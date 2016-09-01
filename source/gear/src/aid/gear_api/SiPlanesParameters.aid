@@ -1,0 +1,41 @@
+package hep.gear.api ;
+
+/**Geometry properties of a pixel beam telescope needed for reconstruction code.
+   *  @author T. Klimkovich, DESY
+   *  @version $Id: 
+   */
+	
+public interface SiPlanesParameters extends GearParameters {
+    
+  // static constants (enums( for the type of layout
+    
+@ifdef cpp
+@cpp{
+    static const int TelescopeWithDUT    = 1 ;
+    static const int TelescopeWithoutDUT    = 2 ;
+}@else
+    public static const int TelescopeWithDUT    = 1 ;
+    public static const int TelescopeWithoutDUT   = 2 ;
+@endif
+
+
+    /** The layer layout of pixel beam telescope. */
+    public const SiPlanesLayerLayout& getSiPlanesLayerLayout() const ;
+
+    /** ID of telescope setup.
+     */
+
+    public int getSiPlanesID() const ;
+
+    /** The type of SiPlanes detector: 
+     * SiPlanesParameters.TelescopeWithDUT, SiPlanesParameters.TelescopeWithoutDUT.
+     */
+
+    public int getSiPlanesType() const ;
+
+    /** Number of telescope planes of SiPlanes detector.
+     */
+
+    public int getSiPlanesNumber() const ;	
+
+}

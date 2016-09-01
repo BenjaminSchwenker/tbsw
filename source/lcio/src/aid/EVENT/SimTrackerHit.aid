@@ -1,0 +1,52 @@
+package hep.lcio.event;
+
+/** A generic simulated tracker hit. 
+ * 
+ * @author gaede
+ * @version $Id: SimTrackerHit.aid,v 1.9 2006/03/24 13:25:52 gaede Exp $
+ */
+
+public interface SimTrackerHit extends LCObject {
+    
+@ifdef cpp
+@cpp{
+    /** Useful typedef for template programming with LCIO */
+    typedef SimTrackerHit lcobject_type ;
+
+}
+@endif
+
+    /**Returns the detector specific (geometrical) cell id.
+     */
+    public int getCellID() const ;
+
+    /** Returns the hit  position in [mm].	
+     */
+    public const double3V getPosition() const ;
+
+    /** Returns  the dE/dx of the hit in [GeV].
+     */ 	
+    public float getdEdx() const ;
+    
+    /** Returns the  time of the hit in [ns]. TO DO needs definition.
+     */
+    public float getTime() const ;	
+    
+    /** Returns the MC particle that caused the hit.
+     *
+     * @see MCParticle
+     */
+    public MCParticle* getMCParticle() const ;
+
+
+    /** Returns the 3-momentum of the particle at the hits position in [GeV] - 
+     * optional, only if bit LCIO::THBIT_MOMENTUM is set.	
+     */ 
+    public const float3V getMomentum() const ;
+
+
+    /** The path length of the particle in the sensitive material that resulted in this hit.
+     *  This is only stored together with momentum, i.e. if  LCIO::THBIT_MOMENTUM is set.
+     */
+    public float getPathLength() const ;
+}

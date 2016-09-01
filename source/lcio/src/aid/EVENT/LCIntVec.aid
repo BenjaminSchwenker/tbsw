@@ -1,0 +1,33 @@
+package hep.lcio.event ;
+
+@cpp{
+ #include "IMPL/AccessChecked.h" // FIXME: EVENT shouldn't  depend on IMPL ...
+}
+
+/** Int vector used for user extensions.
+ * The cpp implementation is a std::vector<int>
+ * 
+ * @author gaede 
+ * @version Aug 8, 2003
+ * @see LCObject
+ */
+public interface LCIntVec extends LCObject 
+@ifdef cpp
+,IntVec
+@endif
+{
+
+@cpp{
+    typedef LCIntVec lcobject_type ;
+
+    public:
+    int id() const { return _acc.simpleUID() ; } 
+    protected:
+      IMPL::AccessChecked _acc ;
+}
+
+@ifdef java
+    public int[] toArray();
+@endif
+}
+

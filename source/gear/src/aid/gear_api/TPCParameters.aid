@@ -1,0 +1,30 @@
+package hep.gear.api ;
+
+/** Proposal for an abstract interface that defines the geometry properties of
+ * a TPC like detector needed for reconstruction code. <br>
+ * This assumes a row based layout of the pads, either in a cartesian or in a 
+ * polar angle coordinate system.  <br>
+ * Most of this class is based on ideas by Dean Karlen.
+ * 
+ * @author F. Gaede, DESY
+ * @version $Id: TPCParameters.aid,v 1.1.1.1 2005-09-13 14:41:03 gaede Exp $
+ */
+public interface TPCParameters extends GearParameters {
+    
+
+    /** The pad layout in the endcaps */
+    public const PadRowLayout2D& getPadLayout() const ;
+    
+    /** The maximum drift length in the TPC in mm.
+     */
+    public double getMaxDriftLength() const ;
+    
+    /** The electron drift velocity in the TPC in mm/s.
+     */
+    public double getDriftVelocity() const ;
+    
+    /** The readout frequency in Hz.
+     */
+    public double getReadoutFrequency() const ;
+    
+}

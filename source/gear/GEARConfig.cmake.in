@@ -1,0 +1,77 @@
+###############################################
+# cmake configuration file for GEAR
+# @author Jan Engels, DESY
+###############################################
+
+SET( GEAR_FOUND FALSE )
+MARK_AS_ADVANCED( GEAR_FOUND )
+
+# do not store find results in cache
+SET( GEAR_INCLUDE_DIR GEAR_INCLUDE_DIR-NOTFOUND )
+
+FIND_PATH( GEAR_INCLUDE_DIR
+	NAMES gear/GEAR.h
+	PATHS @CMAKE_INSTALL_PREFIX@
+	PATH_SUFFIXES include src/cpp/include
+	NO_DEFAULT_PATH
+)
+IF( NOT GEAR_INCLUDE_DIR )
+    MESSAGE( STATUS "Check for GEAR: ${GEAR_HOME}"
+					" -- failed to find GEAR include directory!!" )
+ELSE( NOT GEAR_INCLUDE_DIR )
+    MARK_AS_ADVANCED( GEAR_INCLUDE_DIR )
+ENDIF( NOT GEAR_INCLUDE_DIR )
+
+
+# do not store find results in cache
+SET( GEARXML_LIB GEARXML_LIB-NOTFOUND )
+
+FIND_LIBRARY( GEARXML_LIB
+	NAMES gearxml
+	PATHS @CMAKE_INSTALL_PREFIX@
+	PATH_SUFFIXES lib
+	NO_DEFAULT_PATH
+)
+IF( NOT GEARXML_LIB )
+    MESSAGE( STATUS "Check for GEAR: ${GEAR_HOME}"
+					" -- failed to find GEAR XML library!!" )
+ELSE( NOT GEARXML_LIB )
+    MARK_AS_ADVANCED( GEARXML_LIB )
+ENDIF( NOT GEARXML_LIB )
+
+
+# do not store find results in cache
+SET( GEAR_LIB GEAR_LIB-NOTFOUND )
+
+FIND_LIBRARY( GEAR_LIB
+	NAMES gear
+	PATHS @CMAKE_INSTALL_PREFIX@
+	PATH_SUFFIXES lib
+	NO_DEFAULT_PATH
+)
+IF( NOT GEAR_LIB )
+    MESSAGE( STATUS "Check for GEAR: ${GEAR_HOME}"
+					" -- failed to find GEAR library!!" )
+ELSE( NOT GEAR_LIB )
+    MARK_AS_ADVANCED( GEAR_LIB )
+ENDIF( NOT GEAR_LIB )
+
+
+# set variables and display results
+IF( GEAR_INCLUDE_DIR AND GEAR_LIB AND GEARXML_LIB )
+    SET( GEAR_FOUND TRUE )
+    SET( GEAR_INCLUDE_DIRS ${GEAR_INCLUDE_DIR} )
+    SET( GEAR_LIBRARY_DIRS "@CMAKE_INSTALL_PREFIX@/lib" )
+	SET( GEAR_LIBRARIES  ${GEARXML_LIB} ${GEAR_LIB} )
+    SET( GEAR_DEFINITIONS "-DUSE_GEAR" )
+    MARK_AS_ADVANCED( GEAR_INCLUDE_DIRS GEAR_LIBRARY_DIRS )
+    MARK_AS_ADVANCED( GEAR_LIBRARIES GEAR_DEFINITIONS )
+	MESSAGE( STATUS "Check for GEAR: ${GEAR_HOME} -- works" )
+ELSE( GEAR_INCLUDE_DIR AND GEAR_LIB AND GEARXML_LIB )
+	IF( GEAR_FIND_REQUIRED )
+		MESSAGE( FATAL_ERROR "Check for GEAR: ${GEAR_HOME} -- failed!!" )
+    ELSE( GEAR_FIND_REQUIRED )
+        MESSAGE( STATUS "Check for GEAR: ${GEAR_HOME}"
+						" -- failed!! will skip this package..." )
+    ENDIF( GEAR_FIND_REQUIRED )
+ENDIF( GEAR_INCLUDE_DIR AND GEAR_LIB AND GEARXML_LIB )

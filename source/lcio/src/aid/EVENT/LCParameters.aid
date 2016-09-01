@@ -1,0 +1,132 @@
+package hep.lcio.event ;
+
+@java{
+import hep.lcio.exceptions.* ;
+}
+
+/** Simple interface to store generic named parameters of type
+ *  int, float and string. 
+ *  It can be used  to store (user) meta data that is 
+ *  run, event or collection dependent. 
+ * 
+ * @author gaede 
+ * @version $Id: LCParameters.aid,v 1.3 2009/11/20 11:20:20 gaede Exp $
+ * @see LCRunHeader.parameters()
+ * @see LCEvent.parameters()
+ * @see LCCollection.parameters()
+ */
+
+public interface LCParameters
+
+{
+
+    /** Returns the first integer value for the given key.
+     */
+    public int getIntVal( const String& key ) const ;
+
+
+    /** Returns the first float value for the given key.
+     */
+    public float getFloatVal( const String& key )const ;
+
+
+    /** Returns the first string value for the given key.
+     */
+    public const String& getStringVal( const String& key ) const ;
+    
+@ifdef cpp
+    /** Adds all integer values for the given key to values.
+     *  Returns a reference to values for convenience.
+     */
+    public IntVec& getIntVals( const String& key ,  IntVec& values ) const ;
+
+
+    /** Adds all float values for the given key to values.
+     *  Returns a reference to values for convenience.
+     */
+    public FloatVec& getFloatVals( const String& key ,  FloatVec& values ) const ;
+
+
+    /** Adds all float values for the given key to values.
+     *  Returns a reference to values for convenience.
+     */
+    public StringVec& getStringVals( const String& key  , StringVec & values ) const ;
+
+    /** Returns a list of all keys of integer parameters.
+     */
+    public const StringVec& getIntKeys( StringVec &keys ) const ;
+
+    /** Returns a list of all keys of float parameters.
+     */
+    public const StringVec& getFloatKeys( StringVec &keys ) const ;
+
+    /** Returns a list of all keys of string parameters.
+     */
+    public const StringVec& getStringKeys( StringVec &keys )const  ;
+@else
+    /** Returns values for the given key.
+     */
+    public IntVec& getIntVals( const String& key ) const ;
+
+
+    /** Returns values for the given key.
+     */
+    public FloatVec& getFloatVals( const String& key ) const;
+
+
+    /** Returns values for the given key.
+     */
+    public StringVec& getStringVals( const String& key  ) const;
+
+    /** Returns a list of all keys of integer parameters.
+     */
+    public const StringVec& getIntKeys() const ;
+
+    /** Returns a list of all keys of float parameters.
+     */
+    public const StringVec& getFloatKeys() const ;
+
+    /** Returns a list of all keys of string parameters.
+     */
+    public const StringVec& getStringKeys() const ;
+@endif
+
+
+    /** The number of integer values stored for this key.
+     */ 
+    public int getNInt( const String& key ) const ;
+
+    /** The number of float values stored for this key.
+     */ 
+    public int getNFloat( const String& key ) const ;
+
+    /** The number of string values stored for this key.
+     */ 
+    public int getNString( const String& key ) const ;
+
+    /** Set integer value for the given key.
+     */
+    public void setValue(const String & key, int value);
+
+    /** Set float value for the given key.
+     */
+    public void setValue(const String & key, float  value);
+
+    /** Set string value for the given key.
+     */
+    public void setValue(const String & key, const String & value);
+
+    /** Set integer values for the given key.
+     */
+    public void setValues(const String & key, const IntVec & values);
+
+    /** Set float values for the given key.
+     */
+    public void setValues(const String & key, const FloatVec & values);
+
+    /** Set string values for the given key.
+     */
+    public void setValues(const String & key, const StringVec & values);
+
+}
+
