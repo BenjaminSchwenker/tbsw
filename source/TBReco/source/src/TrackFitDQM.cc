@@ -436,7 +436,7 @@ void TrackFitDQM::printProcessorParams() const
 
 }
 
-// ROOT_OUTPUT
+
 void TrackFitDQM::bookHistos()
 {   
   
@@ -741,34 +741,33 @@ void TrackFitDQM::bookHistos()
   
   histoName = "hbeam_dxdz_vs_x";
   _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", 576, -30, +30); 
-  _profileMap[ histoName ]->SetXTitle("dx/dz [rad]"); 
-  _profileMap[ histoName ]->SetYTitle("x [mm]");    
+  _profileMap[ histoName ]->SetYTitle("dx/dz [rad]"); 
+  _profileMap[ histoName ]->SetXTitle("x [mm]");    
 
   histoName = "hbeam_dydz_vs_x";
   _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", 576, -30, +30); 
-  _profileMap[ histoName ]->SetXTitle("dy/dz [rad]"); 
-  _profileMap[ histoName ]->SetYTitle("x [mm]");   
+  _profileMap[ histoName ]->SetYTitle("dy/dz [rad]"); 
+  _profileMap[ histoName ]->SetXTitle("x [mm]");   
     
   histoName = "hbeam_dxdz_vs_y";
   _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", 288, -15, +15); 
-  _profileMap[ histoName ]->SetXTitle("dx/dz [rad]"); 
-  _profileMap[ histoName ]->SetYTitle("y [mm]");    
+  _profileMap[ histoName ]->SetYTitle("dx/dz [rad]"); 
+  _profileMap[ histoName ]->SetXTitle("y [mm]");    
 
   histoName = "hbeam_dydz_vs_y";
   _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", 288, -15, +15); 
-  _profileMap[ histoName ]->SetXTitle("dy/dz [rad]"); 
-  _profileMap[ histoName ]->SetYTitle("y [mm]");  
+  _profileMap[ histoName ]->SetYTitle("dy/dz [rad]"); 
+  _profileMap[ histoName ]->SetXTitle("y [mm]");  
 
   histoName = "hbeam_mom_vs_x";
   _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", 576, -30, +30); 
-  _profileMap[ histoName ]->SetXTitle("momentum [GeV]"); 
-  _profileMap[ histoName ]->SetYTitle("x [mm]");  
-   
+  _profileMap[ histoName ]->SetYTitle("momentum [GeV]"); 
+  _profileMap[ histoName ]->SetXTitle("x [mm]");  
     
   histoName = "hbeam_mom_vs_y";
   _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", 288, -15, +15); 
-  _profileMap[ histoName ]->SetXTitle("momentum [GeV]"); 
-  _profileMap[ histoName ]->SetYTitle("y [mm]");          
+  _profileMap[ histoName ]->SetYTitle("momentum [GeV]"); 
+  _profileMap[ histoName ]->SetXTitle("y [mm]");          
   
   
 }
