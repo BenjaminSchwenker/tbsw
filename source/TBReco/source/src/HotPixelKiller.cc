@@ -24,6 +24,9 @@
 #include <IMPL/TrackerDataImpl.h>
 #include <IMPL/TrackerRawDataImpl.h>
 
+#include <EVENT/LCParameters.h>
+#include <IMPL/LCCollectionVec.h>
+
 
 // Used namespaces
 using namespace std; 
@@ -92,24 +95,9 @@ void HotPixelKiller::init() {
    
    // Print set parameters
    printProcessorParams();
-   
-   // ROOT Output 
-   _rootFile = new TFile(_rootFileName.c_str(),"recreate");
-   _rootFile->cd("");
-     
-   // Note: this tree contains snapshots for complete module, sampled every 5000 events
-   _rootOccTree = new TTree("Occupancy","Occupancy info");
-   _rootOccTree->Branch("det"             ,&_rootDetectorID     ,"det/I");
-   _rootOccTree->Branch("px_x"            ,&_rootCol            ,"px_x/I");
-   _rootOccTree->Branch("px_y"            ,&_rootRow            ,"px_y/I");
-   _rootOccTree->Branch("status"          ,&_rootStatus         ,"status/I");
-   _rootOccTree->Branch("hitFreq"         ,&_rootHitFrequency   ,"hitFreq/D");
-   
-   _rootEventTree = new TTree("Event","Event info");
-   _rootEventTree->Branch("iEvt"            ,&_rootEventNumber    ,"iEvt/I");
-   _rootEventTree->Branch("det"             ,&_rootDetectorID     ,"det/I");
-   _rootEventTree->Branch("nhits"           ,&_rootNHits          ,"nhits/I");
-   _rootEventTree->Branch("ngoodhits"       ,&_rootNGoodHits      ,"ngoodhits/I");
+
+   // Book all needed histograms 
+   bookHistos();
     
 }
 
@@ -156,9 +144,6 @@ void HotPixelKiller::processEvent(LCEvent * evt)
                                                                  << (evt->getEventNumber())
                                                                  << std::endl << std::endl;
    
-   // More detailed event numbering for testing
-   streamlog_out(MESSAGE2) << std::endl << "Starting with Event Number " << evt->getEventNumber()  << std::endl; 
-    
    
    if ( isFirstEvent() ) {
       
@@ -168,7 +153,7 @@ void HotPixelKiller::processEvent(LCEvent * evt)
       _isFirstEvent = false;
    }
     
-   readEventData(evt);
+   accumulateHits(evt);
    
    if ( _nEvt == 20000 ) {
      streamlog_out(MESSAGE4) << "Compute intermediate mask "
@@ -194,7 +179,7 @@ void HotPixelKiller::check( LCEvent * evt )
 void HotPixelKiller::end()
 {
   
-  // Compute hit pixel mask   
+  // Compute final pixel mask   
   computeMask(); 
   
   // CPU time end
@@ -269,16 +254,54 @@ void HotPixelKiller::end()
   lcWriter->writeEvent(event);
   delete event;
   lcWriter->close();
+
+  // Root DQM histograms 
+
+  for ( int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+     
+    // Read geometry info for sensor
+    int ipl = _planeNumbers[iDetector];       
+    Det& Sensor = _detector.GetDet(ipl);      
+      
+    int noOfXPixels = Sensor.GetNColumns(); 
+    int noOfYPixels = Sensor.GetNRows(); 
+    
+    // Loop over all pixels 
+    MatrixDecoder matrixDecoder( noOfXPixels, noOfYPixels );  
+    
+    std::string histoName;    
+
+    for (int yPixel = 0; yPixel < noOfYPixels; yPixel++) {
+      for (int xPixel = 0; xPixel < noOfXPixels; xPixel++) {
+
+        int iPixel = matrixDecoder.getIndexFromXY(xPixel, yPixel);
+            
+        histoName = "h2mask_sensor"+to_string( ipl );
+        _histoMap2D[histoName]->Fill(xPixel,yPixel, _status[iDetector][iPixel]  );
+             
+        histoName = "h2occ_sensor"+to_string( ipl );
+        _histoMap2D[histoName]->Fill(xPixel,yPixel, _hitCounter[iDetector][iPixel]/_nEvt  ); 
+
+        histoName = "hocc_sensor"+to_string( ipl );
+        _histoMap[ histoName ]->Fill(_hitCounter[iDetector][iPixel]/_nEvt); 
+           
+      }
+    }
+    
+    histoName = "hnhits";
+    _histoMap[ histoName ]->SetBinContent(ipl, mean)
+      
+    histoName = "hnhits_mask";
+    _histoMap[ histoName ]->SetBinContent(ipl, mean2)
+      
+    histoName = "hnmasked";
+    _histoMap[ histoName ]->SetBinContent(ipl, nmasked)
+  
+  }
    
   streamlog_out(MESSAGE3) << std::endl << " " << "Writing ROOT file ..." << std::endl;   
      
-  // Fill occupancy ntuple    
-  fillOccupancyTuple();
-  
-  _rootFile->Write();
-   
-  streamlog_out(MESSAGE3) << std::endl << " " << "Closing ROOT file ..." << std::endl;   
-   
+  _rootFile->Write(); 
   _rootFile->Close();
   
   // Print message
@@ -318,7 +341,13 @@ void HotPixelKiller::printProcessorParams() const
 //
 // Method doing sparse pixel conversion 
 //
-void HotPixelKiller::readEventData(LCEvent * evt) {
+void HotPixelKiller::accumulateHits(LCEvent * evt) {
+
+  
+  //histoName = "hnhits_sensor"+to_string( ipl );
+  //_histoMap[ histoName ]->Fill();
+  //histoName = "hnhits_mask_sensor"+to_string( ipl );
+  //_histoMap[ histoName ]->Fill();
 
   try {
     
@@ -434,9 +463,7 @@ void HotPixelKiller::initializeAlgorithms(LCEvent * evt) {
       
     LCCollectionVec * collectionVec = dynamic_cast < LCCollectionVec * >(evt->getCollection ( _zeroSuppressedDataCollectionName ));
     _noOfDetector = (int)collectionVec->size();
-     
     
-
     for ( int iDetector = 0 ; iDetector < _noOfDetector ; ++iDetector ) {
       
       // Get the TrackerRawData object from the collection for this detector
@@ -469,40 +496,7 @@ void HotPixelKiller::initializeAlgorithms(LCEvent * evt) {
 }
 
    
-void HotPixelKiller::fillOccupancyTuple() {
 
-  for ( int iDetector = 0; iDetector < _noOfDetector ; iDetector++) {
-        
-    // Read geometry info for sensor
-    int ipl = _planeNumbers[iDetector];       
-    Det& adet = _detector.GetDet(ipl);      
-      
-    int noOfXPixels = adet.GetNColumns(); 
-    int noOfYPixels = adet.GetNRows(); 
-    int sensorID = adet.GetDAQID(); 
-      
-    MatrixDecoder matrixDecoder( noOfXPixels, noOfYPixels); 
-      
-    // start looping on all pixels
-    for (int yPixel = 0; yPixel < noOfYPixels; yPixel++) {
-      for (int xPixel = 0; xPixel < noOfXPixels; xPixel++) {
-          
-        int iPixel = matrixDecoder.getIndexFromXY(xPixel, yPixel);
-          
-        // ROOT Output 
-        _rootDetectorID = sensorID ;  
-        _rootCol = xPixel;                
-        _rootRow = yPixel; 
-        _rootStatus = _status[iDetector][iPixel];     
-        _rootHitFrequency = _hitCounter[iDetector][iPixel]/_nEvt;  
-        _rootFile->cd("");
-        _rootOccTree->Fill();
-    
-      } // end loop on xPixel
-    } // end loop on yPixel
-  }  // end loop on detectors
-
-}
 
 
 void HotPixelKiller::computeMask() {
@@ -545,6 +539,90 @@ void HotPixelKiller::computeMask() {
     } // 2x pixel loop      
   } // iDetector loop   
   
+}
+
+void HotPixelKiller::bookHistos()
+{   
+  
+  _rootFile = new TFile(_rootFileName.c_str(),"recreate");
+  _rootFile->cd("");
+   
+  _rootEventTree = new TTree("Event","Event info");
+  _rootEventTree->Branch("iEvt"            ,&_rootEventNumber    ,"iEvt/I");
+  _rootEventTree->Branch("det"             ,&_rootDetectorID     ,"det/I");
+  _rootEventTree->Branch("nhits"           ,&_rootNHits          ,"nhits/I");
+  _rootEventTree->Branch("ngoodhits"       ,&_rootNGoodHits      ,"ngoodhits/I");
+  
+  // Get number of sensors
+  int nSens = _detector.GetNSensors();
+  
+  // Create subdirs for sensors
+  std::string dirName; 
+  std::string histoName;
+  for (int ipl=0 ; ipl < nSens; ipl++) {
+    std::string dirName = "Sensor"+to_string( ipl );
+    _rootFile->mkdir(dirName.c_str());     
+  }      
+  
+  histoName = "hnhits";
+  _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", nSens, 0, nSens);
+  _histoMap[ histoName ]->SetXTitle("plane number"); 
+  _histoMap[ histoName ]->SetYTitle("mean hits per event (before mask)");   
+  
+  histoName = "hnhits_mask";
+  _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", nSens, 0, nSens);
+  _histoMap[ histoName ]->SetXTitle("plane number"); 
+  _histoMap[ histoName ]->SetYTitle("mean hits per event (after mask)");   
+  
+  histoName = "hnmasked";
+  _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", nSens, 0, nSens);
+  _histoMap[ histoName ]->SetXTitle("plane number"); 
+  _histoMap[ histoName ]->SetYTitle("masked pixels");   
+
+  // Loop over all sensors
+  for (int ipl=0 ; ipl < nSens; ipl++) {
+    
+    dirName = "/Sensor"+to_string(ipl)+"/";
+    _rootFile->cd(dirName.c_str());
+
+    // Get handle to sensor data
+    Det & Sensor = _detector.GetDet(ipl); 
+    
+    int uBins = Sensor.GetNColumns();  
+    int vBins = Sensor.GetNRows(); 
+     
+    histoName = "h2mask_sensor"+to_string( ipl );
+    _histoMap2D[histoName] = new TH2D(histoName.c_str(), "" ,uBins, 0, uBins, vBins, 0, vBins);
+    _histoMap2D[histoName]->SetXTitle("uCell [cells]"); 
+    _histoMap2D[histoName]->SetYTitle("vCell [cells]"); 
+    _histoMap2D[histoName]->SetZTitle("mask");     
+    _histoMap2D[histoName]->SetStats( false );      
+     
+    histoName = "h2occ_sensor"+to_string( ipl );
+    _histoMap2D[histoName] = new TH2D(histoName.c_str(), "" ,uBins, 0, uBins, vBins, 0, vBins);
+    _histoMap2D[histoName]->SetXTitle("uCell [cells]"); 
+    _histoMap2D[histoName]->SetYTitle("vCell [cells]"); 
+    _histoMap2D[histoName]->SetZTitle("hit occupancy [%]");       
+    _histoMap2D[histoName]->SetStats( false );    
+    
+    histoName = "hocc_sensor"+to_string( ipl );
+    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 10000000, 0, 100);
+    _histoMap[ histoName ]->SetXTitle("hit occupancy [%]"); 
+    _histoMap[ histoName ]->SetYTitle("pixels");   
+    
+    histoName = "hnhits_sensor"+to_string( ipl );
+    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 200, 0, 200);
+    _histoMap[ histoName ]->SetXTitle("hits per event"); 
+    _histoMap[ histoName ]->SetYTitle("events");   
+    
+    histoName = "hnhits_mask_sensor"+to_string( ipl );
+    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 200, 0, 200);
+    _histoMap[ histoName ]->SetXTitle("hits per event (after mask)"); 
+    _histoMap[ histoName ]->SetYTitle("events");
+    
+      
+  }
+
 }
 
 } // Namespace

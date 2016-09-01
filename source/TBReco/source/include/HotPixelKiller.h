@@ -6,11 +6,9 @@
 #ifndef HotPixelKiller_H
 #define HotPixelKiller_H 1
 
-#include "TBDetector.h"
 
-// Include LCIO classes
-#include <EVENT/LCParameters.h>
-#include <IMPL/LCCollectionVec.h>
+// TBTools includes 
+#include "TBDetector.h"
 
 // Include Marlin classes
 #include <marlin/Global.h>
@@ -26,10 +24,9 @@
 
 // Include basic C
 #include <string>
-#include <cmath>
 #include <map>
 #include <vector>
-#include <algorithm>
+
 
 namespace depfet {
 
@@ -82,20 +79,19 @@ class HotPixelKiller : public marlin::Processor {
 
 protected:
 
+//! Histogram booking
+   void bookHistos();
 
-//! Read  event 
-/*! Read data and accumulate hits 
+//! Accumulate hits
+/*! Accumulate hits to prepare computing of mask later
  */
-   void readEventData(LCEvent * evt);
+   void accumulateHits(LCEvent * evt);
   
 //! Compute hot pixel mask 
 /*! This method is called at the end of the processor to compute the 
  *  hot pixel mask
  */
    void computeMask();
-
-//! This method is used to fill root occupancy ntuple   
-   void fillOccupancyTuple();
 
 //! This method is used to initialize algorithms  
    void initializeAlgorithms(LCEvent * evt); 
@@ -153,17 +149,16 @@ protected:
 
   //! ROOT_Output
   TFile * _rootFile;
-  TTree * _rootOccTree; 
   TTree * _rootEventTree;  
 
   int _rootEventNumber; 
-  int _rootDetectorID; 
-  int _rootCol;                
-  int _rootRow;      
-  int _rootStatus;      
-  double _rootHitFrequency; 
+  int _rootDetectorID;  
   int _rootNHits; 
   int _rootNGoodHits;
+   
+  std::map< std::string, TH1D *> _histoMap;
+  std::map< std::string, TH2D *> _histoMap2D;  
+
      
 }; // Class
 
