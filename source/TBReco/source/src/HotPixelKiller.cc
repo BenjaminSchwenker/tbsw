@@ -289,13 +289,13 @@ void HotPixelKiller::end()
     }
     
     histoName = "hnhits";
-    _histoMap[ histoName ]->SetBinContent(ipl, mean);
+    _histoMap[ histoName ]->SetBinContent(ipl, mean);  
       
     histoName = "hnhits_mask";
     _histoMap[ histoName ]->SetBinContent(ipl, mean2);
       
     histoName = "hnmasked";
-    _histoMap[ histoName ]->SetBinContent(ipl, nmasked);
+    _histoMap[ histoName ]->SetBinContent(ipl, nmask);
   
   }
    
