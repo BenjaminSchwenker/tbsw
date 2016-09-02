@@ -303,13 +303,13 @@ void HotPixelKiller::end()
     double ngoodhits = _histoMap[ histoName ]->GetMean();
     
     histoName = "hnhits";
-    _histoMap[ histoName ]->SetBinContent(ipl, nhits);  
+    _histoMap[ histoName ]->SetBinContent(ipl+1, nhits);  
       
     histoName = "hnhits_mask";
-    _histoMap[ histoName ]->SetBinContent(ipl, ngoodhits);
+    _histoMap[ histoName ]->SetBinContent(ipl+1, ngoodhits);
       
     histoName = "hnmasked";
-    _histoMap[ histoName ]->SetBinContent(ipl, nmasked);
+    _histoMap[ histoName ]->SetBinContent(ipl+1, nmasked);
   
   }
    
