@@ -355,22 +355,22 @@ void TrackFitDQM::processEvent(LCEvent * evt)
     _histoMap[ histoName  ]->Fill(dydz);
     
     histoName = "hbeam_dxdz_vs_x";
-    _profileMap[ histoName ]->Fill( dxdz , x);
+    _profileMap[ histoName ]->Fill( x, dxdz );
     
     histoName = "hbeam_dydz_vs_x";
-    _profileMap[ histoName ]->Fill( dydz , x);
+    _profileMap[ histoName ]->Fill( x, dydz );
     
     histoName = "hbeam_dxdz_vs_y";
-    _profileMap[ histoName ]->Fill( dxdz , y);
+    _profileMap[ histoName ]->Fill( y, dxdz );
     
     histoName = "hbeam_dydz_vs_y";
-    _profileMap[ histoName ]->Fill( dydz , y);   
+    _profileMap[ histoName ]->Fill( y, dydz );   
 
     histoName = "hbeam_mom_vs_x";
-    _profileMap[ histoName ]->Fill( mom , x);
+    _profileMap[ histoName ]->Fill( x, mom );
     
     histoName = "hbeam_mom_vs_y";
-    _profileMap[ histoName ]->Fill( mom , y);   
+    _profileMap[ histoName ]->Fill( y, mom );   
                        
   } // end track loop 
         
@@ -726,7 +726,8 @@ void TrackFitDQM::bookHistos()
   histoName = "hbeam_intensity";
   _histoMap2D[ histoName] = new TH2D(histoName.c_str(), "" ,576, -30, +30, 288, -15, +15);
   _histoMap2D[histoName]->SetXTitle("x [mm]"); 
-  _histoMap2D[histoName]->SetYTitle("y [mm]");    
+  _histoMap2D[histoName]->SetYTitle("y [mm]"); 
+  _histoMap2D[histoName]->SetZTitle("tracks");     
   _histoMap2D[histoName]->SetStats( false );  
   
   histoName = "hbeam_dxdz"; 

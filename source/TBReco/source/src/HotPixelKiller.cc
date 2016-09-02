@@ -427,7 +427,7 @@ void HotPixelKiller::accumulateHits(LCEvent * evt) {
         _hitCounter[ iDetector ][ iPixel ]++; 
         
         // Count number of good hits per frame  
-        if (_status[iDetector][iPixel] == 0  && _nEvt > _eventsForMask ) ++nGoodDigits;
+        if (_status[iDetector][iPixel] == 0 ) ++nGoodDigits;
           
         // Print detailed pixel summary, for testing/debugging only !!! 
         streamlog_out(MESSAGE1) << "Digit on sensor " << sensorID 
@@ -454,8 +454,10 @@ void HotPixelKiller::accumulateHits(LCEvent * evt) {
       histoName = "hnhits_sensor"+to_string( ipl );
       _histoMap[ histoName ]->Fill(nDigits);
       
-      histoName = "hnhits_mask_sensor"+to_string( ipl );
-      _histoMap[ histoName ]->Fill(nGoodDigits);
+      if ( _nEvt > _eventsForMask ) {
+        histoName = "hnhits_mask_sensor"+to_string( ipl );
+        _histoMap[ histoName ]->Fill(nGoodDigits);
+      }
         
     }  // End loop on detectors
     
@@ -609,15 +611,15 @@ void HotPixelKiller::bookHistos()
      
     histoName = "h2mask_sensor"+to_string( ipl );
     _histoMap2D[histoName] = new TH2D(histoName.c_str(), "" ,uBins, 0, uBins, vBins, 0, vBins);
-    _histoMap2D[histoName]->SetXTitle("uCell [cells]"); 
-    _histoMap2D[histoName]->SetYTitle("vCell [cells]"); 
+    _histoMap2D[histoName]->SetXTitle("uCell [cellID]"); 
+    _histoMap2D[histoName]->SetYTitle("vCell [cellID]"); 
     _histoMap2D[histoName]->SetZTitle("mask");     
     _histoMap2D[histoName]->SetStats( false );      
      
     histoName = "h2occ_sensor"+to_string( ipl );
     _histoMap2D[histoName] = new TH2D(histoName.c_str(), "" ,uBins, 0, uBins, vBins, 0, vBins);
-    _histoMap2D[histoName]->SetXTitle("uCell [cells]"); 
-    _histoMap2D[histoName]->SetYTitle("vCell [cells]"); 
+    _histoMap2D[histoName]->SetXTitle("uCell [cellID]"); 
+    _histoMap2D[histoName]->SetYTitle("vCell [cellID]"); 
     _histoMap2D[histoName]->SetZTitle("hit occupancy");       
     _histoMap2D[histoName]->SetStats( false );    
     
