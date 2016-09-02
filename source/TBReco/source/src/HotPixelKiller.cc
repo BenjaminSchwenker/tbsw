@@ -449,7 +449,7 @@ void HotPixelKiller::accumulateHits(LCEvent * evt) {
       _rootFile->cd("");
       _rootEventTree->Fill();
       
-      std::string histoname; 
+      std::string histoName; 
       
       histoName = "hnhits_sensor"+to_string( ipl );
       _histoMap[ histoName ]->Fill(nDigits);
