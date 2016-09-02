@@ -1,6 +1,6 @@
 Welcome to test beam data reconstruction and analysis using TBSW
 
-mail to author: benjamin.schwenker@phys.uni-goettingen.de
+
 
 The test beam software framework (TBSW) deals with the reconstruction and analysis of test beam data obtained with the high resolution EUDET/AIDA telescope. The installation of the framework is covered in INSTALL. The material below explains the typical use case.  
 
