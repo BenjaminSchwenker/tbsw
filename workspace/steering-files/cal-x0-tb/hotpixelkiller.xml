@@ -29,19 +29,21 @@
    </global>
   
  <processor name="HotPixelKiller-M26" type="HotPixelKiller">
- <!--HotPixelKiller: Masking of hot pixels-->
-  <!--Name of zero suppressed data collection-->
-  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
-  <!--Maximum occupancy for good pixels-->
-  <parameter name="MaxOccupancy" type="float" value="0.001"/>
-  <!--This is the name of the noise (hotpixel) data base-->
-  <parameter name="NoiseDBFileName" type="string" value="NoiseDB-M26.slcio"/>
-  <!--Offline zero suppression threshold-->
-  <parameter name="OfflineZSThreshold" type="float" value="0"/>
-  <!--This is the name of the output root file-->
-  <parameter name="OutputRootFileName" type="string" value="NoiseDB-M26.root"/>
-  <!--Name of status data collection-->
-  <parameter name="StatusCollectionName" type="string" value="status_m26"/>
-</processor>
+   <!--HotPixelKiller: Masking of hot pixels-->
+   <!--Name of zero suppressed data collection-->
+   <parameter name="InputCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
+   <!--Events used to compute hot pixel mask-->
+   <parameter name="EventsForMask" type="int" value="20000"/>
+   <!--Maximum hit rate (hits/events) for normal pixels-->
+   <parameter name="MaxOccupancy" type="float" value="0.001"/>
+   <!--This is the name of the noiseDB file-->
+   <parameter name="NoiseDBFileName" type="string" value="NoiseDB-M26.slcio"/>
+   <!--Zero suppression threshold for digits [ADU]-->
+   <parameter name="OfflineZSThreshold" type="float" value="0"/>
+   <!--This is the name of the root file with DQM histos-->
+   <parameter name="OutputRootFileName" type="string" value="NoiseDB-M26.root"/>
+   <!--Name of status data collection-->
+   <parameter name="StatusCollectionName" type="string" value="status_m26"/>
+ </processor>
 
 </marlin>

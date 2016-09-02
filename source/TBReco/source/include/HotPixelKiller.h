@@ -1,11 +1,10 @@
 // ///////////////////////////////////////////////////////////////////////////////////////     //
 //                                                                                             //
-//  HotPixelKiller   - Marlin Processor                                                  //
+//  HotPixelKiller   - Marlin Processor                                                        //
 // ///////////////////////////////////////////////////////////////////////////////////////     //
 
 #ifndef HotPixelKiller_H
 #define HotPixelKiller_H 1
-
 
 // TBTools includes 
 #include "TBDetector.h"
@@ -33,19 +32,14 @@ namespace depfet {
  //! HotPixelKiller Processor 
   /*! The processor generates a hot pixel mask in lcio format. This mask can be used
    *  during the clustering processor to filter hot pixels. Moreover, the 
-   *  HotPixelKiller processor generates a root file for easy visualisation of the 
-   *  hot pixel mask and the noise occupancy of pixels. 
+   *  HotPixelKiller processor produces a couple of DQM histos in a root file.
    * 
    *  The HotPixelKiller needs an input collection containing zero suppressed data.
-   *  The user can specify a maximum hit occupancy for good pixels. The user can 
-   *  specify an offline zero suppression threshold. This threshold can be used in 
-   *  case the signal amplitude is still available.   
+   *  The user can specify a maximum hit occupancy for "normal" pixels. The user can 
+   *  specify an offline zero suppression threshold. 
    *   
    *  The processor also checks if zero suppressed pixels are not duplicated and have 
-   *  a valid address.  
-   *  
-   *  In addition, the processor allows some minitoring of pixel signals using 
-   *  root ntuples.  
+   *  a valid pair of cellIDs.  
    *  
    *  Author: B.Schwenker, Universität Göttingen
    *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
@@ -113,21 +107,23 @@ protected:
 //! Output root file name containing all ntuples 
    std::string _rootFileName;  
 
-   
 //! Offline ZS threshold
-/*! This is the maximum allowed frequency ( orhit occupancy) for a normal pixel. If a pixel 
- *  exceeds thus threshold (fires too often), then it means that this pixel has some sort 
- *  of malfunction and gets masked as HOT. 
+/*! Digits having a signal below this threshold are ignored. The same 
+ *  threshold should be used later in the clusterizer. 
  */
    float _offlineZSCut;
 
 //! Maximum pixel occupancy
-/*! This is the maximum allowed frequency (hit occupancy) at which a 
- *  good pixel should fire. If a pixel fires too often, then it means 
- *  that there is something weird with this and it should be better masked out.
+/*! This is the maximum allowed hit rate or occupancy for nornal pixels.
+ *  If a pixel fires more frequently, it is masked as HOT. 
  */
    float _maxOccupancy;
     
+//! EventsForMask
+/*! This is the number of events used for computing the hotpixel mask. 
+ */
+   int _eventsForMask; 
+
  private:
   
   // Handle to detector data sheets 
@@ -137,10 +133,10 @@ protected:
   std::vector<int> _planeNumbers;  
   int _noOfDetector; 
   
-  // Count pixel hits (-> mean firing frequency)
+  // Count  hits for all pixels on all  detectors 
   std::vector < FloatVec > _hitCounter;
   
-  // Status flags for all pixels in all detectors 
+  // Status mask for all pixels on all detectors 
   std::vector < ShortVec > _status;
   
   double _timeCPU; //!< CPU time
@@ -165,6 +161,5 @@ protected:
 } // Namespace
 
 #endif 
-
 
 

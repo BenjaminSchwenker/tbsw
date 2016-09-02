@@ -10,9 +10,7 @@
 #include "MatrixDecoder.h"
 
 // Include basic C
-#include <cstdlib>
 #include <iostream>
-#include <memory>
 
 // Include LCIO classes
 #include <lcio.h>
@@ -23,7 +21,6 @@
 #include <UTIL/CellIDEncoder.h>
 #include <IMPL/TrackerDataImpl.h>
 #include <IMPL/TrackerRawDataImpl.h>
-
 #include <EVENT/LCParameters.h>
 #include <IMPL/LCCollectionVec.h>
 
@@ -62,20 +59,26 @@ HotPixelKiller::HotPixelKiller() : Processor("HotPixelKiller")
                             _statusDataCollectionName, string("status"));
    
    registerProcessorParameter("OutputRootFileName",
-                              "This is the name of the output root file",
+                              "This is the name of the root file with DQM histos",
                               _rootFileName, string("NoiseDB.root"));
-
+   
    registerProcessorParameter("NoiseDBFileName",
-                              "This is the name of the noise (hotpixel) data base",
+                              "This is the name of the noiseDB file",
                               _noiseDBFileName, string("NoiseDB.slcio"));
-
+   
    registerProcessorParameter ("MaxOccupancy",
-                              "Maximum occupancy for good pixels",
+                              "Maximum hit rate (hits/events) for normal pixels",
                               _maxOccupancy, static_cast < float >(0.01));
-
+   
+   registerProcessorParameter ("EventsForMask",
+                              "Events used to compute hot pixel mask",
+                              _eventsForMask, static_cast < int >(20000));
+   
    registerProcessorParameter ("OfflineZSThreshold",
-                              "Offline zero suppression threshold",
+                              "Zero suppression threshold for digits [ADU]",
                               _offlineZSCut, static_cast < float >(0));
+   
+
 
 
 }
@@ -155,8 +158,8 @@ void HotPixelKiller::processEvent(LCEvent * evt)
     
    accumulateHits(evt);
    
-   if ( _nEvt == 20000 ) {
-     streamlog_out(MESSAGE4) << "Compute intermediate mask "
+   if ( _nEvt == _eventsForMask ) {
+     streamlog_out(MESSAGE4) << "Compute hotpixel mask "
                              << (evt->getEventNumber())
                              << std::endl << std::endl;
       
@@ -185,7 +188,7 @@ void HotPixelKiller::end()
   // CPU time end
   _timeCPU = clock()/1000 - _timeCPU;
   
-  streamlog_out ( MESSAGE3 ) << "Writing the noise data base file" << endl;
+  streamlog_out ( MESSAGE3 ) << "Writing the noise DB lcio file" << endl;
   
   LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
 
@@ -256,6 +259,8 @@ void HotPixelKiller::end()
   lcWriter->close();
 
   // Root DQM histograms 
+ 
+  std::string histoName;   
 
   for ( int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
      
@@ -269,33 +274,42 @@ void HotPixelKiller::end()
     // Loop over all pixels 
     MatrixDecoder matrixDecoder( noOfXPixels, noOfYPixels );  
     
-    std::string histoName;    
-
+    // Count masked channels 
+    double nmasked = 0;  
+    
     for (int yPixel = 0; yPixel < noOfYPixels; yPixel++) {
       for (int xPixel = 0; xPixel < noOfXPixels; xPixel++) {
-
+        
         int iPixel = matrixDecoder.getIndexFromXY(xPixel, yPixel);
+          
+        if ( _status[iDetector][iPixel] != 0 ) nmasked++;
             
         histoName = "h2mask_sensor"+to_string( ipl );
         _histoMap2D[histoName]->Fill(xPixel,yPixel, _status[iDetector][iPixel]  );
              
         histoName = "h2occ_sensor"+to_string( ipl );
         _histoMap2D[histoName]->Fill(xPixel,yPixel, _hitCounter[iDetector][iPixel]/_nEvt  ); 
-
+    
         histoName = "hocc_sensor"+to_string( ipl );
         _histoMap[ histoName ]->Fill(_hitCounter[iDetector][iPixel]/_nEvt); 
            
       }
     }
     
+    histoName = "hnhits_sensor"+to_string( ipl );
+    double nhits = _histoMap[ histoName ]->GetMean();
+      
+    histoName = "hnhits_mask_sensor"+to_string( ipl );
+    double ngoodhits = _histoMap[ histoName ]->GetMean();
+    
     histoName = "hnhits";
-    _histoMap[ histoName ]->SetBinContent(ipl, mean);  
+    _histoMap[ histoName ]->SetBinContent(ipl, nhits);  
       
     histoName = "hnhits_mask";
-    _histoMap[ histoName ]->SetBinContent(ipl, mean2);
+    _histoMap[ histoName ]->SetBinContent(ipl, ngoodhits);
       
     histoName = "hnmasked";
-    _histoMap[ histoName ]->SetBinContent(ipl, nmask);
+    _histoMap[ histoName ]->SetBinContent(ipl, nmasked);
   
   }
    
@@ -342,13 +356,7 @@ void HotPixelKiller::printProcessorParams() const
 // Method doing sparse pixel conversion 
 //
 void HotPixelKiller::accumulateHits(LCEvent * evt) {
-
   
-  //histoName = "hnhits_sensor"+to_string( ipl );
-  //_histoMap[ histoName ]->Fill();
-  //histoName = "hnhits_mask_sensor"+to_string( ipl );
-  //_histoMap[ histoName ]->Fill();
-
   try {
     
     // Open sparse pixel collection 
@@ -371,75 +379,83 @@ void HotPixelKiller::accumulateHits(LCEvent * evt) {
       int noOfYPixels = adet.GetNRows();
       MatrixDecoder matrixDecoder( noOfXPixels, noOfYPixels); 
           
-      FloatVec sparsePixels = trackerData->getChargeValues();
-      int nPixels = sparsePixels.size()/3; 
-      int nGoodPixels =  0;       
-
-
-      streamlog_out(MESSAGE2) << "Module sensorID " << sensorID << " having pixels " <<  nPixels << std::endl; 
+      FloatVec sparseDigits = trackerData->getChargeValues();
+      int nDigits = sparseDigits.size()/3; 
+      int nGoodDigits =  0;       
+      
+      streamlog_out(MESSAGE2) << "Module sensorID " << sensorID << " having digits " <<  nDigits << std::endl; 
        
-      for ( int index=0; index<nPixels;  index++) { 
+      for ( int index=0; index<nDigits;  index++) { 
             
-        int xPixel = static_cast<int> (sparsePixels[index * 3]);
-        int yPixel = static_cast<int> (sparsePixels[index * 3 + 1]);
-        float chargeValue =  sparsePixels[index * 3 + 2]; 
+        int xPixel = static_cast<int> (sparseDigits[index * 3]);
+        int yPixel = static_cast<int> (sparseDigits[index * 3 + 1]);
+        float chargeValue =  sparseDigits[index * 3 + 2]; 
         int iPixel = matrixDecoder.getIndexFromXY(xPixel, yPixel);  
         
-        // If pixel signal below threshold, skip it
+        // If digit signal below threshold, skip it
         if ( chargeValue < _offlineZSCut ) {
           streamlog_out(MESSAGE2) << "  Signal below ZS cut. Skipping it." << std::endl; 
           continue;
         }
         
-        // Estimate firing rate for all pixels 
+        // Check if digit cellIDs are valid
+        if ( xPixel < 0 || xPixel >= noOfXPixels || yPixel < 0 || yPixel >= noOfYPixels) 
+        {   
+          streamlog_out(MESSAGE2) << "Digit on sensor " << sensorID 
+                                    << "   x:" << xPixel << ", y:" << yPixel 
+                                    << " in event " << evt->getEventNumber() 
+                                    << " is out of range!! " << std::endl;    
+          continue; 
+        }
+        
+        // Check if digit is a duplicate   
+        for ( int id=0; id<index;  id++) {
+            
+          int xPixel2 = static_cast<int> (sparseDigits[id * 3]);
+          int yPixel2 = static_cast<int> (sparseDigits[id * 3 + 1]);
+          
+          if ( xPixel2 == xPixel && yPixel2==yPixel ) {
+            streamlog_out(MESSAGE2) << "Digit on sensor " << sensorID 
+                                    << "   x:" << xPixel << ", y:" << yPixel 
+                                    << " in event " << evt->getEventNumber() 
+                                    << " is duplicated!! " << std::endl; 
+            continue; 
+          }     
+        }  
+        
+        // Estimate firing rate for pixel 
         _hitCounter[ iDetector ][ iPixel ]++; 
         
-        // Count number of good hits per frame
-        if (_status[iDetector][iPixel] == 0) ++nGoodPixels;
+        // Count number of good hits per frame  
+        if (_status[iDetector][iPixel] == 0  && _nEvt > _eventsForMask ) ++nGoodDigits;
           
         // Print detailed pixel summary, for testing/debugging only !!! 
-        streamlog_out(MESSAGE1) << "Pixel on sensor " << sensorID 
+        streamlog_out(MESSAGE1) << "Digit on sensor " << sensorID 
                                 << std::endl;  
         streamlog_out(MESSAGE1) << "   x: " << xPixel << ", y: " << yPixel 
                                 << ", charge: " << chargeValue << ", quality: " << _status[iDetector][iPixel]
                                 << std::endl;
         
-        // Check if pixel address is valid
-          
-        if ( xPixel < 0 || xPixel >= noOfXPixels || yPixel < 0 || yPixel >= noOfYPixels) 
-        {   
-          streamlog_out(MESSAGE4) << "Pixel on sensor " << sensorID 
-                                    << "   x:" << xPixel << ", y:" << yPixel 
-                                    << " in event " << evt->getEventNumber() 
-                                    << " is out of range!! " << std::endl;    
-          
-        }
         
-        // Check if pixel is a duplicate   
-        
-        for ( int id=0; id<index;  id++) {
-            
-          int xPixel2 = static_cast<int> (sparsePixels[id * 3]);
-          int yPixel2 = static_cast<int> (sparsePixels[id * 3 + 1]);
-          
-          if ( xPixel2 == xPixel && yPixel2==yPixel ) {
-            streamlog_out(MESSAGE2) << "Pixel on sensor " << sensorID 
-                                    << "   x:" << xPixel << ", y:" << yPixel 
-                                    << " in event " << evt->getEventNumber() 
-                                    << " is duplicated!! " << std::endl; 
-          }     
-        }  
          
-      } // End pixel loop
+      } // End digit loop
       
       // Time to review quality of event
       _rootEventNumber = evt->getEventNumber();
       _rootDetectorID = sensorID;
-      _rootNHits = nPixels; 
-      _rootNGoodHits = nGoodPixels;
+      _rootNHits = nDigits; 
+      _rootNGoodHits = nGoodDigits;
               
       _rootFile->cd("");
       _rootEventTree->Fill();
+      
+      std::string histoname; 
+      
+      histoName = "hnhits_sensor"+to_string( ipl );
+      _histoMap[ histoName ]->Fill(nDigits);
+      
+      histoName = "hnhits_mask_sensor"+to_string( ipl );
+      _histoMap[ histoName ]->Fill(nGoodDigits);
         
     }  // End loop on detectors
     
@@ -602,12 +618,12 @@ void HotPixelKiller::bookHistos()
     _histoMap2D[histoName] = new TH2D(histoName.c_str(), "" ,uBins, 0, uBins, vBins, 0, vBins);
     _histoMap2D[histoName]->SetXTitle("uCell [cells]"); 
     _histoMap2D[histoName]->SetYTitle("vCell [cells]"); 
-    _histoMap2D[histoName]->SetZTitle("hit occupancy [%]");       
+    _histoMap2D[histoName]->SetZTitle("hit occupancy");       
     _histoMap2D[histoName]->SetStats( false );    
     
     histoName = "hocc_sensor"+to_string( ipl );
     _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 10000000, 0, 100);
-    _histoMap[ histoName ]->SetXTitle("hit occupancy [%]"); 
+    _histoMap[ histoName ]->SetXTitle("hit occupancy"); 
     _histoMap[ histoName ]->SetYTitle("pixels");   
     
     histoName = "hnhits_sensor"+to_string( ipl );
