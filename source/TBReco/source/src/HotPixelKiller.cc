@@ -624,7 +624,7 @@ void HotPixelKiller::bookHistos()
     _histoMap2D[histoName]->SetStats( false );    
     
     histoName = "hocc_sensor"+to_string( ipl );
-    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 10000000, 0, 100);
+    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 10000000, 0, 0.01);
     _histoMap[ histoName ]->SetXTitle("hit occupancy"); 
     _histoMap[ histoName ]->SetYTitle("pixels");   
     
