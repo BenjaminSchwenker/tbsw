@@ -43,6 +43,9 @@ if __name__ == '__main__':
   runtag = os.path.splitext(os.path.basename(rawfile))[0]
   
   # create tmp dir
+  if not os.path.isdir(fullpath+'/tmp-runs'):
+    os.mkdir(fullpath+'/tmp-runs')
+  
   tmpdir = os.path.join(fullpath+'/tmp-runs',runtag)
   tmpdir = tmpdir + '-' + caltag  
   
