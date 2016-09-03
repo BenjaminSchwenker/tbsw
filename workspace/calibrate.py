@@ -69,7 +69,7 @@ if __name__ == '__main__':
   os.chdir(tmpdir)
   
   subprocess.call('/$MARLIN/bin/Marlin hotpixelkiller.xml > log-hotpixel.txt 2>&1', shell=True)
-  print ('[Print] Hotpixelkiller done ...')
+  print ('[Print] HotPixelKiller done ...')
   		  
   subprocess.call('/$MARLIN/bin/Marlin correlator.xml > log-correlator.txt 2>&1', shell=True)    
   print ('[Print] Correlator done ...')           
@@ -93,7 +93,9 @@ if __name__ == '__main__':
   for tmpfile in glob.glob('tmp*'):
     os.remove(tmpfile)
      
-  # create new calibration tag       
+  # create new calibration tag    
+  if not os.path.isdir(fullpath+'/cal-files'):
+    os.mkdir(fullpath+'/cal-files')   
   caldir = fullpath+'/cal-files/'+caltag  
   
   if os.path.isdir(caldir):

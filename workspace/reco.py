@@ -25,6 +25,8 @@ def reco_run(params):
   print ('[Print] Starting to process file ' + runtag + ' ...')
 
   # create tmp dir
+  if not os.path.isdir(fullpath+'/tmp-runs'):
+    os.mkdir(fullpath+'/tmp-runs')
   tmpdir = os.path.join(fullpath+'/tmp-runs',runtag)  
   
   if os.path.isdir(tmpdir):
@@ -49,15 +51,21 @@ def reco_run(params):
     os.remove(tmpfile)
 
   # store dqm files 
+  if not os.path.isdir(fullpath+'/root-files'):
+    os.mkdir(fullpath+'/root-files')
+  
   for dqmfile in glob.glob('*.root'): 
     name = os.path.splitext(os.path.basename(dqmfile))[0]
-    shutil.move(dqmfile, fullpath+'/dqm-files/'+name+'-'+runtag+'.root')  
+    shutil.move(dqmfile, fullpath+'/root-files/'+name+'-'+runtag+'.root')  
   
   # store processed lcio files
-  if store_lcio == True: 
+  if not os.path.isdir(fullpath+'/lcio-files'):
+    os.mkdir(fullpath+'/lcio-files')
+  
+  if store_lcio == False: 
     for slciofile in glob.glob('*.slcio'):    
       name = os.path.splitext(os.path.basename(slciofile))[0]
-      shutil.move(slciofile, fullpath+'/track-files/'+name+'-'+runtag+'.slcio')  
+      shutil.move(slciofile, fullpath+'/lcio-files/'+name+'-'+runtag+'.slcio')  
   
   os.chdir(fullpath)
   shutil.rmtree(tmpdir)
