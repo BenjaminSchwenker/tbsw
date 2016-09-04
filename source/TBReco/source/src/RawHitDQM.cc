@@ -132,8 +132,6 @@ void RawHitDQM::processEvent(LCEvent * evt)
          // Built a TBHit     
          TrackerHitImpl * lciohit = dynamic_cast< TrackerHitImpl* > ( hitcol->getElementAt( ihit ) );
          TBHit RecoHit ( lciohit ); 
-         
-         // Only use good hits  
          HitStore.AddRecoHit(RecoHit);
          
                       
@@ -148,7 +146,7 @@ void RawHitDQM::processEvent(LCEvent * evt)
     }  
   }   
   
-  streamlog_out ( MESSAGE2 ) << "Total of " << HitStore.GetNHits() << " good hits." << endl;
+  streamlog_out ( MESSAGE2 ) << "Total of " << HitStore.GetNHits() << " hits." << endl;
   
   // Fill DQM histos 
   // ===============
@@ -216,10 +214,6 @@ void RawHitDQM::processEvent(LCEvent * evt)
     }
   }
 
-  _histoMap["nhits"]->Fill( nhits); 
-
-  
-
 }
 
 
@@ -283,9 +277,7 @@ void RawHitDQM::bookHistos() {
     _rootFile->mkdir(dirName.c_str());     
   }      
   
-  _histoMap["nhits"] = new TH1D("hnhits", "number of hits per event", 500, 0, 500); 
-  _histoMap["nhits"]->SetXTitle("hits per event"); 
-  _histoMap["nhits"]->SetYTitle("events"); 
+  
   
   
   // Detector histograms 

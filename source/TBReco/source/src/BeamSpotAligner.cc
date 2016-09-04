@@ -292,11 +292,11 @@ void BeamSpotAligner::bookHistos() {
     // Get handle to sensor data
     Det & Sensor = _detector.GetDet(ipl); 
     
-    double  uBox = 1.1 * 0.5 * Sensor.GetSensitiveSizeU();   
-    int uBins = Sensor.GetNColumns()/4;    
+    double  uBox = 1.0 * 0.5 * Sensor.GetSensitiveSizeU();   
+    int uBins = Sensor.GetNColumns()/12;    
     
-    double  vBox = 1.1 * 0.5 * Sensor.GetSensitiveSizeV();
-    int vBins = Sensor.GetNRows()/4; 
+    double  vBox = 1.0 * 0.5 * Sensor.GetSensitiveSizeV();
+    int vBins = Sensor.GetNRows()/12; 
 
     histoName = "hhitmap_sensor"+to_string( ipl );
     _histoMap2D[ histoName] = new TH2D(histoName.c_str(), "" ,uBins, -uBox, +uBox, vBins, -vBox, +vBox);
