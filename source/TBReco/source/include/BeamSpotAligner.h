@@ -82,8 +82,11 @@ protected:
  */
    void bookHistos();
    
-//! Input hit collection name
-   std::string  _hitCollectionName;
+//! Track collection name
+/*! These tracks provide a reference for the alignment. Typical these 
+ *  are tripplet tracks from a telescope arm  
+ */
+   std::string _trackCollectionName;
       
 //! Alignment DB file name
 /*! Stores all alignment information (positions + orientations) of 

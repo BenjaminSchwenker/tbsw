@@ -10,7 +10,8 @@
 
 // Include TBTools header files
 #include "TBHit.h"
-
+#include "TBTrack.h"
+#include "TrackInputProvider.h"
 
 // Include basic C
 #include <iostream>
@@ -51,11 +52,10 @@ BeamSpotAligner::BeamSpotAligner() : Processor("BeamSpotAligner")
      
 //   
 // First of all, we need to register the triplett tracks 
-  
-   registerInputCollection (LCIO::TRACKERHIT, "HitCollectionName",
-                            "Name of hit collection",
-                            _hitCollectionName, 
-                            string("hit")); 
+    
+   registerInputCollection(LCIO::TRACK,"TrackCollectionName",
+                          "Tracklett collection for alignment",
+                          _trackCollectionName,std::string("tracks"));
    
 //   
 // Define processor parameters 
@@ -124,30 +124,40 @@ void BeamSpotAligner::processEvent(LCEvent * evt)
                                                                  << std::endl << std::endl;
    
   
-  // Read input hit collections
+  // Read input track collections
   // ===========================
    
-  LCCollectionVec * hitcol;
+  LCCollection* trackcol;
   try {
-      hitcol = dynamic_cast < LCCollectionVec * > (evt->getCollection( _hitCollectionName ) );
+      trackcol = evt->getCollection(_trackCollectionName);
   } catch (DataNotAvailableException& e) {
       throw SkipEventException(this);
   }
   
-  for ( int ihit = 0 ; ihit < (int) hitcol->size() ; ++ihit ) {
+  // Main loop over all tracks
+   
+  int nTracks = trackcol->getNumberOfElements(); 
+  TrackInputProvider TrackLCIOReader;  
+  
+  for (int itrk = 0; itrk < nTracks; itrk++) {
     
-    // Built a TBHit     
-    TrackerHitImpl * lciohit = dynamic_cast< TrackerHitImpl* > ( hitcol->getElementAt( ihit ) );
-    TBHit RecoHit ( lciohit ); 
+    // Retrieve track from LCIO 
+    Track * lciotrk = dynamic_cast<Track*> (trackcol->getElementAt(itrk));
     
-    int sensorID = RecoHit.GetDAQID();
-    int ipl = _detector.GetPlaneNumber(sensorID);  
-    
-    double um = RecoHit.GetCoord()[0][0];
-    double vm = RecoHit.GetCoord()[1][0];
-    
-    string histoName = "hhitmap_sensor"+to_string( ipl );
-    _histoMap2D[ histoName  ]->Fill(um,vm); 
+    // Convert LCIO -> TB track  
+    TBTrack rectrack = TrackLCIOReader.MakeTBTrack( lciotrk, _detector );  
+
+    for(int ipl=0;ipl<_detector.GetNSensors();++ipl)  { 
+      
+      if ( rectrack.GetTE(ipl).HasHit() ) {
+      
+        double um = rectrack.GetTE(ipl).GetHit().GetCoord()[0][0];
+        double vm = rectrack.GetTE(ipl).GetHit().GetCoord()[1][0];
+        
+        string histoName = "hhitmap_sensor"+to_string( ipl );
+        _histoMap2D[ histoName  ]->Fill(um,vm); 
+      }
+    }
                                      
   }  
                      
