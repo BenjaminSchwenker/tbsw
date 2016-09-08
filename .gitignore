@@ -1,0 +1,20 @@
+*.[oa]
+*~
+*.d
+*.so
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Libraries
+*.lib
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
