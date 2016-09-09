@@ -69,63 +69,6 @@ namespace depfet
     
   }; // End class
   
-    
-  //! Pixel quality enum
-  /*! This enum can be attached to a LCIO class describing a pixel
-   *  or it can be inserted into the CellID describing the pixel
-   *  collection. It is a five bit flag, that can be used to
-   *  discriminate among different pixel qualities. This is because
-   *  not all pixels can be considered to be at the same quality levels. 
-   *
-   *
-   */
-  /*
-  enum PixelQuality {
-    kGoodPixel         = 0,
-    kDeadPixel         = 1L << 0,
-    kNoisyPixel        = 1L << 1,
-    kHotPixel          = 1L << 2,
-    kBrigthPixel       = 1L << 3,
-    kBadChannel        = 1L << 4,
-    kBadPixel          = 1L << 5
-    
-  };
-  */
-  //! Pixel quality bit-wise AND operator
-  /*! This is a convenience operator used to identify the reason of a
-   *  non good quality pixel. Bad quality pixels may be so for more
-   *  than one reason simultaneously. This operator is used in the
-   *  identification of such reasons.
-   *
-   *  @param a A pixel quality value
-   *  @param b Another pixel quality value
-   *  @return the bit wise and among @a a and @a b
-   */
-  //PixelQuality operator&(PixelQuality a, PixelQuality b);
-
-  //! Pixel quality bit-wise OR operator
-  /*! This is a crucial operator for PixelQuality since, during the
-   *  quality tests, a pixel maybe flagged with one or
-   *  more than one "bad" qualities. For this reason, using this
-   *  operator can allow to flag the same pixel with more than one
-   *  bad qualities.
-   *
-   *  @param a A pixel quality value
-   *  @param b Another pixel quality value
-   *  @return the bit wise or among @a a and @a b
-   */
-  //PixelQuality operator|(PixelQuality a, PixelQuality b);
-
-  //! Pixel quality operator <<
-  /*! This operator can be used to stream out the value of a pixel
-   *  quality enum. Both the numerical and the textual values are shown.
-   *
-   *  @param os The input output stream
-   *  @param quality The variable to the be stream out
-   *  @return The input output stream
-   */
-  //std::ostream& operator<<(std::ostream& os, const PixelQuality & quality);
-  
   //! Sparse pixel type enum
   /*! This enumerator is used to define the sparsified pixel type.
    *
