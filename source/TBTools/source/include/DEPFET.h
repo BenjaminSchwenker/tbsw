@@ -46,22 +46,6 @@ namespace depfet
     
   public:
     
-    // Pixel flags
-    
-    //! Constant to identify good pixels
-    //static const int GOODPIXEL;
-    
-    //! Constant to identify bad pixels
-    //static const int BADPIXEL;
-    
-    //! Constant to identify hit pixels
-    //static const int HITPIXEL;
-    
-    //! Constant to identify missing pixels
-    //static const int MISSINGPIXEL;
-    
-    //! Constant to identify pixels firing too often
-    //static const int FIRINGPIXEL;
     
     // Encoding strings
     
@@ -100,7 +84,7 @@ namespace depfet
      *
      *  @see ClusterQuality
      */
-    static const char * CLUSTERDEFAULTENCODING;
+    //static const char * CLUSTERDEFAULTENCODING;
     
     //! Default TrackerPulse encoding for cluster
     /*! This constant string is used with CellIDEncoder to define the
@@ -113,7 +97,7 @@ namespace depfet
      *
      *  @see ClusterType
      */
-    static const char * PULSEDEFAULTENCODING;
+    //static const char * PULSEDEFAULTENCODING;
     
     //! Zero suppress cluster default encoding
     /*! This encoding string is used for the TrackerData containing
