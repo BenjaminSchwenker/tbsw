@@ -69,63 +69,21 @@ namespace depfet
     
   }; // End class
   
-  //! Detector type enum
-  /*! This enumeration type is used to identify a specific detector
-   *  type.
-   *
-   */
-  /*
-  enum DEPFETDetectorType {
-    kTLU               =   0,
-    kMimosa26          = 102,
-    kDEPFET            = 103,
-    kTaki              = 104
-  } ;
-  */  
+  
 
   //! Cluster quality enum
   /*! This enum can be attached to a LCIO class describing a cluster
-   *  or it can be inserted into the CellID describing the cluster
-   *  collection. It is a five bit flag, that can be used to
-   *  discriminate among different cluster qualities. This is because
-   *  not all clusters passing the required cuts can be considered to
-   *  be at the same quality levels. For example there are clusters
-   *  centered on or so close to the detector edge that are
-   *  incomplete. Those, even if they are passing the threshold for
-   *  cluster identification they cannot be used for resolution
-   *  studies, because their calculated position if biased by the
-   *  missing pixels. The same apply for pixels with one missing pixel
-   *  because was flagged as bad during the clustering processor.
-   *
-   *  Here a description of all allowed value of cluster quality and
-   *  their meaning:
-   *
-   *  \li <b>kGoodCluster</b>: this flag is used to identify clusters
-   *  having no problem at all.
-   *
-   *  \li <b>kIncompleteCluster</b>: this flag is used to identify
-   *  clusters in which at least one pixel is missing because it was
-   *  flagged as bad during the previous analysis processors.
-   *
-   *  \li <b>kBorderCluster</b>: this flag is used with clusters found
-   *  to close to the detector edge and for that reason, their
-   *  completeness cannot be garanted.
-   *
-   *  \li <b>kMergedCluster</b>: this flag is used to label clusters
-   *  that have been tracked in a position so close to another cluster
-   *  that charge sharing between the two cannot be excluded.
-   *
-   *  There are still two "not assigned" bits that can be used in the
-   *  future to mark other different kind of bad quality clusters.
-   *
+   *  or it can be inserted into the CellID describing the cluste
    */
    
+  /*
   enum ClusterQuality {
     kGoodCluster       = 0,
     kIncompleteCluster = 1L << 0,
     kBorderCluster     = 1L << 1,
     kMergedCluster     = 1L << 2
   };
+  *
   
   //! Cluster quality bit-wise AND operator
   /*! This is a convenience operator used to identify the reason of a
@@ -137,7 +95,7 @@ namespace depfet
    *  @param b Another cluster quality value
    *  @return the bit wise and among @a a and @a b
    */
-  ClusterQuality operator&(ClusterQuality a, ClusterQuality b);
+  //ClusterQuality operator&(ClusterQuality a, ClusterQuality b);
   
   //! Cluster quality bit-wise OR operator
   /*! This is a crucial operator for ClusterQuality since, during the
@@ -150,7 +108,7 @@ namespace depfet
    *  @param b Another cluster quality value
    *  @return the bit wise or among @a a and @a b
    */
-  ClusterQuality operator|(ClusterQuality a, ClusterQuality b);
+  //ClusterQuality operator|(ClusterQuality a, ClusterQuality b);
   
   //! Cluster quality operator <<
   /*! This operator can be used to stream out the value of a cluster
@@ -160,7 +118,7 @@ namespace depfet
    *  @param quality The variable to the be stream out
    *  @return The input output stream
    */
-  std::ostream& operator<<(std::ostream& os, const ClusterQuality & quality);  
+  //std::ostream& operator<<(std::ostream& os, const ClusterQuality & quality);  
   
   //! Pixel quality enum
   /*! This enum can be attached to a LCIO class describing a pixel

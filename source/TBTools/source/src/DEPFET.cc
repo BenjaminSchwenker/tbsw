@@ -10,6 +10,8 @@ const char *   DEPFET::ZSCLUSTERDEFAULTENCODING = "sensorID:17,clusterID:5,spars
 
 namespace depfet {
 
+
+  /*
   ClusterQuality operator&(ClusterQuality a, ClusterQuality b) {
     return ClusterQuality( static_cast<int>(a) & static_cast<int>(b) );
   }
@@ -42,7 +44,7 @@ namespace depfet {
     os << " (" << static_cast<int> (quality) << ")";
     return os;
   }
-
+  */
 
   PixelQuality operator&(PixelQuality a, PixelQuality b) {
     return PixelQuality( static_cast<int>(a) & static_cast<int>(b) );
