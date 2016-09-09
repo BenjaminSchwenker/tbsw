@@ -7,11 +7,11 @@ const int      DEPFET::BADPIXEL            =  1;
 const int      DEPFET::HITPIXEL            = -1;
 const int      DEPFET::MISSINGPIXEL        =  2;
 const int      DEPFET::FIRINGPIXEL         =  3;
-const char *   DEPFET::MATRIXDEFAULTENCODING    = "sensorID:16,xMin:12,xMax:12,yMin:12,yMax:12";
-const char *   DEPFET::ZSDATADEFAULTENCODING    = "sensorID:16,sparsePixelType:5";
-const char *   DEPFET::CLUSTERDEFAULTENCODING   = "sensorID:16,clusterID:8,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5,quality:5";
-const char *   DEPFET::PULSEDEFAULTENCODING     = "sensorID:16,clusterID:8,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5,type:5";
-const char *   DEPFET::ZSCLUSTERDEFAULTENCODING = "sensorID:16,clusterID:8,sparsePixelType:5,quality:5";
+const char *   DEPFET::MATRIXDEFAULTENCODING    = "sensorID:17,xMin:12,xMax:12,yMin:12,yMax:12";
+const char *   DEPFET::ZSDATADEFAULTENCODING    = "sensorID:17,sparsePixelType:5";
+const char *   DEPFET::CLUSTERDEFAULTENCODING   = "sensorID:17,clusterID:8,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5,quality:5";
+const char *   DEPFET::PULSEDEFAULTENCODING     = "sensorID:17,clusterID:8,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5,type:5";
+const char *   DEPFET::ZSCLUSTERDEFAULTENCODING = "sensorID:17,clusterID:8,sparsePixelType:5,quality:5";
 
 
 namespace depfet {
