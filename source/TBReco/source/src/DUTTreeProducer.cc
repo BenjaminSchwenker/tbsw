@@ -560,12 +560,9 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
                    
               int index = matrixDecoder.getIndexFromXY(iCol, iRow);
               
-              bool isGood = true; 
-              if (isDUTStatusOk) {
-                isGood = ( statusVec[index] == DEPFET::GOODPIXEL );
-              }
+              
                 
-              if ( !isGood  ) {
+              if ( statusVec[index]   ) {
                 // Bad pixel in cluster degrades Xing quality
                 _rootTrack3x3Quality++;  
               }     
