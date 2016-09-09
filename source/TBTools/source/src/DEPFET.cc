@@ -3,7 +3,7 @@
 using namespace depfet;
 
 
-const char *   DEPFET::MATRIXDEFAULTENCODING    = "sensorID:17,xMax:12,yMax:12"; 
+const char *   DEPFET::MATRIXDEFAULTENCODING    = "sensorID:17,uMax:12,vMax:12"; 
 const char *   DEPFET::ZSDATADEFAULTENCODING    = "sensorID:17,sparsePixelType:5";
 const char *   DEPFET::ZSCLUSTERDEFAULTENCODING = "sensorID:17,clusterID:5,sparsePixelType:5,quality:2";
 

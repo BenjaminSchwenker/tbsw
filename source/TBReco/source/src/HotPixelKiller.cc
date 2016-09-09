@@ -222,15 +222,13 @@ void HotPixelKiller::end()
     
     TrackerRawDataImpl * statusMatrix   = new TrackerRawDataImpl;
 
-    cout << "benni encoder sensorID " << sensorID << endl;
+    
     
     CellIDEncoder<TrackerRawDataImpl> idStatusEncoder(DEPFET::MATRIXDEFAULTENCODING, statusCollection);
   
     idStatusEncoder["sensorID"]   = sensorID;
-    idStatusEncoder["xMin"]       = 0;
-    idStatusEncoder["xMax"]       = noOfXPixels-1;
-    idStatusEncoder["yMin"]       = 0;
-    idStatusEncoder["yMax"]       = noOfYPixels-1;
+    idStatusEncoder["uMax"]       = noOfXPixels-1;
+    idStatusEncoder["vMax"]       = noOfYPixels-1;
     idStatusEncoder.setCellID(statusMatrix);
 
     statusMatrix->setADCValues(_status[iDetector]);

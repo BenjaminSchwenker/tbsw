@@ -248,8 +248,8 @@ void DEPFETPedestalNoiseProcessor::processEvent(LCEvent * evt)
       for (size_t iDet = 0; iDet < _sensorIDVec.size(); iDet++) 
       {  
         streamlog_out(MESSAGE3) << "SensorID " << _sensorIDVec[iDet]  << ": " << endl 
-                                << "xMin: " << _minX[iDet] << " xMax: " <<  _maxX[iDet] << endl
-                                << "yMin: " << _minY[iDet] << " yMax: " <<  _maxY[iDet] << endl << endl; 
+                                << "uMin: " << _minX[iDet] << " uMax: " <<  _maxX[iDet] << endl
+                                << "vMin: " << _minY[iDet] << " vMax: " <<  _maxY[iDet] << endl << endl; 
       }
    }
    
@@ -351,18 +351,12 @@ void DEPFETPedestalNoiseProcessor::end()
       idPedestalEncoder["sensorID"] = _sensorIDVec.at( iDetector );
       idNoiseEncoder["sensorID"]    = _sensorIDVec.at( iDetector );
       idStatusEncoder["sensorID"]   = _sensorIDVec.at( iDetector );
-      idPedestalEncoder["xMin"]     = _minX[iDetector];
-      idNoiseEncoder["xMin"]        = _minX[iDetector];
-      idStatusEncoder["xMin"]       = _minX[iDetector];
-      idPedestalEncoder["xMax"]     = _maxX[iDetector];
-      idNoiseEncoder["xMax"]        = _maxX[iDetector];
-      idStatusEncoder["xMax"]       = _maxX[iDetector];
-      idPedestalEncoder["yMin"]     = _minY[iDetector];
-      idNoiseEncoder["yMin"]        = _minY[iDetector];
-      idStatusEncoder["yMin"]       = _minY[iDetector];
-      idPedestalEncoder["yMax"]     = _maxY[iDetector];
-      idNoiseEncoder["yMax"]        = _maxY[iDetector];
-      idStatusEncoder["yMax"]       = _maxY[iDetector];
+      idPedestalEncoder["uMax"]     = _maxX[iDetector];
+      idNoiseEncoder["uMax"]        = _maxX[iDetector];
+      idStatusEncoder["uMax"]       = _maxX[iDetector];
+      idPedestalEncoder["vMax"]     = _maxY[iDetector];
+      idNoiseEncoder["vMax"]        = _maxY[iDetector];
+      idStatusEncoder["vMax"]       = _maxY[iDetector];
  
       
       idPedestalEncoder.setCellID(pedestalMatrix);
@@ -557,8 +551,8 @@ void DEPFETPedestalNoiseProcessor::processRawDataDHP(LCEvent * evt) {
       // Get number of pixels of current module 
       CellIDDecoder< TrackerRawDataImpl > rawDataDecoder( collectionVec );
       MatrixDecoder matrixDecoder( rawDataDecoder, trackerRawData);  
-      int noOfXPixels = rawDataDecoder( trackerRawData ) ["xMax"] + 1; 
-      int noOfYPixels = rawDataDecoder( trackerRawData ) ["yMax"] + 1;
+      int noOfXPixels = rawDataDecoder( trackerRawData ) ["uMax"] + 1; 
+      int noOfYPixels = rawDataDecoder( trackerRawData ) ["vMax"] + 1;
       int sensorID = rawDataDecoder( trackerRawData ) ["sensorID"]; 
       
       // Veto for data frame that should not be corrected and saved to lcio 
@@ -875,8 +869,8 @@ void DEPFETPedestalNoiseProcessor::processRawDataDHP2(LCEvent * evt) {
       // Get number of pixels of current module 
       CellIDDecoder< TrackerRawDataImpl > rawDataDecoder( collectionVec );
       MatrixDecoder matrixDecoder( rawDataDecoder, trackerRawData);  
-      int noOfXPixels = rawDataDecoder( trackerRawData ) ["xMax"] + 1; 
-      int noOfYPixels = rawDataDecoder( trackerRawData ) ["yMax"] + 1;
+      int noOfXPixels = rawDataDecoder( trackerRawData ) ["uMax"] + 1; 
+      int noOfYPixels = rawDataDecoder( trackerRawData ) ["vMax"] + 1;
       int sensorID = rawDataDecoder( trackerRawData ) ["sensorID"]; 
       
       // Veto for data frame that should not be corrected and saved to lcio 
@@ -1163,8 +1157,8 @@ void DEPFETPedestalNoiseProcessor::processRawDataTAKI(LCEvent * evt) {
       // Get number of pixels of current module 
       CellIDDecoder< TrackerRawDataImpl > rawDataDecoder( collectionVec );
       MatrixDecoder matrixDecoder( rawDataDecoder, trackerRawData);  
-      int noOfXPixels = rawDataDecoder( trackerRawData ) ["xMax"] + 1; 
-      int noOfYPixels = rawDataDecoder( trackerRawData ) ["yMax"] + 1;
+      int noOfXPixels = rawDataDecoder( trackerRawData ) ["uMax"] + 1; 
+      int noOfYPixels = rawDataDecoder( trackerRawData ) ["vMax"] + 1;
       int sensorID = rawDataDecoder( trackerRawData ) ["sensorID"]; 
       
       // Veto for data frame that should not be corrected and saved to lcio 
@@ -1327,16 +1321,16 @@ bool DEPFETPedestalNoiseProcessor::initializeAlgorithms(LCEvent * evt) {
       CellIDDecoder< TrackerRawData > rawDataDecoder( collectionVec );
       
       // Read geometry info for sensor from cellid
-      _minX.push_back( rawDataDecoder( trackerRawData ) ["xMin"] ) ;
-      _maxX.push_back( rawDataDecoder( trackerRawData ) ["xMax"] ) ;
-      _minY.push_back( rawDataDecoder( trackerRawData ) ["yMin"] ) ;
-      _maxY.push_back( rawDataDecoder( trackerRawData ) ["yMax"] ) ;
+      _minX.push_back( 0 ) ;
+      _maxX.push_back( rawDataDecoder( trackerRawData ) ["uMax"] ) ;
+      _minY.push_back( 0 ) ;
+      _maxY.push_back( rawDataDecoder( trackerRawData ) ["vMax"] ) ;
       _sensorIDVec.push_back( rawDataDecoder( trackerRawData ) ["sensorID"] );
       MatrixDecoder matrixDecoder( rawDataDecoder, trackerRawData);  
        
       int npixel = (int) trackerRawData->getADCValues().size();
-      int noOfXPixels = rawDataDecoder( trackerRawData ) ["xMax"] + 1; 
-      int noOfYPixels = rawDataDecoder( trackerRawData ) ["yMax"] + 1;
+      int noOfXPixels = rawDataDecoder( trackerRawData ) ["uMax"] + 1; 
+      int noOfYPixels = rawDataDecoder( trackerRawData ) ["vMax"] + 1;
       
       if ( npixel !=  noOfXPixels* noOfYPixels) {
         cout << "Inconsistent data stream. Quit!" << endl; 
@@ -1424,8 +1418,8 @@ void DEPFETPedestalNoiseProcessor::fillPedeTuple(LCEvent * evt) {
       // Get number of pixels of current module 
       CellIDDecoder< TrackerRawDataImpl > rawDataDecoder( collectionVec );
       MatrixDecoder matrixDecoder( rawDataDecoder, trackerRawData);  
-      int noOfXPixels = rawDataDecoder( trackerRawData ) ["xMax"] + 1; 
-      int noOfYPixels = rawDataDecoder( trackerRawData ) ["yMax"] + 1;
+      int noOfXPixels = rawDataDecoder( trackerRawData ) ["uMax"] + 1; 
+      int noOfYPixels = rawDataDecoder( trackerRawData ) ["vMax"] + 1;
       int sensorID = rawDataDecoder( trackerRawData ) ["sensorID"]; 
             
       // Start looping on all pixels
@@ -1477,8 +1471,8 @@ void DEPFETPedestalNoiseProcessor::fillPixelTuple(LCEvent * evt) {
         
       // Get number of pixels of current module 
       CellIDDecoder< TrackerRawDataImpl > rawDataDecoder( collectionVec );
-      int noOfXPixels = rawDataDecoder( trackerRawData ) ["xMax"] + 1; 
-      int noOfYPixels = rawDataDecoder( trackerRawData ) ["yMax"] + 1;
+      int noOfXPixels = rawDataDecoder( trackerRawData ) ["uMax"] + 1; 
+      int noOfYPixels = rawDataDecoder( trackerRawData ) ["vMax"] + 1;
       int sensorID = rawDataDecoder( trackerRawData ) ["sensorID"]; 
         
       // Use standard matrix encoding 
@@ -1555,8 +1549,7 @@ void DEPFETPedestalNoiseProcessor::maskBadPixel(LCEvent * evt) {
         
       // Get number of pixels of current module 
       CellIDDecoder< TrackerRawDataImpl > rawDataDecoder( collectionVec );
-      //int noOfXPixels = rawDataDecoder( trackerRawData ) ["xMax"] + 1; 
-      //int noOfYPixels = rawDataDecoder( trackerRawData ) ["yMax"] + 1; 
+      
       
       // Use standard matrix encoding 
       MatrixDecoder matrixDecoder( rawDataDecoder, trackerRawData);  
@@ -1764,10 +1757,8 @@ void DEPFETPedestalNoiseProcessor::calibrateEvent(LCEvent * evt) {
       TrackerDataImpl  * corrected = new TrackerDataImpl;
       CellIDEncoder<TrackerDataImpl> idDataEncoder(DEPFET::MATRIXDEFAULTENCODING, correctedDataCollection);
       idDataEncoder["sensorID"] =  sensorID;
-      idDataEncoder["xMin"]     = static_cast<int > (rawDataDecoder(trackerRawData)["xMin"]);
-      idDataEncoder["xMax"]     = static_cast<int > (rawDataDecoder(trackerRawData)["xMax"]);
-      idDataEncoder["yMin"]     = static_cast<int > (rawDataDecoder(trackerRawData)["yMin"]);
-      idDataEncoder["yMax"]     = static_cast<int > (rawDataDecoder(trackerRawData)["yMax"]);
+      idDataEncoder["uMax"]     = static_cast<int > (rawDataDecoder(trackerRawData)["uMax"]);
+      idDataEncoder["vMax"]     = static_cast<int > (rawDataDecoder(trackerRawData)["vMax"]);
       idDataEncoder.setCellID(corrected);
           
       if ( _sensorIDVec.at( iDetector ) !=  sensorID   ) {

@@ -139,10 +139,8 @@ void SimpleNoiseDBCreator::processEvent(LCEvent * evt)
       TrackerRawDataImpl * status   = new TrackerRawDataImpl;
       CellIDEncoder<TrackerRawDataImpl> statusEncoder(DEPFET::MATRIXDEFAULTENCODING, _statusCollectionVec);
       statusEncoder["sensorID"] = adet.GetDAQID();
-      statusEncoder["xMin"]     = 0;
-      statusEncoder["yMin"]     = 0;
-      statusEncoder["xMax"]     = adet.GetNColumns()-1;
-      statusEncoder["yMax"]     = adet.GetNRows()-1;
+      statusEncoder["uMax"]     = adet.GetNColumns()-1;
+      statusEncoder["vMax"]     = adet.GetNRows()-1;
       statusEncoder.setCellID(status);
       ShortVec statusVec(nPixel, 0);
       status->setADCValues(statusVec);
@@ -151,10 +149,8 @@ void SimpleNoiseDBCreator::processEvent(LCEvent * evt)
       TrackerDataImpl * pedestal    = new TrackerDataImpl;
       CellIDEncoder<TrackerDataImpl>  pedestalEncoder(DEPFET::MATRIXDEFAULTENCODING, _pedestalCollectionVec);
       pedestalEncoder["sensorID"] = adet.GetDAQID();
-      pedestalEncoder["xMin"]     = 0;
-      pedestalEncoder["yMin"]     = 0;
-      pedestalEncoder["xMax"]     = adet.GetNColumns()-1;
-      pedestalEncoder["yMax"]     = adet.GetNRows()-1;
+      pedestalEncoder["uMax"]     = adet.GetNColumns()-1;
+      pedestalEncoder["vMax"]     = adet.GetNRows()-1;
       pedestalEncoder.setCellID(pedestal);
       FloatVec pedestalVec(nPixel, _initPedestal[iDetector]);
       pedestal->setChargeValues(pedestalVec);
@@ -163,10 +159,8 @@ void SimpleNoiseDBCreator::processEvent(LCEvent * evt)
       TrackerDataImpl * noise    = new TrackerDataImpl;
       CellIDEncoder<TrackerDataImpl>  noiseEncoder(DEPFET::MATRIXDEFAULTENCODING, _noiseCollectionVec);
       noiseEncoder["sensorID"] =  adet.GetDAQID();
-      noiseEncoder["xMin"]     = 0;
-      noiseEncoder["yMin"]     = 0;
-      noiseEncoder["xMax"]     = adet.GetNColumns()-1;
-      noiseEncoder["yMax"]     = adet.GetNRows()-1;
+      noiseEncoder["uMax"]     = adet.GetNColumns()-1;
+      noiseEncoder["vMax"]     = adet.GetNRows()-1;
       noiseEncoder.setCellID(noise);
       FloatVec noiseVec(nPixel, _initNoise[iDetector]);
       noise->setChargeValues(noiseVec);
