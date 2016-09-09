@@ -398,7 +398,7 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
           
           // Ok good cluster ... save it 
           CellIDEncoder<TrackerDataImpl> originalDataEncoder( DEPFET::ZSCLUSTERDEFAULTENCODING, originalDataCollection );
-          CellIDEncoder<TrackerPulseImpl> clusterEncoder(DEPFET::PULSEDEFAULTENCODING, clusterCollection ); 
+          CellIDEncoder<TrackerPulseImpl> clusterEncoder(DEPFET::ZSCLUSTERDEFAULTENCODING, clusterCollection ); 
            
           // Set the ID for this zsCluster
           originalDataEncoder["sensorID"] = sensorID;
@@ -411,11 +411,8 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
           TrackerPulseImpl* zsPulse = new TrackerPulseImpl;
           clusterEncoder["sensorID"]  = sensorID;
           clusterEncoder["clusterID"] = 0;
-          clusterEncoder["xSeed"]     = seedCol;
-          clusterEncoder["ySeed"]     = seedRow;
-          clusterEncoder["xCluSize"]  = 0; 
-          clusterEncoder["yCluSize"]  = 0; 
-          clusterEncoder["type"]      = static_cast<int>(0);
+          clusterEncoder["sparsePixelType"] = static_cast<int> (kSimpleSparsePixel);
+          clusterEncoder["quality"] = static_cast<int>(cluQuality);
           clusterEncoder.setCellID( zsPulse );
           
           zsPulse->setCharge( clusterSignal );
