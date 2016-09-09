@@ -49,37 +49,21 @@ namespace depfet
     
     // Encoding strings
     
-    //! Default Tracker(Raw)Data encoding for full matrix
-    /*! This constant string is used with CellIDEncoder to define the
-     *  default encoding used for describe cells into a
-     *  Tracker(Raw)Data object
-     *
-     *  "sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12"
+    //! Default encoding for full data 
+    /*! 
+     *  "sensorID:17,uMax:12,vMax:12"
      */
     static const char * MATRIXDEFAULTENCODING;
          
     //! Default encoding for zero suppress data
-    /*! This constant string is used with CellIDEncoder to define the
-     *  encoding used for describe cells in a TrackerData object
-     *  containing sparsified pixel.
-     *
-     *  The sparse pixel type is defined using the SparsePixelType
-     *  enumeration.
-     *
-     *  @see SparsePixelType
-     *
+    /*!
      *  "sensorID:5,sparsePixelType:5"
      */
     static const char * ZSDATADEFAULTENCODING;
     
-    //! Zero suppress cluster default encoding
-    /*! This encoding string is used for the TrackerData containing
-     *  clusters made by sparsified pixels
-     *
+    //! Cluster default encoding
+    /*! 
      *  "sensorID:5,clusterID:8,sparsePixelType:5,quality:5"
-     *
-     *  @see SparsePixelType
-     *  @see ClusterQuality
      */
     static const char * ZSCLUSTERDEFAULTENCODING;
     
@@ -90,13 +74,15 @@ namespace depfet
    *  type.
    *
    */
+  /*
   enum DEPFETDetectorType {
     kTLU               =   0,
     kMimosa26          = 102,
     kDEPFET            = 103,
     kTaki              = 104
   } ;
-  
+  */  
+
   //! Cluster quality enum
   /*! This enum can be attached to a LCIO class describing a cluster
    *  or it can be inserted into the CellID describing the cluster
