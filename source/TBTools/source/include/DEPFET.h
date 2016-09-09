@@ -83,7 +83,7 @@ namespace depfet
     kBorderCluster     = 1L << 1,
     kMergedCluster     = 1L << 2
   };
-  *
+  */
   
   //! Cluster quality bit-wise AND operator
   /*! This is a convenience operator used to identify the reason of a
