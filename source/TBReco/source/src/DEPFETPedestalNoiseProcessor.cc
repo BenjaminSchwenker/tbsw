@@ -1355,7 +1355,7 @@ bool DEPFETPedestalNoiseProcessor::initializeAlgorithms(LCEvent * evt) {
         if (blockEnv.GetValue(Form("block_all_Column%d", xPixel ), false)){ 
           for (int yPixel = 0; yPixel < noOfYPixels; yPixel++) {
             int iPixel = matrixDecoder.getIndexFromXY(xPixel, yPixel);
-            _status[iDetector][iPixel] = kDeadPixel;          
+            _status[iDetector][iPixel] = 1;          
           }
         }
       }  
@@ -1365,7 +1365,7 @@ bool DEPFETPedestalNoiseProcessor::initializeAlgorithms(LCEvent * evt) {
         if (blockEnv.GetValue(Form("block_all_Row%d", yPixel ), false)){ 
           for (int xPixel = 0; xPixel < noOfXPixels; xPixel++) {
             int iPixel = matrixDecoder.getIndexFromXY(xPixel, yPixel);
-            _status[iDetector][iPixel] = kDeadPixel;          
+            _status[iDetector][iPixel] = 1;          
           }
         }
       }  
@@ -1375,7 +1375,7 @@ bool DEPFETPedestalNoiseProcessor::initializeAlgorithms(LCEvent * evt) {
         for (int yPixel=0; yPixel < noOfYPixels; yPixel++){
           if (blockEnv.GetValue(Form("block_Column%d_Row%d", xPixel, yPixel ), false)){          
             int iPixel = matrixDecoder.getIndexFromXY(xPixel, yPixel);
-            _status[iDetector][iPixel] = kDeadPixel;      
+            _status[iDetector][iPixel] = 1;      
           }
         }
       }
