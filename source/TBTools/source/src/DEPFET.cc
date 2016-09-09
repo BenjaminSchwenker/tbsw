@@ -3,11 +3,9 @@
 using namespace depfet;
 
 
-const char *   DEPFET::MATRIXDEFAULTENCODING    = "sensorID:17,xMin:6,xMax:12,yMin:6,yMax:12"; // issue
+const char *   DEPFET::MATRIXDEFAULTENCODING    = "sensorID:17,xMax:12,yMax:12"; 
 const char *   DEPFET::ZSDATADEFAULTENCODING    = "sensorID:17,sparsePixelType:5";
-//const char *   DEPFET::CLUSTERDEFAULTENCODING   = "sensorID:17,clusterID:8,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5,quality:5";
-//const char *   DEPFET::PULSEDEFAULTENCODING     = "sensorID:17,clusterID:8,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5,type:5";
-const char *   DEPFET::ZSCLUSTERDEFAULTENCODING = "sensorID:17,clusterID:8,sparsePixelType:5,quality:5";
+const char *   DEPFET::ZSCLUSTERDEFAULTENCODING = "sensorID:17,clusterID:5,sparsePixelType:5,quality:2";
 
 
 namespace depfet {
