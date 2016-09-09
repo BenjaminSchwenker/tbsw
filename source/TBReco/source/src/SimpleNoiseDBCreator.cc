@@ -144,7 +144,7 @@ void SimpleNoiseDBCreator::processEvent(LCEvent * evt)
       statusEncoder["xMax"]     = adet.GetNColumns()-1;
       statusEncoder["yMax"]     = adet.GetNRows()-1;
       statusEncoder.setCellID(status);
-      ShortVec statusVec(nPixel, DEPFET::GOODPIXEL);
+      ShortVec statusVec(nPixel, 0);
       status->setADCValues(statusVec);
       _statusCollectionVec->push_back(status);
 
