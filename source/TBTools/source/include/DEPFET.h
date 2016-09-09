@@ -49,19 +49,19 @@ namespace depfet
     // Pixel flags
     
     //! Constant to identify good pixels
-    static const int GOODPIXEL;
+    //static const int GOODPIXEL;
     
     //! Constant to identify bad pixels
-    static const int BADPIXEL;
+    //static const int BADPIXEL;
     
     //! Constant to identify hit pixels
-    static const int HITPIXEL;
+    //static const int HITPIXEL;
     
     //! Constant to identify missing pixels
-    static const int MISSINGPIXEL;
+    //static const int MISSINGPIXEL;
     
     //! Constant to identify pixels firing too often
-    static const int FIRINGPIXEL;
+    //static const int FIRINGPIXEL;
     
     // Encoding strings
     
