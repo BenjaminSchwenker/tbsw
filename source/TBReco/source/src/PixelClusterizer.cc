@@ -351,7 +351,7 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
         // We have found a new cluster candidate. We loop over all pixels  
         // to calculate S/N ratios. 
         
-        ClusterQuality cluQuality = kGoodCluster;
+        int cluQuality = 0;
         float clusterSignal = 0; 
         float seedSignal = -1; 
         int seedCol = -1;
@@ -404,7 +404,7 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
           originalDataEncoder["sensorID"] = sensorID;
           originalDataEncoder["clusterID"] = 0;
           originalDataEncoder["sparsePixelType"] = static_cast<int> (kSimpleSparsePixel);
-          originalDataEncoder["quality"] = static_cast<int>(cluQuality);
+          originalDataEncoder["quality"] = cluQuality;
           originalDataEncoder.setCellID( sparseCluster );
           originalDataCollection->push_back( sparseCluster );
                              
@@ -412,11 +412,11 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
           clusterEncoder["sensorID"]  = sensorID;
           clusterEncoder["clusterID"] = 0;
           clusterEncoder["sparsePixelType"] = static_cast<int> (kSimpleSparsePixel);
-          clusterEncoder["quality"] = static_cast<int>(cluQuality);
+          clusterEncoder["quality"] = cluQuality;
           clusterEncoder.setCellID( zsPulse );
           
           zsPulse->setCharge( clusterSignal );
-          zsPulse->setQuality( static_cast<int>(cluQuality) );
+          zsPulse->setQuality( cluQuality );
           zsPulse->setTrackerData( sparseCluster );
           clusterCollection->push_back( zsPulse );          
           
