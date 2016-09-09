@@ -353,9 +353,8 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
         
         int cluQuality = 0;
         float clusterSignal = 0; 
-        float seedSignal = -1; 
-        int seedCol = -1;
-        int seedRow = -1; 
+        float seedSignal = 0; 
+        
         
         // Prepare a TrackerData to store original data of cluster
         TrackerDataImpl* sparseCluster = new TrackerDataImpl ; 
@@ -373,8 +372,6 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
          
           if (charge > seedSignal ) {
             seedSignal = charge; 
-            seedCol = col; 
-            seedRow = row;   
           }
              
           // Store pixel data int EUTelescope format 

@@ -10,42 +10,8 @@ const char *   DEPFET::ZSCLUSTERDEFAULTENCODING = "sensorID:17,clusterID:5,spars
 
 namespace depfet {
 
-
   /*
-  ClusterQuality operator&(ClusterQuality a, ClusterQuality b) {
-    return ClusterQuality( static_cast<int>(a) & static_cast<int>(b) );
-  }
-
-  ClusterQuality operator|(ClusterQuality a, ClusterQuality b) {
-    return ClusterQuality( static_cast<int>(a) | static_cast<int>(b) );
-  }
-
-  std::ostream& operator<<(std::ostream& os, const ClusterQuality& quality) {
-    if ( quality == kGoodCluster ) {
-      os << "kGoodCluster (" << static_cast<int > (quality) << ")";
-      return os;
-    }
-    bool moreThanOne = false;
-    if ( quality & kIncompleteCluster ) {
-      if ( moreThanOne ) os << ", ";
-      os << "kIncompleteCluster";
-      moreThanOne = true;
-    }
-    if ( quality & kBorderCluster ) {
-      if ( moreThanOne ) os << ", ";
-      os << "kBorderCluster";
-      moreThanOne = true;
-    }
-    if ( quality & kMergedCluster ) {
-      if ( moreThanOne ) os << ", ";
-      os << "kMergedCluster";
-      moreThanOne = true;
-    }
-    os << " (" << static_cast<int> (quality) << ")";
-    return os;
-  }
-  */
-
+  
   PixelQuality operator&(PixelQuality a, PixelQuality b) {
     return PixelQuality( static_cast<int>(a) & static_cast<int>(b) );
   }
@@ -93,5 +59,7 @@ namespace depfet {
     os << " (" << static_cast<int> (quality) << ")";
     return os;
   }
+
+  */
 
 } // end namespace depfet
