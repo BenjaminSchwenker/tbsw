@@ -161,14 +161,7 @@ namespace depfet {
      */ 
     inline int getMaxY() const { return _yMin + _yNoOfPixel - 1; }
 
-    //! A streamer to print out the decoder
-    /*! Utility to print or save to disk the decoder structure
-     * 
-     *  @param os The input output stream
-     *  @param decoder The decoder to stream
-     *  @return The output stream
-     */ 
-    friend std::ostream& operator<< (std::ostream& os, const MatrixDecoder& decoder) ;
+    
 
   private:
     

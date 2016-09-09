@@ -71,17 +71,6 @@ int MatrixDecoder::getYFromIndex(int index) const {
 
 }
 
-std::ostream& depfet::operator<< (std::ostream& os, const MatrixDecoder& decoder){
-        
-  int spacer = 30;
-  
-  os << setiosflags(ios::left) 
-     << std::setw(spacer) << "Number of pixel along X " << decoder._xNoOfPixel << "\n"
-     << std::setw(spacer) << "Number of pixel along Y " << decoder._yNoOfPixel << "\n"
-     << std::setw(spacer) << "Origin  " << "(" << decoder._xMin << ", " << decoder._yMin  << ")"
-     << resetiosflags(ios::left);
-  
-  return os;
-}
+
 
 

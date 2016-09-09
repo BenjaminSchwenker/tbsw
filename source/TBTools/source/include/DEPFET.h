@@ -125,7 +125,7 @@ namespace depfet
    *  @return The input output stream
    */
   //std::ostream& operator<<(std::ostream& os, const PixelQuality & quality);
-
+  
   //! Sparse pixel type enum
   /*! This enumerator is used to define the sparsified pixel type.
    *
