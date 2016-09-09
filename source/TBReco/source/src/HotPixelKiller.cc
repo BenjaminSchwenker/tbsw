@@ -221,6 +221,8 @@ void HotPixelKiller::end()
     int sensorID = adet.GetDAQID(); 
     
     TrackerRawDataImpl * statusMatrix   = new TrackerRawDataImpl;
+
+    cout << "benni encoder sensorID " << sensorID << endl;
     
     CellIDEncoder<TrackerRawDataImpl> idStatusEncoder(DEPFET::MATRIXDEFAULTENCODING, statusCollection);
   
