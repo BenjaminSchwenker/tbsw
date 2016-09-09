@@ -1563,9 +1563,8 @@ void DEPFETPedestalNoiseProcessor::maskBadPixel(LCEvent * evt) {
           // Mask pixel with very low noise  
           if (  _noise[iDetector][iPixel] < _pixelMaskLowerNoise ) {
           
-            PixelQuality pixQuality = PixelQuality( _status[iDetector][iPixel]  );
-            pixQuality = pixQuality | kDeadPixel;
-            _status[iDetector][iPixel] = pixQuality;
+            
+            _status[iDetector][iPixel] = 1;
             nMasked++; 
             streamlog_out ( MESSAGE3 ) <<  "DeadPixel masking of pixel number " << iPixel
                                        << " on detector " << _sensorIDVec.at( iDetector )
@@ -1575,9 +1574,8 @@ void DEPFETPedestalNoiseProcessor::maskBadPixel(LCEvent * evt) {
           // Mask pixel with very high noise  
           if ( _noise[iDetector][iPixel] > _pixelMaskUpperNoise ) {
            
-            PixelQuality pixQuality = PixelQuality( _status[iDetector][iPixel]  );
-            pixQuality = pixQuality | kNoisyPixel;
-            _status[iDetector][iPixel] = pixQuality;
+            
+            _status[iDetector][iPixel] = 1;
             nMasked++;
             streamlog_out ( MESSAGE3 ) <<  "NoisyPixel masking of pixel number " << iPixel
                                        << " on detector " << _sensorIDVec.at( iDetector )
@@ -1588,9 +1586,8 @@ void DEPFETPedestalNoiseProcessor::maskBadPixel(LCEvent * evt) {
           if ( ( _pedestal[iDetector][iPixel] > _pixelMaskUpperPede) ||
                ( _pedestal[iDetector][iPixel] < _pixelMaskLowerPede ) ) {
            
-            PixelQuality pixQuality = PixelQuality( _status[iDetector][iPixel]  );
-            pixQuality = pixQuality | kBrigthPixel;
-            _status[iDetector][iPixel] = pixQuality;
+            
+            _status[iDetector][iPixel] = 1;
             nMasked++;
             streamlog_out( MESSAGE3 ) << "BrigthPixel masking of pixel number " << iPixel
                                       << " on detector " <<  _sensorIDVec.at( iDetector )
@@ -1601,9 +1598,8 @@ void DEPFETPedestalNoiseProcessor::maskBadPixel(LCEvent * evt) {
           double firingFreq =  _hitCounter[ iDetector ][ iPixel ] / _nStatusEvents;
           if ( firingFreq  > _maxFiringFreq ) {
            
-            PixelQuality pixQuality = PixelQuality( _status[iDetector][iPixel]  );
-            pixQuality = pixQuality | kHotPixel;
-            _status[iDetector][iPixel] = pixQuality;
+            
+            _status[iDetector][iPixel] = 1;
             nMasked++;
             streamlog_out( MESSAGE3 ) << "HotPixel masking of pixel number " << iPixel
                                       << " on detector " << _sensorIDVec.at( iDetector ) 

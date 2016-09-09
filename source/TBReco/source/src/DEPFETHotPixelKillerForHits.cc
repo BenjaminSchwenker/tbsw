@@ -478,9 +478,8 @@ void DEPFETHotPixelKillerForHits::computeMask() {
         double firingFreq =  _hitCounter[ ipl ][ iPixel ] / _nEvt;
         if ( firingFreq  > _maxOccupancy ) {
            
-          PixelQuality pixQuality = PixelQuality( _status[ipl][iPixel]  );
-          pixQuality = pixQuality | kHotPixel;
-          _status[ipl][iPixel] = pixQuality;
+          
+          _status[ipl][iPixel] = 1;
           streamlog_out( MESSAGE2 ) << "HotPixel masking of pixel number " << iPixel
                                       << " on detector " << sensorID
                                       << " (" << firingFreq <<  ")" << endl;  
