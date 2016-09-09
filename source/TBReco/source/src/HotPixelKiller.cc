@@ -499,7 +499,7 @@ void HotPixelKiller::initializeAlgorithms(LCEvent * evt) {
       int nPixel = adet.GetNColumns() * adet.GetNRows() ;
        
       // Initialize all pixels as GOODPIXEL
-      _status.push_back(ShortVec( nPixel, kGoodPixel ));
+      _status.push_back(ShortVec( nPixel, 0 ));
       
       // Initialize hit counter 
       _hitCounter.push_back(FloatVec( nPixel, 0.));

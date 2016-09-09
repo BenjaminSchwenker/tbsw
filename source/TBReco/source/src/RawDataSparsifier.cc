@@ -258,7 +258,7 @@ void RawDataSparsifier::processEvent(LCEvent * evt)
        
        for ( int iPixel = 0; iPixel < (int) matrixVec.size(); iPixel++ ) {
             
-          if (  statusVec[iPixel]  == kGoodPixel ) {
+          if (  statusVec[iPixel]  == 0 ) {
             
             float data  = matrixVec[iPixel];
                  

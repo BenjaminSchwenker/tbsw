@@ -585,7 +585,7 @@ void DEPFETPedestalNoiseProcessor::processRawDataDHP(LCEvent * evt) {
             float I = adcValues[iPixel] - _pedestal[iDetector][iPixel];    
             
             // Only use good pixel in common mode 
-            bool isGood = ( _status[iDetector][iPixel] == kGoodPixel );       
+            bool isGood = ( _status[iDetector][iPixel] == 0 );       
 
             // Only use good pixels for common mode 
             if ( no_cmmask ||  isGood ) { 
@@ -622,7 +622,7 @@ void DEPFETPedestalNoiseProcessor::processRawDataDHP(LCEvent * evt) {
             bool isHit = std::abs( I ) > threshold;
                         
             // Not use bad pixels in common mode 
-            bool isGood = ( _status[iDetector][iPixel] == kGoodPixel );              
+            bool isGood = ( _status[iDetector][iPixel] == 0 );              
             
             // Only use good pixels for common mode 
             if ( no_cmmask || (isGood && !isHit)  ) { 
@@ -716,7 +716,7 @@ void DEPFETPedestalNoiseProcessor::processRawDataDHP(LCEvent * evt) {
             int iPixel = matrixDecoder.getIndexFromXY(xPixel, yPixel);  
                  
             // Only use good pixel in common mode 
-            bool isGood = ( _status[iDetector][iPixel] == kGoodPixel );      
+            bool isGood = ( _status[iDetector][iPixel] == 0 );      
             
            
             if ( no_cmmask || isGood ) { 
@@ -749,7 +749,7 @@ void DEPFETPedestalNoiseProcessor::processRawDataDHP(LCEvent * evt) {
             bool isHit = std::abs( I ) >  threshold;
             
             // Not use bad pixels for common mode
-            bool isGood = ( _status[iDetector][iPixel] == kGoodPixel );              
+            bool isGood = ( _status[iDetector][iPixel] == 0 );              
              
             if ( no_cmmask || (isGood && !isHit)   ) { 
               nGoodPixels++; 
@@ -1187,7 +1187,7 @@ void DEPFETPedestalNoiseProcessor::processRawDataTAKI(LCEvent * evt) {
             float I = adcValues[iPixel] - _pedestal[iDetector][iPixel];  
             
             // Only use good pixel in common mode  
-            if ( _status[iDetector][iPixel] == kGoodPixel ) 
+            if ( _status[iDetector][iPixel] == 0 ) 
             {   
               correctedRow.push_back( I );
               pixelSum += I;
@@ -1231,7 +1231,7 @@ void DEPFETPedestalNoiseProcessor::processRawDataTAKI(LCEvent * evt) {
           float I = adcValues[iPixel] - _pedestal[iDetector][iPixel];  
                
           // Only use good pixel in common mode  
-          if ( _status[iDetector][iPixel] == kGoodPixel ) 
+          if ( _status[iDetector][iPixel] == 0 ) 
           {   
             correctedRow.push_back( I );
             pixelSum += I;
@@ -1344,7 +1344,7 @@ bool DEPFETPedestalNoiseProcessor::initializeAlgorithms(LCEvent * evt) {
       _noise.push_back(FloatVec(npixel, 0.));
       
       // Initialize all pixels as GOODPIXEL
-      _status.push_back(ShortVec(npixel, kGoodPixel ));
+      _status.push_back(ShortVec(npixel, 0 ));
       
        
       // Open block pixel config file
@@ -1685,7 +1685,7 @@ void DEPFETPedestalNoiseProcessor::sparsifyEvent(LCEvent * evt) {
          
         for ( int iPixel = 0; iPixel < (int) _correctedData[iDetector].size(); iPixel++ ) {
             
-          if (  _status[iDetector][iPixel]  == kGoodPixel ) {
+          if (  _status[iDetector][iPixel]  == 0 ) {
             
             float data  = _correctedData[iDetector][iPixel];
                  
