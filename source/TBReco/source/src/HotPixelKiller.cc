@@ -632,6 +632,8 @@ void HotPixelKiller::bookHistos()
   // Get number of sensors
   int nSens = _detector.GetNSensors();
   
+  std::string histoName;
+
   histoName = "hnhits";
   _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", nSens, 0, nSens);
   _histoMap[ histoName ]->SetXTitle("plane number"); 
