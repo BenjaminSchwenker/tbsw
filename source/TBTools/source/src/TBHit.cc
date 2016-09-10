@@ -136,21 +136,13 @@ HepVector TBHit::GetLocalSpacePoint()
 PixelCluster TBHit::GetCluster() 
 {
   
-  cout << "benni inside GetCluster " << endl; 
-
   if (RawHitPtr == NULL ) return PixelCluster();
-
-  cout << "benni inside GetCluster: not NULL " << endl; 
-   
+  
   LCObjectVec clusterVec = RawHitPtr->getRawHits();
-
-  cout << "benni inside GetCluster: getRawHits " << endl;   
-
+  
   if ( clusterVec.size() == 0 )  return PixelCluster();
-
+  
   TrackerData * clusterDigits = dynamic_cast<TrackerData *> ( clusterVec[0] );
-
-  cout << "benni inside GetCluster: get cluster digits " << endl;   
     
   return PixelCluster(clusterDigits,DAQID,Quality);  
 }
