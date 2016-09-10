@@ -252,6 +252,8 @@ void TrackFitDQM::processEvent(LCEvent * evt)
 
       PixelCluster Cluster = TE.GetHit().GetCluster();
 
+      cout << "not seen benni get cluster " << endl; 
+
       histoName = "hcls_charge_sensor"+to_string( ipl );
       _histoMap[ histoName  ]->Fill(Cluster.getCharge()); 
       
