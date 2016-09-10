@@ -228,8 +228,8 @@ void DEPFETHotPixelKillerForHits::end()
     CellIDEncoder<TrackerRawDataImpl> idStatusEncoder(DEPFET::MATRIXDEFAULTENCODING, statusCollection);
   
     idStatusEncoder["sensorID"]   = adet.GetDAQID();
-    idStatusEncoder["xMax"]       = noOfXPixels-1;
-    idStatusEncoder["yMax"]       = noOfYPixels-1;
+    idStatusEncoder["uMax"]       = noOfXPixels-1;
+    idStatusEncoder["vMax"]       = noOfYPixels-1;
     idStatusEncoder.setCellID(statusMatrix);
 
     statusMatrix->setADCValues(_status[ipl]);
