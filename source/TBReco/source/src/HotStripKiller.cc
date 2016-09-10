@@ -235,7 +235,7 @@ void HotStripKiller::end()
     
     for (int cell = 0; cell < nUCells; cell++) {
       
-      _status[cell] = _statusU[iDetector][cell]    
+      _status[cell] = _statusU[iDetector][cell];     
       if ( _status[cell] != 0) {
         streamlog_out(MESSAGE3) << "Masking uStrip " << cell << endl;
       }      
@@ -244,7 +244,7 @@ void HotStripKiller::end()
 
     for (int cell = 0; cell < nVCells; cell++) {
       
-      _status[cell+nUCells] = _statusU[iDetector][cell]    
+      _status[cell+nUCells] = _statusU[iDetector][cell];    
       if ( _status[cell] != 0) {
         streamlog_out(MESSAGE3) << "Masking vStrip " << cell << endl;
       }      
@@ -584,25 +584,25 @@ void HotStripKiller::initializeAlgorithms(LCEvent * evt) {
       int vBins = Sensor.GetNRows(); 
       
       histoName = "hmaskU_sensor"+to_string( ipl );
-      _histoMap[histoName] = new TH2D(histoName.c_str(), "" ,uBins, 0, uBins);
+      _histoMap[histoName] = new TH1D(histoName.c_str(), "" ,uBins, 0, uBins);
       _histoMap[histoName]->SetXTitle("uCell [cellID]"); 
       _histoMap[histoName]->SetYTitle("mask");      
       _histoMap[histoName]->SetStats( false );   
       
       histoName = "hmaskV_sensor"+to_string( ipl );
-      _histoMap[histoName] = new TH2D(histoName.c_str(), "" ,vBins, 0, vBins);
+      _histoMap[histoName] = new TH1D(histoName.c_str(), "" ,vBins, 0, vBins);
       _histoMap[histoName]->SetXTitle("vCell [cellID]"); 
       _histoMap[histoName]->SetYTitle("mask");      
       _histoMap[histoName]->SetStats( false );   
       
       histoName = "hoccU_sensor"+to_string( ipl );
-      _histoMap[histoName] = new TH2D(histoName.c_str(), "" ,uBins, 0, uBins);
+      _histoMap[histoName] = new TH1D(histoName.c_str(), "" ,uBins, 0, uBins);
       _histoMap[histoName]->SetXTitle("uCell [cellID]");  
       _histoMap[histoName]->SetYTitle("hit occupancy");       
       _histoMap[histoName]->SetStats( false );    
 
       histoName = "hoccV_sensor"+to_string( ipl );
-      _histoMap[histoName] = new TH2D(histoName.c_str(), "" ,vBins, 0, vBins);
+      _histoMap[histoName] = new TH1D(histoName.c_str(), "" ,vBins, 0, vBins);
       _histoMap[histoName]->SetXTitle("vCell [cellID]");  
       _histoMap[histoName]->SetYTitle("hit occupancy");       
       _histoMap[histoName]->SetStats( false );   
