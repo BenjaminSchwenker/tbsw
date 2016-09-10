@@ -146,6 +146,8 @@ PixelCluster TBHit::GetCluster()
 
   cout << "benni inside GetCluster: getRawHits " << endl;   
 
+  if ( clusterVec.size() == 0 )  return PixelCluster();
+
   TrackerData * clusterDigits = dynamic_cast<TrackerData *> ( clusterVec[0] );
 
   cout << "benni inside GetCluster: get cluster digits " << endl;   
