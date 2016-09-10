@@ -248,6 +248,8 @@ void TrackFitDQM::processEvent(LCEvent * evt)
       double pull_u = du / TMath::Sqrt( TE.GetState().GetCov()[2][2] + TE.GetHit().GetCov()[0][0] ) ; 
       double pull_v = dv / TMath::Sqrt( TE.GetState().GetCov()[3][3] + TE.GetHit().GetCov()[1][1] ) ;  
       
+      cout << "benni get cluster " << endl; 
+
       PixelCluster Cluster = TE.GetHit().GetCluster();
 
       histoName = "hcls_charge_sensor"+to_string( ipl );
