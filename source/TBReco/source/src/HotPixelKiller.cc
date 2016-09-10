@@ -503,10 +503,68 @@ void HotPixelKiller::initializeAlgorithms(LCEvent * evt) {
       
       // Initialize hit counter 
       _hitCounter.push_back(FloatVec( nPixel, 0.));
-      
-       
+          
     } // End of detector loop
     
+    
+    // Create DQM histograms 
+     
+    for ( int iDetector = 0 ; iDetector < _noOfDetector ; ++iDetector ) {
+      
+      // Get the TrackerRawData object from the collection for this detector
+      TrackerData *trackerData = dynamic_cast < TrackerData * >(collectionVec->getElementAt (iDetector));
+       
+      // Get DAQ ID of sensor 
+      CellIDDecoder< TrackerData > DataDecoder( collectionVec );
+      int sensorID =  DataDecoder( trackerData ) ["sensorID"] ;
+       
+      // Read geometry info for sensor 
+      int ipl = _detector.GetPlaneNumber(sensorID);      
+      Det& Sensor = _detector.GetDet(ipl);
+      
+      std::string dirName; 
+      std::string histoName;
+      
+      dirName = "Sensor"+to_string( ipl );
+      _rootFile->mkdir(dirName.c_str());    
+      
+      dirName = "/Sensor"+to_string(ipl)+"/";
+      _rootFile->cd(dirName.c_str());
+      
+      int uBins = Sensor.GetNColumns();  
+      int vBins = Sensor.GetNRows(); 
+      
+      histoName = "h2mask_sensor"+to_string( ipl );
+      _histoMap2D[histoName] = new TH2D(histoName.c_str(), "" ,uBins, 0, uBins, vBins, 0, vBins);
+      _histoMap2D[histoName]->SetXTitle("uCell [cellID]"); 
+      _histoMap2D[histoName]->SetYTitle("vCell [cellID]"); 
+      _histoMap2D[histoName]->SetZTitle("mask");     
+      _histoMap2D[histoName]->SetStats( false );      
+      
+      histoName = "h2occ_sensor"+to_string( ipl );
+      _histoMap2D[histoName] = new TH2D(histoName.c_str(), "" ,uBins, 0, uBins, vBins, 0, vBins);
+      _histoMap2D[histoName]->SetXTitle("uCell [cellID]"); 
+      _histoMap2D[histoName]->SetYTitle("vCell [cellID]"); 
+      _histoMap2D[histoName]->SetZTitle("hit occupancy");       
+      _histoMap2D[histoName]->SetStats( false );    
+      
+      histoName = "hocc_sensor"+to_string( ipl );
+      _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 10000000, 0, 0.01);
+      _histoMap[ histoName ]->SetXTitle("hit occupancy"); 
+      _histoMap[ histoName ]->SetYTitle("pixels");   
+    
+      histoName = "hnhits_sensor"+to_string( ipl );
+      _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 200, 0, 200);
+      _histoMap[ histoName ]->SetXTitle("hits per event"); 
+      _histoMap[ histoName ]->SetYTitle("events");   
+      
+      histoName = "hnhits_mask_sensor"+to_string( ipl );
+      _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 200, 0, 200);
+      _histoMap[ histoName ]->SetXTitle("hits per event (after mask)"); 
+      _histoMap[ histoName ]->SetYTitle("events");
+            
+    }
+   
   } catch (DataNotAvailableException& e) {
         streamlog_out ( WARNING2 ) << "No input collection " << _zeroSuppressedDataCollectionName << " is not available in the current event" << endl;
   }
@@ -574,14 +632,6 @@ void HotPixelKiller::bookHistos()
   // Get number of sensors
   int nSens = _detector.GetNSensors();
   
-  // Create subdirs for sensors
-  std::string dirName; 
-  std::string histoName;
-  for (int ipl=0 ; ipl < nSens; ipl++) {
-    std::string dirName = "Sensor"+to_string( ipl );
-    _rootFile->mkdir(dirName.c_str());     
-  }      
-  
   histoName = "hnhits";
   _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", nSens, 0, nSens);
   _histoMap[ histoName ]->SetXTitle("plane number"); 
@@ -596,51 +646,7 @@ void HotPixelKiller::bookHistos()
   _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", nSens, 0, nSens);
   _histoMap[ histoName ]->SetXTitle("plane number"); 
   _histoMap[ histoName ]->SetYTitle("masked pixels");   
-
-  // Loop over all sensors
-  for (int ipl=0 ; ipl < nSens; ipl++) {
-    
-    dirName = "/Sensor"+to_string(ipl)+"/";
-    _rootFile->cd(dirName.c_str());
-
-    // Get handle to sensor data
-    Det & Sensor = _detector.GetDet(ipl); 
-    
-    int uBins = Sensor.GetNColumns();  
-    int vBins = Sensor.GetNRows(); 
-     
-    histoName = "h2mask_sensor"+to_string( ipl );
-    _histoMap2D[histoName] = new TH2D(histoName.c_str(), "" ,uBins, 0, uBins, vBins, 0, vBins);
-    _histoMap2D[histoName]->SetXTitle("uCell [cellID]"); 
-    _histoMap2D[histoName]->SetYTitle("vCell [cellID]"); 
-    _histoMap2D[histoName]->SetZTitle("mask");     
-    _histoMap2D[histoName]->SetStats( false );      
-     
-    histoName = "h2occ_sensor"+to_string( ipl );
-    _histoMap2D[histoName] = new TH2D(histoName.c_str(), "" ,uBins, 0, uBins, vBins, 0, vBins);
-    _histoMap2D[histoName]->SetXTitle("uCell [cellID]"); 
-    _histoMap2D[histoName]->SetYTitle("vCell [cellID]"); 
-    _histoMap2D[histoName]->SetZTitle("hit occupancy");       
-    _histoMap2D[histoName]->SetStats( false );    
-    
-    histoName = "hocc_sensor"+to_string( ipl );
-    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 10000000, 0, 0.01);
-    _histoMap[ histoName ]->SetXTitle("hit occupancy"); 
-    _histoMap[ histoName ]->SetYTitle("pixels");   
-    
-    histoName = "hnhits_sensor"+to_string( ipl );
-    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 200, 0, 200);
-    _histoMap[ histoName ]->SetXTitle("hits per event"); 
-    _histoMap[ histoName ]->SetYTitle("events");   
-    
-    histoName = "hnhits_mask_sensor"+to_string( ipl );
-    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 200, 0, 200);
-    _histoMap[ histoName ]->SetXTitle("hits per event (after mask)"); 
-    _histoMap[ histoName ]->SetYTitle("events");
-    
-      
-  }
-
+  
 }
 
 } // Namespace
