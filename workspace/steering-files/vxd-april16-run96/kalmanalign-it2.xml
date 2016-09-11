@@ -38,21 +38,21 @@
   <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
   <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio "/>
   <!--Enter plane numbers of bad detectors-->
-  <parameter name="ExcludeDetector" type="IntVec"> </parameter>
+  <parameter name="ExcludeDetector" type="IntVec"> 3 </parameter>
   <!--To use only GoodQuality write 0 here-->
   <parameter name="HitQualitySelection" type="int" value="0"/>
   <!--Maximum hit residual [mm]-->
   <parameter name="MaxResidual" type="float" value="0.5"/>
   <!--Maximum track chisq in track fit-->
-  <parameter name="MaxTrackChi2" type="float" value="200"/>
+  <parameter name="MaxTrackChi2" type="float" value="100"/>
   <!--Maximum number of consecutive missing hits in track-->
-  <parameter name="MaximumGap" type="int" value="0"/>
+  <parameter name="MaximumGap" type="int" value="1"/>
   <!--Maximum slope of candiate tracks in Z=0 plane (rad). Set cut to zero to deactivate.-->
   <parameter name="MaximumSlope" type="float" value="0.1"/>
   <!--Minimum number of hits in track-->
-  <parameter name="MinimumHits" type="int" value="12"/>
+  <parameter name="MinimumHits" type="int" value="10"/>
   <!--Chi2 cut for removal of bad hits-->
-  <parameter name="OutlierChi2Cut" type="float" value="100"/>
+  <parameter name="OutlierChi2Cut" type="float" value="30"/>
   <!--Fitting iteration for removal of bad hits-->
   <parameter name="OutlierIterations" type="int" value="2"/>
   <!--Particle charge [e]-->
