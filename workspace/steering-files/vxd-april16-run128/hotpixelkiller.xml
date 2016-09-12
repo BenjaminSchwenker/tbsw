@@ -17,8 +17,8 @@
 
    <execute>
       <processor name="HotPixelKillerForHits"/>
-      <!--processor name="HotPixelKiller-DEP"/-->
-      <!--processor name="HotPixelKiller-M26"/-->
+      <processor name="HotPixelKiller-DEP"/>
+      <processor name="HotPixelKiller-M26"/>
       <!--processor name="HotPixelKiller-SVD"/-->
       <!--processor name="HotStripKiller-SVD"/-->
    </execute>
@@ -51,7 +51,7 @@
   <!--Events used to compute hot pixel mask-->
   <parameter name="EventsForMask" type="int" value="20000"/>
   <!--Maximum hit rate (hits/events) for normal pixels-->
-  <parameter name="MaxOccupancy" type="float" value="0.01"/>
+  <parameter name="MaxOccupancy" type="float" value="0.001"/>
   <!--This is the name of the noiseDB file-->
   <parameter name="NoiseDBFileName" type="string" value="NoiseDB-DEP.slcio"/>
   <!--Zero suppression threshold for digits [ADU]-->
@@ -69,7 +69,7 @@
   <!--Events used to compute hot pixel mask-->
   <parameter name="EventsForMask" type="int" value="20000"/>
   <!--Maximum hit rate (hits/events) for normal pixels-->
-  <parameter name="MaxOccupancy" type="float" value="0.01"/>
+  <parameter name="MaxOccupancy" type="float" value="0.003"/>
   <!--This is the name of the noiseDB file-->
   <parameter name="NoiseDBFileName" type="string" value="NoiseDB-M26.slcio"/>
   <!--Zero suppression threshold for digits [ADU]-->

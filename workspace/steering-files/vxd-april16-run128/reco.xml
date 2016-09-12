@@ -17,9 +17,17 @@
 
    <execute>
       <processor name="LoadNoiseDB"/>
+      <processor name="LoadNoiseDB-DEP"/>
+      <processor name="LoadNoiseDB-M26"/>
+      <processor name="PixelClusterizer-DEP"/>
+      <processor name="PixelClusterizer-M26"/>
+      <processor name="CogHitMaker-DEP"/>
+      <processor name="CogHitMaker-M26"/>
       <processor name="HotPixelMasker"/>
       <processor name="VXDTracker"/>
-      <processor name="TelescopeDQM"/>   
+      <processor name="VXDDQM"/>   
+      <processor name="L1-TreeProducer"/>
+      <processor name="L3-TreeProducer"/>
    </execute>
 
    <global>
@@ -40,6 +48,82 @@
      <!--Initialization of a simple conditions file handler-->
      <parameter name="SimpleFileHandler" type="StringVec"> status cal-files/dummy/NoiseDB-All.slcio status </parameter>
    </processor>
+
+     <processor name="LoadNoiseDB-DEP" type="ConditionsProcessor">
+ <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
+  <!--Initialization of a conditions db file handler-->
+  <!--parameter name="DBFileHandler" type="StringVec"> conditionsName conditions.slcio collectionName </parameter-->
+  <!--Initialization of a data file handler-->
+  <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
+  <!--Initialization of a simple conditions file handler-->
+  <parameter name="SimpleFileHandler" type="StringVec"> status_dep cal-files/dummy/NoiseDB-DEP.slcio status_dep </parameter>
+</processor>
+
+ <processor name="LoadNoiseDB-M26" type="ConditionsProcessor">
+ <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
+  <!--Initialization of a conditions db file handler-->
+  <!--parameter name="DBFileHandler" type="StringVec"> conditionsName conditions.slcio collectionName </parameter-->
+  <!--Initialization of a data file handler-->
+  <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
+  <!--Initialization of a simple conditions file handler-->
+  <parameter name="SimpleFileHandler" type="StringVec"> status_m26 cal-files/dummy/NoiseDB-M26.slcio status_m26 </parameter>
+</processor>
+     
+ <processor name="PixelClusterizer-DEP" type="PixelClusterizer">
+ <!--PixelClusterizer: Looking for clusters in zs pixel data-->
+  <!--Name of input sparsified pixel data collection-->
+  <parameter name="SparseDataCollectionName" type="string" lcioInType="TrackerData"> PXDDigits </parameter>
+  <!--Input status collection name-->
+  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status_dep </parameter>
+  <!--Name of the output cluster collection-->
+  <parameter name="ClusterCollectionName" type="string" lcioOutType="TrackerPulse"> zscluster_dep </parameter>
+  <!--0: common side; 1: common corner; 3: max. one missing pixel-->
+  <parameter name="AcceptDiagonalCluster" type="int" value="1"/>
+  <!--Threshold for cluster signal-->
+  <parameter name="SparseClusterCut" type="float" value="7"/>
+  <!--Threshold for seed pixel signal-->
+  <parameter name="SparseSeedCut" type="float" value="5"/>
+  <!--Threshold for zero suppression-->
+  <parameter name="SparseZSCut" type="float" value="0"/>
+</processor>
+
+ <processor name="PixelClusterizer-M26" type="PixelClusterizer">
+ <!--PixelClusterizer: Looking for clusters in zs pixel data-->
+  <!--Name of input sparsified pixel data collection-->
+  <parameter name="SparseDataCollectionName" type="string" lcioInType="TrackerData"> TelDigits </parameter>
+  <!--Input status collection name-->
+  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status_m26 </parameter>
+  <!--Name of the output cluster collection-->
+  <parameter name="ClusterCollectionName" type="string" lcioOutType="TrackerPulse"> zscluster_m26 </parameter>
+  <!--0: common side; 1: common corner; 3: max. one missing pixel-->
+  <parameter name="AcceptDiagonalCluster" type="int" value="1"/>
+  <!--Threshold for cluster signal-->
+  <parameter name="SparseClusterCut" type="float" value="0"/>
+  <!--Threshold for seed pixel signal-->
+  <parameter name="SparseSeedCut" type="float" value="0"/>
+  <!--Threshold for zero suppression-->
+  <parameter name="SparseZSCut" type="float" value="0"/>
+</processor>
+
+ <processor name="CogHitMaker-DEP" type="CogHitMaker">
+ <!--CogHitMaker:  Compute center of gravity hits from pixel clusters -->
+  <!--Name of cluster collection-->
+  <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_dep </parameter>
+  <!--Name of hit collection-->
+  <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_dep </parameter>
+  <!--To use only kGoodQuality write 0 here-->
+  <parameter name="ClusterQualitySelection" type="int" value="0"/>
+</processor>
+
+ <processor name="CogHitMaker-M26" type="CogHitMaker">
+ <!--CogHitMaker:  Compute center of gravity hits from pixel clusters -->
+  <!--Name of cluster collection-->
+  <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_m26 </parameter>
+  <!--Name of hit collection-->
+  <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_m26 </parameter>
+  <!--To use only kGoodQuality write 0 here-->
+  <parameter name="ClusterQualitySelection" type="int" value="0"/>
+</processor>
    
    <processor name="HotPixelMasker" type="DEPFETHotPixelMasker">
      <!--DEPFETHotPixelMasker: Remove hits from hot pixels-->
@@ -52,13 +136,13 @@
    <processor name="VXDTracker" type="FastTracker">
      <!--FastTracker: Performs track finding and fitting for beam tests-->
      <!--Input hit collection names-->
-     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> PXDhits2 Telhits2 SVDhits2 </parameter>
+     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> hit_dep hit_m26 SVDhits2 </parameter>
      <!--Collection name for fitted tracks-->
      <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> tracks </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="cal-files/dummy/eudet-alignmentDB.slcio"/>
      <!--Enter plane numbers of bad detectors-->
-     <parameter name="ExcludeDetector" type="IntVec"> 3 </parameter>
+     <parameter name="ExcludeDetector" type="IntVec">  </parameter>
      <!--To use only GoodQuality write 0 here-->
      <parameter name="HitQualitySelection" type="int" value="0"/>
      <!--Maximum hit residual [mm]-->
@@ -66,7 +150,7 @@
      <!--Maximum track chisq in track fit-->
      <parameter name="MaxTrackChi2" type="float" value="100"/>
      <!--Maximum number of consecutive missing hits in track-->
-     <parameter name="MaximumGap" type="int" value="1"/>
+     <parameter name="MaximumGap" type="int" value="2"/>
      <!--Maximum slope of candiate tracks in Z=0 plane (rad). Set cut to zero to deactivate.-->
      <parameter name="MaximumSlope" type="float" value="0.1"/>
      <!--Minimum number of hits in track-->
@@ -91,14 +175,54 @@
      <parameter name="PassTwo_SecondPlane" type="int" value="-1 "/>
    </processor>
 
-   <processor name="TelescopeDQM" type="TrackFitDQM">
+  <processor name="VXDDQM" type="TrackFitDQM">
      <!--TrackFitDQM: DQM plots for monitor quality of track fitting-->
      <!--Track input collection-->
      <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> tracks </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="cal-files/dummy/eudet-alignmentDB.slcio"/>
      <!--Output root file name-->
-     <parameter name="RootFileName" type="string" value="TrackFitDQM.root"/>
+     <parameter name="RootFileName" type="string" value="VXDDQM.root"/>
+   </processor>
+
+  <processor name="L1-TreeProducer" type="DUTTreeProducer">
+     <!--DUTTreeProducer: DUT Analysis Processor-->
+     <!--Name of DUT hit collection-->
+     <parameter name="HitCollection" type="string" lcioInType="TrackerHit"> hit_dep </parameter>
+     <!--Name of DUT status collection-->
+     <parameter name="StatusCollection" type="string" lcioInType="TrackerRawData"> status_dep </parameter>
+     <!--Name of telescope track collection-->
+     <parameter name="TrackCollection" type="string" lcioInType="Track"> tracks </parameter>
+     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+     <parameter name="AlignmentDBFileName" type="string" value="cal-files/dummy/eudet-alignmentDB.slcio"/>
+     <!--Plane number of DUT along the beam line-->
+     <parameter name="DUTPlane" type="int" value="3"/>
+     <!--Maximum hit2track distance for hit matching [mm]-->
+     <parameter name="HitDistMax" type="double" value="2"/>
+     <!--Output root file name-->
+     <parameter name="RootFileName" type="string" value="L1-Histos.root"/>
+     <!--Use only events with one track in telescope-->
+     <parameter name="SingleTrackEvents" type="bool" value="false"/>
+   </processor>
+
+   <processor name="L3-TreeProducer" type="DUTTreeProducer">
+     <!--DUTTreeProducer: DUT Analysis Processor-->
+     <!--Name of DUT hit collection-->
+     <parameter name="HitCollection" type="string" lcioInType="TrackerHit"> SVDhits </parameter>
+     <!--Name of DUT status collection-->
+     <parameter name="StatusCollection" type="string" lcioInType="TrackerRawData"> status </parameter>
+     <!--Name of telescope track collection-->
+     <parameter name="TrackCollection" type="string" lcioInType="Track"> tracks </parameter>
+     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+     <parameter name="AlignmentDBFileName" type="string" value="cal-files/dummy/eudet-alignmentDB.slcio"/>
+     <!--Plane number of DUT along the beam line-->
+     <parameter name="DUTPlane" type="int" value="5"/>
+     <!--Maximum hit2track distance for hit matching [mm]-->
+     <parameter name="HitDistMax" type="double" value="2"/>
+     <!--Output root file name-->
+     <parameter name="RootFileName" type="string" value="L3-Histos.root"/>
+     <!--Use only events with one track in telescope-->
+     <parameter name="SingleTrackEvents" type="bool" value="false"/>
    </processor>
   
 </marlin>
