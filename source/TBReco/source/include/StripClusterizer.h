@@ -68,16 +68,16 @@ protected:
 // This method is called inside the clusterize() method in order to 
 // determine if a strip at cell should be added 
 // to cluster.
-   bool areNeighbours( FloatVec &cluster, int cell, int m_accept ); 
+   bool areNeighbours( FloatVec &cluster, int cell, int isV, int m_accept ); 
    
 // This method is called inside the clusterize() method in order to 
 // determine if strip at cell is already part 
 // of cluster.
-   bool isDuplicated( FloatVec &cluster, int cell) ;
+   bool isDuplicated( FloatVec &cluster, int cell, int isV) ;
    
 // Checks if any other pixel group (apart from base group) neighbours cell. 
 // If so, merge with base group.   
-   void checkForMerge( int cell, 
+   void checkForMerge( int cell, int isV, 
            ClusterCandVec::iterator baseGroup,
            ClusterCandVec::iterator lastGroup); 
            

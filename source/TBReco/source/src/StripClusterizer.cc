@@ -8,6 +8,8 @@
 // Include DEPFETTrackTools 
 #include "DEPFET.h" 
 
+#include <iomanip>
+
 // Used namespaces
 using namespace std; 
 using namespace lcio;
@@ -158,7 +160,6 @@ void StripClusterizer::end()
    streamlog_out(MESSAGE3) << std::endl
                            << " "
                            << "Time per event: "
-                           << std::setiosflags(std::ios::fixed | std::ios::internal )
                            << std::setprecision(3)
                            << _timeCPU/_nEvt
                            << " ms"
@@ -284,11 +285,11 @@ void StripClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
       while( !found && firstCluster!= lastCluster)
       {
         
-        if ( areNeighbours( *firstCluster, cell, m_acceptGaps ) )
+        if ( areNeighbours( *firstCluster, cell, isV, m_acceptGaps ) )
         {
            
           // If digit is a duplicate of one in the cluster, do not add it.   
-          if(!isDuplicated( *firstCluster, cell )){
+          if(!isDuplicated( *firstCluster, cell , isV)){
 
            
             // Add digit to this cluster 
@@ -297,7 +298,7 @@ void StripClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
             (*firstGroup).push_back(signal);
             
             // See if cell is a neighbour to any other groups, if yes perform merging 
-            checkForMerge(cell, firstCluster, lastCluster);
+            checkForMerge(cell, isV, firstCluster, lastCluster);
               
           } else {
             streamlog_out(MESSAGE2) << "  A strip duplicate found. Skipping it." << std::endl; 
@@ -442,7 +443,7 @@ void StripClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
 // Checks if any other cluster candidate neighbours cell. 
 // If so, merge with base.  
  
-void StripClusterizer::checkForMerge( int cell,
+void StripClusterizer::checkForMerge( int cell, int isV,
  ClusterCandVec::iterator baseGroup,
  ClusterCandVec::iterator lastGroup) 
 {
@@ -452,20 +453,20 @@ void StripClusterizer::checkForMerge( int cell,
    
   for (; nextGroup!= lastGroup; ++nextGroup)
   {              
-    if (areNeighbours( *nextGroup, cell, m_acceptGaps ))
+    if (areNeighbours( *nextGroup, cell, isV, m_acceptGaps ))
     {
       
       int nDigits = (*nextGroup).size()/3; 
        
       for ( int i=0; i < nDigits; i++)      
       {
-        float isV = (*nextGroup)[i * 3];
-        float cell = (*nextGroup)[i * 3 + 1];
-        float signal =  (*nextGroup)[i * 3 + 2];     
+        float isV1 = (*nextGroup)[i * 3];
+        float cell1 = (*nextGroup)[i * 3 + 1];
+        float signal1 =  (*nextGroup)[i * 3 + 2];     
         // Copy pixel to base group 
-        (*baseGroup).push_back(isV);
-        (*baseGroup).push_back(cell);
-        (*baseGroup).push_back(signal);
+        (*baseGroup).push_back(isV1);
+        (*baseGroup).push_back(cell1);
+        (*baseGroup).push_back(signal1);
       }
       (*nextGroup).clear();
        
@@ -476,7 +477,7 @@ void StripClusterizer::checkForMerge( int cell,
 
 
 
-bool StripClusterizer::areNeighbours( FloatVec &group, int cell, int isVCell, int m_acceptGaps ) 
+bool StripClusterizer::areNeighbours( FloatVec &group, int cell, int isV, int m_acceptGaps ) 
 {   
     
   bool match=false;
@@ -485,12 +486,12 @@ bool StripClusterizer::areNeighbours( FloatVec &group, int cell, int isVCell, in
   for ( int i=0; i < nDigits; i++)
   {
            
-    int isVCell1 = static_cast<int> (group[i * 3]);
+    int isV1 = static_cast<int> (group[i * 3]);
     int cell1 = static_cast<int> (group[i * 3 + 1]);
     
     int delta = abs(cell-cell1);
     
-    if ( isVCell == isVCell && delta <= m_acceptGaps ) {
+    if ( isV1 == isV && delta <= m_acceptGaps ) {
       match = true;
       break;  
     } 
@@ -502,7 +503,7 @@ bool StripClusterizer::areNeighbours( FloatVec &group, int cell, int isVCell, in
 
 
                                         
-bool StripClusterizer::isDuplicated( FloatVec &group, int cell, isV) 
+bool StripClusterizer::isDuplicated( FloatVec &group, int cell, int isV) 
 { 
   bool duplicate = false;
   int nDigits = group.size()/3; 
