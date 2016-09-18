@@ -7,10 +7,6 @@
 #############################################################################
 
 
-# CMake compatibility issues: don't modify this, please!
-#CMAKE_MINIMUM_REQUIRED( VERSION 2.4.6 )
-#MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
-
 SET( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 
 ### PROJECT #################################################################
