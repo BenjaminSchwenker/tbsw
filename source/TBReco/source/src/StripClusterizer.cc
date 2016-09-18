@@ -558,7 +558,7 @@ void  StripClusterizer::initializeStatus( LCEvent * event )  {
             
       if (dataID != statusID) {
         streamlog_out(ERROR3) << "Status collection not aligned to detector data!" << std::endl << std::endl;      
-        exit(-1); 
+        //exit(-1); 
       }
       
     }
