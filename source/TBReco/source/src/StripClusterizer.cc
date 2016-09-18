@@ -546,7 +546,7 @@ void  StripClusterizer::initializeStatus( LCEvent * event )  {
 
     streamlog_out( MESSAGE3 ) << "Found status collection " << endl;
     
-    for ( size_t iDet = 0 ; iDet < StatusCollection->size(); ++iDet ) {
+    for ( size_t iDet = 0 ; iDet < DigitCollection->size(); ++iDet ) {
 
       streamlog_out( MESSAGE3 ) << "Found iDet " << iDet << endl;
        
