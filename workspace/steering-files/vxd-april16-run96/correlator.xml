@@ -21,6 +21,7 @@
       <processor name="LoadNoiseDB-M26"/>
       <processor name="PixelClusterizer-DEP"/>
       <processor name="PixelClusterizer-M26"/>
+      <processor name="StripClusterizer-SVD"/>
       <processor name="CogHitMaker-DEP"/>
       <processor name="CogHitMaker-M26"/>
       <processor name="RawHitDQM"/>
@@ -102,6 +103,26 @@
   <parameter name="SparseSeedCut" type="float" value="0"/>
   <!--Threshold for zero suppression-->
   <parameter name="SparseZSCut" type="float" value="0"/>
+</processor>
+
+ <processor name="StripClusterizer-SVD" type="StripClusterizer">
+  <!--StripClusterizer: Looking for clusters in strip digits-->
+  <!--Name of input sparsified strip digit collection-->
+  <parameter name="SparseDataCollectionName" type="string" lcioInType="TrackerData"> SVDDigits </parameter>
+  <!--Input status collection name-->
+  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status </parameter>
+  <!--Name of the output cluster collection-->
+  <parameter name="ClusterCollectionName" type="string" lcioOutType="TrackerPulse"> zscluster_svd </parameter>
+  <!--Accepts clusters with N missing strips-->
+  <parameter name="AcceptGaps" type="int" value="1"/>
+  <!--Threshold for cluster signal-->
+  <parameter name="SparseClusterCut" type="float" value="0"/>
+  <!--Threshold for seed digits-->
+  <parameter name="SparseSeedCut" type="float" value="0"/>
+  <!--Threshold for zero suppression-->
+  <parameter name="SparseZSCut" type="float" value="0"/>
+  <!--If true, cluster u strips. Else, cluster v strips-->
+  <parameter name="uSide" type="bool" value="true"/>
 </processor>
 
  <processor name="CogHitMaker-DEP" type="CogHitMaker">
