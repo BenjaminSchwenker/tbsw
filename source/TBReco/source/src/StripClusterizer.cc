@@ -213,7 +213,7 @@ void StripClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
     TrackerDataImpl * Digits = dynamic_cast<TrackerDataImpl* > ( DigitCollection->getElementAt(iDet) );
      
     // Get status matrix 
-    TrackerRawDataImpl * Status = dynamic_cast<TrackerRawDataImpl*> (statusCollection->getElementAt( iDet ));  
+    TrackerRawDataImpl * Status = dynamic_cast<TrackerRawDataImpl*> (StatusCollection->getElementAt( iDet ));  
       
     // Get DAQ ID 
     int sensorID = StripID( Digits ) ["sensorID"];
@@ -279,40 +279,40 @@ void StripClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
       // is a neighbour of a cluster.
       bool found= false;
          	
-      ClusterCandVec::iterator firstCluster = Clusters.begin();
+      ClusterCandVec::iterator currentCluster = Clusters.begin();
       ClusterCandVec::iterator lastCluster  = Clusters.end();    
               
-      while( !found && firstCluster!= lastCluster)
+      while( !found && currentCluster!= lastCluster)
       {
         
-        if ( areNeighbours( *firstCluster, cell, isV, m_acceptGaps ) )
+        if ( areNeighbours( *currentCluster, cell, isV, m_acceptGaps ) )
         {
            
           // If digit is a duplicate of one in the cluster, do not add it.   
-          if(!isDuplicated( *firstCluster, cell , isV)){
+          if(!isDuplicated( *currentCluster, cell , isV)){
 
            
             // Add digit to this cluster 
-            (*firstGroup).push_back(isVCell);
-            (*firstGroup).push_back(cell);
-            (*firstGroup).push_back(signal);
+            (*currentCluster).push_back(isV);
+            (*currentCluster).push_back(cell);
+            (*currentCluster).push_back(signal);
             
             // See if cell is a neighbour to any other groups, if yes perform merging 
-            checkForMerge(cell, isV, firstCluster, lastCluster);
+            checkForMerge(cell, isV, currentCluster, lastCluster);
               
           } else {
             streamlog_out(MESSAGE2) << "  A strip duplicate found. Skipping it." << std::endl; 
           }
           found = true; 
         }
-        ++firstGroup;
+        ++currentCluster;
       }
       
       // If digit is isolated, seed a new candidate cluster. 
       if(!found)
       {
         FloatVec newClu;
-        newClu.push_back(isVCell);
+        newClu.push_back(isV);
         newClu.push_back(cell);
         newClu.push_back(signal);
         
@@ -333,7 +333,7 @@ void StripClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
     int clusterID = 0; 
     
     for( ClusterCandVec::iterator cand = Clusters.begin() ;
-     	group!= Clusters.end() ; ++cand) 
+     	cand!= Clusters.end() ; ++cand) 
     {
       
       candNumber++; 
@@ -359,7 +359,7 @@ void StripClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
         for ( int i=0; i < nDigits; i++)
         {
   
-          int isVCell = static_cast<int> ( (*cand)[i * 3]);
+          int isV = static_cast<int> ( (*cand)[i * 3]);
           int cell = static_cast<int> ( (*cand)[i * 3 + 1]);
           float signal = ( (*cand)[i * 3 + 2]);
                             
@@ -537,7 +537,7 @@ void  StripClusterizer::initializeStatus( LCEvent * event )  {
     
     //Open status data
     LCCollectionVec * StatusCollection = dynamic_cast < LCCollectionVec * > (event->getCollection(_statusCollectionName)); 
-    CellIDDecoder<TrackerRawDataImpl> StatusDecoder( statusCollection ); 
+    CellIDDecoder<TrackerRawDataImpl> StatusDecoder( StatusCollection ); 
     
     // We are assuming that the digit and status collections 
     // are aligned according to the sensorID. In other words, we are 
