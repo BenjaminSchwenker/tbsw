@@ -68,7 +68,7 @@ HotStripKiller::HotStripKiller() : Processor("HotStripKiller")
    
    registerProcessorParameter ("MaxOccupancy",
                               "Maximum hit rate (hits/events) for normal strips",
-                              _maxOccupancy, static_cast < float >(0.01));
+                              _maxOccupancy, static_cast < float >(0.5));
    
    registerProcessorParameter ("EventsForMask",
                               "Events used to compute hot pixel mask",

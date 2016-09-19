@@ -245,14 +245,14 @@ void StripClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
     for (int i = 0; i < nDigits; i++) 
     {   
 
-      int isV = static_cast<int> (rawDigits[i * 3]);
+      int isU = static_cast<int> (rawDigits[i * 3]);
       int cell = static_cast<int> (rawDigits[i * 3 + 1]);
       float signal =  rawDigits[i * 3 + 2]; 
       
       
       streamlog_out(MESSAGE1) << "Digits " << i << " on sensor " << sensorID  
                               << std::endl;  
-      streamlog_out(MESSAGE1) << "   cell: " << cell << ", isV: " << isV
+      streamlog_out(MESSAGE1) << "   cell: " << cell << ", isU: " << isU
                               << ", charge: " << signal
                               << std::endl;
       
@@ -287,20 +287,20 @@ void StripClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
       while( !found && currentCluster!= lastCluster)
       {
         
-        if ( areNeighbours( *currentCluster, cell, isV, m_acceptGaps ) )
+        if ( areNeighbours( *currentCluster, cell, isU, m_acceptGaps ) )
         {
            
           // If digit is a duplicate of one in the cluster, do not add it.   
-          if(!isDuplicated( *currentCluster, cell , isV)){
+          if(!isDuplicated( *currentCluster, cell , isU)){
 
            
             // Add digit to this cluster 
-            (*currentCluster).push_back(isV);
+            (*currentCluster).push_back(isU);
             (*currentCluster).push_back(cell);
             (*currentCluster).push_back(signal);
             
             // See if cell is a neighbour to any other groups, if yes perform merging 
-            checkForMerge(cell, isV, currentCluster, lastCluster);
+            checkForMerge(cell, isU, currentCluster, lastCluster);
               
           } else {
             streamlog_out(MESSAGE2) << "  A strip duplicate found. Skipping it." << std::endl; 
@@ -314,7 +314,7 @@ void StripClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
       if(!found)
       {
         FloatVec newClu;
-        newClu.push_back(isV);
+        newClu.push_back(isU);
         newClu.push_back(cell);
         newClu.push_back(signal);
         
@@ -357,7 +357,7 @@ void StripClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
         for ( int i=0; i < nDigits; i++)
         {
   
-          int isV = static_cast<int> ( (*cand)[i * 3]);
+          int isU = static_cast<int> ( (*cand)[i * 3]);
           int cell = static_cast<int> ( (*cand)[i * 3 + 1]);
           float signal = ( (*cand)[i * 3 + 2]);
                             
@@ -368,7 +368,7 @@ void StripClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
           }
              
           // Store data in lcio format
-          sparseCluster->chargeValues().push_back( isV );
+          sparseCluster->chargeValues().push_back( isU );
           sparseCluster->chargeValues().push_back( cell );
           sparseCluster->chargeValues().push_back( signal );   
           
@@ -441,7 +441,7 @@ void StripClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
 // Checks if any other cluster candidate neighbours cell. 
 // If so, merge with base.  
  
-void StripClusterizer::checkForMerge( int cell, int isV,
+void StripClusterizer::checkForMerge( int cell, int isU,
  ClusterCandVec::iterator baseGroup,
  ClusterCandVec::iterator lastGroup) 
 {
@@ -451,18 +451,18 @@ void StripClusterizer::checkForMerge( int cell, int isV,
    
   for (; nextGroup!= lastGroup; ++nextGroup)
   {              
-    if (areNeighbours( *nextGroup, cell, isV, m_acceptGaps ))
+    if (areNeighbours( *nextGroup, cell, isU, m_acceptGaps ))
     {
       
       int nDigits = (*nextGroup).size()/3; 
        
       for ( int i=0; i < nDigits; i++)      
       {
-        float isV1 = (*nextGroup)[i * 3];
+        float isU1 = (*nextGroup)[i * 3];
         float cell1 = (*nextGroup)[i * 3 + 1];
         float signal1 =  (*nextGroup)[i * 3 + 2];     
         // Copy pixel to base group 
-        (*baseGroup).push_back(isV1);
+        (*baseGroup).push_back(isU1);
         (*baseGroup).push_back(cell1);
         (*baseGroup).push_back(signal1);
       }
@@ -475,7 +475,7 @@ void StripClusterizer::checkForMerge( int cell, int isV,
 
 
 
-bool StripClusterizer::areNeighbours( FloatVec &group, int cell, int isV, int m_acceptGaps ) 
+bool StripClusterizer::areNeighbours( FloatVec &group, int cell, int isU, int m_acceptGaps ) 
 {   
     
   bool match=false;
@@ -484,12 +484,12 @@ bool StripClusterizer::areNeighbours( FloatVec &group, int cell, int isV, int m_
   for ( int i=0; i < nDigits; i++)
   {
            
-    int isV1 = static_cast<int> (group[i * 3]);
+    int isU1 = static_cast<int> (group[i * 3]);
     int cell1 = static_cast<int> (group[i * 3 + 1]);
     
     int delta = abs(cell-cell1);
     
-    if ( isV1 == isV && delta <= m_acceptGaps ) {
+    if ( isU1 == isU && delta <= m_acceptGaps ) {
       match = true;
       break;  
     } 
@@ -501,18 +501,18 @@ bool StripClusterizer::areNeighbours( FloatVec &group, int cell, int isV, int m_
 
 
                                         
-bool StripClusterizer::isDuplicated( FloatVec &group, int cell, int isV) 
+bool StripClusterizer::isDuplicated( FloatVec &group, int cell, int isU) 
 { 
   bool duplicate = false;
   int nDigits = group.size()/3; 
    
   for ( int i=0; i < nDigits; i++)
   {
-    int isV1 = static_cast<int> (group[i * 3]);
+    int isU1 = static_cast<int> (group[i * 3]);
     int cell1 = static_cast<int> (group[i * 3 + 1]);  
      
     // Duplicate?? 
-    if(isV1 == isV && cell1 == cell){
+    if(isU1 == isU && cell1 == cell){
       duplicate = true;
       break; 
     }

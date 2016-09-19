@@ -145,7 +145,7 @@ void StripHitMaker::processEvent(LCEvent * evt)
     float u = 0;
     float v = 0;    
     float total = 0; 
-    int isV = 0; 
+    int isU = 0; 
     
     // Loop over digits and compute hit coordinates
     TrackerData * clusterDigits =  cluster->getTrackerData();
@@ -154,16 +154,17 @@ void StripHitMaker::processEvent(LCEvent * evt)
        
     for ( int i=0; i<nDigits;  i++) { 
          
-      isV = static_cast<int> (rawDigits[i * 3]);
+      isU = static_cast<int> (rawDigits[i * 3]);
       int cell = static_cast<int> (rawDigits[i * 3 + 1]);
       float signal = 1;  // rawDigits[i * 3 + 2]; 
      
       total += signal;
     
-      if (isV) 
-        v += Sensor.GetPixelCenterCoordV(cell, 0)*signal;
+      if (isU) 
+        u += Sensor.GetPixelCenterCoordU(0, cell)*signal;  
       else 
-        u += Sensor.GetPixelCenterCoordU(0, cell)*signal;        
+        v += Sensor.GetPixelCenterCoordV(cell, 0)*signal;
+              
     }
       
     if ( total > 0)  {
@@ -177,10 +178,10 @@ void StripHitMaker::processEvent(LCEvent * evt)
     TBHit hit(sensorID, u, v, cov_u, cov_v, 0);
     hit.SetUniqueID(iClu);      
     
-    if (isV)
-      HitStoreV.push_back(hit);  
-    else  
+    if (isU)
       HitStoreU.push_back(hit);  
+    else  
+      HitStoreV.push_back(hit);  
          
   } // End cluster loop 
   
