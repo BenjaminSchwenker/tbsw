@@ -239,7 +239,7 @@ void StripClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
     ClusterCandVec Clusters;
     Clusters.reserve(nDigits);
 
-    streamlog_out(MESSAGE1) << "nDigits " << nDigits << " on sensor " << sensorID  
+    
         
     // Loop over digits
     for (int i = 0; i < nDigits; i++) 
