@@ -19,8 +19,9 @@
 #include <string>
 
 
-
 namespace depfet {
+
+
 
  //! StripHitMaker processor
  /*!  This processor uses the center of gravity algorithm to compute hits from 

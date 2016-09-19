@@ -8,6 +8,7 @@
 #include "StripHitMaker.h"
 #include "TBHit.h"
 
+
 // Include basic C
 #include <limits>
 #include <cmath>
@@ -122,44 +123,46 @@ void StripHitMaker::processEvent(LCEvent * evt)
       throw SkipEventException(this);
   }
         
-  // Create hit collection  
-  LCCollectionVec * hitCollection = new LCCollectionVec(LCIO::TRACKERHIT) ;
+  // Helper class for decoding cluster ID's 
+  CellIDDecoder<TrackerPulseImpl> clusterDecoder( clusterCollection ); 
          
+  // Create intermediate hit collections  
+  std::vector<TBHit> HitStoreU;   
+  std::vector<TBHit> HitStoreV;   
+  
   // Loop on all clusters 
   for (unsigned int iClu = 0; iClu < clusterCollection->size(); iClu++) 
-  { 
-    
-    // Helper class for decoding cluster ID's 
-    CellIDDecoder<TrackerPulseImpl> clusterDecoder( clusterCollection ); 
-    
+  {   
     // Read cluster header
     TrackerPulseImpl* cluster = dynamic_cast<TrackerPulseImpl* > ( clusterCollection->getElementAt(iClu) )  ;       
     int sensorID = clusterDecoder(cluster)["sensorID"]; 
     int ipl = _detector.GetPlaneNumber(sensorID);
-    Det& Det = _detector.GetDet(ipl);
+    Det& Sensor = _detector.GetDet(ipl);
     
     streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID  << endl; 
-    
       
     // Calculate hit coord in local frame in mm
-    float u = 0; 
-    float v = 0;  
+    float u,v = 0;   
     float total = 0; 
-      
+    int isV; 
+    
     // Loop over digits and compute hit coordinates
     TrackerData * clusterDigits =  cluster->getTrackerData();
-    FloatVec sparsePixels = clusterDigits->getChargeValues();
-    int nPixels = sparsePixels.size()/3; 
+    FloatVec rawDigits = clusterDigits->getChargeValues();
+    int nDigits = rawDigits.size()/3; 
        
-    for ( int index=0; index<nPixels;  index++) { 
+    for ( int i=0; i<nDigits;  i++) { 
          
-      int col = static_cast<int> (sparsePixels[index * 3]);
-      int row = static_cast<int> (sparsePixels[index * 3 + 1]);
-      float chargeValue =  sparsePixels[index * 3 + 2];
-        
-      total += chargeValue;
-      u += Det.GetPixelCenterCoordU(row, col)*chargeValue;
-      v += Det.GetPixelCenterCoordV(row, col)*chargeValue;       
+      isV = static_cast<int> (rawDigits[i * 3]);
+      int cell = static_cast<int> (rawDigits[i * 3 + 1]);
+      float signal = 1;  // rawDigits[i * 3 + 2]; 
+     
+      total += signal;
+    
+      if (isV) 
+        v += Sensor.GetPixelCenterCoordV(cell, 0)*signal;
+      else 
+        u += Sensor.GetPixelCenterCoordU(0, cell)*signal;        
     }
       
     if ( total > 0)  {
@@ -167,28 +170,54 @@ void StripHitMaker::processEvent(LCEvent * evt)
       v /= total; 
     } 
       
-    double cov_u = pow(Det.GetResolutionU(),2);
-    double cov_v = pow(Det.GetResolutionV(),2);   
-       
+    double cov_v = pow(Sensor.GetResolutionV(),2); 
+    double cov_u = pow(Sensor.GetResolutionU(),2);
+         
     TBHit hit(sensorID, u, v, cov_u, cov_v, 0);
-      
-    // Make LCIO TrackerHit
-    TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
-            
-    // Add link to full cluster data 
-    LCObjectVec clusterVec;
-    clusterVec.push_back( cluster->getTrackerData() );
-    trackerhit->rawHits() = clusterVec;
-      
-    // Add hit to the hit collection
-    hitCollection->push_back( trackerhit );
-          
+    hit.SetUniqueID(iClu);      
+    
+    if (isV)
+      HitStoreV.push_back(hit);  
+    else  
+      HitStoreU.push_back(hit);  
+         
   } // End cluster loop 
+  
+  // Now, try to merge clusters along u and v 
+
+  LCCollectionVec * hitCollection = new LCCollectionVec(LCIO::TRACKERHIT) ;      
+  
+  for (int iU = 0; iU < (int) HitStoreU.size(); iU++ ) {
+    for (int iV = 0; iV < (int) HitStoreV.size(); iV++ ) {
+       
+      TBHit hitU = HitStoreU[iU]; 
+      TBHit hitV = HitStoreV[iV];
+      
+      if (hitU.GetDAQID() == hitV.GetDAQID() ) {
+        
+        // Make LCIO TrackerHit 
+        TBHit hit(hitU.GetDAQID(), hitU.GetCoord[0][0], hitV.GetCoord[1][0], hitU.GetCov[0][0], hitV.GetCov[1][1], 0);
+        TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
+            
+        // Add link to full cluster data 
+        TrackerPulseImpl* clusterU = dynamic_cast<TrackerPulseImpl* > ( clusterCollection->getElementAt(hitU.GetUniqueID()) );
+        TrackerPulseImpl* clusterV = dynamic_cast<TrackerPulseImpl* > ( clusterCollection->getElementAt(hitV.GetUniqueID()) )  ;       
    
-       
+        LCObjectVec clusterVec;
+        clusterVec.push_back( clusterU->getTrackerData() );
+        clusterVec.push_back( clusterV->getTrackerData() );
+        trackerhit->rawHits() = clusterVec;
+
+        hitCollection->push_back( trackerhit );
+        
+      }
+
+    }
+  }          
+
+
   // Store hitCollection in LCIO file
-  evt->addCollection( hitCollection, _hitCollectionName );
-       
+  evt->addCollection( hitCollection, _hitCollectionName );     
      
 }
 
