@@ -25,7 +25,9 @@
       <processor name="StripClusterizer-SVD"/>
       <processor name="CogHitMaker-DEP"/>
       <processor name="CogHitMaker-M26"/>
+      <processor name="CogHitMaker-SVD"/>
       <processor name="RawHitDQM"/>
+      <processor name="RawHitDQM2"/>
       <processor name="HotPixelMasker"/>
       <processor name="VXDCorrelator"/>
       <processor name="LCIOOutput"/>
@@ -156,6 +158,16 @@
   <parameter name="ClusterQualitySelection" type="int" value="0"/>
 </processor>
 
+  <processor name="CogHitMaker-SVD" type="StripHitMaker">
+ <!--StripHitMaker:  Compute center of gravity hits from strip clusters -->
+  <!--Name of cluster collection-->
+  <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_svd </parameter>
+  <!--Name of hit collection-->
+  <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_svd </parameter>
+  <!--To use only kGoodQuality write 0 here-->
+  <parameter name="ClusterQualitySelection" type="int" value="0"/>
+</processor>
+
  <processor name="HotPixelMasker" type="DEPFETHotPixelMasker">
  <!--DEPFETHotPixelMasker: Remove hits from hot pixels-->
   <!--Hit collection names-->
@@ -167,7 +179,7 @@
  <processor name="VXDCorrelator" type="Correlator">
  <!--Correlator: Pre- alignment in xy of tracking telescopes-->
   <!--Hit collection names-->
-  <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> hit_dep SVDhits2 hit_m26 </parameter>
+  <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> hit_dep hit_svd hit_m26 </parameter>
   <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
   <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
   <!--This is the name of the output root file-->
@@ -187,9 +199,17 @@
   <processor name="RawHitDQM" type="RawHitDQM">
  <!--RawHitDQM: Producing DQM histos from hits-->
   <!--Hit collection names-->
-  <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> SVDhits hit_dep hit_m26 </parameter>
+  <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> hit_svd hit_dep hit_m26 </parameter>
   <!--Output root file name-->
   <parameter name="RootFileName" type="string" value="HitDQM.root"/>
+</processor>
+
+ <processor name="RawHitDQM2" type="RawHitDQM">
+ <!--RawHitDQM: Producing DQM histos from hits-->
+  <!--Hit collection names-->
+  <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> Telhits PXDhits SVDhits </parameter>
+  <!--Output root file name-->
+  <parameter name="RootFileName" type="string" value="HitDQM_old.root"/>
 </processor>
 
 

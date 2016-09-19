@@ -142,9 +142,10 @@ void StripHitMaker::processEvent(LCEvent * evt)
     streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID  << endl; 
       
     // Calculate hit coord in local frame in mm
-    float u,v = 0;   
+    float u = 0;
+    float v = 0;    
     float total = 0; 
-    int isV; 
+    int isV = 0; 
     
     // Loop over digits and compute hit coordinates
     TrackerData * clusterDigits =  cluster->getTrackerData();
