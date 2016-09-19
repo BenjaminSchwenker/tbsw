@@ -19,6 +19,7 @@
       <processor name="LoadNoiseDB"/>
       <processor name="LoadNoiseDB-DEP"/>
       <processor name="LoadNoiseDB-M26"/>
+      <processor name="LoadNoiseDB-SVD"/>
       <processor name="PixelClusterizer-DEP"/>
       <processor name="PixelClusterizer-M26"/>
       <processor name="StripClusterizer-SVD"/>
@@ -68,6 +69,16 @@
   <!--Initialization of a simple conditions file handler-->
   <parameter name="SimpleFileHandler" type="StringVec"> status_m26 NoiseDB-M26.slcio status_m26 </parameter>
 </processor>
+  
+ <processor name="LoadNoiseDB-SVD" type="ConditionsProcessor">
+ <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
+  <!--Initialization of a conditions db file handler-->
+  <!--parameter name="DBFileHandler" type="StringVec"> conditionsName conditions.slcio collectionName </parameter-->
+  <!--Initialization of a data file handler-->
+  <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
+  <!--Initialization of a simple conditions file handler-->
+  <parameter name="SimpleFileHandler" type="StringVec"> status_svd NoiseDB-SVD.slcio status_svd </parameter>
+</processor>
 
  <processor name="PixelClusterizer-DEP" type="PixelClusterizer">
  <!--PixelClusterizer: Looking for clusters in zs pixel data-->
@@ -110,7 +121,7 @@
   <!--Name of input sparsified strip digit collection-->
   <parameter name="SparseDataCollectionName" type="string" lcioInType="TrackerData"> SVDDigits </parameter>
   <!--Input status collection name-->
-  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status </parameter>
+  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status_svd </parameter>
   <!--Name of the output cluster collection-->
   <parameter name="ClusterCollectionName" type="string" lcioOutType="TrackerPulse"> zscluster_svd </parameter>
   <!--Accepts clusters with N missing strips-->

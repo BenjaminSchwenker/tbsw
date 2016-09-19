@@ -19,8 +19,8 @@
       <processor name="HotPixelKillerForHits"/>
       <processor name="HotPixelKiller-DEP"/>
       <processor name="HotPixelKiller-M26"/>
-      <!--processor name="HotPixelKiller-SVD"/-->
-      <!--processor name="HotStripKiller-SVD"/-->
+      <processor name="HotPixelKiller-SVD"/>
+      <processor name="HotStripKiller-SVD"/>
    </execute>
 
    <global>
@@ -89,13 +89,13 @@
   <!--Maximum hit rate (hits/events) for normal pixels-->
   <parameter name="MaxOccupancy" type="float" value="0.01"/>
   <!--This is the name of the noiseDB file-->
-  <parameter name="NoiseDBFileName" type="string" value="NoiseDB-SVD.slcio"/>
+  <parameter name="NoiseDBFileName" type="string" value="NoiseDB-SVD2.slcio"/>
   <!--Zero suppression threshold for digits [ADU]-->
   <parameter name="OfflineZSThreshold" type="float" value="0"/>
   <!--This is the name of the root file with DQM histos-->
-  <parameter name="OutputRootFileName" type="string" value="NoiseDB-SVD.root"/>
+  <parameter name="OutputRootFileName" type="string" value="NoiseDB-SVD2.root"/>
   <!--Name of status data collection-->
-  <parameter name="StatusCollectionName" type="string" value="status_svd"/>
+  <parameter name="StatusCollectionName" type="string" value="status_svd2"/>
 </processor>
 
  <processor name="HotStripKiller-SVD" type="HotStripKiller">
@@ -107,9 +107,9 @@
   <!--Maximum hit rate (hits/events) for normal strips-->
   <parameter name="MaxOccupancy" type="float" value="0.01"/>
   <!--This is the name of the noiseDB file-->
-  <parameter name="NoiseDBFileName" type="string" value="NoiseDB-SVD2.slcio"/>
+  <parameter name="NoiseDBFileName" type="string" value="NoiseDB-SVD.slcio"/>
   <!--This is the name of the root file with DQM histos-->
-  <parameter name="OutputRootFileName" type="string" value="NoiseDB-SVD2.root"/>
+  <parameter name="OutputRootFileName" type="string" value="NoiseDB-SVD.root"/>
   <!--Name of status data collection-->
   <parameter name="StatusCollectionName" type="string" value="status_svd"/>
   <!--Zero suppression threshold for u strips [ADU]-->
