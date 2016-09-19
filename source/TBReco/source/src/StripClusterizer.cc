@@ -323,10 +323,6 @@ void StripClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
       }
        
     }  
-    
-    
-    streamlog_out(MESSAGE2) << std::endl << "Summary of cluster candidates: "  << std::endl << std::endl;
-    
      
     // Count cluster candidates 
     int candNumber = 0;
