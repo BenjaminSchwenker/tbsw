@@ -238,6 +238,8 @@ void StripClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
     
     ClusterCandVec Clusters;
     Clusters.reserve(nDigits);
+
+    streamlog_out(MESSAGE1) << "nDigits " << nDigits << " on sensor " << sensorID  
         
     // Loop over digits
     for (int i = 0; i < nDigits; i++) 
@@ -250,8 +252,8 @@ void StripClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
       
       streamlog_out(MESSAGE1) << "Digits " << i << " on sensor " << sensorID  
                               << std::endl;  
-      streamlog_out(MESSAGE1) << "   cell:" << cell << ", isVCell" << isV
-                              << ", charge:" << signal
+      streamlog_out(MESSAGE1) << "   cell: " << cell << ", isV: " << isV
+                              << ", charge: " << signal
                               << std::endl;
       
       // If signal below threshold, skip it in clusterization
