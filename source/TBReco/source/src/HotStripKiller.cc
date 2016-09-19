@@ -418,39 +418,11 @@ void HotStripKiller::accumulateHits(LCEvent * evt) {
       
       for ( int index=0; index<nDigits;  index++) { 
             
-        int isVCell = static_cast<int> (sparseDigits[index * 3]);
-        int cellID = static_cast<int> (sparseDigits[index * 3 + 1]);
+        int isU = static_cast<int> (sparseDigits[index * 3]);
+        int cell = static_cast<int> (sparseDigits[index * 3 + 1]);
         float signal =  sparseDigits[index * 3 + 2]; 
         
-        if (isVCell) {
-
-          nDigitsV++;
-
-          if ( signal < _offlineZSCutV ) {
-            streamlog_out(MESSAGE2) << " Signal on vStrip below ZS cut. Skipping it." << std::endl; 
-            continue;
-          }
-               
-          if ( cellID < 0 || cellID >= nVCells  ) {
-            streamlog_out(MESSAGE2) << "Digit on sensor " << sensorID 
-                                    << " vCellID: " << cellID 
-                                    << " in event " << evt->getEventNumber() 
-                                    << " is out of range!! " << std::endl;    
-            continue;  
-          }
-          
-          // Count the digit
-          _hitCounterV[ iDetector ][ cellID ]++; 
-        
-          // Count number of good hits per frame  
-          if (_statusV[iDetector][cellID] == 0 ) ++nGoodDigitsV;
-          
-          // Print detailed strip summary, for testing/debugging only !!! 
-          streamlog_out(MESSAGE1) << "Digit on sensor " << sensorID 
-                                  << " vCell: " << cellID 
-                                  << ", charge: " << signal << std::endl;
-        
-        } else {
+        if (isU) {
 
           nDigitsU++;
 
@@ -459,27 +431,55 @@ void HotStripKiller::accumulateHits(LCEvent * evt) {
             continue;
           }
                
-          if ( cellID < 0 || cellID >= nUCells  ) {
+          if ( cell < 0 || cell >= nUCells  ) {
             streamlog_out(MESSAGE2) << "Digit on sensor " << sensorID 
-                                    << " uCellID: " << cellID 
+                                    << " uCell: " << cell 
                                     << " in event " << evt->getEventNumber() 
                                     << " is out of range!! " << std::endl;    
             continue;  
           }
           
           // Count the digit
-          _hitCounterU[ iDetector ][ cellID ]++; 
+          _hitCounterU[ iDetector ][ cell ]++; 
         
           // Count number of good hits per frame  
-          if (_statusU[iDetector][cellID] == 0 ) ++nGoodDigitsU;
+          if (_statusU[iDetector][cell] == 0 ) ++nGoodDigitsU;
           
           // Print detailed strip summary, for testing/debugging only !!! 
           streamlog_out(MESSAGE1) << "Digit on sensor " << sensorID 
-                                  << " uCell: " << cellID 
+                                  << " uCell: " << cell 
+                                  << ", charge: " << signal << std::endl;
+        
+        } else {
+
+          nDigitsV++;
+
+          if ( signal < _offlineZSCutV ) {
+            streamlog_out(MESSAGE2) << " Signal on vStrip below ZS cut. Skipping it." << std::endl; 
+            continue;
+          }
+               
+          if ( cell < 0 || cell >= nVCells  ) {
+            streamlog_out(MESSAGE2) << "Digit on sensor " << sensorID 
+                                    << " vCell: " << cell 
+                                    << " in event " << evt->getEventNumber() 
+                                    << " is out of range!! " << std::endl;    
+            continue;  
+          }
+          
+          // Count the digit
+          _hitCounterV[ iDetector ][ cell ]++; 
+        
+          // Count number of good hits per frame  
+          if (_statusV[iDetector][cell] == 0 ) ++nGoodDigitsV;
+          
+          // Print detailed strip summary, for testing/debugging only !!! 
+          streamlog_out(MESSAGE1) << "Digit on sensor " << sensorID 
+                                  << " vCell: " << cell 
                                   << ", charge: " << signal << std::endl;
            
           
-        }  // isVCell
+        }  // isU
          
       } // End digit loop
        
