@@ -16,7 +16,7 @@
 <marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
 
    <execute>
-      <processor name="LoadNoiseDB"/>
+      <!--processor name="LoadNoiseDB"/-->
       <processor name="LoadNoiseDB-DEP"/>
       <processor name="LoadNoiseDB-M26"/>
       <processor name="LoadNoiseDB-SVD"/>
@@ -28,7 +28,7 @@
       <processor name="CogHitMaker-SVD"/>
       <processor name="RawHitDQM"/>
       <processor name="RawHitDQM2"/>
-      <processor name="HotPixelMasker"/>
+      <!--processor name="HotPixelMasker"/-->
       <processor name="VXDCorrelator"/>
       <processor name="LCIOOutput"/>
    </execute>

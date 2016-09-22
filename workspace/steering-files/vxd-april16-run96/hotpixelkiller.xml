@@ -16,12 +16,12 @@
 <marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
 
    <execute>
-      <processor name="HotPixelKillerForHits"/>
+      <!--processor name="HotPixelKillerForHits"/-->
       <processor name="HotPixelKiller-DEP"/>
       <processor name="HotPixelKiller-M26"/>
       <processor name="HotStripKiller-SVD"/>
    </execute>
-
+   
    <global>
       <parameter name="LCIOInputFiles"> tmp-rawdata.slcio </parameter>
       <parameter name="GearXMLFile" value="gear-files/gear_vxd_april16_run96.xml"/>
