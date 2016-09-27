@@ -11,7 +11,7 @@
 // DEPFETTrackTools includes
 #include "TBTrack.h"
 #include "TBHit.h"
-#include "PixelCluster.h"
+#include "StripCluster.h"
 #include "GenericTrackFitter.h"
 #include "TrackInputProvider.h"
 #include "Det.h"
@@ -393,14 +393,16 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
 
     // Cluster shape variables   
     
-    PixelCluster Cluster = hit.GetCluster();
+    StripCluster Cluster = hit.GetStripCluster();
        
     _rootHitQuality = 0; 
-    _rootHitCharge = Cluster.getCharge() ; 
-    _rootHitSeedCharge = Cluster.getSeedCharge() ; 
-    _rootHitSize = Cluster.getSize();  
-    _rootHitSizeCol = Cluster.getUSize();     
-    _rootHitSizeRow = Cluster.getVSize();     
+    _rootHitClusterChargeU = Cluster.getUCharge() ; 
+    _rootHitSeedChargeU = Cluster.getUSeedCharge() ; 
+    _rootHitClusterChargeV = Cluster.getVCharge() ; 
+    _rootHitSeedChargeV = Cluster.getVSeedCharge() ; 
+    _rootHitSize =  Cluster.getUSize() + Cluster.getVSize(); 
+    _rootHitSizeU = Cluster.getUSize();     
+    _rootHitSizeV = Cluster.getVSize();     
    
     
 
@@ -414,30 +416,26 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
       HepSymMatrix C = trk.GetTE(_idut).GetState().GetCov();  
       double hitchi2 = TrackFitter.GetPredictedChi2(p, C, hit);
 
-      _rootHitFitMomentum = trk.GetMomentum();   
+      _rootHitFitMom = trk.GetMomentum();   
            
       // Get predicted hit coordinates 
       double pu = p[2][0];
       double pv = p[3][0];
         
-      // Get readout channels  
-      int fitcol = dut.GetColumnFromCoord( pu, pv );     
-      int fitrow = dut.GetRowFromCoord( pu, pv );           
-       
       _rootHitFitdUdW = p[0][0];     
       _rootHitFitdVdW = p[1][0];    
       _rootHitFitU = p[2][0];           
       _rootHitFitV = p[3][0];          
           
-      _rootHitFitErrorU  = TMath::Sqrt(C[2][2]);    
-      _rootHitFitErrorV  = TMath::Sqrt(C[3][3]);  
+      _rootHitFitSigmaU  = TMath::Sqrt(C[2][2]);    
+      _rootHitFitSigmaV  = TMath::Sqrt(C[3][3]);  
       _rootHitPullResidualU = (hit.GetCoord()[0][0] - p[2][0]) / TMath::Sqrt( C[2][2] + hit.GetCov()[0][0] ) ;   
       _rootHitPullResidualV = (hit.GetCoord()[1][0] - p[3][0]) / TMath::Sqrt( C[3][3] + hit.GetCov()[1][1] ) ;  
                                  
-      _rootHitFitCol = fitcol;      
-      _rootHitFitRow = fitrow;    
-      _rootHitFitPixU = dut.GetPixelCenterCoordU( fitrow, fitcol ); 
-      _rootHitFitPixV = dut.GetPixelCenterCoordV( fitrow, fitcol );                                        
+      _rootHitFitCellU = dut.GetColumnFromCoord( pu, pv );        
+      _rootHitFitCellV = dut.GetRowFromCoord( pu, pv );       
+      _rootHitFitCellCenterU = dut.GetPixelCenterCoordU( _rootHitFitCellV, _rootHitFitCellU ); 
+      _rootHitFitCellCenterV = dut.GetPixelCenterCoordV( _rootHitFitCellV, _rootHitFitCellU );                                        
       _rootHitTrackChi2 = trk.GetChiSqu(); 
       _rootHitTrackNDF = trk.GetNDF();
       _rootHitLocalChi2 = hitchi2;   
@@ -447,18 +445,18 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
     } else {
 
       _rootHitHasTrack = -1; // no match
-      _rootHitFitMomentum = -1;       
+      _rootHitFitMom = -1;       
       // These are dummy values, always query hasTrack      
       _rootHitFitU = -1;           
       _rootHitFitV = -1;           
       _rootHitFitdUdW = -1;      
       _rootHitFitdVdW = -1;        
-      _rootHitFitErrorU = -1;  
-      _rootHitFitErrorV = -1;                          
-      _rootHitFitCol = -1;      
-      _rootHitFitRow = -1;      
-      _rootHitFitPixU = -1;  
-      _rootHitFitPixV = -1;                                       
+      _rootHitFitSigmaU = -1;  
+      _rootHitFitSigmaV = -1;                          
+      _rootHitFitCellU = -1;      
+      _rootHitFitCellV = -1;      
+      _rootHitFitCellCenterU = -1;  
+      _rootHitFitCellCenterV = -1;                                       
       _rootHitTrackChi2 = -1;  
       _rootHitTrackNDF = -1; 
       _rootHitLocalChi2 = -1;  
@@ -486,7 +484,7 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
        
     TBTrack& trk = TrackStore[itrk];
 
-    _rootTrackFitMomentum = trk.GetMomentum();   
+    _rootTrackFitMom = trk.GetMomentum();   
     
     HepMatrix p = trk.GetTE(_idut).GetState().GetPars();
     HepSymMatrix C = trk.GetTE(_idut).GetState().GetCov();  
@@ -496,69 +494,27 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
     double pv = p[3][0];
         
     // Get readout channels  
-    int fitcol = dut.GetColumnFromCoord( pu, pv );     
-    int fitrow = dut.GetRowFromCoord( pu, pv );           
-    int Xpixel = matrixDecoder.getIndexFromXY(fitcol, fitrow);
-        
+              
     _rootTrackFitdUdW = p[0][0];     
     _rootTrackFitdVdW = p[1][0];    
     _rootTrackFitU = p[2][0];           
     _rootTrackFitV = p[3][0];    
-    _rootTrackFitCol = fitcol;      
-    _rootTrackFitRow = fitrow;    
-    _rootTrackFitPixU = dut.GetPixelCenterCoordU( fitrow, fitcol ); 
-    _rootTrackFitPixV = dut.GetPixelCenterCoordV( fitrow, fitcol );                                        
+    _rootTrackFitCellU = dut.GetColumnFromCoord( pu, pv );      
+    _rootTrackFitCellV = dut.GetRowFromCoord( pu, pv );      
+    _rootTrackFitCellCenterU = dut.GetPixelCenterCoordU( _rootTrackFitCellV, _rootTrackFitCellU ); 
+    _rootTrackFitCellCenterV = dut.GetPixelCenterCoordV( _rootTrackFitCellV, _rootTrackFitCellU );                                        
     _rootTrackChi2 = trk.GetChiSqu(); 
     _rootTrackNDF = trk.GetNDF();   
-    _rootTrack1x1Quality = 0;    
-    _rootTrack3x3Quality = 0;  
+    
             
-    if (  isDUTStatusOk  ) {
-      
-      if ( ( fitcol >= 0 )  &&  ( fitcol < dut.GetNColumns() ) &&
-               ( fitrow >= 0 )  &&  ( fitrow < dut.GetNRows() ) ) {
-         
-        _rootTrack1x1Quality = statusVec[Xpixel];
-        
-      }
-               
-      for (int iRow = fitrow - (3 / 2); iRow <= fitrow + (3 / 2); iRow++) {
-        for (int iCol =  fitcol - (3 / 2); iCol <= fitcol + (3 / 2); iCol++) {
-          // Always check we are still within the sensor boundaries!!!
-          if ( ( iCol >= 0 )  &&  ( iCol < dut.GetNColumns() ) &&
-               ( iRow >= 0 )  &&  ( iRow < dut.GetNRows() ) ) {
-                   
-              int index = matrixDecoder.getIndexFromXY(iCol, iRow);
-              
-              
-                
-              if ( statusVec[index]   ) {
-                // Bad pixel in cluster degrades Xing quality
-                _rootTrack3x3Quality++;  
-              }     
-          }
-        }
-      }
-            
-    }      
     
     if ( track2hit[itrk] >= 0  ) {
-      
-      _rootTrackHasHit = 0;  // match   
-      
-      TBHit& hit = HitStore[track2hit[itrk]];  
-      PixelCluster Cluster = hit.GetCluster();
-      _rootTrackSeedCharge = Cluster.getSeedCharge() ; 
-
-        
+      _rootTrackHasHit = 0;  // match     
     } else {
       _rootTrackHasHit = -1; // no match
-      _rootTrackSeedCharge = -1;
+      
     }
      
-    
-    
-    
     _rootFile->cd("");
     _rootTrackTree->Fill(); 
   }
@@ -753,9 +709,9 @@ void StripDUTAnalyzer::bookHistos()
    _rootHitTree->Branch("v_hit"           ,&_rootHitV             ,"v_hit/D");     
    _rootHitTree->Branch("sigmaU_hit"      ,&_rootHitSigmaU        ,"sigmaU_hit/D");
    _rootHitTree->Branch("sigmaV_hit"      ,&_rootHitSigmaV        ,"sigmaV_hit/D");     
-   _rootHitTree->Branch("clusterChargeU"  ,&_rootHitChargeU    ,"clusterChargeU/D");
+   _rootHitTree->Branch("clusterChargeU"  ,&_rootHitClusterChargeU    ,"clusterChargeU/D");
    _rootHitTree->Branch("seedChargeU"     ,&_rootHitSeedChargeU       ,"seedChargeU/D");
-   _rootHitTree->Branch("clusterChargeV"  ,&_rootHitChargeV    ,"clusterChargeV/D");
+   _rootHitTree->Branch("clusterChargeV"  ,&_rootHitClusterChargeV    ,"clusterChargeV/D");
    _rootHitTree->Branch("seedChargeV"     ,&_rootHitSeedChargeV       ,"seedChargeV/D");
    _rootHitTree->Branch("sizeU"           ,&_rootHitSizeU   ,"sizeU/I");
    _rootHitTree->Branch("sizeV"           ,&_rootHitSizeV   ,"sizeV/I");
