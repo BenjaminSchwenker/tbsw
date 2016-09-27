@@ -31,8 +31,8 @@ StripCluster::StripCluster( LCObjectVec& DigitVec, unsigned short sensorID, unsi
      
     for ( int index=0; index<m_uSize;  index++) { 
          
-      int cell = static_cast<int> (sparsePixels[index * 3 + 1]);
-      float charge =  sparsePixels[index * 3 + 2];
+      int cell = static_cast<int> (digits[index * 3 + 1]);
+      float charge =  digits[index * 3 + 2];
       
       m_uClsCharge += charge;
        
@@ -62,8 +62,8 @@ StripCluster::StripCluster( LCObjectVec& DigitVec, unsigned short sensorID, unsi
      
     for ( int index=0; index<m_vSize;  index++) { 
          
-      int cell = static_cast<int> (sparsePixels[index * 3 + 1]);
-      float charge =  sparsePixels[index * 3 + 2];
+      int cell = static_cast<int> (digits[index * 3 + 1]);
+      float charge =  digits[index * 3 + 2];
       
       m_vClsCharge += charge;
        
