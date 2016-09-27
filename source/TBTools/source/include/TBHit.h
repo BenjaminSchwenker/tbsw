@@ -11,6 +11,7 @@
 #include <IMPL/TrackerHitImpl.h>
 
 #include "PixelCluster.h"
+#include "StripCluster.h"
 	
 namespace depfet { 
 
@@ -87,6 +88,8 @@ class TBHit {
 
   
   PixelCluster GetCluster();
+
+  StripCluster GetCluster(); 
   
   // Get/Set unique ID for hit  
   void SetUniqueID(int ID ) { UniqueID = ID; }; 
