@@ -24,7 +24,7 @@ StripCluster::StripCluster( LCObjectVec& DigitVec, unsigned short sensorID, unsi
     TrackerData * clusterDigits = dynamic_cast<TrackerData *> ( DigitVec[0] );
     
     FloatVec digits = clusterDigits->getChargeValues();
-    m_uClsSize = digits.size()/3; 
+    m_uSize = digits.size()/3; 
     
     int min = 9999999;
     int max = 0; 
@@ -55,7 +55,7 @@ StripCluster::StripCluster( LCObjectVec& DigitVec, unsigned short sensorID, unsi
     TrackerData * clusterDigits = dynamic_cast<TrackerData *> ( DigitVec[1] );
     
     FloatVec digits = clusterDigits->getChargeValues();
-    m_vClsSize = digits.size()/3; 
+    m_vSize = digits.size()/3; 
     
     int min = 9999999;
     int max = 0; 
