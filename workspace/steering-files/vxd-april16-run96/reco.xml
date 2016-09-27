@@ -28,8 +28,8 @@
       <processor name="CogHitMaker-SVD"/>
       <processor name="VXDTracker"/>
       <processor name="VXDDQM"/>   
-      <processor name="L1-TreeProducer"/>
-      <processor name="L3-TreeProducer"/>
+      <processor name="L1Analyzer"/>
+      <processor name="L3Analyzer"/>
    </execute>
 
    <global>
@@ -221,7 +221,7 @@
      <parameter name="RootFileName" type="string" value="VXDDQM.root"/>
    </processor>
 
-  <processor name="L1-TreeProducer" type="DUTTreeProducer">
+  <processor name="L1Analyzer" type="DUTTreeProducer">
      <!--DUTTreeProducer: DUT Analysis Processor-->
      <!--Name of DUT hit collection-->
      <parameter name="HitCollection" type="string" lcioInType="TrackerHit"> hit_dep </parameter>
@@ -241,12 +241,12 @@
      <parameter name="SingleTrackEvents" type="bool" value="false"/>
    </processor>
 
-   <processor name="L3-TreeProducer" type="DUTTreeProducer">
-     <!--DUTTreeProducer: DUT Analysis Processor-->
+   <processor name="L3Analyzer" type="StripDUTAnalyzer">
+     <!--StripDUTAnalyzer: DUT Analysis Processor-->
      <!--Name of DUT hit collection-->
      <parameter name="HitCollection" type="string" lcioInType="TrackerHit"> hit_svd </parameter>
      <!--Name of DUT status collection-->
-     <parameter name="StatusCollection" type="string" lcioInType="TrackerRawData"> status </parameter>
+     <parameter name="StatusCollection" type="string" lcioInType="TrackerRawData"> status_svd </parameter>
      <!--Name of telescope track collection-->
      <parameter name="TrackCollection" type="string" lcioInType="Track"> tracks </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
@@ -256,9 +256,9 @@
      <!--Maximum hit2track distance for hit matching [mm]-->
      <parameter name="HitDistMax" type="double" value="2"/>
      <!--Output root file name-->
-     <parameter name="RootFileName" type="string" value="L3-Histos.root"/>
-     <!--Use only events with one track in telescope-->
-     <parameter name="SingleTrackEvents" type="bool" value="false"/>
+     <parameter name="RootFileName" type="string" value="L3-Histos.root"/> 
    </processor>
+
+  
   
 </marlin>
