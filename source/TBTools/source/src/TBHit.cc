@@ -147,7 +147,7 @@ PixelCluster TBHit::GetCluster()
   return PixelCluster(clusterDigits,DAQID,Quality);  
 }
 
-StripCluster TBHit::GetCluster() 
+StripCluster TBHit::GetStripCluster() 
 {
   
   if (RawHitPtr == NULL ) return StripCluster();
