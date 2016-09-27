@@ -16,7 +16,6 @@
 #include "TrackInputProvider.h"
 #include "Det.h"
 #include "Utilities.h"
-#include "MatrixDecoder.h"
 #include "DEPFET.h" 
 
 // Include basic C
@@ -72,16 +71,10 @@ StripDUTAnalyzer::StripDUTAnalyzer() : Processor("StripDUTAnalyzer")
                            "Name of DUT hit collection"  ,
                            _hitColName ,
                            std::string("hit") ) ;
-  
-  
-   
+     
   registerInputCollection (LCIO::TRACKERRAWDATA, "StatusCollection",
                            "Name of DUT status collection",
                            _statusColName, string("status")); 
-  
-  
-   
- 
      
   
   // Processor parameters:
@@ -98,10 +91,6 @@ StripDUTAnalyzer::StripDUTAnalyzer() : Processor("StripDUTAnalyzer")
                               "Maximum hit2track distance for hit matching [mm]",
                               _hitdistmax,  static_cast < double > (2.0));
                                
-  registerProcessorParameter ("SingleTrackEvents",
-                              "Use only events with one track in telescope",
-                              _singleTrackEvents,  static_cast < bool > (false));
-  
   registerProcessorParameter( "RootFileName",
                                "Output root file name",
                                _rootFileName, std::string("dut_histos.root"));
@@ -187,13 +176,6 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
   // Load DUT module    
   Det & dut = _detector.GetDet(_idut);   
   
-  
-    
-  // Decoding of DUT matrix
-  MatrixDecoder matrixDecoder(dut.GetNColumns(), dut.GetNRows()); 
-  
-  
-  
   ShortVec statusVec; 
   bool isDUTStatusOk = getDUTStatus( evt, statusVec );
        
@@ -247,67 +229,57 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
   
   std::vector< TBTrack > TrackStore;
   std::vector<TBHit> HitStore;    
-  
-  
-  if ( _singleTrackEvents  &&  nTrack > 1 ) {
+     
+  // Get tracks from the lcio file 
+  TrackInputProvider TrackLCIOReader;  
     
-    streamlog_out(MESSAGE2) << "Track Finder found more than one track in telescope."
-                            <<" SingleTrackEvent requested, discard event!!" 
-                            << endl; 
-  } else {
+  for(int itrk=0; itrk< nTrack ; itrk++)
+  {
     
-    // Get tracks from the lcio file 
-    TrackInputProvider TrackLCIOReader;  
-    
-    for(int itrk=0; itrk< nTrack ; itrk++)
-    {
-    
-      // Retrieve track from LCIO 
-      Track * lciotrk = dynamic_cast<Track*> (trackcol->getElementAt(itrk));
+    // Retrieve track from LCIO 
+    Track * lciotrk = dynamic_cast<Track*> (trackcol->getElementAt(itrk));
       
-      // Convert LCIO -> TB track  
-      TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, _detector );  
+    // Convert LCIO -> TB track  
+    TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, _detector );  
       
-      // Refit track in nominal alignment
-      bool trkerr = TrackFitter.Fit(trk);
-      if ( trkerr ) {
+    // Refit track in nominal alignment
+    bool trkerr = TrackFitter.Fit(trk);
+    if ( trkerr ) {
         streamlog_out ( MESSAGE1 ) << "Fit failed. Skipping track!" << endl;
         continue;
-      } 
+    } 
       
       
-      TrackStore.push_back(trk);                         
+    TrackStore.push_back(trk);                         
        
               
-    } // End track loop
+  } // End track loop
     
-    // Get hits from the lcio file 
+  // Get hits from the lcio file 
       
-    for(int ihit=0; ihit< nHit ; ihit++)
-    {
-      // Built a TBHit
-      TrackerHitImpl * lciohit = dynamic_cast<TrackerHitImpl*>( hitcol->getElementAt(ihit) ) ;
-      TBHit RecoHit ( lciohit  );        
+  for(int ihit=0; ihit< nHit ; ihit++)
+  {
+    // Built a TBHit
+    TrackerHitImpl * lciohit = dynamic_cast<TrackerHitImpl*>( hitcol->getElementAt(ihit) ) ;
+    TBHit RecoHit ( lciohit  );        
          
-      // We have to find plane number of the hit 
-      int daqid = RecoHit.GetDAQID();      
-      int ipl = _detector.GetPlaneNumber(daqid);  
+    // We have to find plane number of the hit 
+    int daqid = RecoHit.GetDAQID();      
+    int ipl = _detector.GetPlaneNumber(daqid);  
       
-      // Store all hits on the DUT module  
-      if( dut.GetPlaneNumber() == ipl )
-      {         
-        streamlog_out(MESSAGE2) << " DUT hit at plane " << ipl 
-                                << "   U [mm]= " << RecoHit.GetCoord()[0][0]
-                                << "   V [mm]= " << RecoHit.GetCoord()[1][0] 
-                                << endl;
+    // Store all hits on the DUT module  
+    if( dut.GetPlaneNumber() == ipl )
+    {         
+      streamlog_out(MESSAGE2) << " DUT hit at plane " << ipl 
+                              << "   U [mm]= " << RecoHit.GetCoord()[0][0]
+                              << "   V [mm]= " << RecoHit.GetCoord()[1][0] 
+                              << endl;
       
-        HitStore.push_back( RecoHit );  
-      }
-    } 
+      HitStore.push_back( RecoHit );  
+    }
+  } 
     
      
-  } // endif singletrack events
-  
   streamlog_out(MESSAGE2) << "Total of " << TrackStore.size() << " good track(s)" << endl; 
   _noOfTracks += TrackStore.size();   
   
@@ -416,8 +388,8 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
     _rootHitU = hit.GetCoord()[0][0];         
     _rootHitV = hit.GetCoord()[1][0];   
     
-    _rootHitCol = dut.GetColumnFromCoord( _rootHitU, _rootHitV );  
-    _rootHitRow = dut.GetRowFromCoord( _rootHitU, _rootHitV );  
+    _rootHitCellU = dut.GetColumnFromCoord( _rootHitU, _rootHitV );  
+    _rootHitCellV = dut.GetRowFromCoord( _rootHitU, _rootHitV );  
 
     // Cluster shape variables   
     
@@ -776,37 +748,39 @@ void StripDUTAnalyzer::bookHistos()
 
 
 
-   _rootHitTree->Branch("clusterQuality"  ,&_rootHitQuality   ,"clusterQuality/I");
+   _rootHitTree->Branch("hitQuality"      ,&_rootHitQuality   ,"hitQuality/I");
    _rootHitTree->Branch("u_hit"           ,&_rootHitU             ,"u_hit/D");
    _rootHitTree->Branch("v_hit"           ,&_rootHitV             ,"v_hit/D");     
-   _rootHitTree->Branch("clusterCharge"   ,&_rootHitCharge    ,"clusterCharge/D");
-   _rootHitTree->Branch("seedCharge"      ,&_rootHitSeedCharge       ,"seedCharge/D");
-   _rootHitTree->Branch("sizeCol"         ,&_rootHitSizeCol   ,"sizeCol/I");
-   _rootHitTree->Branch("sizeRow"         ,&_rootHitSizeRow   ,"sizeRow/I");
+   _rootHitTree->Branch("sigmaU_hit"      ,&_rootHitSigmaU        ,"sigmaU_hit/D");
+   _rootHitTree->Branch("sigmaV_hit"      ,&_rootHitSigmaV        ,"sigmaV_hit/D");     
+   _rootHitTree->Branch("clusterChargeU"  ,&_rootHitChargeU    ,"clusterChargeU/D");
+   _rootHitTree->Branch("seedChargeU"     ,&_rootHitSeedChargeU       ,"seedChargeU/D");
+   _rootHitTree->Branch("clusterChargeV"  ,&_rootHitChargeV    ,"clusterChargeV/D");
+   _rootHitTree->Branch("seedChargeV"     ,&_rootHitSeedChargeV       ,"seedChargeV/D");
+   _rootHitTree->Branch("sizeU"           ,&_rootHitSizeU   ,"sizeU/I");
+   _rootHitTree->Branch("sizeV"           ,&_rootHitSizeV   ,"sizeV/I");
    _rootHitTree->Branch("size"            ,&_rootHitSize      ,"size/I");
    _rootHitTree->Branch("hasTrack"        ,&_rootHitHasTrack         ,"hasTrack/I");   
    _rootHitTree->Branch("u_fit"           ,&_rootHitFitU             ,"u_fit/D");
    _rootHitTree->Branch("v_fit"           ,&_rootHitFitV             ,"v_fit/D"); 
    _rootHitTree->Branch("dudw_fit"        ,&_rootHitFitdUdW          ,"dudw_fit/D");
    _rootHitTree->Branch("dvdw_fit"        ,&_rootHitFitdVdW          ,"dvdw_fit/D");    
-   _rootHitTree->Branch("u_fiterr"        ,&_rootHitFitErrorU        ,"u_fiterr/D");
-   _rootHitTree->Branch("v_fiterr"        ,&_rootHitFitErrorV        ,"v_fiterr/D");   
+   _rootHitTree->Branch("sigmaU_fit"      ,&_rootHitFitSigmaU        ,"sigmaU_fit/D");
+   _rootHitTree->Branch("sigmaV_fit"      ,&_rootHitFitSigmaV        ,"sigmaV_fit/D");   
    _rootHitTree->Branch("pull_resu"       ,&_rootHitPullResidualU    ,"pull_resu/D");
    _rootHitTree->Branch("pull_resv"       ,&_rootHitPullResidualV    ,"pull_resv/D");  
-   _rootHitTree->Branch("col_fit"         ,&_rootHitFitCol           ,"col_fit/I");
-   _rootHitTree->Branch("row_fit"         ,&_rootHitFitRow           ,"row_fit/I");
-   _rootHitTree->Branch("col_hit"         ,&_rootHitCol           ,"col_hit/I");
-   _rootHitTree->Branch("row_hit"         ,&_rootHitRow           ,"row_hit/I");
-   _rootHitTree->Branch("u_pixel"         ,&_rootHitFitPixU          ,"u_pixel/D");
-   _rootHitTree->Branch("v_pixel"         ,&_rootHitFitPixV          ,"v_pixel/D");                                      
+   _rootHitTree->Branch("cellU_fit"       ,&_rootHitFitCellU         ,"cellU_fit/I");
+   _rootHitTree->Branch("cellV_fit"       ,&_rootHitFitCellV         ,"cellV_fit/I");
+   _rootHitTree->Branch("cellU_hit"       ,&_rootHitCellU           ,"cellU_hit/I");
+   _rootHitTree->Branch("cellV_hit"       ,&_rootHitCellV           ,"cellV_hit/I");
+   _rootHitTree->Branch("cellCenterU"     ,&_rootHitFitCellCenterU  ,"cellCenterU/D");
+   _rootHitTree->Branch("cellCenterV"     ,&_rootHitFitCellCenterV  ,"cellCenterV/D");                                      
    _rootHitTree->Branch("chi2"            ,&_rootHitTrackChi2      ,"chi2/D");
    _rootHitTree->Branch("ndof"            ,&_rootHitTrackNDF       ,"ndof/I");
    _rootHitTree->Branch("chi2pred"        ,&_rootHitLocalChi2        ,"chi2pred/D");  
-   _rootHitTree->Branch("momentum"        ,&_rootHitFitMomentum      ,"momentum/D");    
-
+   _rootHitTree->Branch("mom"             ,&_rootHitFitMom      ,"mom/D");    
+   _rootHitTree->Branch("sigmaMom"        ,&_rootHitFitSigmaMom      ,"sigmaMom/D");    
   
-   
-    
    // 
    // Track Tree 
    _rootTrackTree = new TTree("Track","Track info");
@@ -817,20 +791,20 @@ void StripDUTAnalyzer::bookHistos()
    _rootTrackTree->Branch("nduthits"        ,&_rootNDUTHits       ,"nduthits/I");
    
    _rootTrackTree->Branch("hasHit"          ,&_rootTrackHasHit         ,"hasHit/I");
-   _rootTrackTree->Branch("momentum"        ,&_rootTrackFitMomentum    ,"momentum/D");    
-   _rootTrackTree->Branch("seedCharge"      ,&_rootTrackSeedCharge     ,"seedCharge/D");                                                        
-   _rootTrackTree->Branch("1x1Quality"      ,&_rootTrack1x1Quality     ,"1x1Quality/I");
-   _rootTrackTree->Branch("3x3Quality"      ,&_rootTrack3x3Quality     ,"3x3Quality/I");
+   _rootTrackTree->Branch("mom"             ,&_rootTrackFitMom    ,"mom/D");   
+   _rootTrackTree->Branch("chi2"            ,&_rootTrackChi2           ,"chi2/D");
+   _rootTrackTree->Branch("ndof"            ,&_rootTrackNDF            ,"ndof/I");                                                         
+   _rootTrackTree->Branch("cellQualityU"      ,&_rootTrackCellQualityU     ,"cellQualityU/I");
+   _rootTrackTree->Branch("cellQualityV"      ,&_rootTrackCellQualityV     ,"cellQualityV/I");
    _rootTrackTree->Branch("u_fit"           ,&_rootTrackFitU           ,"u_fit/D");
    _rootTrackTree->Branch("v_fit"           ,&_rootTrackFitV           ,"v_fit/D");
    _rootTrackTree->Branch("dudw_fit"        ,&_rootTrackFitdUdW        ,"dudw_fit/D");
    _rootTrackTree->Branch("dvdw_fit"        ,&_rootTrackFitdVdW        ,"dvdw_fit/D");
-   _rootTrackTree->Branch("col_fit"         ,&_rootTrackFitCol         ,"col_fit/I");
-   _rootTrackTree->Branch("row_fit"         ,&_rootTrackFitRow         ,"row_fit/I");
-   _rootTrackTree->Branch("u_pixel"         ,&_rootTrackFitPixU        ,"u_pixel/D");
-   _rootTrackTree->Branch("v_pixel"         ,&_rootTrackFitPixV        ,"v_pixel/D");
-   _rootTrackTree->Branch("chi2"            ,&_rootTrackChi2           ,"chi2/D");
-   _rootTrackTree->Branch("ndof"            ,&_rootTrackNDF            ,"ndof/I");
+   _rootTrackTree->Branch("cellU_fit"       ,&_rootTrackFitCellU         ,"cellU_fit/I");
+   _rootTrackTree->Branch("cellV_fit"       ,&_rootTrackFitCellV         ,"cellV_fit/I");
+   _rootTrackTree->Branch("cellCenterU"     ,&_rootTrackFitCellCenterU        ,"cellCenterU/D");
+   _rootTrackTree->Branch("cellCenterV"     ,&_rootTrackFitCellCenterV        ,"cellCenterV/D");
+   
    
    // 
    // Event Summay Tree 

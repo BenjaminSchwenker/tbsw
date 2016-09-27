@@ -40,14 +40,14 @@ namespace depfet {
 /*! 
  *  The task of this processor is to analyze the intrinsic performance of a
  *  device under test (DUT) using a reference telescope. Instead of making 
- *  histograms directly, the processor outputs a TFile with flat multiple 
- *  TTree objects allowing simple TTree Draw() to make final plots. The 
- *  main advantage of this approach is more user flexibility on final analysis 
- *  cuts and histogram layout.  
+ *  histograms directly, the processor outputs a TFile with flat  
+ *  TTree objects. This allows simple TTree Draw() commands to make final plots. 
+ *  wiht root scripts. The main advantage of this approach is more user flexibility 
+ *  on final analysis cuts and histogram layout.  
  *  
  *  Relevant DUT benchmark variables for study are the hit detection efficiency,
- *  the occupancy, signal spectra, spatial resolution and in pixel studies of 
- *  charge collection efficiency and charge sharing.  
+ *  the occupancy, signal spectra, spatial resolution and in pixel (strip) studies 
+ *  of charge collection efficiency and charge sharing.  
  *  
  *  
  *  Author: B.Schwenker, Universität Göttingen
@@ -89,7 +89,7 @@ protected:
    void printProcessorParams() const;
    
 //! A function to read DUT status map 
-/*! Vector of status values from DUT pixels 
+/*! Vector of status values from DUT  
  */
    bool getDUTStatus(LCEvent * evt, ShortVec & statusVec) ;
    
@@ -113,8 +113,7 @@ protected:
 //! DUT plane number 
    int _idut; 
    
-//! Use only single track events
-   bool  _singleTrackEvents;
+
       
 //! Max hit2track distance for hit-track matching  
    double _hitdistmax; 
@@ -134,29 +133,34 @@ protected:
    
    // Variables in hit tree          
    int _rootHitQuality;       // GoodCluster == 0
-   double _rootHitU;         // in mm        
-   double _rootHitV;         // in mm  
-   double _rootHitCharge; 
-   double _rootHitSeedCharge;
+   double _rootHitU;          // in mm        
+   double _rootHitV;          // in mm  
+   double _rootHitSigmaU; 
+   double _rootHitSigmaV; 
+   double _rootHitClusterChargeU; 
+   double _rootHitSeedChargeU;
+   double _rootHitClusterChargeV; 
+   double _rootHitSeedChargeV;
    int _rootHitSize;  
-   int _rootHitSizeCol;     
-   int _rootHitSizeRow;    
-   int _rootHitCol;
-   int _rootHitRow; 
+   int _rootHitSizeU;     
+   int _rootHitSizeV;    
+   int _rootHitCellU;
+   int _rootHitCellV; 
    int _rootHitHasTrack;             // Matched to track == 0     
-   double _rootHitFitMomentum;              
+   double _rootHitFitMom; 
+   double _rootHitFitSigmaMom;              
    double _rootHitFitU;              // Track impact point [mm] - in local frame       
    double _rootHitFitV;              
    double _rootHitFitdUdW;           // Track direction tangent [rad] - in local frame       
    double _rootHitFitdVdW;      
-   double _rootHitFitErrorU;          // rms error u
-   double _rootHitFitErrorV;          // rms error v 
+   double _rootHitFitSigmaU;          // rms error u
+   double _rootHitFitSigmaV;          // rms error v 
    double _rootHitPullResidualU; 
    double _rootHitPullResidualV;             
-   int _rootHitFitCol;               // DUT pixel - readout column         
-   int _rootHitFitRow;               // DUT pixel - readout row   
-   double _rootHitFitPixU;        // Hit pixel, center in u[mm]        
-   double _rootHitFitPixV;        // Hit pixel, center in v[mm] 
+   int _rootHitFitCellU;               // DUT  - readout column         
+   int _rootHitFitCellV;               // DUT  - readout row   
+   double _rootHitFitCellCenterU;        // Hit  center in u[mm]        
+   double _rootHitFitCellCenterV;        // Hit  center in v[mm] 
    double _rootHitTrackChi2 ; 
    int _rootHitTrackNDF; 
    double _rootHitLocalChi2; 
@@ -164,20 +168,19 @@ protected:
  
    // Variables in track tree  
    int _rootTrackHasHit; 
-   double _rootTrackFitMomentum;  
+   double _rootTrackFitMom;  
    int _rootTrackNDF;          // Track degrees of freedof (ndof) 
    double _rootTrackChi2;      // Track chisq
    double _rootTrackFitU ; 
    double _rootTrackFitV ; 
    double _rootTrackFitdUdW; 
    double _rootTrackFitdVdW; 
-   int _rootTrackFitCol; 
-   int _rootTrackFitRow;  
-   double _rootTrackFitPixU ; 
-   double _rootTrackFitPixV ; 
-   int _rootTrack1x1Quality;       // Good Xing = 0   
-   int _rootTrack3x3Quality;       // Good Xing = 0  
-   double _rootTrackSeedCharge;   
+   int _rootTrackFitCellU; 
+   int _rootTrackFitCellV;  
+   double _rootTrackFitCellCenterU ; 
+   double _rootTrackFitCellCenterV ; 
+   int _rootTrackCellQualityU;
+   int _rootTrackCellQualityV;        
    
    // Variables in event tree
    int _rootEventNDUTTracks; 

@@ -147,7 +147,15 @@ PixelCluster TBHit::GetCluster()
   return PixelCluster(clusterDigits,DAQID,Quality);  
 }
 
-
+StripCluster TBHit::GetCluster() 
+{
+  
+  if (RawHitPtr == NULL ) return StripCluster();
+  
+  LCObjectVec clusterVec = RawHitPtr->getRawHits();
+  
+  return StripCluster(clusterVec,DAQID,Quality);  
+}
 
 
 } // Namespace
