@@ -89,7 +89,7 @@ class TBHit {
   
   PixelCluster GetCluster();
 
-  StripCluster GetCluster(); 
+  StripCluster GetStripCluster(); 
   
   // Get/Set unique ID for hit  
   void SetUniqueID(int ID ) { UniqueID = ID; }; 
