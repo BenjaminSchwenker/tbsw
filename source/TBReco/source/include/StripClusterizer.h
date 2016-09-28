@@ -110,8 +110,8 @@ protected:
 //! Accept strip clusters with gaps 
    int m_acceptGaps; 
 
-//! If true, cluster u side strips.
-   bool m_uSide; 
+//! Number of samples per hit
+   int m_samples; 
    	       
  private: 
     

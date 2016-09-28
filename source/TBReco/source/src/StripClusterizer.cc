@@ -58,8 +58,8 @@ StripClusterizer::StripClusterizer() : Processor("StripClusterizer")
    registerProcessorParameter( "AcceptGaps","Accepts clusters with N missing strips",
                                m_acceptGaps , static_cast<int > (1) ); 
 
-   registerProcessorParameter( "uSide","If true, cluster u strips. Else, cluster v strips",
-                               m_uSide , static_cast<bool > (true) ); 
+   registerProcessorParameter( "nSamples","Number of strip signal samples per hit",
+                               m_samples , static_cast<int > (1) ); 
     
 }
 
@@ -231,38 +231,41 @@ void StripClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
     
     
     FloatVec rawDigits = Digits->getChargeValues();
-    int nDigits = rawDigits.size()/3; 
+    int nDigits = rawDigits.size()/(3*m_samples); 
         
     // Group all digits into cluster candidates, groups of geometrically adjecant 
     // or neighboring digits. 
     
     ClusterCandVec Clusters;
     Clusters.reserve(nDigits);
-
-    
-        
+      
     // Loop over digits
     for (int i = 0; i < nDigits; i++) 
     {   
+      
+      // Read first sample of hit measurement
+      int isU = static_cast<int> (rawDigits[i * 3 * m_samples]);
+      int cell = static_cast<int> (rawDigits[i * 3 * m_samples + 1]);
+      float signal = rawDigits[i * 3 * m_samples + 2]; 
+      
+      // Loop over remaining six samples and find max. signal 
+      for (int is = 1; is < m_samples; is++) {
+        float next_signal = rawDigits[i * 3 * m_samples + is * 3 + 2]; 
+        if ( next_signal > signal ) signal = next_signal; 
+      }
 
-      int isU = static_cast<int> (rawDigits[i * 3]);
-      int cell = static_cast<int> (rawDigits[i * 3 + 1]);
-      float signal =  rawDigits[i * 3 + 2]; 
-      
-      
       streamlog_out(MESSAGE1) << "Digits " << i << " on sensor " << sensorID  
                               << std::endl;  
       streamlog_out(MESSAGE1) << "   cell: " << cell << ", isU: " << isU
                               << ", charge: " << signal
                               << std::endl;
-      
+
       // If signal below threshold, skip it in clusterization
       if ( signal < _sparseZSCut ) {
         streamlog_out(MESSAGE2) << "  Signal below ZS cut. Skipping it." << std::endl; 
         continue;
       }
-       
-
+        
       /*
       // If a pixel is out of range, skip it in clusterization
       if ( col < 0 || col > maxCol || row < 0 || row > maxRow ) {

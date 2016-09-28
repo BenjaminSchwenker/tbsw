@@ -156,10 +156,10 @@ void StripHitMaker::processEvent(LCEvent * evt)
          
       isU = static_cast<int> (rawDigits[i * 3]);
       int cell = static_cast<int> (rawDigits[i * 3 + 1]);
-      float signal = 1;  // rawDigits[i * 3 + 2]; 
-     
+      float signal = rawDigits[i * 3 + 2]; 
+      
       total += signal;
-    
+      
       if (isU) 
         u += Sensor.GetPixelCenterCoordU(0, cell)*signal;  
       else 
