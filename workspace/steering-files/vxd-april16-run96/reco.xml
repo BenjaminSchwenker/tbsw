@@ -134,8 +134,8 @@
   <parameter name="SparseSeedCut" type="float" value="0"/>
   <!--Threshold for zero suppression-->
   <parameter name="SparseZSCut" type="float" value="0"/>
-  <!--If true, cluster u strips. Else, cluster v strips-->
-  <parameter name="uSide" type="bool" value="true"/>
+  <!--Number of strip signal samples per hit-->
+  <parameter name="nSamples" type="int" value="6"/>
 </processor>
 
  <processor name="CogHitMaker-DEP" type="CogHitMaker">
