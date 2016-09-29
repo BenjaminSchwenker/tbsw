@@ -388,6 +388,9 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
     _rootHitU = hit.GetCoord()[0][0];         
     _rootHitV = hit.GetCoord()[1][0];   
     
+    _rootHitSigmaU = hit.GetCov()[0][0]; 
+    _rootHitSigmaV = hit.GetCov()[1][1]; 
+
     _rootHitCellU = dut.GetColumnFromCoord( _rootHitU, _rootHitV );  
     _rootHitCellV = dut.GetRowFromCoord( _rootHitU, _rootHitV );  
 
