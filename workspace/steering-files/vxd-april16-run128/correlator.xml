@@ -16,18 +16,23 @@
 <marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
 
    <execute>
-      <processor name="LoadNoiseDB"/>
+      <!--processor name="LoadNoiseDB"/-->
       <processor name="LoadNoiseDB-DEP"/>
       <processor name="LoadNoiseDB-M26"/>
+      <processor name="LoadNoiseDB-SVD"/>
       <processor name="PixelClusterizer-DEP"/>
       <processor name="PixelClusterizer-M26"/>
+      <processor name="StripClusterizer-SVD"/>
       <processor name="CogHitMaker-DEP"/>
       <processor name="CogHitMaker-M26"/>
+      <processor name="CogHitMaker-SVD"/>
       <processor name="RawHitDQM"/>
-      <processor name="HotPixelMasker"/>
+      <processor name="RawHitDQM2"/>
+      <!--processor name="HotPixelMasker"/-->
       <processor name="VXDCorrelator"/>
       <processor name="LCIOOutput"/>
    </execute>
+
 
    <global>
       <parameter name="LCIOInputFiles"> tmp-rawdata.slcio </parameter>
@@ -69,6 +74,17 @@
   <parameter name="SimpleFileHandler" type="StringVec"> status_m26 NoiseDB-M26.slcio status_m26 </parameter>
 </processor>
 
+
+<processor name="LoadNoiseDB-SVD" type="ConditionsProcessor">
+ <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
+  <!--Initialization of a conditions db file handler-->
+  <!--parameter name="DBFileHandler" type="StringVec"> conditionsName conditions.slcio collectionName </parameter-->
+  <!--Initialization of a data file handler-->
+  <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
+  <!--Initialization of a simple conditions file handler-->
+  <parameter name="SimpleFileHandler" type="StringVec"> status_svd NoiseDB-SVD.slcio status_svd </parameter>
+</processor>
+
 <processor name="PixelClusterizer-DEP" type="PixelClusterizer">
  <!--PixelClusterizer: Looking for clusters in zs pixel data-->
   <!--Name of input sparsified pixel data collection-->
@@ -105,6 +121,26 @@
   <parameter name="SparseZSCut" type="float" value="0"/>
 </processor>
 
+ <processor name="StripClusterizer-SVD" type="StripClusterizer">
+  <!--StripClusterizer: Looking for clusters in strip digits-->
+  <!--Name of input sparsified strip digit collection-->
+  <parameter name="SparseDataCollectionName" type="string" lcioInType="TrackerData"> SVDDigits </parameter>
+  <!--Input status collection name-->
+  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status_svd </parameter>
+  <!--Name of the output cluster collection-->
+  <parameter name="ClusterCollectionName" type="string" lcioOutType="TrackerPulse"> zscluster_svd </parameter>
+  <!--Accepts clusters with N missing strips-->
+  <parameter name="AcceptGaps" type="int" value="1"/>
+  <!--Threshold for cluster signal-->
+  <parameter name="SparseClusterCut" type="float" value="0"/>
+  <!--Threshold for seed digits-->
+  <parameter name="SparseSeedCut" type="float" value="0"/>
+  <!--Threshold for zero suppression-->
+  <parameter name="SparseZSCut" type="float" value="0"/>
+  <!--Number of strip signal samples per hit-->
+  <parameter name="nSamples" type="int" value="6"/>
+</processor>
+
  <processor name="CogHitMaker-DEP" type="CogHitMaker">
  <!--CogHitMaker:  Compute center of gravity hits from pixel clusters -->
   <!--Name of cluster collection-->
@@ -125,6 +161,17 @@
   <parameter name="ClusterQualitySelection" type="int" value="0"/>
 </processor>
 
+
+  <processor name="CogHitMaker-SVD" type="StripHitMaker">
+ <!--StripHitMaker:  Compute center of gravity hits from strip clusters -->
+  <!--Name of cluster collection-->
+  <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_svd </parameter>
+  <!--Name of hit collection-->
+  <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_svd </parameter>
+  <!--To use only kGoodQuality write 0 here-->
+  <parameter name="ClusterQualitySelection" type="int" value="0"/>
+</processor>
+
  <processor name="HotPixelMasker" type="DEPFETHotPixelMasker">
  <!--DEPFETHotPixelMasker: Remove hits from hot pixels-->
   <!--Hit collection names-->
@@ -136,7 +183,7 @@
  <processor name="VXDCorrelator" type="Correlator">
  <!--Correlator: Pre- alignment in xy of tracking telescopes-->
   <!--Hit collection names-->
-  <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> hit_dep SVDhits2 hit_m26 </parameter>
+  <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> hit_dep hit_svd hit_m26 </parameter>
   <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
   <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
   <!--This is the name of the output root file-->
@@ -156,10 +203,19 @@
  <processor name="RawHitDQM" type="RawHitDQM">
  <!--RawHitDQM: Producing DQM histos from hits-->
   <!--Hit collection names-->
-  <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> SVDhits hit_dep hit_m26 </parameter>
+  <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> hit_svd hit_dep hit_m26 </parameter>
   <!--Output root file name-->
   <parameter name="RootFileName" type="string" value="HitDQM.root"/>
 </processor>
+
+ <processor name="RawHitDQM2" type="RawHitDQM">
+ <!--RawHitDQM: Producing DQM histos from hits-->
+  <!--Hit collection names-->
+  <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> Telhits PXDhits SVDhits </parameter>
+  <!--Output root file name-->
+  <parameter name="RootFileName" type="string" value="HitDQM_old.root"/>
+</processor>
+
 
  <processor name="LCIOOutput" type="LCIOOutputProcessor">
  <!--Writes the current event to the specified LCIO outputfile. Needs to be the last ActiveProcessor.-->

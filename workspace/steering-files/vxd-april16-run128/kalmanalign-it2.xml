@@ -32,7 +32,7 @@
  <processor name="VXDTracker" type="FastTracker">
  <!--FastTracker: Performs track finding and fitting for beam tests-->
   <!--Input hit collection names-->
-  <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> hit_dep hit_m26 SVDhits2 </parameter>
+  <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> hit_dep hit_m26 hit_svd </parameter>
   <!--Collection name for fitted tracks-->
   <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> aligntracks </parameter>
   <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->

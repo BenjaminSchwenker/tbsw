@@ -16,11 +16,10 @@
 <marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
 
    <execute>
-      <processor name="HotPixelKillerForHits"/>
+      <!--processor name="HotPixelKillerForHits"/-->
       <processor name="HotPixelKiller-DEP"/>
       <processor name="HotPixelKiller-M26"/>
-      <!--processor name="HotPixelKiller-SVD"/-->
-      <!--processor name="HotStripKiller-SVD"/-->
+      <processor name="HotStripKiller-SVD"/>
    </execute>
 
    <global>
@@ -105,11 +104,11 @@
   <!--Events used to compute hot pixel mask-->
   <parameter name="EventsForMask" type="int" value="20000"/>
   <!--Maximum hit rate (hits/events) for normal strips-->
-  <parameter name="MaxOccupancy" type="float" value="0.01"/>
+  <parameter name="MaxOccupancy" type="float" value="0.5"/>
   <!--This is the name of the noiseDB file-->
-  <parameter name="NoiseDBFileName" type="string" value="NoiseDB-SVD2.slcio"/>
+  <parameter name="NoiseDBFileName" type="string" value="NoiseDB-SVD.slcio"/>
   <!--This is the name of the root file with DQM histos-->
-  <parameter name="OutputRootFileName" type="string" value="NoiseDB-SVD2.root"/>
+  <parameter name="OutputRootFileName" type="string" value="NoiseDB-SVD.root"/>
   <!--Name of status data collection-->
   <parameter name="StatusCollectionName" type="string" value="status_svd"/>
   <!--Zero suppression threshold for u strips [ADU]-->
