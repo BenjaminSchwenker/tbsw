@@ -158,7 +158,8 @@ ENDIF()
 ### INCLUDE, SOURCE, LIB ####################################################
 
 # Compiler flags
-ADD_DEFINITIONS( "-Wall -Wno-long-long -ansi -pedantic -std=c++11" )
+#ADD_DEFINITIONS( "-Wall -Wno-long-long -ansi -pedantic -std=c++11" )
+ADD_DEFINITIONS( "-Wall -Wno-long-long -ansi -pedantic -std=c++1y" )
 
 # Include directories
 INCLUDE_DIRECTORIES( source/include )
