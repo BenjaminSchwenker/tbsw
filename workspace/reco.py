@@ -12,11 +12,11 @@ from itertools import repeat
 def reco_run(params):
   
   # unpack arguments
-  (rawfile,xmlfile) = params
+  (rawfile,xmlfile,caltag) = params
 
   # remember current working dir 
   fullpath = os.getcwd() 
-
+   
   store_lcio = False
   
   # get runtag
@@ -34,15 +34,24 @@ def reco_run(params):
        
   os.mkdir(tmpdir)
   
-  # and populat it with needed files 
-  shutil.copy(xmlfile, tmpdir+'/reco.xml')
+  # copy lcio file that is to be processed
   shutil.copy(rawfile, tmpdir+'/tmp-rawdata.slcio')
-  shutil.copytree('cal-files',tmpdir+'/cal-files')
+  # copy steering file 
+  shutil.copy(xmlfile, tmpdir+'/reco.xml')
+  
+  # check that calibration files exist
+  caldir = caldir = fullpath+'/cal-files/'+caltag   
+  if not os.path.isdir(caldir):
+    print ('[Print] fatal: no calibration data found')
+    sys.exit(2)   
+  
+  # copy calibration files 
+  shutil.copytree(caldir,tmpdir+'/localdb')
   
   # run reco in tmp dir 
   os.chdir(tmpdir)
                        
-  subprocess.call('/$MARLIN/bin/Marlin reco.xml > /dev/null 2>&1', shell=True)
+  subprocess.call('/$MARLIN/bin/Marlin reco.xml > log.txt', shell=True)
   
 
   # clean up tmp files 
@@ -67,7 +76,7 @@ def reco_run(params):
       shutil.move(slciofile, fullpath+'/lcio-files/'+name+'-'+runtag+'.slcio')  
   
   os.chdir(fullpath)
-  shutil.rmtree(tmpdir)
+  #shutil.rmtree(tmpdir)
 
   print ('[Print] Processing file ' + runtag + ' done!')
 	                        
@@ -76,31 +85,36 @@ if __name__ == '__main__':
   
   inputfiles = []
   xmlfile = ''
+  caltag='dummy'
     
   try:
-    opts, args = getopt.getopt(sys.argv[1:],"hi:x:",["ifile=","xmlfile="])
+    opts, args = getopt.getopt(sys.argv[1:],"hi:x:c:",["ifile=","xmlfile=","caltag="])
   except getopt.GetoptError:
-    print ('reco.py -i <inputfiles>  -x <xmlfile>')
+    print ('reco.py -i <inputfiles>  -x <xmlfile> -c <caltag>')
+    print ('-c is optional and defaults to: ' + caltag )
     sys.exit(2)
   for opt, arg in opts:
     if opt == '-h':
-      print ('reco.py -i <inputfiles> -x <xmlfile>')
+      print ('reco.py -i <inputfiles> -x <xmlfile> -c <caltag>')
+      print ('-c is optional and defaults to: ' + caltag )
       sys.exit()
     elif opt in ("-i", "--ifile"):
       inputfiles = glob.glob(arg)
     elif opt in ("-x", "--xmlfile"):
       xmlfile = arg
+    elif opt in ("-c", "--caltag"):
+      caltag = arg
   
   if inputfiles == []:
-    print ('missing option: -i inputfile')
+    print ('missing option: -i path/to/inputfilename.slcio')
     sys.exit(2)  
   
   if xmlfile == '':
-    print ('missing option: -x xmlfile')
+    print ('missing option: -x path/to/steeringfilename.xml')
     sys.exit(2)  
   
   # pack params for multiprocessing
-  params = [(rawfile,xmlfile) for rawfile in inputfiles]
+  params = [(rawfile,xmlfile,caltag) for rawfile in inputfiles]
   
   p = Pool()
   p.map(reco_run, params )	

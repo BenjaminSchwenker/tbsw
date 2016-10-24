@@ -16,10 +16,12 @@ if __name__ == '__main__':
     opts, args = getopt.getopt(sys.argv[1:],"hi:x:c:",["ifile=","xmlfile=","caltag="])
   except getopt.GetoptError:
     print ('calibrate.py -i <inputfile>  -x <xmlfile> -c <caltag>')
+    print ('-c is optional and defaults to: ' + caltag )
     sys.exit(2)
   for opt, arg in opts:
     if opt == '-h':
       print ('calibrate.py -i <inputfile> -x <xmlfile> -c <caltag>')
+      print ('-c is optional and defaults to: ' + caltag )
       sys.exit()
     elif opt in ("-i", "--ifile"):
       rawfile = arg
@@ -29,7 +31,7 @@ if __name__ == '__main__':
       caltag = arg
   
   if rawfile == '':
-    print ('missing option: -i inputfile')
+    print ('missing option: -i path/to/inputfilename.slcio')
     sys.exit(2)  
   
   if xmlpath == '':
