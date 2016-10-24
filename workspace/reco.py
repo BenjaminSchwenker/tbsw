@@ -43,7 +43,7 @@ def reco_run(params):
   caldir = caldir = fullpath+'/cal-files/'+caltag   
   if not os.path.isdir(caldir):
     print ('[Print] fatal: no calibration data found')
-    sys.exit(2)   
+    return  
   
   # copy calibration files 
   shutil.copytree(caldir,tmpdir+'/cal-files')
