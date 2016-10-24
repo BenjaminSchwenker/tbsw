@@ -21,7 +21,7 @@
 
    <global>
       <parameter name="LCIOInputFiles"> tmp-rawdata.slcio </parameter>
-      <parameter name="GearXMLFile" value="gear-files/gear_x0.xml"/>
+      <parameter name="GearXMLFile" value="gear_x0.xml"/>
       <parameter name="MaxRecordNumber" value="50000"/>
       <parameter name="SkipNEvents" value="0"/>
       <parameter name="SupressCheck" value="false"/>

@@ -33,7 +33,7 @@ if __name__ == '__main__':
     sys.exit(2)  
   
   if xmlpath == '':
-    print ('missing option: -x xmlfile')
+    print ('missing option: -x path/to/xmlfiles')
     sys.exit(2)  
     
   # remember current working dir 
@@ -58,9 +58,6 @@ if __name__ == '__main__':
   for name in os.listdir(xmlpath):
     srcname = os.path.join(xmlpath, name)
     shutil.copy(srcname, tmpdir)
- 
-  # copy gear file
-  shutil.copytree('gear-files',tmpdir+'/gear-files')
   
   # copy rawdata 
   shutil.copy(rawfile, tmpdir+'/tmp-rawdata.slcio')

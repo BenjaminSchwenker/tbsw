@@ -38,7 +38,6 @@ def reco_run(params):
   shutil.copy(xmlfile, tmpdir+'/reco.xml')
   shutil.copy(rawfile, tmpdir+'/tmp-rawdata.slcio')
   shutil.copytree('cal-files',tmpdir+'/cal-files')
-  shutil.copytree('gear-files',tmpdir+'/gear-files')
   
   # run reco in tmp dir 
   os.chdir(tmpdir)
