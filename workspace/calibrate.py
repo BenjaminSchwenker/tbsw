@@ -99,9 +99,12 @@ if __name__ == '__main__':
     shutil.rmtree(caldir)
        
   os.mkdir(caldir)		
-  
+
+  # save all files with calibration data to common folder   
   for dbfile in glob.glob('*.slcio'): 
     shutil.copy(dbfile, os.path.join(caldir,dbfile))  
+  # treat the gear file as a calibration file as well
+  shutil.copy('gear.xml', os.path.join(caldir,'gear.xml'))  
   	                       
   os.chdir(fullpath)
                   
