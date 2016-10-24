@@ -27,7 +27,7 @@
 
    <global>
       <parameter name="LCIOInputFiles"> tmp-rawdata.slcio </parameter>
-      <parameter name="GearXMLFile" value="gear.xml"/>
+      <parameter name="GearXMLFile" value="cal-files/gear.xml"/>
       <parameter name="MaxRecordNumber" value="-1"/>
       <parameter name="SkipNEvents" value="0"/>
       <parameter name="SupressCheck" value="false"/>
@@ -41,7 +41,7 @@
      <!--Initialization of a data file handler-->
      <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
      <!--Initialization of a simple conditions file handler-->
-     <parameter name="SimpleFileHandler" type="StringVec"> status_m26 cal-files/dummy/NoiseDB-M26.slcio status_m26 </parameter>
+     <parameter name="SimpleFileHandler" type="StringVec"> status_m26 cal-files/NoiseDB-M26.slcio status_m26 </parameter>
    </processor>
      
    <processor name="M26Clusterizer" type="PixelClusterizer">
@@ -85,7 +85,7 @@
      <!--Collection name for fitted tracks-->
      <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> tracks </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-     <parameter name="AlignmentDBFileName" type="string" value="cal-files/dummy/eudet-alignmentDB.slcio"/>
+     <parameter name="AlignmentDBFileName" type="string" value="cal-files/eudet-alignmentDB.slcio"/>
      <!--Enter plane numbers of bad detectors-->
      <parameter name="ExcludeDetector" type="IntVec" value="3"/>
      <!--To use only GoodQuality write 0 here-->
@@ -143,7 +143,7 @@
      <!--Track input collection-->
      <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> tracks2 </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-     <parameter name="AlignmentDBFileName" type="string" value="cal-files/dummy/eudet-alignmentDB.slcio"/>
+     <parameter name="AlignmentDBFileName" type="string" value="cal-files/eudet-alignmentDB.slcio"/>
      <!--Output root file name-->
      <parameter name="RootFileName" type="string" value="Histos.root"/>
    </processor>
@@ -153,7 +153,7 @@
      <!--Name of track collection-->
      <parameter name="TrackCollection" type="string" lcioInType="Track"> tracks2 </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-     <parameter name="AlignmentDBFileName" type="string" value="cal-files/dummy/eudet-alignmentDB.slcio"/>
+     <parameter name="AlignmentDBFileName" type="string" value="cal-files/eudet-alignmentDB.slcio"/>
      <!--Plane number of DUT along the beam line-->
      <parameter name="DUTPlane" type="int" value="3"/>
      <!--Output root file name-->

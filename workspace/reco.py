@@ -46,12 +46,12 @@ def reco_run(params):
     sys.exit(2)   
   
   # copy calibration files 
-  shutil.copytree(caldir,tmpdir+'/localdb')
+  shutil.copytree(caldir,tmpdir+'/cal-files')
   
   # run reco in tmp dir 
   os.chdir(tmpdir)
                        
-  subprocess.call('/$MARLIN/bin/Marlin reco.xml > log.txt', shell=True)
+  subprocess.call('/$MARLIN/bin/Marlin reco.xml > log.txt 2>&1', shell=True)
   
 
   # clean up tmp files 
