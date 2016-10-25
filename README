@@ -6,7 +6,7 @@ EUDET/AIDA reference telescope. Test beams are all about learning about a device
 centre of the reference telescope. The idea is to probe the device under test with charged tracks crossing the DUT at 
 known times and precisely estimated kinematic parameters. 
 
-The tbsw framework is designed to run local machines (Desktop / laptop) to enable detector groups doing their own data 
+The tbsw framework is designed to run on local machines (Desktop / laptop) to enable detector groups doing their own data 
 analysis right during the beam test (or shortly afterwards). Some effort was invested to make this as smooth and simple
 as possible. The installation of the framework is covered in INSTALL. 
 
@@ -24,7 +24,7 @@ Please replace the 'my-beam-test' part with something more specific like 'desy_o
 files and scripts in the workspace folder come with a specific version of tbsw and are not guaranteed to be backward compatible.  
 
 Raw data files (.raw or converted .slcio) should not be stored directly in your new workspace folder. The reason is that raw data 
-is of course not tied to a tbsw version. It is advised to create two folders outside of your  workspace and to collect all raw data there.
+is of course not bound to a tbsw version. It is advised to create two folders outside of your workspace and to collect all raw data there.
 
 For example: 
 
@@ -32,13 +32,13 @@ For example:
 
 >mkdir path-to-big-disk/converted-lcio/my-beam-test 
 
-Raw data from a typical one week beam test is typically <1TB and will fit on most Desktop PCs or laptops nowadays.  
+Raw data from a one week beam test is typically <1TB and fits on most Desktop PCs or laptops.  
 
 Next, go to your new workspace folder and setup all environment variables. 
 
 > . init_tbsw.sh
 
-A test beam with the EUDET/AIDA telescope results in a number of .raw files stored at some location 'rawfiles'. The conversion 
+A test beam with the EUDET/AIDA telescope results in a number of .raw files stored at 'eudaq-raw/my-beam-test'. The conversion 
 of these .raw files into .slcio files can be handled using a converter script. For help, just type 
 
 > ./converter.py -h 
@@ -49,15 +49,18 @@ The command
 
 will convert all your .raw files into converted .slio files and copies them to the assigned output folder. The converter script 
 uses the python multiprocessing module to use many processes as possible on your machine to speed up conversion. The script accepts
-wildcards and regular expressions for the input file name to specify exactly which .raw files shall be converted.  
+wildcards and regular expressions for the input file names to specify exactly which .raw files shall be converted.  
 
 After converting the raw data, we need to create steering-files for the analysis. Typically, a test beam period breaks down to 
-periods where one or more run is taken under unchanged conditions. We may call these periods 'experiments'. The phrase unchanged 
-conditions refers to conditions relevant for data reconstruction and include: 
+periods where one or more run is taken under unchanged conditions. The phrase unchanged conditions refers to conditions relevant
+for data reconstruction and include: 
 
-- for reference telescope: distances between detector planes, beam energy, trigger coincidence, m26 configuration files (->thresholds)
+- for reference telescope: distances between detector planes, beam energy, trigger coincidence, m26 configuration files (->thresholds).
 
-- for the DUT: you name it, it is your dut ;) 
+- for the DUT: you name it, it is your dut ;) You will probably want to put the name of the DUT and some important configurations. 
+
+Your logbook should contain all the needed information to edit steering files. It is strongly advised to calibrate at least a few runs to 
+make sure you really have all needed numbers in the logbook.  
 
 
 The idea is to create a full set of steering files for each of these experiments. In case of radiation length measurements, there is already
@@ -65,7 +68,7 @@ a template folder with steering files:
 
 > cp -r workspace/steering-files/x0-tb   workspace/steering-files/x0-my-dut
 
-The new steering files folder has the content: 
+The new steering-files folder has the content: 
 
 1) gear.xml                           : xml file to describe the telescope geometry 
 2) hotpixelkiller.xml                 : Marlin steering file, part of calibration 
@@ -88,9 +91,9 @@ After editing the steering files, we can proceed to run the calibration script f
 The -i option defines which run to use for calibration. The -x options defines the folder of steering files to be used. The option -c 
 sets a calibration tag, a common name for all calibration data that are created. The calibrate.py script runs a hot-pixel killer to
 mask noisy channels, performs a full alignment of the telescope and creates DQM plots. At the end, all calibration files will be 
-written to the folder 'cal-files/my-dut'. Intermediate results and root files with validation plots can be found in the folder 'tmp-runs/runXY-my-dut'. 
+written to the folder 'cal-files/my-dut'. Intermediate results and root files with DQM plots can be found in the folder 'tmp-runs/runXY-my-dut'. 
 
-After calibration is done, we can now run the full reconstruction on all runs taken under identical conditions (belonging to the same calibration 
+After the calibration is done, we can now run the full reconstruction on all runs taken under identical conditions (belonging to the same calibration 
 tag). The ranges of run numbers must(!) be written down in your logbook. 
 
 For our example, we will just run over the run also used to create the tag:  
