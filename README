@@ -43,40 +43,42 @@ The command
 
 will convert all your .raw files into converted .slio files and copies them to the assigned output folder. The converter script uses the python multiprocessing module to use many processes as possible on your machine to speed up conversion. The script accepts wildcards and regular expressions for the input file name to specify exactly which .raw files shall be converted.  
 
+After converting the raw data, we need to create steering-files for the analysis. Typically, a test beam period breaks down to periods where one or more run is taken under unchanged conditions. We may call these periods 'experiments'. The phrase unchanged conditions refers to conditions relevant for data reconstruction and include: 
 
-Before we can analyse the .slcio files, a few configuration files need to be edited. The most important one is the 'gearfile',
-an XML file used to define the geometry of the beam test telescope. Example gearfiles can be found in the folder gear-files. 
-In case the geometry was changed during the beam time, more than one gearfile is needed.
+- for reference telescope: distances between detector planes, beam energy, trigger coincidence, m26 configuration files (->thresholds)
 
-Beside the gearfile, we need additional XML steering files for the Marlin processors doing the actual data processing. 
-These steering files should be placed in the folder 'steering-files'. The folder contains steering files for the example of 
-X0 imaging, namely the file 'reco-x0-tb.xml' for reconstruction and a group of files in the folder 'x0-tb' for 
-calibration of the telescope. 
+- for the DUT: you name it, it is your dut ;) 
 
-In case of x0 imaging, no new steering files are needed and we can proceed to running the analysis. The first part of the
-analysis is to run the calibrate.py skript. This skript runs a hot-pixel killer, performs a pre alignment based on hit 
-correlations and a track based alignment using the Kalman Alignment Algorithm. The command 
 
-> .calibrate.py -i '~/path/to/converted/run12.slcio' -x 'steering-files/x0-tb' -c 'dummy'
+The idea is to create a full set of steering files for each of these experiments. In case of radiation length measurements, there is already a template folder with steering files: 
 
-creates a hot-pixel mask for all M26 sensors in the AIDA telescope and an alignment data base using data from run12. It uses 
-steering files in the folder 'steering-files/x0-tb'. The calibration files will be written to the folder 'cal-files/dummy'
-in the current workspace. The -c option defines a calibration tag other than the default tag 'dummy'. In case you have multiple
-geometries (and multiple gearfiles), you will probably want to create calibration 
-tags for each of them. 
+> cp -r workspace/steering-files/x0-tb   workspace/steering-files/x0-my-dut
 
-The calibrate.py skript populates the folder 'tmp-runs/run12-dummy' with root files containing DQM histos to check the quality of the
-calibration. It is worthwhile to have a look at these histograms to make sure the calibration was successful. In addition, text log files for 
-all parts of the calibration are created.    
+The new steering files folder has the content: 
 
-Once we have a calibration tag, we can run the actual reconstruction over one or more runs. For this the reco.py skript can be used.
-For our x0 imaging example, the command is
+1) gear.xml                           : xml file to describe the telescope geometry 
+2) hotpixelkiller.xml                 : Marlin steering file, part of calibration 
+3) correlator.xml                     : Marlin steering file, part of calibration 
+4) kalmanalign-iteration-1.xml        : Marlin steering file, part of calibration 
+5) align-config-iteration-1.cfg       : text file used to define alignment parameters 
+6) kalmanalign-iteration-2.xml        : Marlin steering file, part of calibration 
+7) align-config-iteration-2.cfg       : text file used to define alignment parameters 
+8) telescope-dqm.xml                  : Marlin steering file, part of calibration 
+9) reco.xml                           : Marlin steering file, contains all parameters for reconstruction 
 
-> ./reco.py -i '~/path/to/converted/file*.slcio' -x 'steering-files/x0-tb/reco.xml'
+All these files area readable by a text editor. But only few of them need to be modified. It typically boils down to editing the z positions of sensors in the gear.xml file, setting the particle momentum to the beam energy in Marlin steering files. Please read the comments in the files, it is pretty self explanatory.  
 
-The reco.py skript will populate the folder dqm-files with root files containing DQM histograms. The root files can be browsed directly using
-roots TBrowser. In addition, some useful root macros can be found in the 'root-scripts' folder in the workspace. For X0 studies, have a look 
-in the 'root-scripts/x0imaging' sub folder. 
+After editing the steering files, we can proceed to run the calibration script from the workspace:  
+
+> ./calibrate.py -i 'path/converted-lcio/my-beam-test/runXY.slcio' -x 'steering-files/x0-my-dut' -c 'my-dut'
+
+The -i option defines which run to use for calibration. The -x options defines the folder of steering files to be used. The option -c sets a calibration tag, a common name for all calibration data that are created. The calibrate.py script runs a hot-pixel killer to mask noisy channels, performs a full alignment of the telescope and creates DQM plots. At the end, all calibration files will be written to the folder 'cal-files/my-dut'. Intermediate results and root files with validation plots can be found in the folder 'tmp-runs/runXY-my-dut'. 
+
+After calibration is done, we can now run the full reconstruction on all runs taken under identical conditions (belonging to the same calibration tag). The ranges of run numbers must(!) be written down in your logbook. For our example, we will just run over the run also used to create the tag:  
+
+> ./reco.py -i 'path/converted-lcio/my-beam-test/runXY.slcio' -x 'steering-files/x0-my-dut/reco.xml' -c 'my-dut'
+
+The reco.py script will populate the folder 'root-files' in your workspace. The root files can be browsed directly using ROOT TBrowser. In addition, some useful root macros can be found in the 'root-scripts' folder in the workspace. For X0 studies, have a look in the 'root-scripts/x0imaging' sub folder. 
 
 
 Have fun with test beams ;)  
