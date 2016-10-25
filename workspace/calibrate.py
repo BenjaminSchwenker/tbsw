@@ -73,16 +73,16 @@ if __name__ == '__main__':
   subprocess.call('/$MARLIN/bin/Marlin correlator.xml > log-correlator.txt 2>&1', shell=True)    
   print ('[Print] Correlator done ...')           
                   		              
-  subprocess.call('/$MARLIN/bin/Marlin kalmanalign-it1.xml > log-align-it1.txt 2>&1', shell=True)     
+  subprocess.call('/$MARLIN/bin/Marlin kalmanalign-iteration-1.xml > log-align-it1.txt 2>&1', shell=True)     
   print ('[Print] Alignment first iteration done ...')               
                	               
-  subprocess.call('/$MARLIN/bin/Marlin kalmanalign-it2.xml > log-align-it2.txt 2>&1', shell=True)   
+  subprocess.call('/$MARLIN/bin/Marlin kalmanalign-iteration-2.xml > log-align-it2.txt 2>&1', shell=True)   
   print ('[Print] Alignment second iteration done ...')          
 		               
-  subprocess.call('/$MARLIN/bin/Marlin kalmanalign-it2.xml > log-align-it3.txt 2>&1', shell=True)  
+  subprocess.call('/$MARLIN/bin/Marlin kalmanalign-iteration-2.xml > log-align-it3.txt 2>&1', shell=True)  
   print ('[Print] Alignment third iteration done ...')     
 		               
-  subprocess.call('/$MARLIN/bin/Marlin kalmanalign-it2.xml > log-align-it4.txt 2>&1', shell=True)   
+  subprocess.call('/$MARLIN/bin/Marlin kalmanalign-iteration-2.xml > log-align-it4.txt 2>&1', shell=True)   
   print ('[Print] Alignment fourth iteration done ...')   
 	               
   subprocess.call('/$MARLIN/bin/Marlin telescope-dqm.xml > log-dqm.txt 2>&1', shell=True)     

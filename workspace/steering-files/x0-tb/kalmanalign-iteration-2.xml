@@ -43,9 +43,9 @@
      <!--To use only GoodQuality write 0 here-->
      <parameter name="HitQualitySelection" type="int" value="0"/>
      <!--Maximum hit residual [mm]-->
-     <parameter name="MaxResidual" type="float" value="0.4"/>
+     <parameter name="MaxResidual" type="float" value="0.2"/>
      <!--Maximum track chisq in track fit-->
-     <parameter name="MaxTrackChi2" type="float" value="100000"/>
+     <parameter name="MaxTrackChi2" type="float" value="40"/>
      <!--Maximum number of consecutive missing hits in track-->
      <parameter name="MaximumGap" type="int" value="0"/>
      <!--Maximum slope of candiate tracks in Z=0 plane (rad). Set cut to zero to deactivate.-->
@@ -53,9 +53,9 @@
      <!--Minimum number of hits in track-->
      <parameter name="MinimumHits" type="int" value="6"/>
      <!--Chi2 cut for removal of bad hits-->
-     <parameter name="OutlierChi2Cut" type="float" value="100000"/>
+     <parameter name="OutlierChi2Cut" type="float" value="20"/>
      <!--Fitting iteration for removal of bad hits-->
-     <parameter name="OutlierIterations" type="int" value="1"/>
+     <parameter name="OutlierIterations" type="int" value="2"/>
      <!--Particle charge [e]-->
      <parameter name="ParticleCharge" type="double" value="-1"/>
      <!--Particle mass [GeV]-->
@@ -71,9 +71,9 @@
      <!--Build track seeds from first plane and second plane-->
      <parameter name="PassTwo_SecondPlane" type="int" value="-1"/>
      <!--Output root file name-->
-     <parameter name="RootFileName" type="string" value="AlignTracks-it1.root"/>
+     <parameter name="RootFileName" type="string" value="AlignTracks-it2.root"/>
    </processor>
-
+   
    <processor name="DESYBeamCorrector" type="BeamEnergyCorrector">
      <!--BeamEnergyCorrector: Applies corrections to the beam energy profile-->
      <!--Track input collection-->
@@ -97,11 +97,11 @@
      <!--Track collection for alignment-->
      <parameter name="TrackCollectionName" type="string" lcioInType="Track"> aligntracks2 </parameter>
      <!--Name of the alignment config file-->
-     <parameter name="AlignConfigFileName" type="string" value="align-dut.cfg"/>
+     <parameter name="AlignConfigFileName" type="string" value="align-config-iteration-2.cfg"/>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
      <!--Root file containing alignment validation plots-->
-     <parameter name="RootFileName" type="string" value="KalmanAlign-it1.root"/>
+     <parameter name="RootFileName" type="string" value="KalmanAlign-final.root"/>
      <!--Update lcio alignmentDB using alignment results (true/false)?-->
      <parameter name="UpdateAlignment" type="bool" value="true"/>
    </processor>
