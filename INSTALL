@@ -3,7 +3,8 @@
  
 INSTALL test beam analysis software (TBSW) 
 
-The installation procedure is tested on ubuntu (10.04 or 12.04), CentOS 5 and scientific linux 6 and 7  
+The installation procedure is tested on ubuntu (14.04, 16.04), scientific linux 6 and 7. Please have a look at the Wiki page for 
+more some additional instructions from test users. Note that the Wiki page only appears after login to bitbucket. 
 
 
 0) Prerequisites: make sure the following packages are installed  
@@ -17,7 +18,7 @@ The installation procedure is tested on ubuntu (10.04 or 12.04), CentOS 5 and sc
 
 1) Install TBSW using the script install.sh 
 
-Open the script install.sh and edit the exports for variables ROOTSYS and CLHEP
+Open the script install.sh and edit the two first lines with exports for ROOTSYS and CLHEP on your machine. 
 	  
 After installation, the workspace directory contains the script init_tbsw.sh. Always source this script
 to set all needed environment variables before processing test beam data. 
