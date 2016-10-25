@@ -94,7 +94,7 @@ mask noisy channels, performs a full alignment of the telescope and creates DQM 
 written to the folder 'cal-files/my-dut'. Intermediate results and root files with DQM plots can be found in the folder 'tmp-runs/runXY-my-dut'. 
 
 After the calibration is done, we can now run the full reconstruction on all runs taken under identical conditions (belonging to the same calibration 
-tag). The ranges of run numbers must(!) be written down in your logbook. 
+tag). The ranges of run numbers taken under identical conditions and belonging to the same tag must(!) be written down in your logbook. 
 
 For our example, we will just run over the run also used to create the tag:  
 
