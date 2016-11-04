@@ -47,6 +47,11 @@ TelUnpacker::TelUnpacker() : Processor("TelUnpacker")
    registerProcessorParameter( "Modulus","How many floats are used to encode a digit",
                                m_modulus, static_cast<int > (4));
 
+   std::vector<int> initFilterIDs;
+   registerProcessorParameter ("FilterIDs",
+                              "Unpack digits from detectors having DAQ IDs in this list",
+                              _filterIDs, initFilterIDs);
+
 }
 
 //
@@ -61,12 +66,18 @@ void TelUnpacker::init() {
    // Read detector constants from gear file
    _detector.ReadGearConfiguration();    
                
+   _isActive.resize(_detector.GetNSensors(), false);
+    
+   for (auto id: _filterIDs) {
+    int ipl = _detector.GetPlaneNumber(id);
+    _isActive[ipl] = true; 
+   }
+   
    // Print set parameters
    printProcessorParams();
    
    // CPU time start
    _timeCPU = clock()/1000;
-   
 }
 
 //
@@ -128,7 +139,9 @@ void TelUnpacker::processEvent(LCEvent * evt)
        
        // Read geometry info for sensor 
        int ipl = _detector.GetPlaneNumber(sensorID);      
-       Det& adet = _detector.GetDet(ipl);
+       
+       // Skip clusters on filtered sensors
+       if (!_isActive[ipl]) continue;
         
        // Loop over digits
        FloatVec rawData = cluster->getChargeValues();

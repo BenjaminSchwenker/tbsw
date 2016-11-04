@@ -70,12 +70,17 @@ protected:
 //! Number of floats per digit 
    int m_modulus;
 
+//! Use digits from these detectors
+   std::vector<int >  _filterIDs;
  	       
  private: 
     
    // Handle to detector data sheets 
    TBDetector _detector;    
     
+   // Active flag for sensors 
+   std::vector<bool> _isActive;
+
    double _timeCPU; //!< CPU time
    int    _nRun ;   //!< Run number
    int    _nEvt ;   //!< Event number
