@@ -115,13 +115,19 @@ void TelUnpacker::processEvent(LCEvent * evt)
      // each accpeted cluster.
      LCCollectionVec * outputCollection = new LCCollectionVec(LCIO::TRACKERDATA);
      
+     streamlog_out(MESSAGE0) << "debugme0" << endl;  
+
      // Prepare a TrackerData to store reformatted raw data 
      std::map<int, TrackerDataImpl*> outputDigitsMap;
      for (auto id :  _filterIDs)  outputDigitsMap[id] = new TrackerDataImpl ; 
+  
+     streamlog_out(MESSAGE0) << "debugme0" << endl; 
      
      // Cluster loop
      for (size_t iClu = 0; iClu < inputCollection->size(); iClu++) { 
-        
+     
+       streamlog_out(MESSAGE0) << "debugme0 iClu" << iClu << endl; 
+   
        TrackerDataImpl * cluster = dynamic_cast<TrackerDataImpl* > ( inputCollection->getElementAt(iClu) );
         
        // DAQ ID for pixel detector
