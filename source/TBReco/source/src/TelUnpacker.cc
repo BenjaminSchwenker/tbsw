@@ -135,14 +135,14 @@ void TelUnpacker::processEvent(LCEvent * evt)
        // DAQ ID for pixel detector
        int sensorID = inputDecoder( cluster ) ["sensorID"];
        
-       if ( outputDigitsMap[sensorID] == nullptr ) outputDigitsMap[sensorID] = new TrackerDataImpl ; 
-       
        // Read geometry info for sensor 
        int ipl = _detector.GetPlaneNumber(sensorID);      
        
        // Skip clusters on filtered sensors
        if (!_isActive[ipl]) continue;
-        
+       
+       if ( outputDigitsMap[sensorID] == nullptr ) outputDigitsMap[sensorID] = new TrackerDataImpl ; 
+       
        // Loop over digits
        FloatVec rawData = cluster->getChargeValues();
        int nDigits = rawData.size()/m_modulus; 
