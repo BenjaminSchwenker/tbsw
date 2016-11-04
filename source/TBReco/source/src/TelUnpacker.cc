@@ -94,6 +94,8 @@ void TelUnpacker::processRunHeader(LCRunHeader * run)
 void TelUnpacker::processEvent(LCEvent * evt)
 {
    
+   streamlog_out(MESSAGE0) << "start telunpacker " << endl; 
+
    // Print event number
    if ((evt->getEventNumber())%100 == 0) streamlog_out(MESSAGE3) << "Events processed: "
                                                                    << (evt->getEventNumber())
@@ -120,7 +122,7 @@ void TelUnpacker::processEvent(LCEvent * evt)
      // Prepare a TrackerData to store reformatted raw data 
      std::map<int, TrackerDataImpl*> outputDigitsMap;
      for (auto id :  _filterIDs)  outputDigitsMap[id] = new TrackerDataImpl ; 
-  
+           
      streamlog_out(MESSAGE0) << "debugme0" << endl; 
      
      // Cluster loop
