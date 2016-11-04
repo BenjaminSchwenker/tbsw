@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////  //
 //                                                         //
-//    TelUnpackerizer - Marlin Processor                  //
+//    TelUnpackerizer - Marlin Processor                   //
 /////////////////////////////////////////////////////////  //
 
 #ifndef TelUnpacke_H

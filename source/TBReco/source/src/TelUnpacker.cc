@@ -117,14 +117,10 @@ void TelUnpacker::processEvent(LCEvent * evt)
      // each accpeted cluster.
      LCCollectionVec * outputCollection = new LCCollectionVec(LCIO::TRACKERDATA);
      
-     streamlog_out(MESSAGE0) << "debugme0" << endl;  
-
      // Prepare a TrackerData to store reformatted raw data 
      std::map<int, TrackerDataImpl*> outputDigitsMap;
      for (auto id :  _filterIDs)  outputDigitsMap[id] = new TrackerDataImpl ; 
            
-     streamlog_out(MESSAGE0) << "debugme0" << endl; 
-     
      // Cluster loop
      for (size_t iClu = 0; iClu < inputCollection->size(); iClu++) { 
      
@@ -133,20 +129,12 @@ void TelUnpacker::processEvent(LCEvent * evt)
        // DAQ ID for pixel detector
        int sensorID = inputDecoder( cluster ) ["sensorID"];
 
-       streamlog_out(MESSAGE0) << "debugme0 iClu" << iClu << " id " << sensorID  << endl; 
-       
        // Ignore digits from this sensor. 
        if ( outputDigitsMap.find(sensorID) == outputDigitsMap.end() ) continue;
-      
-       
-       // Ignore digits from this sensor. 
-       //if ( outputDigitsMap[sensorID] == nullptr ) continue;
-         
+             
        // Loop over digits
        FloatVec rawData = cluster->getChargeValues();
        int nDigits = rawData.size()/m_modulus; 
-
-       streamlog_out(MESSAGE0) << "debugme0 iClu" << iClu << " id " << sensorID << " numfloats " << rawData.size() << endl; 
          
        for (int iDigit = 0; iDigit < nDigits; iDigit++) 
        {   
@@ -168,7 +156,6 @@ void TelUnpacker::processEvent(LCEvent * evt)
         outputDigitsMap[sensorID]->chargeValues().push_back( charge );   
          
        }  
-       streamlog_out(MESSAGE0) << "debugme0 end of cluster " << endl;      
 
      } // End cluster loop 
      
