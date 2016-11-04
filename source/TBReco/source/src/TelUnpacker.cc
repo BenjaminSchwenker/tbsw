@@ -129,14 +129,11 @@ void TelUnpacker::processEvent(LCEvent * evt)
      for (size_t iClu = 0; iClu < inputCollection->size(); iClu++) { 
      
        streamlog_out(MESSAGE0) << "debugme0 iClu" << iClu << endl; 
-   
+       
        TrackerDataImpl * cluster = dynamic_cast<TrackerDataImpl* > ( inputCollection->getElementAt(iClu) );
         
        // DAQ ID for pixel detector
        int sensorID = inputDecoder( cluster ) ["sensorID"];
-       
-       // Read geometry info for sensor 
-       int ipl = _detector.GetPlaneNumber(sensorID);      
        
        // Ignore digits from this sensor. 
        if ( outputDigitsMap[sensorID] == nullptr ) continue;
