@@ -461,19 +461,27 @@ void HotPixelKiller::accumulateHits(LCEvent * evt) {
               
       _rootFile->cd("");
       _rootEventTree->Fill();
-      
+    
+      streamlog_out(MESSAGE0) << " debugme15 " << endl; 
+  
       std::string histoName; 
       
       histoName = "hnhits_sensor"+to_string( ipl );
       _histoMap[ histoName ]->Fill(nDigits);
+
+      streamlog_out(MESSAGE0) << " debugme16 " << endl; 
       
       if ( _nEvt > _eventsForMask ) {
         histoName = "hnhits_mask_sensor"+to_string( ipl );
         _histoMap[ histoName ]->Fill(nGoodDigits);
       }
+    
+      streamlog_out(MESSAGE0) << " debugme17 " << endl; 
         
     }  // End loop on detectors
     
+    streamlog_out(MESSAGE0) << " debugme18 " << endl; 
+
     // increment the event number
     ++_nEvt;
     
