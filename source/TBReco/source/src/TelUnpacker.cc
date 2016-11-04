@@ -132,15 +132,19 @@ void TelUnpacker::processEvent(LCEvent * evt)
         
        // DAQ ID for pixel detector
        int sensorID = inputDecoder( cluster ) ["sensorID"];
+
+       streamlog_out(MESSAGE0) << "debugme0 iClu" << iClu << " id " << sensorID  << endl; 
        
        // Ignore digits from this sensor. 
        if ( outputDigitsMap[sensorID] == nullptr ) continue;
 
-       streamlog_out(MESSAGE0) << "debugme0 iClu" << iClu << " id " << sensorID << endl; 
+       
        
        // Loop over digits
        FloatVec rawData = cluster->getChargeValues();
        int nDigits = rawData.size()/m_modulus; 
+
+       streamlog_out(MESSAGE0) << "debugme0 iClu" << iClu << " id " << sensorID << " numfloats " << rawData.size() << endl; 
          
        for (int iDigit = 0; iDigit < nDigits; iDigit++) 
        {   
@@ -162,7 +166,8 @@ void TelUnpacker::processEvent(LCEvent * evt)
         outputDigitsMap[sensorID]->chargeValues().push_back( charge );   
          
        }  
-     
+       streamlog_out(MESSAGE0) << "debugme0 end of cluster " << endl;      
+
      } // End cluster loop 
      
      // CellID encoding string  
