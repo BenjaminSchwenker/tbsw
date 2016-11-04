@@ -390,13 +390,20 @@ void HotPixelKiller::accumulateHits(LCEvent * evt) {
         int xPixel = static_cast<int> (sparseDigits[index * 3]);
         int yPixel = static_cast<int> (sparseDigits[index * 3 + 1]);
         float chargeValue =  sparseDigits[index * 3 + 2]; 
+
+        streamlog_out(MESSAGE0) << " debugme 0 Digit ucell " <<  xPixel << " vcell " << yPixel << " signal  " << chargeValue  << std::endl;  
+   
         int iPixel = matrixDecoder.getIndexFromXY(xPixel, yPixel);  
         
+        streamlog_out(MESSAGE0) << " debugme1 " << endl;  
+
         // If digit signal below threshold, skip it
         if ( chargeValue < _offlineZSCut ) {
           streamlog_out(MESSAGE2) << "  Signal below ZS cut. Skipping it." << std::endl; 
           continue;
         }
+
+        streamlog_out(MESSAGE0) << " debugme2 " << endl; 
         
         // Check if digit cellIDs are valid
         if ( xPixel < 0 || xPixel >= noOfXPixels || yPixel < 0 || yPixel >= noOfYPixels) 
@@ -407,7 +414,9 @@ void HotPixelKiller::accumulateHits(LCEvent * evt) {
                                     << " is out of range!! " << std::endl;    
           continue; 
         }
-        
+               
+        streamlog_out(MESSAGE0) << " debugme3 " << endl; 
+ 
         // Check if digit is a duplicate   
         for ( int id=0; id<index;  id++) {
             
@@ -422,12 +431,16 @@ void HotPixelKiller::accumulateHits(LCEvent * evt) {
             continue; 
           }     
         }  
+
+        streamlog_out(MESSAGE0) << " debugme4 " << endl; 
         
         // Estimate firing rate for pixel 
         _hitCounter[ iDetector ][ iPixel ]++; 
         
         // Count number of good hits per frame  
         if (_status[iDetector][iPixel] == 0 ) ++nGoodDigits;
+
+        streamlog_out(MESSAGE0) << " debugme5 " << endl; 
           
         // Print detailed pixel summary, for testing/debugging only !!! 
         streamlog_out(MESSAGE1) << "Digit on sensor " << sensorID 
