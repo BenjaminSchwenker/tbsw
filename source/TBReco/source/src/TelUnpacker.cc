@@ -66,13 +66,6 @@ void TelUnpacker::init() {
    // Read detector constants from gear file
    _detector.ReadGearConfiguration();    
                
-   _isActive.resize(_detector.GetNSensors(), false);
-    
-   for (auto id: _filterIDs) {
-    int ipl = _detector.GetPlaneNumber(id);
-    _isActive[ipl] = true; 
-   }
-   
    // Print set parameters
    printProcessorParams();
    
@@ -123,10 +116,9 @@ void TelUnpacker::processEvent(LCEvent * evt)
      LCCollectionVec * outputCollection = new LCCollectionVec(LCIO::TRACKERDATA);
      
      // Prepare a TrackerData to store reformatted raw data 
-     //TrackerDataImpl* outputDigits = new TrackerDataImpl ; 
-     
      std::map<int, TrackerDataImpl*> outputDigitsMap;
-      
+     for (auto id :  _filterIDs)  outputDigitsMap[id] = new TrackerDataImpl ; 
+     
      // Cluster loop
      for (size_t iClu = 0; iClu < inputCollection->size(); iClu++) { 
         
@@ -138,10 +130,8 @@ void TelUnpacker::processEvent(LCEvent * evt)
        // Read geometry info for sensor 
        int ipl = _detector.GetPlaneNumber(sensorID);      
        
-       // Skip clusters on filtered sensors
-       if (!_isActive[ipl]) continue;
-       
-       if ( outputDigitsMap[sensorID] == nullptr ) outputDigitsMap[sensorID] = new TrackerDataImpl ; 
+       // Ignore digits from this sensor. 
+       if ( outputDigitsMap[sensorID] == nullptr ) continue;
        
        // Loop over digits
        FloatVec rawData = cluster->getChargeValues();

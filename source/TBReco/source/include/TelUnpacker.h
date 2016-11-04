@@ -78,9 +78,6 @@ protected:
    // Handle to detector data sheets 
    TBDetector _detector;    
     
-   // Active flag for sensors 
-   std::vector<bool> _isActive;
-
    double _timeCPU; //!< CPU time
    int    _nRun ;   //!< Run number
    int    _nEvt ;   //!< Event number
