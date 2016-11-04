@@ -127,16 +127,7 @@ void TelUnpacker::processEvent(LCEvent * evt)
        // Read geometry info for sensor 
        int ipl = _detector.GetPlaneNumber(sensorID);      
        Det& adet = _detector.GetDet(ipl);
-       
-       int noOfXPixels = adet.GetNColumns(); 
-       int noOfYPixels = adet.GetNRows();
-       
-       MatrixDecoder matrixDecoder( noOfXPixels, noOfYPixels); 
-       
-       // Get max channel numbers 
-       int maxCol = adet.GetNColumns() - 1; 
-       int maxRow = adet.GetNRows() - 1;
-       
+        
        // Loop over digits
        FloatVec rawData = cluster->getChargeValues();
        int nDigits = rawData.size()/m_modulus; 
@@ -168,12 +159,12 @@ void TelUnpacker::processEvent(LCEvent * evt)
      CellIDEncoder<TrackerDataImpl> outputEncoder( "sensorID:6,sparsePixelType:5" , outputCollection ); 
      
      // Add output digits to output collection
-     for ( std::pair<const int, TrackerDataImpl* >iterator& cached :  outputDigitsMap ) 
+     for ( auto& cached :  outputDigitsMap ) 
      { 
-       outputEncoder["sensorID"] = cached->first;
+       outputEncoder["sensorID"] = cached.first;
        outputEncoder["sparsePixelType"] = 0;
-       outputEncoder.setCellID( cached->second );
-       outputCollection->push_back( cached->second );
+       outputEncoder.setCellID( cached.second );
+       outputCollection->push_back( cached.second );
      }
      
      // Add output collection to event
