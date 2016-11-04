@@ -128,8 +128,6 @@ void TelUnpacker::processEvent(LCEvent * evt)
      // Cluster loop
      for (size_t iClu = 0; iClu < inputCollection->size(); iClu++) { 
      
-       streamlog_out(MESSAGE0) << "debugme0 iClu" << iClu << endl; 
-       
        TrackerDataImpl * cluster = dynamic_cast<TrackerDataImpl* > ( inputCollection->getElementAt(iClu) );
         
        // DAQ ID for pixel detector
@@ -137,6 +135,8 @@ void TelUnpacker::processEvent(LCEvent * evt)
        
        // Ignore digits from this sensor. 
        if ( outputDigitsMap[sensorID] == nullptr ) continue;
+
+       streamlog_out(MESSAGE0) << "debugme0 iClu" << iClu << " id " << sensorID << endl; 
        
        // Loop over digits
        FloatVec rawData = cluster->getChargeValues();
