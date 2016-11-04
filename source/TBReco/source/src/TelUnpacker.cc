@@ -136,10 +136,12 @@ void TelUnpacker::processEvent(LCEvent * evt)
        streamlog_out(MESSAGE0) << "debugme0 iClu" << iClu << " id " << sensorID  << endl; 
        
        // Ignore digits from this sensor. 
-       if ( outputDigitsMap[sensorID] == nullptr ) continue;
-
+       if ( outputDigitsMap.find(sensorID) == outputDigitsMap.end() ) continue;
+      
        
-       
+       // Ignore digits from this sensor. 
+       //if ( outputDigitsMap[sensorID] == nullptr ) continue;
+         
        // Loop over digits
        FloatVec rawData = cluster->getChargeValues();
        int nDigits = rawData.size()/m_modulus; 
