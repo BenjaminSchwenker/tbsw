@@ -61,7 +61,7 @@ class HitFactory {
   TBHit& GetRecoHitFromID(int ihit, int ipl); 
   
   // Get Ids of hits compatible with track at (u,v) 
-  std::vector<int> GetCompatibleHitIds(int ipl, double u, double v, double distmax);
+  std::vector<int> GetCompatibleHitIds(int ipl, double u, double v, double distMaxU, double distMaxV=0);
   
   // Get total number of hits  
   int GetNHits();

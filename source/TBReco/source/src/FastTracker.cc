@@ -88,10 +88,14 @@ FastTracker::FastTracker() : Processor("FastTracker")
                               "Maximum track chisq in track fit",
                               _maxTrkChi2,  static_cast < float > (1000.) );
    
-   registerProcessorParameter("MaxResidual",  
-                             "Maximum hit residual [mm]",                       
-                             _maxResidual, static_cast <float> (0.5) );
-    
+   std::vector<float> initMaxResidual;
+   initMaxResidual.push_back(1);
+   registerProcessorParameter ("MaxResidualU", "Maximum hit residual [mm]",
+                              _maxResidualU, initMaxResidual );
+   
+   registerProcessorParameter ("MaxResidualV", "Maximum hit residual [mm]",
+                              _maxResidualV, initMaxResidual );
+   
    registerProcessorParameter("OutlierChi2Cut",  
                              "Chi2 cut for removal of bad hits",                       
                              _outlierChi2Cut, static_cast <float> (50) ); 
@@ -224,8 +228,44 @@ void FastTracker::init() {
     streamlog_out ( MESSAGE3 ) <<  "Bad steering file: zero charge set." << endl;  
     _momentum_list.push_back(4.0); 
   }
+
+  if ( (int)_maxResidualU.size() == 0 ) {
+    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter maxResidualU not set. Using 1mm for all planes." << endl;  
+    _maxResidualU.resize(_nTelPlanes, 1.0);  
+  } else if ( (int)_maxResidualU.size() != _nTelPlanes ) {
+    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Paremeter maxResidualU not set for all planes. Appending with value " 
+                               << _maxResidualU[0] << "mm." << endl; 
+    double max = _maxResidualU[0];
+    _maxResidualU.resize(_nTelPlanes, max);  
+  }
   
+  if ( (int)_maxResidualV.size() == 0 ) {
+    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter maxResidualV not set. Using 1mm for all planes." << endl;  
+    _maxResidualV.resize(_nTelPlanes, 1.0);  
+  } else if ( (int)_maxResidualV.size() != _nTelPlanes ) {
+    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Paremeter maxResidualV not set for all planes. Appending with value " 
+                               << _maxResidualV[0] << "mm." << endl; 
+    double max = _maxResidualV[0];
+    _maxResidualV.resize(_nTelPlanes, max);  
+  }
+
   
+  streamlog_out ( MESSAGE3 ) <<  "Use residual cuts for " << _nTelPlanes << " planes" << endl;
+   
+  for(int ipl=0; ipl < _nTelPlanes; ipl++) {
+    stringstream ss ;
+      
+    if(_isActive[ipl]) {
+        ss << "Active  plane" ;
+    } else {
+        ss << "Passive plane" ;
+    }
+    ss << "  ID = " << _detector.GetDet(ipl).GetDAQID()
+       << "  maxU/mm= " << setprecision(3) <<  _maxResidualU[ipl]
+       << "  maxV/mm= " << setprecision(3) <<  _maxResidualV[ipl]; 
+      
+    streamlog_out( MESSAGE3 ) <<  ss.str() << endl;
+  }
        
 }  
 
@@ -626,7 +666,7 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
              
              // Fast preselection of hit candidates compatible to   
              // predicted intersection coordinates. 
-             vector<int> HitIdVec = HitStore.GetCompatibleHitIds(ipl, u, v, _maxResidual);
+             vector<int> HitIdVec = HitStore.GetCompatibleHitIds(ipl, u, v, _maxResidualU[ipl], _maxResidualV[ipl]);
              
              // Now, we select the best hit candidate 
              int ncandhits = HitIdVec.size();
@@ -639,12 +679,15 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
                // Get reco hit at plane ipl 
                int hitid = HitIdVec[icand];
                TBHit & RecoHit = HitStore.GetRecoHitFromID(hitid, ipl);   
-               
-               // Calculate hit2track distance
                double uhit = RecoHit.GetCoord()[0][0];              
                double vhit = RecoHit.GetCoord()[1][0]; 
-               double hitdist = std::abs( u - uhit ) + std::abs( v - vhit ) ;
-                     
+
+               // Discard hits with too large residuals
+               if ( std::abs(u - uhit) >= _maxResidualU[ipl] && _maxResidualU[ipl] > 0) continue; 
+               if ( std::abs(v - vhit) >= _maxResidualV[ipl] && _maxResidualV[ipl] > 0) continue; 
+
+               // Remember hit with smallest residual 
+               double hitdist = std::abs( u - uhit ) + std::abs( v - vhit );
                if( hitdist < bestdist )
                {
                  bestdist = hitdist;
@@ -653,7 +696,7 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
              } 
               
              // Check iff good hit found 
-             if ( besthitid!=-1 && bestdist< 2*_maxResidual )  {
+             if ( besthitid!=-1 )  {
               
                // Add hit to candidate track 
                TBHit& BestHit = HitStore.GetRecoHitFromID(besthitid, ipl);

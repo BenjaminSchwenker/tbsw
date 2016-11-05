@@ -98,15 +98,15 @@ int  HitFactory::GetNHits( )
  *  A hit with coordinates (um,vm) is compatible iff lying in 
  *  a compatible sector. 
  */  
-vector<int> HitFactory::GetCompatibleHitIds(int ipl, double u, double v, double distmax)
+vector<int> HitFactory::GetCompatibleHitIds(int ipl, double u, double v, double distMaxU, double distMaxV)
 {
   
   // List of id for compatible hits 
   vector<int> CompatibleHitIds;
   
   // Compute range of compatible sectors 
-  int minSecID = floor( (u-distmax) / _SectorPitch );
-  int maxSecID = floor( (u+distmax) / _SectorPitch );
+  int minSecID = floor( (u-distMaxU) / _SectorPitch );
+  int maxSecID = floor( (u+distMaxU) / _SectorPitch );
   
   // Add all hits in all compatible sectors 
   for (int secID = minSecID; secID <= maxSecID; ++secID) {

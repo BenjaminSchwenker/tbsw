@@ -106,7 +106,11 @@ protected:
       
 //! Det Selection: Ignore hits from bad detectors
    std::vector<int >  _BadDetectorIDs;
-   
+
+//! Max residual for adding a hit to a track candidate
+   std::vector<float >  _maxResidualU;
+   std::vector<float >  _maxResidualV;   
+
 //! Hit Selection: Discard bad hits
    int _hitQualitySelect;
    
@@ -119,7 +123,6 @@ protected:
    int _secondPass_secondPlane;
    float _maxSlope; 
    float _maxTrkChi2; 
-   float _maxResidual;
    float _outlierChi2Cut; 
    int _outlierIterations;
    
