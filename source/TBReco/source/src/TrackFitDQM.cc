@@ -623,12 +623,12 @@ void TrackFitDQM::bookHistos()
     // Plot cluster shape   
 
     histoName = "hcls_charge_sensor"+to_string( ipl );
-    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, 0, 100);
+    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 400, 0, 400);
     _histoMap[ histoName ]->SetXTitle(" cluster charge [ADU]"); 
     _histoMap[ histoName ]->SetYTitle(" tracks");  
 
     histoName = "hseed_charge_sensor"+to_string( ipl );
-    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, 0, 100);
+    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 400, 0, 400);
     _histoMap[ histoName ]->SetXTitle(" seed charge [ADU]"); 
     _histoMap[ histoName ]->SetYTitle(" tracks");      
 
