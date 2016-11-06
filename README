@@ -90,15 +90,28 @@ After editing the steering files, we can proceed to run the calibration script f
 
 The -i option defines which run to use for calibration. The -x options defines the folder of steering files to be used. The option -c 
 sets a calibration tag, a common name for all calibration data that are created. The calibrate.py script runs a hot-pixel killer to
-mask noisy channels, performs a full alignment of the telescope and creates DQM plots. At the end, all calibration files will be 
-written to the folder 'cal-files/my-dut'. Intermediate results and root files with DQM plots can be found in the folder 'tmp-runs/runXY-my-dut'. 
+mask noisy channels, performs a full alignment of the telescope and creates DQM plots. A typical execution example looks like: 
+
+./calibrate.py -i data_from_kristin/run000282-merger.slcio  -x steering-files/luise-tb/ -c strip
+[Print] HotPixelKiller done ...
+[Print] Correlator done ...
+[Print] Alignment first iteration done ...
+[Print] Alignment second iteration done ...
+[Print] Alignment third iteration done ...
+[Print] Alignment fourth iteration done ...
+[Print] TelescopeDQM done.
+[Print] All calibration files written to /home/benjamin/hep/testbeam/workspace_desy_itk_luise_test/cal-files/strip
+
+You can see that all needed calibration files aregrouped into a folder 'strip' residing in 'cal-files'. Also note that a folder 'tmp-runs/run000282-merger-strip' gets created containing log files and DQM root files with many interesting plots to check the success of the calibration. 
 
 After the calibration is done, we can now run the full reconstruction on all runs taken under identical conditions (belonging to the same calibration 
 tag). The ranges of run numbers taken under identical conditions and belonging to the same tag must(!) be written down in your logbook. 
 
-For our example, we will just run over the run also used to create the tag:  
+For our example, we will just run over the run also used to create the tag: 
 
-> ./reco.py -i 'path/converted-lcio/my-beam-test/runXY.slcio' -x 'steering-files/x0-my-dut/reco.xml' -c 'my-dut'
+./reco.py -i data_from_kristin/run000282-merger.slcio  -x steering-files/luise-tb/reco.xml -c strip
+
+The reco.py script will loop once over all events in the file input file and apply the reconstruction processors defined in the xml file 'steering-files/luise-tb/reco.xml' to each event. The string '-c strip' means that calibration results stored in 'cal-files/strip' will be used. 
 
 The reco.py script will populate the folder 'root-files' in your workspace. The root files can be browsed directly using ROOT TBrowser.  
 Some useful root macros can be found in the 'root-scripts' folder in the workspace. For X0 studies, have a look in the 'root-scripts/x0imaging' 
