@@ -113,7 +113,9 @@ For our example, we will just run over the run also used to create the tag:
 
 ./reco.py -i data_from_kristin/run000282-merger.slcio  -x steering-files/luise-tb/reco.xml -c strip
 
-The reco.py script will loop once over all events in the file input file and apply the reconstruction processors defined in the xml file 'steering-files/luise-tb/reco.xml' to each event. The string '-c strip' means that calibration results stored in 'cal-files/strip' will be used. 
+The reco.py script will loop once over all events in the file input file and apply the reconstruction 
+processors defined in the xml file 'steering-files/luise-tb/reco.xml' to each event. The string '-c strip' 
+means that calibration results stored in 'cal-files/strip' will be used. 
 
 The reco.py script will populate the folder 'root-files' in your workspace. The root files can be browsed directly using ROOT TBrowser.  
 Some useful root macros can be found in the 'root-scripts' folder in the workspace. For X0 studies, have a look in the 'root-scripts/x0imaging' 
