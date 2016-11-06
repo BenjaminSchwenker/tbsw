@@ -180,30 +180,40 @@ void DigitalHitMaker::processEvent(LCEvent * evt)
       cov_u = pow(_SigmaU1,2);
     } 
     else if ( myCluster.getUSize() == 2) {   
-      double u1 = Det.GetPixelCenterCoordU(myCluster.getVStart(), myCluster.getUSize()-1); 
+      double u1 = Det.GetPixelCenterCoordU(myCluster.getVStart(), myCluster.getUStart()+1); 
       u = 0.5*(u0 + u1);                  
       cov_u = pow(_SigmaU2,2); 
     } 
-    else { 
-      double u1 = Det.GetPixelCenterCoordU(myCluster.getVStart(), myCluster.getUSize()-1); 
+    else if ( myCluster.getUSize() == 3)  { 
+      double u1 = Det.GetPixelCenterCoordU(myCluster.getVStart(), myCluster.getUStart()+2); 
       u = 0.5*(u0 + u1);  
       cov_u = pow(_SigmaU3,2);
-    } 
+    } else {
+      clsType = 1; 
+      double u1 = Det.GetPixelCenterCoordU(myCluster.getVStart(), myCluster.getUStart() + myCluster.getUSize() - 1 ); 
+      u = 0.5*(u0 + u1);  
+      cov_u = pow(_SigmaU3,2); 
+    }
     
     if ( myCluster.getVSize() == 1) {
       v = v0; 
       cov_v = pow(_SigmaV1,2);
     } 
     else if ( myCluster.getVSize() == 2) {
-      double v1 = Det.GetPixelCenterCoordV(myCluster.getVSize()-1, myCluster.getUStart()); 
+      double v1 = Det.GetPixelCenterCoordV(myCluster.getVStart()+1, myCluster.getUStart()); 
       v = 0.5*(v0 + v1);
       cov_v = pow(_SigmaV2,2);
     } 
-    else {
-      double v1 = Det.GetPixelCenterCoordV(myCluster.getVSize()-1, myCluster.getUStart()); 
+    else if ( myCluster.getVSize() == 3) {
+      double v1 = Det.GetPixelCenterCoordV(myCluster.getVStart()+2, myCluster.getUStart()); 
       v = 0.5*(v0 + v1);
       cov_v = pow(_SigmaV3,2);
-    } 
+    } else {
+      clsType = 1;
+      double v1 = Det.GetPixelCenterCoordV(myCluster.getVStart() + myCluster.getVSize() - 1, myCluster.getUStart()); 
+      v = 0.5*(v0 + v1);
+      cov_v = pow(_SigmaV3,2);
+    }
          
     TBHit hit(sensorID, u, v, cov_u, cov_v, clsType);
       
