@@ -70,8 +70,10 @@ protected:
 //! Sigma values for cluster shapes
    double _SigmaU1;
    double _SigmaU2;
+   double _SigmaU3;
    double _SigmaV1;
-   double _SigmaV2;   
+   double _SigmaV2;  
+   double _SigmaV3; 
 
  private:
    

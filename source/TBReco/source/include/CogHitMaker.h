@@ -67,9 +67,14 @@ protected:
    
 //! Output hit collection name
    std::string  _hitCollectionName;
-   
-//! Cluster quality selection - use only good clusters
-   int _clusterQualitySelect;
+
+//! Sigma values for cluster shapes
+   double _SigmaU1;
+   double _SigmaU2;
+   double _SigmaU3;
+   double _SigmaV1;
+   double _SigmaV2;  
+   double _SigmaV3; 
    
  private:
    

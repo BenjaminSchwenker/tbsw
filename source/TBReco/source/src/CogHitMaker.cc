@@ -57,11 +57,36 @@ CogHitMaker::CogHitMaker() : Processor("CogHitMaker")
                             "Name of hit collection",
                             _hitCollectionName, 
                             string("hit"));
-   
-   registerProcessorParameter("ClusterQualitySelection",
-                              "To use only kGoodQuality write 0 here",
-                              _clusterQualitySelect, 
-                              static_cast<int> ( 0 ));
+
+   registerProcessorParameter ("SigmaU1", 
+                               "SigmaU for cluster with one uCell contributing [mm]",
+                               _SigmaU1,  
+                               static_cast < double > (1)); 
+
+   registerProcessorParameter ("SigmaU2", 
+                               "SigmaU for cluster with two uCells contributing [mm]",
+                               _SigmaU2,  
+                               static_cast < double > (1));  
+
+   registerProcessorParameter ("SigmaU3", 
+                               "SigmaU for cluster with three or more uCells contributing [mm]",
+                               _SigmaU3,  
+                               static_cast < double > (1));  
+
+   registerProcessorParameter ("SigmaV1", 
+                               "SigmaV for cluster with one vCell contributing [mm]",
+                               _SigmaV1,  
+                               static_cast < double > (1)); 
+
+   registerProcessorParameter ("SigmaV2", 
+                               "SigmaV for cluster with two vCells contributing [mm]",
+                               _SigmaV2,  
+                               static_cast < double > (1));  
+    
+   registerProcessorParameter ("SigmaV3", 
+                               "SigmaV for cluster with three or more vCells contributing [mm]",
+                               _SigmaV3,  
+                               static_cast < double > (1));
    
 }
 
@@ -140,7 +165,8 @@ void CogHitMaker::processEvent(LCEvent * evt)
     
     streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID  << endl; 
     
-      
+    PixelCluster myCluster(cluster->getTrackerData());  
+       
     // Calculate hit coord in local frame in mm
     float u = 0; 
     float v = 0;  
@@ -167,8 +193,16 @@ void CogHitMaker::processEvent(LCEvent * evt)
       v /= total; 
     } 
       
-    double cov_u = pow(Det.GetResolutionU(),2);
-    double cov_v = pow(Det.GetResolutionV(),2);   
+    double cov_u{0.0} , cov_v {0.0};    
+
+    if ( myCluster.getUSize() == 1) cov_u = pow(_SigmaU1,2);
+    else if ( myCluster.getUSize() == 2) cov_u = pow(_SigmaU2,2); 
+    else cov_u = pow(_SigmaU3,2);
+     
+    if ( myCluster.getVSize() == 1) cov_v = pow(_SigmaV1,2);
+    else if ( myCluster.getVSize() == 2) cov_v = pow(_SigmaV2,2);
+    else cov_v = pow(_SigmaV3,2);
+     
        
     TBHit hit(sensorID, u, v, cov_u, cov_v, 0);
       

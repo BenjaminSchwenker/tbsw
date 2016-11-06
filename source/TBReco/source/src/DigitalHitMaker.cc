@@ -62,22 +62,32 @@ DigitalHitMaker::DigitalHitMaker() : Processor("DigitalHitMaker")
    registerProcessorParameter ("SigmaU1", 
                                "SigmaU for cluster with one uCell contributing [mm]",
                                _SigmaU1,  
-                               static_cast < double > (0)); 
+                               static_cast < double > (1)); 
 
    registerProcessorParameter ("SigmaU2", 
                                "SigmaU for cluster with two uCells contributing [mm]",
                                _SigmaU2,  
-                               static_cast < double > (0));  
+                               static_cast < double > (1));  
+
+   registerProcessorParameter ("SigmaU3", 
+                               "SigmaU for cluster with three or more uCells contributing [mm]",
+                               _SigmaU3,  
+                               static_cast < double > (1));  
 
    registerProcessorParameter ("SigmaV1", 
                                "SigmaV for cluster with one vCell contributing [mm]",
                                _SigmaV1,  
-                               static_cast < double > (0)); 
+                               static_cast < double > (1)); 
 
    registerProcessorParameter ("SigmaV2", 
                                "SigmaV for cluster with two vCells contributing [mm]",
                                _SigmaV2,  
-                               static_cast < double > (0));  
+                               static_cast < double > (1));  
+    
+   registerProcessorParameter ("SigmaV3", 
+                               "SigmaV for cluster with three or more vCells contributing [mm]",
+                               _SigmaV3,  
+                               static_cast < double > (1));
    
 }
 
@@ -163,7 +173,7 @@ void DigitalHitMaker::processEvent(LCEvent * evt)
     double u0 = Det.GetPixelCenterCoordU(myCluster.getVStart(), myCluster.getUStart());
     double v0 = Det.GetPixelCenterCoordV(myCluster.getVStart(), myCluster.getUStart()); 
     
-    double u, v, cov_u, cov_v = 0; 
+    double u{0.0}, v{0.0}, cov_u{0.0}, cov_v{0.0}; 
          
     if ( myCluster.getUSize() == 1) {
       u = u0;
@@ -174,12 +184,9 @@ void DigitalHitMaker::processEvent(LCEvent * evt)
       u = 0.5*(u0 + u1);                  
       cov_u = pow(_SigmaU2,2); 
     } 
-    else {
-      // Cluster is too large, probably noisy. 
-      // Mark it as bad 
-      clsType = 1;
+    else { 
       u = u0;
-      cov_u = pow(_SigmaU1,2);
+      cov_u = pow(_SigmaU3,2);
     } 
     
     if ( myCluster.getVSize() == 1) {
@@ -192,14 +199,10 @@ void DigitalHitMaker::processEvent(LCEvent * evt)
       cov_v = pow(_SigmaV2,2);
     } 
     else {
-      // Cluster is too large, probably noisy. 
-      // Mark it as bad 
-      clsType = 1;
       v = v0; 
-      cov_v = pow(_SigmaV1,2);
+      cov_v = pow(_SigmaV3,2);
     } 
-        
-       
+         
     TBHit hit(sensorID, u, v, cov_u, cov_v, clsType);
       
     // Make LCIO TrackerHit
