@@ -179,13 +179,14 @@ void DigitalHitMaker::processEvent(LCEvent * evt)
       u = u0;
       cov_u = pow(_SigmaU1,2);
     } 
-    else if ( myCluster.getUSize() == 2) {
-      double u1 = Det.GetPixelCenterCoordU(myCluster.getVStart(), myCluster.getUStart()+1);    
+    else if ( myCluster.getUSize() == 2) {   
+      double u1 = Det.GetPixelCenterCoordU(myCluster.getVStart(), myCluster.getUSize()-1); 
       u = 0.5*(u0 + u1);                  
       cov_u = pow(_SigmaU2,2); 
     } 
     else { 
-      u = u0;
+      double u1 = Det.GetPixelCenterCoordU(myCluster.getVStart(), myCluster.getUSize()-1); 
+      u = 0.5*(u0 + u1);  
       cov_u = pow(_SigmaU3,2);
     } 
     
@@ -194,12 +195,13 @@ void DigitalHitMaker::processEvent(LCEvent * evt)
       cov_v = pow(_SigmaV1,2);
     } 
     else if ( myCluster.getVSize() == 2) {
-      double v1 = Det.GetPixelCenterCoordV(myCluster.getVStart()+1, myCluster.getUStart()); 
+      double v1 = Det.GetPixelCenterCoordV(myCluster.getVSize()-1, myCluster.getUStart()); 
       v = 0.5*(v0 + v1);
       cov_v = pow(_SigmaV2,2);
     } 
     else {
-      v = v0; 
+      double v1 = Det.GetPixelCenterCoordV(myCluster.getVSize()-1, myCluster.getUStart()); 
+      v = 0.5*(v0 + v1);
       cov_v = pow(_SigmaV3,2);
     } 
          
