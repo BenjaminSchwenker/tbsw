@@ -272,23 +272,43 @@ void TrackFitDQM::processEvent(LCEvent * evt)
        
       if ( Cluster.getUSize() == 1 )  {
         histoName = "hpull_resU1_sensor"+to_string( ipl );
-        _histoMap[ histoName ]->Fill( pull_u );  
-      }  
-        
-      if ( Cluster.getUSize() == 2 )  {
+        _histoMap[ histoName ]->Fill( pull_u ); 
+
+        histoName = "hresU1_sensor"+to_string( ipl );
+        _histoMap[ histoName ]->Fill( du ); 
+      } else if ( Cluster.getUSize() == 2 )  {
         histoName = "hpull_resU2_sensor"+to_string( ipl );
-        _histoMap[ histoName ]->Fill( pull_u );  
-      }  
+        _histoMap[ histoName ]->Fill( pull_u ); 
+        
+        histoName = "hresU2_sensor"+to_string( ipl );
+        _histoMap[ histoName ]->Fill( du );   
+      } else {
+        histoName = "hpull_resU3_sensor"+to_string( ipl );
+        _histoMap[ histoName ]->Fill( pull_u ); 
+        
+        histoName = "hresU3_sensor"+to_string( ipl );
+        _histoMap[ histoName ]->Fill( du );   
+      } 
       
       if ( Cluster.getVSize() == 1 )  {
         histoName = "hpull_resV1_sensor"+to_string( ipl );
-        _histoMap[ histoName ]->Fill( pull_v );  
-      }  
-      
-      if ( Cluster.getVSize() == 2 )  {
+        _histoMap[ histoName ]->Fill( pull_v ); 
+        
+        histoName = "hresV1_sensor"+to_string( ipl );
+        _histoMap[ histoName ]->Fill( dv );   
+      }  else if ( Cluster.getVSize() == 2 )  {
         histoName = "hpull_resV2_sensor"+to_string( ipl );
-        _histoMap[ histoName ]->Fill( pull_v );  
-      }  
+        _histoMap[ histoName ]->Fill( pull_v ); 
+
+        histoName = "hresV2_sensor"+to_string( ipl );
+        _histoMap[ histoName ]->Fill( dv );  
+      }  else {
+        histoName = "hpull_resV3_sensor"+to_string( ipl );
+        _histoMap[ histoName ]->Fill( pull_v ); 
+
+        histoName = "hresV3_sensor"+to_string( ipl );
+        _histoMap[ histoName ]->Fill( dv );    
+      }
       
       histoName = "hsigma_clu_u_sensor"+to_string( ipl );
       _histoMap[ histoName ]->Fill(hit_sigma_u); 
@@ -652,25 +672,72 @@ void TrackFitDQM::bookHistos()
     _histoMap[ histoName ]->SetXTitle(" cluster size v [cells]"); 
     _histoMap[ histoName ]->SetYTitle(" tracks");  
 
+    histoName = "hresU1_sensor"+to_string( ipl );
+    max = 10*safetyFactor*Sensor.GetPitchU(); 
+    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 1000, -max, +max);
+    _histoMap[ histoName ]->SetXTitle("u residual (uSize=1) [mm]"); 
+    _histoMap[ histoName ]->SetYTitle("tracks"); 
+
+    histoName = "hresU2_sensor"+to_string( ipl );
+    max = 10*safetyFactor*Sensor.GetPitchU(); 
+    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 1000, -max, +max);
+    _histoMap[ histoName ]->SetXTitle("u residual (uSize=2) [mm]"); 
+    _histoMap[ histoName ]->SetYTitle("tracks"); 
+
+    histoName = "hresU3_sensor"+to_string( ipl );
+    max = 10*safetyFactor*Sensor.GetPitchU(); 
+    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 1000, -max, +max);
+    _histoMap[ histoName ]->SetXTitle("u residual (uSize>2) [mm]"); 
+    _histoMap[ histoName ]->SetYTitle("tracks"); 
+
+
     histoName = "hpull_resU1_sensor"+to_string( ipl );
     _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, -4, +4);
-    _histoMap[ histoName ]->SetXTitle(" pull u residual (one cell clusters)"); 
+    _histoMap[ histoName ]->SetXTitle(" pull u residual (uSize=1)"); 
     _histoMap[ histoName ]->SetYTitle(" tracks");    
     
     histoName = "hpull_resU2_sensor"+to_string( ipl );
     _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, -4, +4);
-    _histoMap[ histoName ]->SetXTitle(" pull u residual (two cell clusters)"); 
+    _histoMap[ histoName ]->SetXTitle(" pull u residual (uSize=2)"); 
     _histoMap[ histoName ]->SetYTitle(" tracks");    
+
+    histoName = "hpull_resU3_sensor"+to_string( ipl );
+    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, -4, +4);
+    _histoMap[ histoName ]->SetXTitle(" pull u residual (uSize>2)"); 
+    _histoMap[ histoName ]->SetYTitle(" tracks");   
+
+    histoName = "hresV1_sensor"+to_string( ipl );
+    max = 10*safetyFactor*Sensor.GetPitchV(); 
+    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 1000, -max, +max);
+    _histoMap[ histoName ]->SetXTitle("v residual (vSize=1) [mm]"); 
+    _histoMap[ histoName ]->SetYTitle("tracks"); 
+
+    histoName = "hresV2_sensor"+to_string( ipl );
+    max = 10*safetyFactor*Sensor.GetPitchV(); 
+    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 1000, -max, +max);
+    _histoMap[ histoName ]->SetXTitle("v residual (vSize=2) [mm]"); 
+    _histoMap[ histoName ]->SetYTitle("tracks"); 
+    
+    histoName = "hresV3_sensor"+to_string( ipl );
+    max = 10*safetyFactor*Sensor.GetPitchV(); 
+    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 1000, -max, +max);
+    _histoMap[ histoName ]->SetXTitle("v residual (vSize>2) [mm]"); 
+    _histoMap[ histoName ]->SetYTitle("tracks"); 
 
     histoName = "hpull_resV1_sensor"+to_string( ipl );
     _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, -4, +4);
-    _histoMap[ histoName ]->SetXTitle(" pull v residual (one cell clusters)"); 
+    _histoMap[ histoName ]->SetXTitle(" pull v residual (vSize=1)"); 
     _histoMap[ histoName ]->SetYTitle(" tracks");    
     
     histoName = "hpull_resV2_sensor"+to_string( ipl );
     _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, -4, +4);
-    _histoMap[ histoName ]->SetXTitle(" pull v residual (two cell clusters)"); 
+    _histoMap[ histoName ]->SetXTitle(" pull v residual (vSize=2)"); 
     _histoMap[ histoName ]->SetYTitle(" tracks");    
+   
+    histoName = "hpull_resV3_sensor"+to_string( ipl );
+    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, -4, +4);
+    _histoMap[ histoName ]->SetXTitle(" pull v residual (vSize>2)"); 
+    _histoMap[ histoName ]->SetYTitle(" tracks"); 
          
     // Plot residual profiles 
     
