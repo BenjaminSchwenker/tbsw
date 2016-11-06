@@ -102,7 +102,9 @@ mask noisy channels, performs a full alignment of the telescope and creates DQM 
 [Print] TelescopeDQM done.
 [Print] All calibration files written to /home/benjamin/hep/testbeam/workspace_desy_itk_luise_test/cal-files/strip
 
-You can see that all needed calibration files aregrouped into a folder 'strip' residing in 'cal-files'. Also note that a folder 'tmp-runs/run000282-merger-strip' gets created containing log files and DQM root files with many interesting plots to check the success of the calibration. 
+You can see that all needed calibration files aregrouped into a folder 'strip' residing in 'cal-files'. 
+Also note that a folder 'tmp-runs/run000282-merger-strip' gets created containing log files and DQM root
+files with many interesting plots to check the success of the calibration. 
 
 After the calibration is done, we can now run the full reconstruction on all runs taken under identical conditions (belonging to the same calibration 
 tag). The ranges of run numbers taken under identical conditions and belonging to the same tag must(!) be written down in your logbook. 
