@@ -11,7 +11,6 @@
 // DEPFETTrackTools includes
 #include "TBTrack.h"
 #include "TBHit.h"
-#include "GenericTrackFitter.h"
 #include "TBKalmanMSC.h"
 #include "TrackInputProvider.h"
 #include "Utilities.h"
@@ -59,10 +58,16 @@ X0ImageProducer::X0ImageProducer() : Processor("X0ImageProducer")
 // Input collections 
    
   registerInputCollection( LCIO::TRACK,
-                           "TrackCollection" ,
-                           "Name of track collection"  ,
-                           _trackColName ,
-                           std::string("tracks") ) ;    
+                           "DownStreamTrackCollection" ,
+                           "Name of downstream track collection"  ,
+                           _downStreamTrackColName ,
+                           std::string("down_tracks") ) ;  
+
+  registerInputCollection( LCIO::TRACK,
+                           "UpStreamTrackCollection" ,
+                           "Name of upstream track collection"  ,
+                           _upStreamTrackColName ,
+                           std::string("up_tracks") ) ;  
   
   // Processor parameters:
   
@@ -77,7 +82,11 @@ X0ImageProducer::X0ImageProducer() : Processor("X0ImageProducer")
   registerProcessorParameter( "RootFileName",
                                "Output root file name",
                                _rootFileName, std::string("X0.root"));
- 
+
+  registerProcessorParameter ("MaxDist",
+                              "Maximum distance between up and downstream tracks at dut plane [mm]",
+                              _maxDist,  static_cast < double > (0.1));
+
 }
 
 //
@@ -90,8 +99,7 @@ void X0ImageProducer::init() {
    _nEvt = 0 ;
    _timeCPU = clock()/1000 ;
    
-   // Initialize all the counters
-   _noOfTracks = 0;
+   
         
    // Print set parameters
    printProcessorParams();
@@ -149,113 +157,182 @@ void X0ImageProducer::processEvent(LCEvent * evt)
   // Get telescope track collection
   //
   
-  LCCollection* trackcol = NULL;
-  bool isTrackok = true;   
+  LCCollection* downtrackcol = 0;   
   try {
-    trackcol = evt->getCollection( _trackColName ) ;
+    downtrackcol = evt->getCollection( _downStreamTrackColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
     streamlog_out(MESSAGE2) << "Not able to get collection "
-                            << _trackColName
+                            << _downStreamTrackColName
+                            << " from event " << evt->getEventNumber()
+                            << " in run " << evt->getRunNumber()  << endl << endl;   
+     
+    throw SkipEventException(this);
+  }  
+  
+  LCCollection* uptrackcol = 0;
+  try {
+    uptrackcol = evt->getCollection( _upStreamTrackColName ) ;
+  } catch (lcio::DataNotAvailableException& e) {
+    streamlog_out(MESSAGE2) << "Not able to get collection "
+                            << _upStreamTrackColName
                             << " from event " << evt->getEventNumber()
                             << " in run " << evt->getRunNumber()  << endl << endl;   
     
-    isTrackok = false; 
-  }  
+    throw SkipEventException(this);
+  } 
   
   // Configure Kalman track fitter
-  GenericTrackFitter TrackFitter(_detector);
   TBKalmanMSC TrackFitterMSC(_detector);
-  TrackFitter.SetNumIterations(2);
-   
+  TrackInputProvider TrackLCIOReader;  
   
   // Store tracks 
-  std::vector< TBTrack > TrackStore;
-      
-  int nTrack = 0;
-  if(isTrackok) nTrack = trackcol->getNumberOfElements();
-  if ( nTrack == 0)  ++_noOfEventWOInputTrack;  
+  std::vector< TBTrack > downTrackStore;    
     
-  // Loop over tracks in input track collection and 
-  // fill root trees.
+  // Loop over tracks in input track collection
     
-  TrackInputProvider TrackLCIOReader;  
+  int nDownTracks = downtrackcol->getNumberOfElements();  
+  for(int itrk=0; itrk< nDownTracks ; itrk++) {
     
-  for(int itrk=0; itrk< nTrack ; itrk++) {
-     
     // Retrieve track from LCIO 
-    Track * lciotrk = dynamic_cast<Track*> (trackcol->getElementAt(itrk));
+    Track * lciotrk = dynamic_cast<Track*> (downtrackcol->getElementAt(itrk));
       
     // Convert LCIO -> TB track  
     TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, _detector ); 
-      
+    
     // Refit track in nominal alignment
-    bool trkerr = TrackFitter.Fit(trk);
+    bool trkerr = TrackFitterMSC.ProcessTrack(trk, 1, 0);
     if ( trkerr ) {
       streamlog_out ( MESSAGE1 ) << "Fit failed. Skipping track!" << endl;
       continue;
     } 
-         
-    TrackStore.push_back(trk);   
-      
+          
+    downTrackStore.push_back(trk);   
   }
+
+  // Store tracks 
+  std::vector< TBTrack > upTrackStore;    
+    
+  // Loop over tracks in input track collection
+    
+  int nUpTracks = uptrackcol->getNumberOfElements();  
+  for(int itrk=0; itrk< nUpTracks ; itrk++) {
+     
+    // Retrieve track from LCIO 
+    Track * lciotrk = dynamic_cast<Track*> (uptrackcol->getElementAt(itrk));
+      
+    // Convert LCIO -> TB track  
+    TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, _detector ); 
+
+    // Refit track in nominal alignment
+    bool trkerr = TrackFitterMSC.ProcessTrack(trk, -1, 0);  
+    if ( trkerr ) {
+      streamlog_out ( MESSAGE1 ) << "Fit failed. Skipping track!" << endl;
+      continue;
+    }  
+    
+    upTrackStore.push_back(trk);   
+  }
+  
+  
+  // 
+  // Match upstream and downstream tracks at DUT plane 
+  int nMatch=0;	
+  vector< vector<int> > up2down(upTrackStore.size() );
+  vector< vector<int> > down2up(downTrackStore.size() );
+   
+  // Continue matching tracks and hits until all tracks are matched 
+  // or no hit is close enough to a track!! 
+  double distmin=numeric_limits<double >::max();
+   
+  Det dut = _detector.GetDet(_idut);
+
+  do{
+    int bestup=-1;
+    int bestdown=-1;
+    
+    distmin=numeric_limits<double >::max();
+      
+    for(int iup=0;iup<(int)upTrackStore.size(); iup++)
+    {
+            
+      // If matched, skip track 
+      if ( up2down[iup].size() >= 0 ) continue;    
+      
+      for(int idown=0; idown< (int)downTrackStore.size() ; idown++)
+      {
+
+        // If matched, skip track 
+        if (down2up[idown].size() >= 0) continue; 
+        
+        TBTrack& uptrack = upTrackStore[iup];
+        TBTrack& downtrack = downTrackStore[idown];
+        
+        // In and OutStates of the reconstructed Track at the current detector
+        TBTrackState& inState=downtrack.GetTE(_idut).GetState();
+        TBTrackState& OutState=upTrack.GetTE(_idut).GetState(); 
+        
+        double u_in = InState.GetPars()[2][0];
+        double v_in = InState.GetPars()[3][0];
+        double u_out = OutState.GetPars()[2][0];
+        double v_out = OutState.GetPars()[3][0];
+        
+        double hitdist = std::abs(u_in-u_out) + std::abs(v_in-v_out);
+                      
+        if( hitdist<distmin )
+        {
+          distmin=hitdist;
+          bestup=iup;
+          bestdown=idown;
+        }
+      }
+    }
+    
+    streamlog_out(MESSAGE2) << "In matching loop: best up " << bestup << " to best down " << bestdown << endl; 
+    streamlog_out(MESSAGE2) << "  distmin: " <<  distmin  << endl; 
+    
+    // Check if best match is good enough
+    if( distmin < _maxDist  )
+    {   
+
+      streamlog_out(MESSAGE2) << "  match found!!!"   << endl;
+      nMatch++;
+      up2down[bestup].push_back( bestdown );
+      down2up[bestdown].push_back( bestup );     
+    } 
+  
+  } // End matching loop
+  while( distmin < _maxDist );
   
   // Fill event tree
   _rootRunNumber = evt->getRunNumber();  
   _rootEventNumber = evt->getEventNumber();  
-  _rootNTelTracks = TrackStore.size();  
+  _rootnUpTracks = upTrackStore.size();  
+  _rootnDownTracks = downTrackStore.size(); 
+  _rootNMatched = nMatch; 
   _rootFile->cd("");
   _rootEventTree->Fill();    
+
+ 
+
+  for(int iup=0;iup<(int)upTrackStore.size(); iup++)
+  {
   
-  // Analyze tracks   
-  int nsensor = _detector.GetNSensors();   
+    // Check upstream track is matched 
+    if ( up2down[iup].size() != 1 ) continue; 
+    
+    TBTrack& uptrack = upTrackStore[iup];
+    TBTrack& downtrack = downTrackStore[ up2down[iup][0] ];
 
-  for(int itrk=0;itrk<(int)TrackStore.size(); ++itrk) {
-     
-    TBTrack& trk = TrackStore[itrk];
-     
-    TBTrack ForwardTrack(trk);
-    TBTrack BackwardTrack(trk); 
-    
-    //Forward and backward direction
-    int forwarddir = 1;
-    int backwarddir =-1;
-    //No bias: Hit on central plane won't be used
-    bool forwardbias = 0;
-    bool backwardbias = 0;
-    
-    // Try to run a forward Kalman Filter (without bias) on ForwardTrack
-    //
-    // Only the hits on sensor planes 0,1,2 (first telescope arm) are used
-    for( int ipl = 3; ipl < nsensor; ipl++ )
-    {
-	ForwardTrack.GetTE(ipl).RemoveHit();
-    }
-    // Fit the track with the hits that are left (in this case the hits in the upstream telescope arm)
-    TrackFitterMSC.ProcessTrack(ForwardTrack, forwarddir, forwardbias);
-
-    // Try to run a backward Kalman Filter (without bias) on BackwardTrack
-    //
-    // Only the hits on sensors planes nsensor-3, nsensor-2, nsensor-1 (second telescope arm will be used)
-    for( int ipl = 0; ipl < nsensor-3; ipl++ )
-    {
-	BackwardTrack.GetTE(ipl).RemoveHit();
-    }
-     
-    // Fit the track with the hits that are left (in this case the hits in the upstream telescope arm)
-    TrackFitterMSC.ProcessTrack(BackwardTrack, backwarddir, backwardbias);   
-    
     // comboChi2 is chi2 combination of track in upstream and downstream telescope arm
-    double comboChi2 = ForwardTrack.GetChiSqu()+BackwardTrack.GetChiSqu(); 
+    double comboChi2 = uptrack.GetChiSqu()+downtrack.GetChiSqu(); 
     
     
     //MSC Analysis for the reconstructed angles
     //Here we use the In and Out State and the GetScatterKinks function of the TBKalmanMSC Class
-    
-    Det dut = _detector.GetDet(_idut);
      
     // In and OutStates of the reconstructed Track at the current detector
-    TBTrackState& InState=ForwardTrack.GetTE(_idut).GetState();
-    TBTrackState& OutState=BackwardTrack.GetTE(_idut).GetState(); 
+    TBTrackState& InState=uptrack.GetTE(_idut).GetState();
+    TBTrackState& OutState=downtrack.GetTE(_idut).GetState(); 
     
     //Angles and angle errors
     HepMatrix theta(2,1,0);
@@ -265,33 +342,26 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     
     // Get the track parameters of the fitted track on the current sensor
     // The u and v positions are needed for a position-resolved measurement
-    HepMatrix p = trk.GetTE(_idut).GetState().GetPars();
     HepMatrix p_in = InState.GetPars();
     HepMatrix p_out = OutState.GetPars();
      	
     // Fill root variables 
     _rootDaqID = dut.GetDAQID(); 
     _rootPlaneID = _idut;
-    _root_momentum = trk.GetMomentum(); 
-    _rootTrackHits = trk.GetNumHits();
-    _rootTrackChi2 = trk.GetChiSqu(); 
-    _rootTrackProb = TMath::Prob(trk.GetChiSqu(),trk.GetNDF());
-    _rootTrackProbUp = TMath::Prob(ForwardTrack.GetChiSqu(),ForwardTrack.GetNDF());
-    _rootTrackProbDown = TMath::Prob(BackwardTrack.GetChiSqu(),BackwardTrack.GetNDF());
-    _rootTrackProbCombo = TMath::Prob( comboChi2 ,ForwardTrack.GetNDF()+BackwardTrack.GetNDF());
+    _root_momentum = uptrack.GetMomentum(); 
+    _rootTrackHits = uptrack.GetNumHits() + downtrack.GetNumHits(); 
+    _rootTrackProbUp = TMath::Prob(uptrack.GetChiSqu(),uptrack.GetNDF());
+    _rootTrackProbDown = TMath::Prob(downtrack.GetChiSqu(),downtrack.GetNDF());
+    _rootTrackProbCombo = TMath::Prob( comboChi2 ,uptrack.GetNDF()+downtrack.GetNDF());
     
-    _root_x = trk.GetTE(0).GetState().GetPars()[2][0];   
-    _root_y = trk.GetTE(0).GetState().GetPars()[3][0];   
-    _root_dxdz = trk.GetTE(0).GetState().GetPars()[0][0];  
-    _root_dydz = trk.GetTE(0).GetState().GetPars()[1][0];
-    _root_u = p[2][0]; 
-    _root_v = p[3][0]; 
     _root_u_in = p_in[2][0]; 
     _root_v_in = p_in[3][0];
     _root_u_out = p_out[2][0]; 
     _root_v_out = p_out[3][0];
-    _root_dudw = p[0][0]; 
-    _root_dvdw = p[1][0]; 
+    _root_u = 0.5*(p_in[2][0] + p_out[2][0]); 
+    _root_v = 0.5*(p_in[3][0] + p_out[3][0]);  
+    _root_dudw = 0.5*(p_in[0][0] + p_out[0][0]);    
+    _root_dvdw = 0.5*(p_in[1][0] + p_out[1][0]);   
    
     _root_angle1 = theta[0][0];
     _root_angle2 = theta[1][0];
@@ -302,10 +372,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     
   } // end track loop 		
      
-  streamlog_out(MESSAGE2) << "Total of " << nTrack << " tracks in collection " << _trackColName << endl;      
-  
-  streamlog_out(MESSAGE2) << "Total of " << TrackStore.size() << " good tracks" << endl; 
-  _noOfTracks += TrackStore.size();   
+   
   
   return;
 }
@@ -329,8 +396,6 @@ void X0ImageProducer::end()
    // Print the summer
    streamlog_out(MESSAGE3) << endl << endl 
                            << "Total number of processed events:     " << setiosflags(ios::right) << _nEvt 
-                           << resetiosflags(ios::right) << endl
-                           << "Total number of accepted Tel tracks:  " << setiosflags(ios::right) << _noOfTracks 
                            << resetiosflags(ios::right) << endl
                            << endl << endl; 
      
@@ -385,7 +450,11 @@ void X0ImageProducer::bookHistos() {
   _rootEventTree = new TTree("Event","Event info");
   _rootEventTree->Branch("iRun"            ,&_rootRunNumber      ,"iRun/I");
   _rootEventTree->Branch("iEvt"            ,&_rootEventNumber    ,"iEvt/I");
-  _rootEventTree->Branch("nTelTracks"      ,&_rootNTelTracks     ,"nTelTracks/I");
+  _rootEventTree->Branch("nDownTracks"      ,&_rootnDownTracks     ,"nDownTracks/I");
+  _rootEventTree->Branch("nUpTracks"      ,&_rootnUpTracks     ,"nUpTracks/I"); 
+  _rootEventTree->Branch("nMatched"      ,&_rootNMatched     ,"nMatched/I");
+
+  
     
   // 
   // Track Tree of the whole track 
@@ -395,16 +464,9 @@ void X0ImageProducer::bookHistos() {
   _rootMscTree->Branch("daqid"           ,&_rootDaqID           ,"daqid/I"); 
   _rootMscTree->Branch("ipl"             ,&_rootPlaneID         ,"ipl/I"); 
   _rootMscTree->Branch("nhits"           ,&_rootTrackHits       ,"nhits/I"); 
-  _rootMscTree->Branch("chi2"            ,&_rootTrackChi2       ,"chi2/D"); 
-  _rootMscTree->Branch("prob"            ,&_rootTrackProb       ,"prob/D"); 
   _rootMscTree->Branch("prob_up"         ,&_rootTrackProbUp     ,"prob_up/D"); 
   _rootMscTree->Branch("prob_down"       ,&_rootTrackProbDown   ,"prob_down/D"); 
   _rootMscTree->Branch("prob_combo"      ,&_rootTrackProbCombo  ,"prob_combo/D"); 
-
-  _rootMscTree->Branch("x"            ,&_root_x             ,"x/D");
-  _rootMscTree->Branch("y"            ,&_root_y             ,"y/D");
-  _rootMscTree->Branch("dxdz"         ,&_root_dxdz          ,"dxdz/D");
-  _rootMscTree->Branch("dydz"         ,&_root_dydz          ,"dydz/D");
 
   _rootMscTree->Branch("u"            ,&_root_u             ,"u/D");
   _rootMscTree->Branch("v"            ,&_root_v             ,"v/D");

@@ -124,7 +124,7 @@ class TBKalmanMSC {
   
   /** Performs track fitting. Returns track chisqu. 
    */
-  double ProcessTrack(TBTrack& trk, int dir, bool biased);
+  bool ProcessTrack(TBTrack& trk, int dir, bool biased);
   
   /** Get scatter kink angles (as 2x1 matrix) 
    */

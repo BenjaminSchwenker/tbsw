@@ -78,7 +78,7 @@ void TBKalmanMSC::SetNdof(TBTrack& trk)
 
 /** Performs track fitting. Returns track chisqu. 
  */
-double TBKalmanMSC::ProcessTrack(TBTrack& trk, int dir, bool biased)
+bool TBKalmanMSC::ProcessTrack(TBTrack& trk, int dir, bool biased)
 {
   
   // Get particle hypothesis 

@@ -99,7 +99,9 @@ protected:
 // Processor Parameters
    
 //! Input Track collection name
-   std::string _trackColName;
+   std::string _downStreamTrackColName; 
+   std::string _upStreamTrackColName; 
+  
       
 //! Alignment DB file name 
    std::string _alignmentDBFileName;
@@ -109,6 +111,9 @@ protected:
    
 //! DUT plane number 
    int _idut; 
+
+//! Max distance
+   double _maxDist; 
      
      
 // ROOT_OUTPUT 
@@ -120,22 +125,20 @@ protected:
    // Event tree variables 
    int _rootEventNumber;
    int _rootRunNumber;   
-   int _rootNTelTracks;  
-   
+   int _rootnDownTracks;    
+   int _rootnUpTracks;    
+   int _rootNMatched;
+
    // Msc tree variables 
   
    int _rootDaqID; 
    int _rootPlaneID;
    int _rootTrackHits;
-   double _rootTrackChi2;
-   double _rootTrackProb;
+   
    double _rootTrackProbUp;
    double _rootTrackProbDown;
    double _rootTrackProbCombo;
-   double _root_x; 
-   double _root_y; 
-   double _root_dxdz;
-   double _root_dydz;
+   
    double _root_u; 
    double _root_v; 
    double _root_u_in; 
@@ -157,17 +160,7 @@ protected:
    
    // Few counter to show the final summary   
 
-   //! Number of event w/o input track
-   /*! It could happen that no particle track passed the selection
-    *  criteria posed by previous processors. Or, no particle passed 
-    *  the telescope sensors. 
-    */
-   int _noOfEventWOInputTrack;
    
-   //! Total number of acccepted tracks
-   /*! This is the total number of tracks track selection cuts. 
-    */
-   int _noOfTracks;       
    
    double _timeCPU; //!< CPU time
    int    _nRun ;   //!< Run number

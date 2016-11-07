@@ -43,7 +43,9 @@
      <!--To use only GoodQuality write 0 here-->
      <parameter name="HitQualitySelection" type="int" value="0"/>
      <!--Maximum hit residual [mm]-->
-     <parameter name="MaxResidual" type="float" value="0.2"/>
+     <parameter name="MaxResidualU" type="FloatVec" value="0.2"/>
+     <!--Maximum hit residual [mm]-->
+     <parameter name="MaxResidualV" type="FloatVec" value="0.2"/>
      <!--Maximum track chisq in track fit-->
      <parameter name="MaxTrackChi2" type="float" value="50"/>
      <!--Maximum number of consecutive missing hits in track-->
