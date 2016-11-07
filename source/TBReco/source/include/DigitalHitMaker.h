@@ -75,6 +75,10 @@ protected:
    double _SigmaV2;  
    double _SigmaV3; 
 
+//! Clusters having more cells in u/v are considered bad
+   int _maxSizeU;
+   int _maxSizeV;
+
  private:
    
    // Handle to detector data 

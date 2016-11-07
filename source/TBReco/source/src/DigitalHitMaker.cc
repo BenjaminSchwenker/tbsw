@@ -88,6 +88,16 @@ DigitalHitMaker::DigitalHitMaker() : Processor("DigitalHitMaker")
                                "SigmaV for cluster with three or more vCells contributing [mm]",
                                _SigmaV3,  
                                static_cast < double > (1));
+
+   registerProcessorParameter ("MaxSizeU", 
+                               "Clusters having more u cells marked as bad [and can be filterd in track finder]",
+                               _maxSizeU,  
+                               static_cast < int > (3));
+
+   registerProcessorParameter ("MaxSizeV", 
+                               "Clusters having more v cells marked as bad [and can be filterd in track finder]",
+                               _maxSizeV,  
+                               static_cast < int > (3));
    
 }
 
@@ -184,12 +194,11 @@ void DigitalHitMaker::processEvent(LCEvent * evt)
       u = 0.5*(u0 + u1);                  
       cov_u = pow(_SigmaU2,2); 
     } 
-    else if ( myCluster.getUSize() == 3)  { 
+    else if ( myCluster.getUSize() == 3)  {
       double u1 = Det.GetPixelCenterCoordU(myCluster.getVStart(), myCluster.getUStart()+2); 
       u = 0.5*(u0 + u1);  
       cov_u = pow(_SigmaU3,2);
     } else {
-      clsType = 1; 
       double u1 = Det.GetPixelCenterCoordU(myCluster.getVStart(), myCluster.getUStart() + myCluster.getUSize() - 1 ); 
       u = 0.5*(u0 + u1);  
       cov_u = pow(_SigmaU3,2); 
@@ -209,12 +218,14 @@ void DigitalHitMaker::processEvent(LCEvent * evt)
       v = 0.5*(v0 + v1);
       cov_v = pow(_SigmaV3,2);
     } else {
-      clsType = 1;
       double v1 = Det.GetPixelCenterCoordV(myCluster.getVStart() + myCluster.getVSize() - 1, myCluster.getUStart()); 
       v = 0.5*(v0 + v1);
       cov_v = pow(_SigmaV3,2);
     }
          
+    if ( myCluster.getUSize() > _maxSizeU ) clsType = 1; 
+    if ( myCluster.getVSize() > _maxSizeV ) clsType = 1; 
+
     TBHit hit(sensorID, u, v, cov_u, cov_v, clsType);
       
     // Make LCIO TrackerHit

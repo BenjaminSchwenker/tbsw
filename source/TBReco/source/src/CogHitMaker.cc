@@ -87,6 +87,16 @@ CogHitMaker::CogHitMaker() : Processor("CogHitMaker")
                                "SigmaV for cluster with three or more vCells contributing [mm]",
                                _SigmaV3,  
                                static_cast < double > (1));
+
+   registerProcessorParameter ("MaxSizeU", 
+                               "Clusters having more u cells marked as bad [and can be filterd in track finder]",
+                               _maxSizeU,  
+                               static_cast < int > (3));
+
+   registerProcessorParameter ("MaxSizeV", 
+                               "Clusters having more v cells marked as bad [and can be filterd in track finder]",
+                               _maxSizeV,  
+                               static_cast < int > (3));
    
 }
 
@@ -203,8 +213,13 @@ void CogHitMaker::processEvent(LCEvent * evt)
     else if ( myCluster.getVSize() == 2) cov_v = pow(_SigmaV2,2);
     else cov_v = pow(_SigmaV3,2);
      
-       
-    TBHit hit(sensorID, u, v, cov_u, cov_v, 0);
+    // = 1 means the cluster is marked bad 
+    unsigned short clsType = 0; 
+
+    if ( myCluster.getUSize() > _maxSizeU ) clsType = 1; 
+    if ( myCluster.getVSize() > _maxSizeV ) clsType = 1;        
+
+    TBHit hit(sensorID, u, v, cov_u, cov_v, clsType);
       
     // Make LCIO TrackerHit
     TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
