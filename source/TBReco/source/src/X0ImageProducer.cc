@@ -268,8 +268,8 @@ void X0ImageProducer::processEvent(LCEvent * evt)
         TBTrack& downtrack = downTrackStore[idown];
         
         // In and OutStates of the reconstructed Track at the current detector
-        TBTrackState& inState=downtrack.GetTE(_idut).GetState();
-        TBTrackState& OutState=upTrack.GetTE(_idut).GetState(); 
+        TBTrackState& inState=uptrack.GetTE(_idut).GetState();
+        TBTrackState& OutState=downtrack.GetTE(_idut).GetState(); 
         
         double u_in = InState.GetPars()[2][0];
         double v_in = InState.GetPars()[3][0];
