@@ -414,7 +414,7 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
       TBTrack& trk = TrackStore[hit2track[ihit]];      
       HepMatrix p = trk.GetTE(_idut).GetState().GetPars();
       HepSymMatrix C = trk.GetTE(_idut).GetState().GetCov();  
-      double hitchi2 = TrackFitter.GetPredictedChi2(p, C, hit);
+      
 
       _rootHitFitMomentum = trk.GetMomentum();   
            
@@ -442,7 +442,7 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
       _rootHitFitCellVCenter = dut.GetPixelCenterCoordV( fitrow, fitcol );                                        
       _rootHitTrackChi2 = trk.GetChiSqu(); 
       _rootHitTrackNDF = trk.GetNDF();
-      _rootHitTrackNHits = trk.GetNHits(); 
+      _rootHitTrackNHits = trk.GetNumHits(); 
       
      
       
@@ -503,15 +503,15 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
     _rootTrackFitCellVCenter = dut.GetPixelCenterCoordV( fitcellv, fitcellu );                                        
     _rootTrackChi2 = trk.GetChiSqu(); 
     _rootTrackNDF = trk.GetNDF();  
-    _rootTrackNHits = trk.GetNHits(); 
+    _rootTrackNHits = trk.GetNumHits(); 
     _rootTrackDUTCellQuality = 0;      
             
     if (  isDUTStatusOk  ) {
       
-      if ( ( fitcol >= 0 )  &&  ( fitcol < dut.GetNColumns() ) &&
-               ( fitrow >= 0 )  &&  ( fitrow < dut.GetNRows() ) ) {
+      if ( ( fitcellu >= 0 )  &&  ( fitcellu < dut.GetNColumns() ) &&
+               ( fitcellv >= 0 )  &&  ( fitcellv < dut.GetNRows() ) ) {
          
-        int Xpixel = matrixDecoder.getIndexFromXY(fitcol, fitrow);
+        int Xpixel = matrixDecoder.getIndexFromXY(fitcellu, fitcellv);
         _rootTrackDUTCellQuality = statusVec[Xpixel];
         
       }      
