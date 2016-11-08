@@ -292,12 +292,16 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
   vector<int> track2hit(TrackStore.size(), -1); 
   
   // Continue matching tracks and hits until all tracks are matched 
-  // or no hit is close enough to a track!! 
+  // or no hit is close enough to a track!!
+
+  { 
   double distmin=numeric_limits<double >::max();
-   
+  int besttrk=-1;
+  int besthit=-1;   
+
   do{
-    int besttrk=-1;
-    int besthit=-1;
+    besttrk=-1;
+    besthit=-1;
     
     distmin=numeric_limits<double >::max();
     
@@ -358,6 +362,7 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
   } // End of do loop of matching DUT hits to fitted positions
   while( besttrk>-1 &&  besthit>-1);
   
+  }
   _noOfMatchedTracks += nMatch; 
   
   streamlog_out(MESSAGE2) << nMatch << " DUT hits matched to tracks " << endl;
