@@ -72,17 +72,10 @@ DUTTreeProducer::DUTTreeProducer() : Processor("DUTTreeProducer")
                            "Name of DUT hit collection"  ,
                            _hitColName ,
                            std::string("hit") ) ;
-  
-  
-   
+     
   registerInputCollection (LCIO::TRACKERRAWDATA, "StatusCollection",
                            "Name of DUT status collection",
                            _statusColName, string("status")); 
-  
-  
-   
- 
-     
   
   // Processor parameters:
   
@@ -94,19 +87,17 @@ DUTTreeProducer::DUTTreeProducer() : Processor("DUTTreeProducer")
                               "Plane number of DUT along the beam line",
                               _idut,  static_cast < int > (3));
        
-  registerProcessorParameter ("HitDistMax",
-                              "Maximum hit2track distance for hit matching [mm]",
-                              _hitdistmax,  static_cast < double > (2.0));
-                               
+  registerProcessorParameter ("MaxResidualU",
+                              "Maximum u residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.",
+                              _maxResidualU,  static_cast < double > (0.2));
   
-  
-  registerProcessorParameter ("SingleTrackEvents",
-                              "Use only events with one track in telescope",
-                              _singleTrackEvents,  static_cast < bool > (false));
+  registerProcessorParameter ("MaxResidualV",
+                              "Maximum v residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.",
+                              _maxResidualV,  static_cast < double > (0.2));
   
   registerProcessorParameter( "RootFileName",
                                "Output root file name",
-                               _rootFileName, std::string("dut_histos.root"));
+                               _rootFileName, std::string("histos.root"));
    
 }
 
@@ -189,12 +180,8 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
   // Load DUT module    
   Det & dut = _detector.GetDet(_idut);   
   
-  
-    
   // Decoding of DUT matrix
   MatrixDecoder matrixDecoder(dut.GetNColumns(), dut.GetNRows()); 
-  
-  
   
   ShortVec statusVec; 
   bool isDUTStatusOk = getDUTStatus( evt, statusVec );
@@ -204,111 +191,87 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
   //
   
   LCCollection* trackcol = NULL;
-  bool isTrackok = true;   
+  int nTrack = 0;   
   try {
     trackcol = evt->getCollection( _trackColName ) ;
+    nTrack = trackcol->getNumberOfElements();
   } catch (lcio::DataNotAvailableException& e) {
     streamlog_out(MESSAGE2) << "Not able to get collection "
                             << _trackColName
                             << " from event " << evt->getEventNumber()
                             << " in run " << evt->getRunNumber()  << endl << endl;   
-    
-    isTrackok = false; 
   }  
    
-  int nTrack = 0;
-  if(isTrackok) nTrack = trackcol->getNumberOfElements();
-  if ( nTrack == 0)  ++_noOfEventWOInputTrack;   
-  
   streamlog_out(MESSAGE2) << "Total of " << nTrack << " tracks in collection " << _trackColName << endl; 
   
   // 
   // Get DUT hit collection 
   // 
   
-  LCCollection* hitcol = NULL;
-  bool isDUTok=true;
+  LCCollection* hitcol = 0;
+  int nHit = 0; 
   try {
     hitcol = evt->getCollection( _hitColName ) ;
+    nHit = hitcol->getNumberOfElements();
   } catch (lcio::DataNotAvailableException& e) {
     streamlog_out(MESSAGE2) << "Not able to get collection "
                             << _hitColName
                             << " from event " << evt->getEventNumber()
                             << " in run " << evt->getRunNumber() << endl << endl;
-    isDUTok=false;
   } 
-  
-  int nHit = 0;
-  if(isDUTok) nHit = hitcol->getNumberOfElements();
-    
+ 
   streamlog_out(MESSAGE2) << "Total of " << nHit << " hit(s) in collection " << _hitColName << endl;
   
   
-  // Load telescope tracks and DUT hits 
+  // Read telescope tracks and DUT hits 
   // ----------------------------------
   
-  std::vector< TBTrack > TrackStore;
+  std::vector<TBTrack> TrackStore;
   std::vector<TBHit> HitStore;    
-  
-  
-  if ( _singleTrackEvents  &&  nTrack > 1 ) {
+     
+  // Get tracks from the lcio file 
+  TrackInputProvider TrackLCIOReader;  
     
-    streamlog_out(MESSAGE2) << "Track Finder found more than one track in telescope."
-                            <<" SingleTrackEvent requested, discard event!!" 
-                            << endl; 
-  } else {
+  for(int itrk=0; itrk< nTrack ; itrk++)
+  {  
+    // Retrieve track from LCIO 
+    Track * lciotrk = dynamic_cast<Track*> (trackcol->getElementAt(itrk));
+      
+    // Convert LCIO -> TB track  
+    TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, _detector );  
+      
+    // Refit track in nominal alignment
+    bool trkerr = TrackFitter.Fit(trk);
+    if ( trkerr ) {
+      streamlog_out ( MESSAGE1 ) << "Fit failed. Skipping track!" << endl;
+      continue;
+    } 
+        
+    TrackStore.push_back(trk);                                 
+  } // End track loop
     
-    // Get tracks from the lcio file 
-    TrackInputProvider TrackLCIOReader;  
-    
-    for(int itrk=0; itrk< nTrack ; itrk++)
-    {
-    
-      // Retrieve track from LCIO 
-      Track * lciotrk = dynamic_cast<Track*> (trackcol->getElementAt(itrk));
-      
-      // Convert LCIO -> TB track  
-      TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, _detector );  
-      
-      // Refit track in nominal alignment
-      bool trkerr = TrackFitter.Fit(trk);
-      if ( trkerr ) {
-        streamlog_out ( MESSAGE1 ) << "Fit failed. Skipping track!" << endl;
-        continue;
-      } 
-      
-      
-      TrackStore.push_back(trk);                         
-       
-              
-    } // End track loop
-    
-    // Get hits from the lcio file 
-      
-    for(int ihit=0; ihit< nHit ; ihit++)
-    {
-      // Built a TBHit
-      TrackerHitImpl * lciohit = dynamic_cast<TrackerHitImpl*>( hitcol->getElementAt(ihit) ) ;
-      TBHit RecoHit ( lciohit  );        
+  // Get hits from the lcio file   
+  for(int ihit=0; ihit< nHit ; ihit++)
+  {
+    // Built a TBHit
+    TrackerHitImpl * lciohit = dynamic_cast<TrackerHitImpl*>( hitcol->getElementAt(ihit) ) ;
+    TBHit RecoHit ( lciohit  );        
          
-      // We have to find plane number of the hit 
-      int daqid = RecoHit.GetDAQID();      
-      int ipl = _detector.GetPlaneNumber(daqid);  
+    // We have to find plane number of the hit 
+    int daqid = RecoHit.GetDAQID();      
+    int ipl = _detector.GetPlaneNumber(daqid);  
       
-      // Store all hits on the DUT module  
-      if( dut.GetPlaneNumber() == ipl )
-      {         
+    // Store all hits on the DUT module  
+    if( dut.GetPlaneNumber() == ipl )
+    {         
         streamlog_out(MESSAGE2) << " DUT hit at plane " << ipl 
                                 << "   U [mm]= " << RecoHit.GetCoord()[0][0]
                                 << "   V [mm]= " << RecoHit.GetCoord()[1][0] 
                                 << endl;
       
         HitStore.push_back( RecoHit );  
-      }
-    } 
-    
-     
-  } // endif singletrack events
+    }
+  } 
   
   streamlog_out(MESSAGE2) << "Total of " << TrackStore.size() << " good track(s)" << endl; 
   _noOfTracks += TrackStore.size();   
@@ -358,7 +321,12 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
         TBTrack& trk = TrackStore[itrk]; 
         double utrk = trk.GetTE(_idut).GetState().GetPars()[2][0];
         double vtrk = trk.GetTE(_idut).GetState().GetPars()[3][0];
+
+        // Skip all DUT hits with too large residuum 
+        if ( std::abs(utrk-uhit) >= _maxResidualU && _maxResidualU > 0 ) continue;  
+        if ( std::abs(vtrk-vhit) >= _maxResidualV && _maxResidualV > 0 ) continue; 
         
+        // Finally, we will use a simple 2D distance to select best matching hit
         double hitdist = std::abs(utrk-uhit) + std::abs(vtrk-vhit);
                       
         if( hitdist<distmin )
@@ -369,14 +337,13 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
         }
       }
     }
-    
+     
     streamlog_out(MESSAGE2) << "In matching loop: best hit " << besthit << " to best track " << besttrk << endl; 
     streamlog_out(MESSAGE2) << "  distmin: " <<  distmin  << endl; 
     
-    // Check if best match is good enough
-    if( distmin < _hitdistmax  )
+    // Check if a match was found
+    if( besttrk>-1 &&  besthit>-1   )
     {   
-
       streamlog_out(MESSAGE2) << "  match found!!!"   << endl;
       nMatch++;
       hit2track[besthit] = besttrk;
@@ -389,8 +356,7 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
     } 
   
   } // End of do loop of matching DUT hits to fitted positions
-  
-  while( distmin < _hitdistmax );
+  while( besttrk>-1 &&  besthit>-1);
   
   _noOfMatchedTracks += nMatch; 
   
@@ -398,6 +364,16 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
   streamlog_out(MESSAGE2) << HitStore.size() << " DUT hits not matched to any track " << endl;
   streamlog_out(MESSAGE2) << TrackStore.size() << " Tracks not matched to any DUT hit "<< endl;
   
+  // Fill event tree
+  _rootRunNumber = evt->getRunNumber();  
+  _rootEventNumber = evt->getEventNumber();  
+  _rootSensorID = dut.GetDAQID();       
+  _rootNTelTracks = nTrack; 
+  _rootNDUTHits = (int)HitStore.size();
+  _rootEventNMatched = nMatch; 
+
+  _rootFile->cd("");
+  _rootEventTree->Fill();  
 
   // Fill hit tree 
 
@@ -405,35 +381,26 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
   
   for(int ihit=0;ihit<(int)HitStore.size(); ++ihit)
   {
-    
-    _rootRunNumber = evt->getRunNumber();  
-    _rootEventNumber = evt->getEventNumber();  
-    _rootDetectorID = dut.GetDAQID();       
-    _rootNTelTracks = nTrack; 
-    _rootNDUTHits = (int)HitStore.size(); 
-    
-    
+      
     TBHit& hit = HitStore[ihit];
     
     _rootHitU = hit.GetCoord()[0][0];         
     _rootHitV = hit.GetCoord()[1][0];   
     
-    _rootHitCol = dut.GetColumnFromCoord( _rootHitU, _rootHitV );  
-    _rootHitRow = dut.GetRowFromCoord( _rootHitU, _rootHitV );  
+    _rootHitCellU= dut.GetColumnFromCoord( _rootHitU, _rootHitV );  
+    _rootHitCellV = dut.GetRowFromCoord( _rootHitU, _rootHitV );  
 
     // Cluster shape variables   
     
     PixelCluster Cluster = hit.GetCluster();
        
-    _rootHitQuality = 0; 
-    _rootHitCharge = Cluster.getCharge() ; 
+    _rootHitQuality = Cluster.getClusterType(); 
+    _rootHitClusterCharge = Cluster.getCharge() ; 
     _rootHitSeedCharge = Cluster.getSeedCharge() ; 
     _rootHitSize = Cluster.getSize();  
-    _rootHitSizeCol = Cluster.getUSize();     
-    _rootHitSizeRow = Cluster.getVSize();     
-   
+    _rootHitSizeU = Cluster.getUSize();     
+    _rootHitSizeV = Cluster.getVSize();     
     
-
     // Add variables for matched track 
     if ( hit2track[ihit] >= 0 ) {  
      
@@ -464,34 +431,34 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
       _rootHitPullResidualU = (hit.GetCoord()[0][0] - p[2][0]) / TMath::Sqrt( C[2][2] + hit.GetCov()[0][0] ) ;   
       _rootHitPullResidualV = (hit.GetCoord()[1][0] - p[3][0]) / TMath::Sqrt( C[3][3] + hit.GetCov()[1][1] ) ;  
                                  
-      _rootHitFitCol = fitcol;      
-      _rootHitFitRow = fitrow;    
-      _rootHitFitPixU = dut.GetPixelCenterCoordU( fitrow, fitcol ); 
-      _rootHitFitPixV = dut.GetPixelCenterCoordV( fitrow, fitcol );                                        
+      _rootHitFitCellU = fitcol;      
+      _rootHitFitCellV = fitrow;    
+      _rootHitFitCellUCenter = dut.GetPixelCenterCoordU( fitrow, fitcol ); 
+      _rootHitFitCellVCenter = dut.GetPixelCenterCoordV( fitrow, fitcol );                                        
       _rootHitTrackChi2 = trk.GetChiSqu(); 
       _rootHitTrackNDF = trk.GetNDF();
-      _rootHitLocalChi2 = hitchi2;   
+      _rootHitTrackNHits = trk.GetNHits(); 
       
      
       
     } else {
 
       _rootHitHasTrack = -1; // no match
-      _rootHitFitMomentum = -1;       
-      // These are dummy values, always query hasTrack      
+      // These are dummy values, always query hasTrack 
+      _rootHitFitMomentum = -1;            
       _rootHitFitU = -1;           
       _rootHitFitV = -1;           
       _rootHitFitdUdW = -1;      
       _rootHitFitdVdW = -1;        
       _rootHitFitErrorU = -1;  
       _rootHitFitErrorV = -1;                          
-      _rootHitFitCol = -1;      
-      _rootHitFitRow = -1;      
-      _rootHitFitPixU = -1;  
-      _rootHitFitPixV = -1;                                       
+      _rootHitFitCellU = -1;      
+      _rootHitFitCellV = -1;      
+      _rootHitFitCellUCenter = -1;  
+      _rootHitFitCellVCenter = -1;                                       
       _rootHitTrackChi2 = -1;  
       _rootHitTrackNDF = -1; 
-      _rootHitLocalChi2 = -1;  
+      _rootHitTrackNHits = -1;  
       _rootHitPullResidualU = -1;   
       _rootHitPullResidualV = -1;  
     }
@@ -506,18 +473,9 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
    
   for(int itrk=0;itrk<(int)TrackStore.size(); ++itrk)
   {
-    
-    _rootRunNumber = evt->getRunNumber();  
-    _rootEventNumber = evt->getEventNumber();  
-    _rootDetectorID = dut.GetDAQID();   
-    _rootNTelTracks = nTrack; 
-    _rootNDUTHits = (int)HitStore.size(); 
-   
        
     TBTrack& trk = TrackStore[itrk];
 
-    _rootTrackFitMomentum = trk.GetMomentum();   
-    
     HepMatrix p = trk.GetTE(_idut).GetState().GetPars();
     HepSymMatrix C = trk.GetTE(_idut).GetState().GetCov();  
            
@@ -526,69 +484,40 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
     double pv = p[3][0];
         
     // Get readout channels  
-    int fitcol = dut.GetColumnFromCoord( pu, pv );     
-    int fitrow = dut.GetRowFromCoord( pu, pv );           
-    int Xpixel = matrixDecoder.getIndexFromXY(fitcol, fitrow);
-        
+    int fitcellu = dut.GetColumnFromCoord( pu, pv );     
+    int fitcellv = dut.GetRowFromCoord( pu, pv );       
+ 
+    _rootTrackFitMomentum = trk.GetMomentum();      
     _rootTrackFitdUdW = p[0][0];     
     _rootTrackFitdVdW = p[1][0];    
     _rootTrackFitU = p[2][0];           
     _rootTrackFitV = p[3][0];    
-    _rootTrackFitCol = fitcol;      
-    _rootTrackFitRow = fitrow;    
-    _rootTrackFitPixU = dut.GetPixelCenterCoordU( fitrow, fitcol ); 
-    _rootTrackFitPixV = dut.GetPixelCenterCoordV( fitrow, fitcol );                                        
+    _rootTrackFitCellU = fitcellu;      
+    _rootTrackFitCellV = fitcellv;    
+    _rootTrackFitCellUCenter = dut.GetPixelCenterCoordU( fitcellv, fitcellu ); 
+    _rootTrackFitCellVCenter = dut.GetPixelCenterCoordV( fitcellv, fitcellu );                                        
     _rootTrackChi2 = trk.GetChiSqu(); 
-    _rootTrackNDF = trk.GetNDF();   
-    _rootTrack1x1Quality = 0;    
-    _rootTrack3x3Quality = 0;  
+    _rootTrackNDF = trk.GetNDF();  
+    _rootTrackNHits = trk.GetNHits(); 
+    _rootTrackDUTCellQuality = 0;      
             
     if (  isDUTStatusOk  ) {
       
       if ( ( fitcol >= 0 )  &&  ( fitcol < dut.GetNColumns() ) &&
                ( fitrow >= 0 )  &&  ( fitrow < dut.GetNRows() ) ) {
          
-        _rootTrack1x1Quality = statusVec[Xpixel];
+        int Xpixel = matrixDecoder.getIndexFromXY(fitcol, fitrow);
+        _rootTrackDUTCellQuality = statusVec[Xpixel];
         
-      }
-               
-      for (int iRow = fitrow - (3 / 2); iRow <= fitrow + (3 / 2); iRow++) {
-        for (int iCol =  fitcol - (3 / 2); iCol <= fitcol + (3 / 2); iCol++) {
-          // Always check we are still within the sensor boundaries!!!
-          if ( ( iCol >= 0 )  &&  ( iCol < dut.GetNColumns() ) &&
-               ( iRow >= 0 )  &&  ( iRow < dut.GetNRows() ) ) {
-                   
-              int index = matrixDecoder.getIndexFromXY(iCol, iRow);
-              
-              
-                
-              if ( statusVec[index]   ) {
-                // Bad pixel in cluster degrades Xing quality
-                _rootTrack3x3Quality++;  
-              }     
-          }
-        }
-      }
-            
-    }      
+      }      
+    }       
     
     if ( track2hit[itrk] >= 0  ) {
-      
-      _rootTrackHasHit = 0;  // match   
-      
-      TBHit& hit = HitStore[track2hit[itrk]];  
-      PixelCluster Cluster = hit.GetCluster();
-      _rootTrackSeedCharge = Cluster.getSeedCharge() ; 
-
-        
+      _rootTrackHasHit = 0;  // match     
     } else {
       _rootTrackHasHit = -1; // no match
-      _rootTrackSeedCharge = -1;
     }
-     
-    
-    
-    
+       
     _rootFile->cd("");
     _rootTrackTree->Fill(); 
   }
@@ -596,16 +525,6 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
   
   if ( nTrack == 0 )  _noOfHitsWOTrack += (int)HitStore.size(); 
   else  _noOfHitsWTrack += (int)HitStore.size();  
-  
-  // Fill event tree
-  _rootNDUTHits = (int)HitStore.size(); 
-  _rootEventNDUTTracks = (int) TrackStore.size(); 
-  _rootNTelTracks = nTrack; 
-  _rootEventNMatched = nMatch; 
-  
-  
-  _rootFile->cd("");
-  _rootEventTree->Fill();  
    
   return;
 }
@@ -772,20 +691,17 @@ void DUTTreeProducer::bookHistos()
    _rootHitTree = new TTree("Hit","Hit info");
    _rootHitTree->Branch("iRun"            ,&_rootRunNumber        ,"iRun/I");
    _rootHitTree->Branch("iEvt"            ,&_rootEventNumber      ,"iEvt/I");
-   _rootHitTree->Branch("det"             ,&_rootDetectorID       ,"det/I");
+   _rootHitTree->Branch("sensorID"        ,&_rootSensorID       ,"sensorID/I");
    _rootHitTree->Branch("nTelTracks"      ,&_rootNTelTracks       ,"nTelTracks/I"); 
-   _rootHitTree->Branch("nduthits"        ,&_rootNDUTHits          ,"nduthits/I");
-
-
-
+   _rootHitTree->Branch("nDutHits"        ,&_rootNDUTHits          ,"nDutHits/I");
    _rootHitTree->Branch("clusterQuality"  ,&_rootHitQuality   ,"clusterQuality/I");
    _rootHitTree->Branch("u_hit"           ,&_rootHitU             ,"u_hit/D");
    _rootHitTree->Branch("v_hit"           ,&_rootHitV             ,"v_hit/D");     
-   _rootHitTree->Branch("clusterCharge"   ,&_rootHitCharge    ,"clusterCharge/D");
+   _rootHitTree->Branch("clusterCharge"   ,&_rootHitClusterCharge ,"clusterCharge/D");
    _rootHitTree->Branch("seedCharge"      ,&_rootHitSeedCharge       ,"seedCharge/D");
-   _rootHitTree->Branch("sizeCol"         ,&_rootHitSizeCol   ,"sizeCol/I");
-   _rootHitTree->Branch("sizeRow"         ,&_rootHitSizeRow   ,"sizeRow/I");
-   _rootHitTree->Branch("size"            ,&_rootHitSize      ,"size/I");
+   _rootHitTree->Branch("sizeU"           ,&_rootHitSizeU        ,"sizeU/I");
+   _rootHitTree->Branch("sizeV"           ,&_rootHitSizeV        ,"sizeV/I");
+   _rootHitTree->Branch("size"            ,&_rootHitSize         ,"size/I");
    _rootHitTree->Branch("hasTrack"        ,&_rootHitHasTrack         ,"hasTrack/I");   
    _rootHitTree->Branch("u_fit"           ,&_rootHitFitU             ,"u_fit/D");
    _rootHitTree->Branch("v_fit"           ,&_rootHitFitV             ,"v_fit/D"); 
@@ -795,55 +711,50 @@ void DUTTreeProducer::bookHistos()
    _rootHitTree->Branch("v_fiterr"        ,&_rootHitFitErrorV        ,"v_fiterr/D");   
    _rootHitTree->Branch("pull_resu"       ,&_rootHitPullResidualU    ,"pull_resu/D");
    _rootHitTree->Branch("pull_resv"       ,&_rootHitPullResidualV    ,"pull_resv/D");  
-   _rootHitTree->Branch("col_fit"         ,&_rootHitFitCol           ,"col_fit/I");
-   _rootHitTree->Branch("row_fit"         ,&_rootHitFitRow           ,"row_fit/I");
-   _rootHitTree->Branch("col_hit"         ,&_rootHitCol           ,"col_hit/I");
-   _rootHitTree->Branch("row_hit"         ,&_rootHitRow           ,"row_hit/I");
-   _rootHitTree->Branch("u_pixel"         ,&_rootHitFitPixU          ,"u_pixel/D");
-   _rootHitTree->Branch("v_pixel"         ,&_rootHitFitPixV          ,"v_pixel/D");                                      
-   _rootHitTree->Branch("chi2"            ,&_rootHitTrackChi2      ,"chi2/D");
-   _rootHitTree->Branch("ndof"            ,&_rootHitTrackNDF       ,"ndof/I");
-   _rootHitTree->Branch("chi2pred"        ,&_rootHitLocalChi2        ,"chi2pred/D");  
+   _rootHitTree->Branch("cellU_fit"       ,&_rootHitFitCellU           ,"cellU_fit/I");
+   _rootHitTree->Branch("cellV_fit"       ,&_rootHitFitCellV           ,"cellV_fit/I");
+   _rootHitTree->Branch("cellU_hit"       ,&_rootHitCellU           ,"cellU_hit/I");
+   _rootHitTree->Branch("cellV_hit"       ,&_rootHitCellV           ,"cellV_hit/I");
+   _rootHitTree->Branch("cellUCenter_fit" ,&_rootHitFitCellUCenter  ,"cellUCenter_fit/D");
+   _rootHitTree->Branch("cellVCenter_fit" ,&_rootHitFitCellVCenter  ,"cellVCenter_fit/D");                                      
+   _rootHitTree->Branch("trackChi2"       ,&_rootHitTrackChi2      ,"trackChi2/D");
+   _rootHitTree->Branch("trackNdof"       ,&_rootHitTrackNDF       ,"trackNdof/I");
+   _rootHitTree->Branch("trackNHits"      ,&_rootHitTrackNHits     ,"trackNHits/I");  
    _rootHitTree->Branch("momentum"        ,&_rootHitFitMomentum      ,"momentum/D");    
-
-  
-   
     
    // 
    // Track Tree 
    _rootTrackTree = new TTree("Track","Track info");
    _rootTrackTree->Branch("iRun"            ,&_rootRunNumber      ,"iRun/I");
    _rootTrackTree->Branch("iEvt"            ,&_rootEventNumber    ,"iEvt/I");
-   _rootTrackTree->Branch("det"             ,&_rootDetectorID     ,"det/I");
+   _rootTrackTree->Branch("sensorID"        ,&_rootSensorID        ,"sensorID/I");
    _rootTrackTree->Branch("nTelTracks"      ,&_rootNTelTracks     ,"nTelTracks/I"); 
-   _rootTrackTree->Branch("nduthits"        ,&_rootNDUTHits       ,"nduthits/I");
-   
+   _rootTrackTree->Branch("nDutHits"        ,&_rootNDUTHits       ,"nDutHits/I");
    _rootTrackTree->Branch("hasHit"          ,&_rootTrackHasHit         ,"hasHit/I");
-   _rootTrackTree->Branch("momentum"        ,&_rootTrackFitMomentum    ,"momentum/D");    
-   _rootTrackTree->Branch("seedCharge"      ,&_rootTrackSeedCharge     ,"seedCharge/D");                                                        
-   _rootTrackTree->Branch("1x1Quality"      ,&_rootTrack1x1Quality     ,"1x1Quality/I");
-   _rootTrackTree->Branch("3x3Quality"      ,&_rootTrack3x3Quality     ,"3x3Quality/I");
+   _rootTrackTree->Branch("momentum"        ,&_rootTrackFitMomentum    ,"momentum/D");                                                           
+   _rootTrackTree->Branch("dutCellQuality"  ,&_rootTrackDUTCellQuality ,"dutCellQuality/I");
    _rootTrackTree->Branch("u_fit"           ,&_rootTrackFitU           ,"u_fit/D");
    _rootTrackTree->Branch("v_fit"           ,&_rootTrackFitV           ,"v_fit/D");
    _rootTrackTree->Branch("dudw_fit"        ,&_rootTrackFitdUdW        ,"dudw_fit/D");
    _rootTrackTree->Branch("dvdw_fit"        ,&_rootTrackFitdVdW        ,"dvdw_fit/D");
-   _rootTrackTree->Branch("col_fit"         ,&_rootTrackFitCol         ,"col_fit/I");
-   _rootTrackTree->Branch("row_fit"         ,&_rootTrackFitRow         ,"row_fit/I");
-   _rootTrackTree->Branch("u_pixel"         ,&_rootTrackFitPixU        ,"u_pixel/D");
-   _rootTrackTree->Branch("v_pixel"         ,&_rootTrackFitPixV        ,"v_pixel/D");
-   _rootTrackTree->Branch("chi2"            ,&_rootTrackChi2           ,"chi2/D");
-   _rootTrackTree->Branch("ndof"            ,&_rootTrackNDF            ,"ndof/I");
+   _rootTrackTree->Branch("cellU_fit"       ,&_rootTrackFitCellU       ,"cellU_fit/I");
+   _rootTrackTree->Branch("cellV_fit"       ,&_rootTrackFitCellV       ,"cellV_fit/I");
+   _rootTrackTree->Branch("cellUCenter_fit" ,&_rootTrackFitCellUCenter ,"cellUCenter_fit/D");
+   _rootTrackTree->Branch("cellUCenter_fit" ,&_rootTrackFitCellVCenter ,"cellVCenter_fit/D");
+   _rootTrackTree->Branch("trackChi2"       ,&_rootTrackChi2           ,"trackChi2/D");
+   _rootTrackTree->Branch("trackNdof"       ,&_rootTrackNDF            ,"trackNdof/I");
+   _rootTrackTree->Branch("trackNHits"      ,&_rootTrackNHits          ,"trackNHits/I");  
+  
    
    // 
    // Event Summay Tree 
    _rootEventTree = new TTree("Event","Event info");
    _rootEventTree->Branch("iRun"            ,&_rootRunNumber      ,"iRun/I");
    _rootEventTree->Branch("iEvt"            ,&_rootEventNumber    ,"iEvt/I");
-   _rootEventTree->Branch("det"             ,&_rootDetectorID     ,"det/I");    
+   _rootEventTree->Branch("sensorID"        ,&_rootSensorID       ,"sensorID/I");    
    _rootEventTree->Branch("nTelTracks"      ,&_rootNTelTracks     ,"nTelTracks/I"); 
-   _rootEventTree->Branch("nduthits"           ,&_rootNDUTHits          ,"nduthits/I");
-   _rootEventTree->Branch("nDUTTracks"      ,&_rootEventNDUTTracks     ,"nDUTTracks/I");
-   _rootEventTree->Branch("matched"         ,&_rootEventNMatched       ,"matched/I");
+   _rootEventTree->Branch("nDutHits"        ,&_rootNDUTHits       ,"nDutHits/I");
+   _rootEventTree->Branch("nMatched"        ,&_rootEventNMatched  ,"nMatched/I");
    
 }
 

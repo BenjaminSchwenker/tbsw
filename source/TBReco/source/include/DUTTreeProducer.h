@@ -40,14 +40,22 @@ namespace depfet {
 /*! 
  *  The task of this processor is to analyze the intrinsic performance of a
  *  device under test (DUT) using a reference telescope. Instead of making 
- *  histograms directly, the processor outputs a TFile with flat multiple 
+ *  histograms directly, the processor outputs a TFile with flat 
  *  TTree objects allowing simple TTree Draw() to make final plots. The 
  *  main advantage of this approach is more user flexibility on final analysis 
  *  cuts and histogram layout.  
+ * 
+ *  The DUT can be a planar pixel sensor, single sided strip sensor, or double 
+ *  sided strip sensor. For single sided strips, please deactivate the cut on
+ *  the maximum allowed residual on the long side of the strip. 
  *  
- *  Relevant DUT benchmark variables for study are the hit detection efficiency,
- *  the occupancy, signal spectra, spatial resolution and in pixel studies of 
- *  charge collection efficiency and charge sharing.  
+ *  Note: It is assumed that the trackfinder that input tracks do not include 
+ *  hits on the selected DUT plane. Please set steering parameters in the 
+ *  trackfinder processor accordingly.  
+ *  
+ *  Relevant DUT benchmark variables that can be studied with this processor are 
+ *  the hit detection efficiency, fake rate, signal spectra, spatial resolution
+ *  and in pixel/strip studies of charge collection efficiency and charge sharing.  
  *  
  *  
  *  Author: B.Schwenker, Universität Göttingen
@@ -110,78 +118,77 @@ protected:
 //! ROOT output file name  
    std::string _rootFileName;  
    
-//! DUT plane number 
+//! DUT plane number, counting sensors in gear file along the beam line starting at zero 
    int _idut; 
-   
-//! Use only single track events
-   bool  _singleTrackEvents;
       
-//! Max hit2track distance for hit-track matching  
-   double _hitdistmax; 
+//! Max residual for hit-track matching in 
+   double _maxResidualU;  // in mm, local DUT uvw coordinate frame 
+   double _maxResidualV;  // in mm, local DUT uvw coordinate frame 
      
 // ROOT_OUTPUT 
    TFile * _rootFile;
+
+   /** One entry per cluster on the DUT */
    TTree * _rootHitTree;
+   /** One entry per track in the reference telescope */
    TTree * _rootTrackTree;
+   /** One entry per event */
    TTree * _rootEventTree;    
     
-   // Common hit/track/event tree  
-   int _rootEventNumber;
-   int _rootRunNumber;  
-   int _rootDetectorID;
-   int _rootNTelTracks;  
-   int _rootNDUTHits; 
+   // Variables in hit tree       
+   int _rootEventNumber;             // Event number from lcio file
+   int _rootRunNumber;               // Run number from lcio file 
+   int _rootSensorID;                // SensorID from lcio file (this is typically NOT the plane number!!)
+   int _rootNTelTracks;              // Number of tracks in reference telescope in same event as hit
+   int _rootNDUTHits;                // Number of DUT hits in the same event as hit   
+   int _rootHitQuality;              // GoodCluster == 0, BadCluster != 0
+   double _rootHitU;                 // Hit coordinate u reconstructed from DUT cluster in mm, in local DUT uvw coordinates       
+   double _rootHitV;                 // Hit coordinate v reconstructed from DUT cluster in mm, in local DUT uvw coordinates     
+   double _rootHitClusterCharge;     // Sum over all charges in the cluster 
+   double _rootHitSeedCharge;        // Highest charge in cluster
+   int _rootHitSize;                 // Number of hit cells (pixels/strips) in cluster
+   int _rootHitSizeU;                // Number of hit cells along u direction in cluster
+   int _rootHitSizeV;                // Number of hit cells along v direction in cluster
+   int _rootHitCellU;                // Hit u coordinate lies on this u cell
+   int _rootHitCellV;                // Hit v coordinate lies on this v cell
+   int _rootHitHasTrack;             // Hit can be matched to track (== 0)     
+   double _rootHitFitMomentum;       // Estimated track momentum from fit, only filled in case HasTrack==0            
+   double _rootHitFitU;              // Estimated track intersection u coordimate in mm, in local DUT uvw coordinates        
+   double _rootHitFitV;              // Estimated track intersection v coordimate in mm, in local DUT uvw coordinates                  
+   double _rootHitFitdUdW;           // Estimated track slope du/dw in radians, in local DUT uvw coordinates       
+   double _rootHitFitdVdW;           // Estimated track slope dv/dw in radians, in local DUT uvw coordinates    
+   double _rootHitFitErrorU;         // Estimated 1x sigma uncertainty for track intersection u coordinate
+   double _rootHitFitErrorV;         // Estimated 1x sigma uncertainty for track intersection v coordinate
+   double _rootHitPullResidualU;     // Standardized residual in u direction, should have mean = 0 and rms = 1
+   double _rootHitPullResidualV;     // Standardized residual in v direction, should have mean = 0 and rms = 1        
+   int _rootHitFitCellU;             // Estimated track intersection u coordinate lies on this u cell      
+   int _rootHitFitCellV;             // Estimated track intersection v coordinate lies on this v cell         
+   double _rootHitFitCellUCenter;    // Central coordinate of cell 'FitCellU' in mm        
+   double _rootHitFitCellVCenter;    // Central coordinate of cell 'FitCellV' in mm 
+   double _rootHitTrackChi2 ;        // Chi2 value from fit of reference track
+   int _rootHitTrackNDF;             // Number of degrees of freedom of track fit
+   int _rootHitTrackNHits;           // Number of telescope hits used for track fitting 
    
-   // Variables in hit tree          
-   int _rootHitQuality;       // GoodCluster == 0
-   double _rootHitU;         // in mm        
-   double _rootHitV;         // in mm  
-   double _rootHitCharge; 
-   double _rootHitSeedCharge;
-   int _rootHitSize;  
-   int _rootHitSizeCol;     
-   int _rootHitSizeRow;    
-   int _rootHitCol;
-   int _rootHitRow; 
-   int _rootHitHasTrack;             // Matched to track == 0     
-   double _rootHitFitMomentum;              
-   double _rootHitFitU;              // Track impact point [mm] - in local frame       
-   double _rootHitFitV;              
-   double _rootHitFitdUdW;           // Track direction tangent [rad] - in local frame       
-   double _rootHitFitdVdW;      
-   double _rootHitFitErrorU;          // rms error u
-   double _rootHitFitErrorV;          // rms error v 
-   double _rootHitPullResidualU; 
-   double _rootHitPullResidualV;             
-   int _rootHitFitCol;               // DUT pixel - readout column         
-   int _rootHitFitRow;               // DUT pixel - readout row   
-   double _rootHitFitPixU;        // Hit pixel, center in u[mm]        
-   double _rootHitFitPixV;        // Hit pixel, center in v[mm] 
-   double _rootHitTrackChi2 ; 
-   int _rootHitTrackNDF; 
-   double _rootHitLocalChi2; 
    
  
    // Variables in track tree  
-   int _rootTrackHasHit; 
-   double _rootTrackFitMomentum;  
-   int _rootTrackNDF;          // Track degrees of freedof (ndof) 
-   double _rootTrackChi2;      // Track chisq
-   double _rootTrackFitU ; 
-   double _rootTrackFitV ; 
-   double _rootTrackFitdUdW; 
-   double _rootTrackFitdVdW; 
-   int _rootTrackFitCol; 
-   int _rootTrackFitRow;  
-   double _rootTrackFitPixU ; 
-   double _rootTrackFitPixV ; 
-   int _rootTrack1x1Quality;       // Good Xing = 0   
-   int _rootTrack3x3Quality;       // Good Xing = 0  
-   double _rootTrackSeedCharge;   
+   int _rootTrackHasHit;             // Track can be matched to a DUT hit (== 0) 
+   double _rootTrackFitMomentum;     // Estimated track momentum from fit    
+   int _rootTrackNDF;                // Number of degrees of freedom of track fit
+   double _rootTrackChi2;            // Chi2 value from fit of reference track
+   double _rootTrackFitU ;           // Estimated track intersection u coordimate in mm, in local DUT uvw coordinates 
+   double _rootTrackFitV ;           // Estimated track intersection v coordimate in mm, in local DUT uvw coordinates 
+   double _rootTrackFitdUdW;         // Estimated track slope du/dw in radians, in local DUT uvw coordinates     
+   double _rootTrackFitdVdW;         // Estimated track slope dv/dw in radians, in local DUT uvw coordinates     
+   int _rootTrackFitCellU;           // Estimated track intersection u coordinate lies on this u cell  
+   int _rootTrackFitCellV;           // Estimated track intersection v coordinate lies on this v cell   
+   int _rootTrackNHits;              // Number of telescope hits used for track fitting 
+   double _rootTrackFitCellUCenter;  
+   double _rootTrackFitCellVCenter; 
+   int _rootTrackDUTCellQuality;     // Quality flag for readout cell ('FitCellU','FitCellV') on the DUT   
    
    // Variables in event tree
-   int _rootEventNDUTTracks; 
-   int _rootEventNMatched; 
+   int _rootEventNMatched;           // Number of matched hit track pairs in the same event as hit
    
  private:
    
