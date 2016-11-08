@@ -27,7 +27,6 @@
       <processor name="TelTrackFinder"/>
       <processor name="DESYBeamCorrector"/>
       <processor name="TelescopeDQM"/>
-      <processor name="X0Imager"/>
       <processor name="L3Analyzer"/>
       <processor name="L4Analyzer"/>
    </execute>
@@ -81,7 +80,7 @@
      <parameter name="SparseZSCut" type="float" value="0"/>
    </processor>
    
-   <processor name="M26HitMaker" type="DigitalHitMaker">
+  <processor name="M26HitMaker" type="DigitalHitMaker">
      <!--DigitalHitMaker:  Compute digital hits from pixel clusters -->
      <!--Name of cluster collection-->
      <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_m26 </parameter>
@@ -90,15 +89,19 @@
      <!--SigmaU for cluster with one uCell contributing [mm]-->
      <parameter name="SigmaU1" type="double" value="0.00440"/>
      <!--SigmaU for cluster with two uCells contributing [mm]-->
-     <parameter name="SigmaU2" type="double" value="0.00460"/>
+     <parameter name="SigmaU2" type="double" value="0.0047"/>
      <!--SigmaU for cluster with three or more uCells contributing [mm]-->
-     <parameter name="SigmaU3" type="double" value="0.0070"/>
+     <parameter name="SigmaU3" type="double" value="0.0055"/>
      <!--SigmaV for cluster with one vCell contributing [mm]-->
      <parameter name="SigmaV1" type="double" value="0.00440"/>
      <!--SigmaV for cluster with two vCells contributing [mm]-->
-     <parameter name="SigmaV2" type="double" value="0.00460"/>
+     <parameter name="SigmaV2" type="double" value="0.0047"/>
      <!--SigmaV for cluster with three or more vCells contributing [mm]-->
-     <parameter name="SigmaV3" type="double" value="0.0070"/>
+     <parameter name="SigmaV3" type="double" value="0.0055"/>
+     <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
+     <parameter name="MaxSizeU" type="int" value="3"/>
+     <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
+     <parameter name="MaxSizeV" type="int" value="3"/>
    </processor>
 
    <processor name="StripUnpacker" type="TelUnpacker">
@@ -149,6 +152,10 @@
      <parameter name="SigmaV2" type="double" value="2.3"/>
      <!--SigmaV for cluster with three or more vCells contributing [mm]-->
      <parameter name="SigmaV3" type="double" value="2.3"/>
+     <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
+     <parameter name="MaxSizeU" type="int" value="3"/>
+     <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
+     <parameter name="MaxSizeV" type="int" value="3"/>
    </processor>  
    
    <processor name="TelTrackFinder" type="FastTracker">
@@ -168,21 +175,21 @@
      <!--Maximum hit residual [mm]-->
      <parameter name="MaxResidualV" type="FloatVec" value="0.3 0.3 0.3 -1 -1 0.3 0.3 0.3"/>
      <!--Maximum track chisq in track fit-->
-     <parameter name="MaxTrackChi2" type="float" value="50"/>
+     <parameter name="MaxTrackChi2" type="float" value="100"/>
      <!--Maximum number of consecutive missing hits in track-->
-     <parameter name="MaximumGap" type="int" value="0"/>
+     <parameter name="MaximumGap" type="int" value="3"/>
      <!--Maximum slope of candiate tracks in Z=0 plane (rad). Set cut to zero to deactivate.-->
      <parameter name="MaximumSlope" type="float" value="0.1"/>
      <!--Minimum number of hits in track-->
-     <parameter name="MinimumHits" type="int" value="6"/>
+     <parameter name="MinimumHits" type="int" value="3"/>
      <!--Chi2 cut for removal of bad hits-->
-     <parameter name="OutlierChi2Cut" type="float" value="15"/>
+     <parameter name="OutlierChi2Cut" type="float" value="30"/>
      <!--Fitting iteration for removal of bad hits-->
      <parameter name="OutlierIterations" type="int" value="2"/>
      <!--Particle charge [e]-->
      <parameter name="ParticleCharge" type="double" value="-1"/>
      <!--Particle mass [GeV]-->
-     <parameter name="ParticleMass" type="double" value="0.000551"/>
+     <parameter name="ParticleMass" type="double" value="0.000511"/>
      <!--Particle momentum [GeV]-->
      <parameter name="ParticleMomentum" type="double" value="4.6"/>
      <!--Build track seeds from first plane and second plane-->
@@ -190,9 +197,9 @@
      <!--Build track seeds from first plane and second plane-->
      <parameter name="PassOne_SecondPlane" type="int" value="1"/>
      <!--Build track seeds from first plane and second plane-->
-     <parameter name="PassTwo_FirstPlane" type="int" value="-1"/>
+     <parameter name="PassTwo_FirstPlane" type="int" value="5"/>
      <!--Build track seeds from first plane and second plane-->
-     <parameter name="PassTwo_SecondPlane" type="int" value="-1"/>
+     <parameter name="PassTwo_SecondPlane" type="int" value="6"/>
    </processor>
 
    <processor name="DESYBeamCorrector" type="BeamEnergyCorrector">
@@ -222,19 +229,7 @@
      <!--Output root file name-->
      <parameter name="RootFileName" type="string" value="Histos.root"/>
    </processor>
-   
-   <processor name="X0Imager" type="X0ImageProducer">
-     <!--X0ImageProducer: X/X0 measurement for EUDET/AIDA telescope data-->
-     <!--Name of track collection-->
-     <parameter name="TrackCollection" type="string" lcioInType="Track"> tracks2 </parameter>
-     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-     <parameter name="AlignmentDBFileName" type="string" value="cal-files/eudet-alignmentDB.slcio"/>
-     <!--Plane number of DUT along the beam line-->
-     <parameter name="DUTPlane" type="int" value="3"/>
-     <!--Output root file name-->
-     <parameter name="RootFileName" type="string" value="X0.root"/>
-   </processor>
-
+  
    <processor name="L3Analyzer" type="DUTTreeProducer">
      <!--DUTTreeProducer: DUT Analysis Processor-->
      <!--Name of DUT hit collection-->
@@ -247,12 +242,12 @@
      <parameter name="AlignmentDBFileName" type="string" value="cal-files/eudet-alignmentDB.slcio"/>
      <!--Plane number of DUT along the beam line-->
      <parameter name="DUTPlane" type="int" value="3"/>
-     <!--Maximum hit2track distance for hit matching [mm]-->
-     <parameter name="HitDistMax" type="double" value="2"/>
+     <!--Maximum u residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.-->
+     <parameter name="MaxResidualU" type="double" value="0.2"/>
+     <!--Maximum v residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.-->
+     <parameter name="MaxResidualV" type="double" value="-1"/>
      <!--Output root file name-->
      <parameter name="RootFileName" type="string" value="Strip-ID6-Histos.root"/>
-     <!--Use only events with one track in telescope-->
-     <parameter name="SingleTrackEvents" type="bool" value="false"/>
    </processor>
 
    <processor name="L4Analyzer" type="DUTTreeProducer">
@@ -267,12 +262,12 @@
      <parameter name="AlignmentDBFileName" type="string" value="cal-files/eudet-alignmentDB.slcio"/>
      <!--Plane number of DUT along the beam line-->
      <parameter name="DUTPlane" type="int" value="4"/>
-     <!--Maximum hit2track distance for hit matching [mm]-->
-     <parameter name="HitDistMax" type="double" value="2"/>
+     <!--Maximum u residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.-->
+     <parameter name="MaxResidualU" type="double" value="0.2"/>
+     <!--Maximum v residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.-->
+     <parameter name="MaxResidualV" type="double" value="-1"/>
      <!--Output root file name-->
      <parameter name="RootFileName" type="string" value="Strip-ID7-Histos.root"/>
-     <!--Use only events with one track in telescope-->
-     <parameter name="SingleTrackEvents" type="bool" value="false"/>
    </processor>
 
 </marlin>
