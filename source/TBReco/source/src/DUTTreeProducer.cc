@@ -518,9 +518,13 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
     }       
     
     if ( track2hit[itrk] >= 0  ) {
-      _rootTrackHasHit = 0;  // match     
+      TBHit& hit = HitStore[ track2hit[itrk] ];  
+      PixelCluster Cluster = hit.GetCluster();
+      _rootTrackHasHit = 0;  // match
+      _rootTrackSeedCharge = Cluster.getSeedCharge() ; 
     } else {
       _rootTrackHasHit = -1; // no match
+      _rootTrackSeedCharge = -1;
     }
        
     _rootFile->cd("");
@@ -749,8 +753,10 @@ void DUTTreeProducer::bookHistos()
    _rootTrackTree->Branch("trackChi2"       ,&_rootTrackChi2           ,"trackChi2/D");
    _rootTrackTree->Branch("trackNdof"       ,&_rootTrackNDF            ,"trackNdof/I");
    _rootTrackTree->Branch("trackNHits"      ,&_rootTrackNHits          ,"trackNHits/I");  
+   _rootTrackTree->Branch("seedCharge"      ,&_rootTrackSeedCharge     ,"seedCharge/D");  
   
-   
+     
+
    // 
    // Event Summay Tree 
    _rootEventTree = new TTree("Event","Event info");

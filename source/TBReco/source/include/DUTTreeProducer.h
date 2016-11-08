@@ -186,6 +186,7 @@ protected:
    double _rootTrackFitCellUCenter;  
    double _rootTrackFitCellVCenter; 
    int _rootTrackDUTCellQuality;     // Quality flag for readout cell ('FitCellU','FitCellV') on the DUT   
+   double _rootTrackSeedCharge;      // Highest charge in cluster, only filled if cluster matched
    
    // Variables in event tree
    int _rootEventNMatched;           // Number of matched hit track pairs in the same event as hit

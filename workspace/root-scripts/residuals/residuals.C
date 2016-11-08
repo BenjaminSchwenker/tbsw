@@ -12,7 +12,7 @@ gStyle->SetOptStat(0);
 
 // 
 // Analysis cuts 
-TCut hitcut = "chi2 < 100  && hasTrack == 0 && clusterQuality == 0";
+TCut hitcut = "trackChi2 < 100  && hasTrack == 0 && clusterQuality == 0";
 TCut roicut = "";
 TCut trkcut = "";
 
@@ -34,11 +34,11 @@ c0->SetRightMargin(0.1);
 c0->SetTopMargin(0.1);
 c0->SetBottomMargin(0.16);
 
-ttb->Draw("row_hit:col_hit>>hspot", hitcut);
-hspot->SetName("hspot"); 
-hspot->GetXaxis()->SetTitle("columns");
-hspot->GetYaxis()->SetTitle("rows");
-hspot->GetZaxis()->SetTitle("number of hits");
+ttb->Draw("cellV_hit:cellU_hit>>hspot", hitcut);
+hspot->SetName(""); 
+hspot->GetXaxis()->SetTitle("cell U [cell ID]");
+hspot->GetYaxis()->SetTitle("cell V [cell ID]");
+hspot->GetZaxis()->SetTitle("number of clusters");
 hspot->GetXaxis()->SetTitleSize(0.08);
 hspot->GetYaxis()->SetTitleSize(0.08);
 hspot->GetZaxis()->SetTitleSize(0.08);
@@ -53,10 +53,10 @@ c1->SetRightMargin(0.1);
 c1->SetTopMargin(0.1);
 c1->SetBottomMargin(0.16);
 
-ttbtrack->Draw("row_fit:col_fit>>htrackspot", trkcut && roicut);
+ttbtrack->Draw("cellV_fit:cellU_fit>>htrackspot", trkcut && roicut);
 htrackspot->SetName("htrackspot"); 
-htrackspot->GetXaxis()->SetTitle("columns");
-htrackspot->GetYaxis()->SetTitle("rows");
+htrackspot->GetXaxis()->SetTitle("cell U [cell ID]");
+htrackspot->GetYaxis()->SetTitle("cell V [cell ID]");
 htrackspot->GetZaxis()->SetTitle("number of tracks");
 htrackspot->GetXaxis()->SetTitleSize(0.08);
 htrackspot->GetYaxis()->SetTitleSize(0.08);
@@ -134,8 +134,8 @@ c5->SetRightMargin(0.1);
 c5->SetTopMargin(0.1);
 c5->SetBottomMargin(0.16);
 
-ttb->Draw("chi2 / ndof >> hchisqundof(100,0,10)", hitcut);
-hchisqundof->SetName("hchisqundof"); 
+ttb->Draw("trackChi2 / trackNdof >> hchisqundof(100,0,10)", hitcut);
+hchisqundof->SetName(""); 
 hchisqundof->SetTitle("");
 hchisqundof->GetXaxis()->SetTitle("#chi^2/ndof");
 hchisqundof->GetYaxis()->SetTitle("number of tracks");
@@ -147,23 +147,7 @@ hchisqundof->GetYaxis()->SetLabelSize(0.06);
 hchisqundof->Draw();
 
 
-TCanvas * c6  = new TCanvas("c6","c6",600,400);
-c6->SetLeftMargin(0.2);
-c6->SetRightMargin(0.1);
-c6->SetTopMargin(0.1);
-c6->SetBottomMargin(0.16);
 
-ttb->Draw("chi2pred >>hchi2pred(100,0,20)", hitcut);
-hchi2pred->SetName("hchi2pred"); 
-hchi2pred->SetTitle("");
-hchi2pred->GetXaxis()->SetTitle("local #chi^2");
-hchi2pred->GetYaxis()->SetTitle("number of tracks");
-hchi2pred->GetXaxis()->SetTitleSize(0.06);
-hchi2pred->GetYaxis()->SetTitleSize(0.06);
-hchi2pred->GetYaxis()->SetTitleOffset(1.5);
-hchi2pred->GetXaxis()->SetLabelSize(0.06);
-hchi2pred->GetYaxis()->SetLabelSize(0.06);
-hchi2pred->Draw();
 
 TCanvas * c7  = new TCanvas("c7","c7",600,400);
 c7->SetLeftMargin(0.2);
@@ -230,10 +214,10 @@ c11->SetRightMargin(0.1);
 c11->SetTopMargin(0.1);
 c11->SetBottomMargin(0.16);
 
-ttb->Draw("sizeCol >>hcol(10,0,10)", hitcut);
+ttb->Draw("sizeU >>hcol(10,0,10)", hitcut);
 hcol->SetName("hcol"); 
 hcol->SetTitle("");
-hcol->GetXaxis()->SetTitle("proj. cluster size [pixels]");
+hcol->GetXaxis()->SetTitle("size [cells]");
 hcol->GetYaxis()->SetTitle("number of hits");
 hcol->GetXaxis()->SetTitleSize(0.06);
 hcol->GetYaxis()->SetTitleSize(0.06);
@@ -242,10 +226,10 @@ hcol->GetXaxis()->SetLabelSize(0.06);
 hcol->GetYaxis()->SetLabelSize(0.06);
 
 
-ttb->Draw("sizeRow >>hrow(10,0,10)", hitcut);
+ttb->Draw("sizeV >>hrow(10,0,10)", hitcut);
 hrow->SetName("hrow"); 
 hrow->SetTitle("");
-hrow->GetXaxis()->SetTitle("proj. cluster size [pixels]");
+hrow->GetXaxis()->SetTitle("size [cells]");
 hrow->GetYaxis()->SetTitle("number of hits");
 hrow->GetXaxis()->SetTitleSize(0.06);
 hrow->GetYaxis()->SetTitleSize(0.06);
@@ -261,8 +245,8 @@ hrow->Draw("same");
 TLegend* lc = new TLegend(0.6,0.5,0.85,0.7);
 lc->SetFillColor(kWhite); 
 lc->SetBorderSize(0);
-lc->AddEntry("hcol","Columns","l");
-lc->AddEntry("hrow","Rows","l");
+lc->AddEntry("hcol","sizeU","l");
+lc->AddEntry("hrow","sizeV","l");
 lc->Draw();
 
 }
