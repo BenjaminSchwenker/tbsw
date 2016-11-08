@@ -73,6 +73,10 @@
      <parameter name="SigmaV2" type="double" value="0.00360"/>
      <!--SigmaV for cluster with three or more vCells contributing [mm]-->
      <parameter name="SigmaV3" type="double" value="0.0070"/>
+     <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
+     <parameter name="MaxSizeU" type="int" value="2"/>
+     <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
+     <parameter name="MaxSizeV" type="int" value="2"/>
    </processor>
      
    <processor name="TelCorrelator" type="Correlator">
