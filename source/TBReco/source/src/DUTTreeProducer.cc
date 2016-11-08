@@ -243,7 +243,7 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
     // Refit track in nominal alignment
     bool trkerr = TrackFitter.Fit(trk);
     if ( trkerr ) {
-      streamlog_out ( MESSAGE1 ) << "Fit failed. Skipping track!" << endl;
+      streamlog_out ( MESSAGE3 ) << "Fit failed. Skipping track!" << endl;
       continue;
     } 
         
