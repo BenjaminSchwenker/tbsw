@@ -107,11 +107,15 @@ FastTracker::FastTracker() : Processor("FastTracker")
    registerProcessorParameter ("MinimumHits",
                               "Minimum number of hits in track",
                               _minHits,  static_cast < int > (2));
-
+   
+   std::vector<int> initSingleHitSeeding;
+   registerProcessorParameter ("SingleHitSeeding", "Start seeding tracks using single hits for plane numbers",
+                              _singleHitSeedingPlanes, initSingleHitSeeding );
+   
    registerProcessorParameter ("PassOne_FirstPlane",
                               "Build track seeds from first plane and second plane",
                               _firstPass_firstPlane,  static_cast < int > (-1));
-  
+   
    registerProcessorParameter ("PassOne_SecondPlane",
                               "Build track seeds from first plane and second plane",
                               _firstPass_secondPlane,  static_cast < int > (-1));
@@ -424,9 +428,18 @@ void FastTracker::processEvent(LCEvent * evt)
      findTracks(TrackCollector , HitStore ,  _secondPass_firstPlane  , _secondPass_secondPlane ); 
      
      streamlog_out ( MESSAGE2 ) << "Total of " << TrackCollector.size() << " candidate tracks found" << endl;
-     
    }
-   
+
+   // Single hit finding     
+   //=========================================================
+   // Seed tracks are constructed from just a single hit and propagated 
+   // along the z axis. 
+   for ( int seedplane : _singleHitSeedingPlanes ) {
+     
+     findTracks(TrackCollector , HitStore ,  seedplane ); 
+     
+     streamlog_out ( MESSAGE3 ) << "Single hit finding: Total of " << TrackCollector.size() << " candidate tracks found" << endl;
+   } 
    
    // Final Track Selection  
    // ========================================================
@@ -757,6 +770,179 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
          // Ok, we keep this track for final selection      
          TrackCollector.push_back( trk ); 
        } 
+     } // End track seeding  
+   } // End momentum scan 
+}
+
+
+//
+// Called by the processEvent() to add tracks to trackcollector using hits in hitstore
+//
+void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& HitStore , int seedplane) 
+{
+   
+   streamlog_out ( MESSAGE2 ) << "Seed plane is " << seedplane  << " and has " 
+                              << HitStore.GetNHits(seedplane) << " good hits." << endl;
+   
+   
+   // Check plane numbers are valid
+   if (seedplane < 0 ) return; 
+ 
+   // Configure Kalman track fitter
+   GenericTrackFitter TrackFitter(_detector);
+   TrackFitter.SetNumIterations(_outlierIterations+1);
+   TrackFitter.SetOutlierCut(_outlierChi2Cut); 
+   
+   // Loop over different momentum hypothesis 
+   
+   for (int imom = 0; imom < (int) _momentum_list.size() ; imom++ ) {
+     
+     double my_momentum = _momentum_list[imom];
+     double my_charge = _charge; 
+     
+     // This case refers to the antiparticle
+     if ( my_momentum  < 0 ) {
+       my_momentum*=-1; 
+       my_charge *=-1; 
+     } 
+     
+     // Configue seed track generator  
+     SeedGenerator TrackSeeder(my_charge,my_momentum);
+     
+     for (int ihit = 0; ihit < HitStore.GetNHits(seedplane); ihit++ ) {
+       
+       // Init new candidate track  
+       TBTrack trk(_detector);
+       trk.SetMass( _mass );
+       trk.SetCharge( my_charge );
+       trk.SetMomentum( my_momentum ); 
+         
+       // Compute seed track 
+       TBHit& seedhit = HitStore.GetRecoHitFromID(ihit, seedplane);  
+       TBTrackState Seed = TrackSeeder.CreateSeedTrack(seedhit, _detector);   
+       trk.SetReferenceState(Seed);
+         
+       // Extrapolate seed to all planes
+       bool exerr = TrackFitter.ExtrapolateSeed(trk);
+       if ( exerr ) { // just skip the track 
+         continue;
+       }  
+         
+       // Add hits to candidate track  
+       //============================
+       
+       // Counts consecutive missing hits
+       int ngap = 0 ;    
+         
+       // Count number of added hits 
+       int nhits = 0; 
+       
+       // Flag success of track building
+       bool isValid = true;   
+                              
+       // Follow track along beam direction    
+       for(int ipl=0;ipl<_nTelPlanes;ipl++)  { 
+                
+         // Skip passive sensors    
+         if( _isActive[ipl] && trk.GetTE(ipl).IsCrossed() ) { 
+                  
+           // Get extrapolated intersection coordinates
+           double u = trk.GetTE(ipl).GetState().GetPars()[2][0]; 
+           double v = trk.GetTE(ipl).GetState().GetPars()[3][0]; 
+             
+           // Fast preselection of hit candidates compatible to   
+           // predicted intersection coordinates. 
+           vector<int> HitIdVec = HitStore.GetCompatibleHitIds(ipl, u, v, _maxResidualU[ipl], _maxResidualV[ipl]);
+             
+           // Now, we select the best hit candidate 
+           int ncandhits = HitIdVec.size();
+           int besthitid=-1;
+           double bestdist = numeric_limits< double >::max();
+             
+           for (int icand = 0; icand < ncandhits; ++icand ) 
+           {    
+             
+             // Get reco hit at plane ipl 
+             int hitid = HitIdVec[icand];
+             TBHit & RecoHit = HitStore.GetRecoHitFromID(hitid, ipl);   
+             double uhit = RecoHit.GetCoord()[0][0];              
+             double vhit = RecoHit.GetCoord()[1][0]; 
+
+             // Discard hits with too large residuals
+             if ( std::abs(u - uhit) >= _maxResidualU[ipl] && _maxResidualU[ipl] > 0) continue; 
+             if ( std::abs(v - vhit) >= _maxResidualV[ipl] && _maxResidualV[ipl] > 0) continue; 
+
+             // Remember hit with smallest residual 
+             double hitdist = std::abs( u - uhit ) + std::abs( v - vhit );
+             if( hitdist < bestdist )
+             {
+               bestdist = hitdist;
+               besthitid=hitid;
+             }
+           } 
+              
+           // Check iff good hit found 
+           if ( besthitid!=-1 )  {
+              
+             // Add hit to candidate track 
+             TBHit& BestHit = HitStore.GetRecoHitFromID(besthitid, ipl);
+             BestHit.SetUniqueID(besthitid);            
+             trk.GetTE(ipl).SetHit(BestHit);
+                 
+             // Some bookkeeping    
+             nhits++;  
+             ngap = 0;
+             
+           } else {
+           
+             // Ok, missing hit for that seed track 
+             ngap++;    
+             if( ngap > _maxGap ) {
+               streamlog_out(MESSAGE1) << "Too many missing hits. Skip seed track! " << endl;  
+               isValid = false;
+               break;       
+             }
+              
+           }
+         } // End is active 
+          
+       } // End subdetector loop 
+                
+       // Check if track candidate is valid, otherwise proceed to 
+       // next. 
+       // =============================
+       
+       if( !isValid ) {
+         continue;
+       }  
+       
+       if ( nhits<_minHits ) {
+         continue;
+       }
+         
+       // Fit track candidate 
+       bool trkerr = TrackFitter.Fit(trk); 
+       if( trkerr ) {
+         streamlog_out ( MESSAGE1 ) << "Fit failed. Skipping candidate track!" << endl;
+         continue;
+       }
+         
+       // Reject track candidate if number of hits too small
+       // Can change in outlier rejection of fitter
+       if(  trk.GetNumHits() < _minHits  ) { 
+         streamlog_out ( MESSAGE1 ) << "Number of hits too small. Skipping candidate track!" << endl;
+         continue;      
+       }   
+         
+       // Reject hit if total chisq gets too large
+       if(  trk.GetChiSqu() >= _maxTrkChi2  ) { 
+         streamlog_out ( MESSAGE1 ) << "Track chisq too big. Skipping candidate track!" << endl;
+         continue;      
+       }
+              
+       // Ok, we keep this track for final selection      
+       TrackCollector.push_back( trk ); 
+        
      } // End track seeding  
    } // End momentum scan 
 }

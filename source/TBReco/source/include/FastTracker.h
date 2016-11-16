@@ -93,6 +93,9 @@ protected:
 //! Called by the processEvent() to find track candidates  
    void findTracks( std::list<TBTrack>& TrackCollector , HitFactory& HitStore , int firstplane , int secondplane);  
 
+//! Called by the processEvent() to add tracks to trackcollector using hits in hitstore
+   void findTracks( std::list<TBTrack>& TrackCollector , HitFactory& HitStore , int seedplane); 
+
 // Processor Parameters
    
 //! Input hit collection names
@@ -125,6 +128,9 @@ protected:
    float _maxTrkChi2; 
    float _outlierChi2Cut; 
    int _outlierIterations;
+
+//! Perform single hit seeding for these plane numbers 
+   std::vector<int>  _singleHitSeedingPlanes; 
    
 //! Parameters for beam particles 
    std::vector<float> _momentum_list; 
