@@ -256,13 +256,13 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     {
             
       // If matched, skip track 
-      if ( up2down[iup].size() >= 0 ) continue;    
+      if ( up2down[iup].size() > 0 ) continue;    
       
       for(int idown=0; idown< (int)downTrackStore.size() ; idown++)
       {
 
         // If matched, skip track 
-        if (down2up[idown].size() >= 0) continue; 
+        if (down2up[idown].size() > 0) continue; 
         
         TBTrack& uptrack = upTrackStore[iup];
         TBTrack& downtrack = downTrackStore[idown];
