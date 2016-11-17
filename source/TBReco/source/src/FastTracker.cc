@@ -505,7 +505,9 @@ void FastTracker::processEvent(LCEvent * evt)
    int nStoredTracks=0;
 
    // Remember the hit ids of used hits
-   vector<vector<int>> usedIDs(_nTelPlanes);
+   vector<vector<int>> usedIDs;
+   usedIDs.resize(_nTelPlanes, vector<int>(0, 0));
+
    
    for(list<TBTrack>::iterator ctrack=TrackCollector.begin(); ctrack!=TrackCollector.end(); ++ctrack) 
    {
