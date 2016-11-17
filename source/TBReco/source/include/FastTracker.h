@@ -26,10 +26,10 @@ namespace depfet {
    bool check_incompatible( TBTrack& trk1, TBTrack& trk2 );
    
 //! Is track trk1 better than trk2
-   bool compare_tracks ( TBTrack& trk1, TBTrack& trk2 );
+   bool compare_tracks( TBTrack& trk1, TBTrack& trk2 );
 
 //! Mark hits in track as used
-   void mark_hits ( TBTrack& trk, std::vector<std::vector<int>>&  usedIDs )
+   void mark_hits( TBTrack& trk, std::vector<std::vector<int>>&  usedIDs );
 
 //! FastTracker Processor
 /*! This processor performs track finding and track fitting in beam test 
