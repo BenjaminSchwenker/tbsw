@@ -561,6 +561,10 @@ void FastTracker::processEvent(LCEvent * evt)
          // Check hit was not used
          if ( std::find(usedIDs[ipl].begin(), usedIDs[ipl].end(), hit.GetUniqueID() ) == usedIDs[ipl].end() )
          {
+           // Print the track candidate 
+           streamlog_out(MESSAGE2) << "Printing not used hit: " << hit.GetCoord() 
+                                   << endl;
+           
            notUsedHitCollection->push_back( hit.MakeLCIOHit() );
          }
        }

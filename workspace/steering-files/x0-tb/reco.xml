@@ -209,9 +209,9 @@
    <processor name="X0Imager" type="X0ImageProducer">
      <!--X0ImageProducer: X/X0 measurement for EUDET/AIDA telescope data-->
      <!--Name of upstream track collection-->
-     <parameter name="TrackCollection" type="string" lcioInType="Track"> up_tracks2 </parameter>
+     <parameter name="UpStreamTrackCollection" type="string" lcioInType="Track"> up_tracks2 </parameter>
      <!--Name of downstream track collection-->
-     <parameter name="TrackCollection" type="string" lcioInType="Track"> down_tracks2 </parameter>
+     <parameter name="DownStreamTrackCollection" type="string" lcioInType="Track"> down_tracks2 </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="cal-files/eudet-alignmentDB.slcio"/>
      <!--Plane number of DUT along the beam line-->
