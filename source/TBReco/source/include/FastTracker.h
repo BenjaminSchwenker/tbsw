@@ -100,6 +100,9 @@ protected:
    
 //! Input hit collection names
    std::vector< std::string >  _hitCollectionNameVec;  
+
+//! Output collection name for not used hits 
+   std::string _notUsedhitCollectionName;
    
 //! Output track collection name
    std::string _trackCollectionName;

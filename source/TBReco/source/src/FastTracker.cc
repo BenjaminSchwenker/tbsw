@@ -22,6 +22,7 @@
 #include <string>
 #include <iostream>
 #include <iomanip>
+#include <algorithm>
 
 // Include LCIO classes
 #include <lcio.h>
@@ -65,6 +66,11 @@ FastTracker::FastTracker() : Processor("FastTracker")
    registerOutputCollection(LCIO::TRACK,"OutputTrackCollectionName",
                            "Collection name for fitted tracks",
                            _trackCollectionName, string ("fittracks"));
+    
+   registerOutputCollection (LCIO::TRACKERHIT, "HitCollectionName",
+                            "Name of not used hit collection",
+                            _notUsedhitCollectionName, 
+                            string("unusedhits"));
    
 // 
 // Next, initialize the processor paramters
@@ -495,7 +501,11 @@ void FastTracker::processEvent(LCEvent * evt)
    flag.setBit( LCIO::TRBIT_HITS );
    fittrackvec->setFlag(flag.getFlag());
    
+   // Count stored tracks
    int nStoredTracks=0;
+
+   // Remember the hit ids of used hits
+   vector<vector<int>> usedIDs(_nTelPlanes);
    
    for(list<TBTrack>::iterator ctrack=TrackCollector.begin(); ctrack!=TrackCollector.end(); ++ctrack) 
    {
@@ -509,6 +519,9 @@ void FastTracker::processEvent(LCEvent * evt)
                                  << endl;
        } 
      } 
+     
+     // Mark all hits used in this track
+     mark_hits( *ctrack, usedIDs ); 
      
      // Convert TBTrack to LCIO::Track  
      TrackImpl* lciotrack = TrackLCIOWriter.MakeLCIOTrack( *ctrack );
@@ -529,10 +542,34 @@ void FastTracker::processEvent(LCEvent * evt)
      
    evt->addCollection(fittrackvec,_trackCollectionName); 
    
+   // Create collection of unused hits 
+   // ============================================================= 
+   // Unused hits are input hits not being part of any track in the 
+   // final track selection. Putting them in a seperate collection 
+   // may be helpfull for estimating track finding efficiency. 
    
+   // Create collection for unused hits 
+   LCCollectionVec * notUsedHitCollection = new LCCollectionVec(LCIO::TRACKERHIT) ;
    
+   if (true) {  
+     for(int ipl=0;ipl<_nTelPlanes;ipl++)  { 
+       for (int ihit = 0; ihit < HitStore.GetNHits(ipl); ihit++ ) {  
+         // Get hit    
+         TBHit& hit = HitStore.GetRecoHitFromID(ihit, ipl); 
+         // Check hit was not used
+         if ( std::find(usedIDs.begin(), usedIDs.end(), hit.GetUniqueID() ) == usedIDs.end() )
+         {
+           notUsedHitCollection->push_back( hit.MakeLCIOHit() );
+         }
+       }
+     
+     }
+   }
+    
+   // Store collection of not used hits 
+   evt->addCollection( notUsedHitCollection, _notUsedhitCollectionName );   
+
    return;
-   
 }
 
 
@@ -1019,6 +1056,26 @@ bool compare_tracks ( TBTrack& trk1, TBTrack& trk2 )
      }
   }
 }
+
+
+// 
+// mark hits in track as used
+// 
+void mark_hits ( TBTrack& trk, vector<vector<int>>&  usedIDs )
+{ 
+  // Loop over track elements 
+  for(TBTrackElement& te : trk.GetTEs() ) {     
+    // Check both tracks have hits
+    if ( te.HasHit() ) {
+      // Get unique hitId 
+      int hitId = te.GetHit().GetUniqueID();
+      int ipl = te.GetDet().GetPlaneNumber();
+      usedIDs[ipl].push_back(hitId);   
+    } 	 
+  }   
+  return; 
+}
+
 
 } // Namespace
 
