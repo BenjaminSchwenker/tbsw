@@ -559,7 +559,7 @@ void FastTracker::processEvent(LCEvent * evt)
          // Get hit    
          TBHit& hit = HitStore.GetRecoHitFromID(ihit, ipl); 
          // Check hit was not used
-         if ( std::find(usedIDs.begin(), usedIDs.end(), hit.GetUniqueID() ) == usedIDs.end() )
+         if ( std::find(usedIDs[ipl].begin(), usedIDs[ipl].end(), hit.GetUniqueID() ) == usedIDs[ipl].end() )
          {
            notUsedHitCollection->push_back( hit.MakeLCIOHit() );
          }
