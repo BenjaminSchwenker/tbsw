@@ -340,14 +340,14 @@ void FastTracker::processEvent(LCEvent * evt)
          // Ignore hit, iff plane not declared as active (i.e. plane excluded by user)
          if(! _isActive[ipl]) 
          { 
-           //cout << " ignore sensor!! " << endl;
+           streamlog_out ( MESSAGE2 ) << " ignore sensor!! " << endl;
            continue ;
          }
           
          // Ignore hit, iff hit quality is bad and quality filter active  
          if ( !_hitQualitySelect && RecoHit.GetQuality() != _hitQualitySelect )   
          { 
-           //cout << " bad quality hit on plane " << ipl << endl;
+           streamlog_out ( MESSAGE2 ) << " bad quality hit on plane " << ipl << endl;
            continue ;
          }   
          
@@ -444,7 +444,7 @@ void FastTracker::processEvent(LCEvent * evt)
      
      findTracks(TrackCollector , HitStore ,  seedplane ); 
      
-     streamlog_out ( MESSAGE3 ) << "Single hit finding: Total of " << TrackCollector.size() << " candidate tracks found" << endl;
+     streamlog_out ( MESSAGE2 ) << "Single hit finding: Total of " << TrackCollector.size() << " candidate tracks found" << endl;
    } 
    
    // Final Track Selection  
@@ -743,7 +743,11 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
                if ( std::abs(v - vhit) >= _maxResidualV[ipl] && _maxResidualV[ipl] > 0) continue; 
 
                // Remember hit with smallest residual 
-               double hitdist = std::abs( u - uhit ) + std::abs( v - vhit );
+               double hitdist = 0; 
+               if ( _maxResidualU[ipl] > 0 )  hitdist += std::abs(u - uhit); 
+               if ( _maxResidualV[ipl] > 0 )  hitdist += std::abs(v - vhit); 
+
+
                if( hitdist < bestdist )
                {
                  bestdist = hitdist;
@@ -916,7 +920,10 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
              if ( std::abs(v - vhit) >= _maxResidualV[ipl] && _maxResidualV[ipl] > 0) continue; 
 
              // Remember hit with smallest residual 
-             double hitdist = std::abs( u - uhit ) + std::abs( v - vhit );
+             double hitdist = 0; 
+             if ( _maxResidualU[ipl] > 0 )  hitdist += std::abs(u - uhit); 
+             if ( _maxResidualV[ipl] > 0 )  hitdist += std::abs(v - vhit); 
+
              if( hitdist < bestdist )
              {
                bestdist = hitdist;
@@ -1018,8 +1025,7 @@ bool check_incompatible( TBTrack& trk1, TBTrack& trk2 )
   std::vector<TBTrackElement>& TEVec2 = trk2.GetTEs();
   int nTE2 = (int) TEVec2.size();
   
-  if (nTE1!=nTE2) {
-    //cout << "ERR: (CTRACK) At least one track is not complete." << endl;    
+  if (nTE1!=nTE2) {  
     return false; 
   }  
   
