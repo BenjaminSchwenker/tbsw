@@ -601,7 +601,7 @@ void FastTracker::end()
                           << resetiosflags(ios::right) << endl
                           << "Total number of reconstructed tracks: " << setw(10) << setiosflags(ios::right) << _noOfTracks << resetiosflags(ios::right)
                           << resetiosflags(ios::right) << endl
-                          << "Number of events with " << _minHits << " firing planes: " << setw(9) << setiosflags(ios::right) << _noOfEventMinHits << resetiosflags(ios::right)
+                          << "Number of events with " << _minHits << " firing planes: " << setw(9) << setiosflags(ios::right) << _noOfEventMinHits << resetiosflags(ios::right) << endl
                           << "Number of failed final fits " <<  _noOfFailedFits << resetiosflags(ios::right)
                           << endl; 
     
