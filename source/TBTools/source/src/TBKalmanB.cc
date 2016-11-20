@@ -300,15 +300,13 @@ bool TBKalmanB::Fit(TBTrack& trk)
           HepSymMatrix Cf = FFilterData[is].Pr_C;
                 
           bool error = GetSmoothedData(xb, Cb, xf, Cf, xs, Cs);
-          
           if ( error ) {
-            // Smoothing step has failed   
-            TE.SetChiSqu(-1); 
-            continue;     
+            trk.SetChiSqu(-1);
+            SetNdof(trk); 
+            return true; 
           }
                      
       }
-      
       
       // Linearization: This adds the reference parameters         
       xs += RefStateVec[is];
