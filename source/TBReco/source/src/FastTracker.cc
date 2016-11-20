@@ -174,7 +174,8 @@ void FastTracker::init() {
   _noOfEventWOInputHit = 0;
   _noOfEventWOTrack = 0;
   _noOfTracks  = 0;
-  _noOfEventMinHits = 0; 
+  _noOfEventMinHits = 0;
+  _noOfFailedFits = 0;  
   
   // Read detector constants from gear file
   _detector.ReadGearConfiguration();    
@@ -601,9 +602,10 @@ void FastTracker::end()
                           << "Total number of reconstructed tracks: " << setw(10) << setiosflags(ios::right) << _noOfTracks << resetiosflags(ios::right)
                           << resetiosflags(ios::right) << endl
                           << "Number of events with " << _minHits << " firing planes: " << setw(9) << setiosflags(ios::right) << _noOfEventMinHits << resetiosflags(ios::right)
+                          << "Number of failed final fits " <<  _noOfFailedFits << resetiosflags(ios::right)
                           << endl; 
     
-  
+ 
 
    
   // CPU time end
@@ -695,6 +697,8 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
          // Extrapolate seed to all planes
          bool exerr = TrackFitter.ExtrapolateSeed(trk);
          if ( exerr ) { // just skip the track 
+           _noOfFailedFits++;
+           streamlog_out ( MESSAGE2 ) << "Extrapolation of track seed into telescope failed!!" << endl; 
            continue;
          }  
          
@@ -797,6 +801,7 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
          // Fit track candidate 
          bool trkerr = TrackFitter.Fit(trk); 
          if( trkerr ) {
+           _noOfFailedFits++;
            streamlog_out ( MESSAGE1 ) << "Fit failed. Skipping candidate track!" << endl;
            continue;
          }
@@ -872,6 +877,8 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
        // Extrapolate seed to all planes
        bool exerr = TrackFitter.ExtrapolateSeed(trk);
        if ( exerr ) { // just skip the track 
+         _noOfFailedFits++;
+         streamlog_out ( MESSAGE2 ) << "Extrapolation of track seed into telescope failed!!" << endl; 
          continue;
        }  
          
@@ -973,6 +980,7 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
        // Fit track candidate 
        bool trkerr = TrackFitter.Fit(trk); 
        if( trkerr ) {
+         _noOfFailedFits++;
          streamlog_out ( MESSAGE1 ) << "Fit failed. Skipping candidate track!" << endl;
          continue;
        }

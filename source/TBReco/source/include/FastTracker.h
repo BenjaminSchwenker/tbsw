@@ -181,7 +181,10 @@ protected:
    /*! This is the total number of tracks the processor was able to
     * reconstruct.
     */
-   int _noOfTracks;       
+   int _noOfTracks;    
+
+   //! Total number of failed final fits
+   int _noOfFailedFits;    
    
    double _timeCPU; //!< CPU time
    int    _nRun ;   //!< Run number
