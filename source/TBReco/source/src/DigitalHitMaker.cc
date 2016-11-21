@@ -14,6 +14,9 @@
 #include <cmath>
 #include <iomanip>
 
+// ROOT includes
+#include <TMath.h>
+
 // Include LCIO classes
 #include <lcio.h>
 #include <IMPL/LCCollectionVec.h>
@@ -201,7 +204,8 @@ void DigitalHitMaker::processEvent(LCEvent * evt)
     } else {
       double u1 = Det.GetPixelCenterCoordU(myCluster.getVStart(), myCluster.getUStart() + myCluster.getUSize() - 1 ); 
       u = 0.5*(u0 + u1);  
-      cov_u = pow(_SigmaU3,2); 
+      // this is a rough order of magnitude guess
+      cov_u = pow(myCluster.getUSize()*Det.GetPitchU()/TMath::Sqrt(12),2);
     }
     
     if ( myCluster.getVSize() == 1) {
@@ -220,7 +224,8 @@ void DigitalHitMaker::processEvent(LCEvent * evt)
     } else {
       double v1 = Det.GetPixelCenterCoordV(myCluster.getVStart() + myCluster.getVSize() - 1, myCluster.getUStart()); 
       v = 0.5*(v0 + v1);
-      cov_v = pow(_SigmaV3,2);
+      // this is a rough order of magnitude guess
+      cov_v = pow(myCluster.getVSize()*Det.GetPitchV()/TMath::Sqrt(12),2);
     }
          
     if ( myCluster.getUSize() > _maxSizeU ) clsType = 1; 
