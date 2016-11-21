@@ -200,7 +200,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, _detector ); 
     
     // Refit track in nominal alignment
-    bool trkerr = TrackFitterMSC.ProcessTrack(trk, 1, 0);
+    bool trkerr = TrackFitterMSC.ProcessTrack(trk, -1, 0);
     if ( trkerr ) {
       streamlog_out ( MESSAGE1 ) << "Fit failed. Skipping track!" << endl;
       continue;
@@ -224,7 +224,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, _detector ); 
 
     // Refit track in nominal alignment
-    bool trkerr = TrackFitterMSC.ProcessTrack(trk, -1, 0);  
+    bool trkerr = TrackFitterMSC.ProcessTrack(trk, 1, 0);  
     if ( trkerr ) {
       streamlog_out ( MESSAGE1 ) << "Fit failed. Skipping track!" << endl;
       continue;
