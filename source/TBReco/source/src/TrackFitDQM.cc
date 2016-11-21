@@ -282,13 +282,19 @@ void TrackFitDQM::processEvent(LCEvent * evt)
         
         histoName = "hresU2_sensor"+to_string( ipl );
         _histoMap[ histoName ]->Fill( du );   
-      } else {
+      } else if ( Cluster.getUSize() == 3 )  {
         histoName = "hpull_resU3_sensor"+to_string( ipl );
         _histoMap[ histoName ]->Fill( pull_u ); 
         
         histoName = "hresU3_sensor"+to_string( ipl );
         _histoMap[ histoName ]->Fill( du );   
-      } 
+      } else {
+        histoName = "hpull_resUOverflow_sensor"+to_string( ipl );
+        _histoMap[ histoName ]->Fill( pull_u ); 
+        
+        histoName = "hresUOverflow_sensor"+to_string( ipl );
+        _histoMap[ histoName ]->Fill( du );   
+      }
       
       if ( Cluster.getVSize() == 1 )  {
         histoName = "hpull_resV1_sensor"+to_string( ipl );
@@ -302,12 +308,18 @@ void TrackFitDQM::processEvent(LCEvent * evt)
 
         histoName = "hresV2_sensor"+to_string( ipl );
         _histoMap[ histoName ]->Fill( dv );  
-      }  else {
+      }  else if ( Cluster.getVSize() == 3 ) {
         histoName = "hpull_resV3_sensor"+to_string( ipl );
         _histoMap[ histoName ]->Fill( pull_v ); 
 
         histoName = "hresV3_sensor"+to_string( ipl );
         _histoMap[ histoName ]->Fill( dv );    
+      } else {
+        histoName = "hpull_resVOverflow_sensor"+to_string( ipl );
+        _histoMap[ histoName ]->Fill( pull_v ); 
+
+        histoName = "hresVOverflow_sensor"+to_string( ipl );
+        _histoMap[ histoName ]->Fill( dv );  
       }
       
       histoName = "hsigma_clu_u_sensor"+to_string( ipl );
@@ -687,7 +699,13 @@ void TrackFitDQM::bookHistos()
     histoName = "hresU3_sensor"+to_string( ipl );
     max = 10*safetyFactor*Sensor.GetPitchU(); 
     _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 1000, -max, +max);
-    _histoMap[ histoName ]->SetXTitle("u residual (uSize>2) [mm]"); 
+    _histoMap[ histoName ]->SetXTitle("u residual (uSize=3) [mm]"); 
+    _histoMap[ histoName ]->SetYTitle("tracks"); 
+
+    histoName = "hresUOverflow_sensor"+to_string( ipl );
+    max = 10*safetyFactor*Sensor.GetPitchU(); 
+    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 1000, -max, +max);
+    _histoMap[ histoName ]->SetXTitle("u residual (uSize>3) [mm]"); 
     _histoMap[ histoName ]->SetYTitle("tracks"); 
 
 
@@ -703,7 +721,12 @@ void TrackFitDQM::bookHistos()
 
     histoName = "hpull_resU3_sensor"+to_string( ipl );
     _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, -4, +4);
-    _histoMap[ histoName ]->SetXTitle(" pull u residual (uSize>2)"); 
+    _histoMap[ histoName ]->SetXTitle(" pull u residual (uSize=3)"); 
+    _histoMap[ histoName ]->SetYTitle(" tracks");   
+
+    histoName = "hpull_resUOverflow_sensor"+to_string( ipl );
+    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, -4, +4);
+    _histoMap[ histoName ]->SetXTitle(" pull u residual (uSize>3)"); 
     _histoMap[ histoName ]->SetYTitle(" tracks");   
 
     histoName = "hresV1_sensor"+to_string( ipl );
@@ -721,7 +744,13 @@ void TrackFitDQM::bookHistos()
     histoName = "hresV3_sensor"+to_string( ipl );
     max = 10*safetyFactor*Sensor.GetPitchV(); 
     _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 1000, -max, +max);
-    _histoMap[ histoName ]->SetXTitle("v residual (vSize>2) [mm]"); 
+    _histoMap[ histoName ]->SetXTitle("v residual (vSize=3) [mm]"); 
+    _histoMap[ histoName ]->SetYTitle("tracks"); 
+
+    histoName = "hresVOverflow_sensor"+to_string( ipl );
+    max = 10*safetyFactor*Sensor.GetPitchV(); 
+    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 1000, -max, +max);
+    _histoMap[ histoName ]->SetXTitle("v residual (vSize>3) [mm]"); 
     _histoMap[ histoName ]->SetYTitle("tracks"); 
 
     histoName = "hpull_resV1_sensor"+to_string( ipl );
@@ -736,7 +765,12 @@ void TrackFitDQM::bookHistos()
    
     histoName = "hpull_resV3_sensor"+to_string( ipl );
     _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, -4, +4);
-    _histoMap[ histoName ]->SetXTitle(" pull v residual (vSize>2)"); 
+    _histoMap[ histoName ]->SetXTitle(" pull v residual (vSize=3)"); 
+    _histoMap[ histoName ]->SetYTitle(" tracks"); 
+
+    histoName = "hpull_resVOverflow_sensor"+to_string( ipl );
+    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, -4, +4);
+    _histoMap[ histoName ]->SetXTitle(" pull v residual (vSize>3)"); 
     _histoMap[ histoName ]->SetYTitle(" tracks"); 
          
     // Plot residual profiles 
@@ -744,7 +778,7 @@ void TrackFitDQM::bookHistos()
     histoName = "hduvsu_sensor"+to_string( ipl );
     max = safetyFactor*Sensor.GetSensitiveSizeU()/2; 
     nbins = Sensor.GetNColumns()/4;
-    if ( nbins > 50 ) nbins = 50; 
+    //if ( nbins > 50 ) nbins = 50; 
     _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", nbins, -max, +max);
     _profileMap[ histoName ]->SetXTitle("u [mm]"); 
     _profileMap[ histoName ]->SetYTitle("mean residual u [mm]");
@@ -752,7 +786,7 @@ void TrackFitDQM::bookHistos()
     histoName = "hdvvsv_sensor"+to_string( ipl );
     max = safetyFactor*Sensor.GetSensitiveSizeV()/2;  
     nbins = Sensor.GetNRows()/4;
-    if ( nbins > 50 ) nbins = 50;  
+    //if ( nbins > 50 ) nbins = 50;  
     _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", nbins, -max, +max); 
     _profileMap[ histoName ]->SetXTitle("v [mm]"); 
     _profileMap[ histoName ]->SetYTitle("mean residual v [mm]");
@@ -760,7 +794,7 @@ void TrackFitDQM::bookHistos()
     histoName = "hduvsv_sensor"+to_string( ipl );
     max = safetyFactor*Sensor.GetSensitiveSizeV()/2; 
     nbins = Sensor.GetNRows()/4;
-    if ( nbins > 50 ) nbins = 50;   
+    //if ( nbins > 50 ) nbins = 50;   
     _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", nbins, -max, +max); 
     _profileMap[ histoName ]->SetXTitle("v [mm]"); 
     _profileMap[ histoName ]->SetYTitle("mean residual u [mm]");    
@@ -768,7 +802,7 @@ void TrackFitDQM::bookHistos()
     histoName = "hdvvsu_sensor"+to_string( ipl );
     max = safetyFactor*Sensor.GetSensitiveSizeU()/2;  
     nbins = Sensor.GetNColumns()/4;
-    if ( nbins > 50 ) nbins = 50;  
+    //if ( nbins > 50 ) nbins = 50;  
     _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", nbins, -max, +max); 
     _profileMap[ histoName ]->SetXTitle("u [mm]"); 
     _profileMap[ histoName ]->SetYTitle("mean residual v [mm]");
