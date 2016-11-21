@@ -461,7 +461,7 @@ void FastTracker::processEvent(LCEvent * evt)
    // After track selection, the TrackCollector holds all final
    // tracks.    
     
-   /*
+   
    if ( _nActivePlanes>=3 ) {
      
      // Ok, let's sort tracks hypotheses   
@@ -484,8 +484,8 @@ void FastTracker::processEvent(LCEvent * evt)
        } 
      }
    }
-   */   
-
+    
+   
    streamlog_out ( MESSAGE2 ) << "Total of " << TrackCollector.size() << " tracks found" << endl;
    
    // Store final tracks to LCIO
@@ -1092,7 +1092,7 @@ void mark_hits ( TBTrack& trk, vector<vector<int>>&  usedIDs )
       // Get unique hitId 
       int hitId = te.GetHit().GetUniqueID();
       int ipl = te.GetDet().GetPlaneNumber();
-      usedIDs[ipl].push_back(hitId);   
+      if (hitId >= 0) usedIDs[ipl].push_back(hitId);   
     } 	 
   }   
   return; 
