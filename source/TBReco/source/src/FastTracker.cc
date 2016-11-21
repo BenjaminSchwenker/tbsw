@@ -461,6 +461,7 @@ void FastTracker::processEvent(LCEvent * evt)
    // After track selection, the TrackCollector holds all final
    // tracks.    
     
+   /*
    if ( _nActivePlanes>=3 ) {
      
      // Ok, let's sort tracks hypotheses   
@@ -474,16 +475,17 @@ void FastTracker::processEvent(LCEvent * evt)
        ++otrack; 
        while ( otrack != TrackCollector.end() ) {   
          // Delete incompatible track
-         if ( check_incompatible(*ctrack,*otrack) ) { 
+         if (  check_incompatible(*ctrack,*otrack)  ) { 
            otrack = TrackCollector.erase(otrack);
-           streamlog_out ( MESSAGE1 ) << "   erase track" << endl; 
+           streamlog_out ( MESSAGE4 ) << "   erase track" << endl; 
          } else {
            ++otrack;
          } 
        } 
      }
    }
-   
+   */   
+
    streamlog_out ( MESSAGE2 ) << "Total of " << TrackCollector.size() << " tracks found" << endl;
    
    // Store final tracks to LCIO
@@ -602,7 +604,7 @@ void FastTracker::end()
                           << "Total number of reconstructed tracks: " << setw(10) << setiosflags(ios::right) << _noOfTracks << resetiosflags(ios::right)
                           << resetiosflags(ios::right) << endl
                           << "Number of events with " << _minHits << " firing planes: " << setw(9) << setiosflags(ios::right) << _noOfEventMinHits << resetiosflags(ios::right) << endl
-                          << "Number of failed final fits " << setw(10) << setiosflags(ios::right) <<  _noOfFailedFits << resetiosflags(ios::right)
+                          << "Number of failed final fits: " << setw(10) << setiosflags(ios::right) <<  _noOfFailedFits << resetiosflags(ios::right)
                           << endl; 
     
  
