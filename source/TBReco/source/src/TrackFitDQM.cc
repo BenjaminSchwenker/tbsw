@@ -777,32 +777,28 @@ void TrackFitDQM::bookHistos()
     
     histoName = "hduvsu_sensor"+to_string( ipl );
     max = safetyFactor*Sensor.GetSensitiveSizeU()/2; 
-    nbins = Sensor.GetNColumns()/4;
-    //if ( nbins > 50 ) nbins = 50; 
+    nbins = 100; 
     _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", nbins, -max, +max);
     _profileMap[ histoName ]->SetXTitle("u [mm]"); 
     _profileMap[ histoName ]->SetYTitle("mean residual u [mm]");
       
     histoName = "hdvvsv_sensor"+to_string( ipl );
     max = safetyFactor*Sensor.GetSensitiveSizeV()/2;  
-    nbins = Sensor.GetNRows()/4;
-    //if ( nbins > 50 ) nbins = 50;  
+    nbins = 100;  
     _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", nbins, -max, +max); 
     _profileMap[ histoName ]->SetXTitle("v [mm]"); 
     _profileMap[ histoName ]->SetYTitle("mean residual v [mm]");
     
     histoName = "hduvsv_sensor"+to_string( ipl );
     max = safetyFactor*Sensor.GetSensitiveSizeV()/2; 
-    nbins = Sensor.GetNRows()/4;
-    //if ( nbins > 50 ) nbins = 50;   
+    nbins = 100;  
     _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", nbins, -max, +max); 
     _profileMap[ histoName ]->SetXTitle("v [mm]"); 
     _profileMap[ histoName ]->SetYTitle("mean residual u [mm]");    
        
     histoName = "hdvvsu_sensor"+to_string( ipl );
     max = safetyFactor*Sensor.GetSensitiveSizeU()/2;  
-    nbins = Sensor.GetNColumns()/4;
-    //if ( nbins > 50 ) nbins = 50;  
+    nbins = 100; 
     _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", nbins, -max, +max); 
     _profileMap[ histoName ]->SetXTitle("u [mm]"); 
     _profileMap[ histoName ]->SetYTitle("mean residual v [mm]");
