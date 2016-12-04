@@ -36,83 +36,20 @@ namespace gear {
     TiXmlElement setup_id( "siplanesID" ) ;
     setup_id.SetAttribute("ID", param->getSiPlanesID()) ;
     det.InsertEndChild( setup_id ) ;
-
+    
     //type
-    TiXmlElement type( "siplanesType" ) ;
-    std::string strType ;
-    switch( param->getSiPlanesType() ) {
-    case ( SiPlanesParameters::TelescopeWithDUT ) :
-      strType = "TelescopeWithDUT" ;
-      break ;
-    case ( SiPlanesParameters::TelescopeWithoutDUT ) :
-      strType = "TelescopeWithoutDUT" ;
-      break ;
-    default :
-      strType = "Unknown" ;
-    }
-
-    type.SetAttribute( "type", strType ) ;
+    TiXmlElement type("siplanesType");
+    type.SetAttribute( "type",  "TelescopeWithoutDUT" ) ;
+    
     det.InsertEndChild( type ) ;
-
-    //    std::cout << " setup ID = " << param->getSiPlanesID() << std::endl ; //debug
-
-    //    std::cout << "SiPlanesParameters::toXML strType == '" << strType << "'"<< std::endl ; // debug
-
-    //    std::cout << " N of planes = " << param->getSiPlanesNumber() << std::endl ; //debug
-
-
+    
     TiXmlElement nplanes( "siplanesNumber" ) ;
     nplanes.SetAttribute("number", param->getSiPlanesNumber()) ;
     det.InsertEndChild( nplanes ) ;
 
     // layerLayout
     const SiPlanesLayerLayout& siplanesLayers = param->getSiPlanesLayerLayout() ;
-
-    if (strType == "TelescopeWithDUT"){
-      
-      TiXmlElement dut("dut" ) ;
-      
-      TiXmlElement dutladder("dut_ladder") ;
-      dutladder.SetAttribute( "ID" , siplanesLayers.getDUTID() ) ;
-      dutladder.SetDoubleAttribute( "positionX" , siplanesLayers.getDUTPositionX() ) ;
-      dutladder.SetDoubleAttribute( "positionY" , siplanesLayers.getDUTPositionY() ) ;
-      dutladder.SetDoubleAttribute( "positionZ" , siplanesLayers.getDUTPositionZ() ) ;
-      dutladder.SetDoubleAttribute( "sizeX" , siplanesLayers.getDUTSizeX() ) ;
-      dutladder.SetDoubleAttribute( "sizeY" , siplanesLayers.getDUTSizeY() ) ;
-      dutladder.SetDoubleAttribute( "thickness" , siplanesLayers.getDUTThickness() ) ;
-      dutladder.SetDoubleAttribute( "radLength" , siplanesLayers.getDUTRadLength() ) ;
-      
-      TiXmlElement dutsens("dut_sensitive" ) ;
-      dutsens.SetAttribute( "ID" , siplanesLayers.getDUTSensitiveID() ) ;
-      dutsens.SetAttribute( "PixType" , siplanesLayers.getDUTSensitivePixelType() ) ;
-      dutsens.SetDoubleAttribute( "positionX" , siplanesLayers.getDUTSensitivePositionX() ) ;
-      dutsens.SetDoubleAttribute( "positionY" , siplanesLayers.getDUTSensitivePositionY() ) ;
-      dutsens.SetDoubleAttribute( "positionZ" , siplanesLayers.getDUTSensitivePositionZ() ) ;
-      dutsens.SetDoubleAttribute( "sizeX" , siplanesLayers.getDUTSensitiveSizeX() ) ;
-      dutsens.SetDoubleAttribute( "sizeY" , siplanesLayers.getDUTSensitiveSizeY() ) ;
-      dutsens.SetDoubleAttribute( "thickness" , siplanesLayers.getDUTSensitiveThickness() ) ;
-      dutsens.SetAttribute( "npixelX" , siplanesLayers.getDUTSensitiveNpixelX() ) ;
-      dutsens.SetAttribute( "npixelY" , siplanesLayers.getDUTSensitiveNpixelY() ) ;
-      dutsens.SetDoubleAttribute( "pitchX" , siplanesLayers.getDUTSensitivePitchX() ) ;
-      dutsens.SetDoubleAttribute( "pitchY" , siplanesLayers.getDUTSensitivePitchY() ) ;
-      dutsens.SetDoubleAttribute( "resolutionX" , siplanesLayers.getDUTSensitiveResolutionX() ) ;
-      dutsens.SetDoubleAttribute( "resolutionY" , siplanesLayers.getDUTSensitiveResolutionY() ) ;
-      dutsens.SetDoubleAttribute( "alpha" , siplanesLayers.getDUTSensitiveRotationAlpha() ) ;
-      dutsens.SetDoubleAttribute( "beta" , siplanesLayers.getDUTSensitiveRotationBeta() ) ;
-      dutsens.SetDoubleAttribute( "gamma" , siplanesLayers.getDUTSensitiveRotationGamma() ) ;
-      dutsens.SetDoubleAttribute( "rotation1" , siplanesLayers.getDUTSensitiveRotation1() ) ;
-      dutsens.SetDoubleAttribute( "rotation2" , siplanesLayers.getDUTSensitiveRotation2() ) ;
-      dutsens.SetDoubleAttribute( "rotation3" , siplanesLayers.getDUTSensitiveRotation3() ) ;
-      dutsens.SetDoubleAttribute( "rotation4" , siplanesLayers.getDUTSensitiveRotation4() ) ;
-      dutsens.SetDoubleAttribute( "radLength" , siplanesLayers.getDUTSensitiveRadLength() ) ;
-      
-      // assemble dut
-      dut.InsertEndChild(dutladder) ;
-      dut.InsertEndChild(dutsens) ;
-      det.InsertEndChild(dut) ;
-      
-    }
-    
+     
     TiXmlElement layers("layers") ;
 
     for( int i=0 ; i < siplanesLayers.getNLayers() ; i++ ) {
@@ -177,77 +114,20 @@ namespace gear {
 
     const TiXmlElement* siplanesID = xmlElement->FirstChildElement( "siplanesID" ) ;
     int setupID = atoi( getXMLAttribute( siplanesID , "ID" ).c_str() ) ;
-
-    //    std::cout << "SiPlanesParameters::fromXML siplanesID == " << setupID << std::endl ; // debug
-
-    // type
-
-    const TiXmlElement* siplanesType = xmlElement->FirstChildElement( "siplanesType" ) ;
+    
     int intType = 0 ;
-    const char* strType = getXMLAttribute( siplanesType , "type" ) .c_str() ;
-
-    std::cout << "SiPlanesParameters::fromXML siplanesType == '" << strType << "'" << std::endl ; // debug
-
-    if( !std::strcmp( strType , "TelescopeWithDUT" ) ) {
-      intType = SiPlanesParameters::TelescopeWithDUT ;
-     }
-    if( !std::strcmp( strType ,"TelescopeWithoutDUT" ) ) {
-      intType = SiPlanesParameters::TelescopeWithoutDUT ;
-    }
-    if( std::strcmp( strType , "TelescopeWithDUT" ) && std::strcmp( strType ,"TelescopeWithoutDUT" ) ) {
-      throw Exception( "SiPlanesParametersXML::fromXML type of SiPlanes not known."
-		       "Needs to be 'TelescopeWithDUT' or 'TelescopeWithoutDUT'." ) ;
-    }
-
+    
     // number of telescope planes
-
+    
     const TiXmlElement* siplanesNumber = xmlElement->FirstChildElement( "siplanesNumber" ) ;
     int nplanes = atoi( getXMLAttribute( siplanesNumber , "number" ).c_str() ) ;
-
+    
     //    std::cout << "SiPlanesParameters::fromXML siplanesNumber == " << nplanes << std::endl ; // debug
-
+    
     // create SiPlanesParameters
     SiPlanesParametersImpl* siplanesParam = new SiPlanesParametersImpl( setupID, intType , nplanes) ;
 
-    if (intType == SiPlanesParameters::TelescopeWithDUT) {
-      const TiXmlNode* xmlDUT = xmlElement->FirstChildElement( "dut" ) ;
-      const TiXmlNode* xmlDUTLad = xmlDUT->FirstChildElement( "dut_ladder" ) ;
-      const TiXmlNode* xmlDUTSen = xmlDUT->FirstChildElement( "dut_sensitive" ) ;
-      
-      int ldutID = atoi(getXMLAttribute( xmlDUTLad , "ID" ).c_str() );
-      double ldutPosX   = atof(getXMLAttribute( xmlDUTLad , "positionX" ).c_str() ) ;
-      double ldutPosY   = atof(getXMLAttribute( xmlDUTLad , "positionY" ).c_str() ) ;
-      double ldutPosZ   = atof(getXMLAttribute( xmlDUTLad , "positionZ" ).c_str() ) ;
-      double ldutSizX   = atof(getXMLAttribute( xmlDUTLad , "sizeX" ).c_str() ) ;
-      double ldutSizY   = atof(getXMLAttribute( xmlDUTLad , "sizeY" ).c_str() ) ;
-      double ldutThick   = atof(getXMLAttribute( xmlDUTLad , "thickness" ).c_str() ) ;
-      double ldutRadLen = atof(getXMLAttribute( xmlDUTLad , "radLength" ).c_str() ) ;
-      
-      int sdutID = atoi(getXMLAttribute( xmlDUTSen , "ID" ).c_str() );
-      int sdutPixType = atoi(getXMLAttribute( xmlDUTSen , "PixType" ).c_str() );
-      double sdutPosX   = atof(getXMLAttribute( xmlDUTSen , "positionX" ).c_str() ) ;
-      double sdutPosY   = atof(getXMLAttribute( xmlDUTSen , "positionY" ).c_str() ) ;
-      double sdutPosZ   = atof(getXMLAttribute( xmlDUTSen , "positionZ" ).c_str() ) ;
-      double sdutSizX   = atof(getXMLAttribute( xmlDUTSen , "sizeX" ).c_str() ) ;
-      double sdutSizY   = atof(getXMLAttribute( xmlDUTSen , "sizeY" ).c_str() ) ;
-      double sdutThick   = atof(getXMLAttribute( xmlDUTSen , "thickness" ).c_str() ) ;
-      int sdutNPixX   = atoi(getXMLAttribute( xmlDUTSen , "npixelX" ).c_str() ) ;
-      int sdutNPixY   = atoi(getXMLAttribute( xmlDUTSen , "npixelY" ).c_str() ) ;
-      double sdutPitX   = atof(getXMLAttribute( xmlDUTSen , "pitchX" ).c_str() ) ;
-      double sdutPitY   = atof(getXMLAttribute( xmlDUTSen , "pitchY" ).c_str() ) ;
-      double sdutResolX   = atof(getXMLAttribute( xmlDUTSen , "resolutionX" ).c_str() ) ;
-      double sdutResolY   = atof(getXMLAttribute( xmlDUTSen , "resolutionY" ).c_str() ) ;
-      double sdutAlpha  =  atof(getXMLAttribute( xmlDUTSen , "alpha" ).c_str() ) ;
-      double sdutBeta   =  atof(getXMLAttribute( xmlDUTSen , "beta" ).c_str() ) ;
-      double sdutGamma  =  atof(getXMLAttribute( xmlDUTSen , "gamma" ).c_str() ) ;
-      double sdutRotat1 =  atof(getXMLAttribute( xmlDUTSen , "rotation1" ).c_str() ) ;
-      double sdutRotat2 =  atof(getXMLAttribute( xmlDUTSen , "rotation2" ).c_str() ) ;
-      double sdutRotat3 =  atof(getXMLAttribute( xmlDUTSen , "rotation3" ).c_str() ) ;
-      double sdutRotat4 =  atof(getXMLAttribute( xmlDUTSen , "rotation4" ).c_str() ) ;
-      double sdutRadLen = atof(getXMLAttribute( xmlDUTSen , "radLength" ).c_str() ) ;
     
-      siplanesParam->addDUT(ldutID, ldutPosX, ldutPosY, ldutPosZ, ldutSizX, ldutSizY, ldutThick, ldutRadLen, sdutID, sdutPixType, sdutPosX, sdutPosY, sdutPosZ, sdutSizX, sdutSizY, sdutThick, sdutNPixX, sdutNPixY, sdutPitX, sdutPitY, sdutResolX, sdutResolY, sdutAlpha, sdutBeta, sdutGamma, sdutRotat1, sdutRotat2,sdutRotat3,sdutRotat4, sdutRadLen) ;
-    }
 
     // layers
     const TiXmlNode* xmlLayers = xmlElement->FirstChildElement( "layers" ) ;
