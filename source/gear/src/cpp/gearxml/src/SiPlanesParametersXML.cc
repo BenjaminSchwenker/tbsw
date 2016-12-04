@@ -195,6 +195,7 @@ namespace gear {
       intType = SiPlanesParameters::TelescopeWithoutDUT ;
     }
     if( std::strcmp( strType , "TelescopeWithDUT" ) && std::strcmp( strType ,"TelescopeWithoutDUT" ) ) {
+      std::cout << "strType " <<  strType << std::endl ;
       throw Exception( "SiPlanesParametersXML::fromXML type of SiPlanes not known."
 		       "Needs to be 'TelescopeWithDUT' or 'TelescopeWithoutDUT'." ) ;
     }
