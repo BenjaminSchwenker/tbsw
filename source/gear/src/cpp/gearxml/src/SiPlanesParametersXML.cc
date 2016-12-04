@@ -36,12 +36,11 @@ namespace gear {
     TiXmlElement setup_id( "siplanesID" ) ;
     setup_id.SetAttribute("ID", param->getSiPlanesID()) ;
     det.InsertEndChild( setup_id ) ;
-
+    
     //type
-    std::string strType = "TelescopeWithoutDUT" ;
-
-
-    type.SetAttribute( "type", strType ) ;
+    TiXmlElement type("siplanesType");
+    type.SetAttribute( "type",  "TelescopeWithoutDUT" ) ;
+    
     det.InsertEndChild( type ) ;
     
     TiXmlElement nplanes( "siplanesNumber" ) ;
