@@ -178,7 +178,7 @@ namespace gear {
     const TiXmlElement* siplanesID = xmlElement->FirstChildElement( "siplanesID" ) ;
     int setupID = atoi( getXMLAttribute( siplanesID , "ID" ).c_str() ) ;
 
-    //    std::cout << "SiPlanesParameters::fromXML siplanesID == " << setupID << std::endl ; // debug
+    std::cout << "SiPlanesParameters::fromXML siplanesID == " << setupID << std::endl ; // debug
 
     // type
 
@@ -195,7 +195,6 @@ namespace gear {
       intType = SiPlanesParameters::TelescopeWithoutDUT ;
     }
     if( std::strcmp( strType , "TelescopeWithDUT" ) && std::strcmp( strType ,"TelescopeWithoutDUT" ) ) {
-      std::cout << "strType " <<  strType << std::endl ;
       throw Exception( "SiPlanesParametersXML::fromXML type of SiPlanes not known."
 		       "Needs to be 'TelescopeWithDUT' or 'TelescopeWithoutDUT'." ) ;
     }
