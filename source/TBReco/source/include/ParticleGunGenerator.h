@@ -80,7 +80,7 @@ namespace depfet
     double m_GunMomentum;
     double m_GunMass;
     double m_GunCharge;
-    double m_GunPDG;
+    int m_GunPDG;
     
    private: 
 
