@@ -77,7 +77,7 @@ void EventInfoSetter::readDataSource (int Ntrig) {
     ++fakeEventNumber; 
      
     // Print event number 
-    if ( event.getRunNumber()%100 == 0 ) 
+    if ( fakeEventNumber%100 == 0 ) 
       streamlog_out(MESSAGE3) << "Events processed: " << fakeEventNumber
                                << std::endl << std::endl;
      
@@ -93,7 +93,6 @@ void EventInfoSetter::readDataSource (int Ntrig) {
     delete now;
       
     // Add event to LCIO file
-    evt->addCollection (rawDataCol, "rawdata");
     ProcessorMgr::instance ()->processEvent (static_cast<LCEventImpl*> (evt));
     delete evt;
      
