@@ -1,10 +1,10 @@
-// ParticleGun2
+// ParticleGunGenerator
 //                       
 // Author: Benjamin Schwenker, Göttingen University 
 // <mailto:benjamin.schwenker@phys.uni-goettingen.de>
 
 // user includes
-#include "ParticleGun2.h"
+#include "ParticleGunGenerator.h"
 
 #include "DEPFET.h" 
 #include <CLHEP/Random/RandGamma.h>
@@ -16,11 +16,10 @@
 #include <lcio.h>
 #include <IMPL/LCRunHeaderImpl.h>
 #include <IMPL/LCEventImpl.h>
-#include <UTIL/LCTime.h>
-#include <UTIL/CellIDEncoder.h>
-#include <IMPL/TrackImpl.h>
-#include <EVENT/LCParameters.h>
 #include <IMPL/LCCollectionVec.h>
+#include "IMPL/MCParticleImpl.h" 
+
+
 
 // Used namespaces
 using namespace std; 
@@ -33,13 +32,13 @@ namespace depfet {
   //
   // Instantiate this object
   //
-  ParticleGun2 aParticleGun2 ;
+  ParticleGunGenerator aParticleGunGenerator ;
 
 
   //
   // Constructor
   //
-  ParticleGun2::ParticleGun2() : Processor("ParticleGun2")
+  ParticleGunGenerator::ParticleGunGenerator() : Processor("ParticleGunGenerator")
   {
    
     // Processor description
@@ -50,35 +49,27 @@ namespace depfet {
     registerOutputCollection(LCIO::TRACK,"MCParticleCollectionName",
                              "Collection name for MCParticles",
                              m_MCParticleCollectionName, string ("MCParticles"));
-
     
+    registerProcessorParameter ("ParticleMass", "Particle mass [GeV]",
+                                m_GunMass,  static_cast < double > (0.139));
+    
+    registerProcessorParameter ("ParticleCharge", "Particle charge [e]",
+                                m_GunCharge,  static_cast < double > (+1));
+
+    registerProcessorParameter ("PDG", "PDG code",
+                                m_GunPDG,  static_cast < int > (22));
   
     registerProcessorParameter ("ParticleMomentum", "Particle momentum [GeV]",
                                 m_GunMomentum,  static_cast < double > (4.0));
-   
-    registerProcessorParameter ("ParticleMass", "Particle mass [GeV]",
-                                m_GunMass,  static_cast < double > (0.139));
-   
-    registerProcessorParameter ("ParticleCharge", "Particle charge [e]",
-                                m_GunCharge,  static_cast < double > (+1));
-  
+
     registerProcessorParameter ("GunPositionX", "X position of particle gun [mm]",
-                                m_GunXPosition,  static_cast < double > (0));
+                                m_GunPositionX,  static_cast < double > (0));
   
     registerProcessorParameter ("GunPositionY", "Y position of particle gun [mm]",
-                                m_GunYPosition,  static_cast < double > (0));
+                                m_GunPositionY,  static_cast < double > (0));
 
     registerProcessorParameter ("GunPositionZ", "Z position of particle gun [mm]",
-                                m_GunZPosition,  static_cast < double > (-5000));
-  
-    registerProcessorParameter ("GunRotationX", "X rotation of particle gun [rad]",
-                                m_GunRotX,  static_cast < double > (0)); 
-  
-    registerProcessorParameter ("GunRotationY", "Y rotation of particle gun [rad]",
-                                m_GunRotY,  static_cast < double > (0)); 
-
-    registerProcessorParameter ("GunRotationZ", "Z rotation of particel gun [rad]",
-                                m_GunRotZ,  static_cast < double > (0)); 
+                                m_GunPositionZ,  static_cast < double > (-5000));
   
     registerProcessorParameter ("GunSpotSizeX", "Smearing of X vertex position at beam collimator [mm]",
                                 m_GunSpotSizeX,  static_cast < double > (1)); 
@@ -104,14 +95,13 @@ namespace depfet {
     registerProcessorParameter ("GunTimeWindow", "A simulated event contains one particle at t=0 and extends for given time window in seconds",
                                 m_GunTimeWindow,  static_cast < double > (0.0001)); 
    
-    registerProcessorParameter ("BetheHeitlerSmearing", "Thickness of material before telescope for Bremsstrahlung [X/X0]",
-                                m_GunBetheHeitlerT0,  static_cast < double > (0.0)); 
+    
    
                                  
   }
 
 
-  void ParticleGun2::init () {
+  void ParticleGunGenerator::init () {
   
     // Initialize variables
     _nRun = 0 ;
@@ -127,7 +117,7 @@ namespace depfet {
   //
   // Method called for each run
   //
-  void ParticleGun2::processRunHeader(LCRunHeader * run)
+  void ParticleGunGenerator::processRunHeader(LCRunHeader * run)
   {
 
     // Print run number
@@ -142,7 +132,7 @@ namespace depfet {
   //
   // Method called for each event
   //
-  void ParticleGun2::processEvent(LCEvent * evt)
+  void ParticleGunGenerator::processEvent(LCEvent * evt)
   {
     
     //////////////////////////////////////////////////////////////////////  
@@ -150,27 +140,113 @@ namespace depfet {
     ++_nEvt;
        
     // Create output MCParticle collection
-    LCCollectionVec * outputCollection = new LCCollectionVec(LCIO::TRACK);
+    LCCollectionVec * mcVec = new LCCollectionVec( LCIO::MCPARTICLE );
     
-    // Set flag for storing track hits in track collection
-    LCFlagImpl flag(outputCollection->getFlag());
-    flag.setBit( LCIO::TRBIT_HITS );
-    outputCollection->setFlag(flag.getFlag());
+    double time = 0; 
+
+    while ( time < m_GunTimeWindow ) { 
+
+      
+      // Sample vertex and momentum from a directed particle beam.
+      // 
+      // Mean position and directions are always zero in collimator 
+      // frame. 
+      // 
+      // Variables are decomposed into two uncorrelated pairs, namely 
+      // (dx/dz,x) and (dy/dz,y). 
+      //
+      // We use a cholesky decomposition method to sample from the 
+      // correlated pairs. 
+      
+      double X1 = gRandom->Gaus(0, 1); 
+      double X2 = gRandom->Gaus(0, 1); 
+      double Y1 = gRandom->Gaus(0, 1); 
+      double Y2 = gRandom->Gaus(0, 1);
+      
+      double covX = m_GunCorrelationX*m_GunDivergenceX*m_GunSpotSizeX;
+      double covY = m_GunCorrelationY*m_GunDivergenceY*m_GunSpotSizeY;  
+      double DX = std::sqrt( std::pow(m_GunDivergenceX,2)*std::pow(m_GunSpotSizeX,2) - covX*covX );
+      double DY = std::sqrt( std::pow(m_GunDivergenceY,2)*std::pow(m_GunSpotSizeY,2) - covY*covY );
+      
+      double P1 = m_GunDivergenceX*X1;                     // dx/dz
+      double P2 = m_GunDivergenceY*Y1;                     // dy/dz
+      double P3 = 1; 
+      
+      double Norm = m_GunMomentum/std::sqrt( P1*P1 + P2*P2 + 1 );
+      P1 *= Norm; 
+      P2 *= Norm; 
+      P3 *= Norm; 
+      
+      double V1 = m_GunPositionX + (covX*X1 + DX*X2) / m_GunDivergenceX;    // x 
+      double V2 = m_GunPositionY + (covY*Y1 + DY*Y2) / m_GunDivergenceY;    // y  
+      double V3 = m_GunPositionZ; 
+      
+      //
+	  //  Create a MCParticle and fill it from stdhep info
+	  //
+      MCParticleImpl* mcp = new MCParticleImpl();	
+      //
+	  //  PDGID
+	  //
+	  mcp->setPDG(m_GunPDG);
+	  //
+	  //  Momentum vector
+	  //
+	  float p0[3] = {P1,P2,P3};
+	  mcp->setMomentum(p0);
+	  //
+	  //  Mass
+	  //
+	  mcp->setMass(m_GunMass);
+      //
+	  //  Charge
+	  //
+	  mcp->setCharge(m_GunCharge);
+	  //
+	  //  Vertex
+	  // 
+	  double v0[3] = {V1, V2, V3};
+	  mcp->setVertex(v0);
+	  //
+	  //  Generator status
+	  //
+	  mcp->setGeneratorStatus(0);
+	  //
+	  //  Simulator status 0 until simulator acts on it
+	  //
+	  mcp->setSimulatorStatus(0);
+	  //
+	  //  Creation time (note the units)
+	  // 
+	  mcp->setTime(time);
+	  //
+      //  Add the particle to the collection vector
+	  //
+	  mcVec->push_back(mcp);
+      
+      //
+      //  Advance time until the next beam particle
+      // 
+      time += gRandom->Exp(1.0/m_GunBeamIntensity);    
     
-        
-    evt->addCollection(outputCollection, m_MCParticleCollectionName); 
+    }
+    
+    //
+    // Add MCParticle collection
+    //     
+    evt->addCollection(mcVec, m_MCParticleCollectionName); 
 
   }
 
   //
   // Method called after each event to check the data processed
   //
-  void ParticleGun2::check( LCEvent * evt ) {}
+  void ParticleGunGenerator::check( LCEvent * evt ) {}
 
   //
   // Method called after all data processing
   //
-  void ParticleGun2::end()
+  void ParticleGunGenerator::end()
   {
    
     streamlog_out ( MESSAGE3 ) << endl;
@@ -201,12 +277,12 @@ namespace depfet {
   //
   // Method printing processor parameters
   //
-  void ParticleGun2::printProcessorParams() const
+  void ParticleGunGenerator::printProcessorParams() const
   {
 
     streamlog_out(MESSAGE3)  << std::endl
                               << " "
-                              << "BeamEnergyCorrector Development Version, be carefull!!"
+                              << "ParticleGunGenerator development Version, be carefull!!"
                               << " "
                               << std::endl  << std::endl;   
 

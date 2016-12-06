@@ -1,14 +1,13 @@
 // ///////////////////////////////////////////////////////////////////////////////////////  //
 //                                                                                          //
-//    ParticleGun2 - Marlin Processor                                                  //
+//    ParticleGunGenerator - Marlin Processor                                                  //
 // ///////////////////////////////////////////////////////////////////////////////////////  //
 
-#ifndef ParticleGun2_H
-#define ParticleGun2_H 1
+#ifndef ParticleGunGenerator_H
+#define ParticleGunGenerator_H 1
 
 
-// TBTools includes 
-#include "TBDetector.h"
+
 
 // Include Marlin classes
 #include <marlin/Global.h>
@@ -25,7 +24,7 @@
 namespace depfet
 {
   
-  /** The ParticleGun2 Processor
+  /** The ParticleGunGenerator Processor
    * The processor provides a particle gun for simulation of 
    * a directed particle beam.
    * 
@@ -33,15 +32,15 @@ namespace depfet
    * <mailto:benjamin.schwenker@phys.uni-goettingen.de> 
    */
   
-  class ParticleGun2 : public marlin::Processor
+  class ParticleGunGenerator : public marlin::Processor
   {
    public:
      
     //!Method that returns a new instance of this processor
-    virtual Processor*  newProcessor() { return new ParticleGun2 ; }
+    virtual Processor*  newProcessor() { return new ParticleGunGenerator ; }
     
     //!Constructor - set processor description and register processor parameters
-    ParticleGun2();
+    ParticleGunGenerator();
     
     //!Method called at the beginning of data processing - used for initialization
     virtual void init();
@@ -67,12 +66,9 @@ namespace depfet
     std::string m_MCParticleCollectionName;
      
     //! Particle gun
-    double m_GunXPosition;
-    double m_GunYPosition;
-    double m_GunZPosition; 
-    double m_GunRotX;
-    double m_GunRotY;
-    double m_GunRotZ;
+    double m_GunPositionX;
+    double m_GunPositionY;
+    double m_GunPositionZ; 
     double m_GunSpotSizeX;
     double m_GunSpotSizeY;
     double m_GunDivergenceX;
@@ -81,10 +77,10 @@ namespace depfet
     double m_GunCorrelationY;    
     double m_GunBeamIntensity;   
     double m_GunTimeWindow; 
-    double m_GunBetheHeitlerT0;
     double m_GunMomentum;
     double m_GunMass;
     double m_GunCharge;
+    double m_GunPDG;
     
    private: 
 
