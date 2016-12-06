@@ -50,6 +50,8 @@ namespace depfet {
     registerOutputCollection(LCIO::TRACK,"MCParticleCollectionName",
                              "Collection name for MCParticles",
                              m_MCParticleCollectionName, string ("MCParticles"));
+
+    
   
     registerProcessorParameter ("ParticleMomentum", "Particle momentum [GeV]",
                                 m_GunMomentum,  static_cast < double > (4.0));
@@ -100,7 +102,7 @@ namespace depfet {
                                 m_GunBeamIntensity,  static_cast < double > (10000)); 
   
     registerProcessorParameter ("GunTimeWindow", "A simulated event contains one particle at t=0 and extends for given time window in seconds",
-                                m_GunTimeWindow,  static_cast < int > (0.0001)); 
+                                m_GunTimeWindow,  static_cast < double > (0.0001)); 
    
     registerProcessorParameter ("BetheHeitlerSmearing", "Thickness of material before telescope for Bremsstrahlung [X/X0]",
                                 m_GunBetheHeitlerT0,  static_cast < double > (0.0)); 
