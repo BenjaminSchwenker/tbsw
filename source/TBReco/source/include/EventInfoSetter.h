@@ -1,5 +1,5 @@
 #ifndef EventInfoSetter_H
-#define EventInfoSetter_H
+#define EventInfoSetter_H 1
 
 // personal includes ".h"
 

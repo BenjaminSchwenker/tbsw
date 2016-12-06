@@ -24,90 +24,92 @@
 #include <Exceptions.h>
 #include <IMPL/LCFlagImpl.h>
 
+#include <marlin/Global.h>
+
 using namespace std;
-using namespace marlin;
 using namespace lcio;
+using namespace marlin;
 using namespace CLHEP;
 
 namespace depfet {
 
-//
-// Instantiate this object
-//
-ParticleGun aParticleGun ;
-
-
-//
-// Constructor
-//
-ParticleGun::ParticleGun() : Processor("ParticleGun")
-{
-   
-  // Processor description
-  _description = "Particle gun processor for simulation of a directed particle beam";
-   
   //
-  // Output collections  
-  registerOutputCollection(LCIO::TRACK,"MCParticleCollectionName",
-                           "Collection name for MCParticles",
-                           m_MCParticleCollectionName, string ("MCParticles"));
-  
-  registerProcessorParameter ("ParticleMomentum", "Particle momentum [GeV]",
-                              m_GunMomentum,  static_cast < double > (4.0));
-   
-  registerProcessorParameter ("ParticleMass", "Particle mass [GeV]",
-                              m_GunMass,  static_cast < double > (0.139));
-   
-  registerProcessorParameter ("ParticleCharge", "Particle charge [e]",
-                              m_GunCharge,  static_cast < double > (+1));
-  
-  registerProcessorParameter ("GunPositionX", "X position of particle gun [mm]",
-                              m_GunXPosition,  static_cast < double > (0));
-  
-  registerProcessorParameter ("GunPositionY", "Y position of particle gun [mm]",
-                              m_GunYPosition,  static_cast < double > (0));
+  // Instantiate this object
+  //
+  ParticleGun aParticleGun ;
 
-  registerProcessorParameter ("GunPositionZ", "Z position of particle gun [mm]",
-                              m_GunZPosition,  static_cast < double > (-5000));
-  
-  registerProcessorParameter ("GunRotationX", "X rotation of particle gun [rad]",
-                              m_GunRotX,  static_cast < double > (0)); 
-  
-  registerProcessorParameter ("GunRotationY", "Y rotation of particle gun [rad]",
-                              m_GunRotY,  static_cast < double > (0)); 
 
-  registerProcessorParameter ("GunRotationZ", "Z rotation of particel gun [rad]",
-                              m_GunRotZ,  static_cast < double > (0)); 
+  //
+  // Constructor
+  //
+  ParticleGun::ParticleGun() : Processor("ParticleGun")
+  {
+   
+    // Processor description
+    _description = "Particle gun processor for simulation of a directed particle beam";
+   
+    //
+    // Output collections  
+    registerOutputCollection(LCIO::TRACK,"MCParticleCollectionName",
+                             "Collection name for MCParticles",
+                             m_MCParticleCollectionName, string ("MCParticles"));
   
-  registerProcessorParameter ("GunSpotSizeX", "Smearing of X vertex position at beam collimator [mm]",
-                              m_GunSpotSizeX,  static_cast < double > (1)); 
+    registerProcessorParameter ("ParticleMomentum", "Particle momentum [GeV]",
+                                m_GunMomentum,  static_cast < double > (4.0));
+   
+    registerProcessorParameter ("ParticleMass", "Particle mass [GeV]",
+                                m_GunMass,  static_cast < double > (0.139));
+   
+    registerProcessorParameter ("ParticleCharge", "Particle charge [e]",
+                                m_GunCharge,  static_cast < double > (+1));
+  
+    registerProcessorParameter ("GunPositionX", "X position of particle gun [mm]",
+                                m_GunXPosition,  static_cast < double > (0));
+  
+    registerProcessorParameter ("GunPositionY", "Y position of particle gun [mm]",
+                                m_GunYPosition,  static_cast < double > (0));
 
-  registerProcessorParameter ("GunSpotSizeY", "Smearing of Y vertex position at beam collimator [mm]",
-                              m_GunSpotSizeY,  static_cast < double > (1)); 
+    registerProcessorParameter ("GunPositionZ", "Z position of particle gun [mm]",
+                                m_GunZPosition,  static_cast < double > (-5000));
   
-  registerProcessorParameter ("GunDivergenceX", "RMS track slope in XZ plane [rad]",
-                              m_GunDivergenceX,  static_cast < double > (0.0001)); 
+    registerProcessorParameter ("GunRotationX", "X rotation of particle gun [rad]",
+                                m_GunRotX,  static_cast < double > (0)); 
   
-  registerProcessorParameter ("GunDivergenceY", "RMS track slope in YZ plane [rad]",
-                              m_GunDivergenceY,  static_cast < double > (0.0001)); 
+    registerProcessorParameter ("GunRotationY", "Y rotation of particle gun [rad]",
+                                m_GunRotY,  static_cast < double > (0)); 
+
+    registerProcessorParameter ("GunRotationZ", "Z rotation of particel gun [rad]",
+                                m_GunRotZ,  static_cast < double > (0)); 
   
-  registerProcessorParameter ("GunCorrelationX", "Beam correlation coefficient X",
-                              m_GunCorrelationX,  static_cast < double > (0.0)); 
+    registerProcessorParameter ("GunSpotSizeX", "Smearing of X vertex position at beam collimator [mm]",
+                                m_GunSpotSizeX,  static_cast < double > (1)); 
+
+    registerProcessorParameter ("GunSpotSizeY", "Smearing of Y vertex position at beam collimator [mm]",
+                                m_GunSpotSizeY,  static_cast < double > (1)); 
   
-  registerProcessorParameter ("GunCorralationY", "Beam correlation coefficient Y",
-                              m_GunCorrelationY,  static_cast < double > (0.0)); 
+    registerProcessorParameter ("GunDivergenceX", "RMS track slope in XZ plane [rad]",
+                                m_GunDivergenceX,  static_cast < double > (0.0001)); 
+  
+    registerProcessorParameter ("GunDivergenceY", "RMS track slope in YZ plane [rad]",
+                                m_GunDivergenceY,  static_cast < double > (0.0001)); 
+  
+    registerProcessorParameter ("GunCorrelationX", "Beam correlation coefficient X",
+                                m_GunCorrelationX,  static_cast < double > (0.0)); 
+  
+    registerProcessorParameter ("GunCorralationY", "Beam correlation coefficient Y",
+                                m_GunCorrelationY,  static_cast < double > (0.0)); 
    
-  registerProcessorParameter ("GunIntensity", "Number of particles per second",
-                              m_GunBeamIntensity,  static_cast < double > (10000)); 
+    registerProcessorParameter ("GunIntensity", "Number of particles per second",
+                                m_GunBeamIntensity,  static_cast < double > (10000)); 
   
-  registerProcessorParameter ("GunTimeWindow", "A simulated event contains one particle at t=0 and extends for given time window in seconds",
-                              m_GunTimeWindow,  static_cast < int > (0.0001)); 
+    registerProcessorParameter ("GunTimeWindow", "A simulated event contains one particle at t=0 and extends for given time window in seconds",
+                                m_GunTimeWindow,  static_cast < int > (0.0001)); 
    
-  registerProcessorParameter ("BetheHeitlerSmearing", "Thickness of material before telescope for Bremsstrahlung [X/X0]",
-                              m_GunBetheHeitlerT0,  static_cast < double > (0.0)); 
+    registerProcessorParameter ("BetheHeitlerSmearing", "Thickness of material before telescope for Bremsstrahlung [X/X0]",
+                                m_GunBetheHeitlerT0,  static_cast < double > (0.0)); 
    
                                  
-}
+  }
 
 
 void ParticleGun::init () {

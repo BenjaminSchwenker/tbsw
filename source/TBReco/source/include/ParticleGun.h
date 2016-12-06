@@ -29,7 +29,7 @@ namespace depfet
    * <mailto:benjamin.schwenker@phys.uni-goettingen.de> 
    */
   
-  class ParticleGun :public marlin::Processor
+  class ParticleGun : public marlin::Processor
   {
    public:
      
