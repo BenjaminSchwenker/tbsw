@@ -1,10 +1,10 @@
-// ParticleGun
+// ParticleGun2
 //                       
 // Author: Benjamin Schwenker, Göttingen University 
 // <mailto:benjamin.schwenker@phys.uni-goettingen.de>
 
 // user includes
-#include "ParticleGun.h"
+#include "ParticleGun2.h"
 
 #include "DEPFET.h" 
 #include <CLHEP/Random/RandGamma.h>
@@ -33,13 +33,13 @@ namespace depfet {
   //
   // Instantiate this object
   //
-  ParticleGun aParticleGun ;
+  ParticleGun2 aParticleGun2 ;
 
 
   //
   // Constructor
   //
-  ParticleGun::ParticleGun() : Processor("ParticleGun")
+  ParticleGun2::ParticleGun2() : Processor("ParticleGun2")
   {
    
     // Processor description
@@ -109,7 +109,7 @@ namespace depfet {
   }
 
 
-  void ParticleGun::init () {
+  void ParticleGun2::init () {
   
     // Initialize variables
     _nRun = 0 ;
@@ -125,7 +125,7 @@ namespace depfet {
   //
   // Method called for each run
   //
-  void ParticleGun::processRunHeader(LCRunHeader * run)
+  void ParticleGun2::processRunHeader(LCRunHeader * run)
   {
 
     // Print run number
@@ -140,7 +140,7 @@ namespace depfet {
   //
   // Method called for each event
   //
-  void ParticleGun::processEvent(LCEvent * evt)
+  void ParticleGun2::processEvent(LCEvent * evt)
   {
     
     //////////////////////////////////////////////////////////////////////  
@@ -163,12 +163,12 @@ namespace depfet {
   //
   // Method called after each event to check the data processed
   //
-  void ParticleGun::check( LCEvent * evt ) {}
+  void ParticleGun2::check( LCEvent * evt ) {}
 
   //
   // Method called after all data processing
   //
-  void ParticleGun::end()
+  void ParticleGun2::end()
   {
    
     streamlog_out ( MESSAGE3 ) << endl;
@@ -199,7 +199,7 @@ namespace depfet {
   //
   // Method printing processor parameters
   //
-  void ParticleGun::printProcessorParams() const
+  void ParticleGun2::printProcessorParams() const
   {
 
     streamlog_out(MESSAGE3)  << std::endl

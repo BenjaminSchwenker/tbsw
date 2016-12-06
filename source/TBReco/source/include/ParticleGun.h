@@ -1,10 +1,10 @@
 // ///////////////////////////////////////////////////////////////////////////////////////  //
 //                                                                                          //
-//    ParticleGun - Marlin Processor                                                  //
+//    ParticleGun2 - Marlin Processor                                                  //
 // ///////////////////////////////////////////////////////////////////////////////////////  //
 
-#ifndef ParticleGun_H
-#define ParticleGun_H 1
+#ifndef ParticleGun2_H
+#define ParticleGun2_H 1
 
 
 // TBTools includes 
@@ -25,7 +25,7 @@
 namespace depfet
 {
   
-  /** The ParticleGun Processor
+  /** The ParticleGun2 Processor
    * The processor provides a particle gun for simulation of 
    * a directed particle beam.
    * 
@@ -33,15 +33,15 @@ namespace depfet
    * <mailto:benjamin.schwenker@phys.uni-goettingen.de> 
    */
   
-  class ParticleGun : public marlin::Processor
+  class ParticleGun2 : public marlin::Processor
   {
    public:
      
     //!Method that returns a new instance of this processor
-    virtual Processor*  newProcessor() { return new ParticleGun ; }
+    virtual Processor*  newProcessor() { return new ParticleGun2 ; }
     
     //!Constructor - set processor description and register processor parameters
-    ParticleGun();
+    ParticleGun2();
     
     //!Method called at the beginning of data processing - used for initialization
     virtual void init();
