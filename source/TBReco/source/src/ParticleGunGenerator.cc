@@ -19,6 +19,9 @@
 #include <IMPL/LCCollectionVec.h>
 #include "IMPL/MCParticleImpl.h" 
 
+#include <TRandom.h>
+#include <TRandom3.h>
+
 
 
 // Used namespaces
