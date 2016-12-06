@@ -7,16 +7,20 @@
 #define ParticleGun_H 1
 
 
+// TBTools includes 
+#include "TBDetector.h"
+
 // Include Marlin classes
 #include <marlin/Global.h>
 #include <marlin/Processor.h>
 #include <marlin/ProcessorMgr.h>
-#include "marlin/Exceptions.h"
+#include <marlin/Exceptions.h>
 
 // lcio includes <.h>
 
 // system includes <>
-
+#include <string>
+#include <vector>
 
 namespace depfet
 {

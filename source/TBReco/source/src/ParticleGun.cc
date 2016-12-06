@@ -6,29 +6,26 @@
 // user includes
 #include "ParticleGun.h"
 
-
+#include "DEPFET.h" 
 #include <CLHEP/Random/RandGamma.h>
 
 // C++ includes
-#include <cstdio>
 #include <iostream>
-#include <iomanip>
-#include <cmath>
-#include <limits>
-#include <string>
 
 // Include LCIO classes
 #include <lcio.h>
-#include <IMPL/LCCollectionVec.h>
+#include <IMPL/LCRunHeaderImpl.h>
+#include <IMPL/LCEventImpl.h>
+#include <UTIL/LCTime.h>
+#include <UTIL/CellIDEncoder.h>
 #include <IMPL/TrackImpl.h>
-#include <Exceptions.h>
-#include <IMPL/LCFlagImpl.h>
+#include <EVENT/LCParameters.h>
+#include <IMPL/LCCollectionVec.h>
 
-#include <marlin/Global.h>
-
-using namespace std;
-using namespace lcio;
-using namespace marlin;
+// Used namespaces
+using namespace std; 
+using namespace lcio ;
+using namespace marlin ;
 using namespace CLHEP;
 
 namespace depfet {
@@ -112,109 +109,107 @@ namespace depfet {
   }
 
 
-void ParticleGun::init () {
+  void ParticleGun::init () {
   
-  // Initialize variables
-  _nRun = 0 ;
-  _nEvt = 0 ;
+    // Initialize variables
+    _nRun = 0 ;
+    _nEvt = 0 ;
   
-  // Print set parameters
-  printProcessorParams();
+    // Print set parameters
+    printProcessorParams();
   
-  // CPU time start
-  _timeCPU = clock()/1000;
-}
+    // CPU time start
+    _timeCPU = clock()/1000;
+  }
 
-//
-// Method called for each run
-//
-void ParticleGun::processRunHeader(LCRunHeader * run)
-{
+  //
+  // Method called for each run
+  //
+  void ParticleGun::processRunHeader(LCRunHeader * run)
+  {
 
-// Print run number
-   streamlog_out(MESSAGE3) << "Processing run: "
-                           << (run->getRunNumber())
-                           << std::endl << std::endl;
+    // Print run number
+    streamlog_out(MESSAGE3) << "Processing run: "
+                            << (run->getRunNumber())
+                            << std::endl << std::endl;
 
-   _nRun++ ;
+    _nRun++ ;
+  
+  }
 
-}
-
-//
-// Method called for each event
-//
-void ParticleGun::processEvent(LCEvent * evt)
-{
+  //
+  // Method called for each event
+  //
+  void ParticleGun::processEvent(LCEvent * evt)
+  {
     
-  //////////////////////////////////////////////////////////////////////  
-  // Process next event
-  ++_nEvt;
-      
-  // Create output MCParticle collection
-  LCCollectionVec * outputCollection = new LCCollectionVec(LCIO::TRACK);
+    //////////////////////////////////////////////////////////////////////  
+    // Process next event
+    ++_nEvt;
+       
+    // Create output MCParticle collection
+    LCCollectionVec * outputCollection = new LCCollectionVec(LCIO::TRACK);
     
-  // Set flag for storing track hits in track collection
-  LCFlagImpl flag(outputCollection->getFlag());
-  flag.setBit( LCIO::TRBIT_HITS );
-  outputCollection->setFlag(flag.getFlag());
-  
+    // Set flag for storing track hits in track collection
+    LCFlagImpl flag(outputCollection->getFlag());
+    flag.setBit( LCIO::TRBIT_HITS );
+    outputCollection->setFlag(flag.getFlag());
+    
         
-  evt->addCollection(outputCollection, m_MCParticleCollectionName); 
+    evt->addCollection(outputCollection, m_MCParticleCollectionName); 
 
-}
+  }
 
-//
-// Method called after each event to check the data processed
-//
-void ParticleGun::check( LCEvent * evt )
-{
-}
+  //
+  // Method called after each event to check the data processed
+  //
+  void ParticleGun::check( LCEvent * evt ) {}
 
-//
-// Method called after all data processing
-//
-void ParticleGun::end()
-{
+  //
+  // Method called after all data processing
+  //
+  void ParticleGun::end()
+  {
    
-  streamlog_out ( MESSAGE3 ) << endl;
-  streamlog_out ( MESSAGE3 ) << "Successfully finished" << endl;
-  
-  // CPU time end
-  _timeCPU = clock()/1000 - _timeCPU;
+    streamlog_out ( MESSAGE3 ) << endl;
+    streamlog_out ( MESSAGE3 ) << "Successfully finished" << endl;
+    
+    // CPU time end
+    _timeCPU = clock()/1000 - _timeCPU;
    
-  // Print message
-  streamlog_out(MESSAGE3) << std::endl
-                           << " "
-                           << "Time per event: "
-                           << std::setiosflags(std::ios::fixed | std::ios::internal )
-                           << std::setprecision(3)
-                           << _timeCPU/_nEvt
-                           << " ms"
-                           << std::endl
-                           << std::setprecision(3)
-                           << std::endl
-                           << " "
-                           << "Processor succesfully finished!"
-                           << std::endl;
+    // Print message
+    streamlog_out(MESSAGE3) << std::endl
+                             << " "
+                             << "Time per event: "
+                             << std::setiosflags(std::ios::fixed | std::ios::internal )
+                             << std::setprecision(3)
+                             << _timeCPU/_nEvt
+                             << " ms"
+                             << std::endl
+                             << std::setprecision(3)
+                             << std::endl
+                             << " "
+                             << "Processor succesfully finished!"
+                             << std::endl;
 
  
-}
+  }
 
 
-//
-// Method printing processor parameters
-//
-void ParticleGun::printProcessorParams() const
-{
+  //
+  // Method printing processor parameters
+  //
+  void ParticleGun::printProcessorParams() const
+  {
 
-   streamlog_out(MESSAGE3)  << std::endl
-                            << " "
-                            << "BeamEnergyCorrector Development Version, be carefull!!"
-                            << " "
-                            << std::endl  << std::endl;   
+    streamlog_out(MESSAGE3)  << std::endl
+                              << " "
+                              << "BeamEnergyCorrector Development Version, be carefull!!"
+                              << " "
+                              << std::endl  << std::endl;   
 
 
-}
+  }
 
 
 
