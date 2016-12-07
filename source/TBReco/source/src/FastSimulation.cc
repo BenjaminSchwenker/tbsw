@@ -27,6 +27,10 @@
 #include "HelixTrackModel.h"
 #include "StraightLineTrackModel.h"
 
+// CLHEP includes
+#include "CLHEP/Vector/Rotation.h"
+#include "CLHEP/Vector/ThreeVector.h"
+
 
 // Used namespaces
 using namespace std; 
