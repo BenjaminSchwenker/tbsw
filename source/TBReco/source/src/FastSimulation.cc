@@ -28,8 +28,9 @@
 #include "StraightLineTrackModel.h"
 
 // CLHEP includes
-#include "CLHEP/Vector/Rotation.h"
-#include "CLHEP/Vector/ThreeVector.h"
+#include "CLHEP/Matrix/Vector.h"
+//#include "CLHEP/Vector/Rotation.h"
+//#include "CLHEP/Vector/ThreeVector.h"
 
 
 // Used namespaces
