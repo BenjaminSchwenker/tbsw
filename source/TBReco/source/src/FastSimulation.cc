@@ -222,7 +222,7 @@ namespace depfet {
             
           if(  m_scatterModel==0  ) { 
             // Highland model scattering
-            theta2 = materialeffect::GetScatterTheta2(l0, X0, mcp->getMass(), mc->getCharge(), momentum );      
+            theta2 = materialeffect::GetScatterTheta2(l0, X0, mcp->getMass(), mcp->getCharge(), momentum );      
             kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
             kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 ));      
           }
@@ -266,7 +266,7 @@ namespace depfet {
          
         if( m_scatterModel==0 ) { 
           // Highland model scattering     
-          double theta2 = materialeffect::GetScatterTheta2(length, materialeffect::X0_air, mcp->getMass(), mc->getCharge(), momentum ) ;   
+          double theta2 = materialeffect::GetScatterTheta2(length, materialeffect::X0_air, mcp->getMass(), mcp->getCharge(), momentum ) ;   
           kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
           kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 ));  
         } 
