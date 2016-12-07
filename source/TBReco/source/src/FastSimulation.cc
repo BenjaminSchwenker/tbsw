@@ -37,7 +37,7 @@
 using namespace std; 
 using namespace lcio ;
 using namespace marlin ;
-//using namespace CLHEP;
+using namespace CLHEP;
 
 namespace depfet {
 
