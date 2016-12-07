@@ -49,7 +49,7 @@ namespace depfet {
 
     //
     // Input collections  
-    registerInputCollection (LCIO::MCParticle, "MCParticleCollectionName",
+    registerInputCollection (LCIO::MCPARTICLE, "MCParticleCollectionName",
                             "Collection name for MCParticles",
                             m_MCParticleCollectionName, string ("MCParticles") );
 
