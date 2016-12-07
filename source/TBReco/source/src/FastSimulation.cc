@@ -22,6 +22,11 @@
 #include <TRandom.h>
 #include <TRandom3.h>
 
+// TBTools includes 
+#include "MaterialEffect.h"
+#include "HelixTrackModel.h"
+#include "StraightLineTrackModel.h"
+
 
 // Used namespaces
 using namespace std; 
@@ -73,14 +78,17 @@ namespace depfet {
   void FastSimulation::init () {
   
     // Initialize variables
-    _nRun = 0 ;
-    _nEvt = 0 ;
+    m_nRun = 0 ;
+    m_nEvt = 0 ;
   
     // Print set parameters
     printProcessorParams();
   
     // CPU time start
-    _timeCPU = clock()/1000;
+    m_timeCPU = clock()/1000;
+
+    // Read detector constants from gear file
+    m_detector.ReadGearConfiguration();  
   }
 
   //
@@ -94,7 +102,7 @@ namespace depfet {
                             << (run->getRunNumber())
                             << std::endl << std::endl;
 
-    _nRun++ ;
+    m_nRun++ ;
   
   }
 
@@ -106,9 +114,7 @@ namespace depfet {
     
     //////////////////////////////////////////////////////////////////////  
     // Process next event
-    ++_nEvt;
-
-    cout << "start process event" << endl; 
+    ++m_nEvt;
     
     //
     // Open MCParticle collection
@@ -118,88 +124,169 @@ namespace depfet {
     } catch (DataNotAvailableException& e) {
       throw SkipEventException(this);
     }
-
-    cout << "loaded mcparticles " << endl; 
-        
+      
+    // Init the track model for simulation
+    GenericTrackModel* TrackModel; 
+      
+    HepVector field(3,0);
+    field[0] = m_detector.GetBx();
+    field[1] = m_detector.GetBy();
+    field[2] = m_detector.GetBz(); 
+      
+    if ( field.norm() == 0 ) {
+      TrackModel = new StraightLineTrackModel();    
+    } else {
+      TrackModel = new HelixTrackModel(field);  
+    }   
+    
     // Create SimTrackerHit collection  
     LCCollectionVec * simHitVec = new LCCollectionVec(LCIO::SIMTRACKERHIT) ;
          
-    // Loop on all clusters 
+    // Loop on all MCParticles
     for (unsigned int iMC = 0; iMC < mcVec->size(); iMC++) 
     { 
-    
-      // Read MCParticle 
+         
+      // Read back MCParticle 
       MCParticle* mcp = dynamic_cast<MCParticle* > ( mcVec->getElementAt(iMC) )  ;   
       
-      streamlog_out(MESSAGE3) << "Processing generator particle " << mcp->getGeneratorStatus() << " at time " << mcp->getTime() << endl; 
-
-    /*
-    mcp->getMomentum()[0];
-    mcp->getMomentum()[1];
-    mcp->getMomentum()[2];
-    mcp->getTime(); 
-
-    mcp->getVertex()[0];
-    mcp->getVertex()[1];
-    mcp->getVertex()[2];
-
-    mcp->getCharge();
-    mcp->getMass();
-    mcp->getPDG(); 
-    mcp->getEnergy()  
-    mcp->getGeneratorStatus()
-    */
-    
-  }
-    
-
-
-    
-    
-
-    
-
-    
-    /*
-    // Particles are created in the plane of the particle
-    // beam collimator opening 
-    
-    // First, we must construct of reference frame uvw plane for the
-    // collimator opening 
-    // The beam spot center is at u=v=0. The direction of the beam is 
-    // the ew direction. 
-    
-    ReferenceFrame CollimatorFrame;
-    
-    // Position of center of collimator 
-    HepVector CollimatorPosition(3);
-    CollimatorPosition[0] = positionX; 
-    CollimatorPosition[1] = positionY;
-    CollimatorPosition[2] = positionZ;
-    CollimatorFrame.SetPosition(CollimatorPosition); 
-    
-    // Rotation matrix of collimator plane  
-    HepMatrix CollimatorRotation;
-    double alpha = rotationX; 
-    double beta = rotationY; 
-    double gamma = rotationZ; 
-    FillRotMatrixKarimaki(CollimatorRotation, alpha,beta,gamma);
-    CollimatorFrame.SetRotation(CollimatorRotation);    
-    
-    // Next, we create a local track state in the collimator frame.
-    HepMatrix GunState(5,1); 
+      streamlog_out(MESSAGE1) << "Processing generator particle " << mcp->getGeneratorStatus() 
+                              << " at time " << mcp->getTime() << endl; 
+      
+      
+      // Create a complete trajectory state for the MCParticle needed to 
+      // propagate it through the telescope 
+      
+      ReferenceFrame frame;
+      
+      // Origin of frame coincides with particle vertex
+      HepVector origin(3);
+      origin[0] = mcp->getVertex()[0];
+      origin[1] = mcp->getVertex()[1];
+      origin[2] = mcp->getVertex()[2];
+      frame.SetPosition(origin); 
+      
+      // Track state defined at reference frame
+      HepMatrix state(5,1); 
         
-    GunState[0][0] = divergenceX*X1;                     // dx/dz
-    GunState[1][0] = divergenceY*Y1;                     // dy/dz
-    GunState[2][0] = (covX*X1 + DX*X2) / divergenceX;    // x 
-    GunState[3][0] = (covY*Y1 + DY*Y2) / divergenceY;    // y  
-    GunState[4][0] = charge/mom;    // q/p
+      double p1 = mcp->getMomentum()[0];
+      double p2 = mcp->getMomentum()[1];
+      double p3 = mcp->getMomentum()[2];  
+      double momentum = std::sqrt(p1*p1 + p2*p2 + p3*p3);
+      
+      state[0][0] = p1/p3;                              // du/dw
+      state[1][0] = p2/p3;                              // dv/dw
+      state[2][0] = 0;                                  // u 
+      state[3][0] = 0;                                  // v  
+      state[4][0] = mcp->getCharge()/momentum;          // q/p
+        
+      
+      // Enter main loop to propagate particle through telescope
+      int ipl = -1;
+      
+      do  { 
+        
+        streamlog_out(MESSAGE1) << " Particle is at plane " << ipl << " with state " << state << endl; 
+                                
+        // Scatter at a material or sensor plane 
+        
+        if (ipl >= 0 ) { 
+                 
+          Det& current_det = m_detector.GetDet(ipl);
+          
+          // Store state at current detector  
+          // -------------------------------
+          //TruthTrack.GetTE(ipl).GetState().SetPars(MyTrack.State); 
+          //TruthTrack.GetTE(ipl).SetCrossed(true);
+           
+          // Scatter on current detector
+          // --------------------------- 
+          double dudw = state[0][0];
+          double dvdw = state[1][0];
+          double u = state[2][0]; 
+          double v = state[3][0];  
+          
+          // Traversed length in detector layer (mm)
+          double l0 = current_det.GetThickness(u,v)*std::sqrt(1 + dudw*dudw + dvdw*dvdw);  
+          // Radiation length of detector layer(mm) 
+          double X0 = current_det.GetRadLength(u,v);
+          
+          // Scatter kinks (relative to flight direction of particle)      
+          double kink_u = 0;
+          double kink_v = 0;
+          double theta2 = 0;
+            
+          if(  m_scatterModel==0  ) { 
+            // Highland model scattering
+            theta2 = materialeffect::GetScatterTheta2(l0, X0, mcp->getMass(), mc->getCharge(), momentum );      
+            kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
+            kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 ));      
+          }
+          
+          // Scatter track ('in' state -> 'out' state)
+          materialeffect::ScatterTrack(state, kink_u, kink_v);  
+          
+          // Also store scatter kinks in a TBHit object. 
+          // Of course, this abuses the interface a bit.  
+          //TBHit MSCKink(current_det.GetDAQID(), kink_u, kink_v, theta2, theta2);
+          //TruthTrack.GetTE(ipl).SetHit(MSCKink); 
+        }
+         
+        // Propagate particle to next detector surface
+        // ----------------------------------------
+        
+        int jpl = ipl+1;      
+            
+        // Exit condition   
+        if (jpl == m_detector.GetNSensors() ) {break;}
+        
+        // Next sensor along beam line 
+        ReferenceFrame next_frame = m_detector.GetDet(jpl).GetNominal();
+               
+        // Check that track really intersects surface
+        if (! TrackModel->CheckHitsSurface(state, frame, next_frame) ) {
+          break;    
+        } 
+        
+        // Now, compute the fligth length to next surface
+        double length = TrackModel->GetSignedStepLength(state, frame, next_frame);
+        
+        // Extrapolate half step 
+        TrackModel->Extrapolate(state, frame, 0.5*length); 
+        
+        // Scatter in air between detectors
+        // ------------------------------- 
+        
+        double kink_u = 0;
+        double kink_v = 0;
+         
+        if( m_scatterModel==0 ) { 
+          // Highland model scattering     
+          double theta2 = materialeffect::GetScatterTheta2(length, materialeffect::X0_air, mcp->getMass(), mc->getCharge(), momentum ) ;   
+          kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
+          kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 ));  
+        } 
+        
+        // Scatter track ('in' state -> 'out' state)
+        materialeffect::ScatterTrack(state, kink_u, kink_v);    
+          
+        // Get state on next detector
+        bool error = false; 
+        HepMatrix next_state = TrackModel->Extrapolate(state, frame, next_frame, error);  
+        
+        if (error) { // check for loopers
+          break;      
+        } 
+        
+        // Update track snapshot  
+        ipl = jpl;  
+        frame = next_frame;
+        state = next_state;  
+           
+      } while ( ipl < m_detector.GetNSensors() ); 
+        
+    }
     
-    // Finally, we put everything together :)
-    TrackSnapShot MyTrack; 
-    MyTrack.Surf = CollimatorFrame;
-    MyTrack.State = GunState;
-    */
+    delete TrackModel; 
         
     evt->addCollection(simHitVec, m_SimTrackerHitCollectionName); 
 
@@ -220,7 +307,7 @@ namespace depfet {
     streamlog_out ( MESSAGE3 ) << "Successfully finished" << endl;
     
     // CPU time end
-    _timeCPU = clock()/1000 - _timeCPU;
+    m_timeCPU = clock()/1000 - m_timeCPU;
    
     // Print message
     streamlog_out(MESSAGE3) << std::endl
@@ -228,7 +315,7 @@ namespace depfet {
                              << "Time per event: "
                              << std::setiosflags(std::ios::fixed | std::ios::internal )
                              << std::setprecision(3)
-                             << _timeCPU/_nEvt
+                             << m_timeCPU/m_nEvt
                              << " ms"
                              << std::endl
                              << std::setprecision(3)

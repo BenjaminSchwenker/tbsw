@@ -6,6 +6,10 @@
 #ifndef FastSimulation_H
 #define FastSimulation_H 1
 
+// Include TBTools header files
+#include "TBDetector.h"
+
+
 // Include Marlin classes
 #include <marlin/Global.h>
 #include <marlin/Processor.h>
@@ -76,10 +80,13 @@ namespace depfet
     int m_eLossModel;  
     
    private: 
-
-    double _timeCPU; //!< CPU time
-    int    _nRun ;   //!< Run number
-    int    _nEvt ;   //!< Event number
+    
+    // Handle to detector data sheets 
+    TBDetector m_detector;  
+    
+    double m_timeCPU; //!< CPU time
+    int    m_nRun ;   //!< Run number
+    int    m_nEvt ;   //!< Event number
              
     
   };
