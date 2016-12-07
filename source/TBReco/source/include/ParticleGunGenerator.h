@@ -7,8 +7,6 @@
 #define ParticleGunGenerator_H 1
 
 
-
-
 // Include Marlin classes
 #include <marlin/Global.h>
 #include <marlin/Processor.h>

@@ -17,12 +17,17 @@
 #include <IMPL/MCParticleImpl.h> 
 #include <IMPL/SimTrackerHitImpl.h> 
 
+// ROOT includes
+#include <TMath.h>
+#include <TRandom.h>
+#include <TRandom3.h>
+
 
 // Used namespaces
 using namespace std; 
 using namespace lcio ;
 using namespace marlin ;
-using namespace CLHEP;
+//using namespace CLHEP;
 
 namespace depfet {
 

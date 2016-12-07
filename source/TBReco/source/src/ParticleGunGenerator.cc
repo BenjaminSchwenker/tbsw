@@ -16,6 +16,8 @@
 #include <IMPL/LCCollectionVec.h>
 #include "IMPL/MCParticleImpl.h" 
 
+// ROOT includes
+#include <TMath.h>
 #include <TRandom.h>
 #include <TRandom3.h>
 
@@ -23,9 +25,9 @@
 
 // Used namespaces
 using namespace std; 
-using namespace lcio ;
-using namespace marlin ;
-using namespace CLHEP;
+using namespace lcio;
+using namespace marlin;
+
 
 namespace depfet {
 
