@@ -108,86 +108,52 @@ namespace depfet {
     // Process next event
     ++_nEvt;
 
-    /*
-       
-    // Create output MCParticle collection
-    LCCollectionVec * mcVec = new LCCollectionVec( LCIO::MCPARTICLE );
+    //
+  // Open MCParticle collection
+  LCCollectionVec* mcVec = nullptr;
+  try {
+      mcVec = dynamic_cast < LCCollectionVec * >  ( evt->getCollection(m_MCParticleCollectionName) );
+  } catch (DataNotAvailableException& e) {
+      throw SkipEventException(this);
+  }
+        
+  // Create SimTrackerHit collection  
+  LCCollectionVec * simHitVec = new LCCollectionVec(LCIO::SIMTRACKERHIT) ;
+         
+  // Loop on all clusters 
+  for (unsigned int iMC = 0; iMC < mcVec->size(); iMC++) 
+  { 
     
-    //
-	//  Create a MCParticle and fill it from stdhep info
-	//
-    MCParticleImpl* mcp = new MCParticleImpl();
-			
-    //
-	//  PDGID
-	//
-	mcp->setPDG(IDHEP);
-	//
-	//  Momentum vector
-	//
-	float p0[3] = {PHEP1,PHEP2,PHEP3};
-	mcp->setMomentum(p0);
-	//
-	//  Mass
-	//
-	mcp->setMass(PHEP5);
-	//
-	//  Vertex
-	// 
-	double v0[3] = {VHEP1, VHEP2, VHEP3};
-	mcp->setVertex(v0);
-	//
-	//  Generator status
-	//
-	mcp->setGeneratorStatus(ISTHEP);
-	//
-	//  Simulator status 0 until simulator acts on it
-	//
-	mcp->setSimulatorStatus(0);
-	//
-	//  Creation time (note the units)
-	// 
-	mcp->setTime(VHEP4/c_light);
-	//
-    //  Add the particle to the collection vector
-	//
-	mcVec->push_back(mcp);
-    //
-    // Add MCParticle collection
-    // 
-    lcEvt->addCollection( (LCCollection*) lcMCVec , "MCParticle" ) ;
-    */ 
+    // Read MCParticle 
+    MCParticle* mcp = dynamic_cast<MCParticle* > ( mcVec->getElementAt(iMC) )  ;   
 
+    streamlog_out(MESSAGE3) << "Processing generator particle " << mcp->getGeneratorStatus() << " at time " << mcp->getTime() << endl; 
 
     /*
-    PHEP1 = mcp->getMomentum()[0];
-    PHEP2 = mcp->getMomentum()[1];
-    PHEP3 = mcp->getMomentum()[2];
+    mcp->getMomentum()[0];
+    mcp->getMomentum()[1];
+    mcp->getMomentum()[2];
+    mcp->getTime(); 
 
-    PHEP5 = mcp->getMass();
+    mcp->getVertex()[0];
+    mcp->getVertex()[1];
+    mcp->getVertex()[2];
 
-      std::cout << " HepLCIOInterface::GeneratePrimaryVertex: adding particle with pdg: " 
-// 		<< mcp->getPDG() << " and energy: " << mcp->getEnergy()  
-// 		<< " status : ["  << mcp->getGeneratorStatus() <<"]" << std::endl ;
-
-     //      //use the vertex information from the MCParticles
-//	  const double* mcpVertex = mcp->getVertex();
-//      G4ThreeVector vertex_position(mcpVertex[0], mcpVertex[1], mcpVertex[2]);
-
-
-    //	  // remove vertex information from the MCParticle
-//	  MCParticleImpl* mcpImpl = dynamic_cast<MCParticleImpl*>(mcp);
-//
-//	  double mcpv[3] = {0.0, 0.0, 0.0};
-//	  mcpImpl->setVertex(mcpv);
-//	  mcpImpl->setTime(0.0);
-
-   if( theParticle )
-    mcp_impl->setCharge(theParticle->GetPDGCharge());
-  else
-    mcp_impl->setCharge(-1000);
-
+    mcp->getCharge();
+    mcp->getMass();
+    mcp->getPDG(); 
+    mcp->getEnergy()  
+    mcp->getGeneratorStatus()
     */
+    
+  }
+    
+
+
+    
+    
+
+    
 
     
     /*
@@ -231,7 +197,7 @@ namespace depfet {
     MyTrack.State = GunState;
     */
         
-    //evt->addCollection(outputCollection, m_MCParticleCollectionName); 
+    evt->addCollection(simHitVec, m_SimTrackerHitCollectionName); 
 
   }
 
