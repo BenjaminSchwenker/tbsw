@@ -62,7 +62,7 @@ namespace depfet
       
    protected:
      
-    //! Output track collection name
+    //! Output MCParticle collection name
     std::string m_MCParticleCollectionName;
      
     //! Particle gun

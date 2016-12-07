@@ -6,9 +6,6 @@
 #ifndef FastSimulation_H
 #define FastSimulation_H 1
 
-
-
-
 // Include Marlin classes
 #include <marlin/Global.h>
 #include <marlin/Processor.h>
@@ -25,8 +22,12 @@ namespace depfet
 {
   
   /** The FastSimulation Processor
-   * The processor provides a particle gun for simulation of 
-   * a directed particle beam.
+   * The processor tracks all particles found in a collection of type 
+   * lcio::MCParticle trough a test beam telescope geometry and adds 
+   * a new lcio::SimTrackerHits collection to the event. 
+   * 
+   * The processor uses the very same track extrapolation code as the 
+   * track fitter. It is not a Geant4 based simulation.
    * 
    * Author: Benjamin Schwenker, Göttingen University 
    * <mailto:benjamin.schwenker@phys.uni-goettingen.de> 
@@ -62,28 +63,17 @@ namespace depfet
       
    protected:
      
-    //! Output track collection name
+    //! Input MCParticle collection name
     std::string m_MCParticleCollectionName;
      
-    //! Particle gun
-    double m_GunXPosition;
-    double m_GunYPosition;
-    double m_GunZPosition; 
-    double m_GunRotX;
-    double m_GunRotY;
-    double m_GunRotZ;
-    double m_GunSpotSizeX;
-    double m_GunSpotSizeY;
-    double m_GunDivergenceX;
-    double m_GunDivergenceY;
-    double m_GunCorrelationX; 
-    double m_GunCorrelationY;    
-    double m_GunBeamIntensity;   
-    double m_GunTimeWindow; 
-    double m_GunBetheHeitlerT0;
-    double m_GunMomentum;
-    double m_GunMass;
-    double m_GunCharge;
+    //! Output SimTrackerHit collection name
+    std::string m_SimTrackerHitCollectionName;
+    
+    // Choose model for multiple scattering ( Highland:0 )
+    int m_scatterModel;  
+    
+    // Choose model for energy loss ( G4UniversalFluctuation:0 )
+    int m_eLossModel;  
     
    private: 
 

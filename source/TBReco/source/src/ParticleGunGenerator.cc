@@ -6,9 +6,6 @@
 // user includes
 #include "ParticleGunGenerator.h"
 
-#include "DEPFET.h" 
-#include <CLHEP/Random/RandGamma.h>
-
 // C++ includes
 #include <iostream>
 
@@ -49,7 +46,7 @@ namespace depfet {
    
     //
     // Output collections  
-    registerOutputCollection(LCIO::TRACK,"MCParticleCollectionName",
+    registerOutputCollection(LCIO::MCPARTICLE,"MCParticleCollectionName",
                              "Collection name for MCParticles",
                              m_MCParticleCollectionName, string ("MCParticles"));
     
@@ -146,6 +143,7 @@ namespace depfet {
     LCCollectionVec * mcVec = new LCCollectionVec( LCIO::MCPARTICLE );
     
     double time = 0; 
+    int nParticle = 0; 
 
     while ( time < m_GunTimeWindow ) { 
 
@@ -213,11 +211,11 @@ namespace depfet {
 	  //
 	  //  Generator status
 	  //
-	  mcp->setGeneratorStatus(0);
+	  mcp->setGeneratorStatus(nParticle);
 	  //
 	  //  Simulator status 0 until simulator acts on it
 	  //
-	  mcp->setSimulatorStatus(0);
+	  mcp->setSimulatorStatus(nParticle);
 	  //
 	  //  Creation time (note the units)
 	  // 
@@ -230,7 +228,8 @@ namespace depfet {
       //
       //  Advance time until the next beam particle
       // 
-      time += gRandom->Exp(1.0/m_GunBeamIntensity);    
+      time += gRandom->Exp(1.0/m_GunBeamIntensity);  
+      nParticle += 1;  
     
     }
     

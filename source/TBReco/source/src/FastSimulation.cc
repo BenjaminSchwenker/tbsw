@@ -6,9 +6,6 @@
 // user includes
 #include "FastSimulation.h"
 
-#include "DEPFET.h" 
-#include <CLHEP/Random/RandGamma.h>
-
 // C++ includes
 #include <iostream>
 
@@ -17,8 +14,8 @@
 #include <IMPL/LCRunHeaderImpl.h>
 #include <IMPL/LCEventImpl.h>
 #include <IMPL/LCCollectionVec.h>
-#include "IMPL/MCParticleImpl.h" 
-
+#include <IMPL/MCParticleImpl.h> 
+#include <IMPL/SimTrackerHitImpl.h> 
 
 
 // Used namespaces
@@ -42,68 +39,28 @@ namespace depfet {
   {
    
     // Processor description
-    _description = "Particle gun processor for simulation of a directed particle beam";
+    _description = "Fast simulation processor for propagation of beam particels trough a test beam telescope";
    
+
+    //
+    // Input collections  
+    registerInputCollection (LCIO::MCParticle, "MCParticleCollectionName",
+                            "Collection name for MCParticles",
+                            m_MCParticleCollectionName, string ("MCParticles") );
+
     //
     // Output collections  
-    registerOutputCollection(LCIO::TRACK,"MCParticleCollectionName",
-                             "Collection name for MCParticles",
-                             m_MCParticleCollectionName, string ("MCParticles"));
+    registerOutputCollection(LCIO::SIMTRACKERHIT,"SimTrackerHitCollectionName",
+                             "Collection name for SimTrackerHits",
+                             m_SimTrackerHitCollectionName, string ("SimTrackerHits"));
     
-    registerProcessorParameter ("ParticleMomentum", "Particle momentum [GeV]",
-                                m_GunMomentum,  static_cast < double > (4.0));
+    registerProcessorParameter ("ScatterModel", "Choose model for multiple scattering: Highland(0)",
+                                m_scatterModel,  static_cast < int > (0));
    
-    registerProcessorParameter ("ParticleMass", "Particle mass [GeV]",
-                                m_GunMass,  static_cast < double > (0.139));
+    registerProcessorParameter ("ElossModel", "Choose model for energy loss: G4UniversalFluctuation(0)",
+                                m_eLossModel,  static_cast < int > (0));
    
-    registerProcessorParameter ("ParticleCharge", "Particle charge [e]",
-                                m_GunCharge,  static_cast < double > (+1));
-  
-    registerProcessorParameter ("GunPositionX", "X position of particle gun [mm]",
-                                m_GunXPosition,  static_cast < double > (0));
-  
-    registerProcessorParameter ("GunPositionY", "Y position of particle gun [mm]",
-                                m_GunYPosition,  static_cast < double > (0));
-
-    registerProcessorParameter ("GunPositionZ", "Z position of particle gun [mm]",
-                                m_GunZPosition,  static_cast < double > (-5000));
-  
-    registerProcessorParameter ("GunRotationX", "X rotation of particle gun [rad]",
-                                m_GunRotX,  static_cast < double > (0)); 
-  
-    registerProcessorParameter ("GunRotationY", "Y rotation of particle gun [rad]",
-                                m_GunRotY,  static_cast < double > (0)); 
-
-    registerProcessorParameter ("GunRotationZ", "Z rotation of particel gun [rad]",
-                                m_GunRotZ,  static_cast < double > (0)); 
-  
-    registerProcessorParameter ("GunSpotSizeX", "Smearing of X vertex position at beam collimator [mm]",
-                                m_GunSpotSizeX,  static_cast < double > (1)); 
-
-    registerProcessorParameter ("GunSpotSizeY", "Smearing of Y vertex position at beam collimator [mm]",
-                                m_GunSpotSizeY,  static_cast < double > (1)); 
-  
-    registerProcessorParameter ("GunDivergenceX", "RMS track slope in XZ plane [rad]",
-                                m_GunDivergenceX,  static_cast < double > (0.0001)); 
-  
-    registerProcessorParameter ("GunDivergenceY", "RMS track slope in YZ plane [rad]",
-                                m_GunDivergenceY,  static_cast < double > (0.0001)); 
-  
-    registerProcessorParameter ("GunCorrelationX", "Beam correlation coefficient X",
-                                m_GunCorrelationX,  static_cast < double > (0.0)); 
-  
-    registerProcessorParameter ("GunCorralationY", "Beam correlation coefficient Y",
-                                m_GunCorrelationY,  static_cast < double > (0.0)); 
-   
-    registerProcessorParameter ("GunIntensity", "Number of particles per second",
-                                m_GunBeamIntensity,  static_cast < double > (10000)); 
-  
-    registerProcessorParameter ("GunTimeWindow", "A simulated event contains one particle at t=0 and extends for given time window in seconds",
-                                m_GunTimeWindow,  static_cast < double > (0.0001)); 
-   
-    registerProcessorParameter ("BetheHeitlerSmearing", "Thickness of material before telescope for Bremsstrahlung [X/X0]",
-                                m_GunBetheHeitlerT0,  static_cast < double > (0.0)); 
-   
+    
                                  
   }
 
@@ -145,6 +102,8 @@ namespace depfet {
     //////////////////////////////////////////////////////////////////////  
     // Process next event
     ++_nEvt;
+
+    /*
        
     // Create output MCParticle collection
     LCCollectionVec * mcVec = new LCCollectionVec( LCIO::MCPARTICLE );
@@ -192,7 +151,7 @@ namespace depfet {
     // Add MCParticle collection
     // 
     lcEvt->addCollection( (LCCollection*) lcMCVec , "MCParticle" ) ;
-     
+    */ 
 
 
     /*
@@ -254,29 +213,7 @@ namespace depfet {
     
     // Next, we create a local track state in the collimator frame.
     HepMatrix GunState(5,1); 
-    
-    // Sample from a correlated particle position and direction 
-    // variables 
-    // 
-    // Mean position and directions are always zero in collimator 
-    // frame. 
-    // 
-    // Variables are decomposed into two uncorrelated pairs, namely 
-    // (dx/dz,x) and (dy/dz,y). 
-    //
-    // We use a chelesky decomposition method to sample from the 
-    // correlated pairs. 
-    
-    double X1 = myRng->Gaus(0, 1); 
-    double X2 = myRng->Gaus(0, 1); 
-    double Y1 = myRng->Gaus(0, 1); 
-    double Y2 = myRng->Gaus(0, 1);
-
-    double covX = correlationX*divergenceX*spotsizeX;
-    double covY = correlationY*divergenceY*spotsizeY;  
-    double DX = std::sqrt( std::pow(divergenceX,2)*std::pow(spotsizeX,2) - covX*covX );
-    double DY = std::sqrt( std::pow(divergenceY,2)*std::pow(spotsizeY,2) - covY*covY );
-    
+        
     GunState[0][0] = divergenceX*X1;                     // dx/dz
     GunState[1][0] = divergenceY*Y1;                     // dy/dz
     GunState[2][0] = (covX*X1 + DX*X2) / divergenceX;    // x 
@@ -288,12 +225,8 @@ namespace depfet {
     MyTrack.Surf = CollimatorFrame;
     MyTrack.State = GunState;
     */
-
-
-
-    
         
-    evt->addCollection(outputCollection, m_MCParticleCollectionName); 
+    //evt->addCollection(outputCollection, m_MCParticleCollectionName); 
 
   }
 
