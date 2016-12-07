@@ -108,26 +108,30 @@ namespace depfet {
     // Process next event
     ++_nEvt;
 
-    //
-  // Open MCParticle collection
-  LCCollectionVec* mcVec = nullptr;
-  try {
-      mcVec = dynamic_cast < LCCollectionVec * >  ( evt->getCollection(m_MCParticleCollectionName) );
-  } catch (DataNotAvailableException& e) {
-      throw SkipEventException(this);
-  }
-        
-  // Create SimTrackerHit collection  
-  LCCollectionVec * simHitVec = new LCCollectionVec(LCIO::SIMTRACKERHIT) ;
-         
-  // Loop on all clusters 
-  for (unsigned int iMC = 0; iMC < mcVec->size(); iMC++) 
-  { 
+    cout << "start process event" << endl; 
     
-    // Read MCParticle 
-    MCParticle* mcp = dynamic_cast<MCParticle* > ( mcVec->getElementAt(iMC) )  ;   
+    //
+    // Open MCParticle collection
+    LCCollectionVec* mcVec = nullptr;
+    try {
+      mcVec = dynamic_cast < LCCollectionVec * >  ( evt->getCollection(m_MCParticleCollectionName) );
+    } catch (DataNotAvailableException& e) {
+      throw SkipEventException(this);
+    }
 
-    streamlog_out(MESSAGE3) << "Processing generator particle " << mcp->getGeneratorStatus() << " at time " << mcp->getTime() << endl; 
+    cout << "loaded mcparticles " << endl; 
+        
+    // Create SimTrackerHit collection  
+    LCCollectionVec * simHitVec = new LCCollectionVec(LCIO::SIMTRACKERHIT) ;
+         
+    // Loop on all clusters 
+    for (unsigned int iMC = 0; iMC < mcVec->size(); iMC++) 
+    { 
+    
+      // Read MCParticle 
+      MCParticle* mcp = dynamic_cast<MCParticle* > ( mcVec->getElementAt(iMC) )  ;   
+      
+      streamlog_out(MESSAGE3) << "Processing generator particle " << mcp->getGeneratorStatus() << " at time " << mcp->getTime() << endl; 
 
     /*
     mcp->getMomentum()[0];

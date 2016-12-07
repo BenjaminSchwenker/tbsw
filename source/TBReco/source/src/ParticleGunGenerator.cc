@@ -195,7 +195,7 @@ namespace depfet {
 	  //
 	  //  Momentum vector
 	  //
-	  float p0[3] = {P1,P2,P3};
+	  double p0[3] = {P1,P2,P3};
 	  mcp->setMomentum(p0);
 	  //
 	  //  Mass
