@@ -30,8 +30,7 @@
 
 // CLHEP includes
 #include "CLHEP/Matrix/Vector.h"
-//#include "CLHEP/Vector/Rotation.h"
-//#include "CLHEP/Vector/ThreeVector.h"
+
 
 
 // Used namespaces
@@ -349,7 +348,7 @@ namespace depfet {
 
     streamlog_out(MESSAGE3)  << std::endl
                               << " "
-                              << "BeamEnergyCorrector Development Version, be carefull!!"
+                              << "FastSimulation development Version, be carefull!!"
                               << " "
                               << std::endl  << std::endl;   
 

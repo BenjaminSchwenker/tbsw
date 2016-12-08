@@ -1,7 +1,7 @@
 #ifndef PHYSICALCONSTANTS_H
 #define PHYSICALCONSTANTS_H 1
 
-namespace sipxl {
+namespace depfet {
 
 //
 // System of units
@@ -11,12 +11,12 @@ namespace sipxl {
 //    charge        in electrons         [e]
 //    distance      in milimetres        [mm]
 //    energy        in kiloelectronvolts [keV]
-//    mag. filed    in Tesla             [T]
+//    mag. field    in Tesla             [T]
 //    temperature   in Kelvin            [K]
 //    time          in seconds           [s]
 //    voltage       in volts             [V]
 //
-// author: Z.Drasal, Charles University Prague
+// author: B.Schwenker, Göttingen University
 //
 
 // Elementary charge
