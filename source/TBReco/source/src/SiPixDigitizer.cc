@@ -57,7 +57,7 @@ namespace depfet {
     // Input collections  
     registerInputCollection (LCIO::SIMTRACKERHIT, "SimTrackerHitCollectionName",
                              "Collection name for SimTrackerHits",
-                             m_SimTrackerHitCollectionName, string ("SimTrackerHits") );
+                             m_SimTrackerHitCollectionName, std::string ("SimTrackerHits") );
       
     registerOutputCollection(LCIO::TRACKERDATA, "DigitCollectionName",
                              "Collection name for Digits",
@@ -66,7 +66,7 @@ namespace depfet {
     std::vector<int> initFilterIDs;
     registerProcessorParameter ("FilterIDs",
                                 "Apply digitization only to SimTrackerHits for sensors having DAQ IDs in this list",
-                                _filterIDs, initFilterIDs);
+                                m_filterIDs, initFilterIDs);
       
     registerProcessorParameter( "SiBulkDoping",
                                 "Effective bulk doping concentration, in um^-3",
@@ -160,7 +160,7 @@ namespace depfet {
     
     registerProcessorParameter( "ADCBits",
                                 "Set how many bits the ADC uses",
-                                _ADCBits,
+                                m_ADCBits,
                                 int(8));
     
    
@@ -248,7 +248,7 @@ namespace depfet {
          
         // Cut on simHit creation time --> simulate integration time of a sensor (if option switched on))
 	    if ((simTrkHit != 0) && (m_integrationWindow)) {
-	      if (simTrkHit->getTime()*ns < _startIntegration || simTrkHit->getTime()*ns > _stopIntegration) {
+	      if (simTrkHit->getTime()*ns < m_startIntegration || simTrkHit->getTime()*ns > m_stopIntegration) {
 	        continue;
 	      }		
 	    }
@@ -320,7 +320,7 @@ namespace depfet {
 	     
       } // Loop over simTrkHits
       
-      if (_electronicEffects) {
+      if (m_electronicEffects) {
         
         // Produce noise digits and update PXD map
         streamlog_out(MESSAGE2) << " Producing noisy digits ..." << std::endl;
@@ -337,12 +337,12 @@ namespace depfet {
       streamlog_out(MESSAGE1) << " Writing digits ..." << std::endl;
 	  
       // Create sparse data collection
-      LCCollectionVec * sparseDataCollection = new LCCollectionVec(LCIO::TRACKERDATA);       
+      LCCollectionVec * digitCol = new LCCollectionVec(LCIO::TRACKERDATA);       
         
-      ProduceSparsePixels( sparseDataCollection  , digitsMap); 
+      ProduceSparsePixels( digitCol  , digitsMap); 
 	  
       // Store stuff in LCIO file 
-      evt->addCollection(sparseDataCollection, _sparseDataCollectionName);
+      evt->addCollection(digitCol, m_digitCollectionName);
         
       // Release memory - clear digits
       DigitsMap::const_iterator iterDigitsMap;
@@ -365,7 +365,7 @@ namespace depfet {
     }
     catch(DataNotAvailableException &e){}
     
-    _nEvt ++ ;
+    m_nEvt ++ ;
   }
 
   //
@@ -451,7 +451,7 @@ namespace depfet {
     // For charged particles: energy is smeared along the step in 
     // small segments. 
      
-    int numberOfSegments = int(trackLength/_maxSegmentLength) + 1;
+    int numberOfSegments = int(trackLength/m_maxSegmentLength) + 1;
      
     // Calculate mean energy loss in each segment
     double dEMean = Edep/((double)numberOfSegments);
