@@ -11,6 +11,7 @@
 
 // Include LCIO classes
 #include <lcio.h>
+#include <UTIL/CellIDEncoder.h>
 #include <IMPL/LCRunHeaderImpl.h>
 #include <IMPL/LCEventImpl.h>
 #include <IMPL/LCCollectionVec.h>
@@ -146,6 +147,9 @@ namespace depfet {
     
     // Create SimTrackerHit collection  
     LCCollectionVec * simHitVec = new LCCollectionVec(LCIO::SIMTRACKERHIT) ;
+     
+    // Create cellID encoder
+    CellIDEncoder<SimTrackerHitImpl> cellIDEnc( "layer:7,ladder:5,sensor:4,isEntry:2,isExit:2" , simHitVec ) ;
          
     // Loop on all MCParticles
     for (unsigned int iMC = 0; iMC < mcVec->size(); iMC++) 
@@ -198,42 +202,50 @@ namespace depfet {
                  
           Det& current_det = m_detector.GetDet(ipl);
           
-          // Store state at current detector  
-          // -------------------------------
-          //TruthTrack.GetTE(ipl).GetState().SetPars(MyTrack.State); 
-          //TruthTrack.GetTE(ipl).SetCrossed(true);
-           
-          // Scatter on current detector
+          // Local track state on sensor
           // --------------------------- 
           double dudw = state[0][0];
           double dvdw = state[1][0];
           double u = state[2][0]; 
-          double v = state[3][0];  
-          
-          // Traversed length in detector layer (mm)
+          double v = state[3][0]; 
+          double mom = mcp->getCharge()/state[4][0]; 
           double l0 = current_det.GetThickness(u,v)*std::sqrt(1 + dudw*dudw + dvdw*dvdw);  
-          // Radiation length of detector layer(mm) 
-          double X0 = current_det.GetRadLength(u,v);
+          double eDep = l0*82*3.64*1e-6;
+             
+          // Create a new LCIO SimTracker hit
+          SimTrackerHitImpl * simHit = new SimTrackerHitImpl;
+          simHit->setdEdx(eDep); 
+          simHit->setTime(mcp->getTime());
+          simHit->setPathLength(l0); 
+          // Set local hit position
+          double hitPos {u , v , 0} ;
+          simHit->setPosition(hitPos);  
+          // Set local hit momentum 
+          double hitMom { dudw*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1), dvdw*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1) , 1.0*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1) };
+          simHit->setMomentum(hitMom);
           
-          // Scatter kinks (relative to flight direction of particle)      
-          double kink_u = 0;
-          double kink_v = 0;
-          double theta2 = 0;
-            
+          // Set CellID
+          cellIDEnc["layer"]  = ipl;
+          cellIDEnc["ladder"] = ipl;
+          cellIDEnc["sensor"] = ipl;
+          cellIDEnc["isEntry"] = 0;
+          cellIDEnc["isExit"] = 0;
+          cellIDEnc.setCellID(simHit);
+          
+          // Set particle that has interacted in the detector
+          simHit->setMCParticle( mcp );
+    
+          // Put the hit into LCIO collection
+          simHitVec->push_back( simHit );
+           
           if(  m_scatterModel==0  ) { 
             // Highland model scattering
-            theta2 = materialeffect::GetScatterTheta2(l0, X0, mcp->getMass(), mcp->getCharge(), momentum );      
-            kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
-            kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 ));      
+            double theta2 = materialeffect::GetScatterTheta2(l0, current_det.GetRadLength(u,v), mcp->getMass(), mcp->getCharge(), mom );      
+            double kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
+            double kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 ));      
+            // Scatter track ('in' state -> 'out' state)
+            materialeffect::ScatterTrack(state, kink_u, kink_v); 
           }
-          
-          // Scatter track ('in' state -> 'out' state)
-          materialeffect::ScatterTrack(state, kink_u, kink_v);  
-          
-          // Also store scatter kinks in a TBHit object. 
-          // Of course, this abuses the interface a bit.  
-          //TBHit MSCKink(current_det.GetDAQID(), kink_u, kink_v, theta2, theta2);
-          //TruthTrack.GetTE(ipl).SetHit(MSCKink); 
         }
          
         // Propagate particle to next detector surface
@@ -261,18 +273,14 @@ namespace depfet {
         // Scatter in air between detectors
         // ------------------------------- 
         
-        double kink_u = 0;
-        double kink_v = 0;
-         
         if( m_scatterModel==0 ) { 
           // Highland model scattering     
           double theta2 = materialeffect::GetScatterTheta2(length, materialeffect::X0_air, mcp->getMass(), mcp->getCharge(), momentum ) ;   
-          kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
-          kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 ));  
+          double kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
+          double kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 )); 
+          // Scatter track ('in' state -> 'out' state)
+          materialeffect::ScatterTrack(state, kink_u, kink_v);     
         } 
-        
-        // Scatter track ('in' state -> 'out' state)
-        materialeffect::ScatterTrack(state, kink_u, kink_v);    
           
         // Get state on next detector
         bool error = false; 
