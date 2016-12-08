@@ -218,10 +218,10 @@ namespace depfet {
           simHit->setTime(mcp->getTime());
           simHit->setPathLength(l0); 
           // Set local hit position
-          double hitPos {u , v , 0} ;
+          double hitPos[3] =  {u , v , 0} ;
           simHit->setPosition(hitPos);  
           // Set local hit momentum 
-          double hitMom { dudw*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1), dvdw*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1) , 1.0*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1) };
+          double hitMom[3] = { dudw*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1), dvdw*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1) , 1.0*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1) };
           simHit->setMomentum(hitMom);
           
           // Set CellID
