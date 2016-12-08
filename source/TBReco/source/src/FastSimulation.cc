@@ -221,7 +221,7 @@ namespace depfet {
           double hitPos[3] =  {u , v , 0} ;
           simHit->setPosition(hitPos);  
           // Set local hit momentum 
-          double hitMom[3] = { dudw*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1), dvdw*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1) , 1.0*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1) };
+          float hitMom[3] = { dudw*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1), dvdw*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1) , 1.0*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1) };
           simHit->setMomentum(hitMom);
           
           // Set CellID
