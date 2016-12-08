@@ -68,15 +68,6 @@ mkdir build
 cd build 
 cmake -C ../config/BuildSetup.cmake ..
 make install
-cd ../.. 
-
-############################################################
-# Install SiPxlDigi
-cd SiPxlDigi
-mkdir build
-cd build 
-cmake -C ../config/BuildSetup.cmake ..
-make install
 cd ../../..         
 
 ############################################################
@@ -114,7 +105,7 @@ echo "#    Marlin                                                               
 echo "#--------------------------------------------------------------------------------" >> init_tbsw.sh
 echo "export MARLIN="${TBSW_HOME}/Marlin"" >> init_tbsw.sh
 echo "export PATH="${MARLIN}/bin:${PATH}"" >> init_tbsw.sh
-echo "export MARLIN_DLL="${TBSW_HOME}/TBReco/lib/libTBReco.so:${TBSW_HOME}/SiPxlDigi/lib/libSiPxlDigi.so"" >> init_tbsw.sh
+echo "export MARLIN_DLL="${TBSW_HOME}/TBReco/lib/libTBReco.so:"" >> init_tbsw.sh
 echo "" >> init_tbsw.sh
 
 
