@@ -423,7 +423,7 @@ namespace depfet {
   {
     // Space point
     SpacePoint hitLocal;
-    
+        
     // Transform geant4 step to local sensor coordinates
     TransformToLocal(simTrkHit, hitLocal);
     
@@ -468,8 +468,8 @@ namespace depfet {
       ionisationPoints[i] = iPoint;
        
       // Check if iPoint is within sensor boundaries
-      /* FIXME
-      if (_geometry->isPointOutOfSensor(_currentLayerID, _currentSensorID, iPoint->position)) {
+      
+      if (m_detector.GetDet(m_ipl).isPointOutOfSensor( iPoint->position.getX(), iPoint->position.getY() , iPoint->position.getZ() ) {
          
         streamlog_out(ERROR) << std::setiosflags(std::ios::fixed | std::ios::internal )
                              << std::setprecision(3)
@@ -477,9 +477,10 @@ namespace depfet {
                              << std::setprecision(0) << std::endl
                              << "SensorID is " << _currentSensorID
                              << std::endl;
-       
+        
+        continue; 
       }
-      */ 
+       
       // Print
       streamlog_out(MESSAGE1) << "  Hit local ionPoints (ionisation): " << std::endl;
       streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
@@ -512,64 +513,50 @@ namespace depfet {
       // Get current ionisation point
       IonisationPoint * iPoint = ionisationPoints[i];
       
-      // Final point
-      Hep3Vector finalPos(iPoint->position);
-      
       //  Charge cloud created at distance to top plane 
-      double d = _sensorThick - iPoint->position.getX();
-      d = sqrt( d * d );
-      
-      //std::cout << "Depth of charge deposit [mm]: " << d/mm << std::endl;
+      double w =  m_detector.GetDet(ipl).GetSensitiveThickness()/2. - iPoint->position.getZ();
+      w = sqrt( w * w );
       
       // Potential valley is at distance to top plane
-      double x0 = _sensorThick/2 + Perm_Si*(_Uback-_Utop)/(e*_bulkDoping*_sensorThick);
-      double dx = 0.003;  
+      double w0 = m_detector.GetDet(ipl).GetSensitiveThickness()/2. - 0.02;
+      double dw = 0.003;  
       
-      //std::cout << "Depth of potential vallay [mm]: " << x0/mm << std::endl;
+      //std::cout << "Depth of potential vallay [mm]: " << w0/mm << std::endl;
       
       // Drift time into potential valley -  
       double td = 1.4*1.4*um*um/( 2* Utherm * e_mobility);
         
-      if ( d > x0 + dx ) {
-        td += Perm_Si * ::log( (d - x0)/dx ) / ( e_mobility * e * _bulkDoping);
-      } else if ( d < x0 - dx )  {
-        td += Perm_Si * ::log( (x0 - d)/dx ) / ( e_mobility * e * _bulkDoping);
+      if ( w > w0 + dw ) {
+        td += Perm_Si * ::log( (w - w0)/dw ) / ( e_mobility * e * _bulkDoping);
+      } else if ( w < w0 - dw )  {
+        td += Perm_Si * ::log( (w0 - w)/dw ) / ( e_mobility * e * _bulkDoping);
       }
-      
-      //std::cout << "Vertical drift time [ns]: " << td/ns << std::endl; 
       
       // Diffusive spread in lateral plane
       double sigmaDiffus = sqrt( 2 * Utherm * e_mobility * td ); 
       
       //std::cout << "Diffusive spread [mm]: " << sigmaDiffus/mm << std::endl; 
       
-      double sigmaY = sigmaDiffus;
-      double sigmaZ = sigmaDiffus; 
+      double sigmaU = sigmaDiffus;
+      double sigmaV = sigmaDiffus; 
       
       //  After Lorentz shift
-      double onPlaneY = iPoint->position.getY() + _tanLorentzAngle * (d - x0);
-      double onPlaneZ = iPoint->position.getZ();
-      
-      finalPos.setY(onPlaneY);
-      finalPos.setZ(onPlaneZ);
-      finalPos.setX(x0);
-       
+      double onPlaneU = iPoint->position.getX() + _tanLorentzAngle * (w - w0);
+      double onPlaneV = iPoint->position.getY();
+        
       // Save info in signal point
       SignalPoint * sPoint = new SignalPoint;
       
-      sPoint->position.setX(finalPos.getX());
-      sPoint->position.setY(finalPos.getY());
-      sPoint->position.setZ(finalPos.getZ());
+      sPoint->position.setX(onPlaneU);
+      sPoint->position.setY(onPlaneV);
+      sPoint->position.setZ(w0);
       
-      sPoint->sigma.setX(_sensorThick-x0);
-      sPoint->sigma.setY(sigmaY);
-      sPoint->sigma.setZ(sigmaZ);
+      sPoint->sigma.setX(sigmaU);
+      sPoint->sigma.setY(sigmaV);
+      sPoint->sigma.setZ(0);
       
       // Charge in electrons
       sPoint->charge = iPoint->eLoss/Eeh * e;
-         
-      // Check if sinal point not out of sensor - if yes set border of the sensor
-      _geometry->correctPointOutOfSensor(_currentLayerID, _currentSensorID, sPoint->position);
       
       // Save signal point
       signalPoints[i] = sPoint;
@@ -612,12 +599,12 @@ namespace depfet {
       SignalPoint * sPoint = signalPoints[i];
       
       // Calculate centre of gaussian charge cloud
-      double centreZ    = sPoint->position.getZ();
-      double centreRPhi = sPoint->position.getY();
+      double centreU = sPoint->position.getX();
+      double centreV = sPoint->position.getY();
       
       // Calculate width of charge cloud
-      double sigmaZ     = sPoint->sigma.getZ();
-      double sigmaRPhi  = sPoint->sigma.getY();
+      double sigmaU  = sPoint->sigma.getX();
+      double sigmaV  = sPoint->sigma.getY();
       
       // Get number of electrons in cloud
       double clusterCharge = sPoint->charge;
@@ -625,19 +612,19 @@ namespace depfet {
       streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
                               << std::setprecision(3) << std::endl;
       
-      streamlog_out(MESSAGE1) << "Signal point on sensor " << _currentSensorID <<  std::endl;
+      streamlog_out(MESSAGE1) << "Signal point on sensor " << m_ipl <<  std::endl;
       streamlog_out(MESSAGE1) << "point charge [e-] " << clusterCharge  <<  std::endl; 
-      streamlog_out(MESSAGE1) << "point position [mm] " <<  centreZ/mm << ", " << centreRPhi/mm <<  std::endl;
-      streamlog_out(MESSAGE1) << "point sigma [um]    " << sigmaZ/um << ", " << sigmaRPhi/um <<  std::endl;  
+      streamlog_out(MESSAGE1) << "point position [mm] " <<  centreU/mm << ", " << centreV/mm <<  std::endl;
+      streamlog_out(MESSAGE1) << "point sigma [um]    " << sigmaU/um << ", " << sigmaV/um <<  std::endl;  
       
       
       // Now, the signal point is split into groups of electons spread around the 
       // signal point center. Each group is tracked into an internal gate.
-      int numberOfGroups = int(clusterCharge/_eGroupSize) + 1;
+      int numberOfGroups = int(clusterCharge/m_eGroupSize) + 1;
       double groupCharge = clusterCharge/((double)numberOfGroups);
       
       // Random walk step length 
-      double sigmaDiffus = sqrt( 2*Utherm*e_mobility*_eStepTime ) ;
+      double sigmaDiffus = sqrt( 2*Utherm*e_mobility*m_eStepTime ) ;
       
       // N.B. diffusion step length must be smaller than any border length (drain/source/clear)
       // to simulate random walk correctly  
@@ -647,16 +634,15 @@ namespace depfet {
       for (int iGroup=0; iGroup<numberOfGroups; ++iGroup)  {         
         
         // Initial group position   
-        double groupPosZ = centreZ + myRng->Gaus(0, sigmaZ);
-        double groupPosRPhi = centreRPhi + myRng->Gaus(0, sigmaRPhi);
+        double groupPosU = centreZ + gRandom->Gaus(0, sigmaU);
+        double groupPosV = centreRPhi + gRandom->Gaus(0, sigmaV);
             
-        // Pixel cellID in Z 
-        int iZ = _geometry->getPixelIDInZ(_currentLayerID, _currentSensorID, groupPosZ);
-        double pixelPosZ = _geometry->getPixelPosInZ(_currentLayerID, _currentSensorID, iZ);
-            
-        // Pixel cellID in RPhi
-        int iRPhi = _geometry->getPixelIDInRPhi(_currentLayerID, _currentSensorID, _bricked, groupPosRPhi, groupPosZ);
-        double pixelPosRPhi = _geometry->getPixelPosInRPhi(_currentLayerID, _currentSensorID, _bricked, iRPhi, iZ); 
+        
+        int iV = m_detector.GetDet(m_ipl).GetRowFromCoord( groupPosU, groupPosV );
+        int iU = m_detector.GetDet(m_ipl).GetColumnFromCoord( groupPosU, groupPosV ); 
+        
+        double pixelPosV = m_detector.GetDet(m_ipl).GetPixelCenterCoordV(iV, iU); 
+        double pixelPosU = m_detector.GetDet(m_ipl).GetPixelCenterCoordU(iV, iU); 
            
         // control variables 
         double collectionTime = 0;
@@ -667,32 +653,24 @@ namespace depfet {
           //std::cout << "  iStep " <<  iStep << " at time (ns) " << collectionTime/ns <<std::endl;
           
           // Calculate border of internal gate region
-          double pitchZ    = _geometry->getSensorPitchInZ(_currentLayerID, _currentSensorID);
-          double pitchRPhi = _geometry->getSensorPitchInRPhi(_currentLayerID, _currentSensorID);           
-          double lowerZ      = pitchZ/2. - _drainBorderLength[_currentSensorID]; 
-          double upperZ      = pitchZ/2. - _sourceBorderLength[_currentSensorID];          
-          double halfwidth   = pitchRPhi/2. - _clearBorderLength[_currentSensorID];
-          double deltaZ = groupPosZ - pixelPosZ; 
-          double deltaRPhi = groupPosRPhi - pixelPosRPhi;  
+          double pitchU      = m_detector.GetDet(m_ipl).GetPitchU();     
+          double pitchV      = m_detector.GetDet(m_ipl).GetPitchV();           
+          double halfwidthV   = pitchV/2. - m_vSideBorderLength;         
+          double halfwidthU   = pitchU/2. - m_uSideBorderLength;
+          double deltaV = groupPosV - pixelPosV; 
+          double deltaU = groupPosU - pixelPosU;  
           
-          // Check if sensor uses double pixel structure
-          if ( _doublePixel ) {
-            if(iZ % 2 != 0)  {
-	      // N.B. odd pixel rows have source at lower edge
-              lowerZ  = pitchZ/2. - _sourceBorderLength[_currentSensorID]; 
-              upperZ  = pitchZ/2. - _drainBorderLength[_currentSensorID]; 
-            } 
-          }
+          
           // debug
           //std::cout << "  SensorID " << _currentSensorID <<std::endl;
-          //std::cout << "  in pixel cellID: " << iZ << ", " << iRPhi  <<std::endl;
+          //std::cout << "  in pixel cellID: " << iV << ", " << iU  <<std::endl;
           //std::cout << "  pix  centre (mm): " << pixelPosZ/mm << ", " << pixelPosRPhi/mm << std::endl;
           //std::cout << "  group pos   (mm): " << groupPosZ/mm << ", " << groupPosRPhi/mm << std::endl;
           //std::cout << "  delta       (mm): " << deltaZ/mm    << ", " << deltaRPhi/mm    << std::endl;
           
           // Check if charge is inside IG region
-          if (   deltaRPhi > - halfwidth &&  deltaRPhi <  halfwidth &&
-                 deltaZ    > - lowerZ   &&  deltaZ    < upperZ        )
+          if (   deltaU > - halfwidthU &&  deltaU < halfwidthU &&
+                 deltaV > - halfwidthV &&  deltaV < halfwidthV        )
           {
             insideIG = true;
             //std::cout  << " inside!! " << std::endl;
@@ -701,23 +679,24 @@ namespace depfet {
           }
             
   	      // Update position of group, possibly leaving current pixel 
-          collectionTime += _eStepTime;
-          groupPosZ += myRng->Gaus(0, sigmaDiffus);
-          groupPosRPhi += myRng->Gaus(0, sigmaDiffus); 
-              
-          // Update current cellID in Z  
-          iZ = _geometry->getPixelIDInZ(_currentLayerID, _currentSensorID, groupPosZ);
-          pixelPosZ = _geometry->getPixelPosInZ(_currentLayerID, _currentSensorID, iZ);
-                       
-          // Update current cellID in RPHI  
-          iRPhi = _geometry->getPixelIDInRPhi(_currentLayerID, _currentSensorID, _bricked, groupPosRPhi, groupPosZ);
-          pixelPosRPhi = _geometry->getPixelPosInRPhi(_currentLayerID, _currentSensorID, _bricked, iRPhi, iZ);
-               
+          collectionTime += m_eStepTime;
+          groupPosV += gRandom->Gaus(0, sigmaDiffus);
+          groupPosU += gRandom->Gaus(0, sigmaDiffus);
+
+          
+          // Update charge cloud posisiton 
+          int iV = m_detector.GetDet(m_ipl).GetRowFromCoord( groupPosU, groupPosV );
+          int iU = m_detector.GetDet(m_ipl).GetColumnFromCoord( groupPosU, groupPosV ); 
+        
+          double pixelPosV = m_detector.GetDet(m_ipl).GetPixelCenterCoordV(iV, iU); 
+          double pixelPosU = m_detector.GetDet(m_ipl).GetPixelCenterCoordU(iV, iU); 
+           
+                 
         } // end of group tracking
          
         
         
-        // Now, pixel cell [iZ,iRPhi] collects group of electrons         
+        // Now, pixel cell [iU,iV] collects group of electrons         
         // Update digit info if exists, otherwise create new one
         DigitVec::iterator iterDVec;
         bool digitFound = false;
@@ -727,7 +706,7 @@ namespace depfet {
               
           Digit * digit = (*iterDVec);
                  
-          if ( (digit->cellIDRPhi == iRPhi) && (digit->cellIDZ == iZ) ) {
+          if ( (digit->cellIDU == iU) && (digit->cellIDV == iV) ) {
                    
             digit->charge += groupCharge;
             digitFound = true;
@@ -740,11 +719,11 @@ namespace depfet {
                
           Digit * digit = new Digit;
                 
-          digit->cellIDZ    = iZ;
-          digit->cellIDRPhi = iRPhi;
-          digit->cellPosZ   = pixelPosZ;
-          digit->cellPosRPhi= pixelPosRPhi;
-          digit->charge     = groupCharge;                
+          digit->cellIDV = iV;
+          digit->cellIDU = iU;
+          digit->cellPosV = pixelPosV;
+          digit->cellPosU = pixelPosU;
+          digit->charge   = groupCharge;                
           digits.push_back(digit);
         } 
       } // For groups  
@@ -755,14 +734,14 @@ namespace depfet {
   //
   // Method producing sparsified pixels output from all digits (noise + signal)
   //
-  void SiPixDigitizer::ProduceSparsePixels(LCCollectionVec * sparseDataCollection , const DigitsMap & digitsMap) 
+  void SiPixDigitizer::ProduceSparsePixels(LCCollectionVec * digitCollection , const DigitsMap & digitsMap) 
   {
   
     // Print
     streamlog_out(MESSAGE2) << " Writing digits " << std::endl;
     
     // Prepare an encoder for zero suppressed pixels
-    CellIDEncoder<TrackerDataImpl> sparseDataEncoder( "sensorID:6,sparsePixelType:5" , sparseDataCollection ); 
+    CellIDEncoder<TrackerDataImpl> sparseDataEncoder( "sensorID:6,sparsePixelType:5" , digitCollection ); 
      
     // Prepare navigation in digits map 
     DigitsMap::const_iterator iterDigitsMap;
@@ -770,16 +749,8 @@ namespace depfet {
     
     // Go through all sensors
     for (iterDigitsMap=digitsMap.begin(); iterDigitsMap!=digitsMap.end(); iterDigitsMap++) {
-         
-      // Get layerID, ladderID & sensorID corresponding to current sensor
-      _geometry->decodeSensorID(_currentLayerID, _currentLadderID, _currentSensorID, iterDigitsMap->first);
+        
       
-      // Now that we know which is the sensorID, we can ask to GEAR
-      // which are the minX, minY, maxX and maxY.
-      // note: X == RPhi and Y == Z
-      
-      // reset the pixel counter for the PixelID
-      int pixelCounter = 0;
       
       // Denote PXD sensor map as
       DigitMap digitsSensorMap = iterDigitsMap->second;
@@ -788,7 +759,7 @@ namespace depfet {
       TrackerDataImpl* zspixels = new TrackerDataImpl;
       
       // Set description for zspixels 
-      sparseDataEncoder["sensorID"] = _currentSensorID;
+      sparseDataEncoder["sensorID"] = iterDigitsMap->first;
       sparseDataEncoder["sparsePixelType"] = 0;
       sparseDataEncoder.setCellID( zspixels );
       
@@ -802,18 +773,18 @@ namespace depfet {
         // Note: zero suppressed pixels have signal == 0, just skip 
         if (signal == 0) continue;  
       
-        int yPixel = currentDigit->cellIDZ;
-        int xPixel = currentDigit->cellIDRPhi;
+        int yPixel = currentDigit->cellIDV;
+        int xPixel = currentDigit->cellIDU;
       
         // Store pixel data int DEPFET cluster format 
         zspixels->chargeValues().push_back( xPixel );
         zspixels->chargeValues().push_back( yPixel );
         zspixels->chargeValues().push_back( signal );    
         
-        ++pixelCounter;
+        
         
         // Print detailed pixel summary 
-        streamlog_out(MESSAGE2) << "Found pixel Nr. " << pixelCounter << " on sensor " << _currentSensorID << std::endl;  
+        streamlog_out(MESSAGE2) << "Found pixel on sensor " << _currentSensorID << std::endl;  
         streamlog_out(MESSAGE2) << "   x:" << xPixel << ", y:" << yPixel << ", charge:" << signal << std::endl;
       
       }
@@ -838,7 +809,7 @@ namespace depfet {
       
       // Describe sensor by unique ID & pixel by unique ID
       int uniqSensorID = _geometry->encodeSensorID(_currentLayerID, _currentLadderID, _currentSensorID);
-      int uniqPixelID  = _geometry->encodePixelID(_currentLayerID, _currentSensorID, digit->cellIDRPhi, digit->cellIDZ);
+      int uniqPixelID  = _geometry->encodePixelID(_currentLayerID, _currentSensorID, digit->cellIDU, digit->cellIDV);
       
       // Find if sensor already has some signal
       if (digitsMap.find(uniqSensorID)!=digitsMap.end()) {
@@ -864,7 +835,7 @@ namespace depfet {
   //
   void SiPixDigitizer::ProduceNoiseEffects(DigitsMap & digitsMap)
   {
-  
+    
     // prepare navigation in digits map 
     DigitsMap::const_iterator iterDigitsMap;
     DigitMap::const_iterator iterSensorMap;
@@ -876,7 +847,7 @@ namespace depfet {
       _geometry->decodeSensorID(_currentLayerID, _currentLadderID, _currentSensorID, iterDigitsMap->first);
      
       // Get sensor noise level
-      double elNoise = _elNoise[_currentSensorID];  
+      double elNoise = m_elNoise;  
       
       // Denote PXD sensor map as
       DigitMap digitsSensorMap = iterDigitsMap->second;
@@ -889,7 +860,7 @@ namespace depfet {
         // Print
         streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
                                 << std::setprecision(3)
-                                << "   Pos [mm]: ( "     << _sensorThick/2./mm  << ", " << digit->cellPosRPhi/mm << ", " << digit->cellPosZ/mm
+                                << "   Pos [mm]: ( "     << 0 << ", " << digit->cellPosU/mm << ", " << digit->cellPosV/mm
                                 << " , q: " << digit->charge    << " )"
                                 << std::setprecision(0)
                                 << std::endl;	
@@ -900,23 +871,23 @@ namespace depfet {
 	    // For big charge assume Gaussian distr.
 	    if (charge > (1000.*e)) {
 	      double sigma  = sqrt(charge);
-	      digit->charge = myRng->Gaus(charge,sigma);     
+	      digit->charge = gRandom->Gaus(charge,sigma);     
 	    } else {
-	      digit->charge = myRng->Poisson(charge);    
+	      digit->charge = gRandom->Poisson(charge);    
 	    }
         
         // Add electronics effects
-        if (_electronicEffects) {
+        if (m_electronicEffects) {
           
 	      // assume gaussian readout noise
-	      double noise   = myRng->Gaus(0,elNoise);     
+	      double noise   = gRandom->Gaus(0,elNoise);     
 	      digit->charge += noise;
           
           // now, simulate ADC
-          if (_ADC) digit->charge = (double) getInADCUnits(digit->charge);
+          if (m_useADC) digit->charge = (double) getInADCUnits(digit->charge);
           
           // now, zero suppression
-          double thresholdCut = _ZSthr;
+          double thresholdCut = m_zsThreshold;
           if (thresholdCut==0) thresholdCut++;
         
           if ( digit->charge < thresholdCut ) digit->charge = 0; 
@@ -926,7 +897,7 @@ namespace depfet {
         // Print
         streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
                                 << std::setprecision(3)
-                                << "   Pos [mm]: ( "     << _sensorThick/2./mm  << ", " << digit->cellPosRPhi/mm << ", " << digit->cellPosZ/mm
+                                << "   Pos [mm]: ( "     << 0  << ", " << digit->cellPosU/mm << ", " << digit->cellPosV/mm
                                 << " , q: " << digit->charge    << " )"
                                 << std::setprecision(0)
                                 << std::endl;
@@ -952,7 +923,7 @@ namespace depfet {
           int uniqSensorID = _geometry->encodeSensorID(iLayer, iLadder, iSensor);
               
           // Average number of noise pixels
-          double meanNoisePixels = _Fraction*_geometry->getSensorNPixelsInRPhi(iLayer,iSensor)*_geometry->getSensorNPixelsInZ(iLayer,iSensor);
+          double meanNoisePixels = m_noiseFraction*_geometry->getSensorNPixelsInRPhi(iLayer,iSensor)*_geometry->getSensorNPixelsInZ(iLayer,iSensor);
             
           // Total number of noise pixels has Poison distribution
           int fractionPixels = myRng->Poisson(meanNoisePixels);  
@@ -973,15 +944,15 @@ namespace depfet {
             if( !(digitsMap[uniqSensorID].find(uniqPixelID)!=digitsMap[uniqSensorID].end()) ) {
                      
                 // Create a noise charge  
-                double charge = _ZSthr; 
+                double charge = m_zsThreshold; 
                      
                 // Create new noise digit      
                 digit = new Digit;        		       	
-                digit->cellIDRPhi  = iPixelRPhi;
-                digit->cellIDZ     = iPixelZ;
+                digit->cellIDU  = iPixelU;
+                digit->cellIDV  = iPixelV;
                          
-                digit->cellPosRPhi = _geometry->getPixelPosInRPhi(iLayer, iSensor, _bricked, iPixelRPhi, iPixelZ);
-                digit->cellPosZ    = _geometry->getPixelPosInZ(iLayer, iSensor, iPixelZ);
+                digit->cellPosU = _geometry->getPixelPosInRPhi(iLayer, iSensor, _bricked, iPixelRPhi, iPixelZ);
+                digit->cellPosV = _geometry->getPixelPosInZ(iLayer, iSensor, iPixelZ);
                        
                 digit->charge      = charge;
                             
@@ -999,7 +970,7 @@ namespace depfet {
   // Method returning collected charge in ADC units
   //
   int SiPixDigitizer::getInADCUnits(double charge) {
-    static double ADCunit = _ADCRange/short(pow(2, _ADCBits));
+    static double ADCunit = m_ADCRange/short(pow(2, m_ADCBits));
     return int(charge/ADCunit);
   }
 
