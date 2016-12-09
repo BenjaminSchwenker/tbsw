@@ -157,7 +157,7 @@ class Det {
   // Check if module box crossed
   virtual bool ModuleCrossed(double u, double v, double w = 0);
 
-  bool isPointOutOfSensor( double u , double v , double w = 0) const; 
+  bool isPointOutOfSensor( double u , double v , double w = 0); 
   
   // Check if sensitive volume crossed
   virtual bool SensitiveCrossed(double u, double v, double w = 0);

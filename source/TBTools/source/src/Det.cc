@@ -48,7 +48,7 @@ bool Det::SensitiveCrossed(double u, double v, double w)
 }
 
 
-bool Det::isPointOutOfSensor( double u, double v, double w) const
+bool Det::isPointOutOfSensor( double u, double v, double w) 
 {
   bool isOut = false; 
   // Boundary set +- epsilon
