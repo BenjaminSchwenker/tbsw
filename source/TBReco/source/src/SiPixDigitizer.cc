@@ -915,53 +915,44 @@ namespace depfet {
     Digit * digit = 0; 
     
     // Go through all sensors & generate noise digits
-    for (short int iLayer=0; iLayer<_geometry->getNPXDLayers(); iLayer++) {
-      for (short int iLadder=0; iLadder<_geometry->getNLadders(iLayer); iLadder++) {
-        for (short int iSensor=0; iSensor<_geometry->getNSensors(iLayer); iSensor++) {
-              
-          // Describe sensor by unique ID
-          int uniqSensorID = _geometry->encodeSensorID(iLayer, iLadder, iSensor);
-              
-          // Average number of noise pixels
-          double meanNoisePixels = m_noiseFraction*_geometry->getSensorNPixelsInRPhi(iLayer,iSensor)*_geometry->getSensorNPixelsInZ(iLayer,iSensor);
+    for (short int ipl=0; ipl < m_detector.GetNSensors(); ipl++) {
+           
+      // Average number of noise pixels
+      double meanNoisePixels = m_noiseFraction * m_detector.GetDet(ipl).GetNColumns() * m_detector.GetDet(ipl).GetNRows();
             
-          // Total number of noise pixels has Poison distribution
-          int fractionPixels = gRandom->Poisson(meanNoisePixels);  
+      // Total number of noise pixels has Poison distribution
+      int fractionPixels = gRandom->Poisson(meanNoisePixels);  
 
-          // Generate noise digits
-          for (int iNoisePixel=0; iNoisePixel<fractionPixels; iNoisePixel++) {
+      // Generate noise digits
+      for (int iNoisePixel=0; iNoisePixel<fractionPixels; iNoisePixel++) {
                     
-            int iU  = int(myRng->Uniform( m_detector.GetDet(m_ipl).GetNColumns() ));
-            int iV  = int(myRng->Uniform( m_detector.GetDet(m_ipl).GetNRows() ));
-              
-            
-            // Describe pixel by unique ID
-            int uniqPixelID  = _geometry->encodePixelID(iLayer, iSensor, iU, iV);
-                
-            // Find if pixel doesn't already have some signal+noise or just noise
-            if( !(digitsMap[uniqSensorID].find(uniqPixelID)!=digitsMap[uniqSensorID].end()) ) {
-                     
-                // Create a noise charge  
-                double charge = m_zsThreshold; 
-                     
-                // Create new noise digit      
-                digit = new Digit;        		       	
-                digit->cellIDU  = iU;
-                digit->cellIDV  = iV;
-                         
-                digit->cellPosU = m_detector.GetDet(m_ipl).GetPixelCenterCoordU(iV, iU);
-                digit->cellPosV = m_detector.GetDet(m_ipl).GetPixelCenterCoordV(iV, iU);
-
-                digit->charge      = charge;
-                            
-                // Record it
-                digitsMap[uniqSensorID][uniqPixelID] = digit;
+        int iU  = int(myRng->Uniform( m_detector.GetDet(ipl).GetNColumns() ));
+        int iV  = int(myRng->Uniform( m_detector.GetDet(ipl).GetNRows() ));
                   
-            }
-          } // For noise pixels 
+        // Describe pixel by unique ID
+        int uniqPixelID  = _geometry->encodePixelID(iLayer, iSensor, iU, iV);
+                
+        // Find if pixel doesn't already have some signal+noise or just noise
+        if( !(digitsMap[uniqSensorID].find(uniqPixelID)!=digitsMap[uniqSensorID].end()) ) {
+                     
+          // Create a noise charge  
+          double charge = m_zsThreshold; 
+                     
+          // Create new noise digit      
+          digit = new Digit;        		       	
+          digit->cellIDU  = iU;
+          digit->cellIDV  = iV;
+                         
+          digit->cellPosU = m_detector.GetDet(ipl).GetPixelCenterCoordU(iV, iU);
+          digit->cellPosV = m_detector.GetDet(ipl).GetPixelCenterCoordV(iV, iU);
+          digit->charge   = charge;
+                            
+          // Record it
+          digitsMap[uniqSensorID][uniqPixelID] = digit;
+                  
         }
-      } 
-    }// 3xFor: layers, ladders, sensors
+      } // For noise pixels   
+    }
   }
   
   //
