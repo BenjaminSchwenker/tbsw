@@ -475,7 +475,7 @@ namespace depfet {
                              << std::setprecision(3)
                              << "SiPixDigitizer::ProduceIonisationPoints - ionPoint: " << iPoint->position/mm << " out of sensor!!!"
                              << std::setprecision(0) << std::endl
-                             << "SensorID is " << _currentSensorID
+                             << "SensorID is " << m_ipl
                              << std::endl;
         
         continue; 
@@ -518,7 +518,7 @@ namespace depfet {
       w = sqrt( w * w );
       
       // Potential valley is at distance to top plane
-      double w0 = m_detector.GetDet(ipl).GetSensitiveThickness()/2. - 0.02;
+      double w0 = m_detector.GetDet(m_ipl).GetSensitiveThickness()/2. - 0.02;
       double dw = 0.003;  
       
       //std::cout << "Depth of potential vallay [mm]: " << w0/mm << std::endl;
@@ -800,31 +800,29 @@ namespace depfet {
   //
   void SiPixDigitizer::UpdateDigitsMap(DigitsMap & digitsMap, DigitVec & digits)
   {
-    // Go through all digits in given vector
-    DigitVec::iterator  iterDigitVec;
-    
-    for (iterDigitVec=digits.begin(); iterDigitVec!=digits.end(); iterDigitVec++) {
+    // Go through all digits in given vector 
+    for (auto iterDigitVec=digits.begin(); iterDigitVec!=digits.end(); iterDigitVec++) {
           
       Digit * digit = *iterDigitVec;
       
-      
       int uniqSensorID = m_ipl;
-      int uniqPixelID  = m_detector.GetDet(m_ipl).encodePixelID(digit->cellIDV, digit->cellIDU);    _
+      int uniqPixelID  = m_detector.GetDet(m_ipl).encodePixelID(digit->cellIDV, digit->cellIDU);    
       
       // Find if sensor already has some signal
       if (digitsMap.find(uniqSensorID)!=digitsMap.end()) {
          
         // Find if pixel already has some signal --> update
         if(digitsMap[uniqSensorID].find(uniqPixelID)!=digitsMap[uniqSensorID].end()) {
-          
+          // Digit exists already
           digitsMap[uniqSensorID][uniqPixelID]->charge += digit->charge;
-            
-          // Release memory
+          // Release digit memery
           delete digit;
         } else {
+          // store digit
           digitsMap[uniqSensorID][uniqPixelID] = digit;
         }
       } else {
+        // store digits
         digitsMap[uniqSensorID][uniqPixelID] = digit;
       }
     }
@@ -914,9 +912,9 @@ namespace depfet {
     // Go through all sensors & generate noise digits
     for (short int ipl=0; ipl < m_detector.GetNSensors(); ipl++) {
            
-      if ( m_filterIDs.find(m_ipl) == m_filterIDs.end() ) {
-          streamlog_out(MESSAGE2) << " Do not create noise hits on sensor: "  << ipl << std::endl;
-          continue;
+      if ( std::find(m_filterIDs.begin(), m_filterIDs.end(), ipl) == m_filterIDs.end() ) {
+        streamlog_out(MESSAGE2) << " Do not create noise hits on sensor: "  << ipl << std::endl;
+        continue;
       }
       
       // Average number of noise pixels
@@ -932,10 +930,10 @@ namespace depfet {
         int iV  = int(gRandom->Uniform( m_detector.GetDet(ipl).GetNRows() ));
                   
         // Describe pixel by unique ID
-        int uniqPixelID  = m_detector.GetDet(m_ipl).encodePixelID(iV, iU);     
+        int uniqPixelID  = m_detector.GetDet(ipl).encodePixelID(iV, iU);     
                 
         // Find if pixel doesn't already have some signal+noise or just noise
-        if( !(digitsMap[uniqSensorID].find(uniqPixelID)!=digitsMap[uniqSensorID].end()) ) {
+        if( !(digitsMap[ipl].find(uniqPixelID)!=digitsMap[ipl].end()) ) {
                      
           // Create a noise charge  
           double charge = m_zsThreshold; 
@@ -950,7 +948,7 @@ namespace depfet {
           digit->charge   = charge;
                             
           // Record it
-          digitsMap[uniqSensorID][uniqPixelID] = digit;
+          digitsMap[ipl][uniqPixelID] = digit;
                   
         }
       } // For noise pixels   
