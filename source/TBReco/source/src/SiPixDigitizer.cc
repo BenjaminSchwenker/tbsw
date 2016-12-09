@@ -469,7 +469,7 @@ namespace depfet {
        
       // Check if iPoint is within sensor boundaries
       
-      if (m_detector.GetDet(m_ipl).isPointOutOfSensor( iPoint->position.getX(), iPoint->position.getY() , iPoint->position.getZ() ) {
+      if (  m_detector.GetDet(m_ipl).isPointOutOfSensor( iPoint->position.getX(), iPoint->position.getY() , iPoint->position.getZ() ) ) {
          
         streamlog_out(ERROR) << std::setiosflags(std::ios::fixed | std::ios::internal )
                              << std::setprecision(3)
@@ -514,7 +514,7 @@ namespace depfet {
       IonisationPoint * iPoint = ionisationPoints[i];
       
       //  Charge cloud created at distance to top plane 
-      double w =  m_detector.GetDet(ipl).GetSensitiveThickness()/2. - iPoint->position.getZ();
+      double w =  m_detector.GetDet(m_ipl).GetSensitiveThickness()/2. - iPoint->position.getZ();
       w = sqrt( w * w );
       
       // Potential valley is at distance to top plane
@@ -527,9 +527,9 @@ namespace depfet {
       double td = 1.4*1.4*um*um/( 2* Utherm * e_mobility);
         
       if ( w > w0 + dw ) {
-        td += Perm_Si * ::log( (w - w0)/dw ) / ( e_mobility * e * _bulkDoping);
+        td += Perm_Si * ::log( (w - w0)/dw ) / ( e_mobility * e * m_bulkDoping);
       } else if ( w < w0 - dw )  {
-        td += Perm_Si * ::log( (w0 - w)/dw ) / ( e_mobility * e * _bulkDoping);
+        td += Perm_Si * ::log( (w0 - w)/dw ) / ( e_mobility * e * m_bulkDoping);
       }
       
       // Diffusive spread in lateral plane
@@ -541,7 +541,7 @@ namespace depfet {
       double sigmaV = sigmaDiffus; 
       
       //  After Lorentz shift
-      double onPlaneU = iPoint->position.getX() + _tanLorentzAngle * (w - w0);
+      double onPlaneU = iPoint->position.getX() + m_tanLorentzAngle * (w - w0);
       double onPlaneV = iPoint->position.getY();
         
       // Save info in signal point
@@ -634,8 +634,8 @@ namespace depfet {
       for (int iGroup=0; iGroup<numberOfGroups; ++iGroup)  {         
         
         // Initial group position   
-        double groupPosU = centreZ + gRandom->Gaus(0, sigmaU);
-        double groupPosV = centreRPhi + gRandom->Gaus(0, sigmaV);
+        double groupPosU = centreU + gRandom->Gaus(0, sigmaU);
+        double groupPosV = centreV + gRandom->Gaus(0, sigmaV);
             
         
         int iV = m_detector.GetDet(m_ipl).GetRowFromCoord( groupPosU, groupPosV );
@@ -685,11 +685,11 @@ namespace depfet {
 
           
           // Update charge cloud posisiton 
-          int iV = m_detector.GetDet(m_ipl).GetRowFromCoord( groupPosU, groupPosV );
-          int iU = m_detector.GetDet(m_ipl).GetColumnFromCoord( groupPosU, groupPosV ); 
+          iV = m_detector.GetDet(m_ipl).GetRowFromCoord( groupPosU, groupPosV );
+          iU = m_detector.GetDet(m_ipl).GetColumnFromCoord( groupPosU, groupPosV ); 
         
-          double pixelPosV = m_detector.GetDet(m_ipl).GetPixelCenterCoordV(iV, iU); 
-          double pixelPosU = m_detector.GetDet(m_ipl).GetPixelCenterCoordU(iV, iU); 
+          pixelPosV = m_detector.GetDet(m_ipl).GetPixelCenterCoordV(iV, iU); 
+          pixelPosU = m_detector.GetDet(m_ipl).GetPixelCenterCoordU(iV, iU); 
            
                  
         } // end of group tracking
@@ -784,13 +784,13 @@ namespace depfet {
         
         
         // Print detailed pixel summary 
-        streamlog_out(MESSAGE2) << "Found pixel on sensor " << _currentSensorID << std::endl;  
+        streamlog_out(MESSAGE2) << "Found pixel on sensor " << m_ipl << std::endl;  
         streamlog_out(MESSAGE2) << "   x:" << xPixel << ", y:" << yPixel << ", charge:" << signal << std::endl;
       
       }
       
       // Add zs pixels to collection 
-      sparseDataCollection->push_back( zspixels );
+      digitCollection->push_back( zspixels );
         
     } // end for: loop over sensor
   }
@@ -926,19 +926,17 @@ namespace depfet {
           double meanNoisePixels = m_noiseFraction*_geometry->getSensorNPixelsInRPhi(iLayer,iSensor)*_geometry->getSensorNPixelsInZ(iLayer,iSensor);
             
           // Total number of noise pixels has Poison distribution
-          int fractionPixels = myRng->Poisson(meanNoisePixels);  
+          int fractionPixels = gRandom->Poisson(meanNoisePixels);  
 
           // Generate noise digits
           for (int iNoisePixel=0; iNoisePixel<fractionPixels; iNoisePixel++) {
                     
-            int iPixelRPhi  = int(myRng->Uniform(_geometry->getSensorNPixelsInRPhi(iLayer, iSensor)));
-            int iPixelZ     = int(myRng->Uniform(_geometry->getSensorNPixelsInZ(iLayer, iSensor)));
+            int iU  = int(myRng->Uniform( m_detector.GetDet(m_ipl).GetNColumns() ));
+            int iV  = int(myRng->Uniform( m_detector.GetDet(m_ipl).GetNRows() ));
               
-            if (iPixelRPhi==_geometry->getSensorNPixelsInRPhi(iLayer, iSensor)) iPixelRPhi--;
-            if (iPixelZ   ==_geometry->getSensorNPixelsInZ(   iLayer, iSensor)) iPixelZ--;
-                   
+            
             // Describe pixel by unique ID
-            int uniqPixelID  = _geometry->encodePixelID(iLayer, iSensor, iPixelRPhi, iPixelZ);
+            int uniqPixelID  = _geometry->encodePixelID(iLayer, iSensor, iU, iV);
                 
             // Find if pixel doesn't already have some signal+noise or just noise
             if( !(digitsMap[uniqSensorID].find(uniqPixelID)!=digitsMap[uniqSensorID].end()) ) {
@@ -948,12 +946,12 @@ namespace depfet {
                      
                 // Create new noise digit      
                 digit = new Digit;        		       	
-                digit->cellIDU  = iPixelU;
-                digit->cellIDV  = iPixelV;
+                digit->cellIDU  = iU;
+                digit->cellIDV  = iV;
                          
-                digit->cellPosU = _geometry->getPixelPosInRPhi(iLayer, iSensor, _bricked, iPixelRPhi, iPixelZ);
-                digit->cellPosV = _geometry->getPixelPosInZ(iLayer, iSensor, iPixelZ);
-                       
+                digit->cellPosU = m_detector.GetDet(m_ipl).GetPixelCenterCoordU(iV, iU);
+                digit->cellPosV = m_detector.GetDet(m_ipl).GetPixelCenterCoordV(iV, iU);
+
                 digit->charge      = charge;
                             
                 // Record it
