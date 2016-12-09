@@ -27,6 +27,22 @@ namespace depfet {
  * Creates a dummy pixel module. 
  */
 Det::Det() {Name = "DUMMY";}
+
+
+
+int Det::encodePixelID(int row, int column)
+{
+  return (GetNColumns()*row + column);
+}
+
+
+void Det::decodePixelID(int & row, int & column, int uniqPixelID)
+{
+  row    = uniqPixelID / GetNColumns();
+  column = uniqPixelID - row*GetNColumns();
+}
+ 
+
  	
 /**  Check if sensitive volume is crossed
  */

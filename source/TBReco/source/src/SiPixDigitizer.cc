@@ -263,13 +263,12 @@ namespace depfet {
                                 << std::setprecision(0)
                                 << std::endl;
          
-        // Only filter SimTrackerHits from sensor in filter list
-        /*
-        if (_geometry->getLayerType(_currentLayerID) != pixel ) {
-          
+        
+        if ( m_filterIDs.find(m_ipl) == m_filterIDs.end() ) {
+          streamlog_out(MESSAGE2) << " Ignore SimTrackerHit on sensor: "  << m_ipl << std::endl;
           continue;
         }
-        */
+        
         
         //
         // Produce ionisation points along the track
@@ -807,9 +806,9 @@ namespace depfet {
           
       Digit * digit = *iterDigitVec;
       
-      // Describe sensor by unique ID & pixel by unique ID
-      int uniqSensorID = _geometry->encodeSensorID(_currentLayerID, _currentLadderID, _currentSensorID);
-      int uniqPixelID  = _geometry->encodePixelID(_currentLayerID, _currentSensorID, digit->cellIDU, digit->cellIDV);
+      
+      int uniqSensorID = m_ipl;
+      int uniqPixelID  = m_detector.GetDet(m_ipl).encodePixelID(digit->cellIDV, digit->cellIDU);    _
       
       // Find if sensor already has some signal
       if (digitsMap.find(uniqSensorID)!=digitsMap.end()) {
@@ -843,9 +842,6 @@ namespace depfet {
     // Go through all sensors
     for (iterDigitsMap=digitsMap.begin(); iterDigitsMap!=digitsMap.end(); iterDigitsMap++) {
       
-      // Get layerID, ladderID & sensorID corresponding to current sensor
-      _geometry->decodeSensorID(_currentLayerID, _currentLadderID, _currentSensorID, iterDigitsMap->first);
-     
       // Get sensor noise level
       double elNoise = m_elNoise;  
       
@@ -917,6 +913,11 @@ namespace depfet {
     // Go through all sensors & generate noise digits
     for (short int ipl=0; ipl < m_detector.GetNSensors(); ipl++) {
            
+      if ( m_filterIDs.find(m_ipl) == m_filterIDs.end() ) {
+          streamlog_out(MESSAGE2) << " Do not create noise hits on sensor: "  << ipl << std::endl;
+          continue;
+      }
+      
       // Average number of noise pixels
       double meanNoisePixels = m_noiseFraction * m_detector.GetDet(ipl).GetNColumns() * m_detector.GetDet(ipl).GetNRows();
             
@@ -930,7 +931,7 @@ namespace depfet {
         int iV  = int(myRng->Uniform( m_detector.GetDet(ipl).GetNRows() ));
                   
         // Describe pixel by unique ID
-        int uniqPixelID  = _geometry->encodePixelID(iLayer, iSensor, iU, iV);
+        int uniqPixelID  = m_detector.GetDet(m_ipl).encodePixelID(iV, iU);     
                 
         // Find if pixel doesn't already have some signal+noise or just noise
         if( !(digitsMap[uniqSensorID].find(uniqPixelID)!=digitsMap[uniqSensorID].end()) ) {

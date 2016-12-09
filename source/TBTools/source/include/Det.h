@@ -182,6 +182,12 @@ class Det {
   
   // Get v coord of pixel center 
   virtual double GetPixelCenterCoordV(int row, int column);
+
+  // Encode pixelID
+  virtual int encodePixelID(int row, int col);
+
+  // Decode pixelID
+  virtual void decodePixelID(int & row, int & col, int uniqPixelID);
  
  private:
    
