@@ -264,7 +264,8 @@ namespace depfet {
                                 << std::endl;
          
         
-        if ( m_filterIDs.find(m_ipl) == m_filterIDs.end() ) {
+        
+        if ( std::find(m_filterIDs.begin(), m_filterIDs.end(), m_ipl) == m_filterIDs.end() ) {
           streamlog_out(MESSAGE2) << " Ignore SimTrackerHit on sensor: "  << m_ipl << std::endl;
           continue;
         }
@@ -927,8 +928,8 @@ namespace depfet {
       // Generate noise digits
       for (int iNoisePixel=0; iNoisePixel<fractionPixels; iNoisePixel++) {
                     
-        int iU  = int(myRng->Uniform( m_detector.GetDet(ipl).GetNColumns() ));
-        int iV  = int(myRng->Uniform( m_detector.GetDet(ipl).GetNRows() ));
+        int iU  = int(gRandom->Uniform( m_detector.GetDet(ipl).GetNColumns() ));
+        int iV  = int(gRandom->Uniform( m_detector.GetDet(ipl).GetNRows() ));
                   
         // Describe pixel by unique ID
         int uniqPixelID  = m_detector.GetDet(m_ipl).encodePixelID(iV, iU);     
