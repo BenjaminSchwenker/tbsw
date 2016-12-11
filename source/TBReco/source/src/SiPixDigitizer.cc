@@ -472,7 +472,8 @@ namespace depfet {
                              << std::setprecision(0) << std::endl
                              << "SensorID is " << m_sensorID
                              << std::endl;
-        
+    
+        delete iPoint;    
         continue; 
       }
       
