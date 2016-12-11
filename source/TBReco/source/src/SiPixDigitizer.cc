@@ -186,6 +186,8 @@ namespace depfet {
     m_uSideBorderLength    *=um;
     m_elNoise              *= e; 
     
+    if (m_zsThreshold==0) m_zsThreshold++;
+    
     // Read detector constants from gear file
     m_detector.ReadGearConfiguration();      
     
@@ -763,11 +765,16 @@ namespace depfet {
         // Store digits  
         digitVec->chargeValues().push_back( iU );
         digitVec->chargeValues().push_back( iV );
-        digitVec->chargeValues().push_back( signal );    
+        digitVec->chargeValues().push_back( signal );   
+
+        streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
+                                << std::setprecision(3)
+                                << " (sensorID: " <<  sensorID  << ", iU: " << iU << ", iV: " << iV
+                                << " , q[ADU]: " << signal    << " )"
+                                << std::setprecision(0)
+                                << std::endl;	 
        
-        // Print detailed pixel summary 
-        streamlog_out(MESSAGE2) << "Found pixel on sensor " << m_ipl << std::endl;  
-        streamlog_out(MESSAGE2) << "   iU:" << iU << ", iV:" << iV << ", charge[e-]:" << signal << std::endl;
+        
       
       }
       
@@ -789,14 +796,13 @@ namespace depfet {
       
       int uniqSensorID = m_sensorID;
       int uniqPixelID  = m_detector.GetDet(m_ipl).encodePixelID(digit->cellIDV, digit->cellIDU);    
-
+      
       streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
-                              << std::setprecision(3)
-                              << " Signal digit created with sensorID: " << uniqSensorID 
-                              << ", iU:" << digit->cellIDU << ", iV:" << digit->cellIDV << ", charge[e-]:" << digit->charge
-                              << std::resetiosflags(std::ios::showpos)
-                              << std::setprecision(0)
-                              << std::endl << std::endl;
+                                << std::setprecision(3)
+                                << " (sensorID: " <<  uniqSensorID  << ", iU: " << digit->cellIDU << ", iV: " << digit->cellIDV
+                                << " , q[e-]: " << digit->charge    << " )"
+                                << std::setprecision(0)
+                                << std::endl;	
       
       // Find if sensor already has some signal
       if (digitsMap.find(uniqSensorID)!=digitsMap.end()) {
@@ -842,14 +848,6 @@ namespace depfet {
       
         Digit * digit = iterSensorMap->second;
         
-        // Print
-        streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
-                                << std::setprecision(3)
-                                << " (iU: " << digit->cellIDU << ", iV: " << digit->cellIDV
-                                << " , q: " << digit->charge    << " )"
-                                << std::setprecision(0)
-                                << std::endl;	
-        
         // Add Poisson smearing 
         double charge = digit->charge;
            
@@ -860,33 +858,25 @@ namespace depfet {
 	    } else {
 	      digit->charge = gRandom->Poisson(charge);    
 	    }
+          
+	    // Add Gaussian readout noise
+	    double noise   = gRandom->Gaus(0,elNoise);     
+	    digit->charge += noise;
+          
+        // Optionally, simulate ADC
+        if (m_useADC) digit->charge = (double) getInADCUnits(digit->charge);
         
-        // Add electronics effects
-        if (m_electronicEffects) {
-          
-	      // assume gaussian readout noise
-	      double noise   = gRandom->Gaus(0,elNoise);     
-	      digit->charge += noise;
-          
-          // now, simulate ADC
-          if (m_useADC) digit->charge = (double) getInADCUnits(digit->charge);
-          
-          // now, zero suppression
-          double thresholdCut = m_zsThreshold;
-          if (thresholdCut==0) thresholdCut++;
-        
-          if ( digit->charge < thresholdCut ) digit->charge = 0; 
-	     
-        } // Electronics effects
-      
         // Print
         streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
                                 << std::setprecision(3)
                                 << " (iU: " << digit->cellIDU << ", iV: " << digit->cellIDV
-                                << " , q: " << digit->charge    << " )"
+                                << " , q[ADU]: " << digit->charge    << " )"
                                 << std::setprecision(0)
-                                << std::endl;
-        
+                                << std::endl;	   
+         
+        // Perform zero suppression
+        if ( digit->charge < m_zsThreshold ) digit->charge = 0; 
+	     
       } // end loop: sensor map   
     } // end loop: digits map
   }
