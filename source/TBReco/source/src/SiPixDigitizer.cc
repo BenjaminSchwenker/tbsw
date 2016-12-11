@@ -244,25 +244,17 @@ namespace depfet {
         m_sensorID = cellIDDec(simTrkHit)["sensorID"];
         m_ipl = m_detector.GetPlaneNumber(m_sensorID);
          
+        streamlog_out(MESSAGE1) << " Found SimTrackerHit with sensorID: " << m_sensorID << std::endl;
+         
         // Cut on simHit creation time --> simulate integration time of a sensor (if option switched on))
 	    if ((simTrkHit != 0) && (m_integrationWindow)) {
 	      if (simTrkHit->getTime()*ns < m_startIntegration || simTrkHit->getTime()*ns > m_stopIntegration) {
 	        continue;
 	      }		
 	    }
-        
-        // Print
-        streamlog_out(MESSAGE2) << " Sensor plane: "  << m_ipl << std::endl;
-        streamlog_out(MESSAGE2) << std::setiosflags(std::ios::fixed | std::ios::internal )
-                                << std::setprecision(3)
-                                << " Simulated hit global[mm]: (" << simTrkHit->getPosition()[0]
-                                << ", "                           << simTrkHit->getPosition()[1]
-                                << ", "                           << simTrkHit->getPosition()[2] << ")"
-                                << std::setprecision(0)
-                                << std::endl;
          
         if ( std::find(m_filterIDs.begin(), m_filterIDs.end(), m_sensorID) == m_filterIDs.end() ) {
-          streamlog_out(MESSAGE2) << " Ignore SimTrackerHit with ID: "  << m_sensorID << std::endl;
+          streamlog_out(MESSAGE2) << " Ignore SimTrackerHit with sensorID: "  << m_sensorID << std::endl;
           continue;
         }
         
@@ -569,14 +561,14 @@ namespace depfet {
       // Print
       streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
                               << std::setprecision(3)
-                              << "   Pos (X/Y/Z) [mm]:( " << sPoint->position.getX()/mm << ", " << sPoint->position.getY()/mm << ", " << sPoint->position.getZ()/mm << " )"
-                              << " , q [fC]: "    << sPoint->charge/fC
+                              << "   Pos [mm]:( " << sPoint->position.getX()/mm << ", " << sPoint->position.getY()/mm << ", " << sPoint->position.getZ()/mm << " )"
+                              << " , q [e-]: "    << sPoint->charge
                               << std::setprecision(0)
                               << std::endl;
        
       streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
                               << std::setprecision(3)
-                              << "   Sigma (X/Y/Z) [um]:( " << sPoint->sigma.getX()/um << ", " << sPoint->sigma.getY()/um << ", " << sPoint->sigma.getZ()/um << " )"
+                              << "   Sigma [um]:( " << sPoint->sigma.getX()/um << ", " << sPoint->sigma.getY()/um << ", " << sPoint->sigma.getZ()/um << " )"
                               << std::setprecision(0)
                               << std::endl;
       
@@ -595,9 +587,6 @@ namespace depfet {
     // Run over all signal points and create digits
     digits.clear();
     
-    // Print
-    streamlog_out(MESSAGE1) << "Producing hit digits ... " << std::endl;
-    
     for (int i=0; i<numberOfSigPoints; ++i) {
       
       // Get current signal point
@@ -613,15 +602,6 @@ namespace depfet {
       
       // Get number of electrons in cloud
       double clusterCharge = sPoint->charge;
-      
-      streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
-                              << std::setprecision(3) << std::endl;
-      
-      streamlog_out(MESSAGE1) << "Signal point on sensor " << m_ipl <<  std::endl;
-      streamlog_out(MESSAGE1) << "point charge [e-] " << clusterCharge  <<  std::endl; 
-      streamlog_out(MESSAGE1) << "point position [mm] " <<  centreU/mm << ", " << centreV/mm <<  std::endl;
-      streamlog_out(MESSAGE1) << "point sigma [um]    " << sigmaU/um << ", " << sigmaV/um <<  std::endl;  
-      
       
       // Now, the signal point is split into groups of electons spread around the 
       // signal point center. Each group is tracked into an internal gate.
@@ -787,7 +767,7 @@ namespace depfet {
        
         // Print detailed pixel summary 
         streamlog_out(MESSAGE2) << "Found pixel on sensor " << m_ipl << std::endl;  
-        streamlog_out(MESSAGE2) << "   iU:" << iU << ", iV:" << iV << ", charge:" << signal << std::endl;
+        streamlog_out(MESSAGE2) << "   iU:" << iU << ", iV:" << iV << ", charge[e-]:" << signal << std::endl;
       
       }
       
@@ -809,6 +789,14 @@ namespace depfet {
       
       int uniqSensorID = m_sensorID;
       int uniqPixelID  = m_detector.GetDet(m_ipl).encodePixelID(digit->cellIDV, digit->cellIDU);    
+
+      streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
+                              << std::setprecision(3)
+                              << " Signal digit created with sensorID: " << uniqSensorID 
+                              << ", iU:" << digit->cellIDU << ", iV:" << digit->cellIDV << ", charge[e-]:" << digit->charge
+                              << std::resetiosflags(std::ios::showpos)
+                              << std::setprecision(0)
+                              << std::endl << std::endl;
       
       // Find if sensor already has some signal
       if (digitsMap.find(uniqSensorID)!=digitsMap.end()) {
