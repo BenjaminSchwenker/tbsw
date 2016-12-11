@@ -5,10 +5,7 @@
 
 #include "SiPixDigitizer.h"
 
-
-// Include DEPFETTrackTools 
-#include "DEPFET.h" 
-#include "MatrixDecoder.h"
+// Include TBTools  
 #include "PhysicalConstants.h"
 
 // Include basic C
@@ -244,7 +241,8 @@ namespace depfet {
         SimTrackerHit * simTrkHit = dynamic_cast<SimTrackerHit*>(simHitCol->getElementAt(i));
         
         // Set current - layer ID, ladder ID and sensor ID
-        m_ipl = cellIDDec(simTrkHit)["layer"];
+        m_sensorID = cellIDDec(simTrkHit)["sensorID"];
+        m_ipl = m_detector.GetPlaneNumber(sensorID);
          
         // Cut on simHit creation time --> simulate integration time of a sensor (if option switched on))
 	    if ((simTrkHit != 0) && (m_integrationWindow)) {
@@ -265,8 +263,8 @@ namespace depfet {
          
         
         
-        if ( std::find(m_filterIDs.begin(), m_filterIDs.end(), m_ipl) == m_filterIDs.end() ) {
-          streamlog_out(MESSAGE2) << " Ignore SimTrackerHit on sensor: "  << m_ipl << std::endl;
+        if ( std::find(m_filterIDs.begin(), m_filterIDs.end(), m_sensorID) == m_filterIDs.end() ) {
+          streamlog_out(MESSAGE2) << " Ignore SimTrackerHit with ID: "  << m_sensorID << std::endl;
           continue;
         }
         
@@ -297,7 +295,7 @@ namespace depfet {
         // Produce digits
         streamlog_out(MESSAGE1) << " Producing digits ..." << std::endl;
         DigitVec digits;
-        ProduceDigits(signalPoints, digits);
+        ProduceSignalDigits(signalPoints, digits);
         
         // Release memory - clear signalPoints
         SignalPointVec::iterator iterSPVec;
@@ -339,7 +337,7 @@ namespace depfet {
       // Create sparse data collection
       LCCollectionVec * digitCol = new LCCollectionVec(LCIO::TRACKERDATA);       
         
-      ProduceSparsePixels( digitCol  , digitsMap); 
+      WriteDigitsToLCIO( digitCol  , digitsMap); 
 	  
       // Store stuff in LCIO file 
       evt->addCollection(digitCol, m_digitCollectionName);
@@ -581,7 +579,7 @@ namespace depfet {
   //
   // Method producing digits from signal points
   //
-  void SiPixDigitizer::ProduceDigits(const SignalPointVec & signalPoints, DigitVec & digits) 
+  void SiPixDigitizer::ProduceSignalDigits(const SignalPointVec & signalPoints, DigitVec & digits) 
   {
      
     // Calculate number of signal points
@@ -734,7 +732,7 @@ namespace depfet {
   //
   // Method producing sparsified pixels output from all digits (noise + signal)
   //
-  void SiPixDigitizer::ProduceSparsePixels(LCCollectionVec * digitCollection , const DigitsMap & digitsMap) 
+  void SiPixDigitizer::WriteDigitsToLCIO(LCCollectionVec * digitCollection , const DigitsMap & digitsMap) 
   {
   
     // Print
@@ -750,18 +748,19 @@ namespace depfet {
     // Go through all sensors
     for (iterDigitsMap=digitsMap.begin(); iterDigitsMap!=digitsMap.end(); iterDigitsMap++) {
         
+      // Get sensorID
+      int sensorID = iterDigitsMap->first;
       
-      
-      // Denote PXD sensor map as
+      // Get handle to DigitsMap for sensor
       DigitMap digitsSensorMap = iterDigitsMap->second;
        
-      // Prepare a TrackerData to store zs pixels
-      TrackerDataImpl* zspixels = new TrackerDataImpl;
+      // Prepare a TrackerData to store digit
+      TrackerDataImpl* digitVec = new TrackerDataImpl;
       
-      // Set description for zspixels 
-      sparseDataEncoder["sensorID"] = iterDigitsMap->first;
+      // Set cellID
+      sparseDataEncoder["sensorID"] = sensorID; 
       sparseDataEncoder["sparsePixelType"] = 0;
-      sparseDataEncoder.setCellID( zspixels );
+      sparseDataEncoder.setCellID( digitVec  );
       
       // Loop over all digits on this sensor 
       for (iterSensorMap=digitsSensorMap.begin(); iterSensorMap!=digitsSensorMap.end(); iterSensorMap++) {
@@ -773,24 +772,22 @@ namespace depfet {
         // Note: zero suppressed pixels have signal == 0, just skip 
         if (signal == 0) continue;  
       
-        int yPixel = currentDigit->cellIDV;
-        int xPixel = currentDigit->cellIDU;
+        int iV = currentDigit->cellIDV;
+        int iU = currentDigit->cellIDU;
       
-        // Store pixel data int DEPFET cluster format 
-        zspixels->chargeValues().push_back( xPixel );
-        zspixels->chargeValues().push_back( yPixel );
-        zspixels->chargeValues().push_back( signal );    
-        
-        
-        
+        // Store digits  
+        digitVec->chargeValues().push_back( iU );
+        digitVec->chargeValues().push_back( iV );
+        digitVec->chargeValues().push_back( signal );    
+       
         // Print detailed pixel summary 
         streamlog_out(MESSAGE2) << "Found pixel on sensor " << m_ipl << std::endl;  
-        streamlog_out(MESSAGE2) << "   x:" << xPixel << ", y:" << yPixel << ", charge:" << signal << std::endl;
+        streamlog_out(MESSAGE2) << "   iU:" << iU << ", iV:" << iV << ", charge:" << signal << std::endl;
       
       }
       
       // Add zs pixels to collection 
-      digitCollection->push_back( zspixels );
+      digitCollection->push_back( digitVec  );
         
     } // end for: loop over sensor
   }
@@ -805,7 +802,7 @@ namespace depfet {
           
       Digit * digit = *iterDigitVec;
       
-      int uniqSensorID = m_ipl;
+      int uniqSensorID = m_sensorID;
       int uniqPixelID  = m_detector.GetDet(m_ipl).encodePixelID(digit->cellIDV, digit->cellIDU);    
       
       // Find if sensor already has some signal

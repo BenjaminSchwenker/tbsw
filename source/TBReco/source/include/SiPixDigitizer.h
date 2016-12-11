@@ -38,8 +38,6 @@ namespace depfet {
   {
     int cellIDV;
     int cellIDU;
-    double cellPosV;
-    double cellPosU;
     double charge;
   };
 
@@ -113,19 +111,17 @@ namespace depfet {
     void ProduceSignalPoints(const IonisationPointVec & ionisationPoints, SignalPointVec & signalPoints);
     
     //!Method calculating digits from signal points - diffusion, Poisson and electronics effects added
-    void ProduceDigits(const SignalPointVec & signalPoints, DigitVec & digits);
+    void ProduceSignalDigits(const SignalPointVec & signalPoints, DigitVec & digits);
     
     //!Method for calculating electronic effects on signal digits
     void ProduceNoiseEffects(DigitsMap & digitsMap);
     
-    //!Method producing noise digits and updating PXD map containing all digits
+    //!Method producing noise digits and updating digitsmap containing all digits
     void ProduceNoiseDigits(DigitsMap & digitsMap);
     
-    //!Method producing sparsified pixels output from all digits (noise + signal)
-    void ProduceSparsePixels(LCCollectionVec * pixels , const DigitsMap & digitsMap);
+    //!Method producing digits output from all digits (noise + signal)
+    void WriteDigitsToLCIO(LCCollectionVec * digitCol , const DigitsMap & digitsMap);
     
-    //!Method producing local truth hits from geant4 steps 
-    void ProduceTruthHits(LCCollectionVec * truthhit, LCCollection * simTrkHits);
     
     // OTHER METHODS
     
@@ -184,6 +180,7 @@ namespace depfet {
     
     // Current sensor number
     int m_ipl ;   
+    int m_sensorID; 
     
    private:
 
