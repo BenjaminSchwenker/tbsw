@@ -148,7 +148,7 @@ namespace depfet {
     registerProcessorParameter( "ADC",
                                 "Simulate ADC?",
                                 m_useADC,
-                                bool(false));
+                                bool(true));
     
     registerProcessorParameter( "ADCRange",
                                 "Set analog-to-digital converter range 0 - ? (in e)",
@@ -234,7 +234,7 @@ namespace depfet {
       
       //
       // Loop over SimTracker hits;
-      streamlog_out(MESSAGE2) << " Producing all digits ..." << std::endl;
+      streamlog_out(MESSAGE2) << " Producing all SimTrackerHits ..." << std::endl;
       
       for (int i=0; i<nSimHits; ++i) {
         
@@ -261,8 +261,6 @@ namespace depfet {
                                 << std::setprecision(0)
                                 << std::endl;
          
-        
-        
         if ( std::find(m_filterIDs.begin(), m_filterIDs.end(), m_sensorID) == m_filterIDs.end() ) {
           streamlog_out(MESSAGE2) << " Ignore SimTrackerHit with ID: "  << m_sensorID << std::endl;
           continue;
@@ -463,21 +461,22 @@ namespace depfet {
        
       iPoint->position = entryPoint + hitLocal.direction*trackLength/numberOfSegments*(i+0.5);
       iPoint->eLoss    = dEMean; 
-      ionisationPoints[i] = iPoint;
        
       // Check if iPoint is within sensor boundaries
       
       if (  m_detector.GetDet(m_ipl).isPointOutOfSensor( iPoint->position.getX(), iPoint->position.getY() , iPoint->position.getZ() ) ) {
          
-        streamlog_out(ERROR) << std::setiosflags(std::ios::fixed | std::ios::internal )
+        streamlog_out(MESSAGE2) << std::setiosflags(std::ios::fixed | std::ios::internal )
                              << std::setprecision(3)
                              << "SiPixDigitizer::ProduceIonisationPoints - ionPoint: " << iPoint->position/mm << " out of sensor!!!"
                              << std::setprecision(0) << std::endl
-                             << "SensorID is " << m_ipl
+                             << "SensorID is " << m_sensorID
                              << std::endl;
         
         continue; 
       }
+      
+      ionisationPoints.push_back(iPoint);
        
       // Print
       streamlog_out(MESSAGE1) << "  Hit local ionPoints (ionisation): " << std::endl;
@@ -893,7 +892,7 @@ namespace depfet {
                                 << std::endl;
         
       } // end loop: sensor map   
-    } // end loop: PXD map
+    } // end loop: digits map
   }
   
   //
@@ -906,14 +905,17 @@ namespace depfet {
     
     // Go through all sensors & generate noise digits
     for (short int ipl=0; ipl < m_detector.GetNSensors(); ipl++) {
-           
-      if ( std::find(m_filterIDs.begin(), m_filterIDs.end(), ipl) == m_filterIDs.end() ) {
-        streamlog_out(MESSAGE2) << " Do not create noise hits on sensor: "  << ipl << std::endl;
+      
+      m_ipl = ipl;     
+      m_sensorID = m_detector.GetDet(m_ipl).GetDAQID();
+      
+      if ( std::find(m_filterIDs.begin(), m_filterIDs.end(), m_sensorID) == m_filterIDs.end() ) {
+        streamlog_out(MESSAGE2) << " Do not create noise hits on sensorID: "  << m_sensorID << std::endl;
         continue;
       }
       
       // Average number of noise pixels
-      double meanNoisePixels = m_noiseFraction * m_detector.GetDet(ipl).GetNColumns() * m_detector.GetDet(ipl).GetNRows();
+      double meanNoisePixels = m_noiseFraction * m_detector.GetDet(m_ipl).GetNColumns() * m_detector.GetDet(m_ipl).GetNRows();
             
       // Total number of noise pixels has Poison distribution
       int fractionPixels = gRandom->Poisson(meanNoisePixels);  
@@ -921,14 +923,14 @@ namespace depfet {
       // Generate noise digits
       for (int iNoisePixel=0; iNoisePixel<fractionPixels; iNoisePixel++) {
                     
-        int iU  = int(gRandom->Uniform( m_detector.GetDet(ipl).GetNColumns() ));
-        int iV  = int(gRandom->Uniform( m_detector.GetDet(ipl).GetNRows() ));
+        int iU  = int(gRandom->Uniform( m_detector.GetDet(m_ipl).GetNColumns() ));
+        int iV  = int(gRandom->Uniform( m_detector.GetDet(m_ipl).GetNRows() ));
                   
         // Describe pixel by unique ID
-        int uniqPixelID  = m_detector.GetDet(ipl).encodePixelID(iV, iU);     
+        int uniqPixelID  = m_detector.GetDet(m_ipl).encodePixelID(iV, iU);     
                 
         // Find if pixel doesn't already have some signal+noise or just noise
-        if( !(digitsMap[ipl].find(uniqPixelID)!=digitsMap[ipl].end()) ) {
+        if( !(digitsMap[m_sensorID].find(uniqPixelID)!=digitsMap[m_sensorID].end()) ) {
                      
           // Create a noise charge  
           double charge = m_zsThreshold; 
@@ -940,7 +942,7 @@ namespace depfet {
           digit->charge   = charge;
                             
           // Record it
-          digitsMap[ipl][uniqPixelID] = digit;
+          digitsMap[m_sensorID][uniqPixelID] = digit;
                   
         }
       } // For noise pixels   
