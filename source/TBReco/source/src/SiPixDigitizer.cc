@@ -481,7 +481,6 @@ namespace depfet {
       ionisationPoints[i] = iPoint;
       
       // Print
-      streamlog_out(MESSAGE1) << "  Hit local ionPoints (ionisation): " << std::endl;
       streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
                               << std::setprecision(3)
                               << "   Pos [mm]: ( " << iPoint->position.getX()/mm << ", " << iPoint->position.getY()/mm << ", " << iPoint->position.getZ()/mm << " )"
@@ -504,8 +503,7 @@ namespace depfet {
     signalPoints.clear();
     signalPoints.resize(numberOfIonPoints);
     
-    // Print
-    streamlog_out(MESSAGE1) << "  Hit local signalPoints: " << std::endl;
+    
     
     for (int i=0; i<numberOfIonPoints; i++) {
       
