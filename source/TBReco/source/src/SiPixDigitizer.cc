@@ -443,7 +443,7 @@ namespace depfet {
       
     // Check entry and exit point are within sensor boundaries  
     if (  m_detector.GetDet(m_ipl).isPointOutOfSensor( entryPoint.getX(), entryPoint.getY() , entryPoint.getZ() ) ) {
-      streamlog_out(MESSAGE4) << std::setiosflags(std::ios::fixed | std::ios::internal )
+      streamlog_out(MESSAGE2) << std::setiosflags(std::ios::fixed | std::ios::internal )
                               << std::setprecision(3)
                               << "SiPixDigitizer::ProduceIonisationPoints - ionPoint: " << entryPoint/mm << " out of sensor!!!"
                               << std::setprecision(0) << std::endl
@@ -454,7 +454,7 @@ namespace depfet {
       return; 
     }
     if (  m_detector.GetDet(m_ipl).isPointOutOfSensor( exitPoint.getX(), exitPoint.getY() , exitPoint.getZ() ) ) {
-      streamlog_out(MESSAGE4) << std::setiosflags(std::ios::fixed | std::ios::internal )
+      streamlog_out(MESSAGE2) << std::setiosflags(std::ios::fixed | std::ios::internal )
                               << std::setprecision(3)
                               << "SiPixDigitizer::ProduceIonisationPoints - ionPoint: " << exitPoint/mm << " out of sensor!!!"
                               << std::setprecision(0) << std::endl
