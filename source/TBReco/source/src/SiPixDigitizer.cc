@@ -461,6 +461,7 @@ namespace depfet {
        
       iPoint->position = entryPoint + hitLocal.direction*trackLength/numberOfSegments*(i+0.5);
       iPoint->eLoss    = dEMean; 
+      ionisationPoints[i] = iPoint;
        
       // Check if iPoint is within sensor boundaries
       
@@ -473,11 +474,11 @@ namespace depfet {
                              << "SensorID is " << m_sensorID
                              << std::endl;
     
-        delete iPoint;    
+        //delete iPoint;    
         continue; 
       }
       
-      ionisationPoints.push_back(iPoint);
+      //ionisationPoints.push_back(iPoint);
        
       // Print
       streamlog_out(MESSAGE1) << "  Hit local ionPoints (ionisation): " << std::endl;
