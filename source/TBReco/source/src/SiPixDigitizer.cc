@@ -438,17 +438,40 @@ namespace depfet {
     // Calculate entryPoint and exitPoint (in mm)
     double trackLength  = simTrkHit->getPathLength()*mm;
     
-    // Energy deposit along G4 step 
-    double Edep = (simTrkHit->getdEdx()*GeV);
-    
     Hep3Vector entryPoint = hitLocal.position - hitLocal.direction*trackLength/2.;
     Hep3Vector exitPoint  = hitLocal.position + hitLocal.direction*trackLength/2.;
-        
-    // For charged particles: energy is smeared along the step in 
+      
+    // Check entry and exit point are within sensor boundaries  
+    if (  m_detector.GetDet(m_ipl).isPointOutOfSensor( entryPoint.getX(), entryPoint.getY() , entryPoint.getZ() ) ) {
+      streamlog_out(MESSAGE4) << std::setiosflags(std::ios::fixed | std::ios::internal )
+                              << std::setprecision(3)
+                              << "SiPixDigitizer::ProduceIonisationPoints - ionPoint: " << entryPoint/mm << " out of sensor!!!"
+                              << std::setprecision(0) << std::endl
+                              << "SensorID is " << m_sensorID
+                              << std::endl;
+    
+            
+      return; 
+    }
+    if (  m_detector.GetDet(m_ipl).isPointOutOfSensor( exitPoint.getX(), exitPoint.getY() , exitPoint.getZ() ) ) {
+      streamlog_out(MESSAGE4) << std::setiosflags(std::ios::fixed | std::ios::internal )
+                              << std::setprecision(3)
+                              << "SiPixDigitizer::ProduceIonisationPoints - ionPoint: " << exitPoint/mm << " out of sensor!!!"
+                              << std::setprecision(0) << std::endl
+                              << "SensorID is " << m_sensorID
+                              << std::endl;
+    
+            
+      return; 
+    }
+      
+    // For charged particles: energy loss is smeared along the step in 
     // small segments. 
      
     int numberOfSegments = int(trackLength/m_maxSegmentLength) + 1;
      
+    // Energy deposit along G4 step 
+    double Edep = (simTrkHit->getdEdx()*GeV);
     // Calculate mean energy loss in each segment
     double dEMean = Edep/((double)numberOfSegments);
      
@@ -462,24 +485,7 @@ namespace depfet {
       iPoint->position = entryPoint + hitLocal.direction*trackLength/numberOfSegments*(i+0.5);
       iPoint->eLoss    = dEMean; 
       ionisationPoints[i] = iPoint;
-       
-      // Check if iPoint is within sensor boundaries
       
-      if (  m_detector.GetDet(m_ipl).isPointOutOfSensor( iPoint->position.getX(), iPoint->position.getY() , iPoint->position.getZ() ) ) {
-         
-        streamlog_out(MESSAGE2) << std::setiosflags(std::ios::fixed | std::ios::internal )
-                             << std::setprecision(3)
-                             << "SiPixDigitizer::ProduceIonisationPoints - ionPoint: " << iPoint->position/mm << " out of sensor!!!"
-                             << std::setprecision(0) << std::endl
-                             << "SensorID is " << m_sensorID
-                             << std::endl;
-    
-        //delete iPoint;    
-        continue; 
-      }
-      
-      //ionisationPoints.push_back(iPoint);
-       
       // Print
       streamlog_out(MESSAGE1) << "  Hit local ionPoints (ionisation): " << std::endl;
       streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
