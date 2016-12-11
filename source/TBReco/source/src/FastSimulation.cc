@@ -148,7 +148,7 @@ namespace depfet {
     LCCollectionVec * simHitVec = new LCCollectionVec(LCIO::SIMTRACKERHIT) ;
      
     // Create cellID encoder
-    CellIDEncoder<SimTrackerHitImpl> cellIDEnc( "layer:7,ladder:5,sensor:4,isEntry:2,isExit:2" , simHitVec ) ;
+    CellIDEncoder<SimTrackerHitImpl> cellIDEnc( "sensorID:6,isEntry:2,isExit:2" , simHitVec ) ;
          
     // Loop on all MCParticles
     for (unsigned int iMC = 0; iMC < mcVec->size(); iMC++) 
@@ -224,9 +224,7 @@ namespace depfet {
           simHit->setMomentum(hitMom);
           
           // Set CellID
-          cellIDEnc["layer"]  = ipl;
-          cellIDEnc["ladder"] = ipl;
-          cellIDEnc["sensor"] = ipl;
+          cellIDEnc["sensorID"] = m_detector.GetDet(ipl).GetDAQID();
           cellIDEnc["isEntry"] = 0;
           cellIDEnc["isExit"] = 0;
           cellIDEnc.setCellID(simHit);
