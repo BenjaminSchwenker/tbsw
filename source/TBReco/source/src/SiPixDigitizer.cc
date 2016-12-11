@@ -242,7 +242,7 @@ namespace depfet {
         
         // Set current - layer ID, ladder ID and sensor ID
         m_sensorID = cellIDDec(simTrkHit)["sensorID"];
-        m_ipl = m_detector.GetPlaneNumber(sensorID);
+        m_ipl = m_detector.GetPlaneNumber(m_sensorID);
          
         // Cut on simHit creation time --> simulate integration time of a sensor (if option switched on))
 	    if ((simTrkHit != 0) && (m_integrationWindow)) {
@@ -719,8 +719,6 @@ namespace depfet {
                 
           digit->cellIDV = iV;
           digit->cellIDU = iU;
-          digit->cellPosV = pixelPosV;
-          digit->cellPosU = pixelPosU;
           digit->charge   = groupCharge;                
           digits.push_back(digit);
         } 
@@ -852,7 +850,7 @@ namespace depfet {
         // Print
         streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
                                 << std::setprecision(3)
-                                << "   Pos [mm]: ( "     << 0 << ", " << digit->cellPosU/mm << ", " << digit->cellPosV/mm
+                                << " (iU: " << digit->cellIDU << ", iV: " << digit->cellIDV
                                 << " , q: " << digit->charge    << " )"
                                 << std::setprecision(0)
                                 << std::endl;	
@@ -889,7 +887,7 @@ namespace depfet {
         // Print
         streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
                                 << std::setprecision(3)
-                                << "   Pos [mm]: ( "     << 0  << ", " << digit->cellPosU/mm << ", " << digit->cellPosV/mm
+                                << " (iU: " << digit->cellIDU << ", iV: " << digit->cellIDV
                                 << " , q: " << digit->charge    << " )"
                                 << std::setprecision(0)
                                 << std::endl;
@@ -939,9 +937,6 @@ namespace depfet {
           digit = new Digit;        		       	
           digit->cellIDU  = iU;
           digit->cellIDV  = iV;
-                         
-          digit->cellPosU = m_detector.GetDet(ipl).GetPixelCenterCoordU(iV, iU);
-          digit->cellPosV = m_detector.GetDet(ipl).GetPixelCenterCoordV(iV, iU);
           digit->charge   = charge;
                             
           // Record it
