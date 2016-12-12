@@ -62,7 +62,7 @@ namespace depfet {
     
     registerProcessorParameter ("AlignmentDBFileName",
                              "This is the name of the LCIO file with the alignment constants (add .slcio)",
-                             _alignmentDBFileName, static_cast< string > ( "eudet-alignmentDB.slcio" ) );  
+                             _alignmentDBFileName, static_cast< std::string > ( "eudet-alignmentDB.slcio" ) );  
     
     std::vector<int> initFilterIDs;
     registerProcessorParameter ("FilterIDs",
