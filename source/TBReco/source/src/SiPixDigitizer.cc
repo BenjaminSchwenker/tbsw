@@ -191,7 +191,10 @@ namespace depfet {
     m_vSideBorderLength    *=um;
     m_elNoise              *= e; 
     
+    // Threshold of zero is never valid 
     if (m_zsThreshold==0) m_zsThreshold++;
+    // Comparator mode needs threshold one
+    if (m_frontEndType == 1)  m_zsThreshold = 1;
     
     // Read detector constants from gear file
     m_detector.ReadGearConfiguration();      
@@ -863,6 +866,7 @@ namespace depfet {
         } else if ( m_frontEndType == 1) { 
           // Simulate Comparator       
           if ( digit->charge < m_ComparatorThr ) digit->charge = 0;
+          else digit->charge = 1;
         }
         
         // Print
