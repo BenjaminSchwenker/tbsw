@@ -221,7 +221,7 @@ void TBDetector::ReadGearConfiguration( )
     }
     
     if (DiscreteRotation.determinant() != 1)
-      streamlog_out(MESSAGE3) << "Rotation matrix BUG" << std::endl; 
+      streamlog_out(MESSAGE3) << "Rotation matrix BUG. Discrete matrix determinant is " << DiscreteRotation.determinant() << std::endl; 
     
     discrete.SetRotation(DiscreteRotation);    
     
