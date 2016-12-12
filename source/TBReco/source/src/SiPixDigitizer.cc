@@ -600,7 +600,7 @@ namespace depfet {
     
     streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
                             << std::setprecision(3)
-                            << "  u halfwidth [mm]: " <<  halfwidthU << ", v halfwidth [mm]: " << halfwidthV
+                            << "   u halfwidth [mm]: " <<  halfwidthU << ", v halfwidth [mm]: " << halfwidthV
                             << std::setprecision(0)
                             << std::endl;
     
