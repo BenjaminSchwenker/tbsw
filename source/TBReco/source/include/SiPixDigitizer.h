@@ -152,9 +152,10 @@ namespace depfet {
     std::vector<int >  m_filterIDs;              //!< Digitize only sensors in this list
     float m_noiseFraction;                       //!< Fraction of noise hits
     float m_zsThreshold;                         //!< ZS threshold for zero suppression  
-    bool  m_useADC;                              //!< Simulate ADC?
+    int   m_frontEndType;                        //!< Front-end electronics type
     int   m_ADCRange;                            //!< ADC range is from 0 - ? (in electrons)
     int   m_ADCBits;                             //!< ADC has 0 - (2^m -1) digital values
+    float m_ComparatorThr;                       //!< Comparator threshold (in e)
                                                    
     // Digitization parameters - set by user     
     double m_bulkDoping;                         //!< Net bulk doping concentration in sensors, in um^-3

@@ -145,10 +145,10 @@ namespace depfet {
                                 m_zsThreshold,
                                 float(4.0) );
    
-    registerProcessorParameter( "ADC",
-                                "Simulate ADC?",
-                                m_useADC,
-                                bool(true));
+    registerProcessorParameter( "FrontEndType",
+                                "Choose front-end electronics: ADC(0) or Comparator(1) or None(2) ",
+                                m_frontEndType,
+                                int(1));
     
     registerProcessorParameter( "ADCRange",
                                 "Set analog-to-digital converter range 0 - ? (in e)",
@@ -160,7 +160,11 @@ namespace depfet {
                                 m_ADCBits,
                                 int(8));
     
-   
+    registerProcessorParameter( "ComparatorThrehold",
+                                "Set threshold for comparator (in e)",
+                                m_ComparatorThr,
+                                float(1000));
+    
   }
 
   //
@@ -174,6 +178,7 @@ namespace depfet {
     
     // Set variables in appropriate physical units
     m_ADCRange             *= e;
+    m_ComparatorThr        *= e;
     m_bulkDoping           *= 1/um/um/um; 
     m_topVoltage           *= V; 
     m_backVoltage          *= V; 
@@ -851,8 +856,14 @@ namespace depfet {
 	    double noise   = gRandom->Gaus(0,elNoise);     
 	    digit->charge += noise;
           
-        // Optionally, simulate ADC
-        if (m_useADC) digit->charge = (double) getInADCUnits(digit->charge);
+        // Very basic simulation of front end electronics
+        if ( m_frontEndType == 0) {
+          // Simulate ADC 
+          digit->charge = (double) getInADCUnits(digit->charge);
+        } else if ( m_frontEndType == 1) { 
+          // Simulate Comparator       
+          if ( digit->charge < m_ComparatorThr ) digit->charge = 0;
+        }
         
         // Print
         streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
