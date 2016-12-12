@@ -73,6 +73,9 @@ namespace depfet
     //! Output SimTrackerHit collection name
     std::string m_SimTrackerHitCollectionName;
     
+    //! Alignment DB file name 
+    std::string _alignmentDBFileName;
+    
     // Choose model for multiple scattering ( Highland:0 )
     int m_scatterModel;  
     

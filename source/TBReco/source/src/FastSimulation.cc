@@ -74,7 +74,11 @@ namespace depfet {
    
     registerProcessorParameter ("ElossModel", "Choose model for energy loss: G4UniversalFluctuation(0)",
                                 m_eLossModel,  static_cast < int > (0));
-   
+    
+    registerProcessorParameter ("AlignmentDBFileName",
+                             "This is the name of the LCIO file with the alignment constants (add .slcio)",
+                             _alignmentDBFileName, static_cast< string > ( "eudet-alignmentDB.slcio" ) );  
+    
     
                                  
   }
@@ -94,6 +98,9 @@ namespace depfet {
 
     // Read detector constants from gear file
     m_detector.ReadGearConfiguration();  
+    
+    // Read alignment data base file 
+    m_detector.ReadAlignmentDB( _alignmentDBFileName );  
   }
 
   //
