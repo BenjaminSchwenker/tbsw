@@ -532,8 +532,6 @@ namespace depfet {
       // Diffusive spread in lateral plane
       double sigmaDiffus = sqrt( 2 * Utherm * e_mobility * td ); 
       
-      //std::cout << "Diffusive spread [mm]: " << sigmaDiffus/mm << std::endl; 
-      
       double sigmaU = sigmaDiffus;
       double sigmaV = sigmaDiffus; 
       
@@ -587,6 +585,15 @@ namespace depfet {
     // Run over all signal points and create digits
     digits.clear();
     
+    // Random walk step length 
+    double sigmaDiffus = sqrt( 2*Utherm*e_mobility*m_eStepTime ) ;
+    
+    streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
+                              << std::setprecision(3)
+                              << "   Random walk step length [um]: " << sigmaDiffus/um 
+                              << std::setprecision(0)
+                              << std::endl;
+     
     for (int i=0; i<numberOfSigPoints; ++i) {
       
       // Get current signal point
@@ -608,21 +615,12 @@ namespace depfet {
       int numberOfGroups = int(clusterCharge/m_eGroupSize) + 1;
       double groupCharge = clusterCharge/((double)numberOfGroups);
       
-      // Random walk step length 
-      double sigmaDiffus = sqrt( 2*Utherm*e_mobility*m_eStepTime ) ;
-      
-      // N.B. diffusion step length must be smaller than any border length (drain/source/clear)
-      // to simulate random walk correctly  
-      //std::cout << "sigmaDiffus [um]: " <<    sigmaDiffus/um << std::endl;    
-      
-      
       for (int iGroup=0; iGroup<numberOfGroups; ++iGroup)  {         
         
         // Initial group position   
         double groupPosU = centreU + gRandom->Gaus(0, sigmaU);
         double groupPosV = centreV + gRandom->Gaus(0, sigmaV);
             
-        
         int iV = m_detector.GetDet(m_ipl).GetRowFromCoord( groupPosU, groupPosV );
         int iU = m_detector.GetDet(m_ipl).GetColumnFromCoord( groupPosU, groupPosV ); 
         
@@ -634,9 +632,7 @@ namespace depfet {
         bool insideIG = false; 
         
         for (int iStep = 0; iStep < 400; ++iStep) {
-          
-          //std::cout << "  iStep " <<  iStep << " at time (ns) " << collectionTime/ns <<std::endl;
-          
+           
           // Calculate border of internal gate region
           double pitchU      = m_detector.GetDet(m_ipl).GetPitchU();     
           double pitchV      = m_detector.GetDet(m_ipl).GetPitchV();           
@@ -645,10 +641,8 @@ namespace depfet {
           double deltaV = groupPosV - pixelPosV; 
           double deltaU = groupPosU - pixelPosU;  
           
-          
           // debug
-          //std::cout << "  SensorID " << _currentSensorID <<std::endl;
-          //std::cout << "  in pixel cellID: " << iV << ", " << iU  <<std::endl;
+          std::cout << "   walk->  SensorID " << m_sensorID << ", iU: " << iU << ", iV: " << iV << ", istep: " << iStep << std::endl;
           //std::cout << "  pix  centre (mm): " << pixelPosZ/mm << ", " << pixelPosRPhi/mm << std::endl;
           //std::cout << "  group pos   (mm): " << groupPosZ/mm << ", " << groupPosRPhi/mm << std::endl;
           //std::cout << "  delta       (mm): " << deltaZ/mm    << ", " << deltaRPhi/mm    << std::endl;
@@ -658,8 +652,7 @@ namespace depfet {
                  deltaV > - halfwidthV &&  deltaV < halfwidthV        )
           {
             insideIG = true;
-            //std::cout  << " inside!! " << std::endl;
-           
+            std::cout  << " inside!! " << std::endl;
             break;     
           }
             
@@ -679,8 +672,6 @@ namespace depfet {
                  
         } // end of group tracking
          
-        
-        
         // Now, pixel cell [iU,iV] collects group of electrons         
         // Update digit info if exists, otherwise create new one
         DigitVec::iterator iterDVec;

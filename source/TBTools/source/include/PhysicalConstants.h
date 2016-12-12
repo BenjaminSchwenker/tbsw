@@ -10,7 +10,7 @@ namespace depfet {
 //
 //    charge        in electrons         [e]
 //    distance      in milimetres        [mm]
-//    energy        in kiloelectronvolts [keV]
+//    energy        in electronvolts     [eV]
 //    mag. field    in Tesla             [T]
 //    temperature   in Kelvin            [K]
 //    time          in seconds           [s]

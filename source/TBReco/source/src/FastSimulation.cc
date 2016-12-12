@@ -209,7 +209,7 @@ namespace depfet {
           double v = state[3][0]; 
           double mom = mcp->getCharge()/state[4][0]; 
           double l0 = current_det.GetThickness(u,v)*std::sqrt(1 + dudw*dudw + dvdw*dvdw);  
-          double eDep = l0*82*3.64*1e-6;
+          double eDep = l0*1000*82*3.64/GeV;
              
           // Create a new LCIO SimTracker hit
           SimTrackerHitImpl * simHit = new SimTrackerHitImpl;
