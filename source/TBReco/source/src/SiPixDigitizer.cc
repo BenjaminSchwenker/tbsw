@@ -183,7 +183,7 @@ namespace depfet {
     m_startIntegration     *= ns;
     m_stopIntegration      *= ns;
     m_uSideBorderLength    *=um;
-    m_uSideBorderLength    *=um;
+    m_vSideBorderLength    *=um;
     m_elNoise              *= e; 
     
     if (m_zsThreshold==0) m_zsThreshold++;
@@ -593,22 +593,23 @@ namespace depfet {
                               << "   Random walk step length [um]: " << sigmaDiffus/um 
                               << std::setprecision(0)
                               << std::endl;
-
-
-    // Internal pixel borders             
+     
+    // Internal pixel borders   
+    double halfwidthU   = m_detector.GetDet(m_ipl).GetPitchU()/2. - m_uSideBorderLength;          
     double halfwidthV   = m_detector.GetDet(m_ipl).GetPitchV()/2. - m_vSideBorderLength;         
-    double halfwidthU   = m_detector.GetDet(m_ipl).GetPitchU()/2. - m_uSideBorderLength;
     
     streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
                             << std::setprecision(3)
-                            << "  u pixel border [mm]: " <<  halfwidthU << ", v pixel border [mm]: " << halfwidthV
+                            << "  u halfwidth [mm]: " <<  halfwidthU << ", v halfwidth [mm]: " << halfwidthV
                             << std::setprecision(0)
                             << std::endl;
- 
 
+    streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
+                            << std::setprecision(3)
+                            << "  u border [mm]: " <<  m_uSideBorderLength << ", v border [mm]: " << m_vSideBorderLength
+                            << std::setprecision(0)
+                            << std::endl;
     
-    
-     
     for (int i=0; i<numberOfSigPoints; ++i) {
       
       // Get current signal point
