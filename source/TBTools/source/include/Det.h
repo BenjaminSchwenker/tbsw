@@ -156,6 +156,8 @@ class Det {
    
   // Check if module box crossed
   virtual bool ModuleCrossed(double u, double v, double w = 0);
+
+  bool isPointOutOfSensor( double u , double v , double w = 0); 
   
   // Check if sensitive volume crossed
   virtual bool SensitiveCrossed(double u, double v, double w = 0);
@@ -180,6 +182,12 @@ class Det {
   
   // Get v coord of pixel center 
   virtual double GetPixelCenterCoordV(int row, int column);
+
+  // Encode pixelID
+  virtual int encodePixelID(int row, int col);
+
+  // Decode pixelID
+  virtual void decodePixelID(int & row, int & col, int uniqPixelID);
  
  private:
    

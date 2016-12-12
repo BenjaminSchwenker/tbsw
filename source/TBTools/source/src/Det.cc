@@ -19,11 +19,30 @@ using namespace marlin;
 
 namespace depfet {
 
+// Define constants
+#define EPS 0.005           // mm
+
 /** Dummy constructor for pixel modules
  *
  * Creates a dummy pixel module. 
  */
 Det::Det() {Name = "DUMMY";}
+
+
+
+int Det::encodePixelID(int row, int column)
+{
+  return (GetNColumns()*row + column);
+}
+
+
+void Det::decodePixelID(int & row, int & column, int uniqPixelID)
+{
+  row    = uniqPixelID / GetNColumns();
+  column = uniqPixelID - row*GetNColumns();
+}
+ 
+
  	
 /**  Check if sensitive volume is crossed
  */
@@ -42,6 +61,19 @@ bool Det::SensitiveCrossed(double u, double v, double w)
     return false;
   }
   return true; 
+}
+
+
+bool Det::isPointOutOfSensor( double u, double v, double w) 
+{
+  bool isOut = false; 
+  // Boundary set +- epsilon
+  if ( (u < (-GetSensitiveSizeU()/2. -EPS)) || (u > (+GetSensitiveSizeU()/2. + EPS)) ||
+       (v < (-GetSensitiveSizeV()/2. -EPS)) || (v > (+GetSensitiveSizeV()/2. + EPS)) ||
+       (w < (-GetSensitiveThickness()/2. -EPS)) || (w > (+GetSensitiveThickness()/2. + EPS)) ) isOut = true;
+
+   // Return if out or not
+   return isOut;
 }
  	
 /**  Check if module box is crossed
