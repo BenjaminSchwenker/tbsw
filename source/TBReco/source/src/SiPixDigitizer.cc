@@ -593,6 +593,21 @@ namespace depfet {
                               << "   Random walk step length [um]: " << sigmaDiffus/um 
                               << std::setprecision(0)
                               << std::endl;
+
+
+    // Internal pixel borders             
+    double halfwidthV   = m_detector.GetDet(m_ipl).GetPitchV()/2. - m_vSideBorderLength;         
+    double halfwidthU   = m_detector.GetDet(m_ipl).GetPitchU()/2. - m_uSideBorderLength;
+    
+    streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
+                            << std::setprecision(3)
+                            << "  u pixel border [mm]: " <<  halfwidthU << ", v pixel border [mm]: " << halfwidthV
+                            << std::setprecision(0)
+                            << std::endl;
+ 
+
+    
+    
      
     for (int i=0; i<numberOfSigPoints; ++i) {
       
@@ -629,15 +644,11 @@ namespace depfet {
            
         // control variables 
         double collectionTime = 0;
-        bool insideIG = false; 
+      
         
         for (int iStep = 0; iStep < 400; ++iStep) {
            
           // Calculate border of internal gate region
-          double pitchU      = m_detector.GetDet(m_ipl).GetPitchU();     
-          double pitchV      = m_detector.GetDet(m_ipl).GetPitchV();           
-          double halfwidthV   = pitchV/2. - m_vSideBorderLength;         
-          double halfwidthU   = pitchU/2. - m_uSideBorderLength;
           double deltaV = groupPosV - pixelPosV; 
           double deltaU = groupPosU - pixelPosU;  
           
@@ -651,8 +662,6 @@ namespace depfet {
           if (   deltaU > - halfwidthU &&  deltaU < halfwidthU &&
                  deltaV > - halfwidthV &&  deltaV < halfwidthV        )
           {
-            insideIG = true;
-            std::cout  << " inside!! " << std::endl;
             break;     
           }
             
