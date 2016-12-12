@@ -603,12 +603,6 @@ namespace depfet {
                             << "  u halfwidth [mm]: " <<  halfwidthU << ", v halfwidth [mm]: " << halfwidthV
                             << std::setprecision(0)
                             << std::endl;
-
-    streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
-                            << std::setprecision(3)
-                            << "  u border [mm]: " <<  m_uSideBorderLength << ", v border [mm]: " << m_vSideBorderLength
-                            << std::setprecision(0)
-                            << std::endl;
     
     for (int i=0; i<numberOfSigPoints; ++i) {
       
@@ -653,16 +647,11 @@ namespace depfet {
           double deltaV = groupPosV - pixelPosV; 
           double deltaU = groupPosU - pixelPosU;  
           
-          // debug
-          std::cout << "   walk->  SensorID " << m_sensorID << ", iU: " << iU << ", iV: " << iV << ", istep: " << iStep << std::endl;
-          //std::cout << "  pix  centre (mm): " << pixelPosZ/mm << ", " << pixelPosRPhi/mm << std::endl;
-          //std::cout << "  group pos   (mm): " << groupPosZ/mm << ", " << groupPosRPhi/mm << std::endl;
-          //std::cout << "  delta       (mm): " << deltaZ/mm    << ", " << deltaRPhi/mm    << std::endl;
-          
           // Check if charge is inside IG region
           if (   deltaU > - halfwidthU &&  deltaU < halfwidthU &&
                  deltaV > - halfwidthV &&  deltaV < halfwidthV        )
           {
+            streamlog_out(MESSAGE1) << "   random walk finished: (iU: " << iU << ", iV: " << iV << ", istep: " << iStep << ")"  << std::endl;
             break;     
           }
             
