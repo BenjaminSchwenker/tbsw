@@ -220,7 +220,7 @@ void TBDetector::ReadGearConfiguration( )
       streamlog_out(MESSAGE3) << std::endl << "Rotation parameters in gear file wrong" << std::endl;  
     }
     
-    if (DiscreteRotation.determinant() != 1)
+    if ( std::abs( DiscreteRotation.determinant() - 1 ) ==  1.e-5 )  
       streamlog_out(MESSAGE3) << "Rotation matrix BUG. Discrete matrix determinant is " << DiscreteRotation.determinant() << std::endl; 
     
     discrete.SetRotation(DiscreteRotation);    
@@ -250,7 +250,7 @@ void TBDetector::ReadGearConfiguration( )
             beta,
             gamma);
     
-    if (EulerRotation.determinant() != 1)  
+    if ( std::abs( EulerRotation.determinant() - 1 ) ==  1.e-5 )  
       streamlog_out(MESSAGE3) << "Rotation matrix BUG. Euler rotation matrix determinant is " << EulerRotation.determinant() << std::endl; 
     
     // Combine the two factors in proper order
