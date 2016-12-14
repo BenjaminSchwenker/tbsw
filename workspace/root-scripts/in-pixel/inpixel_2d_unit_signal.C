@@ -11,25 +11,25 @@ gStyle->SetPaintTextFormat("1f");
 gStyle->SetOptStat(0);
 
 // Event data 
-TFile *ftb = new TFile("Histos.root");
-
+TFile *ftb = new TFile("root-files/DUT-Histos-dutmc.root");
+       
 //
 // Sensor paramaters
 
-double PITCHX = 50; // in um 
-double PITCHY = 75; // in um 
+double PITCHX = 18.4; // in um 
+double PITCHY = 18.4; // in um 
 
 // 
 // Super pixel contains XPIX x YPIX pixel cells  
 
-int XPIX = 2;  
-int YPIX = 2;  
+int XPIX = 1;  
+int YPIX = 1;  
 
 // 
 // Super pixel is divided into bins along x and y
 
-int BINSX = 10; // nbins in X 30
-int BINSY = 20; // nbins in Y 40
+int BINSX = 40; // nbins in X 30
+int BINSY = 40; // nbins in Y 40
 
 // 
 // Make projections into superpixel at for this bins 
@@ -41,10 +41,10 @@ int PROJ_Y = 10;
 // Signal cuts 
 
 double CHI2MAX = 50; 
-double CLUSTERLOW = 5; 
-double CLUSTERHIGH = 60; 
-double SEEDLOW = 5; 
-double SEEDHIGH = 60; 
+double CLUSTERLOW = 0; 
+double CLUSTERHIGH = 5; 
+double SEEDLOW = 0; 
+double SEEDHIGH = 2; 
 
 
 // ----------------------------------------------------------------------
@@ -63,22 +63,23 @@ Double_t _seedCharge;
 
 TTree * mytuple = (TTree*) ftb->Get("Hit");  
 
-mytuple->SetBranchAddress("chi2",&_chi2);
+mytuple->SetBranchAddress("trackChi2",&_chi2);
 mytuple->SetBranchAddress("hasTrack",&_hasTrack);
 mytuple->SetBranchAddress("u_fit",&_u_fit);
 mytuple->SetBranchAddress("v_fit",&_v_fit);
-mytuple->SetBranchAddress("col_fit",&_col_fit);
-mytuple->SetBranchAddress("row_fit",&_row_fit);
-mytuple->SetBranchAddress("u_pixel",&_u_pixel);
-mytuple->SetBranchAddress("v_pixel",&_v_pixel);
+mytuple->SetBranchAddress("cellU_fit",&_col_fit);
+mytuple->SetBranchAddress("cellV_fit",&_row_fit);
+mytuple->SetBranchAddress("cellUCenter_fit",&_u_pixel);
+mytuple->SetBranchAddress("cellVCenter_fit",&_v_pixel);
 mytuple->SetBranchAddress("clusterCharge",&_clusterCharge);
 mytuple->SetBranchAddress("seedCharge",&_seedCharge);
+
+
 
 // 2d histos
 
 vector<vector<int>> counter; 
 counter.resize(BINSX,vector<int>(BINSY, 0));
-
 
 vector<vector<TH1F*>> histo_cs; 
 histo_cs.resize(BINSX,vector<TH1F*>(BINSY, NULL));
