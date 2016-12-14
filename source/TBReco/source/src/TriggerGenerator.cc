@@ -56,6 +56,10 @@ namespace depfet {
     registerProcessorParameter ("AlignmentDBFileName",
                              "This is the name of the LCIO file with the alignment constants (add .slcio)",
                              _alignmentDBFileName, static_cast< string > ( "eudet-alignmentDB.slcio" ) );  
+
+    registerProcessorParameter ("FakeTriggerPeriod",
+                             "Every nth simulated event will be accepted regardless of trigger coincidence",
+                              m_fakeTriggerPeriod, static_cast< int > ( 0 ) );  
     
     std::vector<float> initScinti;
     registerProcessorParameter ("ScinitNo1", "Scinti parameters: DAQID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)",
@@ -212,9 +216,17 @@ namespace depfet {
         }
       }
       
+      // If true, we keep the simulated event for digitization
       bool trg = true; 
+       
+      // Compute the coincidence of scinti signals 
       for ( auto isHigh : sctStateVec )  trg = trg && isHigh ; 
-      
+       
+      // Maybe it is a event with a fake trigger
+      if ( m_fakeTriggerPeriod > 0 ) { 
+        if ((evt->getEventNumber())%m_fakeTriggerPeriod == 0) trg = true;
+      }
+        
       if (!trg) throw( marlin::SkipEventException(this) );
       
     } catch(DataNotAvailableException &e){}

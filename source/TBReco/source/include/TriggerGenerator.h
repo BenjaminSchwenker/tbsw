@@ -98,6 +98,9 @@ namespace depfet
     
     //! Alignment DB file name 
     std::string _alignmentDBFileName;
+
+    //! Every fakeTriggerPeriod event has a fake trigger
+    int m_fakeTriggerPeriod;
  
     //! Scinti parameters: DAQ ID, Umin, Vmin, Umax, Vmax (leave empty to deactivate)
     std::vector<float >  _scintiNo1;
