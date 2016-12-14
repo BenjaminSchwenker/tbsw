@@ -261,11 +261,21 @@ namespace depfet {
         m_sensorID = cellIDDec(simTrkHit)["sensorID"];
         m_ipl = m_detector.GetPlaneNumber(m_sensorID);
          
-        streamlog_out(MESSAGE1) << " Found SimTrackerHit with sensorID: " << m_sensorID << std::endl;
-         
+        streamlog_out(MESSAGE1) << " Found SimTrackerHit with sensorID: " << m_sensorID  
+                                << std::setprecision(10)
+                                << " at time[s]:" << simTrkHit->getTime()
+                                << std::setprecision(0) << std::endl;
+
+        streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
+                                << std::setprecision(10)
+                                << "Integration start/stop[s]: " << m_startIntegration << "/" << m_stopIntegration
+                                << std::setprecision(0) << std::endl;
+                              
+ 
         // Cut on simHit creation time --> simulate integration time of a sensor (if option switched on))
 	    if ((simTrkHit != 0) && (m_integrationWindow)) {
-	      if (simTrkHit->getTime()*ns < m_startIntegration || simTrkHit->getTime()*ns > m_stopIntegration) {
+	      if (simTrkHit->getTime() < m_startIntegration || simTrkHit->getTime() > m_stopIntegration) {
+            streamlog_out(MESSAGE1) << " Skipped simHit out of integration time" << std::endl; 
 	        continue;
 	      }		
 	    }

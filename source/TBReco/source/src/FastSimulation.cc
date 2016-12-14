@@ -165,7 +165,7 @@ namespace depfet {
       MCParticle* mcp = dynamic_cast<MCParticle* > ( mcVec->getElementAt(iMC) )  ;   
       
       streamlog_out(MESSAGE1) << "Processing generator particle " << mcp->getGeneratorStatus() 
-                              << " at time " << mcp->getTime() << endl; 
+                              << " at time[s] " << std::setprecision(10) << mcp->getTime() << std::setprecision(0) << endl; 
       
       
       // Create a complete trajectory state for the MCParticle needed to 
