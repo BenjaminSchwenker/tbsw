@@ -11,16 +11,21 @@ gStyle->SetPaintTextFormat("1f");
 gStyle->SetOptStat(0);
 
 
-Int_t BINSU = 1152;
-Int_t BINSV = 576;
+Int_t BINSU = 256;
+Int_t BINSV = 128;
+
+Int_t MAXU = 1152;
+Int_t MAXV = 576;
+
+
 
 // 
 // Analysis cuts 
-TCut basecut = "trackChi2 < 100 && trackNHits  == 6 &&  iEvt > 25000 && nTelTracks >= 1";
+TCut basecut = "trackChi2 < 100 && trackNHits  == 6 &&  iEvt > 25000 && nTelTracks == 1";
 TCut seedcut = "seedCharge > 0";
 TCut matched = "hasHit == 0"; 
-TCut u_cut = Form("cellU_fit >= 0 && cellU_fit < %d",BINSU);
-TCut v_cut = Form("cellV_fit >= 0 && cellV_fit < %d",BINSV); 
+TCut u_cut = Form("cellU_fit >= 0 && cellU_fit < %d",MAXU);
+TCut v_cut = Form("cellV_fit >= 0 && cellV_fit < %d",MAXV); 
 
 
 
@@ -38,8 +43,8 @@ c1->SetTopMargin(0.1);
 c1->SetBottomMargin(0.16);
 
 
-ttbtrack->Draw(Form("cellV_fit >> htotal_row(%d,0,%d)",BINSV,BINSV) , basecut && u_cut );
-ttbtrack->Draw(Form("cellV_fit >> hpass_row(%d,0,%d)",BINSV,BINSV) ,  basecut && u_cut && seedcut && matched );
+ttbtrack->Draw(Form("cellV_fit >> htotal_row(%d,0,%d)",BINSV,MAXV) , basecut && u_cut );
+ttbtrack->Draw(Form("cellV_fit >> hpass_row(%d,0,%d)",BINSV,MAXV) ,  basecut && u_cut && seedcut && matched );
 
 
 
@@ -55,7 +60,7 @@ TGraphAsymmErrors * effiRow = new TGraphAsymmErrors ( pass_row, total_row, "w" )
 effiRow->SetTitle("");
 effiRow->GetXaxis()->SetTitle("cellV [cellID]");
 effiRow->GetYaxis()->SetTitle("efficiency");
-effiRow->GetXaxis()->SetRangeUser(0,BINSV);
+effiRow->GetXaxis()->SetRangeUser(0,MAXV);
 effiRow->GetYaxis()->SetRangeUser(0.0,1.0);
 effiRow->GetXaxis()->SetTitleSize(0.06);
 effiRow->GetYaxis()->SetTitleSize(0.06);
@@ -75,8 +80,8 @@ c2->SetRightMargin(0.1);
 c2->SetTopMargin(0.1);
 c2->SetBottomMargin(0.16);
 
-ttbtrack->Draw(Form("cellU_fit  >> htotal_col(%d,0,%d)",BINSU,BINSU) , basecut && v_cut );
-ttbtrack->Draw(Form("cellU_fit  >> hpass_col(%d,0,%d)",BINSU,BINSU) ,  basecut && v_cut && seedcut && matched );
+ttbtrack->Draw(Form("cellU_fit  >> htotal_col(%d,0,%d)",BINSU,MAXU) , basecut && v_cut );
+ttbtrack->Draw(Form("cellU_fit  >> hpass_col(%d,0,%d)",BINSU,MAXU) ,  basecut && v_cut && seedcut && matched );
 
 
 
@@ -93,7 +98,7 @@ effiCol->SetTitle("");
 effiCol->GetXaxis()->SetTitle("cellU [cellID]");
 effiCol->GetYaxis()->SetTitle("efficiency");
 effiCol->GetYaxis()->SetRangeUser(0.98,1.0);
-effiCol->GetXaxis()->SetRangeUser(0,BINSU);
+effiCol->GetXaxis()->SetRangeUser(0,MAXU);
 effiCol->GetXaxis()->SetTitleSize(0.06);
 effiCol->GetYaxis()->SetTitleSize(0.06);
 effiCol->GetXaxis()->SetLabelSize(0.06);
@@ -112,8 +117,8 @@ c3->SetRightMargin(0.26);
 c3->SetTopMargin(0.1);
 c3->SetBottomMargin(0.16);
 
-ttbtrack->Draw(Form(" cellV_fit:cellU_fit >> htotal(%d,0,%d,%d,0,%d)", BINSU,BINSU,BINSV,BINSV) , basecut );
-ttbtrack->Draw(Form(" cellV_fit:cellU_fit >> hpass(%d,0,%d,%d,0,%d)",BINSU,BINSU,BINSV,BINSV) ,  basecut && seedcut && matched );
+ttbtrack->Draw(Form(" cellV_fit:cellU_fit >> htotal(%d,0,%d,%d,0,%d)", BINSU,MAXU,BINSV,MAXV) , basecut );
+ttbtrack->Draw(Form(" cellV_fit:cellU_fit >> hpass(%d,0,%d,%d,0,%d)",BINSU,MAXU,BINSV,MAXV) ,  basecut && seedcut && matched );
 
 TH2D * effi = hpass->Clone(); 
 effi->Divide(htotal); 

@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="us-ascii"?>
+
+<marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
+
+   <execute>
+      <processor name="InfoSetter"/>
+      <processor name="ParticleGun"/>
+      <processor name="FastSim"/>
+      <processor name="TLUTrigger"/>
+      <processor name="M26Digitizer"/>
+      <processor name="DEPDigitizer"/>
+      <processor name="MyLCIOOutputProcessor"/>
+   </execute>
+
+   <global>
+      <parameter name="LCIOInputFiles"> </parameter>
+      <parameter name="GearXMLFile" value="gear.xml"/>
+      <parameter name="MaxRecordNumber" value="600000"/>
+      <parameter name="SkipNEvents" value="0"/>
+      <parameter name="SupressCheck" value="false"/>
+      <parameter name="Verbosity" value="MESSAGE3"/>
+   </global>
+
+ <processor name="InfoSetter" type="EventInfoSetter">
+ <!--Creates a lcio file with run header and empty events
+Make sure to not specify any LCIOInputFiles in the steering in order-->
+  <!--Set name of the detector-->
+  <parameter name="DetectorName" type="string" value="EUTelescope"/>
+  <!--Set run number for lcio file-->
+  <parameter name="RunNumber" type="int" value="0"/>
+</processor>
+
+ <processor name="ParticleGun" type="ParticleGunGenerator">
+ <!--Particle gun processor for simulation of a directed particle beam-->
+  <!--Collection name for MCParticles-->
+  <parameter name="MCParticleCollectionName" type="string" lcioOutType="MCParticle"> MCParticles </parameter>
+  <!--Beam correlation coefficient Y-->
+  <parameter name="GunCorralationY" type="double" value="0.3"/>
+  <!--Beam correlation coefficient X-->
+  <parameter name="GunCorrelationX" type="double" value="0.3"/>
+  <!--RMS track slope in XZ plane [rad]-->
+  <parameter name="GunDivergenceX" type="double" value="0.001"/>
+  <!--RMS track slope in YZ plane [rad]-->
+  <parameter name="GunDivergenceY" type="double" value="0.001"/>
+  <!--Number of particles per second-->
+  <parameter name="GunIntensity" type="double" value="15000"/>
+  <!--X position of particle gun [mm]-->
+  <parameter name="GunPositionX" type="double" value="2"/>
+  <!--Y position of particle gun [mm]-->
+  <parameter name="GunPositionY" type="double" value="-0.5"/>
+  <!--Z position of particle gun [mm]-->
+  <parameter name="GunPositionZ" type="double" value="-20"/>
+  <!--Smearing of X vertex position at beam collimator [mm]-->
+  <parameter name="GunSpotSizeX" type="double" value="2"/>
+  <!--Smearing of Y vertex position at beam collimator [mm]-->
+  <parameter name="GunSpotSizeY" type="double" value="1"/>
+  <!--A simulated event contains one particle at t=0 and extends for given time window in seconds-->
+  <parameter name="GunTimeWindow" type="double" value="0.0001"/>
+  <!--PDG code-->
+  <parameter name="PDG" type="int" value="11"/>
+  <!--Particle charge [e]-->
+  <parameter name="ParticleCharge" type="double" value="-1"/>
+  <!--Particle mass [GeV]-->
+  <parameter name="ParticleMass" type="double" value="0.000511"/>
+  <!--Particle momentum [GeV]-->
+  <parameter name="ParticleMomentum" type="double" value="4"/>
+</processor>
+
+ <processor name="FastSim" type="FastSimulation">
+ <!--Fast simulation processor for propagation of beam particels trough a test beam telescope-->
+  <!--Collection name for MCParticles-->
+  <parameter name="MCParticleCollectionName" type="string" lcioInType="MCParticle"> MCParticles </parameter>
+  <!--Collection name for SimTrackerHits-->
+  <parameter name="SimTrackerHitCollectionName" type="string" lcioOutType="SimTrackerHit"> SimTrackerHits </parameter>
+  <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+  <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
+  <!--Choose model for energy loss: G4UniversalFluctuation(0)-->
+  <parameter name="ElossModel" type="int" value="0"/>
+  <!--Choose model for multiple scattering: Highland(0)-->
+  <parameter name="ScatterModel" type="int" value="0"/>
+</processor>
+
+ <processor name="TLUTrigger" type="TriggerGenerator">
+   <!--Simulates the trigger signal from scinti coincidence for test beam experiments-->
+   <!--Collection name for SimTrackerHits-->
+   <parameter name="SimTrackerHitCollectionName" type="string" lcioOutType="SimTrackerHit"> SimTrackerHits </parameter>
+   <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+   <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
+   <!--Every nth simulated event will be accepted regardless of trigger coincidence-->
+   <parameter name="FakeTriggerPeriod" type="int" value="10"/>
+   <!--Scinti parameters: DAQID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)-->
+   <parameter name="ScinitNo1" type="FloatVec"> 0 -2 -2 3 3.0 </parameter>
+   <!--Scinti parameters: DAQID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)-->
+   <parameter name="ScinitNo2" type="FloatVec"> 5 -2 -3 4.0 3 </parameter>
+   <!--Scinti parameters: DAQID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)-->
+   <parameter name="ScinitNo3" type="FloatVec"> </parameter>
+   <!--Scinti parameters: DAQID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)-->
+   <parameter name="ScinitNo4" type="FloatVec"> </parameter>
+ </processor> 
+
+ <processor name="M26Digitizer" type="SiPixDigitizer">
+ <!--SiPixDigitizer: A rather generic silicon pixel detector digitizer-->
+  <!--Collection name for SimTrackerHits-->
+  <parameter name="SimTrackerHitCollectionName" type="string" lcioInType="SimTrackerHit"> SimTrackerHits </parameter>
+  <!--Collection name for Digits-->
+  <parameter name="DigitCollectionName" type="string" lcioOutType="TrackerData"> zsdata_m26 </parameter>
+  <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+  <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
+  <!--Choose front-end electronics: ADC(0) or Comparator(1) or None(2) -->
+  <parameter name="FrontEndType" type="int" value="1"/>
+  <!--Set threshold for comparator (in e)-->
+  <parameter name="ComparatorThrehold" type="float" value="1000"/>
+  <!--Set how many bits the ADC uses-->
+  <parameter name="ADCBits" type="int" value="8"/>
+  <!--Set analog-to-digital converter range 0 - ? (in e)-->
+  <parameter name="ADCRange" type="int" value="50000"/>
+  <!--Back contact voltage wrt. source, in Volts-->
+  <parameter name="BackPlaneVoltage" type="double" value="-30"/>
+  <!--Split Signalpoints in smaller groups of N electrons (in e)-->
+  <parameter name="ElectronGroupSize" type="double" value="100"/>
+  <!--Time step for tracking electron groups in readout plane (in ns)-->
+  <parameter name="ElectronStepTime" type="double" value="0.3"/>
+  <!--Apply electronic effects?-->
+  <parameter name="ElectronicEffects" type="bool" value="true"/>
+  <!--Noise added by the electronics, set in ENC (one value for each detector)-->
+  <parameter name="ElectronicNoise" type="double" value="100"/>
+  <!--Apply digitization only to SimTrackerHits for sensors having DAQ IDs in this list-->
+  <parameter name="FilterIDs" type="IntVec" value="0 1 2 3 4 5"/>
+  <!--Use integration window?-->
+  <parameter name="IntegrationWindow" type="bool" value="true"/>
+  <!--Maximum distance between ionization points (in mm)-->
+  <parameter name="MaxSegmentLength" type="double" value="0.005"/>
+  <!--Set fraction of noise hits per sensor per readout frame-->
+  <parameter name="NoiseFraction" type="float" value="0.000005"/>
+  <!--Effective bulk doping concentration, in um^-3-->
+  <parameter name="SiBulkDoping" type="double" value="10"/>
+  <!--Only Simulated hits after the StartIntegration time in ns will be digitized-->
+  <parameter name="StartIntegration" type="double" value="0"/>
+  <!--Only Simulated hits before the StopIntegration time in ns will be digitized-->
+  <parameter name="StopIntegration" type="double" value="100000"/>
+  <!--Tangent of Lorentz angle-->
+  <parameter name="TanLorentz" type="double" value="0"/>
+  <!--Top contact voltage wrt. source, in Volts-->
+  <parameter name="TopPlaneVoltage" type="double" value="-5"/>
+  <!--Keep only hits >= threshold in ADC units-->
+  <parameter name="ZSThreshold" type="float" value="0"/>
+  <!--Border length along u side, in um-->
+  <parameter name="uSideBorderLength" type="double" value="3"/>
+  <!--Border length along v side, in um-->
+  <parameter name="vSideBorderLength" type="double" value="3"/>
+</processor>
+
+ <processor name="DEPDigitizer" type="SiPixDigitizer">
+ <!--SiPixDigitizer: A rather generic silicon pixel detector digitizer-->
+  <!--Collection name for SimTrackerHits-->
+  <parameter name="SimTrackerHitCollectionName" type="string" lcioInType="SimTrackerHit"> SimTrackerHits </parameter>
+  <!--Collection name for Digits-->
+  <parameter name="DigitCollectionName" type="string" lcioOutType="TrackerData"> zsdata_dep </parameter>
+  <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+  <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
+  <!--Choose front-end electronics: ADC(0) or Comparator(1) or None(2) -->
+  <parameter name="FrontEndType" type="int" value="1"/>
+  <!--Set threshold for comparator (in e)-->
+  <parameter name="ComparatorThrehold" type="float" value="1000"/>
+  <!--Set how many bits the ADC uses-->
+  <parameter name="ADCBits" type="int" value="8"/>
+  <!--Set analog-to-digital converter range 0 - ? (in e)-->
+  <parameter name="ADCRange" type="int" value="50000"/>
+  <!--Back contact voltage wrt. source, in Volts-->
+  <parameter name="BackPlaneVoltage" type="double" value="-30"/>
+  <!--Split Signalpoints in smaller groups of N electrons (in e)-->
+  <parameter name="ElectronGroupSize" type="double" value="100"/>
+  <!--Time step for tracking electron groups in readout plane (in ns)-->
+  <parameter name="ElectronStepTime" type="double" value="0.3"/>
+  <!--Apply electronic effects?-->
+  <parameter name="ElectronicEffects" type="bool" value="true"/>
+  <!--Noise added by the electronics, set in ENC (one value for each detector)-->
+  <parameter name="ElectronicNoise" type="double" value="100"/>
+  <!--Apply digitization only to SimTrackerHits for sensors having DAQ IDs in this list-->
+  <parameter name="FilterIDs" type="IntVec" value="11"/>
+  <!--Use integration window?-->
+  <parameter name="IntegrationWindow" type="bool" value="true"/>
+  <!--Maximum distance between ionization points (in mm)-->
+  <parameter name="MaxSegmentLength" type="double" value="0.005"/>
+  <!--Set fraction of noise hits per sensor per readout frame-->
+  <parameter name="NoiseFraction" type="float" value="0.000005"/>
+  <!--Effective bulk doping concentration, in um^-3-->
+  <parameter name="SiBulkDoping" type="double" value="10"/>
+  <!--Only Simulated hits after the StartIntegration time in ns will be digitized-->
+  <parameter name="StartIntegration" type="double" value="0"/>
+  <!--Only Simulated hits before the StopIntegration time in ns will be digitized-->
+  <parameter name="StopIntegration" type="double" value="1000"/>
+  <!--Tangent of Lorentz angle-->
+  <parameter name="TanLorentz" type="double" value="0"/>
+  <!--Top contact voltage wrt. source, in Volts-->
+  <parameter name="TopPlaneVoltage" type="double" value="-5"/>
+  <!--Keep only hits >= threshold in ADC units-->
+  <parameter name="ZSThreshold" type="float" value="0"/>
+  <!--Border length along u side, in um-->
+  <parameter name="uSideBorderLength" type="double" value="3"/>
+  <!--Border length along v side, in um-->
+  <parameter name="vSideBorderLength" type="double" value="3"/>
+</processor>
+
+ <processor name="MyLCIOOutputProcessor" type="LCIOOutputProcessor">
+ <!--Writes the current event to the specified LCIO outputfile. Needs to be the last ActiveProcessor.-->
+  <!-- name of output file -->
+  <parameter name="LCIOOutputFile" type="string" value="outputfile.slcio"/>
+  <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
+  <parameter name="LCIOWriteMode" type="string" value="None"/>
+  <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
+  <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
+</processor>
+
+</marlin>
