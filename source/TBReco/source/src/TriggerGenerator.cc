@@ -224,8 +224,17 @@ namespace depfet {
        
       // Maybe it is a event with a fake trigger
       if ( m_fakeTriggerPeriod > 0 ) { 
-        if ((evt->getEventNumber())%m_fakeTriggerPeriod == 0) trg = true;
+        if ((evt->getEventNumber())%m_fakeTriggerPeriod == 0) {
+          trg = true;
+          // We signal a fake trigger by inserting an empty collection called "FakeTrigger" into the event
+          LCCollectionVec * triggerVec = new LCCollectionVec(LCIO::SIMTRACKERHIT) ;
+          evt->addCollection(triggerVec, "FakeTrigger"); 
+        }
+
       }
+
+      
+
         
       if (!trg) throw( marlin::SkipEventException(this) );
       

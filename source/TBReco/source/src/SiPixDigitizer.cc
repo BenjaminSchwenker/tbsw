@@ -237,6 +237,13 @@ namespace depfet {
     // Open collections
     try {
       
+      // Maybe this event got recorded because of a fake trigger 
+      bool isFakeTrigger = false;
+      try {
+        evt->getCollection( "FakeTrigger" );
+        isFakeTrigger = true;
+      } catch (lcio::DataNotAvailableException& e) {}  
+      
       // Open SimTrackerHit collection
       LCCollection * simHitCol = evt->getCollection( m_SimTrackerHitCollectionName );
       
@@ -279,7 +286,15 @@ namespace depfet {
 	        continue;
 	      }		
 	    }
-         
+        
+        // Cut on simHit creation time --> events with fake trigger never have simhits at t=0 
+	    if ((simTrkHit != 0) && (isFakeTrigger)) {
+	      if (simTrkHit->getTime() == 0 ) {
+            streamlog_out(MESSAGE1) << " Skipped simHit at t=0 because of a fake trigger" << std::endl; 
+	        continue;
+	      }		
+	    }
+        
         if ( std::find(m_filterIDs.begin(), m_filterIDs.end(), m_sensorID) == m_filterIDs.end() ) {
           streamlog_out(MESSAGE2) << " Ignore SimTrackerHit with sensorID: "  << m_sensorID << std::endl;
           continue;
