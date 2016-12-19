@@ -434,7 +434,7 @@ namespace depfet {
   void SiPixDigitizer::TransformToLocal(const SimTrackerHit * simTrkHit, SpacePoint & hitLocal)
   {
     Hep3Vector position(simTrkHit->getPosition()[0]*mm ,simTrkHit->getPosition()[1]*mm ,simTrkHit->getPosition()[2]*mm );
-    Hep3Vector momentum(simTrkHit->getMomentum()[0]*GeV,simTrkHit->getMomentum()[1]*GeV,simTrkHit->getMomentum()[2]*GeV);
+    Hep3Vector momentum(simTrkHit->getMomentum()[0],simTrkHit->getMomentum()[1],simTrkHit->getMomentum()[2]);
      
     // Save final results
     hitLocal.position  = position;
