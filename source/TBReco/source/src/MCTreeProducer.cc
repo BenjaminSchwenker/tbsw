@@ -365,8 +365,8 @@ namespace depfet {
         SimTrackerHit * simHit = SimHitStore[ hit2simhit[ihit] ]; 
         Hep3Vector momentum(simHit->getMomentum()[0],simHit->getMomentum()[1],simHit->getMomentum()[2]);
         
-        std::cout <<  std::setiosflags(std::ios::fixed | std::ios::internal ) 
-                  <<  std::setprecision(10)
+        std::cout << std::setiosflags(std::ios::fixed | std::ios::internal ) 
+                  << std::setprecision(16)
                   << "momentum " << simHit->getMomentum()[0] << ", " << simHit->getMomentum()[1] << ", " << simHit->getMomentum()[2]
                   << std::resetiosflags(std::ios::showpos)
                   << std::setprecision(0) 

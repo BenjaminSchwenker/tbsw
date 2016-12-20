@@ -229,6 +229,13 @@ namespace depfet {
           // Set local hit momentum 
           float hitMom[3] = { dudw*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1), dvdw*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1) , 1.0*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1) };
           simHit->setMomentum(hitMom);
+
+          std::cout << std::setiosflags(std::ios::fixed | std::ios::internal ) 
+                    << std::setprecision(16)
+                    << "momentum " << hitMom[0] << ", " << hitMom[1] << ", " << hitMom[2]
+                    << std::resetiosflags(std::ios::showpos)
+                    << std::setprecision(0) 
+                    << std::endl;
           
           // Set CellID
           cellIDEnc["sensorID"] = m_detector.GetDet(ipl).GetDAQID();
