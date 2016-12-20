@@ -17,6 +17,7 @@
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/MCParticleImpl.h> 
 #include <IMPL/SimTrackerHitImpl.h> 
+#include <IMPL/LCFlagImpl.h>
 
 // ROOT includes
 #include <TMath.h>
@@ -153,10 +154,15 @@ namespace depfet {
     
     // Create SimTrackerHit collection  
     LCCollectionVec * simHitVec = new LCCollectionVec(LCIO::SIMTRACKERHIT) ;
-     
+    
     // Create cellID encoder
     CellIDEncoder<SimTrackerHitImpl> cellIDEnc( "sensorID:6,isEntry:2,isExit:2" , simHitVec ) ;
-         
+    
+    // Needed to store momentum to lcio file 
+    LCFlagImpl aFlag(0);
+    aFlag.setBit( LCIO::THBIT_MOMENTUM );
+    simHitVec->setFlag( aFlag.getFlag() );
+     
     // Loop on all MCParticles
     for (unsigned int iMC = 0; iMC < mcVec->size(); iMC++) 
     { 
@@ -230,13 +236,6 @@ namespace depfet {
           float hitMom[3] = { dudw*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1), dvdw*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1) , 1.0*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1) };
           simHit->setMomentum(hitMom);
 
-          std::cout << std::setiosflags(std::ios::fixed | std::ios::internal ) 
-                    << std::setprecision(16)
-                    << "momentum " << hitMom[0] << ", " << hitMom[1] << ", " << hitMom[2]
-                    << std::resetiosflags(std::ios::showpos)
-                    << std::setprecision(0) 
-                    << std::endl;
-          
           // Set CellID
           cellIDEnc["sensorID"] = m_detector.GetDet(ipl).GetDAQID();
           cellIDEnc["isEntry"] = 0;

@@ -435,7 +435,7 @@ namespace depfet {
   {
     Hep3Vector position(simTrkHit->getPosition()[0]*mm ,simTrkHit->getPosition()[1]*mm ,simTrkHit->getPosition()[2]*mm );
     Hep3Vector momentum(simTrkHit->getMomentum()[0],simTrkHit->getMomentum()[1],simTrkHit->getMomentum()[2]);
-     
+    
     // Save final results
     hitLocal.position  = position;
       
@@ -557,8 +557,6 @@ namespace depfet {
       // Potential valley is at distance to top plane
       double w0 = m_detector.GetDet(m_ipl).GetSensitiveThickness()/2. - 0.02;
       double dw = 0.003;  
-      
-      //std::cout << "Depth of potential vallay [mm]: " << w0/mm << std::endl;
       
       // Drift time into potential valley -  
       double td = 1.4*1.4*um*um/( 2* Utherm * e_mobility);

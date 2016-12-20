@@ -213,7 +213,7 @@ namespace depfet {
       {         
         streamlog_out(MESSAGE2) << " SimHit at plane " << ipl << " at: (" << simHit->getPosition()[0] << ", " << simHit->getPosition()[1] << ")" 
                                 << endl;
-        
+          
         SimHitStore.push_back(simHit);    
       }                            
     } 
@@ -365,13 +365,7 @@ namespace depfet {
         SimTrackerHit * simHit = SimHitStore[ hit2simhit[ihit] ]; 
         Hep3Vector momentum(simHit->getMomentum()[0],simHit->getMomentum()[1],simHit->getMomentum()[2]);
         
-        std::cout << std::setiosflags(std::ios::fixed | std::ios::internal ) 
-                  << std::setprecision(16)
-                  << "momentum " << simHit->getMomentum()[0] << ", " << simHit->getMomentum()[1] << ", " << simHit->getMomentum()[2]
-                  << std::resetiosflags(std::ios::showpos)
-                  << std::setprecision(0) 
-                  << std::endl;
-
+        
         _rootTrackMomentum = momentum.mag();         
         _rootTrackCharge = simHit->getMCParticle()->getCharge();       
         _rootTrackPosU = simHit->getPosition()[0];          
