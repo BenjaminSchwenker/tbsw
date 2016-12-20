@@ -31,7 +31,7 @@ namespace depfet {
    *  The task of this processor is to study the relation between SimTrackerHits 
    *  and clusters.  
    *   
-   *  The processor matches SimTrackerHits to truth hits and fills ntuples 
+   *  The processor matches SimTrackerHits to reco hits and fills ntuples 
    *  for a final resolution analysis in root. The output is a root file 
    *  with a tuples for final user analysis. 
    *   
