@@ -380,18 +380,35 @@ namespace depfet {
           _histoMap[ histoName  ]->Fill( rec_mom ); 
           
           // Fill track parameter pulls
-           
+                     
           HepMatrix diff = rec_x-sim_x;
           
-          int ierr; 
-          HepMatrix jchisq = diff.T()*rec_cov.inverse(ierr)*diff;
-          
-          histoName = "hJ_det"+to_string( ipl );
-          _histoMap[histoName]->Fill(jchisq[0][0]);  
-          
-          histoName = "hJp_det"+to_string( ipl );
-          _histoMap[histoName]->Fill(TMath::Prob(jchisq[0][0], 5));
+          // Case w/o magnetic field is spacial
+          if ( ( std::abs(_detector.GetBx()) + std::abs(_detector.GetBy()) + std::abs(_detector.GetBz()) )  == 0 )  {
+             
+            int ierr; 
+            HepMatrix jchisq = diff.sub(1,4,1,1).T()*rec_cov.sub(1,4).inverse(ierr)*diff.sub(1,4,1,1);
+                        
+            histoName = "hJ_det"+to_string( ipl );
+            _histoMap[histoName]->Fill(jchisq[0][0]);  
+            
+            histoName = "hJp_det"+to_string( ipl );
+            _histoMap[histoName]->Fill(TMath::Prob(jchisq[0][0], 4));
+             
+          } else {
+            
+            int ierr; 
+            HepMatrix jchisq = diff.T()*rec_cov.inverse(ierr)*diff;
+            
+            histoName = "hJ_det"+to_string( ipl );
+            _histoMap[histoName]->Fill(jchisq[0][0]);  
+            
+            histoName = "hJp_det"+to_string( ipl );
+            _histoMap[histoName]->Fill(TMath::Prob(jchisq[0][0], 5));
+            
+          }
            
+          
           histoName = "hp1_det"+to_string( ipl );
           _histoMap[ histoName ]->Fill(diff[0][0]/TMath::Sqrt(rec_cov[0][0]));
           
