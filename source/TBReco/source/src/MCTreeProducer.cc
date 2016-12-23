@@ -351,8 +351,8 @@ namespace depfet {
          
         _rootClusterPosU = hit.GetCoord()[0][0];         
         _rootClusterPosV = hit.GetCoord()[1][0];   
-        _rootClusterSigmaU = hit.GetCov()[0][0];
-        _rootClusterSigmaV = hit.GetCov()[1][1];
+        _rootClusterSigmaU = TMath::Sqrt( hit.GetCov()[0][0] );
+        _rootClusterSigmaV = TMath::Sqrt( hit.GetCov()[1][1] );  
           
         PixelCluster Cluster = hit.GetCluster();
         

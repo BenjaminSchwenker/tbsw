@@ -24,6 +24,8 @@
       <processor name="DEPHitMaker"/>
       <processor name="VXDTracker"/>
       <processor name="DUTAnalyzer"/>
+      <processor name="MCAnalyzer"/>
+      <processor name="ValidationDQM"/>
    </execute>
 
    <global>
@@ -90,15 +92,15 @@
      <!--Name of hit collection-->
      <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_m26 </parameter>
      <!--SigmaU for cluster with one uCell contributing [mm]-->
-     <parameter name="SigmaU1" type="double" value="0.00430"/>
+     <parameter name="SigmaU1" type="double" value="0.00375"/>
      <!--SigmaU for cluster with two uCells contributing [mm]-->
-     <parameter name="SigmaU2" type="double" value="0.00360"/>
+     <parameter name="SigmaU2" type="double" value="0.00190"/>
      <!--SigmaU for cluster with three or more uCells contributing [mm]-->
      <parameter name="SigmaU3" type="double" value="0.0070"/>
      <!--SigmaV for cluster with one vCell contributing [mm]-->
-     <parameter name="SigmaV1" type="double" value="0.00430"/>
+     <parameter name="SigmaV1" type="double" value="0.00375"/>
      <!--SigmaV for cluster with two vCells contributing [mm]-->
-     <parameter name="SigmaV2" type="double" value="0.00360"/>
+     <parameter name="SigmaV2" type="double" value="0.00190"/>
      <!--SigmaV for cluster with three or more vCells contributing [mm]-->
      <parameter name="SigmaV3" type="double" value="0.0070"/>
      <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
@@ -114,15 +116,15 @@
      <!--Name of hit collection-->
      <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_dep </parameter>
      <!--SigmaU for cluster with one uCell contributing [mm]-->
-     <parameter name="SigmaU1" type="double" value="0.00430"/>
+     <parameter name="SigmaU1" type="double" value="0.00375"/>
      <!--SigmaU for cluster with two uCells contributing [mm]-->
-     <parameter name="SigmaU2" type="double" value="0.00360"/>
+     <parameter name="SigmaU2" type="double" value="0.00190"/>
      <!--SigmaU for cluster with three or more uCells contributing [mm]-->
      <parameter name="SigmaU3" type="double" value="0.0070"/>
      <!--SigmaV for cluster with one vCell contributing [mm]-->
-     <parameter name="SigmaV1" type="double" value="0.00430"/>
+     <parameter name="SigmaV1" type="double" value="0.00375"/>
      <!--SigmaV for cluster with two vCells contributing [mm]-->
-     <parameter name="SigmaV2" type="double" value="0.00360"/>
+     <parameter name="SigmaV2" type="double" value="0.00190"/>
      <!--SigmaV for cluster with three or more vCells contributing [mm]-->
      <parameter name="SigmaV3" type="double" value="0.0070"/>
      <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
@@ -144,9 +146,9 @@
      <!--To use only GoodQuality write 0 here-->
      <parameter name="HitQualitySelection" type="int" value="0"/>
      <!--Maximum hit residual [mm]-->
-     <parameter name="MaxResidualU" type="FloatVec" value="0.2"/>
+     <parameter name="MaxResidualU" type="FloatVec" value="0.1"/>
      <!--Maximum hit residual [mm]-->
-     <parameter name="MaxResidualV" type="FloatVec" value="0.2"/>
+     <parameter name="MaxResidualV" type="FloatVec" value="0.1"/>
      <!--Maximum track chisq in track fit-->
      <parameter name="MaxTrackChi2" type="float" value="50"/>
      <!--Maximum number of consecutive missing hits in track-->
@@ -188,11 +190,45 @@
      <!--Plane number of DUT along the beam line-->
      <parameter name="DUTPlane" type="int" value="3"/>
      <!--Maximum hit2track distance for hit matching [mm]-->
-     <parameter name="HitDistMax" type="double" value="0.2"/>
+     <parameter name="HitDistMax" type="double" value="0.1"/>
      <!--Output root file name-->
      <parameter name="RootFileName" type="string" value="DUT-Histos.root"/>
      <!--Use only events with one track in telescope-->
      <parameter name="SingleTrackEvents" type="bool" value="false"/>
+   </processor>
+
+   <processor name="MCAnalyzer" type="MCTreeProducer">
+     <!--MCTreeProducer: Matching SimtrackerHits to clusters and moving data into output TTree(s)-->
+     <!--Name of hit collection-->
+     <parameter name="HitCollection" type="string" lcioInType="TrackerHit"> hit_dep </parameter>
+     <!--Name of collection with simulated hits-->
+     <parameter name="SimTrackerHitCollection" type="string" lcioInType="SimTrackerHit"> SimTrackerHits </parameter>
+     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+     <parameter name="AlignmentDBFileName" type="string" value="cal-files/eudet-alignmentDB.slcio"/>
+     <!--Plane number of DUT along the beam line-->
+     <parameter name="DUTPlane" type="int" value="3"/>
+     <!--Maximum u residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
+     <parameter name="MaxResidualU" type="double" value="0.05"/>
+     <!--Maximum v residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
+     <parameter name="MaxResidualV" type="double" value="0.05"/>
+     <!--Output root file name-->
+     <parameter name="RootFileName" type="string" value="MC-Histos.root"/>
+   </processor>
+   
+   <processor name="ValidationDQM" type="TrackFitValidation">
+     <!--Produces Validation plots (pulls) for track fitting algorithms-->
+     <!--Name of collection with simulated hits-->
+     <parameter name="SimTrackerHitCollection" type="string" lcioInType="SimTrackerHit"> SimTrackerHits </parameter>
+     <!--Name of collection with reco tracks -->
+     <parameter name="TrackCollection" type="string" lcioInType="Track"> aligntracks </parameter>
+     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+     <parameter name="AlignmentDBFileName" type="string" value="cal-files/eudet-alignmentDB.slcio"/>
+     <!--Maximum u residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
+     <parameter name="MaxResidualU" type="double" value="0.05"/>
+     <!--Maximum v residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
+     <parameter name="MaxResidualV" type="double" value="0.05"/>
+     <!--Output root file name-->
+     <parameter name="RootFileName" type="string" value="Validation.root"/>
    </processor>
 
   

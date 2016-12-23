@@ -66,15 +66,15 @@
      <!--Name of hit collection-->
      <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_m26 </parameter>
      <!--SigmaU for cluster with one uCell contributing [mm]-->
-     <parameter name="SigmaU1" type="double" value="0.00430"/>
+     <parameter name="SigmaU1" type="double" value="0.00375"/>
      <!--SigmaU for cluster with two uCells contributing [mm]-->
-     <parameter name="SigmaU2" type="double" value="0.00360"/>
+     <parameter name="SigmaU2" type="double" value="0.00190"/>
      <!--SigmaU for cluster with three or more uCells contributing [mm]-->
      <parameter name="SigmaU3" type="double" value="0.0070"/>
      <!--SigmaV for cluster with one vCell contributing [mm]-->
-     <parameter name="SigmaV1" type="double" value="0.00430"/>
+     <parameter name="SigmaV1" type="double" value="0.00375"/>
      <!--SigmaV for cluster with two vCells contributing [mm]-->
-     <parameter name="SigmaV2" type="double" value="0.00360"/>
+     <parameter name="SigmaV2" type="double" value="0.00190"/>
      <!--SigmaV for cluster with three or more vCells contributing [mm]-->
      <parameter name="SigmaV3" type="double" value="0.0070"/>
      <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
@@ -113,15 +113,15 @@
      <!--Name of hit collection-->
      <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_dep </parameter>
      <!--SigmaU for cluster with one uCell contributing [mm]-->
-     <parameter name="SigmaU1" type="double" value="0.00430"/>
+     <parameter name="SigmaU1" type="double" value="0.00375"/>
      <!--SigmaU for cluster with two uCells contributing [mm]-->
-     <parameter name="SigmaU2" type="double" value="0.00360"/>
+     <parameter name="SigmaU2" type="double" value="0.00190"/>
      <!--SigmaU for cluster with three or more uCells contributing [mm]-->
      <parameter name="SigmaU3" type="double" value="0.0070"/>
      <!--SigmaV for cluster with one vCell contributing [mm]-->
-     <parameter name="SigmaV1" type="double" value="0.00430"/>
+     <parameter name="SigmaV1" type="double" value="0.00375"/>
      <!--SigmaV for cluster with two vCells contributing [mm]-->
-     <parameter name="SigmaV2" type="double" value="0.00360"/>
+     <parameter name="SigmaV2" type="double" value="0.00190"/>
      <!--SigmaV for cluster with three or more vCells contributing [mm]-->
      <parameter name="SigmaV3" type="double" value="0.0070"/>
      <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->

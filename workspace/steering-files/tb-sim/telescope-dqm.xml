@@ -83,11 +83,11 @@
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
      <!--Momentum at centre of reference plane [GeV]-->
-     <parameter name="CentralMomentum" type="double" value="3.16"/>
+     <parameter name="CentralMomentum" type="double" value="3"/>
      <!--Plane number along the beam line-->
      <parameter name="ReferencePlane" type="int" value="3"/>
      <!--Momentum slope along u [GeV/mm]-->
-     <parameter name="SlopeUMomentum" type="double" value="-0.006"/>
+     <parameter name="SlopeUMomentum" type="double" value="0"/>
      <!--Momentum slope along v [GeV/mm]-->
      <parameter name="SlopeVMomentum" type="double" value="0"/>
    </processor>
