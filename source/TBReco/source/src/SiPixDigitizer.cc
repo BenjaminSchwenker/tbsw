@@ -237,6 +237,13 @@ namespace depfet {
     // Open collections
     try {
       
+      // Maybe this event got recorded because of a fake trigger 
+      bool isFakeTrigger = false;
+      try {
+        evt->getCollection( "FakeTrigger" );
+        isFakeTrigger = true;
+      } catch (lcio::DataNotAvailableException& e) {}  
+      
       // Open SimTrackerHit collection
       LCCollection * simHitCol = evt->getCollection( m_SimTrackerHitCollectionName );
       
@@ -261,15 +268,33 @@ namespace depfet {
         m_sensorID = cellIDDec(simTrkHit)["sensorID"];
         m_ipl = m_detector.GetPlaneNumber(m_sensorID);
          
-        streamlog_out(MESSAGE1) << " Found SimTrackerHit with sensorID: " << m_sensorID << std::endl;
-         
+        streamlog_out(MESSAGE1) << " Found SimTrackerHit with sensorID: " << m_sensorID  
+                                << std::setprecision(10)
+                                << " at time[s]:" << simTrkHit->getTime()
+                                << std::setprecision(0) << std::endl;
+
+        streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
+                                << std::setprecision(10)
+                                << "Integration start/stop[s]: " << m_startIntegration << "/" << m_stopIntegration
+                                << std::setprecision(0) << std::endl;
+                              
+ 
         // Cut on simHit creation time --> simulate integration time of a sensor (if option switched on))
 	    if ((simTrkHit != 0) && (m_integrationWindow)) {
-	      if (simTrkHit->getTime()*ns < m_startIntegration || simTrkHit->getTime()*ns > m_stopIntegration) {
+	      if (simTrkHit->getTime() < m_startIntegration || simTrkHit->getTime() > m_stopIntegration) {
+            streamlog_out(MESSAGE1) << " Skipped simHit out of integration time" << std::endl; 
 	        continue;
 	      }		
 	    }
-         
+        
+        // Cut on simHit creation time --> events with fake trigger never have simhits at t=0 
+	    if ((simTrkHit != 0) && (isFakeTrigger)) {
+	      if (simTrkHit->getTime() == 0 ) {
+            streamlog_out(MESSAGE1) << " Skipped simHit at t=0 because of a fake trigger" << std::endl; 
+	        continue;
+	      }		
+	    }
+        
         if ( std::find(m_filterIDs.begin(), m_filterIDs.end(), m_sensorID) == m_filterIDs.end() ) {
           streamlog_out(MESSAGE2) << " Ignore SimTrackerHit with sensorID: "  << m_sensorID << std::endl;
           continue;
@@ -409,8 +434,8 @@ namespace depfet {
   void SiPixDigitizer::TransformToLocal(const SimTrackerHit * simTrkHit, SpacePoint & hitLocal)
   {
     Hep3Vector position(simTrkHit->getPosition()[0]*mm ,simTrkHit->getPosition()[1]*mm ,simTrkHit->getPosition()[2]*mm );
-    Hep3Vector momentum(simTrkHit->getMomentum()[0]*GeV,simTrkHit->getMomentum()[1]*GeV,simTrkHit->getMomentum()[2]*GeV);
-     
+    Hep3Vector momentum(simTrkHit->getMomentum()[0],simTrkHit->getMomentum()[1],simTrkHit->getMomentum()[2]);
+    
     // Save final results
     hitLocal.position  = position;
       
@@ -532,8 +557,6 @@ namespace depfet {
       // Potential valley is at distance to top plane
       double w0 = m_detector.GetDet(m_ipl).GetSensitiveThickness()/2. - 0.02;
       double dw = 0.003;  
-      
-      //std::cout << "Depth of potential vallay [mm]: " << w0/mm << std::endl;
       
       // Drift time into potential valley -  
       double td = 1.4*1.4*um*um/( 2* Utherm * e_mobility);

@@ -11,17 +11,28 @@ gStyle->SetPaintTextFormat("1f");
 gStyle->SetOptStat(0);
 
 
+Int_t BINSU = 256;
+Int_t BINSV = 128;
+
+Int_t MAXU = 1152;
+Int_t MAXV = 576;
+
+
+
 // 
 // Analysis cuts 
-TCut basecut = "1x1Quality == 0 && chi2 < 100 && iEvt > 25000 && nTelTracks == 1 && nhits>0";
+TCut basecut = "trackChi2 < 100 && trackNHits  == 6 &&  iEvt > 25000 && nTelTracks == 1";
 TCut seedcut = "seedCharge > 0";
 TCut matched = "hasHit == 0"; 
-TCut col_cut = "col_fit >= 0 && col_fit < 32";
-TCut row_cut = "row_fit >= 0 && row_fit < 63"; 
+TCut u_cut = Form("cellU_fit >= 0 && cellU_fit < %d",MAXU);
+TCut v_cut = Form("cellV_fit >= 0 && cellV_fit < %d",MAXV); 
+
+
+
 
 //
 // event data 
-TFile *ftb = new TFile("root-final/Histos-run000331.root");
+TFile *ftb = new TFile("root-files/DUT-Histos-dutmc.root");
 TTree *ttbtrack = (TTree*) ftb->Get("Track");
 
 
@@ -32,16 +43,25 @@ c1->SetTopMargin(0.1);
 c1->SetBottomMargin(0.16);
 
 
-ttbtrack->Draw(" row_fit >> htotal_row(64,0,64)" , basecut && col_cut );
-ttbtrack->Draw(" row_fit >> hpass_row(64,0,64)" ,  basecut && col_cut && seedcut && matched );
+ttbtrack->Draw(Form("cellV_fit >> htotal_row(%d,0,%d)",BINSV,MAXV) , basecut && u_cut );
+ttbtrack->Draw(Form("cellV_fit >> hpass_row(%d,0,%d)",BINSV,MAXV) ,  basecut && u_cut && seedcut && matched );
 
-TGraphAsymmErrors * effiRow = new TGraphAsymmErrors ( hpass_row, htotal_row, "w" ); 
+
+
+TH1F* pass_row = dynamic_cast<TH1F*> (hpass_row); 
+TH1F* total_row = dynamic_cast<TH1F*> (htotal_row); 
+
+
+
+TGraphAsymmErrors * effiRow = new TGraphAsymmErrors ( pass_row, total_row, "w" ); 
+
+
 
 effiRow->SetTitle("");
-effiRow->GetXaxis()->SetTitle("rows");
+effiRow->GetXaxis()->SetTitle("cellV [cellID]");
 effiRow->GetYaxis()->SetTitle("efficiency");
-effiRow->GetXaxis()->SetRangeUser(0,64);
-effiRow->GetYaxis()->SetRangeUser(0.98,1.0);
+effiRow->GetXaxis()->SetRangeUser(0,MAXV);
+effiRow->GetYaxis()->SetRangeUser(0.0,1.0);
 effiRow->GetXaxis()->SetTitleSize(0.06);
 effiRow->GetYaxis()->SetTitleSize(0.06);
 effiRow->GetXaxis()->SetLabelSize(0.06);
@@ -49,16 +69,9 @@ effiRow->GetYaxis()->SetLabelSize(0.06);
 //effiRow->GetXaxis()->SetTitleOffset(1.3);
 effiRow->GetYaxis()->SetTitleOffset(1.7);
 
-hpass_row->Draw();
+pass_row->Draw();
 effiRow->Draw("a*"); 
 
-
-
-TLegend* l1 = new TLegend(0.45,0.2,0.85,0.45);
-l1->SetFillColor(kWhite); 
-l1->SetBorderSize(0);
-l1->AddEntry("effiRow","H4.1.15 CERN 2012","pe");
-l1->Draw();
 
 
 TCanvas * c2  = new TCanvas("c2","c2",600,400);
@@ -67,16 +80,25 @@ c2->SetRightMargin(0.1);
 c2->SetTopMargin(0.1);
 c2->SetBottomMargin(0.16);
 
-ttbtrack->Draw(" col_fit >> htotal_col(32,0,32)" , basecut && row_cut );
-ttbtrack->Draw(" col_fit >> hpass_col(32,0,32)" ,  basecut && row_cut && seedcut && matched );
+ttbtrack->Draw(Form("cellU_fit  >> htotal_col(%d,0,%d)",BINSU,MAXU) , basecut && v_cut );
+ttbtrack->Draw(Form("cellU_fit  >> hpass_col(%d,0,%d)",BINSU,MAXU) ,  basecut && v_cut && seedcut && matched );
 
-TGraphAsymmErrors * effiCol = new TGraphAsymmErrors ( hpass_col, htotal_col, "w" ); 
+
+
+
+TH1F* pass_col = dynamic_cast<TH1F*> (hpass_col); 
+TH1F* total_col = dynamic_cast<TH1F*> (htotal_col); 
+
+
+
+
+TGraphAsymmErrors * effiCol = new TGraphAsymmErrors ( pass_col, total_col, "w" ); 
 
 effiCol->SetTitle("");
-effiCol->GetXaxis()->SetTitle("columns");
+effiCol->GetXaxis()->SetTitle("cellU [cellID]");
 effiCol->GetYaxis()->SetTitle("efficiency");
 effiCol->GetYaxis()->SetRangeUser(0.98,1.0);
-effiCol->GetXaxis()->SetRangeUser(0,32);
+effiCol->GetXaxis()->SetRangeUser(0,MAXU);
 effiCol->GetXaxis()->SetTitleSize(0.06);
 effiCol->GetYaxis()->SetTitleSize(0.06);
 effiCol->GetXaxis()->SetLabelSize(0.06);
@@ -89,29 +111,22 @@ hpass_col->Draw();
 effiCol->Draw("a*"); 
 
 
-TLegend* l2 = new TLegend(0.45,0.2,0.85,0.45);
-l2->SetFillColor(kWhite); 
-l2->SetBorderSize(0);
-l2->AddEntry("effiCol","H4.1.15 CERN 2012","pe");
-l2->Draw();
-
-
 TCanvas * c3  = new TCanvas("c3","c3",600,600);
 c3->SetLeftMargin(0.14);
 c3->SetRightMargin(0.26);
 c3->SetTopMargin(0.1);
 c3->SetBottomMargin(0.16);
 
-ttbtrack->Draw(" row_fit:col_fit >> htotal(64,0,64,64,0,64)" , basecut );
-ttbtrack->Draw(" row_fit:col_fit >> hpass(64,0,64,64,0,64)" ,  basecut && seedcut && matched );
+ttbtrack->Draw(Form(" cellV_fit:cellU_fit >> htotal(%d,0,%d,%d,0,%d)", BINSU,MAXU,BINSV,MAXV) , basecut );
+ttbtrack->Draw(Form(" cellV_fit:cellU_fit >> hpass(%d,0,%d,%d,0,%d)",BINSU,MAXU,BINSV,MAXV) ,  basecut && seedcut && matched );
 
 TH2D * effi = hpass->Clone(); 
 effi->Divide(htotal); 
 
 
 effi->SetTitle("");
-effi->GetXaxis()->SetTitle("columns");
-effi->GetYaxis()->SetTitle("rows");
+effi->GetXaxis()->SetTitle("cellU [cellID]");
+effi->GetYaxis()->SetTitle("cellV [cellID]");
 effi->GetZaxis()->SetTitle("efficiency");
 effi->GetZaxis()->SetRangeUser(0.0,1.0);
 effi->GetXaxis()->SetTitleSize(0.06);

@@ -17,6 +17,7 @@
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/MCParticleImpl.h> 
 #include <IMPL/SimTrackerHitImpl.h> 
+#include <IMPL/LCFlagImpl.h>
 
 // ROOT includes
 #include <TMath.h>
@@ -153,10 +154,15 @@ namespace depfet {
     
     // Create SimTrackerHit collection  
     LCCollectionVec * simHitVec = new LCCollectionVec(LCIO::SIMTRACKERHIT) ;
-     
+    
     // Create cellID encoder
     CellIDEncoder<SimTrackerHitImpl> cellIDEnc( "sensorID:6,isEntry:2,isExit:2" , simHitVec ) ;
-         
+    
+    // Needed to store momentum to lcio file 
+    LCFlagImpl aFlag(0);
+    aFlag.setBit( LCIO::THBIT_MOMENTUM );
+    simHitVec->setFlag( aFlag.getFlag() );
+     
     // Loop on all MCParticles
     for (unsigned int iMC = 0; iMC < mcVec->size(); iMC++) 
     { 
@@ -165,7 +171,7 @@ namespace depfet {
       MCParticle* mcp = dynamic_cast<MCParticle* > ( mcVec->getElementAt(iMC) )  ;   
       
       streamlog_out(MESSAGE1) << "Processing generator particle " << mcp->getGeneratorStatus() 
-                              << " at time " << mcp->getTime() << endl; 
+                              << " at time[s] " << std::setprecision(10) << mcp->getTime() << std::setprecision(0) << endl; 
       
       
       // Create a complete trajectory state for the MCParticle needed to 
@@ -229,7 +235,7 @@ namespace depfet {
           // Set local hit momentum 
           float hitMom[3] = { dudw*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1), dvdw*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1) , 1.0*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1) };
           simHit->setMomentum(hitMom);
-          
+
           // Set CellID
           cellIDEnc["sensorID"] = m_detector.GetDet(ipl).GetDAQID();
           cellIDEnc["isEntry"] = 0;
