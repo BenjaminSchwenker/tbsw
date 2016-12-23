@@ -118,8 +118,10 @@ namespace depfet {
     int _rootClusterSize;             // Number of hit cells (pixels/strips) in cluster
     int _rootClusterSizeU;            // Number of hit cells along u direction in cluster
     int _rootClusterSizeV;            // Number of hit cells along v direction in cluster
-    int _rootClusterStartU;           // Hit u coordinate lies on this u cell
-    int _rootClusterStartV;           // Hit v coordinate lies on this v cell
+    int _rootClusterStartCellIdU;     // U Id of start cell
+    int _rootClusterStartCellIdV;     // V Id of start cell  
+    double _rootClusterStartCellPosU; // U position of start cell 
+    double _rootClusterStartCellPosV; // V position of start cell 
     double _rootTrackMomentum;        // Track momentum [GeV/c]  
     double _rootTrackCharge;          // Track charge [e]
     double _rootTrackPosU;            // Track U position [mm] 

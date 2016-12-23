@@ -334,8 +334,10 @@ namespace depfet {
       _rootClusterSize = 0;            
       _rootClusterSizeU = 0;            
       _rootClusterSizeV = 0;            
-      _rootClusterStartU = 0;           
-      _rootClusterStartV = 0;           
+      _rootClusterStartCellIdU = -1;          
+      _rootClusterStartCellIdV = -1;
+      _rootClusterStartCellPosU = 0; 
+      _rootClusterStartCellPosV = 0;             
       _rootTrackMomentum = 0;         
       _rootTrackCharge = 0;        
       _rootTrackPosU = 0;           
@@ -359,9 +361,12 @@ namespace depfet {
         _rootClusterSize = Cluster.getSize();  
         _rootClusterSizeU = Cluster.getUSize();     
         _rootClusterSizeV = Cluster.getVSize();  
-        _rootClusterStartU = Cluster.getUStart();
-        _rootClusterStartV = Cluster.getVStart();   
+        _rootClusterStartCellIdU = Cluster.getUStart();
+        _rootClusterStartCellIdV = Cluster.getVStart();   
         
+        _rootClusterStartCellPosU = dut.GetPixelCenterCoordU( Cluster.getVStart(), Cluster.getUStart()); 
+        _rootClusterStartCellPosV = dut.GetPixelCenterCoordV( Cluster.getVStart(), Cluster.getUStart()); 
+
         SimTrackerHit * simHit = SimHitStore[ hit2simhit[ihit] ]; 
         Hep3Vector momentum(simHit->getMomentum()[0],simHit->getMomentum()[1],simHit->getMomentum()[2]);
         
@@ -443,29 +448,31 @@ namespace depfet {
     // 
     // Cluster Tree  
     _rootClusterTree = new TTree("Cluster","Cluster info");
-    _rootClusterTree->Branch("iRun"            ,&_rootRunNumber              ,"iRun/I");
-    _rootClusterTree->Branch("iEvt"            ,&_rootEventNumber            ,"iEvt/I");
-    _rootClusterTree->Branch("sensorID"        ,&_rootSensorID               ,"sensorID/I");
-    _rootClusterTree->Branch("clusterID"       ,&_rootClusterID              ,"clusterID/I"); 
-    _rootClusterTree->Branch("clusterIDU"      ,&_rootClusterIDU             ,"clusterIDU/I"); 
-    _rootClusterTree->Branch("clusterIDV"      ,&_rootClusterIDV             ,"clusterIDV/I"); 
-    _rootClusterTree->Branch("clusterPosU"     ,&_rootClusterPosU            ,"clusterPosU/D");
-    _rootClusterTree->Branch("clusterPosV"     ,&_rootClusterPosV            ,"clusterPosV/D");  
-    _rootClusterTree->Branch("clusterSigmaU"   ,&_rootClusterSigmaU          ,"clusterSigmaU/D");
-    _rootClusterTree->Branch("clusterSigmaV"   ,&_rootClusterSigmaV          ,"clusterSigmaV/D");   
-    _rootClusterTree->Branch("clusterCharge"   ,&_rootClusterCharge          ,"clusterCharge/D");
-    _rootClusterTree->Branch("seedCharge"      ,&_rootSeedCharge             ,"seedCharge/D");
-    _rootClusterTree->Branch("clusterSizeU"    ,&_rootClusterSizeU           ,"clusterSizeU/I");
-    _rootClusterTree->Branch("clusterSizeV"    ,&_rootClusterSizeV           ,"clusterSizeV/I");
-    _rootClusterTree->Branch("clusterSize"     ,&_rootClusterSize            ,"clusterSize/I");
-    _rootClusterTree->Branch("clusterStartU"   ,&_rootClusterStartU          ,"clusterSizeV/I");
-    _rootClusterTree->Branch("clusterStartV"   ,&_rootClusterStartV          ,"clusterSize/I");
-    _rootClusterTree->Branch("trackMomentum"   ,&_rootTrackMomentum          ,"trackMomentum/D"); 
-    _rootClusterTree->Branch("trackCharge"     ,&_rootTrackCharge            ,"trackCharge/D"); 
-    _rootClusterTree->Branch("trackPosU"       ,&_rootTrackPosU              ,"trackPosU/D");
-    _rootClusterTree->Branch("trackPosV"       ,&_rootTrackPosV              ,"trackPosV/D"); 
-    _rootClusterTree->Branch("trackDuDw"       ,&_rootTrackdUdW              ,"trackDuDw/D");
-    _rootClusterTree->Branch("trackDvDw"       ,&_rootTrackdVdW              ,"trackDvDw/D");    
+    _rootClusterTree->Branch("iRun"                  ,&_rootRunNumber              ,"iRun/I");
+    _rootClusterTree->Branch("iEvt"                  ,&_rootEventNumber            ,"iEvt/I");
+    _rootClusterTree->Branch("sensorID"              ,&_rootSensorID               ,"sensorID/I");
+    _rootClusterTree->Branch("clusterID"             ,&_rootClusterID              ,"clusterID/I"); 
+    _rootClusterTree->Branch("clusterIDU"            ,&_rootClusterIDU             ,"clusterIDU/I"); 
+    _rootClusterTree->Branch("clusterIDV"            ,&_rootClusterIDV             ,"clusterIDV/I"); 
+    _rootClusterTree->Branch("clusterPosU"           ,&_rootClusterPosU            ,"clusterPosU/D");
+    _rootClusterTree->Branch("clusterPosV"           ,&_rootClusterPosV            ,"clusterPosV/D");  
+    _rootClusterTree->Branch("clusterSigmaU"         ,&_rootClusterSigmaU          ,"clusterSigmaU/D");
+    _rootClusterTree->Branch("clusterSigmaV"         ,&_rootClusterSigmaV          ,"clusterSigmaV/D");   
+    _rootClusterTree->Branch("clusterCharge"         ,&_rootClusterCharge          ,"clusterCharge/D");
+    _rootClusterTree->Branch("seedCharge"            ,&_rootSeedCharge             ,"seedCharge/D");
+    _rootClusterTree->Branch("clusterSizeU"          ,&_rootClusterSizeU           ,"clusterSizeU/I");
+    _rootClusterTree->Branch("clusterSizeV"          ,&_rootClusterSizeV           ,"clusterSizeV/I");
+    _rootClusterTree->Branch("clusterSize"           ,&_rootClusterSize            ,"clusterSize/I");
+    _rootClusterTree->Branch("clusterStartCellIdU"   ,&_rootClusterStartCellIdU    ,"clusterStartCellIdU/I");
+    _rootClusterTree->Branch("clusterStartCellIdV"   ,&_rootClusterStartCellIdV    ,"clusterStartCellIdV/I");
+    _rootClusterTree->Branch("clusterStartCellPosU"  ,&_rootClusterStartCellPosU   ,"clusterStartCellPosU/D");
+    _rootClusterTree->Branch("clusterStartCellPosV"  ,&_rootClusterStartCellPosV   ,"clusterStartCellPosV/D");
+    _rootClusterTree->Branch("trackMomentum"         ,&_rootTrackMomentum          ,"trackMomentum/D"); 
+    _rootClusterTree->Branch("trackCharge"           ,&_rootTrackCharge            ,"trackCharge/D"); 
+    _rootClusterTree->Branch("trackPosU"             ,&_rootTrackPosU              ,"trackPosU/D");
+    _rootClusterTree->Branch("trackPosV"             ,&_rootTrackPosV              ,"trackPosV/D"); 
+    _rootClusterTree->Branch("trackDuDw"             ,&_rootTrackdUdW              ,"trackDuDw/D");
+    _rootClusterTree->Branch("trackDvDw"             ,&_rootTrackdVdW              ,"trackDvDw/D");    
     
      
   }
