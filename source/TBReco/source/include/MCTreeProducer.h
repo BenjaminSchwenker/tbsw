@@ -21,8 +21,12 @@
 
 // Include ROOT classes
 #include <TFile.h>
+#include <TH1F.h>
+#include <TH2F.h>
 #include <TTree.h>
 #include <TMath.h>
+#include <TRandom.h>
+#include <TRandom3.h>
 
 namespace depfet {
 
@@ -89,45 +93,84 @@ namespace depfet {
     
     //! DUT plane number, counting sensors in gear file along the beam line starting at zero 
     int _idut; 
+
+    //! Minimum number of clusters occurances 
+    int _minClusters; 
       
     //! Max residual for hit-track matching in mm
     double _maxResidualU; 
     double _maxResidualV; 
     
+    //! Create clusterDB from hitmaker flag 
+    bool _createDBFromHitMaker;
+
+    //! Histogram binning parameters
+    std::vector<float >  _binningU;
+    std::vector<float >  _binningV;
+    std::vector<float >  _binningTu;
+    std::vector<float >  _binningTv;
+    std::vector<float >  _binningMom;
+    
    private:
     
     // ROOT_OUTPUT 
     TFile * _rootFile;
+    
+    std::map<std::string, int>  _clusterMap;  
+    
+    std::map< std::string, TH1F *> _histoMapU;
+    std::map< std::string, TH1F *> _histoMapV;
+    std::map< std::string, TH1F *> _histoMapTu;
+    std::map< std::string, TH1F *> _histoMapTv;
+    std::map< std::string, TH1F *> _histoMapMom;
+
+    
+    std::map< std::string, TH2F *> _histoMapU_V; 
+    std::map< std::string, TH2F *> _histoMapU_Tu; 
+    std::map< std::string, TH2F *> _histoMapU_Tv; 
+    std::map< std::string, TH2F *> _histoMapU_Mom; 
+    std::map< std::string, TH2F *> _histoMapV_Tu; 
+    std::map< std::string, TH2F *> _histoMapV_Tv; 
+    std::map< std::string, TH2F *> _histoMapV_Mom;  
+    std::map< std::string, TH2F *> _histoMapTv_Tu; 
+    std::map< std::string, TH2F *> _histoMapTv_Mom; 
+    std::map< std::string, TH2F *> _histoMapTu_Mom; 
+   
      
-    /** One entry per cluster on the DUT */
+    /** One entry per cluster */
     TTree * _rootClusterTree;
     
-    // Variables in hit tree       
-    int _rootEventNumber;             // Event number from lcio file
-    int _rootRunNumber;               // Run number from lcio file 
-    int _rootSensorID;                // SensorID from lcio file (this is typically NOT the plane number!!)
-    int _rootClusterID;               // Cluster ID 
-    int _rootClusterIDU;              // Cluster ID for u cluster 
-    int _rootClusterIDV;              // Cluster ID for v cluster  
-    double _rootClusterPosU;          // Cluster U position [mm]     
-    double _rootClusterPosV;          // Cluster V position [mm]   
-    double _rootClusterSigmaU;        // Sigma for cluster U position [mm]
-    double _rootClusterSigmaV;        // Sigma for cluster V position [mm]   
-    double _rootClusterCharge;        // Sum over all charges in the cluster 
-    double _rootSeedCharge;           // Highest charge in cluster
-    int _rootClusterSize;             // Number of hit cells (pixels/strips) in cluster
-    int _rootClusterSizeU;            // Number of hit cells along u direction in cluster
-    int _rootClusterSizeV;            // Number of hit cells along v direction in cluster
-    int _rootClusterStartCellIdU;     // U Id of start cell
-    int _rootClusterStartCellIdV;     // V Id of start cell  
-    double _rootClusterStartCellPosU; // U position of start cell 
-    double _rootClusterStartCellPosV; // V position of start cell 
+    // Variables in cluster tree      
+    std::string _rootClusterID;       // Cluster ID 
     double _rootTrackMomentum;        // Track momentum [GeV/c]  
-    double _rootTrackCharge;          // Track charge [e]
     double _rootTrackPosU;            // Track U position [mm] 
     double _rootTrackPosV;            // Track V position [mm]                   
     double _rootTrackdUdW;            // Track slope [rad]     
-    double _rootTrackdVdW;            // Track slope [rad]     
+    double _rootTrackdVdW;            // Track slope [rad]    
+    
+ 
+    // Variables for clusterDB
+    double _rootClusterPosU;          // Cluster U position [mm]     
+    double _rootClusterPosV;          // Cluster V position [mm]   
+    double _rootClusterDuDw;          // Cluster slope [rad]  
+    double _rootClusterDvDw;          // Cluster slope [rad]
+    double _rootClusterMom;           // Cluster momentum [GeV] 
+    double _rootClusterSigmaU;        // Sigma for cluster U position [mm]
+    double _rootClusterSigmaV;        // Sigma for cluster V position [mm] 
+    double _rootClusterSigmaDuDw;     // Sigma for slope
+    double _rootClusterSigmaDvDw;     // Sigma for slope
+    double _rootClusterSigmaMom;      // Sigma for momentum
+    double _rootClusterCorrUV;        // Correlation 
+    double _rootClusterCorrUTu;       // Correlation 
+    double _rootClusterCorrUTv;       // Correlation 
+    double _rootClusterCorrUMom;      // Correlation 
+    double _rootClusterCorrVTu;       // Correlation 
+    double _rootClusterCorrVTv;       // Correlation 
+    double _rootClusterCorrVMom;      // Correlation 
+    double _rootClusterCorrTvTu;      // Correlation 
+    double _rootClusterCorrTvMom;     // Correlation 
+    double _rootClusterCorrTuMom;     // Correlation 
+    
     
     // Handle to detector data 
     TBDetector  _detector;    

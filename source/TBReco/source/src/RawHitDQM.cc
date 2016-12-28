@@ -200,7 +200,7 @@ void RawHitDQM::processEvent(LCEvent * evt)
       _histoMap[ histoName  ]->Fill(Cluster.getSeedCharge()); 
       
       histoName = "hcls_type_sensor"+to_string(  iplane  );
-      _histoMap[ histoName  ]->Fill(Cluster.getClusterType()); 
+      _histoMap[ histoName  ]->Fill(0); 
        
       histoName = "hsize_sensor"+to_string(  iplane  );   
       _histoMap[ histoName  ]->Fill(Cluster.getSize()); 

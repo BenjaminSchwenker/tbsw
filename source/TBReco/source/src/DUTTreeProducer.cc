@@ -401,7 +401,7 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
     
     PixelCluster Cluster = hit.GetCluster();
        
-    _rootHitQuality = Cluster.getClusterType(); 
+    _rootHitQuality = 0; 
     _rootHitClusterCharge = Cluster.getCharge() ; 
     _rootHitSeedCharge = Cluster.getSeedCharge() ; 
     _rootHitSize = Cluster.getSize();  

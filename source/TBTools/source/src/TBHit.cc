@@ -144,7 +144,7 @@ PixelCluster TBHit::GetCluster()
   
   TrackerData * clusterDigits = dynamic_cast<TrackerData *> ( clusterVec[0] );
     
-  return PixelCluster(clusterDigits,DAQID,Quality);  
+  return PixelCluster(clusterDigits,DAQID);  
 }
 
 StripCluster TBHit::GetStripCluster() 
