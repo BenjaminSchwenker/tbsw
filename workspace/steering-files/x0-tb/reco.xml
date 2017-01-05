@@ -86,6 +86,8 @@
      <!--FastTracker: Performs track finding and fitting for beam tests-->
      <!--Input hit collection names-->
      <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> hit_m26 </parameter>
+     <!--Name of not used hit collection-->
+     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> unusedhits_down </parameter>
      <!--Collection name for fitted tracks-->
      <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> down_tracks </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
@@ -130,6 +132,8 @@
      <!--FastTracker: Performs track finding and fitting for beam tests-->
      <!--Input hit collection names-->
      <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> hit_m26 </parameter>
+     <!--Name of not used hit collection-->
+     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> unusedhits_up </parameter>
      <!--Collection name for fitted tracks-->
      <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> up_tracks </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->

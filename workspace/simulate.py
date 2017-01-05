@@ -73,9 +73,10 @@ if __name__ == '__main__':
   def move_over(src, dest):
     if os.path.exists(dest):
       os.remove(dest)
-    shutil.move(src, dest)
+    if os.path.isfile(src):
+      shutil.move(src, dest)
   
-  src = 'outputfile.slcio'
+  src = 'outputfile'
   dest = os.path.join(fullpath, ofile)	
   move_over(src, dest)      	
   	                       
