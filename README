@@ -21,7 +21,8 @@ is to make a copy of this folder. For example:
 
 The idea of the folder 'workspace-my-beam-test' is to collect all steering files and analysis results from a specific beam test. 
 Please replace the 'my-beam-test' part with something more specific like 'desy_october_2016' or similar. Note that the steering 
-files and scripts in the workspace folder come with a specific version of tbsw and are not guaranteed to be backward compatible.  
+files and scripts in the workspace folder come with a specific version of tbsw and are not guaranteed to be backward compatible.
+For simplicity, we will call this folder just workspace in the following.  
 
 Raw data files (.raw or converted .slcio) should not be stored directly in your new workspace folder. The reason is that raw data 
 is of course not bound to a tbsw version. It is advised to create two folders outside of your workspace and to collect all raw data there.
@@ -47,7 +48,7 @@ The command
 
 >./converter.py -i 'path-to-big-disk/eudaq-raw/my-beam-test/*' -o path-to-big-disk/converted-lcio/my-beam-test
 
-will convert all your .raw files into converted .slio files and copies them to the assigned output folder. The converter script 
+will convert all your .raw files into converted .slcio files and copies them to the assigned output folder. The converter script 
 uses the python multiprocessing module to use many processes as possible on your machine to speed up conversion. The script accepts
 wildcards and regular expressions for the input file names to specify exactly which .raw files shall be converted.  
 
@@ -66,11 +67,11 @@ make sure you really have all needed numbers in the logbook.
 The idea is to create a full set of steering files for each of these experiments. In case of radiation length measurements, there is already
 a template folder with steering files: 
 
-> cp -r workspace/steering-files/x0-tb   workspace/steering-files/x0-my-dut
+> cp -r workspace/steering-files/x0-tb   workspace/steering-files/my-x0-tb
 
 The new steering-files folder has the content: 
 
-1) gear.xml                           : xml file to describe the telescope geometry 
+1) gear.xml                           : xml file to describe the nominal telescope geometry (before alignment corrections) 
 2) hotpixelkiller.xml                 : Marlin steering file, part of calibration 
 3) correlator.xml                     : Marlin steering file, part of calibration 
 4) kalmanalign-iteration-1.xml        : Marlin steering file, part of calibration 
@@ -79,20 +80,31 @@ The new steering-files folder has the content:
 7) align-config-iteration-2.cfg       : text file used to define alignment parameters 
 8) telescope-dqm.xml                  : Marlin steering file, part of calibration 
 9) reco.xml                           : Marlin steering file, contains all parameters for reconstruction 
+10)simulation.xml                     : Marlin steering file to produce lcio file with simulated digits
+11)gear-misaligned.xml                : xml file to describe the misaligned telescope geometry (the one used for simulation)  
 
 All these files area readable by a text editor. But only few of them need to be modified. It typically boils down to editing the z 
 positions of sensors in the gear.xml file, setting the particle momentum to the beam energy in Marlin steering files. Please read the 
-comments in the files, it is pretty self explanatory.  
+comments in the files, it is pretty self explanatory. 
 
-After editing the steering files, we can proceed to run the calibration script from the workspace:  
+In case you have no test beam data yet, there is the possibility to generate simulated test beam data. In order to do so, you can use 
+the simulate.py script: 
 
-> ./calibrate.py -i 'path/converted-lcio/my-beam-test/runXY.slcio' -x 'steering-files/x0-my-dut' -c 'my-dut'
+./simulate.py -g steering-files/my-x0-tb/gear-misaligned.xml -x steering-files/my-x0-tb/simulation.xml -o run-XY.slcio 
+ 
+The output file run-XY.slcio will be created in yout workspace. The calibration and reconstruction of the file run-XY.slcio proceeds 
+in the same way as for real test beam data. 
+
+
+Once we have the .slcio file, we can proceed to run the calibration script from the workspace:  
+
+> ./calibrate.py -i path-to-big-disk/converted-lcio/my-beam-test/run-XY.slcio -x steering-files/my-x0-tb -c my-x0
 
 The -i option defines which run to use for calibration. The -x options defines the folder of steering files to be used. The option -c 
 sets a calibration tag, a common name for all calibration data that are created. The calibrate.py script runs a hot-pixel killer to
 mask noisy channels, performs a full alignment of the telescope and creates DQM plots. A typical execution example looks like: 
 
-./calibrate.py -i data_from_kristin/run000282-merger.slcio  -x steering-files/luise-tb/ -c strip
+> ./calibrate.py -i path-to-big-disk/converted-lcio/my-beam-test/run-XY.slcio -x steering-files/my-x0-tb -c my-x0
 [Print] HotPixelKiller done ...
 [Print] Correlator done ...
 [Print] Alignment first iteration done ...
@@ -100,10 +112,10 @@ mask noisy channels, performs a full alignment of the telescope and creates DQM 
 [Print] Alignment third iteration done ...
 [Print] Alignment fourth iteration done ...
 [Print] TelescopeDQM done.
-[Print] All calibration files written to /home/benjamin/hep/testbeam/workspace_desy_itk_luise_test/cal-files/strip
+[Print] All calibration files written to /home/benjamin/workspace_my_test_beam/cal-files/my-x0
 
-You can see that all needed calibration files aregrouped into a folder 'strip' residing in 'cal-files'. 
-Also note that a folder 'tmp-runs/run000282-merger-strip' gets created containing log files and DQM root
+You can see that all needed calibration files aregrouped into a folder 'my-x0' residing in 'cal-files'. 
+Also note that a folder 'tmp-runs/run-XY-my-x0' gets created containing log files and DQM root
 files with many interesting plots to check the success of the calibration. 
 
 After the calibration is done, we can now run the full reconstruction on all runs taken under identical conditions (belonging to the same calibration 
@@ -111,11 +123,11 @@ tag). The ranges of run numbers taken under identical conditions and belonging t
 
 For our example, we will just run over the run also used to create the tag: 
 
-./reco.py -i data_from_kristin/run000282-merger.slcio  -x steering-files/luise-tb/reco.xml -c strip
+> ./reco.py -i path-to-big-disk/converted-lcio/my-beam-test/run-XY.slcio -x steering-files/my-x0-tb/reco.xml -c my-x0
 
 The reco.py script will loop once over all events in the file input file and apply the reconstruction 
-processors defined in the xml file 'steering-files/luise-tb/reco.xml' to each event. The string '-c strip' 
-means that calibration results stored in 'cal-files/strip' will be used. 
+processors defined in the xml file 'steering-files/luise-tb/reco.xml' to each event. The string '-c my-x0' 
+means that calibration results stored in 'cal-files/my-x0' will be used. 
 
 The reco.py script will populate the folder 'root-files' in your workspace. The root files can be browsed directly using ROOT TBrowser.  
 Some useful root macros can be found in the 'root-scripts' folder in the workspace. For X0 studies, have a look in the 'root-scripts/x0imaging' 
