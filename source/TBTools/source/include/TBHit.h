@@ -55,8 +55,8 @@ class TBHit {
  public: // functions 
    
   // Constructors 
-  TBHit(int newdaqid, double u, double v, double cov_u, double cov_v);
-  TBHit(int newdaqid, double u, double v, double cov_u, double cov_v, int quality);
+  TBHit();
+  TBHit(int newdaqid, double u, double v, double cov_u, double cov_v, double cov_uv, int quality);
   TBHit(int newdaqid, CLHEP::HepMatrix coord, CLHEP::HepSymMatrix cov);
   TBHit(lcio::TrackerHit* lciohit);
    

@@ -23,15 +23,16 @@ namespace depfet {
 
 
 // Constructors 
- 
-TBHit::TBHit(int newdaqid, double u, double v, double cov_u, double cov_v) : DAQID(newdaqid), Coord(2, 1), Cov(2,1)
+
+TBHit::TBHit() : DAQID(-1), Coord(2, 1), Cov(2,1)
 {
   // Set hit coordinates 
-  Coord[0][0] = u;
-  Coord[1][0] = v;   
+  Coord[0][0] = 0;
+  Coord[1][0] = 0;   
   // Set hit covariance
-  Cov[0][0] = cov_u;
-  Cov[1][1] = cov_v;   
+  Cov[0][0] = 0;
+  Cov[1][1] = 0;   
+  Cov[0][1] = 0; 
   // Set hit id 
   UniqueID = -1; 
   // Set raw data pointer
@@ -39,8 +40,8 @@ TBHit::TBHit(int newdaqid, double u, double v, double cov_u, double cov_v) : DAQ
   // Set quality 
   Quality = 0; 
 }
-
-TBHit::TBHit(int newdaqid, double u, double v, double cov_u, double cov_v, int q) : DAQID(newdaqid), Coord(2, 1), Cov(2,1)
+ 
+TBHit::TBHit(int newdaqid, double u, double v, double cov_u, double cov_v, double cov_uv, int q) : DAQID(newdaqid), Coord(2, 1), Cov(2,1)
 {
   // Set hit coordinates 
   Coord[0][0] = u;
@@ -48,6 +49,7 @@ TBHit::TBHit(int newdaqid, double u, double v, double cov_u, double cov_v, int q
   // Set hit covariance
   Cov[0][0] = cov_u;
   Cov[1][1] = cov_v;   
+  Cov[0][1] = cov_uv; 
   // Set hit id 
   UniqueID = -1; 
   // Set raw data pointer

@@ -217,9 +217,10 @@ namespace depfet {
         double v = simTrkHit->getPosition()[1]*mm + gRandom->Gaus(0, m_sigmaV); 
         double cov_u = std::pow(m_sigmaU,2);
         double cov_v = std::pow(m_sigmaV,2); 
+        double cov_uv = 0; 
         
         // Create TrackerHit    
-        TBHit hit(sensorID, u, v, cov_u, cov_v, clsType);
+        TBHit hit(sensorID, u, v, cov_u, cov_v, cov_uv, clsType);
         
         // Make LCIO TrackerHit
         TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  

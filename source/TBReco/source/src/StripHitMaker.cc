@@ -174,8 +174,9 @@ void StripHitMaker::processEvent(LCEvent * evt)
       
     double cov_v = pow(Sensor.GetResolutionV(),2); 
     double cov_u = pow(Sensor.GetResolutionU(),2);
-         
-    TBHit hit(sensorID, u, v, cov_u, cov_v, 0);
+    double cov_uv = 0;         
+
+    TBHit hit(sensorID, u, v, cov_u, cov_v, cov_uv, 0);
     hit.SetUniqueID(iClu);      
     
     if (isU)
@@ -198,7 +199,7 @@ void StripHitMaker::processEvent(LCEvent * evt)
       if (hitU.GetDAQID() == hitV.GetDAQID() ) {
         
         // Make LCIO TrackerHit 
-        TBHit hit(hitU.GetDAQID(), hitU.GetCoord()[0][0], hitV.GetCoord()[1][0], hitU.GetCov()[0][0], hitV.GetCov()[1][1], 0);
+        TBHit hit(hitU.GetDAQID(), hitU.GetCoord()[0][0], hitV.GetCoord()[1][0], hitU.GetCov()[0][0], hitV.GetCov()[1][1], 0, 0);
         TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
             
         // Add link to full cluster data 

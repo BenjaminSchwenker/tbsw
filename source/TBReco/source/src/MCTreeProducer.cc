@@ -76,14 +76,9 @@ namespace depfet {
                              std::string("hit") ) ;
      
     
-    // Processor parameters:
-    
-    registerProcessorParameter ("AlignmentDBFileName",
-                                "This is the name of the LCIO file with the alignment constants (add .slcio)",
-                                _alignmentDBFileName, static_cast< string > ( "alignmentDB.slcio" ) );     
-    
+    // Processor parameters: 
     registerProcessorParameter ("DUTPlane",
-                                "Plane number of DUT along the beam line",
+                                "Plane number of DUT along the beam line (-1 for all sensors in input collection)",
                                 _idut,  static_cast < int > (3));
        
     registerProcessorParameter ("MaxResidualU",
@@ -192,18 +187,7 @@ namespace depfet {
     
     // Read detector constants from gear file
     _detector.ReadGearConfiguration();  
-    
-    // Read alignment data base file 
-    _detector.ReadAlignmentDB( _alignmentDBFileName );    
-    
-    // Load DUT module    
-    Det & dut = _detector.GetDet(_idut); 
-          
-    // Print out geometry information  
-    streamlog_out ( MESSAGE3 )  << "D.U.T. plane  ID = " << dut.GetDAQID()
-                                << "  at position = " << _idut 
-                                << endl << endl;
-    
+      
     bookHistos(); 
   }
   
@@ -357,7 +341,7 @@ namespace depfet {
             double hitPosV = recoHit.GetCoord()[1][0];
              
 
-            // Skip all DUT hits with too large residuum 
+            // Skip all hits with too large residuum 
             if ( std::abs(hitPosU-simHitPosU) >= _maxResidualU && _maxResidualU > 0 ) continue;  
             if ( std::abs(hitPosV-simHitPosV) >= _maxResidualV && _maxResidualV > 0 ) continue; 
             
@@ -386,7 +370,7 @@ namespace depfet {
           hit2simhit[besthit] = bestsimhit;
         } 
   
-      } // End of do loop of matching DUT hits to fitted positions
+      } // End of do loop of matching  hits to fitted positions
       while( bestsimhit>-1 &&  besthit>-1);
     }
     
@@ -646,7 +630,8 @@ namespace depfet {
     TH1F *hDB_Sigma_V    = new TH1F("hDB_Sigma_V","",NBINS,0,NBINS);
     TH1F *hDB_Sigma_Tu   = new TH1F("hDB_Sigma_Tu","",NBINS,0,NBINS); 
     TH1F *hDB_Sigma_Tv   = new TH1F("hDB_Sigma_Tv","",NBINS,0,NBINS);
-    TH1F *hDB_Sigma_Mom  = new TH1F("hDB_Sigma_Mom","",NBINS,0,NBINS);  
+    TH1F *hDB_Sigma_Mom  = new TH1F("hDB_Sigma_Mom","",NBINS,0,NBINS);
+    TH1F *hDB_Cov_UV     = new TH1F("hDB_Cov_UV","",NBINS,0,NBINS);  
     TH1F *hDB_Corr_UV    = new TH1F("hDB_Corr_UV","",NBINS,0,NBINS);
     TH1F *hDB_Corr_UTu   = new TH1F("hDB_Corr_UTu","",NBINS,0,NBINS);    
     TH1F *hDB_Corr_UTv   = new TH1F("hDB_Corr_UTv","",NBINS,0,NBINS);
@@ -657,13 +642,13 @@ namespace depfet {
     TH1F *hDB_Corr_TvTu  = new TH1F("hDB_Corr_TvTu","",NBINS,0,NBINS);  
     TH1F *hDB_Corr_TvMom = new TH1F("hDB_Corr_TvMom","",NBINS,0,NBINS);
     TH1F *hDB_Corr_TuMom = new TH1F("hDB_Corr_TuMom","",NBINS,0,NBINS);  
-
+    
     hDB_ID->SetStats( false );
     hDB_ID->SetYTitle("clusterID fraction");  
     hDB_U->SetStats( false );
-    hDB_U->SetYTitle("offset u [mm]");  
+    hDB_U->SetYTitle("offset u [mm]");   
     hDB_V->SetStats( false );
-    hDB_V->SetYTitle("offset v [mm]");  
+    hDB_V->SetYTitle("offset v [mm]"); 
     hDB_Tu->SetStats( false );
     hDB_Tu->SetYTitle("du/dw");     
     hDB_Tv->SetStats( false );
@@ -679,7 +664,9 @@ namespace depfet {
     hDB_Sigma_Tv->SetStats( false );
     hDB_Sigma_Tv->SetYTitle("sigma dv/dw");   
     hDB_Sigma_Mom->SetStats( false );
-    hDB_Sigma_Mom->SetYTitle("sigma momentum [GeV]");   
+    hDB_Sigma_Mom->SetYTitle("sigma momentum [GeV]");  
+    hDB_Cov_UV->SetStats( false );
+    hDB_Cov_UV->SetYTitle("covariance u-v"); 
     hDB_Corr_UV->SetStats( false );
     hDB_Corr_UV->SetYTitle("correlation factor u-v");   
     hDB_Corr_UTv->SetStats( false );
@@ -710,28 +697,6 @@ namespace depfet {
       string id = iter->first;
       i++;  
        
-      _rootClusterPosU        = _histoMapU[id]->GetMean();        
-      _rootClusterPosV        = _histoMapV[id]->GetMean();      
-      _rootClusterDuDw        = _histoMapTu[id]->GetMean();         
-      _rootClusterDvDw        = _histoMapTv[id]->GetMean();        
-      _rootClusterMom         = _histoMapMom[id]->GetMean();            
-      _rootClusterSigmaU      = _histoMapU[id]->GetRMS();         
-      _rootClusterSigmaV      = _histoMapV[id]->GetRMS();     
-      _rootClusterSigmaDuDw   = _histoMapTu[id]->GetRMS();     
-      _rootClusterSigmaDvDw   = _histoMapTv[id]->GetRMS();     
-      _rootClusterSigmaMom    = _histoMapMom[id]->GetRMS();       
-      _rootClusterCorrUV      = _histoMapU_V[id]->GetCorrelationFactor();      
-      _rootClusterCorrUTu     = _histoMapU_Tu[id]->GetCorrelationFactor();   
-      _rootClusterCorrUTv     = _histoMapU_Tv[id]->GetCorrelationFactor();  
-      _rootClusterCorrUMom    = _histoMapU_Mom[id]->GetCorrelationFactor();
-      _rootClusterCorrVTu     = _histoMapV_Tu[id]->GetCorrelationFactor();     
-      _rootClusterCorrVTv     = _histoMapV_Tv[id]->GetCorrelationFactor();  
-      _rootClusterCorrVMom    = _histoMapV_Mom[id]->GetCorrelationFactor();
-      _rootClusterCorrTvTu    = _histoMapTv_Tu[id]->GetCorrelationFactor();  
-      _rootClusterCorrTvMom   = _histoMapTv_Mom[id]->GetCorrelationFactor();
-      _rootClusterCorrTuMom   = _histoMapTu_Mom[id]->GetCorrelationFactor();
-      
-      
       hDB_ID->SetBinContent( i, count );
       hDB_ID->SetBinError( i, TMath::Sqrt(count) );
       hDB_ID->GetXaxis()->SetBinLabel( i, id.c_str() );
@@ -739,7 +704,7 @@ namespace depfet {
       hDB_U->SetBinContent( i, _histoMapU[id]->GetMean() );
       hDB_U->SetBinError( i, _histoMapU[id]->GetMeanError() );
       hDB_U->GetXaxis()->SetBinLabel( i, id.c_str() );
-
+      
       hDB_V->SetBinContent( i, _histoMapV[id]->GetMean() );
       hDB_V->SetBinError( i, _histoMapV[id]->GetMeanError() );
       hDB_V->GetXaxis()->SetBinLabel( i, id.c_str() );
@@ -775,6 +740,10 @@ namespace depfet {
       hDB_Sigma_Mom->SetBinContent( i, _histoMapMom[id]->GetRMS() );
       hDB_Sigma_Mom->SetBinError( i, _histoMapMom[id]->GetRMSError() );
       hDB_Sigma_Mom->GetXaxis()->SetBinLabel( i, id.c_str() );
+
+      hDB_Cov_UV->SetBinContent( i, _histoMapU_V[id]->GetCovariance() );
+      hDB_Cov_UV->SetBinError( i, 0 );
+      hDB_Cov_UV->GetXaxis()->SetBinLabel( i, id.c_str() );
 
       hDB_Corr_UV->SetBinContent( i, _histoMapU_V[id]->GetCorrelationFactor() );
       hDB_Corr_UV->SetBinError( i, 0 );
@@ -816,15 +785,12 @@ namespace depfet {
       hDB_Corr_TuMom->SetBinError( i, 0 );
       hDB_Corr_TuMom->GetXaxis()->SetBinLabel( i, id.c_str() );
             
-     
-          
-      
       streamlog_out(MESSAGE3) << "  ClusterId:  " << id << " count: " << count << endl
                               << std::setiosflags(std::ios::fixed | std::ios::internal )
                               << std::setprecision(8)
-                              << "  u: " << _rootClusterPosU << ", sigma: " << _rootClusterSigmaU << endl
-                              << "  v: " << _rootClusterPosV << ", sigma: " << _rootClusterSigmaV << endl
-                              << "  corr: " << _rootClusterCorrUV 
+                              << "  u: " << _histoMapU[id]->GetMean() << ", sigma: " << _histoMapU[id]->GetRMS() << endl
+                              << "  v: " << _histoMapV[id]->GetMean() << ", sigma: " << _histoMapV[id]->GetRMS() << endl
+                              << "  corr: " << _histoMapU_V[id]->GetCorrelationFactor() 
                               << std::setprecision(3)
                               << endl;
     

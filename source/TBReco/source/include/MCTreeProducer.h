@@ -84,10 +84,7 @@ namespace depfet {
     
     //! Input DUT TrackerHit collection name
     std::string _hitColName;   
-     
-    //! Alignment DB file name 
-    std::string _alignmentDBFileName;
-    
+       
     //! ROOT output file name  
     std::string _rootFileName;  
     
@@ -147,30 +144,6 @@ namespace depfet {
     double _rootTrackPosV;            // Track V position [mm]                   
     double _rootTrackdUdW;            // Track slope [rad]     
     double _rootTrackdVdW;            // Track slope [rad]    
-    
- 
-    // Variables for clusterDB
-    double _rootClusterPosU;          // Cluster U position [mm]     
-    double _rootClusterPosV;          // Cluster V position [mm]   
-    double _rootClusterDuDw;          // Cluster slope [rad]  
-    double _rootClusterDvDw;          // Cluster slope [rad]
-    double _rootClusterMom;           // Cluster momentum [GeV] 
-    double _rootClusterSigmaU;        // Sigma for cluster U position [mm]
-    double _rootClusterSigmaV;        // Sigma for cluster V position [mm] 
-    double _rootClusterSigmaDuDw;     // Sigma for slope
-    double _rootClusterSigmaDvDw;     // Sigma for slope
-    double _rootClusterSigmaMom;      // Sigma for momentum
-    double _rootClusterCorrUV;        // Correlation 
-    double _rootClusterCorrUTu;       // Correlation 
-    double _rootClusterCorrUTv;       // Correlation 
-    double _rootClusterCorrUMom;      // Correlation 
-    double _rootClusterCorrVTu;       // Correlation 
-    double _rootClusterCorrVTv;       // Correlation 
-    double _rootClusterCorrVMom;      // Correlation 
-    double _rootClusterCorrTvTu;      // Correlation 
-    double _rootClusterCorrTvMom;     // Correlation 
-    double _rootClusterCorrTuMom;     // Correlation 
-    
     
     // Handle to detector data 
     TBDetector  _detector;    
