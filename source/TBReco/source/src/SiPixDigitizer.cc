@@ -60,10 +60,6 @@ namespace depfet {
                              "Collection name for Digits",
                               m_digitCollectionName, std::string("zsdata"));
     
-    registerProcessorParameter ("AlignmentDBFileName",
-                             "This is the name of the LCIO file with the alignment constants (add .slcio)",
-                             _alignmentDBFileName, static_cast< std::string > ( "eudet-alignmentDB.slcio" ) );  
-    
     std::vector<int> initFilterIDs;
     registerProcessorParameter ("FilterIDs",
                                 "Apply digitization only to SimTrackerHits for sensors having DAQ IDs in this list",
@@ -202,9 +198,6 @@ namespace depfet {
     
     // Read detector constants from gear file
     m_detector.ReadGearConfiguration();      
-    
-    // Read alignment data base file 
-    m_detector.ReadAlignmentDB( _alignmentDBFileName );  
     
     // Print set parameters
     printProcessorParams();

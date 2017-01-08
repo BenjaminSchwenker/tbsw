@@ -147,10 +147,7 @@ namespace depfet {
     
     //! Digit collection name
     std::string m_digitCollectionName;	
-    
-    //! Alignment DB file name 
-    std::string _alignmentDBFileName;
-        
+         
     // Readout/DAQ parameters - set by user
     std::vector<int >  m_filterIDs;              //!< Digitize only sensors in this list
     float m_noiseFraction;                       //!< Fraction of noise hits

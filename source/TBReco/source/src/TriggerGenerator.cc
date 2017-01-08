@@ -53,10 +53,6 @@ namespace depfet {
                              "Collection name for SimTrackerHits",
                              m_SimTrackerHitCollectionName, string ("SimTrackerHits"));
     
-    registerProcessorParameter ("AlignmentDBFileName",
-                             "This is the name of the LCIO file with the alignment constants (add .slcio)",
-                             _alignmentDBFileName, static_cast< string > ( "eudet-alignmentDB.slcio" ) );  
-
     registerProcessorParameter ("FakeTriggerPeriod",
                              "Every nth simulated event will be accepted regardless of trigger coincidence",
                               m_fakeTriggerPeriod, static_cast< int > ( 0 ) );  
@@ -90,10 +86,6 @@ namespace depfet {
 
     // Read detector constants from gear file
     m_detector.ReadGearConfiguration();  
-    
-    // Read alignment data base file 
-    m_detector.ReadAlignmentDB( _alignmentDBFileName );
-    
     
     if ( _scintiNo1.size() >= 5 ) {
       int sensorID = (int) _scintiNo1[0];
