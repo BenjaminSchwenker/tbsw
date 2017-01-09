@@ -42,16 +42,17 @@ def reco_run(params):
   # check that calibration files exist
   caldir = caldir = fullpath+'/cal-files/'+caltag   
   if not os.path.isdir(caldir):
-    print ('[Print] fatal: no calibration data found')
+    print ('[Print] warning: no calibration data found')
     return  
-  
-  # copy calibration files 
-  shutil.copytree(caldir,tmpdir+'/cal-files')
+  else: 
+    # copy calibration files 
+    shutil.copytree(caldir,tmpdir+'/cal-files')
   
   # run reco in tmp dir 
   os.chdir(tmpdir)
                        
-  subprocess.call('/$MARLIN/bin/Marlin reco.xml > log.txt 2>&1', shell=True)
+  #subprocess.call('/$MARLIN/bin/Marlin reco.xml > log.txt 2>&1', shell=True)
+  subprocess.call('/$MARLIN/bin/Marlin reco.xml', shell=True)
   
 
   # clean up tmp files 

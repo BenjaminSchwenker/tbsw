@@ -10,10 +10,11 @@ if __name__ == '__main__':
   
   rawfile = ''
   xmlpath = ''
-  caltag='default'
+  caltag='dummy'
+  useMC = False
   
   try:
-    opts, args = getopt.getopt(sys.argv[1:],"hi:x:c:",["ifile=","xmlfile=","caltag="])
+    opts, args = getopt.getopt(sys.argv[1:],"hi:x:c:",["ifile=","xmlfile=","caltag=","useMC="])
   except getopt.GetoptError:
     print ('calibrate.py -i <inputfile>  -x <xmlfile> -c <caltag>')
     print ('-c is optional and defaults to: ' + caltag )
@@ -29,7 +30,9 @@ if __name__ == '__main__':
       xmlpath = arg
     elif opt in ("-c", "--caltag"):
       caltag = arg
-  
+    elif opt in ("--useMC"):
+      useMC = arg
+   
   if rawfile == '':
     print ('missing option: -i path/to/inputfilename.slcio')
     sys.exit(2)  
@@ -70,6 +73,10 @@ if __name__ == '__main__':
   subprocess.call('/$MARLIN/bin/Marlin hotpixelkiller.xml > log-hotpixel.txt 2>&1', shell=True)
   print ('[Print] HotPixelKiller done ...')
   		  
+  if useMC:
+    subprocess.call('/$MARLIN/bin/Marlin cluster-calibration.xml > log-clustering.txt 2>&1', shell=True)
+    print ('[Print] ClusterDB done ...')    
+  
   subprocess.call('/$MARLIN/bin/Marlin correlator.xml > log-correlator.txt 2>&1', shell=True)    
   print ('[Print] Correlator done ...')           
                   		              
@@ -103,7 +110,7 @@ if __name__ == '__main__':
   os.mkdir(caldir)		
 
   # save all files with calibration data to common folder   
-  for dbfile in glob.glob('*.slcio'): 
+  for dbfile in glob.glob('*DB*'): 
     shutil.copy(dbfile, os.path.join(caldir,dbfile))  
   # treat the gear file as a calibration file as well
   shutil.copy('gear.xml', os.path.join(caldir,'gear.xml'))  
