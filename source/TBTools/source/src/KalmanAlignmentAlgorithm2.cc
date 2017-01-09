@@ -148,9 +148,6 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
   // Outlier rejection
   double probCut = mEnv.GetValue("probabilityCut", 0.5);
   double deviationCut = mEnv.GetValue("deviationCut", 1.0);
-  
-  // Minimum number of hits in track
-  int mintrkhits = mEnv.GetValue("minTrackHits", 7);
     
   // Use beam model to constrain track fitting
   int useBC = mEnv.GetValue("useBeamModel", 0);
@@ -299,11 +296,7 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
     KalmanAlignmentInputProvider kaip;       
     TBTrack trk = kaip.MakeTBTrack( *alignEvent, aligned_detector );  
     
-    // Skip tracks with to few hits 
-    //-----------------------------
-    if ( trk.GetNumHits() < mintrkhits ) {
-      continue; 
-    } 
+    
 
     // Deterministic annealing (geometric cooling scheme)
     // must be applied before the track is refitted!!
@@ -357,16 +350,7 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
       nOutliers1++;
       continue;
     } 
-
-   
-     
-    
-    
-    // Skip tracks with to few hits 
-    //----------------------
-    if ( trk.GetNumHits() < mintrkhits ) 
-      continue; 
-       
+        
     // Kalman update for hit alignables 
     // -------------------------------- 
     // Loop over all alignable sensors

@@ -110,6 +110,15 @@ namespace depfet {
      */
     unsigned short getVStart() const { return m_vStart; }
 
+    /** Get cluster ID string. 
+     * @return cluster ID string with signal charge.
+     */
+    std::string getClusterID() const { return m_id; }
+
+    /** Get digital cluster ID string. 
+     * @return digital cluster ID string w/o signal charge.
+     */
+    std::string getDigitalClusterID() const { return m_digitalID; }
     
   protected:
       
@@ -121,7 +130,8 @@ namespace depfet {
     unsigned short m_vSize;      // Cluster size in vcells  
     unsigned short m_uStart;     // Start ucell of the cluster 
     unsigned short m_vStart;     // Start vcell of the cluster 
-    std::string m_id;            // Cluster shape id   
+    std::string m_id;            // Analog cluster id   
+    std::string m_digitalID;     // Digital cluster id   
     
   };
 
