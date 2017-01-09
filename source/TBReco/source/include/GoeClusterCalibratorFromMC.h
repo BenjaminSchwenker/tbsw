@@ -1,10 +1,10 @@
 // ///////////////////////////////////////////////////////////////////////////////////////  //
 //                                                                                          //
-//    MCTreeProducer - Marlin Processor                                                     //
+//    GoeClusterCalibratorFromMC - Marlin Processor                                         //
 // ///////////////////////////////////////////////////////////////////////////////////////  //
 
-#ifndef MCTreeProducer_H
-#define MCTreeProducer_H 1
+#ifndef GoeClusterCalibratorFromMC_H
+#define GoeClusterCalibratorFromMC_H 1
 
 // DEPFETTrackTools includes
 #include "TBDetector.h"
@@ -25,34 +25,30 @@
 #include <TH2F.h>
 #include <TTree.h>
 #include <TMath.h>
-#include <TRandom.h>
-#include <TRandom3.h>
+
 
 namespace depfet {
 
-  //! MCTreeProducer  
+  //! GoeClusterCalibratorFromMC  
   /*! 
-   *  The task of this processor is to study the relation between SimTrackerHits 
-   *  and clusters.  
-   *   
-   *  The processor matches SimTrackerHits to reco hits and fills ntuples 
-   *  for a final resolution analysis in root. The output is a root file 
-   *  with a tuples for final user analysis. 
+   *  The task of this processor is to create a clusterDB for all clusters
+   *  contained in the input cluster collection. The clusterDB will be used
+   *  later to compute a 2D hit measurement together with a 2x2 covariance
+   *  matrix for any given cluster.  
    *   
    *  Author: B.Schwenker, Universität Göttingen
    *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
    */
    
-  
-  class MCTreeProducer : public marlin::Processor {
+  class GoeClusterCalibratorFromMC : public marlin::Processor {
    
    public:
    
     //!Method that returns a new instance of this processor
-    virtual Processor*  newProcessor() { return new MCTreeProducer ; }
+    virtual Processor*  newProcessor() { return new GoeClusterCalibratorFromMC ; }
     
     //!Constructor - set processor description and register processor parameters
-    MCTreeProducer();
+    GoeClusterCalibratorFromMC();
     
     //!Method called at the beginning of data processing - used for initialization
     virtual void init();
@@ -82,31 +78,18 @@ namespace depfet {
     //! Input Track collection name
     std::string _simHitColName;
     
-    //! Input DUT TrackerHit collection name
+    //! Input TrackerHit collection name
     std::string _hitColName;   
        
     //! ROOT output file name  
-    std::string _rootFileName;  
+    std::string _clusterDBFileName;   
     
-    //! DUT plane number, counting sensors in gear file along the beam line starting at zero 
-    int _idut; 
-
     //! Minimum number of clusters occurances 
     int _minClusters; 
       
     //! Max residual for hit-track matching in mm
     double _maxResidualU; 
     double _maxResidualV; 
-    
-    //! Create clusterDB from hitmaker flag 
-    bool _createDBFromHitMaker;
-
-    //! Histogram binning parameters
-    std::vector<float >  _binningU;
-    std::vector<float >  _binningV;
-    std::vector<float >  _binningTu;
-    std::vector<float >  _binningTv;
-    std::vector<float >  _binningMom;
     
    private:
     
@@ -117,22 +100,7 @@ namespace depfet {
     
     std::map< std::string, TH1F *> _histoMapU;
     std::map< std::string, TH1F *> _histoMapV;
-    std::map< std::string, TH1F *> _histoMapTu;
-    std::map< std::string, TH1F *> _histoMapTv;
-    std::map< std::string, TH1F *> _histoMapMom;
-
-    
-    std::map< std::string, TH2F *> _histoMapU_V; 
-    std::map< std::string, TH2F *> _histoMapU_Tu; 
-    std::map< std::string, TH2F *> _histoMapU_Tv; 
-    std::map< std::string, TH2F *> _histoMapU_Mom; 
-    std::map< std::string, TH2F *> _histoMapV_Tu; 
-    std::map< std::string, TH2F *> _histoMapV_Tv; 
-    std::map< std::string, TH2F *> _histoMapV_Mom;  
-    std::map< std::string, TH2F *> _histoMapTv_Tu; 
-    std::map< std::string, TH2F *> _histoMapTv_Mom; 
-    std::map< std::string, TH2F *> _histoMapTu_Mom; 
-   
+    std::map< std::string, TH2F *> _histoMapUV; 
      
     /** One entry per cluster */
     TTree * _rootClusterTree;

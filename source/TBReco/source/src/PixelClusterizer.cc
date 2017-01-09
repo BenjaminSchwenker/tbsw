@@ -559,7 +559,7 @@ bool PixelClusterizer::isDuplicated( FloatVec &group, int col, int row )
  
 void  PixelClusterizer::initializeStatus( LCEvent * event )  {
   
-  streamlog_out( MESSAGE3 ) << "Initializing status" << endl;
+  streamlog_out( MESSAGE2 ) << "Initializing status" << endl;
   
   try {
          
