@@ -28,7 +28,7 @@ namespace depfet {
   /** Constructor */
   PixelCluster::PixelCluster( TrackerData * Digits, unsigned short sensorID) : 
                                   m_sensorID(sensorID), m_clsCharge(0), m_seedCharge(0),
-                                  m_clsSize(0), m_uSize(0), m_vSize(0), m_uStart(0), m_vStart(0), m_id("")
+                                  m_clsSize(0), m_uSize(0), m_vSize(0), m_uStart(0), m_vStart(0), m_id(""), m_digitalID("")
   {
     FloatVec rawDigits = Digits->getChargeValues();
     int size = rawDigits.size()/3; 
@@ -67,15 +67,19 @@ namespace depfet {
     std::sort(sortedDigits.begin(), sortedDigits.end());
     
     // Compute Id string from sorted digits
-    stringstream out;     
+    stringstream streamID;     
+    stringstream streamDigitalID;    
     
-    out << size; 
+    streamID << size; 
+    streamDigitalID << size;     
     
     for (auto digit : sortedDigits ) {
-      out << "D" << digit.m_cellIDV - vMin <<  "." << digit.m_cellIDU - uMin << "." << digit.m_charge;  
+      streamID << "D" << digit.m_cellIDV - vMin <<  "." << digit.m_cellIDU - uMin << "." << digit.m_charge;  
+      streamDigitalID << "D" << digit.m_cellIDV - vMin <<  "." << digit.m_cellIDU - uMin;  
     } 
     
-    m_id = out.str();   
+    m_id = streamID.str();   
+    m_digitalID = streamDigitalID.str(); 
   }
 
 }

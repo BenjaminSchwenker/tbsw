@@ -29,11 +29,10 @@
 namespace depfet {
 
 //! TrackFitDQM processor 
-/*! The Processor produces data driven check DQM plots to test the  
- *  quality of track fitting and detector alignment. All plots are 
- *  written into a root file. 
- * 
- *   
+/*! The Processor produces data driven DQM histos to test the  
+ *  quality of track fitting and detector alignment. All histos
+ *  are written into a root file. 
+ *    
  *  Author: Benjamin Schwenker, Göttingen University 
  *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
  */
@@ -82,9 +81,7 @@ protected:
    
 //! ROOT output file name  
    std::string _rootFileName;
-   
-
-      
+         
  private:
    
    double _timeCPU; //!< CPU time
@@ -93,6 +90,9 @@ protected:
    
    // Handle to detector data 
    TBDetector  _detector;     
+   
+   std::map<int, std::map<std::string, int> >  _clusterSpectrumMap;  
+   std::map<int, TDirectory *>  _clusterDirMap;  
 
    // Handle to root file
    TFile * _rootFile;
@@ -100,8 +100,9 @@ protected:
    std::map< std::string, TH1D *> _histoMap;
    std::map< std::string, TH2D *> _histoMap2D;  
    std::map< std::string, TProfile *> _profileMap; 
+
    
-   
+
    
 }; // Class
 
