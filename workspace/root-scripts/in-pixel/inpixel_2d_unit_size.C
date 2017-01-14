@@ -11,13 +11,13 @@ gStyle->SetPaintTextFormat("1f");
 gStyle->SetOptStat(0);
 
 // Event data 
-TFile *ftb = new TFile("Histos.root");
+TFile *ftb = new TFile("root-files/DUT-Histos-dutmc.root");
        
 //
 // Sensor paramaters
 
-double PITCHX = 50; // in um 
-double PITCHY = 75; // in um 
+double PITCHX = 18.4; // in um 
+double PITCHY = 18.4; // in um 
 
 // 
 // Super pixel contains XPIX x YPIX pixel cells  
@@ -53,17 +53,17 @@ Int_t _sizeRow;
 
 TTree * mytuple = (TTree*) ftb->Get("Hit");  
 
-mytuple->SetBranchAddress("chi2",&_chi2);
+mytuple->SetBranchAddress("trackChi2",&_chi2);
 mytuple->SetBranchAddress("hasTrack",&_hasTrack);
 mytuple->SetBranchAddress("u_fit",&_u_fit);
 mytuple->SetBranchAddress("v_fit",&_v_fit);
-mytuple->SetBranchAddress("col_fit",&_col_fit);
-mytuple->SetBranchAddress("row_fit",&_row_fit);
-mytuple->SetBranchAddress("u_pixel",&_u_pixel);
-mytuple->SetBranchAddress("v_pixel",&_v_pixel);
+mytuple->SetBranchAddress("cellU_fit",&_col_fit);
+mytuple->SetBranchAddress("cellV_fit",&_row_fit);
+mytuple->SetBranchAddress("cellUCenter_fit",&_u_pixel);
+mytuple->SetBranchAddress("cellVCenter_fit",&_v_pixel);
 mytuple->SetBranchAddress("size",&_size);
-mytuple->SetBranchAddress("sizeCol",&_sizeCol);
-mytuple->SetBranchAddress("sizeRow",&_sizeRow);
+mytuple->SetBranchAddress("sizeU",&_sizeCol);
+mytuple->SetBranchAddress("sizeV",&_sizeRow);
 
 
 
@@ -73,14 +73,23 @@ mytuple->SetBranchAddress("sizeRow",&_sizeRow);
 vector<vector<int>> counter; 
 counter.resize(BINSX,vector<int>(BINSY, 0));
 
-vector<vector<TH1F*>> histo_cs; 
-histo_cs.resize(BINSX,vector<TH1F*>(BINSY, NULL));
+vector<vector<TH1F*>> histo_px; 
+histo_px.resize(BINSX,vector<TH1F*>(BINSY, NULL));
+
+vector<vector<TH1F*>> histo_rr; 
+histo_rr.resize(BINSX,vector<TH1F*>(BINSY, NULL));
 
 vector<vector<TH1F*>> histo_cc; 
-histo_ss.resize(BINSX,vector<TH1F*>(BINSY, NULL));
+histo_cc.resize(BINSX,vector<TH1F*>(BINSY, NULL));
 
 
-
+for (int u=0; u<BINSX; u++){
+  for (int w=0; w<BINSY; w++){
+      histo_px[u][w] = new TH1F("","",10,0,10);
+      histo_rr[u][w] = new TH1F("","",10,0,10);
+      histo_cc[u][w] = new TH1F("","",10,0,10);
+  }
+}
 
 
 
@@ -89,8 +98,6 @@ histo_ss.resize(BINSX,vector<TH1F*>(BINSY, NULL));
 
 vector<TH1F*>histo_c (BINSX, NULL);
 
-
-
 for (int w=0; w<BINSX; w++){
   histo_c[w] = new TH1F("","",10,0,10);
 }
@@ -98,12 +105,9 @@ for (int w=0; w<BINSX; w++){
 vector<TH1F*>histo_r (BINSY, NULL);
 
 
-
-
 for (int w=0; w<BINSY; w++){
   histo_r[w] = new TH1F("","",10,0,10);
 }
-
 
 
 int binx, biny;
@@ -111,7 +115,11 @@ float m_x, m_y;
   
 for(int i=0; i< mytuple->GetEntries(); i++){
     mytuple->GetEntry(i);
+
+    
     if (  _hasTrack == 0 && _chi2 < CHI2MAX ){
+
+      
       
       // m_x and m_y are in pixel hit positions from track fit 
       // origin (0,0) is pixel centre, unit is mm 
@@ -129,6 +137,8 @@ for(int i=0; i< mytuple->GetEntries(); i++){
       if (m_x>=PITCHX) continue;
       if (m_y<0) continue;
       if (m_y>=PITCHY) continue;
+
+      
       
       // Pitch of inpixel bins 
       double subpitchX = (XPIX*PITCHX)/BINSX; 
@@ -143,6 +153,8 @@ for(int i=0; i< mytuple->GetEntries(); i++){
       
       binx = floor( m_x / subpitchX );
       biny = floor( m_y / subpitchY );
+
+      
       
       // Fill maps 
       
@@ -151,9 +163,13 @@ for(int i=0; i< mytuple->GetEntries(); i++){
       histo_cc[binx][biny]->Fill(_sizeCol);
       histo_rr[binx][biny]->Fill(_sizeRow);
 
+      
+
       // Fill 1d histos
       histo_c[binx]->Fill(_sizeCol);
       histo_r[biny]->Fill(_sizeRow);
+
+      
       
     }
 }

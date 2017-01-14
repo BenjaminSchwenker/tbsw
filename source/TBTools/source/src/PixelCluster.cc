@@ -6,50 +6,81 @@
 
 
 #include "PixelCluster.h"
+#include <algorithm>
+#include <limits>
 
 using namespace std;
 using namespace lcio; 
 
 namespace depfet {
-
-/** Constructor */
-PixelCluster::PixelCluster( TrackerData * Digits, unsigned short sensorID, unsigned short clsType) : 
-   m_sensorID(sensorID), m_clsCharge(0), m_seedCharge(0),
-   m_clsSize(0), m_uSize(0), m_vSize(0), m_uStart(0), m_vStart(0), m_clsType(clsType)
-{
   
-  FloatVec sparsePixels = Digits->getChargeValues();
-  m_clsSize = sparsePixels.size()/3; 
-
-  int vMin = 9999999;
-  int vMax = 0;
-  int uMin = 9999999;
-  int uMax = 0; 
-  
-  for ( int index=0; index<m_clsSize;  index++) { 
-         
-    int uCell = static_cast<int> (sparsePixels[index * 3]);
-    int vCell = static_cast<int> (sparsePixels[index * 3 + 1]);
-    float charge =  sparsePixels[index * 3 + 2];
-    
-    m_clsCharge += charge;
-    
-    if ( m_seedCharge < charge ) m_seedCharge = charge; 
-    
-    if (vCell < vMin) vMin = vCell; 
-    if (vCell > vMax) vMax = vCell;
-    if (uCell < uMin) uMin = uCell;
-    if (uCell > uMax) uMax = uCell;
-          
+  PixelCluster::operator string() const
+  {
+    return  m_id;
   }
   
-  m_uStart = uMin; 
-  m_vStart = vMin; 
-  m_uSize = uMax-uMin+1;
-  m_vSize = vMax-vMin+1; 
-}
-
-
+  std::ostream& operator<<(std::ostream& out, const PixelCluster& id)
+  {
+    out << ((string)id);
+    return out;
+  }
+  
+  /** Constructor */
+  PixelCluster::PixelCluster( TrackerData * Digits, unsigned short sensorID) : 
+                                  m_sensorID(sensorID), m_clsCharge(0), m_seedCharge(0),
+                                  m_clsSize(0), m_uSize(0), m_vSize(0), m_uStart(0), m_vStart(0), m_id(""), m_digitalID("")
+  {
+    FloatVec rawDigits = Digits->getChargeValues();
+    int size = rawDigits.size()/3; 
+    
+    // Sort for ascending v cell, look at u cell in case of equality
+    std::vector<RawDigit> sortedDigits;
+ 
+    unsigned short vMin = std::numeric_limits<unsigned short>::max();
+    unsigned short vMax = 0;
+    unsigned short uMin = std::numeric_limits<unsigned short>::max();
+    unsigned short uMax = 0; 
+    
+    for ( int index=0; index<size;  index++) { 
+      unsigned short iU = static_cast<unsigned short> (rawDigits[index * 3]);
+      unsigned short iV = static_cast<unsigned short> (rawDigits[index * 3 + 1]);
+      unsigned short charge = static_cast<unsigned short> (rawDigits[index * 3 + 2]);   
+      
+      m_clsCharge += charge;
+      
+      if ( m_seedCharge < charge ) m_seedCharge = charge;  
+      if (iV < vMin) vMin = iV; 
+      if (iV > vMax) vMax = iV;
+      if (iU < uMin) uMin = iU;
+      if (iU > uMax) uMax = iU;  
+      
+      sortedDigits.push_back(RawDigit(iU,iV,charge));
+    }
+    
+    // Compute some variables 
+    m_clsSize = size;
+    m_uStart = uMin; 
+    m_vStart = vMin; 
+    m_uSize = uMax-uMin+1;
+    m_vSize = vMax-vMin+1; 
+    
+    std::sort(sortedDigits.begin(), sortedDigits.end());
+    
+    // Compute Id string from sorted digits
+    stringstream streamID;     
+    stringstream streamDigitalID;    
+    
+    streamID << size; 
+    streamDigitalID << size;     
+    
+    for (auto digit : sortedDigits ) {
+      streamID << "D" << digit.m_cellIDV - vMin <<  "." << digit.m_cellIDU - uMin << "." << digit.m_charge;  
+      streamDigitalID << "D" << digit.m_cellIDV - vMin <<  "." << digit.m_cellIDU - uMin;  
+    } 
+    
+    m_id = streamID.str();   
+    m_digitalID = streamDigitalID.str(); 
+  }
 
 }
 

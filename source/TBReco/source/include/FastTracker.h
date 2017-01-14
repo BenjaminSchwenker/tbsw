@@ -26,7 +26,10 @@ namespace depfet {
    bool check_incompatible( TBTrack& trk1, TBTrack& trk2 );
    
 //! Is track trk1 better than trk2
-   bool compare_tracks ( TBTrack& trk1, TBTrack& trk2 );
+   bool compare_tracks( TBTrack& trk1, TBTrack& trk2 );
+
+//! Mark hits in track as used
+   void mark_hits( TBTrack& trk, std::vector<std::vector<int>>&  usedIDs );
 
 //! FastTracker Processor
 /*! This processor performs track finding and track fitting in beam test 
@@ -93,10 +96,16 @@ protected:
 //! Called by the processEvent() to find track candidates  
    void findTracks( std::list<TBTrack>& TrackCollector , HitFactory& HitStore , int firstplane , int secondplane);  
 
+//! Called by the processEvent() to add tracks to trackcollector using hits in hitstore
+   void findTracks( std::list<TBTrack>& TrackCollector , HitFactory& HitStore , int seedplane); 
+
 // Processor Parameters
    
 //! Input hit collection names
    std::vector< std::string >  _hitCollectionNameVec;  
+
+//! Output collection name for not used hits 
+   std::string _notUsedhitCollectionName;
    
 //! Output track collection name
    std::string _trackCollectionName;
@@ -125,6 +134,9 @@ protected:
    float _maxTrkChi2; 
    float _outlierChi2Cut; 
    int _outlierIterations;
+
+//! Perform single hit seeding for these plane numbers 
+   std::vector<int>  _singleHitSeedingPlanes; 
    
 //! Parameters for beam particles 
    std::vector<float> _momentum_list; 
@@ -169,7 +181,10 @@ protected:
    /*! This is the total number of tracks the processor was able to
     * reconstruct.
     */
-   int _noOfTracks;       
+   int _noOfTracks;    
+
+   //! Total number of failed final fits
+   int _noOfFailedFits;    
    
    double _timeCPU; //!< CPU time
    int    _nRun ;   //!< Run number

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-export CLHEP_HOME=/home/benjamin/work/CLHEP/lib/CLHEP-2.3.1.1
-export ROOTSYS=/home/benjamin/work/root-6.04.14
+export CLHEP_HOME=/home/benjamin/work/CLHEP-2-3-4-3/lib/CLHEP-2.3.4.3
+export ROOTSYS=/home/benjamin/work/root-v6-08
 
 ############################################################
 # Please do not edit stuff below here !!!!!!!!!!!!!!!!!!!!!!
@@ -68,15 +68,6 @@ mkdir build
 cd build 
 cmake -C ../config/BuildSetup.cmake ..
 make install
-cd ../.. 
-
-############################################################
-# Install SiPxlDigi
-cd SiPxlDigi
-mkdir build
-cd build 
-cmake -C ../config/BuildSetup.cmake ..
-make install
 cd ../../..         
 
 ############################################################
@@ -114,7 +105,7 @@ echo "#    Marlin                                                               
 echo "#--------------------------------------------------------------------------------" >> init_tbsw.sh
 echo "export MARLIN="${TBSW_HOME}/Marlin"" >> init_tbsw.sh
 echo "export PATH="${MARLIN}/bin:${PATH}"" >> init_tbsw.sh
-echo "export MARLIN_DLL="${TBSW_HOME}/TBReco/lib/libTBReco.so:${TBSW_HOME}/SiPxlDigi/lib/libSiPxlDigi.so"" >> init_tbsw.sh
+echo "export MARLIN_DLL="${TBSW_HOME}/TBReco/lib/libTBReco.so:"" >> init_tbsw.sh
 echo "" >> init_tbsw.sh
 
 

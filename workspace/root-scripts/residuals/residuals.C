@@ -8,7 +8,7 @@ gStyle->SetPalette(1);
 gStyle->SetCanvasColor(0);
 gStyle->SetTitleFillColor(0);
 gStyle->SetPaintTextFormat("1f");
-gStyle->SetOptStat(0);
+//gStyle->SetOptStat(0);
 
 // 
 // Analysis cuts 
@@ -18,7 +18,7 @@ TCut trkcut = "";
 
 //
 // event data 
-TFile *ftb = new TFile("Histos.root");
+TFile *ftb = new TFile("root-files/DUT-Histos-dutmc.root");
 
 TTree *ttb = (TTree*) ftb->Get("Hit");
 TTree *ttbtrack = (TTree*) ftb->Get("Track");

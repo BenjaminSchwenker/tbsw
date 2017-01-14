@@ -331,7 +331,9 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
         if ( std::abs(vtrk-vhit) >= _maxResidualV && _maxResidualV > 0 ) continue; 
         
         // Finally, we will use a simple 2D distance to select best matching hit
-        double hitdist = std::abs(utrk-uhit) + std::abs(vtrk-vhit);
+        double hitdist = 0; 
+        if ( _maxResidualU > 0 )  hitdist += std::abs(utrk-uhit); 
+        if ( _maxResidualV > 0 )  hitdist += std::abs(vtrk-vhit); 
                       
         if( hitdist<distmin )
         {
@@ -399,7 +401,7 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
     
     PixelCluster Cluster = hit.GetCluster();
        
-    _rootHitQuality = Cluster.getClusterType(); 
+    _rootHitQuality = 0; 
     _rootHitClusterCharge = Cluster.getCharge() ; 
     _rootHitSeedCharge = Cluster.getSeedCharge() ; 
     _rootHitSize = Cluster.getSize();  

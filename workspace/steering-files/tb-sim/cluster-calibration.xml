@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="us-ascii"?>
+
+<marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
+   
+  <execute>
+    <processor name="LoadNoiseDB-M26"/>
+    <processor name="M26Clusterizer"/>
+    <processor name="M26HitMaker"/>
+    <processor name="M26ClusterDBCreator"/>
+    <processor name="LoadNoiseDB-DEP"/>
+    <processor name="DEPClusterizer"/>
+    <processor name="DEPHitMaker"/>
+    <processor name="DEPClusterDBCreator"/>
+  </execute>
+   
+  <global>
+    <parameter name="LCIOInputFiles"> tmp-rawdata.slcio </parameter>
+    <parameter name="GearXMLFile" value="gear.xml"/>
+    <parameter name="MaxRecordNumber" value="50000"/>
+    <parameter name="SkipNEvents" value="0"/>
+    <parameter name="SupressCheck" value="false"/>
+    <parameter name="Verbosity" value="MESSAGE3"/>
+  </global>
+  
+  <processor name="LoadNoiseDB-M26" type="ConditionsProcessor">
+    <!--Initialization of a simple conditions file handler-->
+    <parameter name="SimpleFileHandler" type="StringVec"> status_m26 NoiseDB-M26.slcio status_m26 </parameter>
+  </processor>
+   
+  <processor name="M26Clusterizer" type="PixelClusterizer">
+    <!--PixelClusterizer: Looking for clusters in zs pixel data-->
+    <!--Name of input sparsified pixel data collection-->
+    <parameter name="SparseDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
+    <!--Input status collection name-->
+    <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status_m26 </parameter>
+    <!--Name of the output cluster collection-->
+    <parameter name="ClusterCollectionName" type="string" lcioOutType="TrackerPulse"> zscluster_m26 </parameter>
+     <!--0: common side; 1: common corner; 3: max. one missing pixel-->
+    <parameter name="AcceptDiagonalCluster" type="int" value="1"/>
+    <!--Threshold for cluster signal-->
+    <parameter name="SparseClusterCut" type="float" value="0"/>
+    <!--Threshold for seed pixel signal-->
+    <parameter name="SparseSeedCut" type="float" value="0"/>
+    <!--Threshold for zero suppression-->
+    <parameter name="SparseZSCut" type="float" value="0"/>
+  </processor>
+   
+  <processor name="M26HitMaker" type="CogHitMaker">
+    <!--CogHitMaker:  Compute hits from pixel clusters -->
+    <!--Name of cluster collection-->
+    <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_m26 </parameter>
+    <!--Name of hit collection-->
+    <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_m26 </parameter>
+    <!--SigmaU for cluster with one uCell contributing [mm]-->
+    <parameter name="SigmaU1" type="double" value="0.00375"/>
+    <!--SigmaU for cluster with two uCells contributing [mm]-->
+    <parameter name="SigmaU2" type="double" value="0.00190"/>
+    <!--SigmaU for cluster with three or more uCells contributing [mm]-->
+    <parameter name="SigmaU3" type="double" value="0.0070"/>
+    <!--SigmaV for cluster with one vCell contributing [mm]-->
+    <parameter name="SigmaV1" type="double" value="0.00375"/>
+    <!--SigmaV for cluster with two vCells contributing [mm]-->
+    <parameter name="SigmaV2" type="double" value="0.00190"/>
+    <!--SigmaV for cluster with three or more vCells contributing [mm]-->
+    <parameter name="SigmaV3" type="double" value="0.0070"/>
+    <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
+    <parameter name="MaxSizeU" type="int" value="3"/>
+    <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
+    <parameter name="MaxSizeV" type="int" value="3"/>
+  </processor>
+  
+  <processor name="M26ClusterDBCreator" type="GoeClusterCalibratorFromMC">
+    <!--GoeClusterCalibratorFromMC: Create clusterDB for clusters using simhits-->
+    <!--Name of hit collection-->
+    <parameter name="HitCollection" type="string" lcioInType="TrackerHit"> hit_m26 </parameter>
+    <!--Name of collection with simulated hits-->
+    <parameter name="SimTrackerHitCollection" type="string" lcioInType="SimTrackerHit"> SimTrackerHits </parameter>
+    <!--Output clusterDB file name-->
+    <parameter name="ClusterDBFileName" type="string" value="clusterDB-M26.root"/>
+    <!--Maximum u residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
+    <parameter name="MaxResidualU" type="double" value="0.02"/>
+    <!--Maximum v residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
+    <parameter name="MaxResidualV" type="double" value="0.02"/>
+    <!--Minimum number of cluster ID occurances for clusterDB-->
+    <parameter name="MinClusters" type="int" value="500"/>
+  </processor>
+  
+  <processor name="LoadNoiseDB-DEP" type="ConditionsProcessor">
+    <!--Initialization of a simple conditions file handler-->
+    <parameter name="SimpleFileHandler" type="StringVec"> status_dep NoiseDB-DEP.slcio status_dep </parameter>
+  </processor>
+   
+  <processor name="DEPClusterizer" type="PixelClusterizer">
+    <!--PixelClusterizer: Looking for clusters in zs pixel data-->
+    <!--Name of input sparsified pixel data collection-->
+    <parameter name="SparseDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_dep </parameter>
+    <!--Input status collection name-->
+    <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status_dep </parameter>
+    <!--Name of the output cluster collection-->
+    <parameter name="ClusterCollectionName" type="string" lcioOutType="TrackerPulse"> zscluster_dep </parameter>
+    <!--0: common side; 1: common corner; 3: max. one missing pixel-->
+    <parameter name="AcceptDiagonalCluster" type="int" value="1"/>
+    <!--Threshold for cluster signal-->
+    <parameter name="SparseClusterCut" type="float" value="0"/>
+    <!--Threshold for seed pixel signal-->
+    <parameter name="SparseSeedCut" type="float" value="0"/>
+    <!--Threshold for zero suppression-->
+    <parameter name="SparseZSCut" type="float" value="0"/>
+  </processor>
+   
+  <processor name="DEPHitMaker" type="CogHitMaker">
+    <!--CogHitMaker:  Compute digital hits from pixel clusters -->
+    <!--Name of cluster collection-->
+    <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_dep </parameter>
+    <!--Name of hit collection-->
+    <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_dep </parameter>
+    <!--SigmaU for cluster with one uCell contributing [mm]-->
+    <parameter name="SigmaU1" type="double" value="0.00375"/>
+    <!--SigmaU for cluster with two uCells contributing [mm]-->
+    <parameter name="SigmaU2" type="double" value="0.00190"/>
+    <!--SigmaU for cluster with three or more uCells contributing [mm]-->
+    <parameter name="SigmaU3" type="double" value="0.0070"/>
+    <!--SigmaV for cluster with one vCell contributing [mm]-->
+    <parameter name="SigmaV1" type="double" value="0.00375"/>
+    <!--SigmaV for cluster with two vCells contributing [mm]-->
+    <parameter name="SigmaV2" type="double" value="0.00190"/>
+    <!--SigmaV for cluster with three or more vCells contributing [mm]-->
+    <parameter name="SigmaV3" type="double" value="0.0070"/>
+    <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
+    <parameter name="MaxSizeU" type="int" value="3"/>
+    <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
+    <parameter name="MaxSizeV" type="int" value="3"/>
+  </processor>
+  
+  <processor name="DEPClusterDBCreator" type="GoeClusterCalibratorFromMC">
+    <!--GoeClusterCalibratorFromMC: Create clusterDB for clusters using simhits-->
+    <!--Name of hit collection-->
+    <parameter name="HitCollection" type="string" lcioInType="TrackerHit"> hit_dep </parameter>
+    <!--Name of collection with simulated hits-->
+    <parameter name="SimTrackerHitCollection" type="string" lcioInType="SimTrackerHit"> SimTrackerHits </parameter>
+    <!--Output clusterDB file name-->
+    <parameter name="ClusterDBFileName" type="string" value="clusterDB-DEP.root"/>
+    <!--Maximum u residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
+    <parameter name="MaxResidualU" type="double" value="0.02"/>
+    <!--Maximum v residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
+    <parameter name="MaxResidualV" type="double" value="0.02"/>
+    <!--Minimum number of cluster ID occurances for clusterDB-->
+    <parameter name="MinClusters" type="int" value="500"/>
+  </processor>
+  
+</marlin>
