@@ -1,10 +1,10 @@
 // ///////////////////////////////////////////////////////////////////////////////////////  //
 //                                                                                          //
-//    GoeClusterCalibratorFromMC - Marlin Processor                                         //
+//    GoeClusterCalibratorForMC - Marlin Processor                                         //
 // ///////////////////////////////////////////////////////////////////////////////////////  //
 
-#ifndef GoeClusterCalibratorFromMC_H
-#define GoeClusterCalibratorFromMC_H 1
+#ifndef GoeClusterCalibratorForMC_H
+#define GoeClusterCalibratorForMC_H 1
 
 // DEPFETTrackTools includes
 #include "TBDetector.h"
@@ -20,35 +20,38 @@
 #include "marlin/Exceptions.h"
 
 // Include ROOT classes
-#include <TFile.h>
 #include <TH1F.h>
 #include <TH2F.h>
-#include <TTree.h>
-#include <TMath.h>
-
 
 namespace depfet {
 
-  //! GoeClusterCalibratorFromMC  
+  //! GoeClusterCalibratorForMC  
   /*! 
    *  The task of this processor is to create a clusterDB for all clusters
-   *  contained in the input cluster collection. The clusterDB will be used
-   *  later to compute a 2D hit measurement together with a 2x2 covariance
-   *  matrix for any given cluster.  
-   *   
+   *  contained in the input cluster collection. After calibration, the 
+   *  clusterDB will be used by the GoeHitMaker processor to compute a 2D 
+   *  position measurement (hit) together with a 2x2 covariance matrix for 
+   *  all cluster registered in the clusterDB.
+   * 
+   *  This version of the ClusterCalibrator requires a collection of simHits 
+   *  for creating the clusterDB. The final clusterDB can be used both for 
+   *  simulated detector clusters and real detector clusters. In the later 
+   *  case, the accuracy of the clusterDB depends on the accuracy of the 
+   *  detector simulation (digitizer). 
+   *    
    *  Author: B.Schwenker, Universität Göttingen
    *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
    */
    
-  class GoeClusterCalibratorFromMC : public marlin::Processor {
+  class GoeClusterCalibratorForMC : public marlin::Processor {
    
    public:
    
     //!Method that returns a new instance of this processor
-    virtual Processor*  newProcessor() { return new GoeClusterCalibratorFromMC ; }
+    virtual Processor*  newProcessor() { return new GoeClusterCalibratorForMC ; }
     
     //!Constructor - set processor description and register processor parameters
-    GoeClusterCalibratorFromMC();
+    GoeClusterCalibratorForMC();
     
     //!Method called at the beginning of data processing - used for initialization
     virtual void init();
@@ -67,9 +70,6 @@ namespace depfet {
      
    protected:
    
-    //! Histogram booking
-    void bookHistos();
-    
     //!Method printing processor parameters
     void printProcessorParams() const;
    
@@ -93,25 +93,14 @@ namespace depfet {
     
    private:
     
-    // ROOT_OUTPUT 
-    TFile * _rootFile;
+    // Intermediate histos to compute calibrated measurements 
+    // Outer key is sensorID, inner key is clusterID 
+    std::map<int, std::map<std::string, int> >  _sensorMap;  
+    std::map< int, std::map<std::string, TH1F *> > _clusterUMap;
+    std::map< int, std::map<std::string, TH1F *> > _clusterVMap;
+    std::map< int, std::map<std::string, TH2F *> > _clusterUVMap;
     
-    std::map<std::string, int>  _clusterMap;  
-    
-    std::map< std::string, TH1F *> _histoMapU;
-    std::map< std::string, TH1F *> _histoMapV;
-    std::map< std::string, TH2F *> _histoMapUV; 
-     
-    /** One entry per cluster */
-    TTree * _rootClusterTree;
-    
-    // Variables in cluster tree      
-    std::string _rootClusterID;       // Cluster ID 
-    double _rootTrackMomentum;        // Track momentum [GeV/c]  
-    double _rootTrackPosU;            // Track U position [mm] 
-    double _rootTrackPosV;            // Track V position [mm]                   
-    double _rootTrackdUdW;            // Track slope [rad]     
-    double _rootTrackdVdW;            // Track slope [rad]    
+    std::map< std::string, TH1F *> _histoMap;
     
     // Handle to detector data 
     TBDetector  _detector;    

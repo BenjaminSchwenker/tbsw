@@ -1,28 +1,24 @@
-// GoeClusterCalibratorFromMC Processor  
+// GoeClusterCalibratorForMC Processor  
 // 
-// See GoeClusterCalibratorFromMC.h for full documentation of processor. 
+// See GoeClusterCalibratorForMC.h for full documentation of processor. 
 // 
 // Author: Benjamin Schwenker, Göttingen University 
 // <mailto:benjamin.schwenker@phys.uni-goettingen.de>
 
 
-#include "GoeClusterCalibratorFromMC.h"
+#include "GoeClusterCalibratorForMC.h"
 
 // TBTools includes
 #include "TBHit.h"
 #include "PixelCluster.h"
 #include "Det.h"
 #include "Utilities.h" 
-#include "PhysicalConstants.h"
 
 
 // Include basic C
 #include <iostream>
 #include <limits>
 #include <iomanip>
-#include <cstdlib>
-#include <cmath>
-#include <string>
 #include <algorithm>
 
 // Include LCIO classes
@@ -36,6 +32,9 @@
 #include <CLHEP/Matrix/Vector.h>
 #include <CLHEP/Vector/ThreeVector.h>
 
+// Include ROOT classes
+#include <TFile.h>
+#include <TMath.h>
 
 
 // Used namespaces
@@ -49,16 +48,16 @@ namespace depfet {
   //
   // Instantiate this object
   //
-  GoeClusterCalibratorFromMC aGoeClusterCalibratorFromMC ;
+  GoeClusterCalibratorForMC aGoeClusterCalibratorForMC ;
   
   //
   // Constructor
   //
-  GoeClusterCalibratorFromMC::GoeClusterCalibratorFromMC() : Processor("GoeClusterCalibratorFromMC")
+  GoeClusterCalibratorForMC::GoeClusterCalibratorForMC() : Processor("GoeClusterCalibratorForMC")
   {
     
     // Processor description
-    _description = "GoeClusterCalibratorFromMC: Create clusterDB for clusters using simhits" ;
+    _description = "GoeClusterCalibratorForMC: Create clusterDB for clusters using simhits" ;
     
     //
     // Input collections 
@@ -89,14 +88,14 @@ namespace depfet {
      
     registerProcessorParameter ("MinClusters",
                                 "Minimum number of cluster ID occurances for clusterDB",
-                                _minClusters,  static_cast < int > (100));
+                                _minClusters,  static_cast < int > (2000));
     
   }
   
   //
   // Method called at the beginning of data processing
   //
-  void GoeClusterCalibratorFromMC::init() {
+  void GoeClusterCalibratorForMC::init() {
     
     // Initialize variables
     _nRun = 0 ;
@@ -108,14 +107,12 @@ namespace depfet {
     
     // Read detector constants from gear file
     _detector.ReadGearConfiguration();  
-      
-    bookHistos(); 
   }
   
   //
   // Method called for each run
   //
-  void GoeClusterCalibratorFromMC::processRunHeader(LCRunHeader * run)
+  void GoeClusterCalibratorForMC::processRunHeader(LCRunHeader * run)
   {
    
     // Print run number
@@ -130,7 +127,7 @@ namespace depfet {
   //
   // Method called for each event
   //
-  void GoeClusterCalibratorFromMC::processEvent(LCEvent * evt)
+  void GoeClusterCalibratorForMC::processEvent(LCEvent * evt)
   {
     
     _nEvt ++ ;
@@ -285,47 +282,54 @@ namespace depfet {
       
       for(int ihit=0;ihit<(int)RecoHits.size(); ++ihit)
       {
-        // Provide default values for all branches
-        _rootClusterID = "";                              
-        _rootTrackMomentum = 0;               
-        _rootTrackPosU = 0;           
-        _rootTrackPosV = 0;                          
-        _rootTrackdUdW = 0;           
-        _rootTrackdVdW = 0;     
-        
+          
         if ( hit2simhit[ihit] >= 0 ) {        
           
           TBHit& hit = RecoHits[ihit];     
           int sensorID = hit.GetDAQID();     
           int ipl = _detector.GetPlaneNumber(sensorID);
-           
-          PixelCluster Cluster = hit.GetCluster();
           Det & Sensor = _detector.GetDet(ipl);   
-          
-          double originPosU = Sensor.GetPixelCenterCoordU( Cluster.getVStart(), Cluster.getUStart()); 
-          double originPosV = Sensor.GetPixelCenterCoordV( Cluster.getVStart(), Cluster.getUStart()); 
-          
+           
           SimTrackerHit * simHit = SimHits[ hit2simhit[ihit] ]; 
           Hep3Vector momentum(simHit->getMomentum()[0],simHit->getMomentum()[1],simHit->getMomentum()[2]);
           
-          _rootClusterID = (string) Cluster; 
-          _rootTrackMomentum = momentum.mag();             
-          _rootTrackPosU = simHit->getPosition()[0] - originPosU;          
-          _rootTrackPosV = simHit->getPosition()[1] - originPosV;                           
-          _rootTrackdUdW = momentum[0]/momentum[2];        
-          _rootTrackdVdW = momentum[1]/momentum[2]; 
+          // Get local track parameters 
+          double trk_tu = momentum[0]/momentum[2];    // rad
+          double trk_tv = momentum[1]/momentum[2];    // rad
+          double trk_u = simHit->getPosition()[0];    // mm
+          double trk_v = simHit->getPosition()[1];    // mm
+          double trk_mom = momentum.mag();            // GeV
           
-          // Fill tree with set variables 
-          _rootFile->cd("");
-          _rootClusterTree->Fill();
+          // Get cluster id 
+          PixelCluster Cluster = hit.GetCluster();
+          string id = Cluster.getClusterID(); 
           
           // Register new cluster if needed
-          if (_clusterMap.find(Cluster) == _clusterMap.end() ) {
-            _clusterMap[Cluster] = 0;
+          if (_sensorMap[sensorID].find(id) == _sensorMap[sensorID].end() ) {
+            _sensorMap[sensorID][id] = 0;
+            
+            _clusterUMap[sensorID][id] = new TH1F("","",1,0,1);
+            _clusterUMap[sensorID][id]->SetDirectory(0);
+            _clusterUMap[sensorID][id]->StatOverflows(); 	
+             
+            _clusterVMap[sensorID][id] = new TH1F("","",1,0,1);
+            _clusterVMap[sensorID][id]->SetDirectory(0); 
+            _clusterVMap[sensorID][id]->StatOverflows(); 	
+            
+            _clusterUVMap[sensorID][id] = new TH2F("","",1,0,1,1,0,1);
+            _clusterUVMap[sensorID][id]->SetDirectory(0);
+            _clusterUVMap[sensorID][id]->StatOverflows(); 	
           }
           
+          trk_u -= Sensor.GetPixelCenterCoordU( Cluster.getVStart(), Cluster.getUStart()); 
+          trk_v -= Sensor.GetPixelCenterCoordV( Cluster.getVStart(), Cluster.getUStart()); 
+          
           // Count how many times a clusterID appear 
-          _clusterMap[Cluster]++;  
+          _sensorMap[sensorID][id]++;  
+          _clusterUMap[sensorID][id]->Fill( trk_u ); 
+          _clusterVMap[sensorID][id]->Fill( trk_v );     
+          _clusterUVMap[sensorID][id]->Fill( trk_u, trk_v ); 
+          
         }
       }
     }
@@ -336,12 +340,12 @@ namespace depfet {
   //
   // Method called after each event to check the data processed
   //
-  void GoeClusterCalibratorFromMC::check( LCEvent * evt ) {}
+  void GoeClusterCalibratorForMC::check( LCEvent * evt ) {}
   
   //
   // Method called after all data processing
   //
-  void GoeClusterCalibratorFromMC::end()
+  void GoeClusterCalibratorForMC::end()
   {
     
     // CPU time end
@@ -362,182 +366,177 @@ namespace depfet {
                             << "Processor succesfully finished!"
                             << std::endl;
     
-    streamlog_out(MESSAGE3) << "Create the clusterDB ... " << endl; 
-     
-    // Erase all clusterIDs with too few entries  
-    for(auto it = _clusterMap.begin(); it != _clusterMap.end(); ) {
-      if(it->second < _minClusters ) {
-        streamlog_out(MESSAGE3) << "  Deleting clusterId:  " << it->first << " because too few counts (" << it->second << ")." 
-                                << endl;
-        it = _clusterMap.erase(it);
-      } else {
-        ++it;
+    // We remove all cluster IDs which have to few counts and cannot be 
+    // calibrated :( 
+    for(auto it = _sensorMap.begin(); it != _sensorMap.end(); it++) {
+      auto sensorID = it->first;
+      auto&& clusterMap = it->second;
+      
+      // Delete cluster ids with too small counter
+      
+      for(auto iter = clusterMap.begin(); iter != clusterMap.end(); ) {
+        auto id = iter->first; 
+        auto counter = iter->second;
+        
+        if(counter < _minClusters ) {
+          streamlog_out(MESSAGE3) << "  Deleting clusterId:  " << id << " because too few counts (" << counter << ") on sensorID " << sensorID 
+                                  << endl;
+          iter = clusterMap.erase(iter);
+        } else {
+          ++iter;
+        }
       }
     }
     
-    // The histograms are used to compute unbinned moments of
-    // cluster positions stored in "Cluster" tree. They will 
-    // never be used to display data and are not added to 
-    // the clusterDB.  
-    for (auto iter =_clusterMap.begin(); iter!=_clusterMap.end(); iter++ ) {
-      string id = iter->first;    
-      string histoName;
+    streamlog_out(MESSAGE3) << "Create the clusterDB ... " << endl; 
     
-      // TODO: the range of the histograms should not be hard coded. Better to 
-      // use the size of the sensitive area insted. 
-      histoName = id + "_U";
-      _histoMapU[id] = new TH1F(histoName.c_str(), histoName.c_str(),1,-1,+1);
-      _histoMapU[id]->SetDirectory(0);
-          
-      histoName = id + "_V";
-      _histoMapV[id] = new TH1F(histoName.c_str(), histoName.c_str(),1,-1,+1);
-      _histoMapV[id]->SetDirectory(0);
-      
-      histoName = id + "_UV";
-      _histoMapUV[id] = new TH2F( histoName.c_str(), histoName.c_str(),1,-1,+1,1,-1,+1);
-      _histoMapUV[id]->SetDirectory(0);          
-    }
+    TFile * _rootFile = new TFile( _clusterDBFileName.c_str(),"recreate");
+    _rootFile->cd("");   
     
-    // Now fill the histograms by looping over the matched simhits
-    _rootClusterID = "";                              
-    _rootTrackMomentum = 0;               
-    _rootTrackPosU = 0;           
-    _rootTrackPosV = 0;                          
-    _rootTrackdUdW = 0;           
-    _rootTrackdVdW = 0;     
-    
-    for (int ii = 0; ii < _rootClusterTree->GetEntries(); ii++) {
-      _rootClusterTree->GetEntry(ii);
+    // Loop over all registered sensors 
+    for(auto it = _sensorMap.begin(); it != _sensorMap.end(); it++) {
+      auto sensorID = it->first;
+      auto&& clusterMap = it->second;
       
-      std::string id = _rootClusterID;
+      // Book histograms for clusterDB
+      int NCLUSTERS = clusterMap.size(); 
+      string histoName;  
+       
+      _rootFile->cd("");
       
-      // Ignore simhits creating clusters with too few entries
-      if (_clusterMap.find(id) == _clusterMap.end() ) {
-        streamlog_out(MESSAGE2) << "Ignore data for clusterID " << id   
-                                << endl;  
-         
-      } else {
+      histoName = "hDB_sensor" + to_string(sensorID) + "_ID";
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("clusterID fraction");  
       
-        _histoMapU[id]->Fill( _rootTrackPosU  );
-        _histoMapV[id]->Fill( _rootTrackPosV  );
-        _histoMapUV[id]->Fill( _rootTrackPosU   , _rootTrackPosV);  
+      histoName = "hDB_sensor" + to_string(sensorID) + "_U";
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("offset u [mm]");  
+      
+      histoName = "hDB_sensor" + to_string(sensorID) + "_V";
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("offset v [mm]");  
+      
+      histoName = "hDB_sensor" + to_string(sensorID) + "_Sigma2_U";
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("sigma2 offset u [mm^2]");        
+
+      histoName = "hDB_sensor" + to_string(sensorID) + "_Sigma2_V";
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("sigma2 offset v [mm^2]"); 
+
+      histoName = "hDB_sensor" + to_string(sensorID) + "_Cov_UV";
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("covariance u-v [mm^2]"); 
+                   
+      // Go through all cluster shapes
+      int i = 0; 
+      for (auto iter =clusterMap.begin(); iter!=clusterMap.end(); iter++ ) {
+        int counter = iter->second;  
+        string id = iter->first;
+        i++; 
         
-      } 
+        // Perform the calibration for u position 
+        double clu_mean_u = _clusterUMap[sensorID][id]->GetMean();
+        double clu_mean_u_error = _clusterUMap[sensorID][id]->GetMeanError();        
+        double clu_rms_u = _clusterUMap[sensorID][id]->GetRMS();
+        double clu_rms_u_error = _clusterUMap[sensorID][id]->GetRMSError();
+        
+        double clu_rms2_u = clu_rms_u*clu_rms_u;
+        double clu_rms2_u_error = 2*clu_rms_u*clu_rms_u_error;
+         
+        // Perform the calibration for v position  
+        double clu_mean_v = _clusterVMap[sensorID][id]->GetMean();
+        double clu_mean_v_error = _clusterVMap[sensorID][id]->GetMeanError();   
+        double clu_rms_v = _clusterVMap[sensorID][id]->GetRMS();
+        double clu_rms_v_error = _clusterVMap[sensorID][id]->GetRMSError();   
+        
+        double clu_rms2_v = clu_rms_v*clu_rms_v;  
+        double clu_rms2_v_error = 2*clu_rms_v*clu_rms_v_error;
+         
+        // Perform the calibration for uv covariance   
+        double clu_cov_uv = _clusterUVMap[sensorID][id]->GetCovariance();
+                 
+        // Store calibration result   
+        histoName = "hDB_sensor" + to_string(sensorID) + "_ID";
+        _histoMap[histoName]->SetBinContent( i, counter );
+        _histoMap[histoName]->SetBinError( i, TMath::Sqrt(counter) );
+        _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
+        
+        histoName = "hDB_sensor" + to_string(sensorID) + "_U";
+        _histoMap[histoName]->SetBinContent( i, clu_mean_u );
+        _histoMap[histoName]->SetBinError( i, clu_mean_u_error );
+        _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
+        
+        histoName = "hDB_sensor" + to_string(sensorID) + "_V"; 
+        _histoMap[histoName]->SetBinContent( i, clu_mean_v );
+        _histoMap[histoName]->SetBinError( i, clu_mean_v_error );
+        _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
+        
+        histoName = "hDB_sensor" + to_string(sensorID) + "_Sigma2_U";
+        _histoMap[histoName]->SetBinContent( i, clu_rms2_u );
+        _histoMap[histoName]->SetBinError( i, clu_rms2_u_error );
+        _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
+         
+        histoName = "hDB_sensor" + to_string(sensorID) + "_Sigma2_V";
+        _histoMap[histoName]->SetBinContent( i, clu_rms2_v );
+        _histoMap[histoName]->SetBinError( i, clu_rms2_v_error );
+        _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );  
+        
+        histoName = "hDB_sensor" + to_string(sensorID) + "_Cov_UV";
+        _histoMap[histoName]->SetBinContent( i, clu_cov_uv );
+        _histoMap[histoName]->SetBinError( i, 0 );
+        _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
+
+        streamlog_out(MESSAGE3) << "  ClusterId:  " << id << " sensorID: " << sensorID << endl
+                                << std::setiosflags(std::ios::fixed | std::ios::internal )
+                                << std::setprecision(8)
+                                << "  u: " << clu_mean_u  << ", sigma2: " << clu_rms2_u << endl
+                                << "  v: " << clu_mean_v  << ", sigma2: " << clu_rms2_v << endl
+                                << "  cov: " << clu_cov_uv
+                                << std::setprecision(3)
+                                << endl;
+         
+      }  
+            
+      // Normalaize the cluster ID spectrum to unit area for 
+      // better comparison between data sets 
+      
+      histoName = "hDB_sensor" + to_string(sensorID) + "_ID";
+      double normID = _histoMap[histoName]->Integral();
+      if (normID > 0 ) _histoMap[histoName]->Scale(1.0/normID, "width");
+      
     }
-     
-    // Book histograms for clusterDB
-    int NBINS = _clusterMap.size();   
     
-    _rootFile->cd("");
-    TH1F *hDB_ID         = new TH1F("hDB_ID","",NBINS,0,NBINS);
-    TH1F *hDB_U          = new TH1F("hDB_U","",NBINS,0,NBINS);
-    TH1F *hDB_V          = new TH1F("hDB_V","",NBINS,0,NBINS);   
-    TH1F *hDB_Sigma_U    = new TH1F("hDB_Sigma_U","",NBINS,0,NBINS);  
-    TH1F *hDB_Sigma_V    = new TH1F("hDB_Sigma_V","",NBINS,0,NBINS);
-    TH1F *hDB_Cov_UV     = new TH1F("hDB_Cov_UV","",NBINS,0,NBINS);  
-    
-    hDB_ID->SetStats( false );
-    hDB_ID->SetYTitle("clusterID fraction");  
-    hDB_U->SetStats( false );
-    hDB_U->SetYTitle("offset u [mm]");   
-    hDB_V->SetStats( false );
-    hDB_V->SetYTitle("offset v [mm]"); 
-    hDB_Sigma_U->SetStats( false );
-    hDB_Sigma_U->SetYTitle("sigma offset u [mm]");  
-    hDB_Sigma_V->SetStats( false );
-    hDB_Sigma_V->SetYTitle("sigma offset v [mm]"); 
-    hDB_Cov_UV->SetStats( false );
-    hDB_Cov_UV->SetYTitle("covariance u-v"); 
-    
-    int i = 0; 
-    
-    // Go through all cluster shapes
-    for (auto iter =_clusterMap.begin(); iter!=_clusterMap.end(); iter++ ) {
-      int count = iter->second;  
-      string id = iter->first;
-      i++;  
-       
-      hDB_ID->SetBinContent( i, count );
-      hDB_ID->SetBinError( i, TMath::Sqrt(count) );
-      hDB_ID->GetXaxis()->SetBinLabel( i, id.c_str() );
-
-      hDB_U->SetBinContent( i, _histoMapU[id]->GetMean() );
-      hDB_U->SetBinError( i, _histoMapU[id]->GetMeanError() );
-      hDB_U->GetXaxis()->SetBinLabel( i, id.c_str() );
-      
-      hDB_V->SetBinContent( i, _histoMapV[id]->GetMean() );
-      hDB_V->SetBinError( i, _histoMapV[id]->GetMeanError() );
-      hDB_V->GetXaxis()->SetBinLabel( i, id.c_str() );
-       
-      hDB_Sigma_U->SetBinContent( i, _histoMapU[id]->GetRMS() );
-      hDB_Sigma_U->SetBinError( i, _histoMapU[id]->GetRMSError() );
-      hDB_Sigma_U->GetXaxis()->SetBinLabel( i, id.c_str() );
-      
-      hDB_Sigma_V->SetBinContent( i, _histoMapV[id]->GetRMS() );
-      hDB_Sigma_V->SetBinError( i, _histoMapV[id]->GetRMSError() );
-      hDB_Sigma_V->GetXaxis()->SetBinLabel( i, id.c_str() );  
-
-      hDB_Cov_UV->SetBinContent( i, _histoMapUV[id]->GetCovariance() );
-      hDB_Cov_UV->SetBinError( i, 0 );
-      hDB_Cov_UV->GetXaxis()->SetBinLabel( i, id.c_str() );
-      
-      streamlog_out(MESSAGE3) << "  ClusterId:  " << id << " count: " << count << endl
-                              << std::setiosflags(std::ios::fixed | std::ios::internal )
-                              << std::setprecision(8)
-                              << "  u: " << _histoMapU[id]->GetMean() << ", sigma: " << _histoMapU[id]->GetRMS() << endl
-                              << "  v: " << _histoMapV[id]->GetMean() << ", sigma: " << _histoMapV[id]->GetRMS() << endl
-                              << "  corr: " << _histoMapUV[id]->GetCorrelationFactor()
-                              << std::setprecision(3)
-                              << endl;
-    
-    }  
-    
-    streamlog_out(MESSAGE3) << "ClusterDB with " << _clusterMap.size() << " cluster shapes written to file "
-                            << _clusterDBFileName << endl; 
-     
-    double normID = hDB_ID->Integral();
-    if (normID > 0 ) hDB_ID->Scale(1.0/normID, "width");
-    
+    streamlog_out(MESSAGE3) << "ClusterDB written to file " << _clusterDBFileName 
+                            << endl; 
     
     // Close root  file
     _rootFile->Write();
     _rootFile->Close();
-    delete _rootFile;
+    delete _rootFile;    
   }
-
+  
   //
   // Method printing processor parameters
   //
-  void GoeClusterCalibratorFromMC::printProcessorParams() const 
+  void GoeClusterCalibratorForMC::printProcessorParams() const 
   {
     
     streamlog_out(MESSAGE3)  << std::endl
                              << " "
-                             << "GoeClusterCalibratorFromMC Development Version, be carefull!!"
+                             << "GoeClusterCalibratorForMC Development Version, be carefull!!"
                              << " "
                              << std::endl  << std::endl;   
     
   }
   
-  void GoeClusterCalibratorFromMC::bookHistos()
-  {   
-     
-    _rootFile = new TFile( _clusterDBFileName.c_str(),"recreate");
-    _rootFile->cd("");
-      
-    // 
-    // Cluster Tree 
-    _rootClusterTree = new TTree("Cluster","Cluster info");
-    _rootClusterTree->Branch("clusterID"             ,&_rootClusterID              );
-    _rootClusterTree->Branch("trackMomentum"         ,&_rootTrackMomentum          ,"trackMomentum/D"); 
-    _rootClusterTree->Branch("trackPosU"             ,&_rootTrackPosU              ,"trackPosU/D");
-    _rootClusterTree->Branch("trackPosV"             ,&_rootTrackPosV              ,"trackPosV/D"); 
-    _rootClusterTree->Branch("trackDuDw"             ,&_rootTrackdUdW              ,"trackDuDw/D");
-    _rootClusterTree->Branch("trackDvDw"             ,&_rootTrackdVdW              ,"trackDvDw/D");   
-    
-    // Auto save every 5 MB
-    _rootClusterTree->SetAutoSave(5000000);     
-  }
+  
 
 } // Namespace
 
