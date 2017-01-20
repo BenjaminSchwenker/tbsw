@@ -149,8 +149,8 @@ protected:
    double _root_dvdw;
    double _root_angle1;
    double _root_angle2;
-   double _root_angle1_err;
-   double _root_angle2_err;
+   double _root_angle1_var;
+   double _root_angle2_var;
    double _root_momentum;
    
  private:
