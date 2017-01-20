@@ -3,32 +3,29 @@
 using namespace std ;
 
 
-  // Function to sort the MSC angles depending on their u,v crossing point
-  double getrecoerror(TFile* file, double lambda)
+  // Returns the mean value of the angle reco error squared
+  double getanglerecovar(TFile* file)
   {
 	//TTree in input root file, that contains the MSC projected angle distributions and reconstruction error distribution
 	file->cd("");
 	TTree *msc_tree = (TTree*)file->Get("MSCTree");
 
 	// Draw reconstruction error 1 histogram
-	msc_tree->Draw("theta1_err", "", "P*");
+	msc_tree->Draw("theta1_var", "", "P*");
 
 	// Get mean value
-	double recoerror = msc_tree->GetHistogram()->GetMean();		//mean methode
+	double recovar = msc_tree->GetHistogram()->GetMean();		//mean methode
 
 	// Get maximum value
-	double recoerror_max = msc_tree->GetHistogram()->GetBinCenter(msc_tree->GetHistogram()->GetMaximumBin());	//max methode
+	double recovar_max = msc_tree->GetHistogram()->GetBinCenter(msc_tree->GetHistogram()->GetMaximumBin());	//max methode
 
 	// The difference of results between the two methods of reading out the recoerror shouldn't be larger than 10%
-	if(2*abs(recoerror-recoerror_max)/(recoerror+recoerror_max)>0.1)
+	if(2*abs(recovar-recovar_max)/(recovar+recovar_max)>0.1)
 	{
-		cout<<"Reconstruction error not well defined!"<<endl; 
+		cout<<"Angle Reconstruction Variance not well defined!"<<endl; 
 	}
 
-	//Calibration of the Reco Error
-	double recoerror_cali=recoerror*lambda;
-
-	return recoerror_cali;
+	return recovar;
   }
 
 
@@ -958,7 +955,7 @@ int PARAMETER-FUNCTIONNAME()
 
 	// Calibration factor lambda, used to change the reconstruction error to include systematical errors
 	double lambda=1.000;
-	double recoerror=getrecoerror(X0file,lambda);
+	double recoerror=sqrt(getanglerecovar(X0file))*lambda;
 	cout<<"The reconstruction error is "<<recoerror*1E6<<" µrad!"<<endl;
 
 	// Beam energy in GeV
