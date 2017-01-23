@@ -25,17 +25,22 @@ int MergeImages()
 	const int num_vsplits=PARAMETER-VSPLITS;
 
 	// TString for the input root file name
-	TString filename[num_usplits][num_vsplits];
+	TString filenameB[num_usplits][num_vsplits];
 
 	// Input root files
 	TFile *X0file[num_usplits][num_vsplits]; 
+
+	// TString for the input root file name
+	TString filenameA;
+	filenameA="PARAMETER-X0FILENAME";
 
 	for(int i=0;i<num_usplits;i++) 
 	{
 		for(int j=0;j<num_vsplits;j++) 
 		{
-			filename[i][j].Form("X0_merge-image-part_%i_%i.root",i+1,j+1);    
-			X0file[i][j] = new TFile(filename[i][j], "READ");
+			filenameB[i][j].Form("-part_%i_%i.root",i+1,j+1); 
+			TString filename=filenameA+filenameB[i][j];
+			X0file[i][j] = new TFile(filename, "READ");
 		}
 	}
 
@@ -70,14 +75,15 @@ int MergeImages()
 			hmeanmap2_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/hmeanmap2");
 			huresidualmeanmap_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/huresidualmeanmap");
 			hvresidualmeanmap_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/hvresidualmeanmap");
-			htrackchi2map_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/htrackchi2map");
 			hnummap_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/hnummap");
 			hmommap_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/hmommap");
 		}
 	}
 
 	// Results file
-	TFile *Resultsfile = new TFile("X0-image-merged.root", "RECREATE");	
+	TString resultsfilename="PARAMETER-RESULTSFILENAME";
+	resultsfilename+=".root";
+	TFile *Resultsfile = new TFile(resultsfilename, "RECREATE");	
 
 	// PIXEL Size of the image
 	double upixelsize = PARAMETER-UPIXELSIZE; // in µm
@@ -248,16 +254,6 @@ int MergeImages()
         hvresidualmeanmap->GetZaxis()->SetTitle("v residual[µm]");
         hvresidualmeanmap->GetZaxis()->SetTitleSize(0.02);
         hvresidualmeanmap->GetZaxis()->SetLabelSize(0.02);
-
-	// track chi2 mean value
-	TH2F * htrackchi2map = new TH2F("htrackchi2map","htrackchi2map",numcol,umin,umax,numrow,vmin,vmax);
-	htrackchi2map->SetStats(kFALSE);
-        htrackchi2map->GetXaxis()->SetTitle("u [mm]");
-        htrackchi2map->GetYaxis()->SetTitle("v [mm]");
-        htrackchi2map->GetZaxis()->SetTitle("track chi2");
-        htrackchi2map->GetZaxis()->SetTitleOffset(1.4);
-        htrackchi2map->GetZaxis()->SetTitleSize(0.02);
-        htrackchi2map->GetZaxis()->SetLabelSize(0.02);
 	
 	// #Tracks map
 	TH2F * hnummap = new TH2F("hnummap","hnummap",numcol,umin,umax,numrow,vmin,vmax);
@@ -295,7 +291,6 @@ int MergeImages()
 			hmeanmap2->SetBinContent(col+1,row+1,hmeanmap2_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 			huresidualmeanmap->SetBinContent(col+1,row+1,huresidualmeanmap_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 			hvresidualmeanmap->SetBinContent(col+1,row+1,hvresidualmeanmap_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			htrackchi2map->SetBinContent(col+1,row+1,htrackchi2map_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 			hnummap->SetBinContent(col+1,row+1,hnummap_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 			hmommap->SetBinContent(col+1,row+1,hmommap_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 		}
@@ -312,7 +307,7 @@ int MergeImages()
 	hmeanmap2->Write();
 	huresidualmeanmap->Write();
 	hvresidualmeanmap->Write();
-	htrackchi2map->Write();
+
 	hnummap->Write();
 	hmommap->Write();
 
