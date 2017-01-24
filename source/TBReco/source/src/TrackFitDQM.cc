@@ -280,12 +280,6 @@ void TrackFitDQM::processEvent(LCEvent * evt)
         _histoMap[ histoName ]->SetXTitle("v residual [mm]"); 
         _histoMap[ histoName ]->SetYTitle("tracks"); 
         
-        histoName = "hresUV_sensor"+to_string( ipl )+"_"+id;
-        _histoMap2D[ histoName ] = new TH2D(histoName.c_str(), "", 500, -maxU, +maxU, 500, -maxV, +maxV);
-        _histoMap2D[ histoName ]->SetXTitle("u residual [mm]"); 
-        _histoMap2D[ histoName ]->SetYTitle("v residual [mm]"); 
-        _histoMap2D[ histoName ]->SetZTitle("tracks"); 
-
         histoName = "hpull_resU_sensor"+to_string( ipl )+"_"+id;
         _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, -4, +4);
         _histoMap[ histoName ]->SetXTitle(" pull u residual"); 
@@ -310,9 +304,6 @@ void TrackFitDQM::processEvent(LCEvent * evt)
 
       histoName = "hresV_sensor"+to_string( ipl )+"_"+id;
       _histoMap[ histoName ]->Fill( dv ); 
-
-      histoName = "hresUV_sensor"+to_string( ipl )+"_"+id;
-      _histoMap2D[ histoName ]->Fill( du, dv ); 
 
       histoName = "hpull_resU_sensor"+to_string( ipl )+"_"+id;
       _histoMap[ histoName ]->Fill( pull_u );
@@ -464,10 +455,7 @@ void TrackFitDQM::end()
     _histoMap[histoName]->SetYTitle("RMS v residual [mm]"); 
     _histoMap[histoName]->SetStats( false );
     
-    histoName = "hClusterID_corrUV_sensor"+to_string( ipl );
-    _histoMap[histoName] = new TH1D(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-    _histoMap[histoName]->SetYTitle("correlation factor u-v residual"); 
-    _histoMap[histoName]->SetStats( false );
+    
     
     int i = 0; 
     
@@ -479,8 +467,7 @@ void TrackFitDQM::end()
        
       TH1D * tmpHistU = _histoMap["hresU_sensor"+to_string( ipl )+"_"+id];
       TH1D * tmpHistV = _histoMap["hresV_sensor"+to_string( ipl )+"_"+id];
-      TH2D * tmpHistUV = _histoMap2D["hresUV_sensor"+to_string( ipl )+"_"+id];
-
+      
       histoName = "hClusterID_fractions_sensor"+to_string( ipl );
       _histoMap[histoName]->SetBinContent( i, count );
       _histoMap[histoName]->SetBinError( i, TMath::Sqrt(count) );
@@ -495,11 +482,6 @@ void TrackFitDQM::end()
       _histoMap[histoName]->SetBinContent( i, tmpHistV->GetRMS() );
       _histoMap[histoName]->SetBinError( i, tmpHistV->GetRMSError() );
       _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );  
-      
-      histoName = "hClusterID_corrUV_sensor"+to_string( ipl );
-      _histoMap[histoName]->SetBinContent( i, tmpHistUV->GetCorrelationFactor() );
-      //_histoMap[histoName]->SetBinError( i, 0.001 );
-      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
       
     }  
     
