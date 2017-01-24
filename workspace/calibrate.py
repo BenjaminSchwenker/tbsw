@@ -11,10 +11,12 @@ if __name__ == '__main__':
   rawfile = ''
   xmlpath = ''
   caltag='dummy'
-  useMC = False
+  clusterMC = False
+  clusterTB = True
+  iterations = 3
   
   try:
-    opts, args = getopt.getopt(sys.argv[1:],"hi:x:c:",["ifile=","xmlfile=","caltag=","useMC="])
+    opts, args = getopt.getopt(sys.argv[1:],"hi:x:c:",["ifile=","xmlfile=","caltag=","clusterMC=","clusterTB="])
   except getopt.GetoptError:
     print ('calibrate.py -i <inputfile>  -x <xmlfile> -c <caltag>')
     print ('-c is optional and defaults to: ' + caltag )
@@ -30,8 +32,10 @@ if __name__ == '__main__':
       xmlpath = arg
     elif opt in ("-c", "--caltag"):
       caltag = arg
-    elif opt in ("--useMC"):
-      useMC = arg
+    elif opt in ("--clusterMC"):
+      clusterMC = arg
+    elif opt in ("--clusterTB"):
+      clusterTB = arg
    
   if rawfile == '':
     print ('missing option: -i path/to/inputfilename.slcio')
@@ -73,8 +77,8 @@ if __name__ == '__main__':
   subprocess.call('/$MARLIN/bin/Marlin hotpixelkiller.xml > log-hotpixel.txt 2>&1', shell=True)
   print ('[Print] HotPixelKiller done ...')
   		  
-  if useMC:
-    subprocess.call('/$MARLIN/bin/Marlin cluster-calibration.xml > log-clustering.txt 2>&1', shell=True)
+  if clusterMC:
+    subprocess.call('/$MARLIN/bin/Marlin cluster-calibration-mc.xml > log-clustering-mc.txt 2>&1', shell=True)
     print ('[Print] ClusterDB done ...')    
   
   subprocess.call('/$MARLIN/bin/Marlin correlator.xml > log-correlator.txt 2>&1', shell=True)    
@@ -94,7 +98,12 @@ if __name__ == '__main__':
 	               
   subprocess.call('/$MARLIN/bin/Marlin telescope-dqm.xml > log-dqm.txt 2>&1', shell=True)     
   print ('[Print] TelescopeDQM done.')   	
-
+  
+  if clusterTB: 
+    for i in range(0, iterations):
+      subprocess.call('/$MARLIN/bin/Marlin cluster-calibration-tb.xml > log-clustering-tb.txt 2>&1', shell=True)     
+      print ('[Print] clusterDB iteration done ...')   	
+  
   # clean up tmp files 
   for tmpfile in glob.glob('tmp*'):
     os.remove(tmpfile)

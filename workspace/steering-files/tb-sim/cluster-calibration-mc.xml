@@ -16,7 +16,7 @@
   <global>
     <parameter name="LCIOInputFiles"> tmp-rawdata.slcio </parameter>
     <parameter name="GearXMLFile" value="gear.xml"/>
-    <parameter name="MaxRecordNumber" value="50000"/>
+    <parameter name="MaxRecordNumber" value="100000"/>
     <parameter name="SkipNEvents" value="0"/>
     <parameter name="SupressCheck" value="false"/>
     <parameter name="Verbosity" value="MESSAGE3"/>
@@ -69,8 +69,8 @@
     <parameter name="MaxSizeV" type="int" value="3"/>
   </processor>
   
-  <processor name="M26ClusterDBCreator" type="GoeClusterCalibratorFromMC">
-    <!--GoeClusterCalibratorFromMC: Create clusterDB for clusters using simhits-->
+  <processor name="M26ClusterDBCreator" type="GoeClusterCalibratorForMC">
+    <!--GoeClusterCalibratorForMC: Create clusterDB for clusters using simhits-->
     <!--Name of hit collection-->
     <parameter name="HitCollection" type="string" lcioInType="TrackerHit"> hit_m26 </parameter>
     <!--Name of collection with simulated hits-->
@@ -82,7 +82,7 @@
     <!--Maximum v residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
     <parameter name="MaxResidualV" type="double" value="0.02"/>
     <!--Minimum number of cluster ID occurances for clusterDB-->
-    <parameter name="MinClusters" type="int" value="500"/>
+    <parameter name="MinClusters" type="int" value="2000"/>
   </processor>
   
   <processor name="LoadNoiseDB-DEP" type="ConditionsProcessor">
@@ -131,9 +131,9 @@
     <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
     <parameter name="MaxSizeV" type="int" value="3"/>
   </processor>
-  
-  <processor name="DEPClusterDBCreator" type="GoeClusterCalibratorFromMC">
-    <!--GoeClusterCalibratorFromMC: Create clusterDB for clusters using simhits-->
+
+  <processor name="DEPClusterDBCreator" type="GoeClusterCalibratorForMC">
+    <!--GoeClusterCalibratorForMC: Create clusterDB for clusters using simhits-->
     <!--Name of hit collection-->
     <parameter name="HitCollection" type="string" lcioInType="TrackerHit"> hit_dep </parameter>
     <!--Name of collection with simulated hits-->
@@ -145,7 +145,6 @@
     <!--Maximum v residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
     <parameter name="MaxResidualV" type="double" value="0.02"/>
     <!--Minimum number of cluster ID occurances for clusterDB-->
-    <parameter name="MinClusters" type="int" value="500"/>
+    <parameter name="MinClusters" type="int" value="2000"/>
   </processor>
-  
 </marlin>
