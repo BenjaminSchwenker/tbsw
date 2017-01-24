@@ -53,7 +53,7 @@
      <!--Name of hit collection-->
      <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_m26 </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-     <parameter name="ClusterDBFileName" type="string" value="clusterDB-M26.root"/>
+     <parameter name="ClusterDBFileName" type="string" value="clusterDB-ALL.root"/>
    </processor>
    
    <processor name="M26HitMaker-notused" type="CogHitMaker">
@@ -110,7 +110,7 @@
      <!--Name of hit collection-->
      <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_dep </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-     <parameter name="ClusterDBFileName" type="string" value="clusterDB-DEP.root"/>
+     <parameter name="ClusterDBFileName" type="string" value="clusterDB-ALL.root"/>
    </processor>
    
    <processor name="DEPHitMaker-notused" type="CogHitMaker">

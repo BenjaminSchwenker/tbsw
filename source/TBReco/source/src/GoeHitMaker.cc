@@ -8,7 +8,6 @@
 #include "GoeHitMaker.h"
 #include "TBHit.h"
 
-
 // Include basic C
 #include <limits>
 #include <cmath>
@@ -24,6 +23,9 @@
 #include <IMPL/TrackerHitImpl.h>
 #include <UTIL/CellIDDecoder.h>
 #include <IMPL/TrackerPulseImpl.h>
+
+// Include ROOT classes
+#include <TFile.h>
 
 
 // Used namespaces
@@ -51,19 +53,18 @@ namespace depfet {
     // First of all we need to register the input/output collections
     
     registerInputCollection( LCIO::TRACKERPULSE,
-                            "ClusterCollection" ,
-                            "Name of cluster collection"  ,
-                            _clusterCollectionName ,
-                            std::string("cluster") ) ;
+                             "ClusterCollection" ,
+                             "Name of cluster collection"  ,
+                             _clusterCollectionName , std::string("cluster") ) ;
     
-    registerOutputCollection (LCIO::TRACKERHIT, "HitCollectionName",
+    registerOutputCollection(LCIO::TRACKERHIT, "HitCollectionName",
                              "Name of hit collection",
                              _hitCollectionName, 
                              string("hit"));
     
-    registerProcessorParameter ("ClusterDBFileName",
-                                "This is the name of the LCIO file with the alignment constants (add .slcio)",
-                                _clusterDBFileName, static_cast< string > ( "ClusterDB.root" ) ); 
+    registerProcessorParameter("ClusterDBFileName",
+                               "This is the name of the LCIO file with the alignment constants (add .slcio)",
+                               _clusterDBFileName, static_cast< string > ( "ClusterDB.root" ) ); 
    
   }
   
@@ -76,48 +77,63 @@ namespace depfet {
     _nRun = 0 ;
     _nEvt = 0 ;
     _timeCPU = clock()/1000;
+    _nClu = 0 ;
+    _nMatched = 0 ;
                  
     // Print set parameters
     printProcessorParams();
-   
+    
     // Read detector constants from gear file
     _detector.ReadGearConfiguration();    
-   
+    
     // Open clusterDB file 
-    _clusterDBFile = new TFile(_clusterDBFileName.c_str(), "UPDATE");
-    if (_clusterDBFile == 0 || _clusterDBFile->IsOpen() != kTRUE) {
-      streamlog_out ( ERROR4) << "Could not open clusterDB file!!" << endl;
-      exit(-1);
+    TFile * clusterDBFile = new TFile(_clusterDBFileName.c_str(), "READ");
+    
+    for(int ipl=0;ipl<_detector.GetNSensors();ipl++)  { 
+      int sensorID = _detector.GetDet(ipl).GetDAQID();
+      string histoName;
+      
+      histoName = "hDB_sensor" + to_string(sensorID) + "_ID";
+      if ( (TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+        _DB_Map_ID[sensorID] = (TH1F *) clusterDBFile->Get(histoName.c_str());  
+        _DB_Map_ID[sensorID]->SetDirectory(0);
+      }
+       
+      histoName = "hDB_sensor" + to_string(sensorID) + "_U";
+      if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+        _DB_Map_U[sensorID] = (TH1F *) clusterDBFile->Get(histoName.c_str());
+        _DB_Map_U[sensorID]->SetDirectory(0);
+      } 
+      
+      histoName = "hDB_sensor" + to_string(sensorID) + "_V"; 
+      if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+        _DB_Map_V[sensorID] = (TH1F *) clusterDBFile->Get(histoName.c_str());
+        _DB_Map_V[sensorID]->SetDirectory(0);
+      } 
+      
+      histoName = "hDB_sensor" + to_string(sensorID) + "_Sigma2_U";
+      if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+        _DB_Map_Sigma2_U[sensorID] = (TH1F *) clusterDBFile->Get(histoName.c_str());
+        _DB_Map_Sigma2_U[sensorID]->SetDirectory(0);
+      } 
+      
+      histoName = "hDB_sensor" + to_string(sensorID) + "_Sigma2_V";
+      if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+        _DB_Map_Sigma2_V[sensorID] = (TH1F *) clusterDBFile->Get(histoName.c_str());
+        _DB_Map_Sigma2_V[sensorID]->SetDirectory(0);
+      } 
+      
+      histoName = "hDB_sensor" + to_string(sensorID) + "_Cov_UV";
+      if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+        _DB_Map_Cov_UV[sensorID] = (TH1F *) clusterDBFile->Get(histoName.c_str());
+        _DB_Map_Cov_UV[sensorID]->SetDirectory(0);
+      } 
     }
     
-    // Get histograms storing position offsets 
-    _DB_U  = (TH1F *) _clusterDBFile->Get("hDB_U");
-    if (_DB_U == 0) {
-      streamlog_out ( ERROR4) << "Could not find cluster offset histograms in file " << _clusterDBFileName << endl;
-      exit(-1);  
-    }
-    _DB_V  = (TH1F *) _clusterDBFile->Get("hDB_V");
-    if (_DB_U == 0) {
-      streamlog_out ( ERROR4) << "Could not find cluster offset histograms in file " << _clusterDBFileName << endl;
-      exit(-1);  
-    }
-   
-    // Get histograms storing components of covariance matrix  
-    _DB_Sigma_U  = (TH1F *) _clusterDBFile->Get("hDB_Sigma_U");
-    if (_DB_Sigma_U == 0) {
-      streamlog_out ( ERROR4) << "Could not find cluster covariance histograms in file " << _clusterDBFileName << endl;
-      exit(-1);  
-    }
-    _DB_Sigma_V  = (TH1F *) _clusterDBFile->Get("hDB_Sigma_V");
-    if (_DB_Sigma_V == 0) {
-      streamlog_out ( ERROR4) << "Could not find cluster covariance histograms in file " << _clusterDBFileName << endl;
-      exit(-1);  
-    }
-    _DB_Cov_UV  = (TH1F *) _clusterDBFile->Get("hDB_Cov_UV");
-    if (_DB_Cov_UV == 0) {
-      streamlog_out ( ERROR4) << "Could not find cluster covariance histograms in file " << _clusterDBFileName << endl;
-      exit(-1);  
-    }     
+    // Close root  file
+    clusterDBFile->Close();
+    delete clusterDBFile;
+    
   }
   
   //
@@ -160,7 +176,9 @@ namespace depfet {
          
     // Loop on all clusters 
     for (unsigned int iClu = 0; iClu < clusterCollection->size(); iClu++) 
-    { 
+    {
+
+      _nClu++;
     
       // Helper class for decoding cluster ID's 
       CellIDDecoder<TrackerPulseImpl> clusterDecoder( clusterCollection ); 
@@ -177,38 +195,32 @@ namespace depfet {
       
       streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID << " with clusterID " << id << endl; 
       
-      // Compute hit position and 2x2 covariance matrix 
-      double originPosU = Det.GetPixelCenterCoordU( aCluster.getVStart(), aCluster.getUStart()); 
-      double originPosV = Det.GetPixelCenterCoordV( aCluster.getVStart(), aCluster.getUStart()); 
-      double u{originPosU}, v{originPosV}, sig2_u{0.0}, sig2_v{0.0}, cov_uv{0.0}; 
-         
-      // Lookup hash for clusterID
-      int bin = _DB_U->GetXaxis()->FindFixBin(id.c_str());
-      
-      if (bin == -1) {
-        streamlog_out(MESSAGE2) << "  ClusterId " << id << " not found in clusterDB. Ignoring cluster." << endl;
-        continue;
+      // Compute position measurement and its 2x2 covariance matrix   
+      double u{0.0}, v{0.0}, sig2_u{0.0}, sig2_v{0.0}, cov_uv{0.0};
+      int quality = 0; 
+       
+      bool found = searchDB(sensorID, id, u, v, sig2_u, sig2_v, cov_uv); 
+      if (found) {
+        // Count matched clusters
+        _nMatched++;
+        // Shift position into local sensor coordinates
+        u += Det.GetPixelCenterCoordU( aCluster.getVStart(), aCluster.getUStart()); 
+        v += Det.GetPixelCenterCoordV( aCluster.getVStart(), aCluster.getUStart()); 
+      } else { 
+        // Fallback for computing position measurement
+        double ustart = Det.GetPixelCenterCoordU( aCluster.getVStart(), aCluster.getUStart());
+        double ustop  = Det.GetPixelCenterCoordU( aCluster.getVStart(), aCluster.getUStart() + aCluster.getUSize()-1);
+        u       = 0.5*( ustart + ustop );
+        double vstart = Det.GetPixelCenterCoordV( aCluster.getVStart(), aCluster.getUStart());
+        double vstop  = Det.GetPixelCenterCoordV( aCluster.getVStart() + aCluster.getVSize()-1 , aCluster.getUStart());
+        v       = 0.5*( vstart + vstop ); 
+        sig2_u  = std::pow(aCluster.getUSize()*Det.GetPitchU()/TMath::Sqrt(12),2);  
+        sig2_v  = std::pow(aCluster.getVSize()*Det.GetPitchV()/TMath::Sqrt(12),2);   
+        cov_uv  = 0; 
       }
       
-      streamlog_out(MESSAGE2) << "  ClusterId " << id << " found at bin " << bin << endl
-                                << std::setiosflags(std::ios::fixed | std::ios::internal )
-                                << std::setprecision(8)
-                                << "  offset u: " << _DB_U->GetBinContent(bin) << ", sigma: " << _DB_Sigma_U->GetBinContent(bin) << endl
-                                << "  offset v: " << _DB_V->GetBinContent(bin) << ", sigma: " << _DB_Sigma_V->GetBinContent(bin) << endl
-                                << "  cov(u,v): " << _DB_Cov_UV->GetBinContent(bin)
-                                << std::setprecision(3)
-                                << endl;   
-                            
-      // Lookup offsets from clusterDB 
-      u += _DB_U->GetBinContent(bin); 
-      v += _DB_V->GetBinContent(bin); 
-          
-      // Lookup sigmas and covariance from clusterDB
-      sig2_u = pow(_DB_Sigma_U->GetBinContent(bin),2);     
-      sig2_v = pow(_DB_Sigma_V->GetBinContent(bin),2);    
-      cov_uv = _DB_Cov_UV->GetBinContent(bin);
-      
-      TBHit hit(sensorID, u, v, sig2_u, sig2_v, cov_uv, 0);
+      // Make TBHit 
+      TBHit hit(sensorID, u, v, sig2_u, sig2_v, cov_uv, quality);
       
       // Make LCIO TrackerHit
       TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
@@ -220,6 +232,15 @@ namespace depfet {
       
       // Add hit to the hit collection
       hitCollection->push_back( trackerhit );
+      
+      streamlog_out(MESSAGE2) << "  ClusterId " << id << " found: " << endl
+                                << std::setiosflags(std::ios::fixed | std::ios::internal )
+                                << std::setprecision(8)
+                                << "  offset u: " << u << ", sigma: " << TMath::Sqrt(sig2_u) << endl
+                                << "  offset v: " << v << ", sigma: " << TMath::Sqrt(sig2_v) << endl
+                                << "  cov(u,v): " << cov_uv
+                                << std::setprecision(3)
+                                << endl;   
           
     } // End cluster loop 
       
@@ -252,15 +273,45 @@ namespace depfet {
                             << _timeCPU/_nEvt
                             << " ms"
                             << std::endl
+                            << "ClusterDB coverage: "
+                            << _nMatched/_nClu
                             << std::setprecision(3)
                             << std::endl
                             << " "
                             << "Processor succesfully finished!"
                             << std::endl;
+
+    
+    
    
   }
-
-
+  
+  bool GoeHitMaker::searchDB(int sensorID, string id, double& u, double& v, double& sig2_u, double& sig2_v, double& cov_uv)
+  {
+    
+    if ( _DB_Map_ID.find(sensorID) == _DB_Map_ID.end() ) {
+      return false;  
+    }
+    
+    int bin = _DB_Map_ID[sensorID]->GetXaxis()->FindFixBin(id.c_str());
+    if (bin == -1) {
+      return false;
+    }
+    
+    // Get calibrated measurement 
+    u      =  _DB_Map_U[sensorID]->GetBinContent(bin);
+    v      =  _DB_Map_V[sensorID]->GetBinContent(bin);
+    sig2_u =  _DB_Map_Sigma2_U[sensorID]->GetBinContent(bin);
+    sig2_v =  _DB_Map_Sigma2_V[sensorID]->GetBinContent(bin);
+    cov_uv =  _DB_Map_Cov_UV[sensorID]->GetBinContent(bin);
+    
+    if (sig2_u <=0 || sig2_v <= 0) {
+      return false;
+    } 
+    
+    return true;
+  }
+  
   //
   // Method printing processor parameters
   //
@@ -272,7 +323,6 @@ namespace depfet {
                              << "GoeHitMaker Development Version, be carefull!!"
                              << " "
                              << std::endl  << std::endl;   
-
   }
 
 } // Namespace

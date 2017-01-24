@@ -11,13 +11,14 @@
     <processor name="DEPHitMaker"/>
     <processor name="VXDTracker"/>
     <processor name="DUTAnalyzer"/>
-    <!--processor name="ValidationDQM"-->
+    <processor name="TelescopeDQM"/>
   </execute>
-  
+    
+ 
   <global>
     <parameter name="LCIOInputFiles"> tmp-rawdata.slcio </parameter>
     <parameter name="GearXMLFile" value="cal-files/gear.xml"/>
-    <parameter name="MaxRecordNumber" value="-1"/>
+    <parameter name="MaxRecordNumber" value="100000"/>
     <parameter name="SkipNEvents" value="0"/>
     <parameter name="SupressCheck" value="false"/>
     <parameter name="Verbosity" value="MESSAGE3"/>
@@ -76,7 +77,7 @@
     <!--Name of hit collection-->
     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_m26 </parameter>
     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-    <parameter name="ClusterDBFileName" type="string" value="cal-files/clusterDB-M26.root"/>
+    <parameter name="ClusterDBFileName" type="string" value="cal-files/clusterDB-ALL.root"/>
   </processor>
   
   <processor name="M26HitMaker-notused" type="CogHitMaker">
@@ -110,7 +111,7 @@
     <!--Name of hit collection-->
     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_dep </parameter>
     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-    <parameter name="ClusterDBFileName" type="string" value="cal-files/clusterDB-DEP.root"/>
+    <parameter name="ClusterDBFileName" type="string" value="cal-files/clusterDB-ALL.root"/>
   </processor>
 
   <processor name="DEPHitMaker-notused" type="CogHitMaker">
@@ -140,19 +141,19 @@
     <processor name="VXDTracker" type="FastTracker">
      <!--FastTracker: Performs track finding and fitting for beam tests-->
      <!--Input hit collection names-->
-     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> hit_m26 </parameter>
+     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> hit_m26 hit_dep </parameter>
      <!--Collection name for fitted tracks-->
      <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> aligntracks </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="cal-files/eudet-alignmentDB.slcio"/>
      <!--Enter plane numbers of bad detectors-->
-     <parameter name="ExcludeDetector" type="IntVec" value="3"/>
+     <parameter name="ExcludeDetector" type="IntVec" value=""/>
      <!--To use only GoodQuality write 0 here-->
      <parameter name="HitQualitySelection" type="int" value="0"/>
      <!--Maximum hit residual [mm]-->
-     <parameter name="MaxResidualU" type="FloatVec" value="0.1"/>
+     <parameter name="MaxResidualU" type="FloatVec" value="0.2"/>
      <!--Maximum hit residual [mm]-->
-     <parameter name="MaxResidualV" type="FloatVec" value="0.1"/>
+     <parameter name="MaxResidualV" type="FloatVec" value="0.2"/>
      <!--Maximum track chisq in track fit-->
      <parameter name="MaxTrackChi2" type="float" value="50"/>
      <!--Maximum number of consecutive missing hits in track-->
@@ -160,7 +161,7 @@
      <!--Maximum slope of candiate tracks in Z=0 plane (rad). Set cut to zero to deactivate.-->
      <parameter name="MaximumSlope" type="float" value="0.1"/>
      <!--Minimum number of hits in track-->
-     <parameter name="MinimumHits" type="int" value="6"/>
+     <parameter name="MinimumHits" type="int" value="7"/>
      <!--Chi2 cut for removal of bad hits-->
      <parameter name="OutlierChi2Cut" type="float" value="20"/>
      <!--Fitting iteration for removal of bad hits-->
@@ -201,21 +202,14 @@
      <parameter name="SingleTrackEvents" type="bool" value="false"/>
    </processor>
    
-   <processor name="ValidationDQM" type="TrackFitValidation">
-     <!--Produces Validation plots (pulls) for track fitting algorithms-->
-     <!--Name of collection with simulated hits-->
-     <parameter name="SimTrackerHitCollection" type="string" lcioInType="SimTrackerHit"> SimTrackerHits </parameter>
-     <!--Name of collection with reco tracks -->
-     <parameter name="TrackCollection" type="string" lcioInType="Track"> aligntracks </parameter>
+   <processor name="TelescopeDQM" type="TrackFitDQM">
+     <!--TrackFitDQM: DQM plots for monitor quality of track fitting-->
+     <!--Track input collection-->
+     <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> aligntracks </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="cal-files/eudet-alignmentDB.slcio"/>
-     <!--Maximum u residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
-     <parameter name="MaxResidualU" type="double" value="0.05"/>
-     <!--Maximum v residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
-     <parameter name="MaxResidualV" type="double" value="0.05"/>
      <!--Output root file name-->
-     <parameter name="RootFileName" type="string" value="Validation.root"/>
+     <parameter name="RootFileName" type="string" value="TelescopeDQM.root"/>
    </processor>
-
-  
+   
 </marlin>

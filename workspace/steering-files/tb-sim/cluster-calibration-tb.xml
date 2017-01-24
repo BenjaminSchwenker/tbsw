@@ -1,26 +1,48 @@
 <?xml version="1.0" encoding="us-ascii"?>
 
 <marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
-
-   <execute>
-      <processor name="TelTrackFinder"/>
-      <processor name="DESYBeamCorrector"/>
-      <processor name="TelescopeDQM"/>
-   </execute>
-
-   <global>
-      <parameter name="LCIOInputFiles"> tmp.slcio </parameter>
-      <parameter name="GearXMLFile" value="gear.xml"/>
-      <parameter name="MaxRecordNumber" value="-1"/>
-      <parameter name="SkipNEvents" value="0"/>
-      <parameter name="SupressCheck" value="false"/>
-      <parameter name="Verbosity" value="MESSAGE3 "/>
-   </global>
-
-   <processor name="TelTrackFinder" type="FastTracker">
+  
+  <execute>
+    <processor name="M26HitMaker"/>
+    <processor name="DEPHitMaker"/>
+    <processor name="VXDTracker"/>
+    <processor name="ClusterCalibrator"/>
+    <processor name="ClusterDQM"/>
+  </execute>
+    
+  <global>
+    <parameter name="LCIOInputFiles"> tmp.slcio </parameter>
+    <parameter name="GearXMLFile" value="gear.xml"/>
+    <parameter name="MaxRecordNumber" value="-1"/>
+    <parameter name="SkipNEvents" value="0"/>
+    <parameter name="SupressCheck" value="false"/>
+    <parameter name="Verbosity" value="MESSAGE3"/>
+  </global>
+     
+  <processor name="M26HitMaker" type="GoeHitMaker">
+    <!--GoeHitMaker:  Compute hits from pixel clusters using a clusterDB-->
+    <!--Name of cluster collection-->
+    <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_m26 </parameter>
+    <!--Name of hit collection-->
+    <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> goehit_m26 </parameter>
+    <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+    <parameter name="ClusterDBFileName" type="string" value="clusterDB-ALL.root"/>
+  </processor>
+  
+  <processor name="DEPHitMaker" type="GoeHitMaker">
+    <!--GoeHitMaker:  Compute hits from pixel clusters using a clusterDB-->
+    <!--Name of cluster collection-->
+    <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_dep </parameter>
+    <!--Name of hit collection-->
+    <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> goehit_dep </parameter>
+    <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+    <parameter name="ClusterDBFileName" type="string" value="clusterDB-ALL.root"/>
+  </processor>
+  
+    <processor name="VXDTracker" type="FastTracker">
      <!--FastTracker: Performs track finding and fitting for beam tests-->
      <!--Input hit collection names-->
-     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> hit_m26 hit_dep</parameter>
+     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> goehit_m26 goehit_dep </parameter>
      <!--Collection name for fitted tracks-->
      <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> aligntracks </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
@@ -60,33 +82,31 @@
      <!--Build track seeds from first plane and second plane-->
      <parameter name="PassTwo_SecondPlane" type="int" value="-1"/>
    </processor>
-   
-   <processor name="DESYBeamCorrector" type="BeamEnergyCorrector">
-     <!--BeamEnergyCorrector: Applies corrections to the beam energy profile-->
+    
+   <processor name="ClusterCalibrator" type="GoeClusterCalibrator">
+     <!--GoeClusterCalibrator: Create clusterDB for clusters using reco tracks-->
      <!--Track input collection-->
      <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> aligntracks </parameter>
-     <!--Collection name for corrected tracks-->
-     <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> aligntracks2 </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
-     <!--Momentum at centre of reference plane [GeV]-->
-     <parameter name="CentralMomentum" type="double" value="3"/>
-     <!--Plane number along the beam line-->
-     <parameter name="ReferencePlane" type="int" value="3"/>
-     <!--Momentum slope along u [GeV/mm]-->
-     <parameter name="SlopeUMomentum" type="double" value="0"/>
-     <!--Momentum slope along v [GeV/mm]-->
-     <parameter name="SlopeVMomentum" type="double" value="0"/>
+     <!--Output clusterDB file name-->
+     <parameter name="ClusterDBFileName" type="string" value="clusterDB-ALL.root"/>
+     <!--Minimum number of cluster ID occurances for clusterDB-->
+     <parameter name="MinClusters" type="int" value="2000"/>
+     <!--Minimum value of variance for u position measurement [mm^2]-->
+     <parameter name="MinVarianceU" type="float" value="1e-06"/>
+     <!--Minimum value of variance for v position measurement [mm^2]-->
+     <parameter name="MinVarianceV" type="float" value="1.1e-06"/>
    </processor>
    
-   <processor name="TelescopeDQM" type="TrackFitDQM">
+   <processor name="ClusterDQM" type="TrackFitDQM">
      <!--TrackFitDQM: DQM plots for monitor quality of track fitting-->
      <!--Track input collection-->
-     <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> aligntracks2 </parameter>
+     <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> aligntracks </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
      <!--Output root file name-->
-     <parameter name="RootFileName" type="string" value="TelescopeDQM.root"/>
+     <parameter name="RootFileName" type="string" value="ClusterValidation.root"/>
    </processor>
-     
+   
 </marlin>
