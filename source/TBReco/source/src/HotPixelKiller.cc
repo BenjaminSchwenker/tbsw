@@ -236,6 +236,8 @@ namespace depfet {
       _histoMap[histoName]->SetZTitle("mask");     
       _histoMap[histoName]->SetStats( false );     
       
+      int nMasked = 0; 
+       
       // Loop over all pixels 
       for (int iV = 0; iV < adet.GetNRows(); iV++) {
         for (int iU = 0; iU < adet.GetNColumns(); iU++) {
@@ -245,7 +247,8 @@ namespace depfet {
           // Mask pixel with very high hit frequency -> hot pixel killer 
           double occupancy =  hitVec[ uniqPixelID ] / _nEvt;
           if ( occupancy  > _maxOccupancy ) {
-                  
+             
+            nMasked++;     
             streamlog_out(MESSAGE1) << "Mask pixel on sensorID " << sensorID 
                                     << "   iU: " << iU << ", iV: " << iV 
                                     << "   (" << occupancy <<  ")" << endl;
@@ -255,7 +258,10 @@ namespace depfet {
             _histoMap[histoName]->SetBinContent(iU+1,iV+1, 0 ); 
           }      
         }
-      } // 2x pixel loop   
+      } 
+        
+      streamlog_out(MESSAGE3) << "Number of masked pixels on sensorID " << sensorID 
+                              << " is " << nMasked << endl;  
     }
     
     streamlog_out(MESSAGE3) << std::endl << " " << "Writing ROOT file ..." << std::endl;   

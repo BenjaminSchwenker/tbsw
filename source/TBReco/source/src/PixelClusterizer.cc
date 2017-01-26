@@ -5,9 +5,11 @@
 
 #include "PixelClusterizer.h"
 
-// Include DEPFETTrackTools 
+// Include TBTools 
 #include "DEPFET.h" 
-#include "MatrixDecoder.h"
+
+// Include ROOT classes
+#include <TFile.h>
 
 // Used namespaces
 using namespace std; 
@@ -36,10 +38,6 @@ PixelClusterizer::PixelClusterizer() : Processor("PixelClusterizer")
    registerInputCollection (LCIO::TRACKERDATA, "SparseDataCollectionName",
                             "Name of input sparsified pixel data collection",
                             _sparseDataCollectionName, string("zsdata"));
-   
-   registerInputCollection (LCIO::TRACKERRAWDATA, "StatusCollectionName",
-                           "Input status collection name",
-                           _statusCollectionName, string("status")); 
     
    registerOutputCollection (LCIO::TRACKERPULSE, "ClusterCollectionName",
                             "Name of the output cluster collection",
@@ -56,6 +54,10 @@ PixelClusterizer::PixelClusterizer() : Processor("PixelClusterizer")
    
    registerProcessorParameter( "AcceptDiagonalCluster","0: common side; 1: common corner; 3: max. one missing pixel",
                                m_acceptDiagonalClusters , static_cast<int > (1) ); 
+
+   registerProcessorParameter("NoiseDBFileName",
+                               "This is the name of the LCIO file with the alignment constants (add .slcio)",
+                               _noiseDBFileName, static_cast< string > ( "NoiseDB.root" ) ); 
     
 }
 
@@ -73,8 +75,21 @@ void PixelClusterizer::init() {
    
    _dummyCollectionName = "original_data_"+_clusterCollectionName;
    
-   // The status data is not yet initialized
-   _isStatusReady = false;
+   // Open clusterDB file 
+   TFile * noiseDBFile = new TFile(_noiseDBFileName.c_str(), "READ");
+    
+   for(int ipl=0;ipl<_detector.GetNSensors();ipl++)  { 
+     int sensorID = _detector.GetDet(ipl).GetDAQID();
+     string histoName = "hDB_sensor"+to_string(sensorID) + "_mask";
+     if ( (TH2F *) noiseDBFile->Get(histoName.c_str()) != nullptr) {
+       _DB_Map_Mask[sensorID] = (TH2F *) noiseDBFile->Get(histoName.c_str());  
+       _DB_Map_Mask[sensorID]->SetDirectory(0);
+     }  
+   }
+     
+   // Close root  file
+   noiseDBFile->Close();
+   delete noiseDBFile;
               
    // Print set parameters
    printProcessorParams();
@@ -112,12 +127,7 @@ void PixelClusterizer::processEvent(LCEvent * evt)
    
    // More detailed event numbering for testing
    streamlog_out(MESSAGE2) << std::endl << "Starting with Event Number " << evt->getEventNumber()  << std::endl;  
-   
-   // First of all we need to be sure that status data is initialized
-   if ( !_isStatusReady ) {
-     initializeStatus( evt ) ;
-   }
-   
+    
    //
    // Open collections
    try {
@@ -197,12 +207,7 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
   LCCollectionVec * Pix_collection = dynamic_cast < LCCollectionVec * > (evt->getCollection(_sparseDataCollectionName)); 
   // Helper class for decoding pixel data 
   CellIDDecoder<TrackerDataImpl> PixelID( Pix_collection );  
-  
-  //Open status data
-  LCCollectionVec * statusCollection = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusCollectionName));
-  // Helper class for decoding status data 
-  CellIDDecoder<TrackerDataImpl> statusDecoder( statusCollection ); 
-  
+   
   // The original data collection contains the sparse pixel data for 
   // each accpeted cluster.
   LCCollectionVec * originalDataCollection = new LCCollectionVec(LCIO::TRACKERDATA);
@@ -212,22 +217,14 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
      
     // Get zs pixels from next pixel detector   
     TrackerDataImpl * pixModule = dynamic_cast<TrackerDataImpl* > ( Pix_collection->getElementAt(iDet) );
-     
-    // Get pixel status matrix 
-    TrackerRawDataImpl * status = dynamic_cast<TrackerRawDataImpl*> (statusCollection->getElementAt( iDet ));  
       
     // DAQ ID for pixel detector
     int sensorID = PixelID( pixModule ) ["sensorID"];
-
+    
     // Read geometry info for sensor 
     int ipl = _detector.GetPlaneNumber(sensorID);      
     Det& adet = _detector.GetDet(ipl);
-  
-    int noOfXPixels = adet.GetNColumns(); 
-    int noOfYPixels = adet.GetNRows();
-
-    MatrixDecoder matrixDecoder( noOfXPixels, noOfYPixels); 
-    
+       
     // Get max channel numbers 
     int maxCol = adet.GetNColumns() - 1; 
     int maxRow = adet.GetNRows() - 1;
@@ -254,6 +251,12 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
       int col = static_cast<int> (pixVector[iPix * 3]);
       int row = static_cast<int> (pixVector[iPix * 3 + 1]);
       float charge =  pixVector[iPix * 3 + 2];     
+       
+      // Try to get status code for pixel 
+      float status = 0; 
+      if ( _DB_Map_Mask.find(sensorID) != _DB_Map_Mask.end() ) {
+        status = _DB_Map_Mask[sensorID]->GetBinContent(col+1, row+1);  
+      }
       
       // Print detailed pixel summary, for testing/debugging only !!! 
       streamlog_out(MESSAGE1) << "Pixel Nr. " << iPix << " on sensor " << sensorID  
@@ -274,8 +277,8 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
         continue;
       }
       
-      // If a pixel is bad, skip it in clusterization
-      if ( status->getADCValues() [ matrixDecoder.getIndexFromXY(col,row) ]   != 0 ) {
+      // Skip masked pixels 
+      if ( status  != 0 ) {
         streamlog_out(MESSAGE2) << "  Bad pixel found. Skipping it." << std::endl; 
         continue;
       }
@@ -554,55 +557,7 @@ bool PixelClusterizer::isDuplicated( FloatVec &group, int col, int row )
 }
 
 
-// This method is called to initialize the status information,
-// namely linking status data  to pixel data.
- 
-void  PixelClusterizer::initializeStatus( LCEvent * event )  {
-  
-  streamlog_out( MESSAGE2 ) << "Initializing status" << endl;
-  
-  try {
-         
-    // Open pixel data  
-    LCCollectionVec * Pix_collection = dynamic_cast < LCCollectionVec * > (event->getCollection(_sparseDataCollectionName)); 
-    CellIDDecoder<TrackerDataImpl> PixelID( Pix_collection ); 
-    
-    //Open status data
-    LCCollectionVec * statusCollection = dynamic_cast < LCCollectionVec * > (event->getCollection(_statusCollectionName)); 
-    CellIDDecoder<TrackerRawDataImpl> statusDecoder( statusCollection ); 
-    
-    // We are assuming that the pixel and status collections 
-    // are aligned according to the sensorID. In other words, we are 
-    // assuming the element i-th in the all the collections corresponds 
-    // to the same detector. Let's test this ...
 
-    streamlog_out( MESSAGE3 ) << "Found status collection " << endl;
-    
-    for ( size_t iDet = 0 ; iDet < statusCollection->size(); ++iDet ) {
-
-      streamlog_out( MESSAGE3 ) << "Found iDet " << iDet << endl;
-       
-      TrackerDataImpl * pixel = dynamic_cast<TrackerDataImpl* > ( Pix_collection->getElementAt(iDet) )  ;
-      TrackerRawDataImpl * status = dynamic_cast < TrackerRawDataImpl * >(statusCollection->getElementAt(iDet));
-      
-      int dataID = static_cast<int> ( PixelID(pixel)["sensorID"] );
-      int statusID = static_cast<int> ( statusDecoder(status)["sensorID"] );
-            
-      if (dataID != statusID) {
-        streamlog_out(ERROR3) << "Status collection not aligned to detector data!" << std::endl << std::endl;      
-        exit(-1); 
-      }
-      
-    }
-    
-    _isStatusReady = true;
-    
-  } catch (  lcio::DataNotAvailableException ) {
-    streamlog_out( MESSAGE2 ) << "Unable to to find status collection" << endl;
-    _isStatusReady = false;
-  }
-   
-}
 
 } // Namespace
 
