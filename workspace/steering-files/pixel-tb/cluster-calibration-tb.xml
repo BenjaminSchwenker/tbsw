@@ -7,7 +7,6 @@
     <processor name="DEPHitMaker"/>
     <processor name="VXDTracker"/>
     <processor name="ClusterCalibrator"/>
-    <processor name="ClusterDQM"/>
   </execute>
     
   <global>
@@ -72,7 +71,7 @@
      <!--Particle mass [GeV]-->
      <parameter name="ParticleMass" type="double" value="0.000511"/>
      <!--Particle momentum [GeV]-->
-     <parameter name="ParticleMomentum" type="double" value="3.0"/>
+     <parameter name="ParticleMomentum" type="double" value="4.0"/>
      <!--Build track seeds from first plane and second plane-->
      <parameter name="PassOne_FirstPlane" type="int" value="0"/>
      <!--Build track seeds from first plane and second plane-->
@@ -92,21 +91,11 @@
      <!--Output clusterDB file name-->
      <parameter name="ClusterDBFileName" type="string" value="clusterDB-ALL.root"/>
      <!--Minimum number of cluster ID occurances for clusterDB-->
-     <parameter name="MinClusters" type="int" value="2000"/>
+     <parameter name="MinClusters" type="int" value="300"/>
      <!--Minimum value of variance for u position measurement [mm^2]-->
      <parameter name="MinVarianceU" type="float" value="1e-06"/>
      <!--Minimum value of variance for v position measurement [mm^2]-->
      <parameter name="MinVarianceV" type="float" value="1.1e-06"/>
-   </processor>
-   
-   <processor name="ClusterDQM" type="TrackFitDQM">
-     <!--TrackFitDQM: DQM plots for monitor quality of track fitting-->
-     <!--Track input collection-->
-     <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> aligntracks </parameter>
-     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-     <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
-     <!--Output root file name-->
-     <parameter name="RootFileName" type="string" value="ClusterValidation.root"/>
    </processor>
    
 </marlin>

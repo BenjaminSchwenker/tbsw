@@ -56,7 +56,7 @@ PixelClusterizer::PixelClusterizer() : Processor("PixelClusterizer")
                                m_acceptDiagonalClusters , static_cast<int > (1) ); 
 
    registerProcessorParameter("NoiseDBFileName",
-                               "This is the name of the LCIO file with the alignment constants (add .slcio)",
+                               "This is the name of the ROOT file with the status mask (add .root)",
                                _noiseDBFileName, static_cast< string > ( "NoiseDB.root" ) ); 
     
 }

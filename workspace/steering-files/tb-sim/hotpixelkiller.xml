@@ -20,36 +20,24 @@
    <!--HotPixelKiller: Masking of hot pixels-->
    <!--Name of zero suppressed data collection-->
    <parameter name="InputCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
-   <!--Events used to compute hot pixel mask-->
-   <parameter name="EventsForMask" type="int" value="20000"/>
    <!--Maximum hit rate (hits/events) for normal pixels-->
    <parameter name="MaxOccupancy" type="float" value="0.01"/>
    <!--This is the name of the noiseDB file-->
-   <parameter name="NoiseDBFileName" type="string" value="NoiseDB-M26.slcio"/>
+   <parameter name="NoiseDBFileName" type="string" value="NoiseDB-M26.root"/>
    <!--Zero suppression threshold for digits [ADU]-->
    <parameter name="OfflineZSThreshold" type="float" value="0"/>
-   <!--This is the name of the root file with DQM histos-->
-   <parameter name="OutputRootFileName" type="string" value="HotPixelDQM-M26.root"/>
-   <!--Name of status data collection-->
-   <parameter name="StatusCollectionName" type="string" value="status_m26"/>
  </processor>
 
   <processor name="HotPixelKiller-DEP" type="HotPixelKiller">
    <!--HotPixelKiller: Masking of hot pixels-->
    <!--Name of zero suppressed data collection-->
    <parameter name="InputCollectionName" type="string" lcioInType="TrackerData"> zsdata_dep </parameter>
-   <!--Events used to compute hot pixel mask-->
-   <parameter name="EventsForMask" type="int" value="20000"/>
    <!--Maximum hit rate (hits/events) for normal pixels-->
    <parameter name="MaxOccupancy" type="float" value="0.01"/>
    <!--This is the name of the noiseDB file-->
-   <parameter name="NoiseDBFileName" type="string" value="NoiseDB-DEP.slcio"/>
+   <parameter name="NoiseDBFileName" type="string" value="NoiseDB-DEP.root"/>
    <!--Zero suppression threshold for digits [ADU]-->
    <parameter name="OfflineZSThreshold" type="float" value="0"/>
-   <!--This is the name of the root file with DQM histos-->
-   <parameter name="OutputRootFileName" type="string" value="HotPixelDQM-DEP.root"/>
-   <!--Name of status data collection-->
-   <parameter name="StatusCollectionName" type="string" value="status_dep"/>
  </processor>
 
 </marlin>

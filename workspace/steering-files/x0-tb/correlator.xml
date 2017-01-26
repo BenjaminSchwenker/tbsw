@@ -2,7 +2,6 @@
 <marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
 
    <execute>
-      <processor name="LoadNoiseDB-M26"/>
       <processor name="M26Clusterizer"/>
       <processor name="M26HitMaker"/>
       <processor name="M26RawDQM"/>
@@ -13,23 +12,18 @@
    <global>
       <parameter name="LCIOInputFiles"> tmp-rawdata.slcio </parameter>
       <parameter name="GearXMLFile" value="gear.xml"/>
-      <parameter name="MaxRecordNumber" value="50000"/>
+      <parameter name="MaxRecordNumber" value="100000"/>
       <parameter name="SkipNEvents" value="0"/>
       <parameter name="SupressCheck" value="false"/>
       <parameter name="Verbosity" value="MESSAGE3"/>
    </global>
-    
-   <processor name="LoadNoiseDB-M26" type="ConditionsProcessor">
-     <!--Initialization of a simple conditions file handler-->
-     <parameter name="SimpleFileHandler" type="StringVec"> status_m26 NoiseDB-M26.slcio status_m26 </parameter>
-   </processor>
    
    <processor name="M26Clusterizer" type="PixelClusterizer">
      <!--PixelClusterizer: Looking for clusters in zs pixel data-->
+     <!--This is the name of the ROOT file with the status mask (add .root)-->
+     <parameter name="NoiseDBFileName" type="string" value="NoiseDB-M26.root"/>
      <!--Name of input sparsified pixel data collection-->
      <parameter name="SparseDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
-     <!--Input status collection name-->
-     <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status_m26 </parameter>
      <!--Name of the output cluster collection-->
      <parameter name="ClusterCollectionName" type="string" lcioOutType="TrackerPulse"> zscluster_m26 </parameter>
      <!--0: common side; 1: common corner; 3: max. one missing pixel-->
@@ -41,8 +35,18 @@
      <!--Threshold for zero suppression-->
      <parameter name="SparseZSCut" type="float" value="0"/>
    </processor>
-
-   <processor name="M26HitMaker" type="CogHitMaker">
+   
+   <processor name="M26HitMaker" type="GoeHitMaker">
+     <!--GoeHitMaker:  Compute hits from pixel clusters using a clusterDB-->
+     <!--Name of cluster collection-->
+     <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_m26 </parameter>
+     <!--Name of hit collection-->
+     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_m26 </parameter>
+     <!--This is the name of the ROOT file with the cluster constants (add .root)-->
+     <parameter name="ClusterDBFileName" type="string" value="clusterDB-ALL.root"/>
+   </processor>
+    
+   <processor name="M26HitMaker-notused" type="CogHitMaker">
      <!--CogHitMaker:  Compute hits from pixel clusters -->
      <!--Name of cluster collection-->
      <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_m26 </parameter>
@@ -100,8 +104,6 @@
      <parameter name="LCIOOutputFile" type="string" value="tmp.slcio "/>
      <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
      <parameter name="LCIOWriteMode" type="string" value="None"/>
-     <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
-     <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
    </processor>
    
 </marlin>

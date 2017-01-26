@@ -63,7 +63,7 @@
      <!--Particle mass [GeV]-->
      <parameter name="ParticleMass" type="double" value="0.000511"/>
      <!--Particle momentum [GeV]-->
-     <parameter name="ParticleMomentum" type="double" value="3.0"/>
+     <parameter name="ParticleMomentum" type="double" value="4.0"/>
      <!--Build track seeds from first plane and second plane-->
      <parameter name="PassOne_FirstPlane" type="int" value="0"/>
      <!--Build track seeds from first plane and second plane-->
@@ -85,7 +85,7 @@
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
      <!--Momentum at centre of reference plane [GeV]-->
-     <parameter name="CentralMomentum" type="double" value="3.0"/>
+     <parameter name="CentralMomentum" type="double" value="4.0"/>
      <!--Plane number along the beam line-->
      <parameter name="ReferencePlane" type="int" value="3"/>
      <!--Momentum slope along u [GeV/mm]-->

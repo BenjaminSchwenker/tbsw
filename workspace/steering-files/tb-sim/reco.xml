@@ -3,8 +3,6 @@
 <marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
 
   <execute>
-    <processor name="LoadNoiseDB-DEP"/>
-    <processor name="LoadNoiseDB-M26"/>
     <processor name="Clusterizer-DEP"/>
     <processor name="Clusterizer-M26"/>
     <processor name="M26HitMaker"/>
@@ -23,23 +21,13 @@
     <parameter name="SupressCheck" value="false"/>
     <parameter name="Verbosity" value="MESSAGE3"/>
   </global>
-    
-  <processor name="LoadNoiseDB-M26" type="ConditionsProcessor">
-    <!--Initialization of a simple conditions file handler-->
-    <parameter name="SimpleFileHandler" type="StringVec"> status_m26 cal-files/NoiseDB-M26.slcio status_m26 </parameter>
-  </processor>
-  
-  <processor name="LoadNoiseDB-DEP" type="ConditionsProcessor">
-    <!--Initialization of a simple conditions file handler-->
-    <parameter name="SimpleFileHandler" type="StringVec"> status_dep cal-files/NoiseDB-DEP.slcio status_dep </parameter>
-  </processor>
-   
+     
   <processor name="Clusterizer-DEP" type="PixelClusterizer">
     <!--PixelClusterizer: Looking for clusters in zs pixel data-->
+    <!--This is the name of the ROOT file with the status mask (add .root)-->
+    <parameter name="NoiseDBFileName" type="string" value="cal-files/NoiseDB-DEP.root"/>
     <!--Name of input sparsified pixel data collection-->
     <parameter name="SparseDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_dep </parameter>
-    <!--Input status collection name-->
-    <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status_dep </parameter>
     <!--Name of the output cluster collection-->
     <parameter name="ClusterCollectionName" type="string" lcioOutType="TrackerPulse"> zscluster_dep </parameter>
     <!--0: common side; 1: common corner; 3: max. one missing pixel-->
@@ -54,10 +42,10 @@
   
   <processor name="Clusterizer-M26" type="PixelClusterizer">
     <!--PixelClusterizer: Looking for clusters in zs pixel data-->
+    <!--This is the name of the ROOT file with the status mask (add .root)-->
+    <parameter name="NoiseDBFileName" type="string" value="cal-files/NoiseDB-M26.root"/>
     <!--Name of input sparsified pixel data collection-->
     <parameter name="SparseDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
-    <!--Input status collection name-->
-    <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status_m26 </parameter>
     <!--Name of the output cluster collection-->
     <parameter name="ClusterCollectionName" type="string" lcioOutType="TrackerPulse"> zscluster_m26 </parameter>
     <!--0: common side; 1: common corner; 3: max. one missing pixel-->
@@ -76,7 +64,7 @@
     <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_m26 </parameter>
     <!--Name of hit collection-->
     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_m26 </parameter>
-    <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+    <!--This is the name of the ROOT file with the cluster constants (add .root)-->
     <parameter name="ClusterDBFileName" type="string" value="cal-files/clusterDB-ALL.root"/>
   </processor>
   
@@ -110,7 +98,7 @@
     <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_dep </parameter>
     <!--Name of hit collection-->
     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_dep </parameter>
-    <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+    <!--This is the name of the ROOT file with the cluster constants (add .root)-->
     <parameter name="ClusterDBFileName" type="string" value="cal-files/clusterDB-ALL.root"/>
   </processor>
 
@@ -182,26 +170,24 @@
      <parameter name="PassTwo_SecondPlane" type="int" value="-1"/>
    </processor>
 
-  <processor name="DUTAnalyzer" type="DUTTreeProducer">
-     <!--DUTTreeProducer: DUT Analysis Processor-->
+   <processor name="DUTAnalyzer" type="PixelDUTAnalyzer">
+     <!--PixelDUTAnalyzer: DUT Analysis Processor-->
      <!--Name of DUT hit collection-->
      <parameter name="HitCollection" type="string" lcioInType="TrackerHit"> hit_dep </parameter>
-     <!--Name of DUT status collection-->
-     <parameter name="StatusCollection" type="string" lcioInType="TrackerRawData"> status_dep </parameter>
      <!--Name of telescope track collection-->
      <parameter name="TrackCollection" type="string" lcioInType="Track"> aligntracks </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="cal-files/eudet-alignmentDB.slcio"/>
      <!--Plane number of DUT along the beam line-->
      <parameter name="DUTPlane" type="int" value="3"/>
-     <!--Maximum hit2track distance for hit matching [mm]-->
-     <parameter name="HitDistMax" type="double" value="0.1"/>
+     <!--Maximum u residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.-->
+     <parameter name="MaxResidualU" type="double" value="0.1"/>
+     <!--Maximum v residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.-->
+     <parameter name="MaxResidualV" type="double" value="0.1"/>
      <!--Output root file name-->
-     <parameter name="RootFileName" type="string" value="DUT-Histos.root"/>
-     <!--Use only events with one track in telescope-->
-     <parameter name="SingleTrackEvents" type="bool" value="false"/>
+     <parameter name="RootFileName" type="string" value="DEPFET-Histos.root"/>
    </processor>
-   
+ 
    <processor name="TelescopeDQM" type="TrackFitDQM">
      <!--TrackFitDQM: DQM plots for monitor quality of track fitting-->
      <!--Track input collection-->
