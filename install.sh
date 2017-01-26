@@ -35,15 +35,6 @@ make main
 cd ..
 
 ############################################################
-# Install lccd
-cd lccd
-mkdir build
-cd build 
-cmake -C ../BuildSetup.cmake ..
-make install
-cd ../..
-
-############################################################
 # Install Marlin  
 cd Marlin
 mkdir build

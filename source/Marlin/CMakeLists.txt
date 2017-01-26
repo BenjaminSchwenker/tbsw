@@ -34,7 +34,7 @@ OPTION( MARLIN_GUI "Set to ON to build Marlin GUI" OFF )
 OPTION( INSTALL_DOC "Set to OFF to skip build/install Documentation" OFF )
 
 # project dependencies
-SET( Marlin_DEPENDS "LCCD LCIO GEAR" )
+SET( Marlin_DEPENDS "LCIO GEAR" )
 
 # set default cmake build type to RelWithDebInfo
 IF( NOT CMAKE_BUILD_TYPE )

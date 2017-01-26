@@ -63,7 +63,7 @@ namespace depfet {
                              string("hit"));
     
     registerProcessorParameter("ClusterDBFileName",
-                               "This is the name of the LCIO file with the alignment constants (add .slcio)",
+                               "This is the name of the ROOT file with the cluster constants (add .root)",
                                _clusterDBFileName, static_cast< string > ( "ClusterDB.root" ) ); 
    
   }

@@ -154,8 +154,13 @@ void RawHitDQM::processEvent(LCEvent * evt)
   int nhits = 0; 
   
   for (int iplane = 0; iplane < _detector.GetNSensors(); ++iplane ) {
-
+     
+    std::string histoName;
+    
     nhits += HitStore.GetNHits(iplane); 
+    
+    histoName = "hnhits_sensor"+to_string( iplane );
+    _histoMap[ histoName ]->Fill(HitStore.GetNHits(iplane));
     
     for (int ihit = 0; ihit < HitStore.GetNHits(iplane); ++ihit ) {
       
@@ -167,9 +172,7 @@ void RawHitDQM::processEvent(LCEvent * evt)
       double hit_sigma_u = TMath::Sqrt(Hit.GetCov()[0][0]); 
       double hit_sigma_v = TMath::Sqrt(Hit.GetCov()[1][1]); 
       double hit_corr_uv = Hit.GetCov()[0][1]/(hit_sigma_u*hit_sigma_v); 
-
-      std::string histoName;
-      
+        
       histoName = "hsigma_hit_u_det"+to_string( iplane ); 
       _histoMap[ histoName  ]->Fill(hit_sigma_u);
       
@@ -232,8 +235,16 @@ void RawHitDQM::end()
    
    // CPU time end
    _timeCPU = clock()/1000 - _timeCPU;
+
+   for (int ipl = 0; ipl < _detector.GetNSensors(); ++ipl ) {
+     
+     string histoName = "hnhits_sensor"+to_string( ipl );
+     double nhits = _histoMap[ histoName ]->GetMean();
+     
+     histoName = "hnhits";
+     _histoMap[ histoName ]->SetBinContent(ipl+1, nhits);  
+   }
    
-      
    _rootFile->Write();
    _rootFile->Close();
    
@@ -270,15 +281,22 @@ void RawHitDQM::bookHistos() {
   // Write ROOT Output
   _rootFile = new TFile(_rootFileName.c_str(),"recreate");
    
-  // Create subdirs for detectors
+  
   std::string dirName; 
+  std::string histoName;
+  std::string histoTitle;
+  
+  histoName = "hnhits";
+  _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", nDet, 0, nDet);
+  _histoMap[ histoName ]->SetXTitle("plane number"); 
+  _histoMap[ histoName ]->SetYTitle("mean hits per event");   
+  
+  // Create subdirs for detectors
+  
   for (int ipl=0 ; ipl < nDet; ipl++) {
     std::string dirName = "Det"+to_string( ipl );
     _rootFile->mkdir(dirName.c_str());     
   }      
-  
-  
-  
   
   // Detector histograms 
   for (int ipl=0 ; ipl < nDet; ipl++) {
@@ -286,8 +304,7 @@ void RawHitDQM::bookHistos() {
     dirName = "/Det"+to_string(ipl)+"/";
     _rootFile->cd(dirName.c_str());
     
-    std::string histoName;
-    std::string histoTitle;
+    
     double max; 
     double safetyFactor = 1.1;
           
@@ -374,7 +391,10 @@ void RawHitDQM::bookHistos() {
     _histoMap[ histoName ]->SetXTitle(" cluster size v [cells]"); 
     _histoMap[ histoName ]->SetYTitle(" tracks");  
           
-    
+    histoName = "hnhits_sensor"+to_string( ipl );
+    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 200, 0, 200);
+    _histoMap[ histoName ]->SetXTitle("hits per event"); 
+    _histoMap[ histoName ]->SetYTitle("events");   
      
   } 
         
