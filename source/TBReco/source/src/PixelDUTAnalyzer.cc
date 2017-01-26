@@ -1,12 +1,12 @@
-// DUTTreeProducer Processor  
+// PixelDUTAnalyzer Processor  
 // 
-// See DUTTreeProducer.h for full documentation of processor. 
+// See PixelDUTAnalyzer.h for full documentation of processor. 
 // 
 // Author: Benjamin Schwenker, Göttingen University 
 // <mailto:benjamin.schwenker@phys.uni-goettingen.de>
 
 
-#include "DUTTreeProducer.h"
+#include "PixelDUTAnalyzer.h"
 
 // DEPFETTrackTools includes
 #include "TBTrack.h"
@@ -47,16 +47,16 @@ namespace depfet {
 //
 // Instantiate this object
 //
-DUTTreeProducer aDUTTreeProducer ;
+PixelDUTAnalyzer aPixelDUTAnalyzer ;
 
 //
 // Constructor
 //
-DUTTreeProducer::DUTTreeProducer() : Processor("DUTTreeProducer")
+PixelDUTAnalyzer::PixelDUTAnalyzer() : Processor("PixelDUTAnalyzer")
 {
 
 // Processor description
-  _description = "DUTTreeProducer: DUT Analysis Processor" ;
+  _description = "PixelDUTAnalyzer: DUT Analysis Processor" ;
    
 //
 // Input collections 
@@ -73,9 +73,7 @@ DUTTreeProducer::DUTTreeProducer() : Processor("DUTTreeProducer")
                            _hitColName ,
                            std::string("hit") ) ;
      
-  registerInputCollection (LCIO::TRACKERRAWDATA, "StatusCollection",
-                           "Name of DUT status collection",
-                           _statusColName, string("status")); 
+  
   
   // Processor parameters:
   
@@ -104,7 +102,7 @@ DUTTreeProducer::DUTTreeProducer() : Processor("DUTTreeProducer")
 //
 // Method called at the beginning of data processing
 //
-void DUTTreeProducer::init() {
+void PixelDUTAnalyzer::init() {
    
    // Initialize variables
    _nRun = 0 ;
@@ -147,7 +145,7 @@ void DUTTreeProducer::init() {
 //
 // Method called for each run
 //
-void DUTTreeProducer::processRunHeader(LCRunHeader * run)
+void PixelDUTAnalyzer::processRunHeader(LCRunHeader * run)
 {
    // Print run number
    streamlog_out(MESSAGE3) << "Processing run: "
@@ -160,7 +158,7 @@ void DUTTreeProducer::processRunHeader(LCRunHeader * run)
 //
 // Method called for each event
 //
-void DUTTreeProducer::processEvent(LCEvent * evt)
+void PixelDUTAnalyzer::processEvent(LCEvent * evt)
 {
   
   // Print event number
@@ -183,8 +181,7 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
   // Decoding of DUT matrix
   MatrixDecoder matrixDecoder(dut.GetNColumns(), dut.GetNRows()); 
   
-  ShortVec statusVec; 
-  bool isDUTStatusOk = getDUTStatus( evt, statusVec );
+  
        
   //
   // Get telescope track collection
@@ -505,20 +502,8 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
     _rootTrackFitCellVCenter = dut.GetPixelCenterCoordV( fitcellv, fitcellu );                                        
     _rootTrackChi2 = trk.GetChiSqu(); 
     _rootTrackNDF = trk.GetNDF();  
-    _rootTrackNHits = trk.GetNumHits(); 
-    _rootTrackDUTCellQuality = 0;      
-            
-    if (  isDUTStatusOk  ) {
-      
-      if ( ( fitcellu >= 0 )  &&  ( fitcellu < dut.GetNColumns() ) &&
-               ( fitcellv >= 0 )  &&  ( fitcellv < dut.GetNRows() ) ) {
-         
-        int Xpixel = matrixDecoder.getIndexFromXY(fitcellu, fitcellv);
-        _rootTrackDUTCellQuality = statusVec[Xpixel];
-        
-      }      
-    }       
-    
+    _rootTrackNHits = trk.GetNumHits();    
+           
     if ( track2hit[itrk] >= 0  ) {
       TBHit& hit = HitStore[ track2hit[itrk] ];  
       PixelCluster Cluster = hit.GetCluster();
@@ -544,14 +529,14 @@ void DUTTreeProducer::processEvent(LCEvent * evt)
 //
 // Method called after each event to check the data processed
 //
-void DUTTreeProducer::check( LCEvent * evt )
+void PixelDUTAnalyzer::check( LCEvent * evt )
 {
 }
 
 //
 // Method called after all data processing
 //
-void DUTTreeProducer::end()
+void PixelDUTAnalyzer::end()
 {
 
    // Print the summer
@@ -633,56 +618,16 @@ void DUTTreeProducer::end()
 
 }
 
-//! A function to read DUT status map 
-/*! Vector of status values for DUT pixels 
- */
-bool DUTTreeProducer::getDUTStatus(LCEvent * evt, ShortVec & statusVec) {
-  
-  // Load DUT module    
-  Det & dut = _detector.GetDet(_idut); 
-  
-  bool isOk = false; 
-  
-  try {  
-     
-    LCCollectionVec * statusCollection = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusColName)); 
-    CellIDDecoder<TrackerRawDataImpl> Decoder(statusCollection);    
-     
-    for ( size_t iDet = 0; iDet < statusCollection->size() ; iDet++) {
-        
-      // Get pixel status matrix 
-      TrackerRawDataImpl * status = dynamic_cast<TrackerRawDataImpl*> (statusCollection->getElementAt(iDet));    
-           
-      // DAQ ID for pixel detector	
-      int sensorID =  Decoder(status)["sensorID"];
-         
-      if (sensorID == dut.GetDAQID()) { 
-        statusVec = status->getADCValues(); 
-        isOk = true; 
-        break;
-      }
-    }  
-    
-  } catch(DataNotAvailableException &e){} 
-  
-  return isOk; 
-}
-   
-
-   
-
-
-
 
 //
 // Method printing processor parameters
 //
-void DUTTreeProducer::printProcessorParams() const
+void PixelDUTAnalyzer::printProcessorParams() const
 {
 
    streamlog_out(MESSAGE3)  << std::endl
                             << " "
-                            << "DUTTreeProducer Development Version, be carefull!!"
+                            << "PixelDUTAnalyzer Development Version, be carefull!!"
                             << " "
                             << std::endl  << std::endl;   
 
@@ -691,7 +636,7 @@ void DUTTreeProducer::printProcessorParams() const
 
 
  // ROOT_OUTPUT
-void DUTTreeProducer::bookHistos()
+void PixelDUTAnalyzer::bookHistos()
 {   
    
    _rootFile = new TFile( _rootFileName.c_str(),"recreate");
@@ -743,7 +688,6 @@ void DUTTreeProducer::bookHistos()
    _rootTrackTree->Branch("nDutHits"        ,&_rootNDUTHits       ,"nDutHits/I");
    _rootTrackTree->Branch("hasHit"          ,&_rootTrackHasHit         ,"hasHit/I");
    _rootTrackTree->Branch("momentum"        ,&_rootTrackFitMomentum    ,"momentum/D");                                                           
-   _rootTrackTree->Branch("dutCellQuality"  ,&_rootTrackDUTCellQuality ,"dutCellQuality/I");
    _rootTrackTree->Branch("u_fit"           ,&_rootTrackFitU           ,"u_fit/D");
    _rootTrackTree->Branch("v_fit"           ,&_rootTrackFitV           ,"v_fit/D");
    _rootTrackTree->Branch("dudw_fit"        ,&_rootTrackFitdUdW        ,"dudw_fit/D");

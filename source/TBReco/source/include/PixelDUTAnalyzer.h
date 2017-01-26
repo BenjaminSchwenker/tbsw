@@ -1,10 +1,10 @@
 // ///////////////////////////////////////////////////////////////////////////////////////  //
 //                                                                                          //
-//    DUTTreeProducer - Marlin Processor                                                    //
+//    PixelDUTAnalyzer - Marlin Processor                                                    //
 // ///////////////////////////////////////////////////////////////////////////////////////  //
 
-#ifndef DUTTreeProducer_H
-#define DUTTreeProducer_H 1
+#ifndef PixelDUTAnalyzer_H
+#define PixelDUTAnalyzer_H 1
 
 
 // DEPFETTrackTools includes
@@ -20,7 +20,6 @@
 #include "lcio.h"
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerDataImpl.h>
-#include <IMPL/TrackerRawDataImpl.h>
 #include <IMPL/TrackerHitImpl.h>
 #include <IMPL/TrackImpl.h>
 
@@ -36,7 +35,7 @@
 
 namespace depfet {
 
-//! DUTTreeProducer Processor 
+//! PixelDUTAnalyzer Processor 
 /*! 
  *  The task of this processor is to analyze the intrinsic performance of a
  *  device under test (DUT) using a reference telescope. Instead of making 
@@ -63,15 +62,15 @@ namespace depfet {
  */
    
   
-class DUTTreeProducer : public marlin::Processor {
+class PixelDUTAnalyzer : public marlin::Processor {
    
  public:
    
 //!Method that returns a new instance of this processor
-   virtual Processor*  newProcessor() { return new DUTTreeProducer ; }
+   virtual Processor*  newProcessor() { return new PixelDUTAnalyzer ; }
     
 //!Constructor - set processor description and register processor parameters
-   DUTTreeProducer();
+   PixelDUTAnalyzer();
    
 //!Method called at the beginning of data processing - used for initialization
    virtual void init();
@@ -96,11 +95,6 @@ protected:
 //!Method printing processor parameters
    void printProcessorParams() const;
    
-//! A function to read DUT status map 
-/*! Vector of status values from DUT pixels 
- */
-   bool getDUTStatus(LCEvent * evt, ShortVec & statusVec) ;
-   
 // Processor Parameters
    
 //! Input Track collection name
@@ -108,9 +102,6 @@ protected:
    
 //! Input DUT TrackerHit collection name
    std::string _hitColName;   
-   
-//! Input DUT status data collection name
-   std::string _statusColName;
    
 //! Alignment DB file name 
    std::string _alignmentDBFileName;
@@ -185,7 +176,6 @@ protected:
    int _rootTrackNHits;              // Number of telescope hits used for track fitting 
    double _rootTrackFitCellUCenter;  
    double _rootTrackFitCellVCenter; 
-   int _rootTrackDUTCellQuality;     // Quality flag for readout cell ('FitCellU','FitCellV') on the DUT   
    double _rootTrackSeedCharge;      // Highest charge in cluster, only filled if cluster matched
    
    // Variables in event tree
