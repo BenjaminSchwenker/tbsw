@@ -29,40 +29,46 @@ Make sure to not specify any LCIOInputFiles in the steering in order-->
 </processor>
 
  <processor name="ParticleGun" type="ParticleGunGenerator">
- <!--Particle gun processor for simulation of a directed particle beam-->
-  <!--Collection name for MCParticles-->
-  <parameter name="MCParticleCollectionName" type="string" lcioOutType="MCParticle"> MCParticles </parameter>
-  <!--Beam correlation coefficient Y-->
-  <parameter name="GunCorralationY" type="double" value="0.3"/>
-  <!--Beam correlation coefficient X-->
-  <parameter name="GunCorrelationX" type="double" value="0.3"/>
-  <!--RMS track slope in XZ plane [rad]-->
-  <parameter name="GunDivergenceX" type="double" value="0.001"/>
-  <!--RMS track slope in YZ plane [rad]-->
-  <parameter name="GunDivergenceY" type="double" value="0.001"/>
-  <!--Number of particles per second-->
-  <parameter name="GunIntensity" type="double" value="15000"/>
-  <!--X position of particle gun [mm]-->
-  <parameter name="GunPositionX" type="double" value="2"/>
-  <!--Y position of particle gun [mm]-->
-  <parameter name="GunPositionY" type="double" value="-0.5"/>
-  <!--Z position of particle gun [mm]-->
-  <parameter name="GunPositionZ" type="double" value="-20"/>
-  <!--Smearing of X vertex position at beam collimator [mm]-->
-  <parameter name="GunSpotSizeX" type="double" value="2"/>
-  <!--Smearing of Y vertex position at beam collimator [mm]-->
-  <parameter name="GunSpotSizeY" type="double" value="1"/>
-  <!--A simulated event contains one particle at t=0 and extends for given time window in seconds-->
-  <parameter name="GunTimeWindow" type="double" value="0.0001"/>
-  <!--PDG code-->
-  <parameter name="PDG" type="int" value="11"/>
-  <!--Particle charge [e]-->
-  <parameter name="ParticleCharge" type="double" value="-1"/>
-  <!--Particle mass [GeV]-->
-  <parameter name="ParticleMass" type="double" value="0.000511"/>
-  <!--Particle momentum [GeV]-->
-  <parameter name="ParticleMomentum" type="double" value="4"/>
-</processor>
+    <!--Particle gun processor for simulation of a directed particle beam-->
+    <!--Collection name for MCParticles-->
+    <parameter name="MCParticleCollectionName" type="string" lcioOutType="MCParticle"> MCParticles </parameter>
+    <!--Number of beam particles per second-->
+    <parameter name="BeamIntensity" type="double" value="15000"/>
+    <!--Beam momentum [GeV]-->
+    <parameter name="BeamMomentum" type="double" value="4"/>
+    <!--Beam momentum sigma [GeV]-->
+    <parameter name="BeamMomentumSigma" type="double" value="0.1"/>
+    <!--Beam slope sigma in XZ plane [rad]-->
+    <parameter name="BeamSlopeXSigma" type="double" value="0.001"/>
+    <!--Beam slope sigma in YZ plane [rad]-->
+    <parameter name="BeamSlopeYSigma" type="double" value="0.001"/>
+    <!--A simulated event contains one particle at t=0 and extends for given time window in seconds-->
+    <parameter name="BeamTimeWindow" type="double" value="0.0001"/>
+    <!--Beam vertex position in X direction [mm]-->
+    <parameter name="BeamVertexX" type="double" value="2"/>
+    <!--Beam vertex sigma in X direction [mm]-->
+    <parameter name="BeamVertexXSigma" type="double" value="1"/>
+    <!--Beam vertex position in Y direction [mm]-->
+    <parameter name="BeamVertexY" type="double" value="-0.5"/>
+    <!--Beam vertex sigma in Y direction [mm]-->
+    <parameter name="BeamVertexYSigma" type="double" value="1"/>
+    <!--Beam vertex position in Z direction [mm]-->
+    <parameter name="BeamVertexZ" type="double" value="-10"/>
+    <!--Beam correlation factor between vertex position and momentum-->
+    <parameter name="CorrelationVertexXvsMomentum" type="double" value="0"/>
+    <!--Beam correlation factor between vertex position and slope-->
+    <parameter name="CorrelationVertexXvsSlopeX" type="double" value="0"/>
+    <!--Beam correlation factor between vertex position and momentum-->
+    <parameter name="CorrelationVertexYvsMomentum" type="double" value="0"/>
+    <!--Beam correlation factor between vertex position and slope-->
+    <parameter name="CorrelationVertexYvsSlopeY" type="double" value="0"/>
+    <!--PDG code-->
+    <parameter name="PDG" type="int" value="11"/>
+    <!--Particle charge [e]-->
+    <parameter name="ParticleCharge" type="double" value="-1"/>
+    <!--Particle mass [GeV]-->
+    <parameter name="ParticleMass" type="double" value="0.000511"/>
+  </processor>
 
  <processor name="FastSim" type="FastSimulation">
  <!--Fast simulation processor for propagation of beam particels trough a test beam telescope-->

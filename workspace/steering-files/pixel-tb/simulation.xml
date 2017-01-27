@@ -37,7 +37,7 @@
     <!--Number of beam particles per second-->
     <parameter name="BeamIntensity" type="double" value="15000"/>
     <!--Beam momentum [GeV]-->
-    <parameter name="BeamMomentum" type="double" value="3"/>
+    <parameter name="BeamMomentum" type="double" value="4"/>
     <!--Beam momentum sigma [GeV]-->
     <parameter name="BeamMomentumSigma" type="double" value="0.1"/>
     <!--Beam slope sigma in XZ plane [rad]-->
