@@ -13,6 +13,10 @@
 #include <marlin/ProcessorMgr.h>
 #include <marlin/Exceptions.h>
 
+#include "CLHEP/Matrix/Vector.h"
+#include "CLHEP/Matrix/Matrix.h"
+#include "CLHEP/Matrix/SymMatrix.h"
+
 // lcio includes <.h>
 
 // system includes <>
@@ -59,34 +63,46 @@ namespace depfet
     void printProcessorParams() const;
       
    protected:
+    
+    //!Method returns vector of gaussian randoms based on sigmas, rotated by U,
+    // with means of 0. 
+    CLHEP::HepVector deviates() const;
      
     //! Output MCParticle collection name
     std::string m_MCParticleCollectionName;
      
-    //! Particle gun
-    double m_GunPositionX;
-    double m_GunPositionY;
-    double m_GunPositionZ; 
-    double m_GunSpotSizeX;
-    double m_GunSpotSizeY;
-    double m_GunDivergenceX;
-    double m_GunDivergenceY;
-    double m_GunCorrelationX; 
-    double m_GunCorrelationY;    
-    double m_GunBeamIntensity;   
-    double m_GunTimeWindow; 
-    double m_GunMomentum;
-    double m_GunMass;
-    double m_GunCharge;
-    int m_GunPDG;
+    //! Particle beam paramaters
+    double m_BeamVertexX;
+    double m_BeamVertexY;
+    double m_BeamVertexZ;
+    double m_BeamMomentum;
+    double m_BeamVertexXSigma;
+    double m_BeamVertexYSigma;
+    double m_BeamSlopeXSigma;
+    double m_BeamSlopeYSigma;
+    double m_BeamMomentumSigma; 
+    double m_BeamCorrelationVertexXvsSlopeX;
+    double m_BeamCorrelationVertexYvsSlopeY;
+    double m_BeamCorrelationVertexXvsMomentum;
+    double m_BeamCorrelationVertexYvsMomentum;
+    double m_BeamIntensity;   
+    double m_BeamTimeWindow;
+    double m_ParticleMass;
+    double m_ParticleCharge;
+    int m_ParticlePDG;
     
    private: 
-
+    
+    // Vector of sigmas and rotation matrix U for computing 
+    // random deviates
+    CLHEP::HepMatrix m_U;
+    CLHEP::HepVector m_Sigmas;	
+    CLHEP::HepVector m_Mean;
+    
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number
     int    _nEvt ;   //!< Event number
-             
-    
+            
   };
  
 }            
