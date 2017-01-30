@@ -1,12 +1,16 @@
-This README contains a step-by-step guide for the X/X0 scripts, which are a part of the test beam software framework (tbsw). The scripts can be used once you have produced X0.root files with the reco.py script (present in the steering-files/x0-sim/ or steering-files/x0-tb/ folder). The first step is to merge the root files with the same target and run conditions:
+This README contains a step-by-step guide for the X/X0 scripts, which are a part of the test beam software framework (tbsw). The scripts can be used once you
+have produced X0.root files with the reco.py script (present in the steering-files/x0-tb/ folder). The first step is to merge the root files with the same
+target and run conditions:
 
 > hadd X0-merge.root X0-runAB.root ... X0-runXY.root
 
-Once you have created the merged root file, you can begin with the generation of the first uncalibrated X/X0 image, which can be used to get a sense of direction and position of the material in the beam spot region. The calibration of the angle resolution of the telescope is a very crucial part of the analysis, therefore the absolut X/X0 values of the uncalibrated image might still have large errors at this point (especially for thin materials).
-The image can be produced in the following way:
+Once you have created the merged root file, you can begin with the generation of the first uncalibrated X/X0 image, which can be used to get a sense of direction
+and position of the material in the beam spot region. The calibration of the angle resolution of the telescope is a very crucial part of the analysis, therefore 
+the absolut X/X0 values of the uncalibrated image might still have large errors at this point (especially for thin materials).The image can be produced in the following way:
 
-> ./path/to/work/directory/root-scripts/x0imaging/GenerateImage.py -i /path/to/work/directory/root-files/4GeV-alutarget/X0-merge.root -s /path/to/work/directory/root-scripts/x0imaging/ -d 0
+> ./path/to/work/dir/root-scripts/x0imaging/GenerateImage.py -i /path/to/work/dir/root-files/4GeV-alutarget/X0-merge.root -s /path/to/work/dir/root-scripts/x0imaging/ -d 0
 
-This command produces a rootfile, which contains the x0 image and other histograms. Parameters like the the result file name, beam energy, the calibration factor and the size and binning of the image can be set in the designated cfg file, which can also be found at "/path/to/work/directory/root-scripts/x0imaging/image.cfg".
+This command produces a rootfile, which contains the x0 image and other histograms. Parameters like the the result file name, beam energy, the calibration factor and the size and 
+binning of the image can be set in the designated cfg file, which can also be found at "/path/to/work/directory/root-scripts/x0imaging/image.cfg".
 
 TBC
