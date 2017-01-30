@@ -5,8 +5,8 @@ This README contains a step-by-step guide for the X/X0 scripts, which are a part
 Once you have created the merged root file, you can begin with the generation of the first uncalibrated X/X0 image, which can be used to get a sense of direction and position of the material in the beam spot region. The calibration of the angle resolution of the telescope is a very crucial part of the analysis, therefore the absolut X/X0 values of the uncalibrated image might still have large errors at this point (especially for thin materials).
 The image can be produced in the following way:
 
-> python root-scripts/x0imaging/GenerateImage.py -i /home/ulf/workspace-feature-test1/root-files/4GeV-alutarget/X0-merge.root -s /home/ulf/workspace-feature-test1/root-scripts/x0imaging/ -d 0
+> ./path/to/work/directory/root-scripts/x0imaging/GenerateImage.py -i /path/to/work/directory/root-files/4GeV-alutarget/X0-merge.root -s /path/to/work/directory/root-scripts/x0imaging/ -d 0
 
-This command produces a rootfile, which contains the x0 image and other histograms. Parameters like the beam energy, the calibration factor and the size and binning of the image can be set in the designated area in the GenerateImage.py script.
+This command produces a rootfile, which contains the x0 image and other histograms. Parameters like the the result file name, beam energy, the calibration factor and the size and binning of the image can be set in the designated cfg file, which can also be found at "/path/to/work/directory/root-scripts/x0imaging/image.cfg".
 
 TBC

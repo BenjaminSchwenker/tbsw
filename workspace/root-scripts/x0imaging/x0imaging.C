@@ -124,7 +124,6 @@ using namespace std ;
 	Double_t v_in;
 	Double_t u_out;
 	Double_t v_out;
-	Double_t track_chi2;
 
 	// Array of mean theta1 and theta2 values in each map pixel
 	double mean1[numcol][numrow];
@@ -143,7 +142,6 @@ using namespace std ;
 	msc_tree->SetBranchAddress("v_in",&v_in);
 	msc_tree->SetBranchAddress("u_out",&u_out);
 	msc_tree->SetBranchAddress("v_out",&v_out);
-	msc_tree->SetBranchAddress("chi2",&track_chi2);
 
 	file2->cd("");
 	file2->cd("mapping/raw");
@@ -609,6 +607,8 @@ using namespace std ;
 		chi2ndof_2=0.0;
 		prob2=0.0;
 
+		sigmasum=0.0;
+
 		cout<<"Histograms (nearly) empty... no fit possible!"<<endl;
 	}
 
@@ -630,7 +630,6 @@ using namespace std ;
 
 	// Get the mean v residual histogram
 	vresidual_meanmap=(TH2*)file->Get("mapping/result/hvresidualmeanmap");
-
         // Get the momentum 2D histogram
 	mommap=(TH2*)file->Get("mapping/result/hmommap");
 
@@ -833,19 +832,22 @@ int x0imaging()
 	gSystem->Load("libTreePlayer.so");
 
 	gROOT->Reset(); 
-	//gROOT->SetStyle("Plain"); 
 
 	// display mode
 	gStyle->SetPalette(1);
 	gStyle->SetOptStat(11111111);
-        gStyle->SetPadRightMargin(0.15);
-        gStyle->SetPadLeftMargin(0.15);
+    gStyle->SetPadRightMargin(0.15);
+    gStyle->SetPadLeftMargin(0.15);
 
-        gROOT->ForceStyle();
+    gROOT->ForceStyle();
+
+    // Read config file
+    //------------------
+    TEnv mEnv("x0image-partial.cfg");
 
 	// TString for the input root file name
-	TString filename,histoname,range;
-	filename="X0-allcomb-merged";
+	TString histoname,range;
+	TString filename=mEnv.GetValue("x0filename", "X0-merge");
 
 	// Set preprocessing parameter
 	// 0: Use standard procedure
@@ -856,7 +858,7 @@ int x0imaging()
 	TFile *X0file = new TFile(filename+".root", "READ");
 
 	//Open the copied file
-	filename=filename+"-image-200mum-06MeV1mm_test2";
+	filename=filename+mEnv.GetValue("x0fileidentifier", "-part-1-1");
 	TFile *rootfile = new TFile(filename+".root", "RECREATE");
 
 	// Create directories containing map histograms, fits and results
@@ -866,16 +868,16 @@ int x0imaging()
 	rootfile->mkdir("mapping/result");
 
 	// Number of Rows and Columns of the sensor map
-	int numcol = 75;//160;
-	int numrow = 40;//100;
+	int numcol = mEnv.GetValue("maxupixels", 100);
+	int numrow = mEnv.GetValue("maxvpixels", 50);
 
 	// u minimum and v maximum value (in mm)
-	double umin=-6.0;
-	double vmax=4.0;
+	double umin=mEnv.GetValue("umin", -10.0);
+	double vmax=mEnv.GetValue("vmax", 5.0);
 
 	// u and v length of the map (in mm)
-	double ulength=15.0;
-	double vlength=8.0;
+	double ulength=mEnv.GetValue("ulength", 20.0);
+	double vlength=mEnv.GetValue("vlength", -10.0);
 
 	// u and v pitch (length of one pixel in the map, in mm)
 	double upitch=ulength/(1.0*numcol);
@@ -927,7 +929,7 @@ int x0imaging()
 	int numberofbins=200;
 
 	// Calibration factor lambda, used to change the reconstruction error to include systematical errors
-	double lambda=1.000;
+	double lambda=mEnv.GetValue("calibrationfactor", 1.0);
 	double recoerror=sqrt(getanglerecovar(X0file))*lambda;
 	cout<<"The reconstruction error is "<<recoerror*1E6<<" µrad!"<<endl;
 
@@ -937,8 +939,12 @@ int x0imaging()
         // the finite size of the collimator opening particles with momenta in a certain range p0+/-delta_p
         // can traverse into the test beam area
         // We expect a linear distribution with slope corresponding to ~500MeV/20mm
-	double mom0=3.0;           // in GeV
-        double mom_slope=-0.006;    // in GeV/mm
+	double mom0=mEnv.GetValue("momentummean", 4.0);           // in GeV
+    double mom_slope=mEnv.GetValue("momentumslope", 0.0);    // in GeV/mm
+	cout<<"The beam energy is "<<mom0<<" GeV!"<<endl;
+	cout<<"The beam energy gradient is "<<mom_slope<<" GeV/mm!"<<endl;
+	
+	
 
 	// Save the theta1 histogram of this pixel to the root file
 	if(correctmean==1)

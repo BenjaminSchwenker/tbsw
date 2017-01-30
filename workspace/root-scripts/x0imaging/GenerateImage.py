@@ -7,12 +7,13 @@ import sys, getopt
 import glob
 import math
 import fileinput
+from configparser import ConfigParser
 
 if __name__ == '__main__':
   
   rootfile = ''
   scriptsfolder = ''
-  deletetag=`1`
+  deletetag=str(1)
 
   try:
     opts, args = getopt.getopt(sys.argv[1:],"hi:s:d:",["ifile=","scriptsfolder=","deletetag="])
@@ -39,6 +40,41 @@ if __name__ == '__main__':
     print ('missing option: -i path/to/inputfilename.root')
     sys.exit(2)  
 
+  # copy cfg text file to current work directory
+  shutil.copy(scriptsfolder+'image.cfg','image.cfg')
+
+  # Read config txt file
+  config = ConfigParser(delimiters=(':'))
+  fp = open('image.cfg')
+  config.readfp(fp)
+
+  # Read out all the relevant parameters
+  # calibration factor
+  calibrationfactor = config.getfloat('x0image', 'calibrationfactor')
+
+  # Mean value of the momentum of the beam particles
+  momentummean = config.getfloat('x0image', 'momentummean')
+
+  # u momentum slope of the beam particles
+  momentumslope = config.getfloat('x0image', 'momentumslope')
+
+  # Name of the results file
+  this_resultsfilename = config.get('x0image', 'resultsfilename')
+
+  # u and v length of complete X0 image 
+  u_length = config.getfloat('x0image', 'u_length')
+  v_length = config.getfloat('x0image', 'v_length')
+
+  # umin and vmax of the complete X0 image
+  umin = config.getfloat('x0image', 'umin')
+  vmax = config.getfloat('x0image', 'vmax')
+
+  fp.close()
+
+  # Pixel sizes of the image
+  u_pixel_size = config.getfloat('x0image', 'u_pixel_size')
+  v_pixel_size = config.getfloat('x0image', 'v_pixel_size')
+
   # remember current working dir 
   fullpath = os.getcwd() 
 
@@ -48,130 +84,77 @@ if __name__ == '__main__':
   # copy rootfile to current work directory
   shutil.copy(rootfile, this_x0filename+'.root')
 
-  #-----------------------------------------------------------------
-  #-------------------- Change Parameters here ---------------------
-  #-----------------------------------------------------------------
-
-  # u and v size of complete X0 image 
-  u_length=20.0  #mm
-  v_length=10.0  #mm
-
-  # umin and vmax of the complete X0 image
-  umin=-10.0
-  vmax=+5.0
-
-  # Pixel sizes of the image
-  u_pixel_size=200.0 #mum
-  v_pixel_size=200.0 #mum
-
   # number of pixels needed
-  num_u_pixels=u_length * 1000.0 / u_pixel_size
-  num_v_pixels=v_length * 1000.0 / v_pixel_size
- 
-  # Test
-  print num_u_pixels
-  print num_v_pixels
+  num_u_pixels = u_length * 1000.0 / u_pixel_size
+  num_v_pixels = v_length * 1000.0 / v_pixel_size
 
-  # Max number of pixels per x0image (these numbers ensure a stable imaging)
-  max_u_pixels=100
-  max_v_pixels=50
+  # Max number of pixels per x0image
+  max_u_pixels = 75
+  max_v_pixels = 75
+
+  # Convert the number to a string
+  this_maxupixels=str(max_u_pixels)
+  this_maxvpixels=str(max_v_pixels)
 
   # How many x0image parts are required in each direction?
   u_splits=math.ceil(num_u_pixels/max_u_pixels)
   v_splits=math.ceil(num_v_pixels/max_v_pixels)
 
-  # Calibration factor for this telescope setup
-  calibrationfactor=1.0
-
-  # Mean value of the momentum of the beam particles
-  momentummean=4.0
-
-  # Mean value of the momentum of the beam particles
-  momentumslope=0.0
-
-  # Name of the results file
-  this_resultsfilename="X0-merge-completearea-image"
-
-  #-----------------------------------------------------------------
-  #---------------------- End of Parameters ------------------------
-  #-----------------------------------------------------------------
-
-  # Define the placeholder strings, which will be replaced in the x0image scripts
-  placeholder_functionname="PARAMETER-FUNCTIONNAME"
-  placeholder_x0filename="PARAMETER-X0FILENAME"
-  placeholder_x0fileidentifier="PARAMETER-FILEINDENTIFIER"
-  placeholder_umin="PARAMETER-UMIN"
-  placeholder_vmax="PARAMETER-VMAX"
-  placeholder_ulength="PARAMETER-ULENGTH"
-  placeholder_vlength="PARAMETER-VLENGTH"
-  placeholder_calibrationfactor="PARAMETER-CALIBRATIONFACTOR"
-  placeholder_momentummean="PARAMETER-MOMENTUMMEAN"
-  placeholder_momentumslope="PARAMETER-MOMENTUMSLOPE"
-
-
-  # Define the placeholder strings, which will be replaced in the X0 merge script
-  placeholder_usplits="PARAMETER-USPLITS"
-  placeholder_vsplits="PARAMETER-VSPLITS"
-  placeholder_upixelsize="PARAMETER-UPIXELSIZE"
-  placeholder_vpixelsize="PARAMETER-VPIXELSIZE"
-  placeholder_maxupixels="PARAMETER-MAXUPIXELS"
-  placeholder_maxvpixels="PARAMETER-MAXVPIXELS"
-  placeholder_resultsfilename="PARAMETER-RESULTSFILENAME"
-
   # Overall number of X0 image parts required
   num_parts=u_splits * v_splits
 
-  # Test
-  print num_parts
+  scriptname="x0imaging.C"
 
   # copy x0image files 
   for i in range(0,int(u_splits)):
     for j in range(0,int(v_splits)):
-      scriptname="x0imaging_part_"+`i+1`+"_"+`j+1`+".C"
       # Function name for this x0image script
-      this_functionname="x0imaging_part_"+`i+1`+"_"+`j+1`
+      this_functionname="x0imaging-part-"+str(i+1)+"-"+str(j+1)
       # fileidentifier for this x0image
-      this_x0fileidentifier="-part_"+`i+1`+"_"+`j+1`
+      this_x0fileidentifier="-part-"+str(i+1)+"-"+str(j+1)
       # umin for this x0image
-      this_umin=`umin + i * max_u_pixels * u_pixel_size / 1000.0`
+      this_umin=str(umin + i * max_u_pixels * u_pixel_size / 1000.0)
       # vmax for this x0image
-      this_vmax=`vmax-j * max_v_pixels * v_pixel_size / 1000.0`
+      this_vmax=str(vmax-j * max_v_pixels * v_pixel_size / 1000.0)
       # ulength for this x0image
-      this_ulength=`max_u_pixels * u_pixel_size / 1000.0`
+      this_ulength=str(max_u_pixels * u_pixel_size / 1000.0)
       # vlength for this x0image
-      this_vlength=`max_v_pixels * v_pixel_size / 1000.0`
+      this_vlength=str(max_v_pixels * v_pixel_size / 1000.0)
       # calibrationfactor
-      this_calibrationfactor=`calibrationfactor`
+      this_calibrationfactor=str(calibrationfactor)
       # mean momentum
-      this_momentummean=`momentummean`
+      this_momentummean=str(momentummean)
       # momentum slope
-      this_momentumslope=`momentumslope`
+      this_momentumslope=str(momentumslope)
       
       # Copy placeholder x0image and change it
-      shutil.copy(scriptsfolder+'/x0imaging_mask.C', scriptname)
+      shutil.copy(scriptsfolder+'/x0imaging.C', scriptname)
 
-      # Open the x0imaging script of this x0image part
-      tempFile = None
+      # Open new cfg txt file
+      open('x0image-partial.cfg', 'a').close()
+      fp = open('x0image-partial.cfg','r+')
+      config.readfp(fp)
 
-      with open(scriptname, 'r') as file:
-	tempFile = file.read()
+      config.remove_section('image')
+      config.remove_section('x0image')
 
-      # Replace the placeholder strings in the x0image_mask.C script
-      tempFile = tempFile.replace(placeholder_functionname, this_functionname)
-      tempFile = tempFile.replace(placeholder_x0filename, this_x0filename)
-      tempFile = tempFile.replace(placeholder_x0fileidentifier, this_x0fileidentifier)
-      tempFile = tempFile.replace(placeholder_umin, this_umin)
-      tempFile = tempFile.replace(placeholder_vmax, this_vmax)
-      tempFile = tempFile.replace(placeholder_ulength, this_ulength)
-      tempFile = tempFile.replace(placeholder_vlength, this_vlength)
-      tempFile = tempFile.replace(placeholder_calibrationfactor, this_calibrationfactor)
-      tempFile = tempFile.replace(placeholder_momentummean, this_momentummean)
-      tempFile = tempFile.replace(placeholder_momentumslope, this_momentumslope)
+      # fill a temporary cfg file with the parameters relevant for the current partial x0image
+      config.add_section('image')
+      config.set('image', 'x0filename', this_x0filename)
+      config.set('image', 'x0fileidentifier', this_x0fileidentifier)
+      config.set('image', 'umin', this_umin)
+      config.set('image', 'vmax', this_vmax)
+      config.set('image', 'maxupixels', this_maxupixels)
+      config.set('image', 'maxvpixels', this_maxvpixels)
+      config.set('image', 'ulength', this_ulength)
+      config.set('image', 'vlength', this_vlength)
+      config.set('image', 'calibrationfactor', this_calibrationfactor)
+      config.set('image', 'momentummean', this_momentummean)
+      config.set('image', 'momentumslope', this_momentumslope)
 
-
-      # Write the script out again
-      with open(scriptname, 'w') as file:
-  	file.write(tempFile)
+      # Writing the configuration file
+      with open('x0image-partial.cfg', 'w') as configfile:
+         config.write(configfile,space_around_delimiters=False)
   
       subprocess.call('root -q '+scriptname, shell=True)
       print ('[Print] One part done ...')
@@ -180,7 +163,7 @@ if __name__ == '__main__':
   scriptname="MergeImages.C"
 
   # Copy placeholder x0image and change it
-  shutil.copy(scriptsfolder+'/MergeImages_mask.C', scriptname)
+  shutil.copy(scriptsfolder+'/MergeImages.C', scriptname)
 
   # Open the x0imaging script of this x0image part
   tempFile = None
@@ -189,35 +172,39 @@ if __name__ == '__main__':
     tempFile = file.read()
 
   # Create strings, which will replace the placeholder strings
-  this_usplits=`u_splits`
-  this_vsplits=`v_splits`
-  this_upixelsize=`u_pixel_size`
-  this_vpixelsize=`v_pixel_size`
-  this_maxupixels=`max_u_pixels`
-  this_maxvpixels=`max_v_pixels`
-  this_umin=`umin`
-  this_vmax=`vmax`
-  this_ulength=`u_length`
-  this_vlength=`v_length`
+  this_usplits=str(u_splits)
+  this_vsplits=str(v_splits)
+  this_upixelsize=str(u_pixel_size)
+  this_vpixelsize=str(v_pixel_size)
+  this_umin=str(umin)
+  this_vmax=str(vmax)
+  this_ulength=str(u_length)
+  this_vlength=str(v_length)
 
-  # Replace the placeholder strings
+  # Open new cfg txt file
+  open('x0merge.cfg', 'a').close()
+  fp = open('x0merge.cfg','r+')
+  config.readfp(fp)
 
-  tempFile = tempFile.replace(placeholder_x0filename, this_x0filename)
-  tempFile = tempFile.replace(placeholder_resultsfilename, this_resultsfilename)
-  tempFile = tempFile.replace(placeholder_usplits, this_usplits)
-  tempFile = tempFile.replace(placeholder_vsplits, this_vsplits)
-  tempFile = tempFile.replace(placeholder_upixelsize, this_upixelsize)
-  tempFile = tempFile.replace(placeholder_vpixelsize, this_vpixelsize)
-  tempFile = tempFile.replace(placeholder_maxupixels, this_maxupixels)
-  tempFile = tempFile.replace(placeholder_maxvpixels, this_maxvpixels)
-  tempFile = tempFile.replace(placeholder_umin, this_umin)
-  tempFile = tempFile.replace(placeholder_vmax, this_vmax)
-  tempFile = tempFile.replace(placeholder_ulength, this_ulength)
-  tempFile = tempFile.replace(placeholder_vlength, this_vlength)
+  config.remove_section('image')
+  config.remove_section('x0image')
 
-  # Write the script out again
-  with open(scriptname, 'w') as file:
-    file.write(tempFile)
+  # fill a temporary cfg file with the parameters relevant for the current partial x0image
+  config.add_section('merge')
+  config.set('merge', 'x0filename', this_x0filename)
+  config.set('merge', 'resultsfilename', this_resultsfilename)
+  config.set('merge', 'usplits', this_usplits)
+  config.set('merge', 'vsplits', this_vsplits)
+  config.set('merge', 'upixelsize', this_upixelsize)
+  config.set('merge', 'vpixelsize', this_vpixelsize)
+  config.set('merge', 'maxupixels', this_maxupixels)
+  config.set('merge', 'maxvpixels', this_maxvpixels)
+  config.set('merge', 'umin', this_umin)
+  config.set('merge', 'vmax', this_vmax)
+
+  # Writing the configuration file
+  with open('x0merge.cfg', 'w') as configfile:
+    config.write(configfile,space_around_delimiters=False)
    
   subprocess.call('root -q '+scriptname, shell=True)            
   print ('[Print] All partial images created and merged... ')  
@@ -226,13 +213,21 @@ if __name__ == '__main__':
   for tmpfile in glob.glob('*part_*.C'):
     os.remove(tmpfile) 
 
-  if deletetag == `1`:
+  if deletetag == "1":
     # clean up root files
     for tmpfile in glob.glob('*part_*.root'):
       os.remove(tmpfile) 
+    # also remove the input cfg file
+    os.remove('image.cfg') 
 
-  # remove MergeImage.C script
+
+
+
+  # remove MergeImage.C and config file script
   os.remove('MergeImages.C') 
+  os.remove('x0merge.cfg') 
+  os.remove('x0image-partial.cfg') 
+  os.remove(this_x0filename+'.root') 
                
 		           
                 
