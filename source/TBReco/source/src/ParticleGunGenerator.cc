@@ -133,9 +133,9 @@ namespace depfet {
     S[3][3] = std::pow(m_BeamVertexYSigma,2);
     S[4][4] = std::pow(m_BeamMomentumSigma,2);    
     S[0][2] = m_BeamCorrelationVertexXvsSlopeX*m_BeamSlopeXSigma*m_BeamVertexXSigma;
-    S[0][4] = m_BeamCorrelationVertexXvsMomentum*m_BeamSlopeYSigma*m_BeamVertexYSigma;
-    S[1][2] = m_BeamCorrelationVertexYvsSlopeY*m_BeamVertexXSigma*m_BeamMomentumSigma;
-    S[1][4] = m_BeamCorrelationVertexYvsMomentum*m_BeamVertexYSigma*m_BeamMomentumSigma;     
+    S[2][4] = m_BeamCorrelationVertexXvsMomentum*m_BeamVertexXSigma*m_BeamMomentumSigma;
+    S[1][3] = m_BeamCorrelationVertexYvsSlopeY*m_BeamVertexYSigma*m_BeamSlopeYSigma;
+    S[3][4] = m_BeamCorrelationVertexYvsMomentum*m_BeamVertexYSigma*m_BeamMomentumSigma;     
     
     // Construct average track state of beam particle 
     m_Mean = HepVector(5);
