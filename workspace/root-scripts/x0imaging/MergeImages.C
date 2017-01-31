@@ -1,4 +1,5 @@
 #include <fstream>
+#include <algorithm>
 using namespace std ;
 
 
@@ -15,27 +16,36 @@ int MergeImages()
 	// display mode
 	gStyle->SetPalette(1);
 	gStyle->SetOptStat(11111111);
-        gStyle->SetPadRightMargin(0.15);
-        gStyle->SetPadLeftMargin(0.15);
+    gStyle->SetPadRightMargin(0.15);
+    gStyle->SetPadLeftMargin(0.15);
 
-        gROOT->ForceStyle();
+    gROOT->ForceStyle();
+
+    // Read config file
+    //------------------
+    TEnv mEnv("x0merge.cfg");
 
 	// Number of Input files (image parts)
-	const int num_usplits=PARAMETER-USPLITS;
-	const int num_vsplits=PARAMETER-VSPLITS;
+	const int num_usplits=mEnv.GetValue("usplits", 1);
+	const int num_vsplits=mEnv.GetValue("vsplits", 1);
 
 	// TString for the input root file name
-	TString filename[num_usplits][num_vsplits];
+	TString filenameB[num_usplits][num_vsplits];
 
 	// Input root files
 	TFile *X0file[num_usplits][num_vsplits]; 
+
+	// TString for the input root file name
+	TString filenameA;
+	filenameA=mEnv.GetValue("x0filename", "X0-merge");
 
 	for(int i=0;i<num_usplits;i++) 
 	{
 		for(int j=0;j<num_vsplits;j++) 
 		{
-			filename[i][j].Form("X0_merge-image-part_%i_%i.root",i+1,j+1);    
-			X0file[i][j] = new TFile(filename[i][j], "READ");
+			filenameB[i][j].Form("-part-%i-%i.root",i+1,j+1); 
+			TString filename=filenameA+filenameB[i][j];
+			X0file[i][j] = new TFile(filename, "READ");
 		}
 	}
 
@@ -70,38 +80,43 @@ int MergeImages()
 			hmeanmap2_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/hmeanmap2");
 			huresidualmeanmap_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/huresidualmeanmap");
 			hvresidualmeanmap_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/hvresidualmeanmap");
-			htrackchi2map_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/htrackchi2map");
 			hnummap_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/hnummap");
 			hmommap_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/hmommap");
 		}
 	}
 
 	// Results file
-	TFile *Resultsfile = new TFile("X0-image-merged.root", "RECREATE");	
+	TString resultsfilename=mEnv.GetValue("resultsfilename", "X0-merge-completearea-image");
+	resultsfilename+=".root";
+	TFile *Resultsfile = new TFile(resultsfilename, "RECREATE");	
 
 	// PIXEL Size of the image
-	double upixelsize = PARAMETER-UPIXELSIZE; // in µm
-	double vpixelsize = PARAMETER-VPIXELSIZE; // in µm
+	double upixelsize = mEnv.GetValue("upixelsize", 100); // in µm
+	double vpixelsize = mEnv.GetValue("vpixelsize", 100); // in µm
 
 	// u minimum and v maximum value (in mm)
-	double umin=PARAMETER-UMIN;
-	double vmax=PARAMETER-VMAX;
-
-	// u and v length of the map (in mm)
-	double ulength=PARAMETER-ULENGTH;
-	double vlength=PARAMETER-VLENGTH;
+	double umin=mEnv.GetValue("umin", -10.0);
+	double vmax=mEnv.GetValue("vmax", 5.0);
 
 	// maximal number of pixels per partial image
-	int max_u_pixels=PARAMETER-MAXUPIXELS;
-	int max_v_pixels=PARAMETER-MAXVPIXELS;
+	int max_u_pixels=mEnv.GetValue("maxupixels", 100);
+	int max_v_pixels=mEnv.GetValue("maxvpixels", 50);
+
+	// u and v length of the map (in mm)
+	double ulength=num_usplits*upixelsize*max_u_pixels/1000.0;
+	double vlength=num_vsplits*vpixelsize*max_v_pixels/1000.0;
+
+	// Print map parameters
+	cout<<"Length of total image in u direction: "<<ulength<<" mm"<<endl;
+	cout<<"Length of total image in v direction: "<<vlength<<" mm"<<endl;
 
 	// umax and vmin can be computed from the parameters already implemented 
 	double umax=umin+ulength;
 	double vmin=vmax-vlength;
 
 	// Number of Rows and Columns of the sensor map
-	int numcol = ulength/upixelsize*1000; //1000 because pixelsize is in µm
-	int numrow = vlength/vpixelsize*1000; //1000 because pixelsize is in µm
+	int numcol = num_usplits*max_u_pixels;//max(max_u_pixels,ulength/upixelsize*1000); //1000 because pixelsize is in µm
+	int numrow = num_vsplits*max_v_pixels;//max(max_v_pixels,vlength/vpixelsize*1000); //1000 because pixelsize is in µm
 
 	// Print map parameters
 	cout<<"Column and Row values of the whole area:"<<endl;
@@ -125,7 +140,7 @@ int MergeImages()
 
 	// X0 map
 	TH2F * hX0map = new TH2F("hX0map","hX0map",numcol,umin,umax,numrow,vmin,vmax);
-        hX0map->SetStats(kFALSE);
+    hX0map->SetStats(kFALSE);
         hX0map->SetMaximum(8);
         hX0map->SetMinimum(0);
         hX0map->GetXaxis()->SetTitle("u [mm]");
@@ -248,16 +263,6 @@ int MergeImages()
         hvresidualmeanmap->GetZaxis()->SetTitle("v residual[µm]");
         hvresidualmeanmap->GetZaxis()->SetTitleSize(0.02);
         hvresidualmeanmap->GetZaxis()->SetLabelSize(0.02);
-
-	// track chi2 mean value
-	TH2F * htrackchi2map = new TH2F("htrackchi2map","htrackchi2map",numcol,umin,umax,numrow,vmin,vmax);
-	htrackchi2map->SetStats(kFALSE);
-        htrackchi2map->GetXaxis()->SetTitle("u [mm]");
-        htrackchi2map->GetYaxis()->SetTitle("v [mm]");
-        htrackchi2map->GetZaxis()->SetTitle("track chi2");
-        htrackchi2map->GetZaxis()->SetTitleOffset(1.4);
-        htrackchi2map->GetZaxis()->SetTitleSize(0.02);
-        htrackchi2map->GetZaxis()->SetLabelSize(0.02);
 	
 	// #Tracks map
 	TH2F * hnummap = new TH2F("hnummap","hnummap",numcol,umin,umax,numrow,vmin,vmax);
@@ -295,7 +300,6 @@ int MergeImages()
 			hmeanmap2->SetBinContent(col+1,row+1,hmeanmap2_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 			huresidualmeanmap->SetBinContent(col+1,row+1,huresidualmeanmap_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 			hvresidualmeanmap->SetBinContent(col+1,row+1,hvresidualmeanmap_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			htrackchi2map->SetBinContent(col+1,row+1,htrackchi2map_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 			hnummap->SetBinContent(col+1,row+1,hnummap_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 			hmommap->SetBinContent(col+1,row+1,hmommap_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 		}
@@ -312,7 +316,7 @@ int MergeImages()
 	hmeanmap2->Write();
 	huresidualmeanmap->Write();
 	hvresidualmeanmap->Write();
-	htrackchi2map->Write();
+
 	hnummap->Write();
 	hmommap->Write();
 

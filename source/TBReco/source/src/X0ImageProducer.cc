@@ -365,8 +365,8 @@ void X0ImageProducer::processEvent(LCEvent * evt)
    
     _root_angle1 = theta[0][0];
     _root_angle2 = theta[1][0];
-    _root_angle1_err = TMath::Sqrt(Cov[0][0]);
-    _root_angle2_err = TMath::Sqrt(Cov[1][1]);
+    _root_angle1_var = Cov[0][0];
+    _root_angle2_var = Cov[1][1];
     
     _rootMscTree->Fill();       
     
@@ -481,8 +481,8 @@ void X0ImageProducer::bookHistos() {
 
   _rootMscTree->Branch("theta1_val"      ,&_root_angle1      ,"theta1_val/D"); 
   _rootMscTree->Branch("theta2_val"      ,&_root_angle2      ,"theta2_val/D");
-  _rootMscTree->Branch("theta1_err"      ,&_root_angle1_err  ,"theta1_err/D");
-  _rootMscTree->Branch("theta2_err"      ,&_root_angle2_err  ,"theta2_err/D");
+  _rootMscTree->Branch("theta1_var"      ,&_root_angle1_var  ,"theta1_var/D");
+  _rootMscTree->Branch("theta2_var"      ,&_root_angle2_var  ,"theta2_var/D");
   _rootMscTree->Branch("momentum"        ,&_root_momentum    ,"momentum/D");
   
 
