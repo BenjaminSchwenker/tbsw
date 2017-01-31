@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="us-ascii"?>
+
+<marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
+   
+  <execute>
+    <processor name="M26HitMaker"/>
+    <processor name="M26ClusterDBCreator"/>
+  </execute>
+   
+  <global>
+    <parameter name="LCIOInputFiles"> tmp-rawdata.slcio </parameter>
+    <parameter name="GearXMLFile" value="gear.xml"/>
+    <parameter name="MaxRecordNumber" value="100000"/>
+    <parameter name="SkipNEvents" value="0"/>
+    <parameter name="SupressCheck" value="false"/>
+    <parameter name="Verbosity" value="MESSAGE3"/>
+  </global>
+  
+  <processor name="M26HitMaker" type="GoeHitMaker">
+    <!--GoeHitMaker:  Compute hits from pixel clusters using a clusterDB-->
+    <!--Name of cluster collection-->
+    <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_m26 </parameter>
+    <!--Name of hit collection-->
+    <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> goehit_m26 </parameter>
+    <!--This is the name of the ROOT file with the cluster constants (add .root)-->
+    <parameter name="ClusterDBFileName" type="string" value="clusterDB-ALL.root"/>
+  </processor>
+  
+  <processor name="M26ClusterDBCreator" type="GoeClusterCalibratorForMC">
+    <!--GoeClusterCalibratorForMC: Create clusterDB for clusters using simhits-->
+    <!--Name of hit collection-->
+    <parameter name="HitCollection" type="string" lcioInType="TrackerHit"> goehit_m26 </parameter>
+    <!--Name of collection with simulated hits-->
+    <parameter name="SimTrackerHitCollection" type="string" lcioInType="SimTrackerHit"> SimTrackerHits </parameter>
+    <!--Output clusterDB file name-->
+    <parameter name="ClusterDBFileName" type="string" value="clusterDB-M26.root"/>
+    <!--Maximum u residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
+    <parameter name="MaxResidualU" type="double" value="0.02"/>
+    <!--Maximum v residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
+    <parameter name="MaxResidualV" type="double" value="0.02"/>
+    <!--Minimum number of cluster ID occurances for clusterDB-->
+    <parameter name="MinClusters" type="int" value="2000"/>
+  </processor>
+</marlin>

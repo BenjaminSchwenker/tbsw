@@ -93,7 +93,7 @@
      <!--Particle mass [GeV]-->
      <parameter name="ParticleMass" type="double" value="0.000511"/>
      <!--Particle momentum [GeV]-->
-     <parameter name="ParticleMomentum" type="double" value="3.0"/>
+     <parameter name="ParticleMomentum" type="double" value="4.0"/>
      <!--Update alignment DB using offset corrections (true/false)?-->
      <parameter name="UpdateAlignment" type="bool" value="true"/>
    </processor>
