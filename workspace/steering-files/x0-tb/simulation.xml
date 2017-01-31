@@ -13,7 +13,7 @@
    <global>
       <parameter name="LCIOInputFiles"> </parameter>
       <parameter name="GearXMLFile" value="gear.xml"/>
-      <parameter name="MaxRecordNumber" value="50000"/>
+      <parameter name="MaxRecordNumber" value="500000"/>
       <parameter name="SkipNEvents" value="0"/>
       <parameter name="SupressCheck" value="false"/>
       <parameter name="Verbosity" value="MESSAGE3"/>
@@ -45,23 +45,23 @@ Make sure to not specify any LCIOInputFiles in the steering in order-->
     <!--A simulated event contains one particle at t=0 and extends for given time window in seconds-->
     <parameter name="BeamTimeWindow" type="double" value="0.0001"/>
     <!--Beam vertex position in X direction [mm]-->
-    <parameter name="BeamVertexX" type="double" value="2"/>
+    <parameter name="BeamVertexX" type="double" value="0"/>
     <!--Beam vertex sigma in X direction [mm]-->
-    <parameter name="BeamVertexXSigma" type="double" value="1"/>
+    <parameter name="BeamVertexXSigma" type="double" value="7"/>
     <!--Beam vertex position in Y direction [mm]-->
-    <parameter name="BeamVertexY" type="double" value="-0.5"/>
+    <parameter name="BeamVertexY" type="double" value="-0"/>
     <!--Beam vertex sigma in Y direction [mm]-->
-    <parameter name="BeamVertexYSigma" type="double" value="1"/>
+    <parameter name="BeamVertexYSigma" type="double" value="10"/>
     <!--Beam vertex position in Z direction [mm]-->
     <parameter name="BeamVertexZ" type="double" value="-10"/>
     <!--Beam correlation factor between vertex position and momentum-->
-    <parameter name="CorrelationVertexXvsMomentum" type="double" value="0"/>
+    <parameter name="CorrelationVertexXvsMomentum" type="double" value="0.05"/>
     <!--Beam correlation factor between vertex position and slope-->
-    <parameter name="CorrelationVertexXvsSlopeX" type="double" value="0"/>
+    <parameter name="CorrelationVertexXvsSlopeX" type="double" value="0.1"/>
     <!--Beam correlation factor between vertex position and momentum-->
-    <parameter name="CorrelationVertexYvsMomentum" type="double" value="0"/>
+    <parameter name="CorrelationVertexYvsMomentum" type="double" value="0.05"/>
     <!--Beam correlation factor between vertex position and slope-->
-    <parameter name="CorrelationVertexYvsSlopeY" type="double" value="0"/>
+    <parameter name="CorrelationVertexYvsSlopeY" type="double" value="0.1"/>
     <!--PDG code-->
     <parameter name="PDG" type="int" value="11"/>
     <!--Particle charge [e]-->
@@ -95,7 +95,7 @@ Make sure to not specify any LCIOInputFiles in the steering in order-->
   <!--Choose front-end electronics: ADC(0) or Comparator(1) or None(2) -->
   <parameter name="FrontEndType" type="int" value="1"/>
   <!--Set threshold for comparator (in e)-->
-  <parameter name="ComparatorThrehold" type="float" value="1000"/>
+  <parameter name="ComparatorThrehold" type="float" value="1100"/>
   <!--Set how many bits the ADC uses-->
   <parameter name="ADCBits" type="int" value="8"/>
   <!--Set analog-to-digital converter range 0 - ? (in e)-->
@@ -109,7 +109,7 @@ Make sure to not specify any LCIOInputFiles in the steering in order-->
   <!--Apply electronic effects?-->
   <parameter name="ElectronicEffects" type="bool" value="true"/>
   <!--Noise added by the electronics, set in ENC (one value for each detector)-->
-  <parameter name="ElectronicNoise" type="double" value="100"/>
+  <parameter name="ElectronicNoise" type="double" value="300"/>
   <!--Apply digitization only to SimTrackerHits for sensors having DAQ IDs in this list-->
   <parameter name="FilterIDs" type="IntVec" value="0 1 2 3 4 5"/>
   <!--Use integration window?-->
