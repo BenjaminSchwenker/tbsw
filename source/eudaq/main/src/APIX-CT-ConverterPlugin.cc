@@ -2,7 +2,6 @@
 #include "eudaq/Exception.hh"
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/Configuration.hh"
-#include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
 
 #if USE_LCIO

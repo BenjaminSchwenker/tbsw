@@ -27,7 +27,7 @@ namespace eudaq {
         break;
       }
       i1 += 1;
-      if (i1 >= pattern.length()) EUDAQ_THROW("Bad file pattern: '" + pattern + "'");
+      if (i1 >= pattern.length()) std::cout << "Bad file pattern: '" << pattern << "'"<< std::endl;        
       if (pattern[i1] == '-' || pattern[i1] == '+') i1 += 1;
       size_t i2 = pattern.find_first_not_of("0123456789", i1);
       //std::cout << "i1 " << i1 << ", i2 " << i2 << std::endl;

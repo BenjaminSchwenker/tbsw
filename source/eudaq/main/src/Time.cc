@@ -43,7 +43,7 @@ namespace eudaq {
   Time Time::Current() {
     timeval tv;
     if (gettimeofday(&tv, 0)) {
-      EUDAQ_THROW(std::string("Error getting current time: ") + strerror(errno));
+      EUDAQ_THROWX(FileReadException, "Error getting current time" );
     }
     return tv;
   }

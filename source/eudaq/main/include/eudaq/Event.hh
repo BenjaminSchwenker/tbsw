@@ -95,7 +95,7 @@ namespace eudaq {
       ds.read(id);
       //std::cout << "Create id = " << std::hex << id << std::dec << std::endl;
       event_creator cr = GetCreator(id);
-      if (!cr) EUDAQ_THROW("Unrecognised Event type (" + Event::id2str(id) + ")");
+      if (!cr)  std::cout << "Unrecognised Event type (" << Event::id2str(id) << ")" << std::endl;  
       return cr(ds);
     }
 

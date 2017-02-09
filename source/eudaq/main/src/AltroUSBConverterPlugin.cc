@@ -1,7 +1,5 @@
 #include "eudaq/DataConverterPlugin.hh"
-//#include "eudaq/Exception.hh"
 #include "eudaq/RawDataEvent.hh"
-#include "eudaq/Logger.hh"
 
 #if USE_LCIO
 //#  include <IMPL/LCEventImpl.h>

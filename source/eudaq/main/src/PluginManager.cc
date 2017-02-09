@@ -34,7 +34,7 @@ namespace eudaq {
       = m_pluginmap.find(eventtype);
 
     if (pluginiter == m_pluginmap.end()) {
-      EUDAQ_THROW("PluginManager::GetPlugin(): Unkown event type "+Event::id2str(eventtype.first)+":"+eventtype.second);
+      EUDAQ_THROWX(FileReadException, "PluginManager::GetPlugin(): Unkown event type "+Event::id2str(eventtype.first)+":"+eventtype.second);
     }
 
     return *pluginiter->second;
@@ -78,14 +78,14 @@ namespace eudaq {
     StandardEvent event(dev);
     for (size_t i = 0; i < dev.NumEvents(); ++i) {
       const Event * ev = dev.GetEvent(i);
-      if (!ev) EUDAQ_THROW("Null event!");
+      if (!ev) EUDAQ_THROWX(FileReadException, "Null event!");
       if (ev->GetSubType() == "EUDRB") {
         ConvertStandardSubEvent(event, *ev);
       }
     }
     for (size_t i = 0; i < dev.NumEvents(); ++i) {
       const Event * ev = dev.GetEvent(i);
-      if (!ev) EUDAQ_THROW("Null event!");
+      if (!ev)  EUDAQ_THROWX(FileReadException, "Null event!");
       if (ev->GetSubType() != "EUDRB") {
         ConvertStandardSubEvent(event, *ev);
       }

@@ -1,7 +1,6 @@
 #include "eudaq/DataConverterPlugin.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/RawDataEvent.hh"
-#include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/EUTELESCOPE.hh"
 #include "eudaq/DEPFETADCValues.hh"

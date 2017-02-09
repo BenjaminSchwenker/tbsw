@@ -10,7 +10,7 @@
 #endif
 
 #define EUDAQ_THROWX(exc, msg) throw ::eudaq::InitException(exc(msg), __FILE__, __LINE__, EUDAQ_FUNC)
-#define EUDAQ_THROW(msg) EUDAQ_THROWX(::eudaq::LoggedException, (msg))
+
 
 #define EUDAQ_EXCEPTIONX(name, base) \
   class name : public base {         \
@@ -45,27 +45,18 @@ namespace eudaq {
     mutable unsigned m_line;
   };
 
-  class LoggedException : public Exception {
-  public:
-    LoggedException(const std::string & msg);
-    void Log() const;
-    virtual ~LoggedException() throw();
-  private:
-    mutable bool m_logged;
-  };
+ 
 
   namespace {
     void do_log(const Exception &) {
     }
-    void do_log(const LoggedException & e) {
-      e.Log();
-    }
+    
   }
 
   template <typename T>
   const T & InitException(const T & e, const std::string & file, int line = 0, const std::string func = "") {
     e.SetLocation(file, line, func);
-    do_log(e); // If it is a LoggedException, send it to be logged already
+    do_log(e); 
     return e;
   }
 

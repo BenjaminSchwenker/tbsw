@@ -127,9 +127,9 @@ namespace eudaq {
 
   void WriteStringToFile(const std::string & fname, const std::string & val) {
     std::ofstream file(fname.c_str());
-    if (!file.is_open()) EUDAQ_THROW("Unable to open file " + fname + " for writing");
+    if (!file.is_open())  EUDAQ_THROWX(FileReadException, "Unable to open file " + fname + " for writing");
     file << val << std::endl;
-    if (file.fail()) EUDAQ_THROW("Error writing to file " + fname);
+    if (file.fail()) EUDAQ_THROWX(FileReadException, "Error writing to file " + fname);
   }
 
   std::string ReadLineFromFile(const std::string & fname) {
@@ -138,7 +138,7 @@ namespace eudaq {
     if (file.is_open()) {
       std::getline(file, result);
       if (file.fail()) {
-        EUDAQ_THROW("Error reading from file " + fname);
+        EUDAQ_THROWX(FileReadException, "Error reading from file " + fname);  
       }
     }
     return result;

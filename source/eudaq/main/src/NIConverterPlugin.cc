@@ -2,7 +2,6 @@
 #include "eudaq/Exception.hh"
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/Configuration.hh"
-#include "eudaq/Logger.hh"
 #include "eudaq/EUTELESCOPE.hh"
 #include "eudaq/EUTelMimoTelDetector.hh"
 #include "eudaq/EUTelMimosa18Detector.hh"
@@ -63,7 +62,7 @@ namespace eudaq {
       const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(source);
       if (rawev.NumBlocks() != 2 || rawev.GetBlock(0).size() < 20 ||
           rawev.GetBlock(1).size() < 20) {
-        EUDAQ_WARN("Ignoring bad event " + to_string(source.GetEventNumber()));
+        //EUDAQ_WARN("Ignoring bad event " + to_string(source.GetEventNumber()));
         return false;
       }
       const datavect & data0 = rawev.GetBlock(0);
@@ -84,11 +83,11 @@ namespace eudaq {
         if (dbg) std::cout << "Mimosa_header0 = " << hexdec(header0) << std::endl;
         if (dbg) std::cout << "Mimosa_header1 = " << hexdec(header1) << std::endl;
         if (it0 + 2 >= data0.end()) {
-          EUDAQ_WARN("Trailing rubbish in first frame");
+          //EUDAQ_WARN("Trailing rubbish in first frame");
           break;
         }
         if (it1 + 2 >= data1.end()) {
-          EUDAQ_WARN("Trailing rubbish in second frame");
+          //EUDAQ_WARN("Trailing rubbish in second frame");
           break;
         }
         if (dbg) std::cout << "Mimosa_framecount0 = " << hexdec(GET(it0, 0)) << std::endl;
@@ -97,8 +96,7 @@ namespace eudaq {
         if (dbg) std::cout << "Mimosa_wordcount0 = " << hexdec(len0 & 0xffff, 4)
                            << ", " << hexdec(len0 >> 16, 4) << std::endl;
         if ((len0 & 0xffff) != (len0 >> 16)) {
-          EUDAQ_WARN("Mismatched lengths decoding first frame (" +
-                     to_string(len0 & 0xffff) + ", " + to_string(len0 >> 16) + ")");
+          //EUDAQ_WARN("Mismatched lengths decoding first frame (" + to_string(len0 & 0xffff) + ", " + to_string(len0 >> 16) + ")");
           len0 = std::max(len0 & 0xffff, len0 >> 16);
         }
         len0 &= 0xffff;
@@ -106,17 +104,16 @@ namespace eudaq {
         if (dbg) std::cout << "Mimosa_wordcount1 = " << hexdec(len1 & 0xffff, 4)
                            << ", " << hexdec(len1 >> 16, 4) << std::endl;
         if ((len1 & 0xffff) != (len1 >> 16)) {
-          EUDAQ_WARN("Mismatched lengths decoding second frame (" +
-                     to_string(len1 & 0xffff) + ", " + to_string(len1 >> 16) + ")");
+          //EUDAQ_WARN("Mismatched lengths decoding second frame (" + to_string(len1 & 0xffff) + ", " + to_string(len1 >> 16) + ")");
           len1 = std::max(len1 & 0xffff, len1 >> 16);
         }
         len1 &= 0xffff;
         if (it0 + len0*4 + 12 > data0.end()) {
-          EUDAQ_WARN("Bad length in first frame");
+          //EUDAQ_WARN("Bad length in first frame");
           break;
         }
         if (it1 + len1*4 + 12 > data1.end()) {
-          EUDAQ_WARN("Bad length in second frame");
+          //EUDAQ_WARN("Bad length in second frame");
           break;
         }
         StandardPlane plane(id, "NI", "MIMOSA26");
@@ -315,7 +312,7 @@ namespace eudaq {
         }
       } else {
 
-        EUDAQ_ERROR("Unrecognised sensor type in LCIO converter: " + plane.Sensor());
+        //EUDAQ_ERROR("Unrecognised sensor type in LCIO converter: " + plane.Sensor());
         return true;
 
       }

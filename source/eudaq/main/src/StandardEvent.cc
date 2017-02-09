@@ -81,7 +81,7 @@ namespace eudaq {
   }
 
   void StandardPlane::PushPixelHelper(unsigned x, unsigned y, double p, bool pivot, unsigned frame) {
-    if (frame > m_x.size()) EUDAQ_THROW("Bad frame number " + to_string(frame) + " in PushPixel");
+    if (frame > m_x.size())   EUDAQ_THROWX(FileReadException, "Bad frame number " + to_string(frame) + " in PushPixel");
     m_x[frame].push_back(x);
     m_y[frame].push_back(y);
     m_pix[frame].push_back(p);
@@ -90,7 +90,7 @@ namespace eudaq {
   }
 
   void StandardPlane::SetPixelHelper(unsigned index, unsigned x, unsigned y, double pix, bool pivot, unsigned frame) {
-    if (frame >= m_pix.size()) EUDAQ_THROW("Bad frame number " + to_string(frame) + " in SetPixel");
+    if (frame >= m_pix.size()) EUDAQ_THROWX(FileReadException, "Bad frame number " + to_string(frame) + " in SetPixel");
     if (frame < m_x.size()) m_x.at(frame).at(index) = x;
     if (frame < m_y.size()) m_y.at(frame).at(index) = y;
     if (frame < m_pivot.size()) m_pivot.at(frame).at(index) = pivot;
@@ -314,8 +314,8 @@ namespace eudaq {
       }
       m_result_pix = &m_temp_pix;
     } else {
-      EUDAQ_THROW("Unrecognised pixel format (" + to_string(m_pix.size())
-                  + " frames, CDS=" + (GetFlags(FLAG_NEEDCDS) ? "Needed" : "Done") + ")");
+      EUDAQ_THROWX(FileReadException, "Unrecognised pixel format (" + to_string(m_pix.size())
+                                        + " frames, CDS=" + (GetFlags(FLAG_NEEDCDS) ? "Needed" : "Done") + ")");
     }
     
   }

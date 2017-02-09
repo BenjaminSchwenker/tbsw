@@ -1,6 +1,4 @@
 #include "eudaq/OptionParser.hh"
-#include "eudaq/Logger.hh"
-#include "eudaq/Time.hh"
 #include <ostream>
 #include <sstream>
 #include <fstream>
@@ -102,11 +100,10 @@ namespace eudaq {
     {
       std::ofstream logfile("crashlog.txt", std::ios::app);
       logfile << "===============================================\n"
-              << "Abnormal exit of " << m_name << "(" << m_ver << ") at " << Time::Current().Formatted() << "\n"
+              << "Abnormal exit of " << m_name << "(" << m_ver << ") at \n"
               << msg << "\n"
               << "-----------------------------------------------" << std::endl;
     }
-    GetLogger().SendLogMessage(LogMessage(msg, LogMessage::LVL_ERROR), false);
     os << msg << "\n"
        << "Please report this to the developers." << std::endl;
     //std::string str;
