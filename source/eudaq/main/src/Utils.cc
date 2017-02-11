@@ -1,19 +1,12 @@
 #include "eudaq/Utils.hh"
-#include "eudaq/Platform.hh"
 #include "eudaq/Exception.hh"
 #include <cstring>
 #include <cstdlib>
 #include <iostream>
 #include <cctype>
+#include <unistd.h>
 
-#if EUDAQ_PLATFORM_IS(WIN32)
-# define WIN32_LEAN_AND_MEAN
-# include <Windows.h>
-# include <cstdio>  // HK
-# include <cstdlib>  // HK
-#else
-# include <unistd.h>
-#endif
+
 
 namespace eudaq {
 
@@ -82,11 +75,7 @@ namespace eudaq {
   }
 
   void mSleep(unsigned ms) {
-#if EUDAQ_PLATFORM_IS(WIN32)
-    Sleep(ms);
-#else
     usleep(ms * 1000);
-#endif
   }
 
   template<>

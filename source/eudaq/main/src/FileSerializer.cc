@@ -1,5 +1,4 @@
 #include "eudaq/FileSerializer.hh"
-#include "eudaq/Platform.hh"
 #include "eudaq/Utils.hh"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -44,15 +43,11 @@ namespace eudaq {
   void FileSerializer::Flush() {
     fflush(m_file);
   }
-
+  
   void FileSerializer::WriteProtect() {
-#if EUDAQ_PLATFORM_IS(CYGWIN) || EUDAQ_PLATFORM_IS(MINGW)
-    std::cout << "Cannot write protect under cygwin or MinGW: function fileno() is not available" << std::endl;
-#else
     fchmod(fileno(m_file), S_IRUSR | S_IRGRP | S_IROTH);
-#endif
   }
-
+  
   FileDeserializer::FileDeserializer(const std::string & fname, bool faileof, size_t buffersize) :
     m_file(0), m_faileof(faileof), m_buf(buffersize), m_start(&m_buf[0]), m_stop(m_start)
   {

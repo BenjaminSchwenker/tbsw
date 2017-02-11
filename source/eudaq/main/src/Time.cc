@@ -1,45 +1,13 @@
 #include "eudaq/Time.hh"
-#include "eudaq/Platform.hh"
 #include "eudaq/Exception.hh"
 #include <ctime>
 #include <iostream>
 
-#if EUDAQ_PLATFORM_IS(WIN32)
-# define WIN32_LEAN_AND_MEAN
-//# include <afxwin.h> 
-# include <Windows.h>
-# include <time.h>
-# define EPOCHFILETIME (116444736000000000LL)
-#endif
 
 namespace eudaq {
 
   const std::string Time::DEFAULT_FORMAT = "%Y-%m-%d %H:%M:%S.%3";
-
-#if EUDAQ_PLATFORM_IS(WIN32)
-
-  // Based on timeval.h by Wu Yongwei
-  Time Time::Current() {
-    FILETIME ft;
-    GetSystemTimeAsFileTime(&ft);
-
-    LARGE_INTEGER li;
-    li.LowPart  = ft.dwLowDateTime;
-    li.HighPart = ft.dwHighDateTime;
-
-    __int64 t = li.QuadPart;
-    t -= EPOCHFILETIME;     /* Offset to the Epoch time */
-    t /= 10;                /* In microseconds */
-
-    timeval tv;
-    tv.tv_sec  = (long)(t / 1000000);
-    tv.tv_usec = (long)(t % 1000000);
-
-    return tv;
-  }
-
-#else
-
+  
   Time Time::Current() {
     timeval tv;
     if (gettimeofday(&tv, 0)) {
@@ -48,7 +16,7 @@ namespace eudaq {
     return tv;
   }
 
-#endif
+
 
   Time::Time(int year, int month, int date, int hour, int minute, int sec, int usec) {
     struct tm time;

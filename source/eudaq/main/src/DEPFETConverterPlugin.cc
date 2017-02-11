@@ -2,7 +2,6 @@
 #include "eudaq/Exception.hh"
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/Utils.hh"
-#include "eudaq/EUTELESCOPE.hh"
 #include "eudaq/DEPFETADCValues.hh"
 #include "eudaq/DEPFETEvent.hh"
 
@@ -86,7 +85,7 @@ class DEPFETConverterBase {
  public:
   
 #if USE_LCIO 
-  void ConvertLCIOHeader(lcio::LCRunHeader & header, eudaq::Event const & bore, eudaq::Configuration const & conf) const;
+  void ConvertLCIOHeader(lcio::LCRunHeader & header, eudaq::Event const & bore) const;
   bool ConvertLCIO(lcio::LCEvent & lcioEvent, const Event & eudaqEvent) const;
 #endif
 
@@ -371,7 +370,7 @@ class DEPFETConverterPlugin : public DataConverterPlugin, public DEPFETConverter
  public:
   //virtual lcio::LCEvent * GetLCIOEvent( eudaq::Event const * ee ) const;
   
-  virtual bool GetStandardSubEvent(StandardEvent &, const eudaq::Event &) const;
+ 
   
   virtual unsigned GetTriggerID(Event const & ev) const {
     const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(ev);
@@ -380,8 +379,8 @@ class DEPFETConverterPlugin : public DataConverterPlugin, public DEPFETConverter
   }
   
 #if USE_LCIO 
-  virtual void GetLCIORunHeader(lcio::LCRunHeader & header, eudaq::Event const & bore, eudaq::Configuration const & conf) const {
-    return ConvertLCIOHeader(header, bore, conf);
+  virtual void GetLCIORunHeader(lcio::LCRunHeader & header, eudaq::Event const & bore) const {
+    return ConvertLCIOHeader(header, bore);
   }
   
   virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, const Event & eudaqEvent) const {
@@ -397,67 +396,10 @@ class DEPFETConverterPlugin : public DataConverterPlugin, public DEPFETConverter
 
 DEPFETConverterPlugin const DEPFETConverterPlugin::m_instance;
 
-bool DEPFETConverterPlugin::GetStandardSubEvent(StandardEvent & result, const Event & source) const {
-   
-  if (source.IsBORE()) {
-      //FillInfo(source);
-      return true;
-  } else if (source.IsEORE()) {
-      // nothing to do
-      return true;
-  }
-  
-  // If we get here it must be a data event
-  
-  //-----------------------------------------------
-  // Decode event data to a DEPFETEvent format 
-   
-  size_t numplanes = NumPlanes(source);
-  
-  depfet::DEPFETEvent m_event; 
-   
-  for (size_t iPlane = 0; iPlane < numplanes; ++iPlane) {
-     
-    // Get read fully encoded subevent
-    depfet::DEPFETADCValues m_subevent = ConvertDEPFETEvent(GetPlane(source, iPlane), GetID(source, iPlane));    
-    m_event.push_back(m_subevent);
-  }
-  
-  //-----------------------------------------------
-  // Decode event data to a eudaq::StandardEvent 
-  
-  for (size_t iframe=0;iframe<m_event.size();iframe++) {
-    
-    // Get read fully decoded data
-    const depfet::DEPFETADCValues& data = m_event[iframe];
-    int nPixel = (int) data.at(0).size(); 
-    
-    StandardPlane plane(data.getModuleNr(), "DEPFET", "DEPFET");    
-    plane.SetSizeZS(64, 1024, nPixel);
-    
-    for ( int iPixel = 0; iPixel < nPixel; iPixel++ ) {
-      int val = data.at(2).at(iPixel);
-      int col = data.at(1).at(iPixel);   
-      int row = data.at(0).at(iPixel);  
-      
-      //cout << " col  " << col << endl;    
-      //cout << " row  " << row << endl;   
-      //cout << " val  " << val << endl;      
-       
-      // Store pixel data 
-      plane.SetPixel(iPixel, col, row, val);
-    }
-      
-    // Add plane to event
-    result.AddPlane( plane );
-    
-  }
-  
-  return true;
-}
+
 
 #if USE_LCIO
-void DEPFETConverterBase::ConvertLCIOHeader(lcio::LCRunHeader & header, eudaq::Event const & /*bore*/, eudaq::Configuration const & /*conf*/) const {}
+void DEPFETConverterBase::ConvertLCIOHeader(lcio::LCRunHeader & header, eudaq::Event const & /*bore*/) const {}
 
 bool DEPFETConverterBase::ConvertLCIO(lcio::LCEvent & result, const Event & source) const {
     
@@ -512,7 +454,7 @@ bool DEPFETConverterBase::ConvertLCIO(lcio::LCEvent & result, const Event & sour
       int row = data.at(0).at(iPixel);  
       int cm = data.at(3).at(iPixel);
       
-      // Store pixel data int EUTelescope format 
+      // Store pixel data int lcio format 
       zspixels->chargeValues().push_back( col );
       zspixels->chargeValues().push_back( row );
       zspixels->chargeValues().push_back( val );   

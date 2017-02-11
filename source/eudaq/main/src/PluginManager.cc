@@ -1,6 +1,6 @@
 #include "eudaq/PluginManager.hh"
 #include "eudaq/Exception.hh"
-#include "eudaq/Configuration.hh"
+
 
 #if USE_LCIO
 #  include "lcio.h"
@@ -41,10 +41,9 @@ namespace eudaq {
   }
 
   void PluginManager::Initialize(const DetectorEvent & dev) {
-    const eudaq::Configuration conf(dev.GetTag("CONFIG"));
     for (size_t i = 0; i < dev.NumEvents(); ++i) {
       const eudaq::Event & subev = *dev.GetEvent(i);
-      GetInstance().GetPlugin(subev).Initialize(subev, conf);
+      GetInstance().GetPlugin(subev).Initialize(subev);
     }
   }
 
@@ -58,11 +57,9 @@ namespace eudaq {
     lcHeader->setRunNumber(bore.GetRunNumber());
     lcHeader->setDetectorName("EUTelescope");
     
-    const eudaq::Configuration conf(bore.GetTag("CONFIG"));
-    
     for (size_t i = 0; i < bore.NumEvents(); ++i) {
       const eudaq::Event & subev = *bore.GetEvent(i);
-      GetInstance().GetPlugin(subev).GetLCIORunHeader(*lcHeader, subev, conf);
+      GetInstance().GetPlugin(subev).GetLCIORunHeader(*lcHeader, subev);
     }
     return lcHeader;
   }
@@ -73,25 +70,7 @@ namespace eudaq {
 #endif
 
 
-  StandardEvent PluginManager::ConvertToStandard(const DetectorEvent & dev) {
-    //StandardEvent event(dev.GetRunNumber(), dev.GetEventNumber(), dev.GetTimestamp());
-    StandardEvent event(dev);
-    for (size_t i = 0; i < dev.NumEvents(); ++i) {
-      const Event * ev = dev.GetEvent(i);
-      if (!ev) EUDAQ_THROWX(FileReadException, "Null event!");
-      if (ev->GetSubType() == "EUDRB") {
-        ConvertStandardSubEvent(event, *ev);
-      }
-    }
-    for (size_t i = 0; i < dev.NumEvents(); ++i) {
-      const Event * ev = dev.GetEvent(i);
-      if (!ev)  EUDAQ_THROWX(FileReadException, "Null event!");
-      if (ev->GetSubType() != "EUDRB") {
-        ConvertStandardSubEvent(event, *ev);
-      }
-    }
-    return event;
-  }
+  
 
 #if USE_LCIO
   lcio::LCEvent * PluginManager::ConvertToLCIO(const DetectorEvent & dev) {
@@ -112,13 +91,7 @@ namespace eudaq {
   }
 #endif
 
-  void PluginManager::ConvertStandardSubEvent(StandardEvent & dest, const Event & source) {
-    try {
-      GetInstance().GetPlugin(source).GetStandardSubEvent(dest, source);
-    } catch (const Exception & e) {
-      std::cerr << "Error during conversion in PluginManager::ConvertStandardSubEvent:\n" << e.what() << std::endl;
-    }
-  }
+  
   
   void PluginManager::ConvertLCIOSubEvent(lcio::LCEvent & dest, const Event & source) {
     
