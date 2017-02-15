@@ -8,6 +8,7 @@
 
 // C++ includes
 #include <iostream>
+#include <iomanip>
 
 // Include LCIO classes
 #include <lcio.h>
