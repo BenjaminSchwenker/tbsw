@@ -1,6 +1,6 @@
 #include "eudaq/Exception.hh"
 
-#include "eudaq/Logger.hh"
+
 
 namespace eudaq {
 
@@ -28,20 +28,4 @@ namespace eudaq {
     if (m_func.length() > 0) m_text += "\n  In " + m_func;
   }
 
-  LoggedException::LoggedException(const std::string & msg)
-    : Exception(msg), m_logged(false)
-  {
-  }
-
-  void LoggedException::Log() const {
-    if (m_logged) return;
-    // Only log the message once
-    eudaq::GetLogger().SendLogMessage(eudaq::LogMessage(m_msg, eudaq::LogMessage::LVL_THROW));
-    m_logged = true;
-  }
-
-  LoggedException::~LoggedException() throw() {
-    // Make sure the message has been logged before we die
-    Log();
-  }
 }

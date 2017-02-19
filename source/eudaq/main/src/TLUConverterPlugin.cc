@@ -13,10 +13,7 @@ namespace eudaq{
   public:
     TLUConverterPlugin() : DataConverterPlugin(Event::str2id("_TLU")) {}
 
-    virtual bool GetStandardSubEvent(eudaq::StandardEvent & result, const eudaq::Event & source) const {
-      result.SetTimestamp(source.GetTimestamp());
-      return true;
-    }
+    
     virtual unsigned GetTriggerID(const eudaq::Event & ev) const {
       return ev.GetEventNumber();
     }

@@ -7,7 +7,7 @@
  *   The Converter uses a plugin mechanism to handle data from 
  *   different types of pixel detectors. A typical telescope 
  *   setup will consist of a number of reference planes and at 
- *   least one DUT sensor.Every detector group should supply a 
+ *   least one DUT sensor. Every detector group should supply a 
  *   DataConverterPlugin to convert their data into approbriate 
  *   LCIO collections.   
  *   
@@ -24,7 +24,6 @@
 #include "eudaq/OptionParser.hh"
 #include "eudaq/counted_ptr.hh"
 #include "eudaq/Utils.hh"
-#include "eudaq/Logger.hh"
 #include "eudaq/FileNamer.hh"
 #include "eudaq/Exception.hh"
 
@@ -69,7 +68,7 @@ std::vector<unsigned> parsenumbers(const std::string & s) {
       if (j == 0 && max == 1) {
         result.push_back((unsigned)-1);
       } else if (j == 0 || j == ranges[i].length()-1 || min < 0 || max < min) {
-        EUDAQ_THROW("Bad range");
+        std::cout << "Bad range" << std::endl ;
       } else {
         for (long n = min; n <= max; ++n) {
           result.push_back(n);
@@ -94,7 +93,6 @@ int main(int /*argc*/, char ** argv) {
   
   try {
     op.Parse(argv);
-    EUDAQ_LOG_LEVEL(level.Value());
     std::vector<unsigned> numbers = parsenumbers(events.Value());
     
     // Loop over data files 
@@ -103,7 +101,7 @@ int main(int /*argc*/, char ** argv) {
                      
       //eudaq::FileReader reader(op.GetArg(i), ipat.Value(), true);
       eudaq::FileReader reader(op.GetArg(i), ipat.Value(), false);
-      EUDAQ_INFO("Reading: " + reader.Filename());
+      std::cout << "Reading: " << reader.Filename() << std::endl ;
       
       string m_filepattern = opat.Value();  
       int m_runnumber = reader.RunNumber();    
@@ -126,8 +124,7 @@ int main(int /*argc*/, char ** argv) {
         if (ev.IsBORE()) {
           nbore++;
           if (nbore > 1) {
-            std::cout << "shouldn't happen" << " ... but happens " << std::endl;
-            EUDAQ_WARN("Multiple BOREs (" + to_string(nbore) + ")");
+            std::cout << "Multiple BOREs " << to_string(nbore) << std::endl ;
           }
           
           
@@ -155,7 +152,7 @@ int main(int /*argc*/, char ** argv) {
         } else if (ev.IsEORE()) {
           neore++;
           if (neore > 1) {
-            EUDAQ_WARN("Multiple EOREs (" + to_string(neore) + ")");
+            std::cout << "Warning: Multiple EOREs: " << to_string(neore) << std::endl;
           }
           
         } else {
@@ -205,7 +202,8 @@ int main(int /*argc*/, char ** argv) {
         std::cout << e.what() << std::endl ;
       }        
 
-      EUDAQ_INFO("Number of data events: " + to_string(ndata));
+      
+      //std::cout << "Number of data events: " << to_string(ndata) << std::endl;
       if (!nbore) {
         std::cout << "Warning: No BORE found" << std::endl;
       } else if (nbore > 1) {

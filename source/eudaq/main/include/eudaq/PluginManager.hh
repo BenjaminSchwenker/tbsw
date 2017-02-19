@@ -34,10 +34,7 @@ namespace eudaq {
     static unsigned GetTriggerID(const Event &);
     static void Initialize(const DetectorEvent &);
     static lcio::LCRunHeader * GetLCRunHeader(const DetectorEvent &);
-    static StandardEvent ConvertToStandard(const DetectorEvent &);
     static lcio::LCEvent * ConvertToLCIO(const DetectorEvent &);
-
-    static void ConvertStandardSubEvent(StandardEvent &, const Event &);
     static void ConvertLCIOSubEvent(lcio::LCEvent &, const Event &);
 
     /** Get the correct plugin implementation according to the event type.

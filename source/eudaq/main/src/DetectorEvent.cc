@@ -20,7 +20,7 @@ namespace eudaq {
   }
 
   void DetectorEvent::AddEvent(counted_ptr<Event> evt) {
-    if (!evt.get()) EUDAQ_THROW("Adding null event!");
+    if (!evt.get()) std::cout << "Adding null event!" << std::endl;    
     m_events.push_back(evt);
     SetFlags(evt->GetFlags());
   }
@@ -53,7 +53,7 @@ namespace eudaq {
         }
       }
     }
-    EUDAQ_THROW("DetectorEvent::GetRawSubEvent: could not find " + subtype + ":" + to_string(n));
+    std::cout << "DetectorEvent::GetRawSubEvent: could not find " << subtype << ":" << to_string(n) << std::endl;  
   }
 
 }

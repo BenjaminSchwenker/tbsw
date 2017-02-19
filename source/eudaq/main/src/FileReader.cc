@@ -2,7 +2,7 @@
 #include "eudaq/FileNamer.hh"
 #include "eudaq/PluginManager.hh"
 #include "eudaq/Event.hh"
-#include "eudaq/Logger.hh"
+
 
 #include <list>
 
@@ -122,7 +122,7 @@ namespace eudaq {
     std::list<item_t>::const_iterator iter(size_t producer, int offset = 0) const {
       std::list<item_t>::const_iterator it = offsets.at(producer);
       for (int i = 0; i <= offset; ++i) {
-        if (it == items.begin()) EUDAQ_THROW("Bad offset in ResyncTLU routine");
+        if (it == items.begin()) EUDAQ_THROWX(FileReadException, "Bad offset in ResyncTLU routine");  
         --it;
       }
       return it;
@@ -191,9 +191,9 @@ namespace eudaq {
             if (queue.getevent(i).get_id() != TLUID) {
               queue.firstid = PluginManager::GetTriggerID(queue.getevent(i)) & IDMASK;
               if (queue.firstid <= 1) {
-                EUDAQ_INFO("First TLU id detected as " + to_string(queue.firstid));
+                //EUDAQ_INFO("First TLU id detected as " + to_string(queue.firstid));
               } else {
-                EUDAQ_WARN("First TLU id detected as " + to_string(queue.firstid) + " (should be 0 or 1)");
+                //EUDAQ_WARN("First TLU id detected as " + to_string(queue.firstid) + " (should be 0 or 1)");
               }
               break;
             }
@@ -238,14 +238,14 @@ namespace eudaq {
           return true;
         }
         if (triggerid != 0 && triggerid == queue.lastid) {
-          EUDAQ_WARN("Trigger ID " + to_string(triggerid) + " is repeated for whole event " + to_string(eventnum));      
+          //EUDAQ_WARN("Trigger ID " + to_string(triggerid) + " is repeated for whole event " + to_string(eventnum));      
         }
         if (hasrepeat) {
           for (size_t i = 0; i < queue.producers(); ++i) {
             unsigned tid = queue.getid(i);
             if (tid == queue.lastid) {
               if (dbg) std::cout << std::endl;
-              EUDAQ_INFO("Discarded repeated ID (" + to_string(triggerid) + ") in event " + to_string(eventnum));
+              //EUDAQ_INFO("Discarded repeated ID (" + to_string(triggerid) + ") in event " + to_string(eventnum));
               queue.discardevent(i);
             }
           }
@@ -274,7 +274,7 @@ namespace eudaq {
           }
           if (istlumiss) {
             if (dbg) std::cout << ", tlumiss" << std::endl;
-            EUDAQ_INFO("Skipped TLU event detected, discarding rest of event " + to_string(eventnum));
+            //EUDAQ_INFO("Skipped TLU event detected, discarding rest of event " + to_string(eventnum));
             for (size_t i = 0; i < queue.producers(); ++i) {
               if (queue.getevent(i).get_id() != TLUID) {
                 queue.discardevent(i);
@@ -284,7 +284,7 @@ namespace eudaq {
           }
           if (isothermiss) {
             if (dbg) std::cout << ", othermiss" << std::endl;
-            EUDAQ_INFO("Skipped event detected, discarding rest of event " + to_string(eventnum));
+            //EUDAQ_INFO("Skipped event detected, discarding rest of event " + to_string(eventnum));
             for (size_t i = 0; i < queue.producers(); ++i) {
               if (queue.getid(i) != ((queue.lastid + 2) & IDMASK)) {
                 queue.discardevent(i);
@@ -293,7 +293,7 @@ namespace eudaq {
             continue;
           }
 	  if (dbg) std::cout << ", " << to_string(nums) << std::endl;
-          EUDAQ_WARN("Unexpected tid in event number " + to_string(eventnum) + ": " + to_string(nums));
+          //EUDAQ_WARN("Unexpected tid in event number " + to_string(eventnum) + ": " + to_string(nums));
         } else {
 	  if (dbg) std::cout << ", hmm" << std::endl;
 	}
@@ -312,10 +312,10 @@ namespace eudaq {
           if (tid == 0) {
             unsigned tid1 = queue.getid(i, 1);
             if (tid1 == triggerid) {
-              EUDAQ_INFO("Discarded extra 'zero' in event " + to_string(eventnum));
+              //EUDAQ_INFO("Discarded extra 'zero' in event " + to_string(eventnum));
               queue.discardevent(i);
             } else if (tid1 == triggerid1) {
-              EUDAQ_DEBUG("Detected 'zero' in event " + to_string(eventnum));
+              //EUDAQ_DEBUG("Detected 'zero' in event " + to_string(eventnum));
             } else if (tid1 == 0) {
               // Make sure there are at least three full events in the queue
               if (queue.fullevents() < 3) {
@@ -328,26 +328,27 @@ namespace eudaq {
               unsigned tid2 = queue.getid(i, 2);
               unsigned triggerid2 = (triggerid + 2) & IDMASK;
               if (tid2 == triggerid) {
-                EUDAQ_INFO("Discarded two extra 'zero's in event " + to_string(eventnum));
+                //EUDAQ_INFO("Discarded two extra 'zero's in event " + to_string(eventnum));
                 queue.discardevent(i);
                 queue.discardevent(i);
               } else if (tid2 == triggerid2) {
-                EUDAQ_DEBUG("Detected double 'zero' in event " + to_string(eventnum));
+                //EUDAQ_DEBUG("Detected double 'zero' in event " + to_string(eventnum));
               } else if (tid2 == triggerid1) {
-                EUDAQ_WARN("Ambiguous double zero in event " + to_string(eventnum) + ", discarding whole event plus zero");
+                //EUDAQ_WARN("Ambiguous double zero in event " + to_string(eventnum) + ", discarding whole event plus zero");
                 queue.discardevent(i);
                 queue.popevent();
                 doskip = true;
                 break;
               } else if (tid2 == 0) {
-                EUDAQ_WARN("Three consecutive 'zero's in event " + to_string(eventnum) + ", discarding one event.");
+                //EUDAQ_WARN("Three consecutive 'zero's in event " + to_string(eventnum) + ", discarding one event.");
                 queue.popevent();
                 doskip = true;
                 break;
               }
             } else {
-              EUDAQ_THROW("Unable to synchronize at event " + to_string(eventnum) +
-                          ", next = " + to_string(tid1) + ", expected = " + to_string(triggerid1));
+              EUDAQ_THROWX(FileReadException, "Unable to synchronize at event " + to_string(eventnum) +
+                          ", next = " + to_string(tid1) + ", expected = " + to_string(triggerid1));   
+              
             }
           }
         }
@@ -357,7 +358,7 @@ namespace eudaq {
           return true;
         } 
       }
-      EUDAQ_WARN("Unable to synchronize after " + to_string(MAXTRIES) + " events at event " + to_string(eventnum));
+      //EUDAQ_WARN("Unable to synchronize after " + to_string(MAXTRIES) + " events at event " + to_string(eventnum));
       return false;
     }
 
@@ -369,15 +370,7 @@ namespace eudaq {
       m_ev(EventFactory::Create(m_des)),
       m_ver(1),
       m_queue(0) {
-    //unsigned versiontag = m_des.peek<unsigned>();
-    //if (versiontag == Event::str2id("VER2")) {
-    //  m_ver = 2;
-    //  m_des.read(versiontag);
-    //} else if (versiontag != Event::str2id("_DET")) {
-    //  EUDAQ_WARN("Unrecognised native file (tag=" + Event::id2str(versiontag) + "), assuming version 1");
-    //}
-    //EUDAQ_INFO("FileReader, version = " + to_string(m_ver));
-    //NextEvent();
+    
 
     if (synctriggerid) { 
       m_queue = new eventqueue_t(GetDetectorEvent().NumEvents());
@@ -421,31 +414,8 @@ namespace eudaq {
     return dynamic_cast<const DetectorEvent &>(*m_ev);
   }
 
-  const StandardEvent & FileReader::GetStandardEvent() const {
-    return dynamic_cast<const StandardEvent &>(*m_ev);
-  }
+  
 
-//   const StandardEvent & FileReader::GetStandardEvent() const {
-//     if (!m_sev) {
-//       counted_ptr<StandardEvent> sevent(new StandardEvent);
-//       const DetectorEvent & dev = GetDetectorEvent();
-//       for (size_t i = 0; i < dev.NumEvents(); ++i) {
-//         const eudaq::Event * subevent = dev.GetEvent(i);
 
-//         try {
-//           const DataConverterPlugin * converterplugin = PluginManager::GetInstance().GetPlugin(subevent->GetType());
-//           converterplugin->GetStandardSubEvent(*sevent, *subevent);
-//           //std::fprintf(m_file, "Event %d %d\n", devent.GetEventNumber(), standardevent->m_x.size());
-//         } catch(eudaq::Exception & e) {
-//           //std::cout <<  e.what() << std::endl;
-//           std::cout <<  "FileWriterText::WriteEvent(): Ignoring event type "
-//                     <<  subevent->GetType() << std::endl;
-//           continue;
-//         }
-//       }
-//       m_sev = sevent;
-//     }
-//     return *m_sev;
-//   }
 
 }

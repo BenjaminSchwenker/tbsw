@@ -3,7 +3,6 @@
 
 #include "eudaq/FileSerializer.hh"
 #include "eudaq/DetectorEvent.hh"
-#include "eudaq/StandardEvent.hh"
 #include "eudaq/counted_ptr.hh"
 #include <string>
 
@@ -19,7 +18,6 @@ namespace eudaq {
     const eudaq::Event & GetEvent() const;
     const DetectorEvent & Event() const { return GetDetectorEvent(); } // for backward compatibility
     const DetectorEvent & GetDetectorEvent() const;
-    const StandardEvent & GetStandardEvent() const;
     void Interrupt() { m_des.Interrupt(); }
     class eventqueue_t;
   private:

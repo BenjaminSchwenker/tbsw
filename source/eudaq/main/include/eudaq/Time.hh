@@ -1,20 +1,13 @@
 #ifndef EUDAQ_INCLUDED_Time
 #define EUDAQ_INCLUDED_Time
 
-#include "eudaq/Platform.hh"
 #include <errno.h>
 #include <ostream>
 #include <iomanip>
 #include <string>
 #include <cstring>
+#include <sys/time.h>
 
-#if EUDAQ_PLATFORM_IS(WIN32)
-//# include <time.h>
-//# include <afxwin.h>
-# include <winsock2.h>
-#else
-# include <sys/time.h>
-#endif
 
 namespace eudaq {
 
