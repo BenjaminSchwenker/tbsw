@@ -27,6 +27,7 @@ cmake -C ../BuildSetup.cmake ..
 make install 
 cd ../..
 
+
 ############################################################
 # Install eudaq
 cd eudaq
@@ -42,7 +43,16 @@ cd build
 cmake -C ../BuildSetup.cmake ..
 make install
 cd ../.. 
-        
+
+############################################################
+# Install EudaqInput
+cd EudaqInput
+mkdir build
+cd build 
+cmake -C ../config/BuildSetup.cmake ..
+make install 
+cd ../..
+
 ############################################################
 # Install TBTools  
 cd TBTools
