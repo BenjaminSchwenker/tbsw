@@ -38,32 +38,37 @@ if __name__ == '__main__':
   # remember current working dir 
   fullpath = os.getcwd() 
 
-  # get X0 filename and x0 image filename without path
+  # get X0 filename filename without path
   this_x0filename = os.path.splitext(os.path.basename(rootfile))[0]
-  this_imagefilename = os.path.splitext(os.path.basename(imagefile))[0]
 
   # copy rootfile to current work directory
   shutil.copy(rootfile, 'X0.root')
-  shutil.copy(imagefile, 'X0image.root')
 
   # Copy cfg file
   cfgname="x0calibration.cfg"
   shutil.copy(scriptsfolder+'/'+cfgname, cfgname)
 
-  # Copy placeholder x0image and change it
-  scriptname="DrawBoxes.C"
-  shutil.copy(scriptsfolder+'/DrawBoxes.C', scriptname)
+  if imagefile != '':
+
+	#get X0 filename filename without path
+  	this_imagefilename = os.path.splitext(os.path.basename(imagefile))[0]
+	
+	# Copy X0image file to work directory
+  	shutil.copy(imagefile, 'X0image.root')
+
+  	# Copy placeholder x0image and change it
+  	scriptname="DrawBoxes.C"
+  	shutil.copy(scriptsfolder+'/DrawBoxes.C', scriptname)
   
-  subprocess.call('root -q '+scriptname, shell=True)
+  	subprocess.call('root -q '+scriptname, shell=True)
 
-  # remove DrawBoxes.C script
-  os.remove(scriptname) 
-
-  # Modify the merging script
+  	# remove DrawBoxes.C script and image file
+  	os.remove(scriptname) 
+  	os.remove('X0image.root') 
+  
+  # Copy the calibration fit script
   scriptname="calibrationfit.C"
-
-  # Copy placeholder x0image and change it
-  shutil.copy(scriptsfolder+'/calibrationfit.C', scriptname)
+  shutil.copy(scriptsfolder+'/'+scriptname, scriptname)
    
   subprocess.call('root -x '+scriptname, shell=True)            
   print ('[Print] All partial images created and merged... ')  
@@ -73,6 +78,7 @@ if __name__ == '__main__':
 
   # remove cfg file
   os.remove(cfgname) 
+  os.remove('X0.root') 
                
 		           
                 

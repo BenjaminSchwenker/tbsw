@@ -1,6 +1,7 @@
 #include <fstream>
 using namespace std ;
 
+
 // Hole Class describing a hole in the calibration grid. Parameters of the hole are position and side length
 // as well as the radiation length in the hole region
 class Hole
@@ -8,18 +9,16 @@ class Hole
 	private:
 
 	// Parameter declarations
-
-	double center_u,center_v;  	// Position of the center of the hole
-	double length_u,length_v;  	// Side length of the hole
-	double thickness;          	// Radiation length of the material in the region of the hole
-	double BE;			// Beam energy of particle beam in the region of the hole
+	double center_u,center_v;  	// Position of the center of the hole in mm
+	double length_u,length_v;  	// Side length of the hole in mm
+	double thickness;          	// Thickness of the material in the region of the hole
 
 	public:
 
 	// Constructors
 
-	Hole(double, double, double, double, double, double);	// Constructor
-	Hole();						// Default Constructor
+	Hole(double, double, double, double, double);	// Constructor
+	Hole();											// Default Constructor
 
 	// Reading hole parameters
 
@@ -27,13 +26,11 @@ class Hole
 	double Get_u_max() { return center_u+0.5*length_u; }	// Return max u value of hole
 	double Get_v_min() { return center_v-0.5*length_v; }	// Return min v value of hole
 	double Get_v_max() { return center_v+0.5*length_v; }	// Return max v value of hole
-	double Get_u_center() { return center_u; }		// Return center u value of hole
-	double Get_v_center() { return center_v; }		// Return center v value of hole
-	double Get_u_length() { return length_u; }		// Return the side length (in u direction) of hole
-	double Get_v_length() { return length_v; }		// Return the side length (in v direction) of hole
-	double Get_thickness()	{ return thickness; }		// Return thickness
-	double Get_BE()		{ return BE; }			// Return Beam energy
-
+	double Get_u_center() { return center_u; }				// Return center u value of hole
+	double Get_v_center() { return center_v; }				// Return center v value of hole
+	double Get_u_length() { return length_u; }				// Return the side length (in u direction) of hole
+	double Get_v_length() { return length_v; }				// Return the side length (in v direction) of hole
+	double Get_thickness()	{ return thickness; }			// Return thickness
 
 	// Setting the hole parameters
 
@@ -51,78 +48,72 @@ class Hole
 
 	void SetHolethickness(double a) { thickness=a; } 	// Reset the thickness of the hole
 
-	void SetBeamEnergy(double a) { BE=a; } 		// Reset the Beamenergy of the particles in the hole area
-
-	void SetHoleParameters(double ucenter, double vcenter, double ulength, double vlength, double thick, double beamenergy)	// Reset all parameters of the hole
+	void SetHoleParameters(double ucenter, double vcenter, double ulength, double vlength, double thick)	// Reset all parameters of the hole
 	{
 		center_u=ucenter;
 		center_v=vcenter;
 		length_u=ulength;
 		length_v=vlength;
 		thickness=thick;
-		BE=beamenergy;
 	}
 
-	void PrintHoleParameters()
+	void PrintHoleParameters() 		// Print all hole parameters
 	{
-		cout<<"u center: "<<center_u<<endl;
-		cout<<"v center: "<<center_v<<endl;
+		std::cout<<"u center: "<<center_u<<" mm"<<std::endl;
+		std::cout<<"v center: "<<center_v<<" mm"<<std::endl;
 
-		cout<<"u length: "<<length_u<<endl;
-		cout<<"v length: "<<length_v<<endl;
+		std::cout<<"u length: "<<length_u<<" mm"<<std::endl;
+		std::cout<<"v length: "<<length_v<<" mm"<<std::endl;
 
-		cout<<"thickness: "<<thickness<<endl;
-		cout<<"beam energy: "<<BE<<endl;
+		std::cout<<"thickness: "<<thickness<<" mm"<<std::endl;
 	}
 };	
-
 // Constructor definition
-Hole::Hole(double ucenter, double vcenter, double ulength, double vlength, double thick, double beamenergy)
+Hole::Hole(double ucenter, double vcenter, double ulength, double vlength, double thick)
 {
-	center_u=ucenter;
-	center_v=vcenter;
+	center_u=ucenter;	// mm
+	center_v=vcenter;	// mm
 	length_u=ulength;	// mm
 	length_v=vlength;	// mm
 	thickness=thick;	// mm
-	BE=beamenergy;		// GeV
 }
 
 // Default Constructor
 Hole::Hole()
 {
-	center_u=0.0;
-	center_v=0.0;
-	length_u=1.0;	// mm
-	length_v=1.0;	// mm
-	thickness=0.0;	// mm
-	BE=4.0;			// GeV
+	center_u=1000.0;  	// mm
+	center_v=-1000.0;	// mm
+	length_u=0.1;		// mm
+	length_v=0.1;		// mm
+	thickness=0.0;		// mm
 }
 
 // Class describing the complete calibration grid. The grid consists of a set of holes with a specific radiation length.
+// This class can be used to described the aluminium target which was used during the March and November 2015 PXD test beams. 
+// The second constructor can be used to model this exact aluminium target
 class Grid
 {
 	private:
 
 	// Declaration of parameters
 
-	double center_u,center_v;  					// Position of the center of the central hole
-	double lengthfactor;
-	double thickness_inc;        				// Radiation length increment from hole to hole
-	double density;								// Density of the target material
+	double center_u,center_v;  					// Position of the center of the central hole in mm
+	double lengthfactor;						// Factor, which will be multiplied to the side lengths of the holes (should be below 1.0)
+	double thickness_inc;        				// Radiation length increase from hole to hole
+	double density;								// Density of the target material in g/cm³
 	double Z;									// Atomic number of the target material
 	double A; 									// Atomic mass of the target material
 
-	double mirrored_u;
-	double mirrored_v;
+	double mirrored_u;							// Mirroring of target grid on u axis (is either 1.0 or -1.0)
+	double mirrored_v;							// Mirroring of target grid on v axis (is either 1.0 or -1.0)
 
 	std::vector<Hole> holes;					// Declaration the holes in the grid
 
 	public:
 
 	// Constructors
-
-	Grid(double, double, double);
-	Grid(double, double, double, double, double, double, double, double, bool, bool, bool);			
+	Grid(double, double, double);														// Only material parameters are set, no holes
+	Grid(double, double, double, double, double, double, double, bool, bool, bool);		// Create material parameters and 9 holes, which match the alignment of the 2015 aluminium target		
 
 	// Read out Grid Parameters
 
@@ -156,9 +147,6 @@ class Grid
 	// Return atomic mass of i-th hole
 	double Get_A() { return A; }
 
-	// Return Beam Energy in area of the i-th hole
-	double Get_BE(int i) { return holes[i].Get_BE(); }
-
 	// Return number of measurement areas/holes
 	int GetNumHoles() { return holes.size(); }
 
@@ -167,24 +155,27 @@ class Grid
 
 	void PrintGridParameters()
 	{
-		for(int i=0;i<holes.size();i++) holes.at(i).PrintHoleParameters();
-		cout<<"Density: "<<density<<endl;
-		cout<<"Z: "<<Z<<endl;
-		cout<<"A: "<<A<<endl;
+		for(int i=0;i<holes.size();i++) 
+		{
+			cout<<"-----------------------"<<endl;
+			cout<<"Hole "<<i<<endl;
+			cout<<"-----------------------"<<endl;			
+			holes.at(i).PrintHoleParameters();
+		}
+		cout<<"-----------------------"<<endl;
+		cout<<"Material "<<endl;
+		cout<<"-----------------------"<<endl;	
+		cout<<"Density: "<<density<<"g/cm^3"<<endl;
+		cout<<"Atomic number Z: "<<Z<<endl;
+		cout<<"Atomic mass A: "<<A<<endl;
 	}
 
 	// Set grid parameters
 
 	// Change hole parameters
-	void SetHoleParameters(int ihole, double u_center, double v_center, double u_length, double v_length, double thick, double dens, double atom_num, double atom_mass, double energy)
+	void SetHoleParameters(int ihole, double u_center, double v_center, double u_length, double v_length, double thick, double dens, double atom_num, double atom_mass)
 	{
-		holes.at(ihole).SetHoleParameters(u_center, v_center, u_length, v_length, thick, energy);
-	}
-
-	// Change hole beam energy
-	void SetHoleBE(int ihole, double energy)
-	{
-		holes.at(ihole).SetBeamEnergy(energy);
+		holes.at(ihole).SetHoleParameters(u_center, v_center, u_length, v_length, thick);
 	}
 
 	// Add a hole
@@ -203,8 +194,8 @@ class Grid
 	}
 };	
 
-
-Grid::Grid(double ucenter, double vcenter, double length, double thick_increase, double dens, double atomicnumber, double atomicmass, double BE,  bool i, bool j, bool uv)
+// Specific 2015 aluminium target constructor
+Grid::Grid(double ucenter, double vcenter, double length, double thick_increase, double dens, double atomicnumber, double atomicmass,  bool i, bool j, bool uv)
 {
 	center_u=ucenter;
 	center_v=vcenter;
@@ -217,6 +208,8 @@ Grid::Grid(double ucenter, double vcenter, double length, double thick_increase,
 
 	int help=0;
 
+	// Create holes with specific alignment 
+
 	// Must the u axis be mirrored?
 	if(i==true) mirrored_u=-1.0;
 	else mirrored_u=1.0;
@@ -228,39 +221,42 @@ Grid::Grid(double ucenter, double vcenter, double length, double thick_increase,
 	// Set the parameters of all holes, which are part of the 3x3 grid
 	for(int m=0; m<9; m++)
 	{
+		// air hole: Nominal area 2x2mm²
 		if(m==0)
 		{
             // Case: u=first coordinate and v=second coordinate
 		    if(uv==false) 
 		    {
-				Hole hole(center_u+mirrored_u*2.8, center_v+mirrored_v*2.1, 1.0*lengthfactor, 1.0*lengthfactor, 0.0, BE);
+				Hole hole(center_u+mirrored_u*2.5, center_v+mirrored_v*2.5, 2.0*lengthfactor, 2.0*lengthfactor, 0.0);
 				holes.push_back(hole);
 			}
             // Case: v=first coordinate and u=second coordinate
             else 
 			{
-				Hole hole(center_v+mirrored_v*2.8, center_u+mirrored_u*2.1, 1.0*lengthfactor, 1.0*lengthfactor, 0.0, BE);
+				Hole hole(center_v+mirrored_v*2.5, center_u+mirrored_u*2.5, 2.0*lengthfactor, 2.0*lengthfactor, 0.0);
 				holes.push_back(hole);
 			}
 		}
 
 
+		// 1.6mm alu hole: Nominal area 1x2mm²
 		else if(m==8)
 		{
            	// Case: u=first coordinate and v=second coordinate
 		   	if(uv==false) 
 			{
-				Hole hole(center_u-mirrored_u*2.0, center_v-mirrored_v*2.5, 1.0*lengthfactor, 2.0*lengthfactor, m*1.0*thickness_inc, BE);
+				Hole hole(center_u-mirrored_u*2.0, center_v-mirrored_v*2.5, 1.0*lengthfactor, 2.0*lengthfactor, m*1.0*thickness_inc);
 				holes.push_back(hole);
 			}
            	// Case: v=first coordinate and u=second coordinate
 		   	else 
 			{
-				Hole hole(center_v-mirrored_v*2.5, center_u-mirrored_u*2.0, 2.0*lengthfactor, 1.0*lengthfactor, m*1.0*thickness_inc, BE);
+				Hole hole(center_v-mirrored_v*2.5, center_u-mirrored_u*2.0, 2.0*lengthfactor, 1.0*lengthfactor, m*1.0*thickness_inc);
 				holes.push_back(hole);
 			}
 		}
 
+		// Other holes: Nominal area 1x1mm²
 		else
 		{
 		   if((m==3)||(m==6)) help++;
@@ -269,22 +265,21 @@ Grid::Grid(double ucenter, double vcenter, double length, double thick_increase,
 		   	if(uv==false) 
 			{
 
-				Hole hole(center_u+mirrored_u*(1-help)*2.0, center_v+mirrored_v*(1+3*help-m)*2.0, 1.0*lengthfactor, 1.0*lengthfactor, m*1.0*thickness_inc, BE);
+				Hole hole(center_u+mirrored_u*(1-help)*2.0, center_v+mirrored_v*(1+3*help-m)*2.0, 1.0*lengthfactor, 1.0*lengthfactor, m*1.0*thickness_inc);
 				holes.push_back(hole);
 			}
           	// Case: v=first coordinate and u=second coordinate
            	else 
 			{
-				Hole hole(center_v+mirrored_v*(1+3*help-m)*2.0, center_u+mirrored_u*(1-help)*2.0, 1.0*lengthfactor, 1.0*lengthfactor, m*1.0*thickness_inc, BE);
+				Hole hole(center_v+mirrored_v*(1+3*help-m)*2.0, center_u+mirrored_u*(1-help)*2.0, 1.0*lengthfactor, 1.0*lengthfactor, m*1.0*thickness_inc);
 				holes.push_back(hole);
 			}
 		}
 	}
-
-	// Leave the default values for the last three holes
 	
 }
 
+// Constructor, which only sets the material parameters, holes must be added afterwards via Grid::AddHole()
 Grid::Grid(double dens, double atomicnumber, double atomicmass)
 {
 	density=dens;
@@ -292,17 +287,12 @@ Grid::Grid(double dens, double atomicnumber, double atomicmass)
 	A=atomicmass;
 }
 
-
-
-
-
 // This script is used to create a map of a plane in a test beam telescope. The input is a TTree including 
 // MSC projected scattering angle distributions and reconstruction errors.
 void DrawBoxes()
 {
 	gSystem->Load("libProof.so");
 	gSystem->Load("libTreePlayer.so");
-	gSystem->Load("libRooFit") ;
 
 	gROOT->Reset(); 
 	gROOT->SetStyle("Plain"); 
@@ -315,17 +305,19 @@ void DrawBoxes()
     //------------------
     TEnv mEnv("x0calibration.cfg");
 
-
 	//number of fit functions required for the number of measurement areas given by the cfg file
 
 	// Determine the number of fit functions from the cfg file
 	int num_grid=0; // Number of measurement grids (corresponds to 9 holes)
 	int num_hole=0; // Number of additional holes
+	int num_line=0; // Number of Lines, which are used for BE gradient calibration
 
 	TString gridname;
 	gridname.Form("grid");
 	TString holename;
 	holename.Form("hole%i",num_hole+1);
+	TString linename;
+	linename.Form("line%i",num_line+1);
 	
 	if(mEnv.GetValue(gridname+".exist",0)!=0) num_grid=1;
 
@@ -339,19 +331,37 @@ void DrawBoxes()
 
 	cout<<"Number of additional holes: "<<num_hole<<endl;
 	
-	const int num_fitfunctions=num_grid*9+num_hole;
+
+	// Vector with number of holes defined in each line
+	std::vector<int> numholes_in_line;
+
+	while(mEnv.GetValue(linename+".exist",0)!=0)
+	{
+		// Find number of holes along line, typically one steplength parameter should be 0 and the other non-zero
+		int num;
+		if(mEnv.GetValue(linename+".usteplength",0.0)!=0.0) num=(mEnv.GetValue(linename+".ulength",0.0)/mEnv.GetValue(linename+".usteplength",0.0));
+		else if(mEnv.GetValue(linename+".vsteplength",0.0)!=0.0) num=(mEnv.GetValue(linename+".vlength",0.0)/mEnv.GetValue(linename+".vsteplength",0.0));
+		else num=0;
+		numholes_in_line.push_back(num);
+
+		num_line++;
+		linename.Form("line%i",num_line+1);
+	}
+
+	cout<<"Number of additional lines: "<<num_line<<endl;
+
+	// Overall number of holes in lines
+	int num_line_holes=0;
+	for(int i=0;i<numholes_in_line.size();i++) 
+	{
+		num_line_holes+=numholes_in_line.at(i);
+		cout<<"Line "<<i+1<<" consists of "<<numholes_in_line.at(i)<<" holes!"<<endl;
+	}
+	
+	//The number of total holes can now be calculated
+	const int num_fitfunctions=num_grid*9+num_hole+num_line_holes;
 
 	cout<<"Total number of measurement areas: "<<num_fitfunctions<<endl;
-
-	// Choose the multiple scattering model
-	// "moliere": Moliere model
-	// "highland": Highland model
-	TString model=mEnv.GetValue("model", "highland");
-
-	// Integer determining, whether a offset correction is applied to the angular distributions
-	// 1: correction
-	// everything else, no correction
-	int correctmean=mEnv.GetValue("correctmean", 1 );
 
 	// Define and set the parameters used in the Moliere fit
 	// BE: beam energy (GeV), z: charge of beam particle (e), mass: mass of beam particle (GeV),
@@ -362,21 +372,6 @@ void DrawBoxes()
 	cout<<"---------------------------------------------------"<<endl;
 	cout<<"-----------------Parameter settings----------------"<<endl;
 	cout<<"---------------------------------------------------"<<endl;
-	// Set mean beam energy (GeV) and slope
-	p=mEnv.GetValue("particle.momentummean", 4.0);
-	cout<<"Beam particle momentum: 	"<<p<<" GeV/c"<<endl;
-
-	double BE=TMath::Sqrt(p*p+mass*mass);   // energy in GeV
-	double BE_Slope=mEnv.GetValue("particle.momentumslope", 0.0);			// energy slope in GeV/mm
-	cout<<"Mean Beam energy: 		"<<BE<<" GeV"<<endl;
-
-	// Set beam particle charge (e)	
-	z= mEnv.GetValue("particle.charge", 1);
-
-	// Set beam particle mass (GeV)	
-	mass= mEnv.GetValue("particle.mass", 4.0);
-	cout<<"Mass: 				"<<mass<<" GeV"<<endl;
-	cout<<"Charge: 		"<<z<<" e"<<endl;
 
 	// Set target material density (g/cm³)	
 	density= mEnv.GetValue("material.density", 2.7);
@@ -393,7 +388,7 @@ void DrawBoxes()
 
 
 	// Print number of measurement areas on target plane
-	cout<<"Number of measurement areas: 		"<<num_fitfunctions<<" "<<endl;
+	cout<<"Number of measurement areas: 	"<<num_fitfunctions<<" "<<endl;
 
 	cout<<"---------------------------------------------------"<<endl;
 	cout<<"---------------------------------------------------"<<endl;
@@ -433,10 +428,11 @@ void DrawBoxes()
 	// The Grid class creates the 3x3 grid, the three additional holes outside of the grid have to be added manually
 	if(num_grid==1)
 	{
-		Grid grid1(center_u, center_v, sidelength, thickness_inc, density, Z, A, BE, mirroring_u, mirroring_v, switch_uv);
+		Grid grid1(center_u, center_v, sidelength, thickness_inc, density, Z, A, mirroring_u, mirroring_v, switch_uv);
 		grid.SetGrid(grid1);
 	}
 
+	// Loop over number of holes
 	for(int i=0; i<num_hole;i++)
 	{
 		TString holename;
@@ -448,12 +444,68 @@ void DrawBoxes()
 		double vlength=mEnv.GetValue(holename+".hole_v_length", 1.0);
 		double thickness=mEnv.GetValue(holename+".thickness", 1.8);
 
-		Hole hole(ucenter,vcenter,ulength,vlength,thickness,BE);
+		Hole hole(ucenter,vcenter,ulength,vlength,thickness);
 
 		//cout<<"Hole info: "<<endl;
 		//hole.PrintHoleParameters();
   
 		grid.AddHole(hole);
+		
+	}
+
+	// Loop over number of lines
+	for(int i=0; i<num_line;i++)
+	{
+
+	linename.Form("line%i",i+1);
+
+		// line in u direction
+		if(mEnv.GetValue(linename+".usteplength",0.0)!=0.0) 
+		{
+
+			for(double d=mEnv.GetValue(linename+".startu",0.0);d<(mEnv.GetValue(linename+".startu",0.0)+mEnv.GetValue(linename+".ulength",-1.0));d+=mEnv.GetValue(linename+".usteplength",10.0))
+			{
+				// Compute/Read out hole parameters
+				double ucenter=d;
+				double vcenter=mEnv.GetValue(linename+".startv", 1000.0);
+				double ulength=mEnv.GetValue(linename+".usteplength", 0.1);
+				double vlength=mEnv.GetValue(linename+".vlength", 0.1);
+				double thickness=mEnv.GetValue(linename+".thickness", 1.8);
+
+				// Define hole based on these parameters
+				Hole hole(ucenter,vcenter,ulength,vlength,thickness);
+		  
+				// Add hole to predefined grid
+				grid.AddHole(hole);
+			}
+
+		}
+	
+
+		// line in v direction
+		else if(mEnv.GetValue(linename+".vsteplength",0.0)!=0.0)
+		{
+
+			for(double d=mEnv.GetValue(linename+".startv",0.0);d<(mEnv.GetValue(linename+".startv",0.0)+mEnv.GetValue(linename+".vlength",-1.0));d+=mEnv.GetValue(linename+".vsteplength",10.0))
+			{
+				// Compute/Read out hole parameters
+				double ucenter=mEnv.GetValue(linename+".startu", 1000.0);
+				double vcenter=d;
+				double ulength=mEnv.GetValue(linename+".ulength", 0.1);
+				double vlength=mEnv.GetValue(linename+".vsteplength", 0.1);
+				double thickness=mEnv.GetValue(linename+".thickness", 1.8);
+
+				// Define hole based on these parameters
+				Hole hole(ucenter,vcenter,ulength,vlength,thickness);
+		  
+				// Add hole to predefined grid
+				grid.AddHole(hole);
+			}
+
+		}
+
+		// in this case there is nothing to do
+		else continue;
 		
 	}
 
@@ -512,9 +564,7 @@ void DrawBoxes()
 		TString number;
 		number.Form("%i",i+1);
 	 	TText* text=new TText(0.5*(umax[i]+umin[i])-0.25*(umax[i]-umin[i]),0.5*(vmax[i]+vmin[i])-0.25*(vmax[i]-vmin[i]),number);
-		if(i>2) text->SetTextColor(1);
-		else text->SetTextColor(0);
-
+		text->SetTextColor(1);
 
 		if(i<9)
 		{

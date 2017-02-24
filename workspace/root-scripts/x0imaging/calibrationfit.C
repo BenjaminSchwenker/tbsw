@@ -36,14 +36,14 @@
 
 // The purpose of this script is to do a simultaneous fit of a set of angle distributions, which are taken from the X0_merge.root input file. Each of these distributions 
 // should come from an area with a homogenious thickness and material composition. The hole class defined in this script can be used to select the area and give them some attributes
-// like for example the thickness, the X0 value or the mean beam energy in this area. The angle distributions are then fitted by a function which corresponds to the convolution 
+// like for example the thickness, position and the X0 value in this area. The angle distributions are then fitted by a function which corresponds to the convolution 
 // between a function given by a theoretical model for the multiple scattering (highland or moliere model) and a gaussian error function, which depends on the expected telescope angular resolution
 // and a calibration factor. The fit estimates an optimal value for the calibration factor.
 
 // This script can be used by starting root and afterwards typing the command .x calibration.C+.
 
-
 using namespace std;
+
 
 // Hole Class describing a hole in the calibration grid. Parameters of the hole are position and side length
 // as well as the radiation length in the hole region
@@ -52,18 +52,16 @@ class Hole
 	private:
 
 	// Parameter declarations
-
-	double center_u,center_v;  	// Position of the center of the hole
-	double length_u,length_v;  	// Side length of the hole
-	double thickness;          	// Radiation length of the material in the region of the hole
-	double BE;			// Beam energy of particle beam in the region of the hole
+	double center_u,center_v;  	// Position of the center of the hole in mm
+	double length_u,length_v;  	// Side length of the hole in mm
+	double thickness;          	// Thickness of the material in the region of the hole
 
 	public:
 
 	// Constructors
 
-	Hole(double, double, double, double, double, double);	// Constructor
-	Hole();						// Default Constructor
+	Hole(double, double, double, double, double);	// Constructor
+	Hole();											// Default Constructor
 
 	// Reading hole parameters
 
@@ -71,13 +69,11 @@ class Hole
 	double Get_u_max() { return center_u+0.5*length_u; }	// Return max u value of hole
 	double Get_v_min() { return center_v-0.5*length_v; }	// Return min v value of hole
 	double Get_v_max() { return center_v+0.5*length_v; }	// Return max v value of hole
-	double Get_u_center() { return center_u; }		// Return center u value of hole
-	double Get_v_center() { return center_v; }		// Return center v value of hole
-	double Get_u_length() { return length_u; }		// Return the side length (in u direction) of hole
-	double Get_v_length() { return length_v; }		// Return the side length (in v direction) of hole
-	double Get_thickness()	{ return thickness; }		// Return thickness
-	double Get_BE()		{ return BE; }			// Return Beam energy
-
+	double Get_u_center() { return center_u; }				// Return center u value of hole
+	double Get_v_center() { return center_v; }				// Return center v value of hole
+	double Get_u_length() { return length_u; }				// Return the side length (in u direction) of hole
+	double Get_v_length() { return length_v; }				// Return the side length (in v direction) of hole
+	double Get_thickness()	{ return thickness; }			// Return thickness
 
 	// Setting the hole parameters
 
@@ -95,78 +91,72 @@ class Hole
 
 	void SetHolethickness(double a) { thickness=a; } 	// Reset the thickness of the hole
 
-	void SetBeamEnergy(double a) { BE=a; } 		// Reset the Beamenergy of the particles in the hole area
-
-	void SetHoleParameters(double ucenter, double vcenter, double ulength, double vlength, double thick, double beamenergy)	// Reset all parameters of the hole
+	void SetHoleParameters(double ucenter, double vcenter, double ulength, double vlength, double thick)	// Reset all parameters of the hole
 	{
 		center_u=ucenter;
 		center_v=vcenter;
 		length_u=ulength;
 		length_v=vlength;
 		thickness=thick;
-		BE=beamenergy;
 	}
 
-	void PrintHoleParameters()
+	void PrintHoleParameters() 		// Print all hole parameters
 	{
-		cout<<"u center: "<<center_u<<endl;
-		cout<<"v center: "<<center_v<<endl;
+		std::cout<<"u center: "<<center_u<<" mm"<<std::endl;
+		std::cout<<"v center: "<<center_v<<" mm"<<std::endl;
 
-		cout<<"u length: "<<length_u<<endl;
-		cout<<"v length: "<<length_v<<endl;
+		std::cout<<"u length: "<<length_u<<" mm"<<std::endl;
+		std::cout<<"v length: "<<length_v<<" mm"<<std::endl;
 
-		cout<<"thickness: "<<thickness<<endl;
-		cout<<"beam energy: "<<BE<<endl;
+		std::cout<<"thickness: "<<thickness<<" mm"<<std::endl;
 	}
 };	
-
 // Constructor definition
-Hole::Hole(double ucenter, double vcenter, double ulength, double vlength, double thick, double beamenergy)
+Hole::Hole(double ucenter, double vcenter, double ulength, double vlength, double thick)
 {
-	center_u=ucenter;
-	center_v=vcenter;
+	center_u=ucenter;	// mm
+	center_v=vcenter;	// mm
 	length_u=ulength;	// mm
 	length_v=vlength;	// mm
 	thickness=thick;	// mm
-	BE=beamenergy;		// GeV
 }
 
 // Default Constructor
 Hole::Hole()
 {
-	center_u=0.0;
-	center_v=0.0;
-	length_u=1.0;	// mm
-	length_v=1.0;	// mm
-	thickness=0.0;	// mm
-	BE=4.0;			// GeV
+	center_u=1000.0;  	// mm
+	center_v=-1000.0;	// mm
+	length_u=0.1;		// mm
+	length_v=0.1;		// mm
+	thickness=0.0;		// mm
 }
 
 // Class describing the complete calibration grid. The grid consists of a set of holes with a specific radiation length.
+// This class can be used to described the aluminium target which was used during the March and November 2015 PXD test beams. 
+// The second constructor can be used to model this exact aluminium target
 class Grid
 {
 	private:
 
 	// Declaration of parameters
 
-	double center_u,center_v;  					// Position of the center of the central hole
-	double lengthfactor;
-	double thickness_inc;        				// Radiation length increment from hole to hole
-	double density;								// Density of the target material
+	double center_u,center_v;  					// Position of the center of the central hole in mm
+	double lengthfactor;						// Factor, which will be multiplied to the side lengths of the holes (should be below 1.0)
+	double thickness_inc;        				// Radiation length increase from hole to hole
+	double density;								// Density of the target material in g/cm³
 	double Z;									// Atomic number of the target material
 	double A; 									// Atomic mass of the target material
 
-	double mirrored_u;
-	double mirrored_v;
+	double mirrored_u;							// Mirroring of target grid on u axis (is either 1.0 or -1.0)
+	double mirrored_v;							// Mirroring of target grid on v axis (is either 1.0 or -1.0)
 
 	std::vector<Hole> holes;					// Declaration the holes in the grid
 
 	public:
 
 	// Constructors
-
-	Grid(double, double, double);
-	Grid(double, double, double, double, double, double, double, double, bool, bool, bool);			
+	Grid(double, double, double);														// Only material parameters are set, no holes
+	Grid(double, double, double, double, double, double, double, bool, bool, bool);		// Create material parameters and 9 holes, which match the alignment of the 2015 aluminium target		
 
 	// Read out Grid Parameters
 
@@ -200,9 +190,6 @@ class Grid
 	// Return atomic mass of i-th hole
 	double Get_A() { return A; }
 
-	// Return Beam Energy in area of the i-th hole
-	double Get_BE(int i) { return holes[i].Get_BE(); }
-
 	// Return number of measurement areas/holes
 	int GetNumHoles() { return holes.size(); }
 
@@ -211,24 +198,27 @@ class Grid
 
 	void PrintGridParameters()
 	{
-		for(int i=0;i<holes.size();i++) holes.at(i).PrintHoleParameters();
-		cout<<"Density: "<<density<<endl;
-		cout<<"Z: "<<Z<<endl;
-		cout<<"A: "<<A<<endl;
+		for(int i=0;i<holes.size();i++) 
+		{
+			cout<<"-----------------------"<<endl;
+			cout<<"Hole "<<i<<endl;
+			cout<<"-----------------------"<<endl;			
+			holes.at(i).PrintHoleParameters();
+		}
+		cout<<"-----------------------"<<endl;
+		cout<<"Material "<<endl;
+		cout<<"-----------------------"<<endl;	
+		cout<<"Density: "<<density<<"g/cm³"<<endl;
+		cout<<"Atomic number Z: "<<Z<<endl;
+		cout<<"Atomic mass A: "<<A<<endl;
 	}
 
 	// Set grid parameters
 
 	// Change hole parameters
-	void SetHoleParameters(int ihole, double u_center, double v_center, double u_length, double v_length, double thick, double dens, double atom_num, double atom_mass, double energy)
+	void SetHoleParameters(int ihole, double u_center, double v_center, double u_length, double v_length, double thick, double dens, double atom_num, double atom_mass)
 	{
-		holes.at(ihole).SetHoleParameters(u_center, v_center, u_length, v_length, thick, energy);
-	}
-
-	// Change hole beam energy
-	void SetHoleBE(int ihole, double energy)
-	{
-		holes.at(ihole).SetBeamEnergy(energy);
+		holes.at(ihole).SetHoleParameters(u_center, v_center, u_length, v_length, thick);
 	}
 
 	// Add a hole
@@ -247,8 +237,8 @@ class Grid
 	}
 };	
 
-
-Grid::Grid(double ucenter, double vcenter, double length, double thick_increase, double dens, double atomicnumber, double atomicmass, double BE,  bool i, bool j, bool uv)
+// Specific 2015 aluminium target constructor
+Grid::Grid(double ucenter, double vcenter, double length, double thick_increase, double dens, double atomicnumber, double atomicmass,  bool i, bool j, bool uv)
 {
 	center_u=ucenter;
 	center_v=vcenter;
@@ -261,6 +251,8 @@ Grid::Grid(double ucenter, double vcenter, double length, double thick_increase,
 
 	int help=0;
 
+	// Create holes with specific alignment 
+
 	// Must the u axis be mirrored?
 	if(i==true) mirrored_u=-1.0;
 	else mirrored_u=1.0;
@@ -272,39 +264,42 @@ Grid::Grid(double ucenter, double vcenter, double length, double thick_increase,
 	// Set the parameters of all holes, which are part of the 3x3 grid
 	for(int m=0; m<9; m++)
 	{
+
+		// air hole: Nominal area 2x2mm²
 		if(m==0)
 		{
             // Case: u=first coordinate and v=second coordinate
 		    if(uv==false) 
 		    {
-				Hole hole(center_u+mirrored_u*2.8, center_v+mirrored_v*2.1, 1.0*lengthfactor, 1.0*lengthfactor, 0.0, BE);
+				Hole hole(center_u+mirrored_u*2.5, center_v+mirrored_v*2.5, 2.0*lengthfactor, 2.0*lengthfactor, 0.0);
 				holes.push_back(hole);
 			}
             // Case: v=first coordinate and u=second coordinate
             else 
 			{
-				Hole hole(center_v+mirrored_v*2.8, center_u+mirrored_u*2.1, 1.0*lengthfactor, 1.0*lengthfactor, 0.0, BE);
+				Hole hole(center_v+mirrored_v*2.5, center_u+mirrored_u*2.5, 2.0*lengthfactor, 2.0*lengthfactor, 0.0);
 				holes.push_back(hole);
 			}
 		}
 
-
+		// 1.6mm alu hole: Nominal area 1x2mm²
 		else if(m==8)
 		{
            	// Case: u=first coordinate and v=second coordinate
 		   	if(uv==false) 
 			{
-				Hole hole(center_u-mirrored_u*2.0, center_v-mirrored_v*2.5, 1.0*lengthfactor, 2.0*lengthfactor, m*1.0*thickness_inc, BE);
+				Hole hole(center_u-mirrored_u*2.0, center_v-mirrored_v*2.5, 1.0*lengthfactor, 2.0*lengthfactor, m*1.0*thickness_inc);
 				holes.push_back(hole);
 			}
            	// Case: v=first coordinate and u=second coordinate
 		   	else 
 			{
-				Hole hole(center_v-mirrored_v*2.5, center_u-mirrored_u*2.0, 2.0*lengthfactor, 1.0*lengthfactor, m*1.0*thickness_inc, BE);
+				Hole hole(center_v-mirrored_v*2.5, center_u-mirrored_u*2.0, 2.0*lengthfactor, 1.0*lengthfactor, m*1.0*thickness_inc);
 				holes.push_back(hole);
 			}
 		}
 
+		// Other holes: Nominal area 1x1mm²
 		else
 		{
 		   if((m==3)||(m==6)) help++;
@@ -313,22 +308,21 @@ Grid::Grid(double ucenter, double vcenter, double length, double thick_increase,
 		   	if(uv==false) 
 			{
 
-				Hole hole(center_u+mirrored_u*(1-help)*2.0, center_v+mirrored_v*(1+3*help-m)*2.0, 1.0*lengthfactor, 1.0*lengthfactor, m*1.0*thickness_inc, BE);
+				Hole hole(center_u+mirrored_u*(1-help)*2.0, center_v+mirrored_v*(1+3*help-m)*2.0, 1.0*lengthfactor, 1.0*lengthfactor, m*1.0*thickness_inc);
 				holes.push_back(hole);
 			}
           	// Case: v=first coordinate and u=second coordinate
            	else 
 			{
-				Hole hole(center_v+mirrored_v*(1+3*help-m)*2.0, center_u+mirrored_u*(1-help)*2.0, 1.0*lengthfactor, 1.0*lengthfactor, m*1.0*thickness_inc, BE);
+				Hole hole(center_v+mirrored_v*(1+3*help-m)*2.0, center_u+mirrored_u*(1-help)*2.0, 1.0*lengthfactor, 1.0*lengthfactor, m*1.0*thickness_inc);
 				holes.push_back(hole);
 			}
 		}
 	}
-
-	// Leave the default values for the last three holes
 	
 }
 
+// Constructor, which only sets the material parameters, holes must be added afterwards via Grid::AddHole()
 Grid::Grid(double dens, double atomicnumber, double atomicmass)
 {
 	density=dens;
@@ -336,12 +330,13 @@ Grid::Grid(double dens, double atomicnumber, double atomicmass)
 	A=atomicmass;
 }
 
+// Functions used in this script
 double DetermineFitrange(TH1*,double);
 double calculateB(double);
 double getrecoerror(TFile*);
-void savehisto(TFile*,TFile*,TString, TString, double, double, double, double, int );
-void correcthisto(TFile*,TFile*,TString , TString , double , double , double , double );
-double* gridfit(TFile*, Grid, double, double, double, TString, bool, bool);
+void savehisto(TFile*,TFile*,TString,TString, double, double, double, double, int );
+void correcthisto(TFile*,TFile*, TString , double , double , double , double );
+double* fit(TFile*,TString, Grid, std::vector<double>, double, TString, std::vector<bool>);
 void shiftbins(TH1*, double);
 void calibrationfit();
 int** GetParameterMapping(int);
@@ -350,21 +345,36 @@ int** GetParameterMapping(int);
   // Highland model of a MSC angle distribution, the parameters are:
 
   /*
-	* par[0]: Expected beam energy
-	* par[1]: Beam particle charge
-	* par[2]: Beam particle mass
-	* par[3]: Target material density
-	* par[4]: Target material atomic number
-	* par[5]: Target material atomic weight
-	* par[6]: Thickness
-	* par[7]: Expected angle reconstruction error
-	* par[8]: momentum calibration factor
-	* par[9]: reco error calibration factor
-	* par[10]: Normalization
+	* par[0]:  Expected beam energy at u,v=0;
+	* par[1]:  Beam particle charge
+	* par[2]:  Beam particle mass
+	* par[3]:  Target material density
+	* par[4]:  Target material atomic number
+	* par[5]:  Target material atomic weight
+	* par[6]:  Thickness
+	* par[7]:  Expected angle reconstruction error
+	* par[8]:  reco error calibration factor
+	* par[9]: Normalization
+	* par[10]:  u coordinate
+	* par[11]: v coordinate
+	* par[12]: u BE gradient
+	* par[13]: v BE gradient
+
 */
+
+// Function, which returns beam energy value for every point on the target plane
+// This is necessary because the beam profile at DESY often have beam energy gradients in the order of a few MeV/mm
+Double_t GetEnergy(double meanvalue,double ugrad,double vgrad, double u, double v)
+{
+	double E;
+	E=meanvalue+u*ugrad+v*vgrad;
+	return E;
+}
   
-  Double_t highlandfunction(Double_t *x, Double_t *par)
-  {  
+// Highland model of multiple scattering: Simple gaussian with a well defined standard deviation depending on X/X0 and the beam energy.
+// The overall function describing the kink angle distributions is the Highland function convoluted with a gaussian function due to the finite angle resolution on the target plane. 
+Double_t highlandfunction(Double_t *x, Double_t *par)
+{  
 
 	// atomic number of target material
 	double Z; 
@@ -385,7 +395,7 @@ int** GetParameterMapping(int);
 
 	// Other parameters
 	double exp_recoerror=par[7];  //expected reconstruction error
-	double lambda=par[9];	//calibration factor of the reconstrcution error
+	double lambda=par[8];	//calibration factor of the reconstrcution error
 
 	double recoerror=exp_recoerror*lambda;   // calibrated reco error
 
@@ -400,13 +410,10 @@ int** GetParameterMapping(int);
 	charge=par[1];
 
 	// beam energy
-	double E;   
-	double momentum=par[0]; //expected momentum
-	double mu=par[8];  // calibration factor of the momentum
+	double E=GetEnergy(par[0],par[10],par[11],par[12],par[13]);
 
-	double p=momentum*mu;  // calibrated momentum
-	//cout<<"p: "<<p<<endl;
-	E=TMath::Sqrt(p*p+mass*mass);  // energy in GeV
+	// calibrated momentum
+	double p=TMath::Sqrt(E*E-mass*mass);  // energy in GeV
 
 	double beta;  //relative velocity
 	beta=p/E;
@@ -417,30 +424,38 @@ int** GetParameterMapping(int);
 	// Combination of Highland width and reconstruction error
 	double sigma=TMath::Sqrt(pow(0.0136*charge/(p*beta)*TMath::Sqrt(d1/X0)*(1.0+0.038*TMath::Log(d1/X0)),2)+pow(recoerror,2));
 
-	double value=par[10]*TMath::Gaus(x[0],0.0,sigma);
+	// function value at a certain theta value
+	double value=par[9]*TMath::Gaus(x[0],0.0,sigma);
 
 	return value;
-  }
+}// End definition of highland model
 
 
   // Moliere model of a MSC angle distribution, the parameters are:
 
-  /*
-	* par[0]: Expected beam energy
-	* par[1]: Beam particle charge
-	* par[2]: Beam particle mass
-	* par[3]: Target material density
-	* par[4]: Target material atomic number
-	* par[5]: Target material atomic weight
-	* par[6]: Thickness
-	* par[7]: Expected angle reconstruction error
-	* par[8]: momentum calibration factor
-	* par[9]: reco error calibration factor
-	* par[10]: Normalization
+  /* 
+	* par[0]:   Expected beam energy at u,v=0;
+	* par[1]:   Beam particle charge
+	* par[2]:   Beam particle mass
+	* par[3]:   Target material density
+	* par[4]:   Target material atomic number
+	* par[5]:   Target material atomic weight
+	* par[6]:   Thickness
+	* par[7]:   Expected angle reconstruction error
+	* par[8]:   reco error calibration factor
+	* par[9]:   Normalization
+	* par[10]:  u coordinate
+	* par[11]:  v coordinate
+	* par[12]:  u BE gradient
+	* par[13]:  v BE gradient
+
 */
   
-  Double_t molierefunction(Double_t *x, Double_t *par)
-  {  
+// Moliere model of multiple scattering: Function also describing the tails of multiple scattering distributions. The function depends on material properties, which
+// can be reduced to X0, the material thickness and the beam energy.
+// The overall function describing the kink angle distributions is the Moliere function convoluted with a gaussian function due to the finite angle resolution on the target plane. 
+Double_t molierefunction(Double_t *x, Double_t *par)
+{  
 	// atomic number of target material
 	double Z; 
 	Z=par[4];  
@@ -460,11 +475,11 @@ int** GetParameterMapping(int);
 
 	// Other parameters
 	double exp_recoerror=par[7];  //expected reconstruction error
-	double lambda=par[9];	//calibration factor of the reconstrcution error
+	double lambda=par[8];	//calibration factor of the reconstrcution error
 
 	double recoerror=exp_recoerror*lambda;   // calibrated reco error
 
-        // particle parameters
+    // particle parameters
 
 	// mass of beam particle
 	double mass;   
@@ -475,13 +490,9 @@ int** GetParameterMapping(int);
 	charge=par[1];
 
 	// beam energy
-	double E;   
-	double momentum=par[0]; //expected momentum
-	double mu=par[8];  // calibration factor of the momentum
+	double E=GetEnergy(par[0],par[10],par[11],par[12],par[13]);   // Energy in GeV
 
-	double p=momentum*mu;  // calibrated momentum
-	//cout<<"p: "<<p<<endl;
-	E=TMath::Sqrt(p*p+mass*mass);  // energy in GeV
+	double p=TMath::Sqrt(E*E-mass*mass);
 
 	double beta;  //relative velocity
 	beta=p/E;
@@ -736,18 +747,19 @@ int** GetParameterMapping(int);
 	h_total1->SetDirectory(gROOT);
 	delete h_total1;
 
-	return par[10]*convolutionintegral;
-  } // End definition moliere model
+	// function value at a certain theta value
+	return par[9]*convolutionintegral;
+} // End definition moliere model
 
 
+// definition of shared parameters like the parameter numbers of each fit function and 
+// a globalChi2 structure
 
-  // definition of shared parameters like the parameter numbers of each fit function and 
-  // a globalChi2 structure
+// Number of parameters per fit function
+const int num_localparameters=14;
 
-  // Number of parameters per fit function
-  const int num_localparameters=11;
-
-  struct GlobalChi2 { 
+// Global chi2 object, will be used in fit
+struct GlobalChi2 { 
     std::vector< ROOT::Math::IMultiGenFunction * >& getChi2Vec() {return fChi2Vec;}
 	void SetArray() {ipar=GetParameterMapping(fChi2Vec.size());}
 
@@ -766,11 +778,14 @@ int** GetParameterMapping(int);
 		}
         // evaluate function and sum up
         ROOT::Math::IMultiGenFunction * func  =  fChi2Vec.at(j);
+
+		// Add up all local chi2 values of the single fit functions
 		ret += (*func)(p1);
        
       }
+	  // return global chi2 value
 	  return ret;
-	}
+}
 
 
  
@@ -779,9 +794,10 @@ int** GetParameterMapping(int);
   };
 
 
-  // Get Relation between global fit parameters and local fit parameters
-  int **GetParameterMapping(int numfuncs)
-  {
+// Get Relation between global fit parameters and local fit parameters
+// Parameter mapping
+int **GetParameterMapping(int numfuncs)
+{
 
 	  int **ipar=0;
 
@@ -794,8 +810,9 @@ int** GetParameterMapping(int);
             for (int j = 0; j < num_localparameters; j++)
             {
                   
-				// There are basically 2 cases: The first function has the Parameters 0-10,
-				//								the other function have a new Parameter number at the first parameter (BE), 7th Parameter (thickness of target material) and the last (11th) Parameter (~#tracks)
+				// There are basically 2 cases: The first function has the Parameters 0-14,
+				//								the other function have a new Parameter number at the 6th Parameter (thickness of target material), the 9th Parameter (~#tracks),
+				//								10 parameter (u coordinate) and 11th parameter (v coordinate)
 						
 				if(i==0) 
 				{
@@ -803,22 +820,23 @@ int** GetParameterMapping(int);
 				}
 				else
 				{
-					if((j!=0)&&(j!=6)&&(j!=10)) ipar[i][j]=j;
-					else if(j==0) ipar[i][j]=11+(i-1)*3;
-					else if(j==6) ipar[i][j]=12+(i-1)*3;
-					else ipar[i][j]=13+(i-1)*3;
+					if((j!=6)&&(j!=9)&&(j!=10)&&(j!=11)) ipar[i][j]=j;
+					else if(j==6) ipar[i][j]=14+(i-1)*4;
+					else if(j==9) ipar[i][j]=15+(i-1)*4;
+					else if(j==10) ipar[i][j]=16+(i-1)*4;
+					else ipar[i][j]=17+(i-1)*4;
 				}
 				//cout<<"Parameter mapping: Global parameter number of local parameter "<<j<<" in fit function "<<i<<" is "<<ipar[i][j]<<endl;
             }
       }
 
       return ipar;
-  }
+}
 
 
-  // Function used in Moliere model to calculate a parameter
-  double calculateB(double log_omega_b)
-  {
+// Function used in Moliere model to calculate a parameter
+double calculateB(double log_omega_b)
+{
 	// Initialize Bmin and Bmax values
 	double Bmin=1.0;
 	double Bmax=30.0;
@@ -852,25 +870,25 @@ int** GetParameterMapping(int);
 	}
 
 	return B;
-  }
+}
 
-  // Determine fit range for a kink angle histogram
-  // This is done by finding the first and last bin above a certain threshold.
-  // The fit range is half of the distance between these two bins in rad
-  double DetermineFitrange(TH1* histo,double minvalue)
-  {
+// Determine fit range for a kink angle histogram
+// This is done by finding the first and last bin above a certain threshold.
+// The fit range is half of the distance between these two bins in rad
+double DetermineFitrange(TH1* histo,double minvalue)
+{
 
 	int bin1 = histo->FindFirstBinAbove(histo->GetMaximum()*minvalue);
 	int bin2 = histo->FindLastBinAbove(histo->GetMaximum()*minvalue);
 	double fitrange = (histo->GetBinCenter(bin2) - histo->GetBinCenter(bin1))/2.0;
 
 	return fitrange;
-  }
+}
 
 
-  // Returns the mean value of the angle reco error squared
-  double getanglerecovar(TFile* file)
-  {
+// Returns the mean value of the angle reco error squared
+double getanglerecovar(TFile* file)
+{
 	//TTree in input root file, that contains the MSC projected angle distributions and reconstruction error distribution
 	file->cd("");
 	TTree *msc_tree = (TTree*)file->Get("MSCTree");
@@ -885,15 +903,15 @@ int** GetParameterMapping(int);
 	double recovar_error = msc_tree->GetHistogram()->GetMeanError();	//max methode
 
 	// The recovar error shouldn't be too large! 
-	cout<<"Angle Reconstruction Variance is "<<recovar<<" +/- "<<recovar_error<<endl; 
+	cout<<"Angle Reconstruction Variance: 	"<<recovar<<" +/- "<<recovar_error<<"rad^2"<<endl; 
 
 	return recovar;
-  }
+}
 
 
-  // Shift a decentralized angle distribution in order to get a mean value of 0
-  void shiftbins(TH1* histogram, double mean1)
-  {
+// Shift a decentralized angle distribution in order to get a mean value of 0
+void shiftbins(TH1* histogram, double mean1)
+{
 	// The mean offset has to be corrected before merging the two histograms
 	// First the bin value of the offset has to be found out
 	TAxis *xaxis =  histogram->GetXaxis();
@@ -926,11 +944,11 @@ int** GetParameterMapping(int);
 		   	 histogram->SetBinContent(j, histogram->GetBinContent(0));
 		}
 	}
-  }
+}
 
-  // This function fills histograms corresponding to certain u v values with msc angle distributions 
-  void correcthisto(TFile* file,TFile* file2, TString histoname, TString range, double umin, double umax, double vmin, double vmax )
-  {
+// This function fills histograms corresponding to certain u v values with msc angle distributions 
+void correcthisto(TFile* file,TFile* file2, TString histoname, TString range, double umin, double umax, double vmin, double vmax )
+{
 	//TTree in input root file, that contains the MSC projected angle distributions
 	file->cd("");
 	TTree *msc_tree = (TTree*)file->Get("MSCTree");
@@ -961,7 +979,7 @@ int** GetParameterMapping(int);
 
 	// Go to raw directory
 	file2->cd("");
-	file2->cd("grid/raw");
+	file2->cd("grid/raw/");
 
 	aidhistogram->Write("theta1_uncorrected_"+histoname);
 
@@ -979,7 +997,7 @@ int** GetParameterMapping(int);
 
 	// Go to raw directory
 	file2->cd("");
-	file2->cd("grid/raw");
+	file2->cd("grid/raw/");
 
 	aidhistogram2->Write("theta2_uncorrected_"+histoname);
 
@@ -1010,7 +1028,7 @@ int** GetParameterMapping(int);
 
 	// Go to raw directory
 	file2->cd("");
-	file2->cd("grid/raw");
+	file2->cd("grid/raw/");
 
 	h->Write("sumhisto_uncorrected_"+histoname);
 
@@ -1025,13 +1043,13 @@ int** GetParameterMapping(int);
 	// Delete histogram 2 from memory
 	hsum2->SetDirectory(gROOT);
 	delete hsum2;
-  }
+}
 
 
-  // Function to save the projected angle histograms of different regions in the u-v plane, the region lies within the given 
-  // u and v min and max values.
-  void savehisto(TFile* file, TFile* file2, TString histoname, TString range, double umin, double umax, double vmin, double vmax, int correctmean)
-  {
+// Function to save the projected angle histograms of different regions in the u-v plane, the region lies within the given 
+// u and v min and max values.
+void savehisto(TFile* file, TFile* file2, TString histoname, TString range, double umin, double umax, double vmin, double vmax, int correctmean)
+{
 	//TTree in input root file, that contains the MSC projected angle distributions
 	file->cd("");
 	TTree *msc_tree = (TTree*)file->Get("MSCTree");
@@ -1080,7 +1098,7 @@ int** GetParameterMapping(int);
 
 	// Go to raw directory
 	file2->cd("");
-	file2->cd("grid/raw");
+	file2->cd("grid/raw/");
 
 	aidhistogram->Write("theta1_"+histoname);
 
@@ -1102,7 +1120,7 @@ int** GetParameterMapping(int);
 
 	// Go to raw directory
 	file2->cd("");
-	file2->cd("grid/raw");
+	file2->cd("grid/raw/");
 
 	aidhistogram2->Write("theta2_"+histoname);
 
@@ -1139,7 +1157,7 @@ int** GetParameterMapping(int);
 
 	// Go to raw directory
 	file2->cd("");
-	file2->cd("grid/raw");
+	file2->cd("grid/raw/");
 	h->Write("sumhisto_"+histoname);
 
 	// Delete sum histogram from memory
@@ -1154,11 +1172,34 @@ int** GetParameterMapping(int);
 	hsum2->SetDirectory(gROOT);
 	delete hsum2;
 
-  }
+}
 
-  // Function to fit the MSC angle histograms simultaneously, it returns a pointer to the fit results
-  double* gridfit( TFile* file, Grid grid, double z, double mass, double recoerr, TString model, bool fixlambda, bool fixmu)
-  { 
+// Function to fit the MSC angle histograms simultaneously, it returns a pointer to the fit results
+double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double recoerr, TString model, std::vector<bool> fitoptions)
+{ 
+
+	// Read out the parameters from the beamoptions vector
+	double z=beamoptions.at(0);
+	double mass=beamoptions.at(1);
+
+	double BE_mean=beamoptions.at(2);
+	double BE_ugrad=beamoptions.at(3);
+	double BE_vgrad=beamoptions.at(4);
+
+
+	// Read out the parameters from the fitoptions vector
+	bool fixlambda=fitoptions.at(0);
+	bool fixuBE=fitoptions.at(1);
+	bool fixvBE=fitoptions.at(2);
+
+
+	// Some parameter definitions
+
+	double lambda_startvalue=beamoptions.at(5);
+
+	// Number of new parameters for every new measurement area
+	int newparsperhole=4;
+
 	// histogram name
 	TString histoname;
 
@@ -1167,9 +1208,14 @@ int** GetParameterMapping(int);
 
 	const int num_fitfunctions=grid.GetNumHoles();
 
+	// fitresults Array
+	double *fitresults = new double[8];
+
+	// Fit and raw angle histograms
 	TH1 * fithistogramsum[num_fitfunctions];
 	TH1 * histogramsum;
 
+	// Copy raw histograms
 	for(int i=0; i< num_fitfunctions; i++)
 	{
 		// histogram name
@@ -1189,7 +1235,6 @@ int** GetParameterMapping(int);
 	// Declaration of fit functions
 	TF1 *fitFcn[num_fitfunctions];
 	TString fctname;
-
 
 	ROOT::Fit::DataOptions opt; 
 	ROOT::Fit::DataRange range[num_fitfunctions];
@@ -1211,19 +1256,19 @@ int** GetParameterMapping(int);
 		{
 			// Use Gaussian function with width corresponding to the calibrated angle resolution, if material is only air or extremely thin
 			// Also in this case the fit range is set to be a little smaller
-			if(grid.Get_thickness(i)<0.0001) fitFcn[i] = new TF1(fctname,"[0]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[8],[7]*[9])",-fitrange,fitrange);
+			if(grid.Get_thickness(i)<0.0001) fitFcn[i] = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13],[7]*[8])",-fitrange,fitrange);
 
 
 			// Use Moliere model in case the material is not just air
-			else fitFcn[i] = new TF1(fctname,molierefunction,-fitrange,fitrange,11);
+			else fitFcn[i] = new TF1(fctname,molierefunction,-fitrange,fitrange,num_localparameters);
 		}
 
 		else
 		{
 			// Use Gaussian function with width corresponding to the calibrated angle resolution, if material is only air or extremely thin
-			if(grid.Get_thickness(i)<0.0001) fitFcn[i] = new TF1(fctname,"[10]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[8],[7]*[9])",-fitrange,fitrange);
+			if(grid.Get_thickness(i)<0.0001) fitFcn[i] = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13],[7]*[8])",-fitrange,fitrange);
 			// Use Highland model in case the material is not just air
-			else fitFcn[i] = new TF1(fctname,highlandfunction,-fitrange,fitrange,11);
+			else fitFcn[i] = new TF1(fctname,highlandfunction,-fitrange,fitrange,num_localparameters);
 		}
 
 		// set the data range	
@@ -1278,48 +1323,72 @@ int** GetParameterMapping(int);
     
 	ROOT::Fit::Fitter fitter;
 
-	// Number of global parameters: There are num_fitfunctions fit functions with three new parameters each: Scale, momentum, thickness
+	// Number of global parameters: There are num_fitfunctions fit functions with three new parameters each: Scale, u coordinate, vcoordinate, thickness
 	// Then there are 8 parameters, which are used in all fit functions (beam energy calibration factor, angle calibration factor, material properties, etc)
-	static const int num_globalparameters = num_fitfunctions*3+8;
+	static const int num_globalparameters = num_fitfunctions*newparsperhole+(num_localparameters-newparsperhole);
 
 	double par0[num_globalparameters];
 
 	// Set the entries of the globalparameters array
 
 	// First fit function has num_localparameters new parameters:
-	double aid_array[num_localparameters]={ grid.Get_BE(0),z,mass,grid.Get_density(),grid.Get_Z(),grid.Get_A(),grid.Get_thickness(0),recoerr,1.0,1.0,700.0};
+	double aid_array[num_localparameters]={ BE_mean,z,mass,grid.Get_density(),grid.Get_Z(),grid.Get_A(),grid.Get_thickness(0),recoerr,lambda_startvalue,700.0,grid.Get_u_center(0),grid.Get_v_center(0),BE_ugrad,BE_vgrad};
 	for(int i=0;i<num_localparameters;i++) par0[i]=aid_array[i];
+
+	cout<<aid_array[11]<<endl;
 
 	// Afterwards for each fit functions we get 3 new parameters
 	for(int i=1;i<num_fitfunctions;i++)
 	{
-		par0[8+i*3]=grid.Get_BE(i);
-		par0[9+i*3]=grid.Get_thickness(i);
-		par0[10+i*3]=700.0;
+		par0[14+(i-1)*4]=grid.Get_thickness(i);
+		par0[15+(i-1)*4]=700;
+		par0[16+(i-1)*4]=grid.Get_u_center(i);
+		par0[17+(i-1)*4]=grid.Get_v_center(i);
 	}
+
+	cout<<par0[11]<<endl;
 
 	// create before the parameter settings in order to fix or set range on them
 	fitter.Config().SetParamsSettings(num_globalparameters,par0);
 
 	// fix constant parameters 0 to 7
-	for(int i=0;i<8;i++) fitter.Config().ParSettings(i).Fix();
+	for(int i=1;i<8;i++) fitter.Config().ParSettings(i).Fix();
 
-	// fix thickness and beam energy parameters for all fitfunctions
+	// fix u and v position of first measurement area
+	fitter.Config().ParSettings(10).Fix();
+	fitter.Config().ParSettings(11).Fix();
+
+	// If both BE gradient parameters are fixed also fix the beam energy offset fit
+	if((fixuBE)&&(fixvBE)) fitter.Config().ParSettings(0).Fix();
+
+	// Fix the beam energy gradient parameters?
+	if((fixuBE)) fitter.Config().ParSettings(12).Fix();
+	if((fixvBE)) fitter.Config().ParSettings(13).Fix();
+
+	// Limit the beam energy gradient parameters, they should be small anyway (< 10MeV/mm)
+	// and we dont want to see negative beam energies at any position on the target plane
+	fitter.Config().ParSettings(12).SetLimits(-0.035,0.035);
+	fitter.Config().ParSettings(13).SetLimits(-0.035,0.035);
+
+	// The beam energy mean value should also always be positive
+	fitter.Config().ParSettings(0).SetLimits(0.5*BE_mean,1.5*BE_mean);
+
+	// fix thickness and coordinate parameters for all fitfunctions
 	for(int i=1;i<num_fitfunctions;i++)
 	{
-		fitter.Config().ParSettings(8+i*3).Fix();
-		fitter.Config().ParSettings(9+i*3).Fix();
+		fitter.Config().ParSettings(14+(i-1)*4).Fix();
+		fitter.Config().ParSettings(16+(i-1)*4).Fix();
+		fitter.Config().ParSettings(17+(i-1)*4).Fix();
 	}
 
-	if(fixmu) fitter.Config().ParSettings(8).Fix(); 		 //fix mu?
-	if(fixlambda) fitter.Config().ParSettings(9).Fix();				 //fix lambda?
+	if(fixlambda) fitter.Config().ParSettings(8).Fix();				 //fix lambda?
 
-	// set limits on the calibration factor parameters
+	// set limits on the calibration factor parameter
 	fitter.Config().ParSettings(8).SetLimits(0.6,1.4);
-	fitter.Config().ParSettings(9).SetLimits(0.6,1.4);
 
 	//Set limits on fit function Normalizations
-	for(int i=0;i<num_fitfunctions;i++) fitter.Config().ParSettings(10+3*i).SetLimits(10.0,200000.0);
+	fitter.Config().ParSettings(9).SetLimits(10.0,200000.0);
+	for(int i=1;i<num_fitfunctions;i++) fitter.Config().ParSettings(15+(i-1)*4).SetLimits(10.0,200000.0);
 
 	fitter.Config().MinimizerOptions().SetPrintLevel(10);
 	fitter.Config().SetMinimizer("Minuit2","Migrad"); 
@@ -1353,29 +1422,23 @@ int** GetParameterMapping(int);
 		fithistogramsum[i]->Write("thetasum_"+histoname+"_fit");
 	}
 
-	// Plot the fit results and print them in terminal
-	// Declaration of pointer to fitresults
-	double *fitresults = new double[8];
+	// Plot the fit results, print them in terminal and save them to histogram
 		
-	// Read out mu value and error
+	// Save lambda value and error as result
 	fitresults[0]=result.Parameter(8);
 	fitresults[1]=result.Error(8);
 
-	// Read out lambda value and error
-	fitresults[2]=result.Parameter(9);
-	fitresults[3]=result.Error(9);
+	// Save BE mean value (at u,v=0) as result
+	fitresults[2]=result.Parameter(0);
+	fitresults[3]=result.Error(0);
 
-	// Read out fit chi2
-	fitresults[4]=result.Chi2();
+	// Save BE u gradient as result
+	fitresults[4]=result.Parameter(12);
+	fitresults[5]=result.Error(12);
 
-	// Read out fit NDF
-	fitresults[5]=result.Ndf();
-
-	// Read out fit prob
-	fitresults[6]=result.Prob();
-
-	// Read out fit correlation between lambda and mu
-	fitresults[7]=result.Correlation(8,9);
+	// Save BE v gradient as result
+	fitresults[6]=result.Parameter(13);
+	fitresults[7]=result.Error(13);
 
 	
 	// output of the single fit function chi2 values and the quadratic sum of them
@@ -1535,22 +1598,27 @@ int** GetParameterMapping(int);
 
 
 	// Copy the X0 Analysis Root file and rename it
-	TFile *resultsfile = new TFile("calibration_results.root", "RECREATE");
+	TFile *resultsfile = new TFile("X0calibration_results.root", "RECREATE");
 
-	TH1F * resultshist=new TH1F("resultshist","results of calibration",3,1,3);
+	TH1F * resultshist=new TH1F("resultshist","results of calibration",4,1,4);
 
     resultshist->GetXaxis()->SetBinLabel( 1, "lambda" );
-    resultshist->GetXaxis()->SetBinLabel( 2, "mu" );
-    resultshist->GetXaxis()->SetBinLabel( 3, "slope" );
+    resultshist->GetXaxis()->SetBinLabel( 2, "BE_mean[GeV]" );
+    resultshist->GetXaxis()->SetBinLabel( 3, "BE_u_grad[GeV/mm]" );
+    resultshist->GetXaxis()->SetBinLabel( 3, "BE_u_grad[GeV/mm]" );
 
-	resultshist->SetBinContent(1,fitresults[2]);
-	resultshist->SetBinError(1,fitresults[3]);
+	// Save the results to histogram
+	resultshist->SetBinContent(1,fitresults[0]);
+	resultshist->SetBinError(1,fitresults[1]);
 
-	resultshist->SetBinContent(2,fitresults[0]);
-	resultshist->SetBinError(2,fitresults[1]);
+	resultshist->SetBinContent(2,fitresults[2]);
+	resultshist->SetBinError(2,fitresults[3]);
 
-	resultshist->SetBinContent(3,0.0);
-	resultshist->SetBinError(3,0.1);
+	resultshist->SetBinContent(3,fitresults[4]);
+	resultshist->SetBinError(3,fitresults[5]);
+
+	resultshist->SetBinContent(4,fitresults[6]);
+	resultshist->SetBinError(4,fitresults[7]);
 
 	resultshist->Write("results");
 
@@ -1559,16 +1627,8 @@ int** GetParameterMapping(int);
 
 	// Return pointer to fitresults
 	return fitresults;
-  }
+} // End of fit function
 
-
-  // Calculate the momentum from the mean momentum value, a reference u position where we expect the mean momentum value to be located,
-  // the slope of the momentum distribution and the current u position
-  double CalculateMomentum(double u, double u_reference, double mom0, double mom_slope)
-  {
-        double mom=mom0+mom_slope*(u_reference-u);
-        return mom;
-  }
 
   // Function used to get the angle distributions of tracks crossing certain regions in the u-v measurement plane,
   // perform a moliere fit on the distributions to estimate the calibrationfactors mu and lambda. Usually this script is used on 
@@ -1598,11 +1658,14 @@ int** GetParameterMapping(int);
 	// Determine the number of fit functions from the cfg file
 	int num_grid=0; // Number of measurement grids (corresponds to 9 holes)
 	int num_hole=0; // Number of additional holes
+	int num_line=0; // Number of Lines, which are used for BE gradient calibration
 
 	TString gridname;
 	gridname.Form("grid");
 	TString holename;
 	holename.Form("hole%i",num_hole+1);
+	TString linename;
+	linename.Form("line%i",num_line+1);
 	
 	if(mEnv.GetValue(gridname+".exist",0)!=0) num_grid=1;
 
@@ -1615,10 +1678,39 @@ int** GetParameterMapping(int);
 	}
 
 	cout<<"Number of additional holes: "<<num_hole<<endl;
+
+	// Vector with number of holes defined in each line
+	std::vector<int> numholes_in_line;
+
+	while(mEnv.GetValue(linename+".exist",0)!=0)
+	{
+		// Find number of holes along line, typically one steplength parameter should be 0 and the other non-zero
+		int num;
+		if(mEnv.GetValue(linename+".usteplength",0.0)!=0.0) num=(mEnv.GetValue(linename+".ulength",0.0)/mEnv.GetValue(linename+".usteplength",0.0));
+		else if(mEnv.GetValue(linename+".vsteplength",0.0)!=0.0) num=(mEnv.GetValue(linename+".vlength",0.0)/mEnv.GetValue(linename+".vsteplength",0.0));
+		else num=0;
+		numholes_in_line.push_back(num);
+
+		num_line++;
+		linename.Form("line%i",num_line+1);
+	}
+
+	cout<<"Number of additional lines: "<<num_line<<endl;
+
+	// Overall number of holes in lines
+	int num_line_holes=0;
+	for(int i=0;i<numholes_in_line.size();i++) 
+	{
+		num_line_holes+=numholes_in_line.at(i);
+		cout<<"Line "<<i+1<<" consists of "<<numholes_in_line.at(i)<<" holes!"<<endl;
+	}
 	
-	const int num_fitfunctions=num_grid*9+num_hole;
+	//The number of total holes can now be calculated
+	const int num_fitfunctions=num_grid*9+num_hole+num_line_holes;
 
 	cout<<"Total number of measurement areas: "<<num_fitfunctions<<endl;
+
+
 
 	// Choose the multiple scattering model
 	// "moliere": Moliere model
@@ -1636,6 +1728,9 @@ int** GetParameterMapping(int);
 	// everything else, no correction
 	int correctmean=mEnv.GetValue("correctmean", 1 );
 
+	// Get the lambda starting value
+	double 	lambda_start=mEnv.GetValue("lambda_start", 1.0);
+
 	// Define and set the parameters used in the Moliere fit
 	// BE: beam energy (GeV), z: charge of beam particle (e), mass: mass of beam particle (GeV),
 	// density: density of the target material (g/cm³), Z: atomic number of target material, A: atomic mass (amu)
@@ -1646,12 +1741,10 @@ int** GetParameterMapping(int);
 	cout<<"-----------------Parameter settings----------------"<<endl;
 	cout<<"---------------------------------------------------"<<endl;
 	// Set mean beam energy (GeV) and slope
-	p=mEnv.GetValue("particle.momentummean", 4.0);
-	cout<<"Beam particle momentum: 	"<<p<<" GeV/c"<<endl;
-
-	double BE=TMath::Sqrt(p*p+mass*mass);   // energy in GeV
-	double BE_Slope=mEnv.GetValue("particle.momentumslope", 0.0);			// energy slope in GeV/mm
-	cout<<"Mean Beam energy: 		"<<BE<<" GeV"<<endl;
+	double BE_mean=mEnv.GetValue("particle.BEummean", 4.0);
+	cout<<"Beam particle mean energy 	"<<BE_mean<<" GeV"<<endl;
+	double BE_ugrad=mEnv.GetValue("particle.BEugradient", 0.0);			// energy slope in GeV/mm in u direction
+	double BE_vgrad=mEnv.GetValue("particle.BEvgradient", 0.0);			// energy slope in GeV/mm in u direction
 
 	// Set beam particle charge (e)	
 	z= mEnv.GetValue("particle.charge", 1);
@@ -1659,7 +1752,7 @@ int** GetParameterMapping(int);
 	// Set beam particle mass (GeV)	
 	mass= mEnv.GetValue("particle.mass", 4.0);
 	cout<<"Mass: 				"<<mass<<" GeV"<<endl;
-	cout<<"Charge: 		"<<z<<" e"<<endl;
+	cout<<"Charge: 			"<<z<<" e"<<endl;
 
 	// Set target material density (g/cm³)	
 	density= mEnv.GetValue("material.density", 2.7);
@@ -1670,13 +1763,13 @@ int** GetParameterMapping(int);
 	// Set atomic mass of target material (amu)
 	A=mEnv.GetValue("material.atomicmass", 27);
 
-	cout<<"Density: 			"<<density<<" g/cm^3"<<endl;
+	cout<<"Density: 			"<<density<<" g/cm³"<<endl;
 	cout<<"A: 				"<<A<<" "<<endl;
 	cout<<"Z: 				"<<Z<<" "<<endl;
 
 
 	// Print number of measurement areas on target plane
-	cout<<"Number of measurement areas: 		"<<num_fitfunctions<<" "<<endl;
+	cout<<"Number of measurement areas: 	"<<num_fitfunctions<<" "<<endl;
 
 	cout<<"---------------------------------------------------"<<endl;
 	cout<<"---------------------------------------------------"<<endl;
@@ -1716,29 +1809,91 @@ int** GetParameterMapping(int);
 	// The Grid class creates the 3x3 grid, the three additional holes outside of the grid have to be added manually
 	if(num_grid==1)
 	{
-		Grid grid1(center_u, center_v, sidelength, thickness_inc, density, Z, A, BE, mirroring_u, mirroring_v, switch_uv);
+		// Create grid from parameters in cfg file
+		Grid grid1(center_u, center_v, sidelength, thickness_inc, density, Z, A, mirroring_u, mirroring_v, switch_uv);
+		// Set prefdefined grid according to these parameters
 		grid.SetGrid(grid1);
 	}
 
+	// Loop over number of single holes
 	for(int i=0; i<num_hole;i++)
 	{
 		TString holename;
 		holename.Form("hole%i",i+1);
 
+		// Read out hole parameters
 		double ucenter=mEnv.GetValue(holename+".ucenter", 1.0);
 		double vcenter=mEnv.GetValue(holename+".vcenter", 1.0);
 		double ulength=mEnv.GetValue(holename+".hole_u_length", 1.0);
 		double vlength=mEnv.GetValue(holename+".hole_v_length", 1.0);
 		double thickness=mEnv.GetValue(holename+".thickness", 1.8);
 
-		Hole hole(ucenter,vcenter,ulength,vlength,thickness,BE);
-
-		//cout<<"Hole info: "<<endl;
-		//hole.PrintHoleParameters();
+		// Define hole based on these parameters
+		Hole hole(ucenter,vcenter,ulength,vlength,thickness);
   
+		// Add hole to predefined grid
 		grid.AddHole(hole);
 		
 	}
+
+	// Loop over number of lines
+	for(int i=0; i<num_line;i++)
+	{
+
+	linename.Form("line%i",i+1);
+
+		// line in u direction
+		if(mEnv.GetValue(linename+".usteplength",0.0)!=0.0) 
+		{
+
+			for(double d=mEnv.GetValue(linename+".startu",0.0);d<(mEnv.GetValue(linename+".startu",0.0)+mEnv.GetValue(linename+".ulength",-1.0));d+=mEnv.GetValue(linename+".usteplength",10.0))
+			{
+				// Compute/Read out hole parameters
+				double ucenter=d;
+				double vcenter=mEnv.GetValue(linename+".startv", 1000.0);
+				double ulength=mEnv.GetValue(linename+".usteplength", 0.1);
+				double vlength=mEnv.GetValue(linename+".vlength", 0.1);
+				double thickness=mEnv.GetValue(linename+".thickness", 1.8);
+
+				// Define hole based on these parameters
+				Hole hole(ucenter,vcenter,ulength,vlength,thickness);
+		  
+				// Add hole to predefined grid
+				grid.AddHole(hole);
+			}
+
+		}
+	
+
+		// line in v direction
+		else if(mEnv.GetValue(linename+".vsteplength",0.0)!=0.0)
+		{
+
+			for(double d=mEnv.GetValue(linename+".startv",0.0);d<(mEnv.GetValue(linename+".startv",0.0)+mEnv.GetValue(linename+".vlength",-1.0));d+=mEnv.GetValue(linename+".vsteplength",10.0))
+			{
+				// Compute/Read out hole parameters
+				double ucenter=mEnv.GetValue(linename+".startu", 1000.0);
+				double vcenter=d;
+				double ulength=mEnv.GetValue(linename+".ulength", 0.1);
+				double vlength=mEnv.GetValue(linename+".vsteplength", 0.1);
+				double thickness=mEnv.GetValue(linename+".thickness", 1.8);
+
+				// Define hole based on these parameters
+				Hole hole(ucenter,vcenter,ulength,vlength,thickness);
+		  
+				// Add hole to predefined grid
+				grid.AddHole(hole);
+			}
+
+		}
+
+		// in this case there is nothing to do
+		else continue;
+		
+	}
+	
+	// Print out the measurement areas, which will be used for the fit
+	grid.PrintGridParameters();
 
 	// Readout max and min values of all measurement areas of the calibration grid
 	for(int i=0;i<num_fitfunctions;i++)
@@ -1747,33 +1902,6 @@ int** GetParameterMapping(int);
 		umax[i]=grid.Get_u_max(i);
 		vmin[i]=grid.Get_v_min(i);
 		vmax[i]=grid.Get_v_max(i);
-	}
-
-	// There is a X/X0 gradient in most measurements. Typically the gradient is along the horizontal axis. Therefore we have to correct the Beam energy depending
-	// on the u position of the hole. This is done here
-	for(int i=0;i<num_fitfunctions;i++)
-	{
-		double BE_tmp=CalculateMomentum((umin[i]+umax[i])/2,0,BE,BE_Slope);
-		grid.SetHoleBE(i,BE_tmp);
-
-		cout<<"-----------------------------------"<<endl;
-		cout<<"Position: "<<i<<endl;
-		cout<<"-----------------------------------"<<endl;
-
-		cout<<"center u at "<<grid.Get_u_center(i)<<" mm "<<endl;
-		cout<<"center v at "<<grid.Get_v_center(i)<<" mm "<<endl;
-
-		cout<<"Minimal u at "<<grid.Get_u_min(i)<<" mm "<<endl;
-		cout<<"Minimal v at "<<grid.Get_v_min(i)<<" mm "<<endl;
-
-		cout<<"Maximal u at "<<grid.Get_u_max(i)<<" mm "<<endl;
-		cout<<"Maximal v at "<<grid.Get_v_max(i)<<" mm "<<endl;
-
-		cout<<"Thickness is "<<grid.Get_thickness(i)<<" mm"<<endl;
-		cout<<"Density is "<<grid.Get_density()<<" g/cm³"<<endl;
-		cout<<"Z is "<<grid.Get_Z()<<endl;
-		cout<<"A is "<<grid.Get_A()<<endl;
-		cout<<"Beam energy is "<<grid.Get_BE(i)<<" GeV"<<endl;
 	}
 
 
@@ -1785,7 +1913,7 @@ int** GetParameterMapping(int);
 	TFile *X0file = new TFile(filename+".root", "READ");
 
 	//Open the copied file
-	filename=filename+"_"+model+"fit_lambdafit";
+	filename=filename+"CalibrationDQM_"+model+"fit";
 	TFile *rootfile = new TFile(filename+".root", "RECREATE");
 
 	// Set number of layers of target	
@@ -1803,6 +1931,9 @@ int** GetParameterMapping(int);
 	int nbins=500;
 	double range1=-0.0025;
 	double range2=0.0025;
+
+	rootfile->mkdir("grid/raw/");
+	rootfile->mkdir("grid/fit/");
 
 	// Loop over number of measurement areas
 	for(Int_t i=0; i<num_fitfunctions; i++)
@@ -1823,14 +1954,31 @@ int** GetParameterMapping(int);
 
 	X0file->Close();
 
-	// fit the histograms
-	double* iresults=gridfit(rootfile, grid, z, mass, recoerr, model, fixlambda,fixmu);
 
-	cout<<" The µ calibration factor is: "<<iresults[0]<<" +/- "<<iresults[1]<<endl;
-	cout<<" The lambda calibration factor is: "<<iresults[2]<<" +/- "<<iresults[3]<<endl;
-	cout<<" The overall chi2 value of the fit is: "<<iresults[4]<<endl;
-	cout<<" The corresponding probability value is: "<<iresults[5]<<endl;
-	cout<<" The correlation between µ and lambda is: "<<iresults[6]<<endl;
+	// TODO add the possibility to read out values from previous results root files
+	// and set starting parameters accordingly
+
+	std::vector<double> beamoptions;
+	// Use abs, because z,mass and BE_mean should be positive
+	beamoptions.push_back(abs(z));
+	beamoptions.push_back(abs(mass));
+	beamoptions.push_back(abs(BE_mean));
+	beamoptions.push_back(BE_ugrad);
+	beamoptions.push_back(BE_vgrad);
+	// lambda is not really a beam parameter, but this is the only place this fits in
+	beamoptions.push_back(lambda_start);
+
+	std::vector<bool> fitoptions;
+	fitoptions.push_back(fixlambda);
+	fitoptions.push_back(fix_u_gradient);
+	fitoptions.push_back(fix_v_gradient);
+
+	double* iresults=fit(rootfile, grid, beamoptions, recoerr, model, fitoptions);
+
+	cout<<" The lambda calibration factor is: "<<iresults[0]<<" +/- "<<iresults[1]<<endl;
+	cout<<" The mean beam energy at (0,0) is: "<<iresults[2]<<" +/- "<<iresults[3]<<"GeV"<<endl;
+	cout<<" The BE gradient in u direction is: "<<iresults[4]<<" +/- "<<iresults[5]<<"GeV/mm"<<endl;
+	cout<<" The BE gradient in v direction is: "<<iresults[6]<<" +/- "<<iresults[7]<<"GeV/mm"<<endl;
 
 	rootfile->Close();
   }
