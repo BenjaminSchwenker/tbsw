@@ -27,14 +27,6 @@ cmake -C ../BuildSetup.cmake ..
 make install 
 cd ../..
 
-
-############################################################
-# Install eudaq
-#cd eudaq
-#export LCIO=${TBSW_HOME}/lcio
-#make main 
-#cd ..
-
 ############################################################
 # Install Marlin  
 cd Marlin
@@ -94,12 +86,6 @@ echo "export LCIO="${TBSW_HOME}/lcio"" >> init_tbsw.sh
 echo "export PATH="$LCIO/tools:$LCIO/bin:$PATH"" >> init_tbsw.sh
 echo "export LD_LIBRARY_PATH="$LCIO/lib:$LD_LIBRARY_PATH"" >> init_tbsw.sh
 echo "" >> init_tbsw.sh
-
-#echo "#--------------------------------------------------------------------------------" >> init_tbsw.sh
-#echo "#    EUDAQ                                                                       " >> init_tbsw.sh
-#echo "#--------------------------------------------------------------------------------" >> init_tbsw.sh
-#echo "export EUDAQ="${TBSW_HOME}/eudaq"" >> init_tbsw.sh
-#echo "" >> init_tbsw.sh
 
 echo "#--------------------------------------------------------------------------------" >> init_tbsw.sh
 echo "#    Marlin                                                                      " >> init_tbsw.sh
