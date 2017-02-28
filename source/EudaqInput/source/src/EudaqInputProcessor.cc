@@ -4,6 +4,9 @@
 /*          Author: Benjamin Schwenker                                 */
 /*                (benjamin.schwenker@phys.uni-goettingen.de)          */
 /*                                                                     */
+/*  New version stores raw data into lcio::LCEvent and delegates       */
+/*  unpacking (converting) of raw data to other downstream Marlin      */
+/*  processors called unpackers.                                        */
 /*=====================================================================*/
 
 // user includes
@@ -12,8 +15,6 @@
 #include "FileReader.hh"
 #include "DetectorEvent.hh"
 #include "RawDataEvent.hh"
-#include "PluginManager.hh"
-
 
 // marlin includes
 #include "marlin/Processor.h"
@@ -21,18 +22,19 @@
 #include "marlin/ProcessorMgr.h"
 
 // lcio includes
+#include "lcio.h"
 #include <IMPL/LCEventImpl.h>
 #include <IMPL/LCRunHeaderImpl.h>
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerRawDataImpl.h>
-#include <IMPL/TrackerDataImpl.h>
 #include <UTIL/CellIDEncoder.h>
-#include <UTIL/LCTime.h>
 
 // system includes
 #include <string>
 #include <iomanip>
 #include <iostream>
+
+#define GET(d, i) getlittleendian<unsigned>(&(d)[(i)*4])
 
 
 using namespace std;
@@ -40,15 +42,15 @@ using namespace marlin;
 using namespace eudaqinput;
 
 namespace {
-  //static const unsigned TLUID = eudaqinput::Event::str2id("_TLU");
-  static const unsigned IDMASK = 0x7fff;
+  typedef std::vector<unsigned char> datavect;
+  typedef std::vector<unsigned char>::const_iterator datait;
 }
 
 EudaqInputProcessor::EudaqInputProcessor ():DataSourceProcessor  ("EudaqInputProcessor") {
   
   _description =
-    "Reads a EUDAQ .raw file and converts it event by event into LCIO format\n"
-    "Make sure to not specify any LCIOInputFiles in the steering to read raw files.";
+    "Reads a EUDAQ .raw file event by event and stores raw data into lcio::LCEvents.\n"
+    "Make sure to not specify any LCIOInputFiles.";
   
   registerProcessorParameter ("FileName", "Input file",
                               m_filename, std::string ("input.raw"));
@@ -90,17 +92,16 @@ void EudaqInputProcessor::readDataSource (int Ntrig) {
         
     if (ev.IsBORE()) {
       m_nbore++;
+      
       if (m_nbore == 1) {
         // Process BORE event 
-        const eudaqinput::DetectorEvent * dev = dynamic_cast<const eudaqinput::DetectorEvent *>(&ev);
-         
-        // Initialize pugin manager
-        eudaqinput::PluginManager::Initialize(*dev);
-        
+
+        const eudaqinput::DetectorEvent & dev = *dynamic_cast<const eudaqinput::DetectorEvent *>(&ev);
+            
         // Write LCIO run header here 
         IMPL::LCRunHeaderImpl* lcHeader = new IMPL::LCRunHeaderImpl;
         lcHeader->setDescription(" Reading from file " + reader.Filename());
-        lcHeader->setRunNumber((*dev).GetRunNumber());
+        lcHeader->setRunNumber(dev.GetRunNumber());
         lcHeader->setDetectorName(m_detectorName);
         
         // Add run header to LCIO file
@@ -111,6 +112,7 @@ void EudaqInputProcessor::readDataSource (int Ntrig) {
          streamlog_out ( MESSAGE3 ) << "Multiple BOREs " << to_string(m_nbore) << std::endl ;
       }    
     } else if (ev.IsEORE()) {
+
       m_neore++;
       if (m_neore > 1) {
         streamlog_out ( MESSAGE3 ) << "Warning: Multiple EOREs: " << to_string(m_neore) << std::endl;
@@ -118,19 +120,70 @@ void EudaqInputProcessor::readDataSource (int Ntrig) {
     } else {
       m_ndata++;
                       
-      const eudaqinput::DetectorEvent * dev = dynamic_cast<const eudaqinput::DetectorEvent *>(&ev);
-                           
-      for (size_t i = 0; i < (*dev).NumEvents(); ++i) {
-        const eudaqinput::Event* subev = (*dev).GetEvent(i);           
-               
-        streamlog_out ( MESSAGE2 ) << "  TrigID  " << (eudaqinput::PluginManager::GetTriggerID(*subev) & IDMASK) 
-                                   << "  (" << subev->GetSubType() << ")"         
-                                   << endl;  
-      } 
-      
-      // This actually converts the detector raw data 
-      // FIXME store raw data and move unpacking of raw data into seperate processors ('unpackers')             
-      LCEvent * lcEvent = eudaqinput::PluginManager::ConvertToLCIO(*dev);
+      // Process data event 
+      const eudaqinput::DetectorEvent & dev = *dynamic_cast<const eudaqinput::DetectorEvent *>(&ev);
+       
+      lcio::LCEventImpl * lcEvent = new lcio::LCEventImpl;
+      lcEvent->setEventNumber(dev.GetEventNumber());
+      lcEvent->setRunNumber(dev.GetRunNumber());
+      lcEvent->setTimeStamp(dev.GetTimestamp());
+       
+      for (size_t i = 0; i < dev.NumEvents(); ++i) {
+          
+        const eudaqinput::Event& subev = *dev.GetEvent(i);    
+        
+        // Every sub event can have these decorators 
+        // FIXME These should be stored in LCGenericObject
+        //unsigned m_flags, 
+        //unsigned m_runnumber;
+        //unsigned m_eventnumber;
+        //unsigned long long m_timestamp;
+        
+        // process RawDataEvent
+        if (const RawDataEvent * rawev = dynamic_cast<const RawDataEvent *>(&subev)) { 
+          
+          //FIXME: The TLU sub event never gets here
+          std::string type = rawev->GetSubType();
+          
+          // prepare the collections for the raw data 
+          LCCollectionVec * rawDataCollection = new LCCollectionVec( lcio::LCIO::TRACKERRAWDATA );
+
+          //LCCollectionVec* rawDataCollection = new LCCollectionVec( lcio::LCIO::LCGENERICOBJECT )  ;
+          
+          // set the proper cell encoder
+          CellIDEncoder<TrackerRawDataImpl> lcEncoder( "blockID:6", rawDataCollection  ); 
+          
+          // loop over all data blocks in sub event
+          for (size_t j = 0; j < rawev->NumBlocks(); ++j) {
+          
+            // get a handle to data block
+            const datavect & data = rawev->GetBlock(j);
+            // prepare lcio::TrackerRawData
+            lcio::TrackerRawDataImpl* lcBlock =  new lcio::TrackerRawDataImpl;
+            lcEncoder["blockID"] = rawev->GetID(j); 
+            lcEncoder.setCellID( lcBlock );
+            
+            //LCGenericObjectImpl* lcBlock = new LCGenericObjectImpl(3,0,0);
+            //lcBlock->setIntVal(0,boardID);   
+            //AdcBlock* InAdcBlock = new AdcBlock(boardID, f, imul, AdcVals, (int) a->flags());         
+              
+            
+            // loop over the data block
+            for (size_t it = 0; it < data.size(); ++it) {
+              lcBlock->adcValues().push_back( data[it] );
+            }
+            
+            // add the lcio::TrackerRawData to the collection
+            rawDataCollection->push_back( lcBlock ); 
+
+            //rawDataCollection->addElement( lcBlock ) ; 
+            //rawDataCollection->addElement( InAdcBlock ) ; 
+          } 
+          
+          // add collection to the event
+          lcEvent->addCollection( rawDataCollection, type.c_str() );
+        }        
+      }
             
       ProcessorMgr::instance ()->processEvent (static_cast<LCEventImpl*> (lcEvent));
       delete lcEvent;        
