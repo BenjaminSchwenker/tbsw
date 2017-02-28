@@ -78,15 +78,13 @@ struct Onsen_Header_t {
 
 namespace eudaqinput {
 
-
 class DEPFETConverterBase {
  public:
   
-
   void ConvertLCIOHeader(lcio::LCRunHeader & header, eudaqinput::Event const & bore) const;
   bool ConvertLCIO(lcio::LCEvent & lcioEvent, const Event & eudaqEvent) const;
-
-
+  
+  
 depfet::DEPFETADCValues ConvertDEPFETEvent(const std::vector<unsigned char> & data, unsigned id) const {
       
   
@@ -362,13 +360,11 @@ depfet::DEPFETADCValues ConvertDEPFETEvent(const std::vector<unsigned char> & da
   
 }; // end Base
 
+
   /********************************************/
 
 class DEPFETConverterPlugin : public DataConverterPlugin, public DEPFETConverterBase {
  public:
-  //virtual lcio::LCEvent * GetLCIOEvent( eudaq::Event const * ee ) const;
-  
- 
   
   virtual unsigned GetTriggerID(Event const & ev) const {
     const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(ev);
