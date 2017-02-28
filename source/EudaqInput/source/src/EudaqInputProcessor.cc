@@ -135,7 +135,7 @@ void EudaqInputProcessor::readDataSource (int Ntrig) {
       ProcessorMgr::instance ()->processEvent (static_cast<LCEventImpl*> (lcEvent));
       delete lcEvent;        
     }       
-  } while (reader.NextEvent());
+  } while (reader.NextEvent()  &&  m_ndata < Ntrig );
       
 }
 
