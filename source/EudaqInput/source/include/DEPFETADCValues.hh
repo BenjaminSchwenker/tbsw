@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include <stdint.h>
+#include <vector>
 
 namespace depfet {
 
