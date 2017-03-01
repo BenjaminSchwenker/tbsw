@@ -34,8 +34,6 @@
 #include <iomanip>
 #include <iostream>
 
-#define GET(d, i) getlittleendian<unsigned>(&(d)[(i)*4])
-
 
 using namespace std;
 using namespace marlin;
@@ -132,24 +130,15 @@ void EudaqInputProcessor::readDataSource (int Ntrig) {
           
         const eudaqinput::Event& subev = *dev.GetEvent(i);    
         
-        // Every sub event can have these decorators 
-        // FIXME These should be stored in LCGenericObject
-        //unsigned m_flags, 
-        //unsigned m_runnumber;
-        //unsigned m_eventnumber;
-        //unsigned long long m_timestamp;
-        
         // process RawDataEvent
         if (const RawDataEvent * rawev = dynamic_cast<const RawDataEvent *>(&subev)) { 
           
-          //FIXME: The TLU sub event never gets here
+          // this string will be the name of the raw data collection
           std::string type = rawev->GetSubType();
           
           // prepare the collections for the raw data 
           LCCollectionVec * rawDataCollection = new LCCollectionVec( lcio::LCIO::TRACKERRAWDATA );
-
-          //LCCollectionVec* rawDataCollection = new LCCollectionVec( lcio::LCIO::LCGENERICOBJECT )  ;
-          
+                    
           // set the proper cell encoder
           CellIDEncoder<TrackerRawDataImpl> lcEncoder( "blockID:6", rawDataCollection  ); 
           
@@ -163,21 +152,13 @@ void EudaqInputProcessor::readDataSource (int Ntrig) {
             lcEncoder["blockID"] = rawev->GetID(j); 
             lcEncoder.setCellID( lcBlock );
             
-            //LCGenericObjectImpl* lcBlock = new LCGenericObjectImpl(3,0,0);
-            //lcBlock->setIntVal(0,boardID);   
-            //AdcBlock* InAdcBlock = new AdcBlock(boardID, f, imul, AdcVals, (int) a->flags());         
-              
-            
             // loop over the data block
             for (size_t it = 0; it < data.size(); ++it) {
               lcBlock->adcValues().push_back( data[it] );
             }
             
             // add the lcio::TrackerRawData to the collection
-            rawDataCollection->push_back( lcBlock ); 
-
-            //rawDataCollection->addElement( lcBlock ) ; 
-            //rawDataCollection->addElement( InAdcBlock ) ; 
+            rawDataCollection->push_back( lcBlock );  
           } 
           
           // add collection to the event

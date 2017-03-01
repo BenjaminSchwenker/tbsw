@@ -20,8 +20,8 @@ namespace eudaqinput
    *
    * The input processor reads .raw files produced by EUDAQ event by 
    * event. A new lcio::LCEvent is created and the detector raw data
-   * gets written into lcio::LCCollection objects. Subsquent processor
-   * can be used to unpack and reconstruct the raw data. 
+   * gets written into lcio::LCCollection objects. Subsquent processors
+   * can be used to unpack and reconstruct the raw data collections. 
    * 
    * Author: Benjamin Schwenker, Göttingen University 
    * <mailto:benjamin.schwenker@phys.uni-goettingen.de>
