@@ -2,10 +2,10 @@
 This README contains an explanation of the calibration procedure of X0 images. The relevant calibration constants ares: 
 
 
-1) lambda: 					calibration factor of the angle resolution on the central target plane
-2) momentumugradient:		Momentum gradient (in u direction) of beam particles in GeV/mm
-3) momentumvgradient:		Momentum gradient (in v direction) of beam particles in GeV/mm
-4) momentumoffset:			Momentum value of beam particles at (u,v)=(0,0) in GeV
+1) lambda:                  calibration factor of the angle resolution on the central target plane
+2) momentumugradient:       Momentum gradient (in u direction) of beam particles in GeV/mm
+3) momentumvgradient:       Momentum gradient (in v direction) of beam particles in GeV/mm
+4) momentumoffset:          Momentum value of beam particles at (u,v)=(0,0) in GeV
 
 The average beam momentum at DESY is parametrized by a linear function 
 
@@ -22,10 +22,10 @@ descriptions of the options can be found in the cfg file itself.
 The next step is to produce a X0 image from the target with all calibration constants at their start values. To do 
 that, first modify /path/to/work/dir/root-scripts/x0imaging/image.cfg file. As start values use the following:
 
-1) lambda:					1.0
-2) momentumugradient:		0.0
-3) momentumvgradient		0.0 
-4) momentumoffset: 			Use nominal beam energy
+1) lambda:                  1.0
+2) momentumugradient:       0.0
+3) momentumvgradient:       0.0 
+4) momentumoffset:          Use nominal beam energy
 
 Then start the GenerateImage script via
 
