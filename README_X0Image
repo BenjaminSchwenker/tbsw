@@ -32,7 +32,7 @@ The produced X0 root file contains a TTree named MSCTree. The following variable
 1)  iRun            : Run number of the track
 2)  iEvt            : Event number of the track
 3)  probup          : p value of the upstream track
-4)  probdown        : p value of the downstream track
+4)  probup          : p value of the downstream track
 5)  probcombo       : p value of the combined track
 6)  du/dw           : mean of the two track slopes in u-w plane (rad)
 7)  dv/dw           : mean of the two track slopes in v-w plane (rad)
@@ -54,19 +54,19 @@ The next step is to merge the TTrees in root files with the same target and run 
 
 > hadd X0-merge.root X0-runAB.root ... X0-runXY.root
 
-Once you have created the merged root file, you can begin with the generation of the calibrated X/X0 image. Assuming you are in the 
-workspace folder, the image can be produced with the command:
+Once you have created the merged root file, you can begin with the generation of the calibrated X/X0 image. The image can 
+be produced in the following way with the GenerateImage.py script:
 
-> ./root-scripts/x0imaging/GenerateImage.py -i root-files/4GeV-alutarget/X0-merge.root 
-  -s root-scripts/x0imaging/ -d 0
+> ./path/to/work/dir/root-scripts/x0imaging/GenerateImage.py -i /path/to/work/dir/root-files/4GeV-alutarget/X0-merge.root 
+  -s /path/to/work/dir/root-scripts/x0imaging/ -d 0
 
-The imaging procedure employs a cfg file (see "root-scripts/x0imaging/image.cfg"). The parameters 
+ The imaging procedure employs a cfg file (see "/path/to/work/directory/root-scripts/x0imaging/image.cfg"). The parameters 
 in the config file are
 
 1) calibrationfactor        : the calibration factor of the angle resolution, should be extracted beforehand with the 
                               designated calibration measurement
-2) momentummean             : mean value of the momentum/beam energy in the center of the image (u=0,v=0)
-3) momentumslope            : momentum gradient of the beam in u direction
+2) momentummean             : mean value of the momentum/beam energy in the center of the image
+3) momentumslope            : momentum/energy gradient of the beam in u direction
 4) resultsfilename          : name of the results file, which is produced by the GenerateImage.py script
 5) u_length/v_length        : side lengths of the total image, should be 20 x 10 mm² for an image of the whole beam spot 
 6) umin/vmax                : Position of the upper left corner of the total image, should be (umin,vmax)=(-10mm,5mm) for 
@@ -79,7 +79,7 @@ their intersection coordinates (u,v) on the target plane. This yields a large se
 then fitted with a gaussian function. The radiation length can be extracted from the fitted width of the gaussian fit 
 function. The GenerateImage.py script produces a rootfile, which contains the following histograms:
 
-1) hX0map                   : Radiation length (X/X0) image 
+1) hX0map                   : Radiation length (X/X0) Image 
 2) hX0errmap                : Image of the statistical errors of the image (due to the fit)
 3) hchi2map                 : Image of the fit chi2 values
 4) hmeanmap1/2              : Image of the mean values of the projected kink angle distributions
@@ -88,3 +88,10 @@ function. The GenerateImage.py script produces a rootfile, which contains the fo
 6) hX0relerrmap             : Image of relative X/X0 errors
 7) hmommap                  : Image of the particle momentum/beam energy
 8) hprobmap1/2/sum          : p values of the fit of the projected angle distributions and the combined distribution
+
+
+Ulf Stolzenberg
+
+Göttingen 2017 
+
+ulf.stolzenberg@phys.uni-goettingen.de 

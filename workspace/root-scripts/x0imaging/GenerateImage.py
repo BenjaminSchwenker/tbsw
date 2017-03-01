@@ -53,10 +53,13 @@ if __name__ == '__main__':
   calibrationfactor = config.getfloat('x0image', 'calibrationfactor')
 
   # Mean value of the momentum of the beam particles
-  momentummean = config.getfloat('x0image', 'momentummean')
+  momentumoffset = config.getfloat('x0image', 'momentumoffset')
 
   # u momentum slope of the beam particles
-  momentumslope = config.getfloat('x0image', 'momentumslope')
+  momentumugradient = config.getfloat('x0image', 'momentumugradient')
+
+  # u momentum slope of the beam particles
+  momentumvgradient = config.getfloat('x0image', 'momentumvgradient')
 
   # Name of the results file
   this_resultsfilename = config.get('x0image', 'resultsfilename')
@@ -123,9 +126,11 @@ if __name__ == '__main__':
       # calibrationfactor
       this_calibrationfactor=str(calibrationfactor)
       # mean momentum
-      this_momentummean=str(momentummean)
-      # momentum slope
-      this_momentumslope=str(momentumslope)
+      this_momentumoffset=str(momentumoffset)
+      # momentum u gradient
+      this_momentumugradient=str(momentumugradient)
+      # momentum v gradient
+      this_momentumvgradient=str(momentumvgradient)
       
       # Copy placeholder x0image and change it
       shutil.copy(scriptsfolder+'/x0imaging.C', scriptname)
@@ -149,8 +154,9 @@ if __name__ == '__main__':
       config.set('image', 'ulength', this_ulength)
       config.set('image', 'vlength', this_vlength)
       config.set('image', 'calibrationfactor', this_calibrationfactor)
-      config.set('image', 'momentummean', this_momentummean)
-      config.set('image', 'momentumslope', this_momentumslope)
+      config.set('image', 'momentumoffset', this_momentumoffset)
+      config.set('image', 'momentumugradient', this_momentumugradient)
+      config.set('image', 'momentumvgradient', this_momentumvgradient)
 
       # Writing the configuration file
       with open('x0image-partial.cfg', 'w') as configfile:

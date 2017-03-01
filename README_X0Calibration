@@ -1,0 +1,62 @@
+
+This README contains an explanation of the calibration procedure of X0 images. The relevant calibration constants ares: 
+
+
+1) lambda: 					calibration factor of the angle resolution on the central target plane
+2) momentumugradient:		Momentum gradient (in u direction) of beam particles in GeV/mm
+3) momentumvgradient:		Momentum gradient (in v direction) of beam particles in GeV/mm
+4) momentumoffset:			Momentum value of beam particles at (u,v)=(0,0) in GeV
+
+The average beam momentum at DESY is parametrized by a linear function 
+
+momentum = momentumoffset+momentumugradient*u+momentumvgradient*v
+
+The calibration parameters are measured by fitting a X0 image from a calibration target. The calibration target is
+expected to be a planar object with areas of well defined  X/X0. For the calibration software, the calibration target
+must be described in a cfg file. This file is located at /path/to/work/dir/root-scripts/x0imaging/x0calibration.cfg.
+It is used to to set starting parameters, measurement areas (MA) and fit options. The measurement areas can be added
+as simple rectangular shapes (MA in the cfg file) with a center position, length, thickness and material parameters. 
+Alternatively a line can be defined, which constructs multiple measurement areas at the same time. More detailed 
+descriptions of the options can be found in the cfg file itself.
+
+The next step is to produce a X0 image from the target with all calibration constants at their start values. To do 
+that, first modify /path/to/work/dir/root-scripts/x0imaging/image.cfg file. As start values use the following:
+
+1) lambda:					1.0
+2) momentumugradient:		0.0
+3) momentumvgradient		0.0 
+4) momentumoffset: 			Use nominal beam energy
+
+Then start the GenerateImage script via
+
+> ./path/to/work/dir/root-scripts/x0imaging/GenerateImage.py -i /path/to/work/dir/root-files/4GeV-alutarget/X0.root 
+  -s /path/to/work/dir/root-scripts/x0imaging/ -d 0
+
+This generates an image, which will be used in the next step. To use it either move it into the folder with the X0.root file
+or adjust the path to the image file in the following command accordingly. Now the calibration fit can be used: 
+
+> ./path/to/work/dir/root-scripts/x0imaging/X0Calibration.py 
+  -i /path/to/work/dir/root-files/root-files/4GeV-alutarget/X0.root 
+  -m /path/to/work/dir/root-files/root-files/4GeV-alutarget/X0image.root 
+  -s /path/to/work/dir/root-files/root-scripts/x0imaging/
+
+You can do some cross checks by looking at the file X0image_Boxes.pdf in the current work directory. The pdf
+depicts the X0image including Boxes, which indicate the measurement areas. The pdf can be used to check, whether
+the measurement areas are located correctly.
+
+The root file named X0CalibrationDQM_*fitmodel*fit.root, which is located in the working directory, contains the 
+angle distributions of the tracks intersection each measurement area. The "fit" folder contains histograms and the fit
+function together. After the fit the histograms in this folder one should take a look at the distributions in order 
+to get an idea of the quality of the fit.
+
+X0Calibration_results.root contains a single histogram with the fit results for lambda, the momentum offset and 
+the momentum gradients. The entries of this histogram can be used to generate calibrated images of unknown target
+objects. For the X0 imaging follow the instructions in README_X0Image. The most important point is to copy the 
+measured calibration constants to the config file at /path/to/work/dir/root-scripts/x0imaging/image.cfg. 
+
+
+Ulf Stolzenberg
+
+Göttingen 2017 
+
+ulf.stolzenberg@phys.uni-goettingen.de 

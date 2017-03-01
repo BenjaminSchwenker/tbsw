@@ -815,13 +815,15 @@ using namespace std ;
 	delete fithistogramsum;
   }
 
-  // Calculate the momentum from the mean momentum value, a reference u position where we expect the mean momentum value to be located,
-  // the slope of the momentum distribution and the current u position
-  double CalculateMomentum(double u, double u_reference, double mom0, double mom_slope)
-  {
-        double mom=mom0+mom_slope*(u_reference-u);
-        return mom;
-  }
+// Function, which returns beam momentum value for every point on the target plane
+// This is necessary because the beam profile at DESY often have beam energy gradients in the order of a few MeV/mm
+Double_t GetMomentum(double meanvalue,double ugrad,double vgrad, double u, double v)
+{
+	double p;
+	p=meanvalue+u*ugrad+v*vgrad;
+	return p;
+}
+  
 
 
 // This script is used to create a map of a plane in a test beam telescope. The input is a TTree including 
@@ -939,10 +941,12 @@ int x0imaging()
         // the finite size of the collimator opening particles with momenta in a certain range p0+/-delta_p
         // can traverse into the test beam area
         // We expect a linear distribution with slope corresponding to ~500MeV/20mm
-	double mom0=mEnv.GetValue("momentummean", 4.0);           // in GeV
-    double mom_slope=mEnv.GetValue("momentumslope", 0.0);    // in GeV/mm
+	double mom0=mEnv.GetValue("momentumoffset", 4.0);           // in GeV
+    double mom_uslope=mEnv.GetValue("momentumugradient", 0.0);    // in GeV/mm
+    double mom_vslope=mEnv.GetValue("momentumvgradient", 0.0);    // in GeV/mm
 	cout<<"The beam energy is "<<mom0<<" GeV!"<<endl;
-	cout<<"The beam energy gradient is "<<mom_slope<<" GeV/mm!"<<endl;
+	cout<<"The beam energy gradient (u direction) is "<<mom_uslope<<" GeV/mm!"<<endl;
+	cout<<"The beam energy gradient (v direction) is "<<mom_vslope<<" GeV/mm!"<<endl;
 	
 	
 
@@ -1113,9 +1117,11 @@ int x0imaging()
 
                         // Calculate the u position of this bin
                         double u=umin+col*upitch;
+                        double v=vmin+row*vpitch;
 
                         // Determine the momentum value from the u position and the p distribution parameters
-                        double mom=CalculateMomentum(u,u_center,mom0,mom_slope);
+                        double mom=GetMomentum(mom0, mom_uslope, mom_vslope, u, v);
+
 
 			// fit the histograms
 			fithisto(rootfile, fittype,model,col,numcol,row,numrow,mom, recoerror);
