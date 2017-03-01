@@ -13,16 +13,17 @@ if __name__ == '__main__':
   rootfile = ''
   imagefile = ''
   scriptsfolder = ''
+  caltag=''
 
   try:
-    opts, args = getopt.getopt(sys.argv[1:],"hi:m:s:",["ifile=","imagefile=","scriptsfolder="])
+    opts, args = getopt.getopt(sys.argv[1:],"hi:m:s:c:",["ifile=","imagefile=","scriptsfolder=","caltag="])
   except getopt.GetoptError:
-    print ('GenerateImage.py -i <inputfile>  -m <imagefile> -s <scriptsfolder>' )
+    print ('GenerateImage.py -i <inputfile>  -m <imagefile> -s <scriptsfolder> -c <cal-tag>' )
     sys.exit(2)
 
   for opt, arg in opts:
     if opt == '-h':
-      print ('GenerateImage.py -i <inputfile> -m <imagefile> -s <scriptsfolder>')
+      print ('GenerateImage.py -i <inputfile> -m <imagefile> -s <scriptsfolder> -c <cal-tag>')
       sys.exit()
     elif opt in ("-i", "--ifile"):
       rootfile = arg
@@ -30,10 +31,13 @@ if __name__ == '__main__':
       imagefile = arg
     elif opt in ("-s", "--scriptsfolder"):
       scriptsfolder = arg
+    elif opt in ("-c", "--caltag"):
+      caltag = arg
+      
 
   if rootfile == '':
     print ('missing option: -i path/to/inputfilename.root')
-    sys.exit(2)  
+    sys.exit(2)   
 
   # remember current working dir 
   fullpath = os.getcwd() 
@@ -79,6 +83,47 @@ if __name__ == '__main__':
   # remove cfg file
   os.remove(cfgname) 
   os.remove('X0.root') 
+
+  caldir=fullpath+'/cal-files/'+caltag
+  x0caldir=fullpath+'/cal-files/'+caltag+'/X0calibration'
+
+  if os.path.isdir(caldir):
+    if os.path.isdir(x0caldir):
+      shutil.rmtree(x0caldir)
+
+    os.mkdir(x0caldir)	
+	
+    # save all interesting files to common folder   
+    for pdffile in glob.glob('*.pdf'): 
+      shutil.copy(pdffile, os.path.join(x0caldir,pdffile))  
+
+    for rootfile in glob.glob('*.root'): 
+      shutil.copy(rootfile, os.path.join(x0caldir,rootfile))  
+
+  else :
+    print ('[Print] Cal tag folder does not exist! ') 
+
+    x0caldir=fullpath+'/X0calibration'
+
+    if os.path.isdir(x0caldir):
+      shutil.rmtree(x0caldir)
+
+    os.mkdir(x0caldir)	
+	
+    # save all interesting files to common folder   
+    for pdffile in glob.glob('*.pdf'): 
+      shutil.copy(pdffile, os.path.join(x0caldir,pdffile))  
+
+    for rootfile in glob.glob('*.root'): 
+      shutil.copy(rootfile, os.path.join(x0caldir,rootfile)) 
+
+  # Remove files
+  for file in glob.glob('*.pdf'):
+    os.remove(file) 
+  for file in glob.glob('*.root'):
+    os.remove(file) 
+  for file in glob.glob('*.cfg'):
+    os.remove(file) 
                
 		           
                 

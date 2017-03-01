@@ -1730,5 +1730,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	cout<<" The BE gradient in v direction is: "<<iresults[6]<<" +/- "<<iresults[7]<<"GeV/mm"<<endl;
 
 	rootfile->Close();
+
+  gApplication->Terminate();
   }
 

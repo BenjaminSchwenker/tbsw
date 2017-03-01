@@ -39,12 +39,17 @@ or adjust the path to the image file in the following command accordingly. Now t
   -i /path/to/work/dir/root-files/root-files/4GeV-alutarget/X0.root 
   -m /path/to/work/dir/root-files/root-files/4GeV-alutarget/X0image.root 
   -s /path/to/work/dir/root-files/root-scripts/x0imaging/
+  -c cal-tag
 
-You can do some cross checks by looking at the file X0image_Boxes.pdf in the current work directory. The pdf
+The calibration results can be found at /path/to/work/dir/cal-files/cal-tag/X0Calibration in case the cal-tag
+folder exists. If it doesn't the folder /path/to/work/dir/X0Calibration will be created and the results will
+be stored there.
+
+You can do some cross checks by looking at the file X0image_Boxes.pdf in the results directory directory. The pdf
 depicts the X0image including Boxes, which indicate the measurement areas. The pdf can be used to check, whether
 the measurement areas are located correctly.
 
-The root file named X0CalibrationDQM_*fitmodel*fit.root, which is located in the working directory, contains the 
+The root file named X0CalibrationDQM_*fitmodel*fit.root, which is also located in the results directory, contains the 
 angle distributions of the tracks intersection each measurement area. The "fit" folder contains histograms and the fit
 function together. After the fit the histograms in this folder one should take a look at the distributions in order 
 to get an idea of the quality of the fit.
