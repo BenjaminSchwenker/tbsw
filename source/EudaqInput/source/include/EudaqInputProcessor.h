@@ -43,7 +43,7 @@ namespace eudaqinput
     // Processor parameters 
     std::string m_filename;
     std::string m_detectorName;
-    bool m_synctriggerid;
+    
     
    private:
     unsigned m_ndata;

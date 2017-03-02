@@ -19,13 +19,12 @@ namespace eudaqinput {
     const DetectorEvent & Event() const { return GetDetectorEvent(); } // for backward compatibility
     const DetectorEvent & GetDetectorEvent() const;
     void Interrupt() { m_des.Interrupt(); }
-    class eventqueue_t;
+    
   private:
     std::string m_filename;
     FileDeserializer m_des;
     counted_ptr<eudaqinput::Event> m_ev;
     unsigned m_ver;
-    eventqueue_t * m_queue;
   };
 
 }

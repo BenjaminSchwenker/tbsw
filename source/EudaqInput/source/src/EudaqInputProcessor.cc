@@ -53,9 +53,6 @@ EudaqInputProcessor::EudaqInputProcessor ():DataSourceProcessor  ("EudaqInputPro
   registerProcessorParameter ("FileName", "Input file",
                               m_filename, std::string ("input.raw"));
   
-  registerProcessorParameter ("SyncTriggerId", "Syncronize subevents by trigger id",
-                              m_synctriggerid, static_cast < bool > (false));
-
   registerProcessorParameter( "DetectorName", "Set name of the detector",
                               m_detectorName, std::string("EUTelescope"));
     
@@ -81,7 +78,7 @@ void EudaqInputProcessor::readDataSource (int Ntrig) {
   
   // ------------------------------------------------------- // 
   // Create a file reader for raw data  
-  eudaqinput::FileReader reader(m_filename, "", m_synctriggerid);
+  eudaqinput::FileReader reader(m_filename, "", false);
   
   // ------------------------------------------------------- // 
   // Read rawdata file   

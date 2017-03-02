@@ -1,5 +1,4 @@
 #include "RawDataEvent.hh"
-#include "PluginManager.hh"
 
 #include <ostream>
 
@@ -49,14 +48,6 @@ namespace eudaqinput {
   void RawDataEvent::Print(std::ostream & os) const {
     Event::Print(os);
     std::string tluevstr = "unknown";
-    try {
-      unsigned tluev = PluginManager::GetTriggerID(*this);
-      if (tluev != (unsigned)-1) {
-        tluevstr = to_string(tluev);
-      }
-    } catch (const Exception &) {
-      // ignore it
-    }
     os << ", " << m_blocks.size() << " blocks, tluev=" << tluevstr;
   }
 
