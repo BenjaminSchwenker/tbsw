@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="us-ascii"?>
 
 <marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
-
+   
    <execute>
       <processor name="InfoSetter"/>
       <processor name="ParticleGun"/>
@@ -9,7 +9,7 @@
       <processor name="M26Digitizer"/>
       <processor name="MyLCIOOutputProcessor"/>
    </execute>
-
+   
    <global>
       <parameter name="LCIOInputFiles"> </parameter>
       <parameter name="GearXMLFile" value="gear.xml"/>
@@ -18,15 +18,15 @@
       <parameter name="SupressCheck" value="false"/>
       <parameter name="Verbosity" value="MESSAGE3"/>
    </global>
-
- <processor name="InfoSetter" type="EventInfoSetter">
- <!--Creates a lcio file with run header and empty events
-Make sure to not specify any LCIOInputFiles in the steering in order-->
-  <!--Set name of the detector-->
-  <parameter name="DetectorName" type="string" value="EUTelescope"/>
-  <!--Set run number for lcio file-->
-  <parameter name="RunNumber" type="int" value="0"/>
-</processor>
+   
+   <processor name="InfoSetter" type="EventInfoSetter">
+     <!--Creates a lcio file with run header and empty events
+         Make sure to not specify any LCIOInputFiles in the steering in order-->
+     <!--Set name of the detector-->
+     <parameter name="DetectorName" type="string" value="EUTelescope"/>
+     <!--Set run number for lcio file-->
+     <parameter name="RunNumber" type="int" value="0"/>
+   </processor>
 
  <processor name="ParticleGun" type="ParticleGunGenerator">
     <!--Particle gun processor for simulation of a directed particle beam-->

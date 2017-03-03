@@ -3,36 +3,17 @@
 <marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
 
    <execute>
-      <processor name="RawInputProcessor"/>
-      <processor name="M26Unpacker"/>
       <processor name="M26HotPixelKiller"/>
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles">  </parameter>
+      <parameter name="LCIOInputFiles"> inputfilename </parameter>
       <parameter name="GearXMLFile" value="gear.xml"/>
       <parameter name="MaxRecordNumber" value="100000"/>
       <parameter name="SkipNEvents" value="0"/>
       <parameter name="SupressCheck" value="false"/>
       <parameter name="Verbosity" value="MESSAGE3"/>
    </global>
-   
-   <processor name="RawInputProcessor" type="EudaqInputProcessor">
-     <!--Reads a EUDAQ .raw file event by event and stores raw data into lcio::LCEvents.
-         Make sure to not specify any LCIOInputFiles.-->
-     <!--Set name of the detector-->
-     <parameter name="DetectorName" type="string" value="EUTelescope"/>
-     <!--Input file-->
-     <parameter name="FileName" type="string" value="inputfilename"/>
-   </processor>
-   
-   <processor name="M26Unpacker" type="NIUnpacker">
-     <!--NIUnpacker: Unpacker for M26 sensors in EUDET/AIDA telescope raw data-->
-     <!--Name of collection containing raw data-->
-     <parameter name="InputCollectionName" type="string" lcioInType="TrackerRawData"> NI </parameter>
-     <!--Name of the output digit collection-->
-     <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerData"> zsdata_m26 </parameter>
-   </processor>
    
    <processor name="M26HotPixelKiller" type="HotPixelKiller">
      <!--HotPixelKiller: Masking of hot pixels-->

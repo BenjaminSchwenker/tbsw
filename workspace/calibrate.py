@@ -38,7 +38,7 @@ if __name__ == '__main__':
       clusterTB = arg
    
   if rawfile == '':
-    print ('missing option: -i path/to/inputfilename.slcio')
+    print ('missing option: -i path/to/inputfilename')
     sys.exit(2)  
   
   if xmlpath == '':
@@ -69,7 +69,7 @@ if __name__ == '__main__':
     shutil.copy(srcname, tmpdir)
   
   # copy rawdata 
-  shutil.copy(rawfile, tmpdir+'/tmp-rawdata.slcio')
+  shutil.copy(rawfile, tmpdir+'/inputfilename')
   
   # run calibration in tmp dir  
   os.chdir(tmpdir)
@@ -77,13 +77,13 @@ if __name__ == '__main__':
   subprocess.call('/$MARLIN/bin/Marlin hotpixelkiller.xml > log-hotpixel.txt 2>&1', shell=True)
   print ('[Print] HotPixelKiller done ...')
   		  
+  subprocess.call('/$MARLIN/bin/Marlin correlator.xml > log-correlator.txt 2>&1', shell=True)    
+  print ('[Print] Correlator done ...')           
+          
   if clusterMC:
     subprocess.call('/$MARLIN/bin/Marlin cluster-calibration-mc.xml > log-clustering-mc.txt 2>&1', shell=True)
     print ('[Print] ClusterDB done ...')    
-  
-  subprocess.call('/$MARLIN/bin/Marlin correlator.xml > log-correlator.txt 2>&1', shell=True)    
-  print ('[Print] Correlator done ...')           
-                  		              
+        		              
   subprocess.call('/$MARLIN/bin/Marlin kalmanalign-iteration-1.xml > log-align-it1.txt 2>&1', shell=True)     
   print ('[Print] Alignment first iteration done ...')               
                	               
