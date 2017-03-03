@@ -65,20 +65,19 @@ of steering files to analyse a X0 test beam. The folder has the content:
 10)simulation.xml                     : Marlin steering file to produce lcio file with simulated digits
 11)gear-misaligned.xml                : xml file to describe the misaligned telescope geometry (the one used for simulation)  
 
-All these files area readable by a text editor. But only few of them need to be modified. It typically boils down to editing the z 
-positions of sensors in the gear.xml file, setting the particle momentum to the beam energy in Marlin steering files. Please read the 
-comments in the files, it is pretty self explanatory. 
+All these files area readable by a text editor and are heavily commented. The content of the x0-tb steer files are explained in more 
+detail in README_X0Image. 
 
 Once we have the a set of steer files for run, we can proceed to run the calibration script from the workspace:  
 
-> ./calibrate.py -i path-to-big-disk/my-beam-test/run-XY.raw -x steering-files/my-x0-tb -c geoid
+> ./calibrate.py -i path-to-big-disk/eudaq-raw/my-beam-test/run-XY.raw -x steering-files/my-x0-tb -c geoid
 
 The -i option defines which run to use for calibration. The -x options defines the folder of steering files to be used. The option -c 
-sets a calibration tag, a common name for all calibration data that are created. For example, you can use the GeoID as a tag. The calibrate.py 
-script runs a hot-pixel killer to mask noisy channels, performs a full alignment of the telescope and creates several DQM plots. A typical
-execution example looks like: 
+sets a calibration tag, a common name for all calibration data files that are created. For example, you can use the GeoID as a tag but any 
+string can be used. The calibrate.py script makes starts a series of process to compute the calibration data. A typical execution example 
+looks like this : 
 
-> ./calibrate.py -i path-to-big-disk/my-beam-test/run-XY.raw -x steering-files/my-x0-tb -c geoid
+> ./calibrate.py -i path-to-big-disk/eudaq-raw/my-beam-test/run-XY.raw -x steering-files/my-x0-tb -c geoid
 [Print] HotPixelKiller done ...
 [Print] Correlator done ...
 [Print] Alignment first iteration done ...
@@ -86,9 +85,9 @@ execution example looks like:
 [Print] Alignment third iteration done ...
 [Print] Alignment fourth iteration done ...
 [Print] TelescopeDQM done.
-[Print] All calibration files written to /home/benjamin/workspace_my_test_beam/cal-files/geoid
+[Print] All calibration files written to ~/workspace_my_test_beam/cal-files/geoid
 
-You can see that all needed calibration files aregrouped into a folder 'cal-files/geoid'. Also note that a folder 'tmp-runs/run-XY-my-x0' gets 
+You can see that all needed calibration files aregrouped into a folder 'cal-files/geoid'. Also note that a folder 'tmp-runs/run-XY-geoid' gets 
 created containing log files and DQM root files with many interesting plots to check the success of the calibration. The log files contain very
 important information for trouble shooting and debugging. 
 
@@ -97,7 +96,7 @@ tag). The ranges of run numbers taken under identical conditions and belonging t
 
 For our example, we will just reconstruct the run also used to create the tag: 
 
-> ./reco.py -i path-to-big-disk/run-XY.raw -x steering-files/my-x0-tb/reco.xml -c geoid
+> ./reco.py -i path-to-big-disk/eudaq-raw/my-beam-test/run-XY.raw -x steering-files/my-x0-tb/reco.xml -c geoid
 
 The reco.py script will loop once over all events in the file input file and apply the reconstruction processors defined in the xml file 'reco.xml' 
 to each event. The string '-c geoid' means that calibration results stored in 'cal-files/geoid' will be used. 
