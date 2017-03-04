@@ -12,11 +12,11 @@ if __name__ == '__main__':
   xmlpath = ''
   caltag='dummy'
   clusterMC = False
-  clusterTB = True
-  iterations = 3
+  clusterShapeIter = 0
+  
   
   try:
-    opts, args = getopt.getopt(sys.argv[1:],"hi:x:c:",["ifile=","xmlfile=","caltag=","clusterMC=","clusterTB="])
+    opts, args = getopt.getopt(sys.argv[1:],"hi:x:c:",["ifile=","xmlfile=","caltag=","clusterMC=","clusterShapeIter="])
   except getopt.GetoptError:
     print ('calibrate.py -i <inputfile>  -x <xmlfile> -c <caltag>')
     print ('-c is optional and defaults to: ' + caltag )
@@ -25,6 +25,7 @@ if __name__ == '__main__':
     if opt == '-h':
       print ('calibrate.py -i <inputfile> -x <xmlfile> -c <caltag>')
       print ('-c is optional and defaults to: ' + caltag )
+      print ('--clusterShapeIter is optional and defaults to: ' + '0' )
       sys.exit()
     elif opt in ("-i", "--ifile"):
       rawfile = arg
@@ -34,8 +35,8 @@ if __name__ == '__main__':
       caltag = arg
     elif opt in ("--clusterMC"):
       clusterMC = arg
-    elif opt in ("--clusterTB"):
-      clusterTB = arg
+    elif opt in ("--clusterShapeIter"):
+      clusterShapeIter = int(arg)
    
   if rawfile == '':
     print ('missing option: -i path/to/inputfilename')
@@ -97,12 +98,11 @@ if __name__ == '__main__':
   print ('[Print] Alignment fourth iteration done ...')   
 	               
   subprocess.call('/$MARLIN/bin/Marlin telescope-dqm.xml > log-dqm.txt 2>&1', shell=True)     
-  print ('[Print] TelescopeDQM done.')   	
+  print ('[Print] TelescopeDQM done ...')   	
   
-  if clusterTB: 
-    for i in range(0, iterations):
-      subprocess.call('/$MARLIN/bin/Marlin cluster-calibration-tb.xml > log-clustering-tb.txt 2>&1', shell=True)     
-      print ('[Print] clusterDB iteration done ...')   	
+  for i in range(0, clusterShapeIter):
+    subprocess.call('/$MARLIN/bin/Marlin cluster-calibration-tb.xml > log-clustering-tb.txt 2>&1', shell=True)     
+    print ('[Print] clusterDB iteration done ...')   	
   
   # clean up tmp files 
   for tmpfile in glob.glob('tmp*'):
