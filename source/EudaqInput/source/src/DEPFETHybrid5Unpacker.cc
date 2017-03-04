@@ -228,7 +228,7 @@ namespace eudaqinput {
         int val = data.at(2).at(iPixel);
         int col = data.at(1).at(iPixel);   
         int row = data.at(0).at(iPixel);  
-        int cm = data.at(3).at(iPixel);
+        //int cm = data.at(3).at(iPixel);
         
         // Store pixel data int lcio format 
         zsFrame->chargeValues().push_back( col );
@@ -296,7 +296,7 @@ namespace eudaqinput {
          
       // The InfoWord is a 32 bit frame header
       // behind the Bonn header
-      struct InfoWord frameInfoData = *(struct InfoWord *) &data[rc];
+      //struct InfoWord frameInfoData = *(struct InfoWord *) &data[rc];
       rc += sizeof(struct InfoWord);
          
       
@@ -311,7 +311,7 @@ namespace eudaqinput {
       unsigned int nextHeaderIndex=rc;
       unsigned int lastByte=Npixels+rc; 
       bool finished = false; 
-	  uint16_t lastWord = 0;
+	  //uint16_t lastWord = 0;
             
       while( (!finished) && (nextHeaderIndex<lastByte) ){ 
           
