@@ -10,9 +10,9 @@
       <processor name="M26PixelClusterizer"/>
       <processor name="M26HitMaker"/>
       <processor name="DEPUnpacker"/>
-      <processor name="DEPPixelClusterizer"/>
+      <processor name="DEPClusterizer"/>
       <processor name="DEPHitMaker"/>
-      <processor name="DEPPixelClusterizer_2"/>
+      <processor name="DEPClusterizer_2"/>
       <processor name="DEPHitMaker_2"/>
       <processor name="VXDTracker"/>
       <processor name="TelescopeDQM"/>
