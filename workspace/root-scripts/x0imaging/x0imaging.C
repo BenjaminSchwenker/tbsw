@@ -847,6 +847,10 @@ int x0imaging()
     //------------------
     TEnv mEnv("x0image-partial.cfg");
 
+    // Read calibration results config file
+    //------------------
+    TEnv mEnv_res("x0cal_result.cfg");
+
 	// TString for the input root file name
 	TString histoname,range;
 	TString filename=mEnv.GetValue("x0filename", "X0-merge");
@@ -931,19 +935,26 @@ int x0imaging()
 	int numberofbins=200;
 
 	// Calibration factor lambda, used to change the reconstruction error to include systematical errors
-	double lambda=mEnv.GetValue("calibrationfactor", 1.0);
+	// The calibration factor is either taken from the x0 calibration results cfg file or
+	// from the cfg, where it must be inserted manually
+	double lambda_default=mEnv.GetValue("lambda", 1.0);
+	double lambda=mEnv_res.GetValue("lambda_start", lambda_default);
 	double recoerror=sqrt(getanglerecovar(X0file))*lambda;
 	cout<<"The reconstruction error is "<<recoerror*1E6<<" µrad!"<<endl;
 
 	// Beam energy in GeV
-        // The particle momenta are distributed due to the beam generation at the desy facility
-        // Particles of different momenta are sperated by a dipole magnet and a collimator. Due to
-        // the finite size of the collimator opening particles with momenta in a certain range p0+/-delta_p
-        // can traverse into the test beam area
-        // We expect a linear distribution with slope corresponding to ~500MeV/20mm
-	double mom0=mEnv.GetValue("momentumoffset", 4.0);           // in GeV
-    double mom_uslope=mEnv.GetValue("momentumugradient", 0.0);    // in GeV/mm
-    double mom_vslope=mEnv.GetValue("momentumvgradient", 0.0);    // in GeV/mm
+    // The particle momenta are distributed due to the beam generation at the desy facility
+    // Particles of different momenta are sperated by a dipole magnet and a collimator. Due to
+    // the finite size of the collimator opening particles with momenta in a certain range p0+/-delta_p
+    // can traverse into the test beam area
+    // We expect a linear distribution with slope corresponding to ~500MeV/20mm
+	// Take either results from x0 calibration or manually inserted values from cfg file
+	double mom0_default=mEnv.GetValue("momentumoffset", 4.0);           // in GeV
+	double mom0=mEnv_res.GetValue("momentumoffset", mom0_default);
+    double mom_uslope_default=mEnv.GetValue("momentumugradient", 0.0);    // in GeV/mm
+	double mom_uslope=mEnv_res.GetValue("momentumugradient", mom_uslope_default);
+    double mom_vslope_default=mEnv.GetValue("momentumvgradient", 0.0);    // in GeV/mm
+	double mom_vslope=mEnv_res.GetValue("momentumvgradient", mom_vslope_default);
 	cout<<"The beam energy is "<<mom0<<" GeV!"<<endl;
 	cout<<"The beam energy gradient (u direction) is "<<mom_uslope<<" GeV/mm!"<<endl;
 	cout<<"The beam energy gradient (v direction) is "<<mom_vslope<<" GeV/mm!"<<endl;
@@ -955,6 +966,7 @@ int x0imaging()
 	{
 		getcorrection(X0file, rootfile, plotrange, numberofbins, numcol, numrow, umin, vmin, umax, vmax);
 	}
+
 	savehistos(X0file, rootfile, plotrange, numberofbins, numcol, numrow, umin, vmin, umax, vmax, correctmean);
 
 	X0file->Close();

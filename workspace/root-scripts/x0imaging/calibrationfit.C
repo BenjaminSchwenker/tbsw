@@ -1594,7 +1594,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	int correctmean=mEnv->GetValue("correctmean", 1 );
 
 	// Get the lambda starting value
-	double 	lambda_start=mEnv->GetValue("lambda_start", 1.0);
+	double 	lambda_start_default=mEnv->GetValue("lambda_start", 1.0);
 
 	// Define and set the parameters used in the Moliere fit
 	// BE: beam energy (GeV), z: charge of beam particle (e), mass: mass of beam particle (GeV),
@@ -1605,10 +1605,9 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	cout<<"-----------------Parameter settings----------------"<<endl;
 	cout<<"---------------------------------------------------"<<endl;
 	// Set mean beam energy (GeV) and slope
-	double BE_mean=mEnv->GetValue("momentumumoffset", 4.0);
-	cout<<"Beam particle mean energy 		"<<BE_mean<<" GeV"<<endl;
-	double BE_ugrad=mEnv->GetValue("momentumugradient", 0.0);			// energy slope in GeV/mm in u direction
-	double BE_vgrad=mEnv->GetValue("momentumvgradient", 0.0);			// energy slope in GeV/mm in u direction
+	double BE_mean_default=mEnv->GetValue("momentumumoffset", 4.0);
+	double BE_ugrad_default=mEnv->GetValue("momentumugradient", 0.0);			// energy slope in GeV/mm in u direction
+	double BE_vgrad_default=mEnv->GetValue("momentumvgradient", 0.0);			// energy slope in GeV/mm in u direction
 
 	// Set beam particle charge (e)	
 	z= mEnv->GetValue("particle.charge", 1);
@@ -1703,8 +1702,16 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 	X0file->Close();
 
-	// TODO add the possibility to read out values from previous results root files
-	// and set starting parameters accordingly
+	// Open results config file
+    //------------------
+    TEnv *mEnv_res=new TEnv("x0cal_result.cfg");
+	// Check whether there are entries, of this is the case use these entries as starting values
+
+	double lambda_start=mEnv_res->GetValue("lambda", lambda_start_default);
+	double BE_mean=mEnv_res->GetValue("momentumumoffset", BE_mean_default);
+	double BE_ugrad=mEnv_res->GetValue("momentumugradient", BE_ugrad_default);	
+	double BE_vgrad=mEnv_res->GetValue("momentumvgradient", BE_ugrad_default);
+
 
 	std::vector<double> beamoptions;
 	// Use abs, because z,mass and BE_mean should be positive
@@ -1715,6 +1722,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	beamoptions.push_back(BE_vgrad);
 	// lambda is not really a beam parameter, but this is the only place this fits in
 	beamoptions.push_back(lambda_start);
+	
 
 	std::vector<bool> fitoptions;
 	fitoptions.push_back(fixlambda);
@@ -1722,12 +1730,30 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	fitoptions.push_back(fix_u_gradient);
 	fitoptions.push_back(fix_v_gradient);
 
+	cout<<"Beam particle mean energy start value is				"<<BE_mean<<" GeV"<<endl;
+	cout<<"Beam particle energy u gradient start value is				"<<BE_ugrad<<" GeV/mm"<<endl;
+	cout<<"Beam particle energy v gradient start value is				"<<BE_vgrad<<" GeV/mm"<<endl;
+	cout<<"Beam particle lambda		 start value is				"<<lambda_start<<endl;
+
 	double* iresults=fit(rootfile, grid, beamoptions, recoerr, model, fitoptions);
 
 	cout<<" The lambda calibration factor is: "<<iresults[0]<<" +/- "<<iresults[1]<<endl;
 	cout<<" The mean beam energy at (0,0) is: "<<iresults[2]<<" +/- "<<iresults[3]<<"GeV"<<endl;
 	cout<<" The BE gradient in u direction is: "<<iresults[4]<<" +/- "<<iresults[5]<<"GeV/mm"<<endl;
 	cout<<" The BE gradient in v direction is: "<<iresults[6]<<" +/- "<<iresults[7]<<"GeV/mm"<<endl;
+
+	TString value;
+	// Fill cfg file with result values
+	value.Form("%f",iresults[0]);
+	mEnv_res->SetValue("lambda_start",value);
+	value.Form("%f",iresults[2]);
+	mEnv_res->SetValue("momentumoffset",value);
+	value.Form("%f",iresults[4]);
+	mEnv_res->SetValue("momentumugradient",value);
+	value.Form("%f",iresults[6]);
+	mEnv_res->SetValue("momentumvgradient",value);
+	mEnv_res->Print();
+	mEnv_res->SaveLevel(kEnvLocal);
 
 	rootfile->Close();
 

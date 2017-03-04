@@ -58,21 +58,26 @@ Once you have created the merged root file, you can begin with the generation of
 workspace folder, the image can be produced with the command:
 
 > ./root-scripts/x0imaging/GenerateImage.py -i root-files/4GeV-alutarget/X0-merge.root 
-  -s root-scripts/x0imaging/ -d 0
+  -c cal-tag -d 0
 
 The imaging procedure employs a cfg file (see "root-scripts/x0imaging/image.cfg"). The parameters 
 in the config file are
 
-1) calibrationfactor        : the calibration factor of the angle resolution, should be extracted beforehand with the 
-                              designated calibration measurement
-2) momentummean             : mean value of the momentum/beam energy in the center of the image (u=0,v=0)
-3) momentumslope            : momentum gradient of the beam in u direction
+1) lambda			        : the calibration factor of the angle resolution sigma, should be extracted beforehand
+                              with a designated calibration measurement
+2) momentumoffset           : mean value of the momentum/beam energy in the center of the image (u=0,v=0)
+3) momentumugradient        : momentum gradient of the beam in u direction
+3) momentumvgradient        : momentum gradient of the beam in u direction
 4) resultsfilename          : name of the results file, which is produced by the GenerateImage.py script
 5) u_length/v_length        : side lengths of the total image, should be 20 x 10 mm² for an image of the whole beam spot 
 6) umin/vmax                : Position of the upper left corner of the total image, should be (umin,vmax)=(-10mm,5mm) for 
                               an image of the whole beam spot
 7) u/v pixelsize            : Pixel size of the image in µm, should be chosen in such away, that at least 1000 particles 
                               pass through the area of most pixels
+
+If you performed a x0 calibration measurement before this step, a cfg file named x0cal_result.cfg will be present in
+path/to/workspace/cal-files/cal-tag/. If this is the case the default values of lambda and the beam momentum parameters
+will be updated accordingly.
 
 During the X0 imaging the angles theta1 and theta2 angles from the root tree are sorted into small pixels according to 
 their intersection coordinates (u,v) on the target plane. This yields a large set of kink angle distributions, which are

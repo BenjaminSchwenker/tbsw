@@ -12,13 +12,13 @@ from configparser import ConfigParser
 if __name__ == '__main__':
   
   rootfile = ''
-  scriptsfolder = ''
+  caltag=''
   deletetag=str(1)
 
   try:
-    opts, args = getopt.getopt(sys.argv[1:],"hi:s:d:",["ifile=","scriptsfolder=","deletetag="])
+    opts, args = getopt.getopt(sys.argv[1:],"hi:c:d:",["ifile=","caltag=","deletetag="])
   except getopt.GetoptError:
-    print ('GenerateImage.py -i <inputfile> -s <scriptsfolder> -d <deletetag>')
+    print ('GenerateImage.py -i <inputfile> -c <cal-tag> -d <deletetag>')
     print ('-d is optional and defaults to: ' + deletetag )
     print (' 1: delete partial rootfiles' )
     print (' 0: dont delete partial rootfiles' )
@@ -26,13 +26,13 @@ if __name__ == '__main__':
 
   for opt, arg in opts:
     if opt == '-h':
-      print ('GenerateImage.py -i <inputfile> -d <deletetag>')
+      print ('GenerateImage.py -i <inputfile> -c <cal-tag> -d <deletetag>')
       print ('-d is optional and defaults to: ' + deletetag )
       sys.exit()
     elif opt in ("-i", "--ifile"):
       rootfile = arg
-    elif opt in ("-s", "--scriptsfolder"):
-      scriptsfolder = arg
+    elif opt in ("-c", "--caltag"):
+      caltag = arg
     elif opt in ("-d", "--deletetag"):
       deletetag = arg
 
@@ -40,8 +40,13 @@ if __name__ == '__main__':
     print ('missing option: -i path/to/inputfilename.root')
     sys.exit(2)  
 
+  # remember current working dir 
+  fullpath = os.getcwd() 
+
+  scriptsfolder = fullpath+'/root-scripts/x0imaging'
+
   # copy cfg text file to current work directory
-  shutil.copy(scriptsfolder+'image.cfg','image.cfg')
+  shutil.copy(scriptsfolder+'/image.cfg','image.cfg')
 
   # Read config txt file
   config = ConfigParser(delimiters=(':'))
@@ -50,7 +55,7 @@ if __name__ == '__main__':
 
   # Read out all the relevant parameters
   # calibration factor
-  calibrationfactor = config.getfloat('x0image', 'calibrationfactor')
+  calibrationfactor = config.getfloat('x0image', 'lambda')
 
   # Mean value of the momentum of the beam particles
   momentumoffset = config.getfloat('x0image', 'momentumoffset')
@@ -78,9 +83,6 @@ if __name__ == '__main__':
   u_pixel_size = config.getfloat('x0image', 'u_pixel_size')
   v_pixel_size = config.getfloat('x0image', 'v_pixel_size')
 
-  # remember current working dir 
-  fullpath = os.getcwd() 
-
   # get X0 filename without path
   this_x0filename = os.path.splitext(os.path.basename(rootfile))[0]
 
@@ -105,6 +107,12 @@ if __name__ == '__main__':
 
   # Overall number of X0 image parts required
   num_parts=u_splits * v_splits
+
+  # Copy the results cfg file from previous calibrations, of it exists
+  cfgfilename="x0cal_result.cfg"
+  cfgfile=fullpath+'/cal-files/'+caltag+'/'+cfgfilename
+  if os.path.isfile(cfgfile):
+    shutil.copy(cfgfile, cfgfilename)
 
   scriptname="x0imaging.C"
 
@@ -153,7 +161,7 @@ if __name__ == '__main__':
       config.set('image', 'maxvpixels', this_maxvpixels)
       config.set('image', 'ulength', this_ulength)
       config.set('image', 'vlength', this_vlength)
-      config.set('image', 'calibrationfactor', this_calibrationfactor)
+      config.set('image', 'lambda', this_calibrationfactor)
       config.set('image', 'momentumoffset', this_momentumoffset)
       config.set('image', 'momentumugradient', this_momentumugradient)
       config.set('image', 'momentumvgradient', this_momentumvgradient)
@@ -226,14 +234,23 @@ if __name__ == '__main__':
     # also remove the input cfg file
     os.remove('image.cfg') 
 
-
-
-
   # remove MergeImage.C and config file script
   os.remove('MergeImages.C') 
   os.remove('x0merge.cfg') 
   os.remove('x0image-partial.cfg') 
   os.remove(this_x0filename+'.root') 
+
+  # Move results to results directory
+  resdir=fullpath+'/root-files/'+caltag
+
+  if os.path.isdir(resdir):
+	
+    # save all interesting files to results folder    
+    for rootfile in glob.glob('*.root'): 
+      shutil.copy(rootfile, os.path.join(resdir,rootfile))  
+
+  else :
+    print ('[Print] Results folder does not exist! cfg file will not be copied. ') 
                
 		           
                 
