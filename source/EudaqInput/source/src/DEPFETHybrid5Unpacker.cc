@@ -429,7 +429,7 @@ namespace eudaqinput {
                         
           //if(debug) std::cout << "DHP frame id " << tempZSFrameData[1] << std::endl; 
                   
-          lastWord = tempZSFrameData[payloadLength/2-3] ;
+          //lastWord = tempZSFrameData[payloadLength/2-3] ;
 	       
           //printf("Drittes wort vom ende %04x\n",tempZSFrameData[payloadLength/2-3]); 
              
