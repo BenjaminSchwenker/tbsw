@@ -215,7 +215,7 @@
      <!--Maximum v residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.-->
      <parameter name="MaxResidualV" type="double" value="0.2"/>
      <!--Output root file name-->
-     <parameter name="RootFileName" type="string" value="DEPFET-Histos.root"/>
+     <parameter name="RootFileName" type="string" value="H5-Histos.root"/>
    </processor>
 
    
