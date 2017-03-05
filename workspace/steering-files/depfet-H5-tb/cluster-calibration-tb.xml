@@ -4,7 +4,6 @@
   
   <execute>
     <processor name="M26HitMaker"/>
-    <processor name="DEPHitMaker"/>
     <processor name="VXDTracker"/>
     <processor name="ClusterCalibrator"/>
     <processor name="ClusterShapeDQM"/>
@@ -42,29 +41,29 @@
     <processor name="VXDTracker" type="FastTracker">
      <!--FastTracker: Performs track finding and fitting for beam tests-->
      <!--Input hit collection names-->
-     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> goehit_m26 goehit_dep </parameter>
+     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> goehit_m26 </parameter>
      <!--Collection name for fitted tracks-->
      <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> aligntracks </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
      <!--Enter plane numbers of bad detectors-->
-     <parameter name="ExcludeDetector" type="IntVec" value=""/>
+     <parameter name="ExcludeDetector" type="IntVec" value="3"/>
      <!--To use only GoodQuality write 0 here-->
      <parameter name="HitQualitySelection" type="int" value="0"/>
      <!--Maximum hit residual [mm]-->
-     <parameter name="MaxResidualU" type="FloatVec" value="0.2"/>
+     <parameter name="MaxResidualU" type="FloatVec" value="0.3"/>
      <!--Maximum hit residual [mm]-->
-     <parameter name="MaxResidualV" type="FloatVec" value="0.2"/>
+     <parameter name="MaxResidualV" type="FloatVec" value="0.3"/>
      <!--Maximum track chisq in track fit-->
-     <parameter name="MaxTrackChi2" type="float" value="50"/>
+     <parameter name="MaxTrackChi2" type="float" value="100"/>
      <!--Maximum number of consecutive missing hits in track-->
      <parameter name="MaximumGap" type="int" value="0"/>
      <!--Maximum slope of candiate tracks in Z=0 plane (rad). Set cut to zero to deactivate.-->
      <parameter name="MaximumSlope" type="float" value="0.1"/>
      <!--Minimum number of hits in track-->
-     <parameter name="MinimumHits" type="int" value="7"/>
+     <parameter name="MinimumHits" type="int" value="6"/>
      <!--Chi2 cut for removal of bad hits-->
-     <parameter name="OutlierChi2Cut" type="float" value="20"/>
+     <parameter name="OutlierChi2Cut" type="float" value="40"/>
      <!--Fitting iteration for removal of bad hits-->
      <parameter name="OutlierIterations" type="int" value="2"/>
      <!--Particle charge [e]-->
@@ -92,11 +91,11 @@
      <!--Output clusterDB file name-->
      <parameter name="ClusterDBFileName" type="string" value="clusterDB-ALL.root"/>
      <!--Minimum number of cluster ID occurances for clusterDB-->
-     <parameter name="MinClusters" type="int" value="300"/>
+     <parameter name="MinClusters" type="int" value="2000"/>
      <!--Minimum value of variance for u position measurement [mm^2]-->
-     <parameter name="MinVarianceU" type="float" value="1e-06"/>
+     <parameter name="MinVarianceU" type="float" value="2e-06"/>
      <!--Minimum value of variance for v position measurement [mm^2]-->
-     <parameter name="MinVarianceV" type="float" value="1.1e-06"/>
+     <parameter name="MinVarianceV" type="float" value="2e-06"/>
    </processor>
     
    <processor name="ClusterShapeDQM" type="TrackFitDQM">

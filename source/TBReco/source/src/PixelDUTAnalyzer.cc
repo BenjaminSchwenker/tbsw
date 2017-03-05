@@ -374,7 +374,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
   _rootSensorID = dut.GetDAQID();       
   _rootNTelTracks = nTrack; 
   _rootNDUTHits = (int)HitStore.size();
-  _rootEventNMatched = nMatch; 
+  
 
   _rootFile->cd("");
   _rootEventTree->Fill();  
@@ -563,34 +563,6 @@ void PixelDUTAnalyzer::end()
                            << resetiosflags(ios::right) << endl  
                            << endl << endl; 
      
-    
-   // Load DUT module    
-   Det & dut = _detector.GetDet(_idut); 
-
-   // DUT fake rate 
-   double dutNPixels = dut.GetNColumns()*dut.GetNRows(); 
-   double dutFakeRate  = static_cast<double> (_noOfHits - _noOfMatchedTracks) / static_cast<double> ( _nEvt ) / dutNPixels;
-   
-   // Telescope track effi 
-   double telTrackEffi = static_cast<double> (_noOfMatchedTracks) / static_cast<double> (_noOfHits);
-   
-   // Telescope track fake rate
-   double telTrackFakeRate = static_cast<double> ( _noOfTracks - _noOfMatchedTracks ) / static_cast<double> ( _nEvt );
-   
-   // Print perfomance summer
-   streamlog_out(MESSAGE3) << std::setprecision(3)
-                           << "DUT Fake Rate is ~ " << setiosflags(ios::right) << dutFakeRate
-                           << resetiosflags(ios::right) << endl
-                           << std::setprecision(3) 
-                           << "Telescope Track Efficiency is ~ "  << setiosflags(ios::right) << telTrackEffi
-                           << resetiosflags(ios::right) << endl
-                           << std::setprecision(0)
-                           << std::setprecision(3) 
-                           << "Telescope Track Fake Rate is ~ "  << setiosflags(ios::right) << telTrackFakeRate
-                           << resetiosflags(ios::right) << endl
-                           << std::setprecision(0)
-                           << endl << endl; 
-   
    
    // CPU time end
    _timeCPU = clock()/1000 - _timeCPU;
@@ -711,7 +683,6 @@ void PixelDUTAnalyzer::bookHistos()
    _rootEventTree->Branch("sensorID"        ,&_rootSensorID       ,"sensorID/I");    
    _rootEventTree->Branch("nTelTracks"      ,&_rootNTelTracks     ,"nTelTracks/I"); 
    _rootEventTree->Branch("nDutHits"        ,&_rootNDUTHits       ,"nDutHits/I");
-   _rootEventTree->Branch("nMatched"        ,&_rootEventNMatched  ,"nMatched/I");
    
 }
 

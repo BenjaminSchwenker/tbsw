@@ -104,6 +104,9 @@ if __name__ == '__main__':
     subprocess.call('/$MARLIN/bin/Marlin cluster-calibration-tb.xml > log-clustering-tb.txt 2>&1', shell=True)     
     print ('[Print] clusterDB iteration done ...')   	
   
+  # clean up inputfile
+  os.remove('inputfilename')
+  
   # clean up tmp files 
   for tmpfile in glob.glob('tmp*'):
     os.remove(tmpfile)

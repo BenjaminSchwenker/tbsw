@@ -65,6 +65,16 @@ namespace depfet {
     registerProcessorParameter("ClusterDBFileName",
                                "This is the name of the ROOT file with the cluster constants (add .root)",
                                _clusterDBFileName, static_cast< string > ( "ClusterDB.root" ) ); 
+    
+    registerProcessorParameter ("MaxSizeU", 
+                                "Clusters having more u cells marked as bad [and can be filterd in track finder]",
+                                _maxSizeU,  
+                                static_cast < int > (3));
+    
+    registerProcessorParameter ("MaxSizeV", 
+                                "Clusters having more v cells marked as bad [and can be filterd in track finder]",
+                                _maxSizeV,  
+                                static_cast < int > (3));
    
   }
   
@@ -77,8 +87,6 @@ namespace depfet {
     _nRun = 0 ;
     _nEvt = 0 ;
     _timeCPU = clock()/1000;
-    _nClu = 0 ;
-    _nMatched = 0 ;
                  
     // Print set parameters
     printProcessorParams();
@@ -92,6 +100,10 @@ namespace depfet {
     for(int ipl=0;ipl<_detector.GetNSensors();ipl++)  { 
       int sensorID = _detector.GetDet(ipl).GetDAQID();
       string histoName;
+
+      _countAllMap[sensorID] = 0;   
+      _countBadMap[sensorID] = 0;   
+      _countCalMap[sensorID] = 0;  
       
       histoName = "hDB_sensor" + to_string(sensorID) + "_ID";
       if ( (TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
@@ -177,9 +189,6 @@ namespace depfet {
     // Loop on all clusters 
     for (unsigned int iClu = 0; iClu < clusterCollection->size(); iClu++) 
     {
-
-      _nClu++;
-    
       // Helper class for decoding cluster ID's 
       CellIDDecoder<TrackerPulseImpl> clusterDecoder( clusterCollection ); 
       
@@ -188,6 +197,9 @@ namespace depfet {
       int sensorID = clusterDecoder(cluster)["sensorID"]; 
       int ipl = _detector.GetPlaneNumber(sensorID);
       Det& Det = _detector.GetDet(ipl);
+      
+      // Increment the cluster counter
+      _countAllMap[sensorID]++;
       
       // Compute the cluster ID string
       PixelCluster aCluster(cluster->getTrackerData());   
@@ -202,7 +214,7 @@ namespace depfet {
       bool found = searchDB(sensorID, id, u, v, sig2_u, sig2_v, cov_uv); 
       if (found) {
         // Count matched clusters
-        _nMatched++;
+        _countCalMap[sensorID]++; 
         // Shift position into local sensor coordinates
         u += Det.GetPixelCenterCoordU( aCluster.getVStart(), aCluster.getUStart()); 
         v += Det.GetPixelCenterCoordV( aCluster.getVStart(), aCluster.getUStart()); 
@@ -217,6 +229,13 @@ namespace depfet {
         sig2_u  = std::pow(aCluster.getUSize()*Det.GetPitchU()/TMath::Sqrt(12),2);  
         sig2_v  = std::pow(aCluster.getVSize()*Det.GetPitchV()/TMath::Sqrt(12),2);   
         cov_uv  = 0; 
+      }
+      
+      // Too large clusters are marked as bad and can be ignored 
+      // in the track finder stage
+      if ( aCluster.getUSize() > _maxSizeU  ||  aCluster.getVSize() > _maxSizeV ) {
+        quality = 1; 
+        _countBadMap[sensorID]++;   
       }
       
       // Make TBHit 
@@ -260,6 +279,25 @@ namespace depfet {
   //
   void GoeHitMaker::end()
   {
+    
+    for(int ipl=0;ipl<_detector.GetNSensors();ipl++)  { 
+      int sensorID = _detector.GetDet(ipl).GetDAQID();
+      
+      // Print message
+      streamlog_out(MESSAGE3) << std::endl
+                              << " "
+                              << "ClusterDB coverage on sensorID " << sensorID << ": "
+                              << std::setprecision(4)
+                              << 100.0*((float)_countCalMap[sensorID]/_countAllMap[sensorID])
+                              << " %"
+                              << std::endl
+                              << "Fraction of bad clusters on sensorID " << sensorID << ": "
+                              << std::setprecision(4)
+                              << 100.0*((float)_countBadMap[sensorID]/_countAllMap[sensorID])
+                              << " %"
+                              << std::endl    
+                              << std::endl;
+    }
      
     // CPU time end
     _timeCPU = clock()/1000 - _timeCPU;
@@ -272,18 +310,11 @@ namespace depfet {
                             << std::setprecision(3)
                             << _timeCPU/_nEvt
                             << " ms"
-                            << std::endl
-                            << "ClusterDB coverage: "
-                            << _nMatched/_nClu
                             << std::setprecision(3)
                             << std::endl
                             << " "
                             << "Processor succesfully finished!"
                             << std::endl;
-
-    
-    
-   
   }
   
   bool GoeHitMaker::searchDB(int sensorID, string id, double& u, double& v, double& sig2_u, double& sig2_v, double& cov_uv)

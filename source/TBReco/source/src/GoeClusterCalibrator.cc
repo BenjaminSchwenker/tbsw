@@ -280,24 +280,37 @@ namespace depfet {
      
     // We remove all cluster IDs which have to few counts and cannot be 
     // calibrated :( 
+
+    streamlog_out(MESSAGE3) << "Remove all cluster IDs with less than " << _minClusters  << " counts." << endl; 
+    
     for(auto it = _sensorMap.begin(); it != _sensorMap.end(); it++) {
       auto sensorID = it->first;
       auto&& clusterMap = it->second;
-      
+    
+      // Count all clusters
+      double countAll = 0;
+    
+      // Count reject clusters
+      int countReject = 0;
+  
       // Delete cluster ids with too small counter
-      
       for(auto iter = clusterMap.begin(); iter != clusterMap.end(); ) {
         auto id = iter->first; 
         auto counter = iter->second;
         
+        countAll += counter;
+        
         if(counter < _minClusters ) {
-          streamlog_out(MESSAGE3) << "  Deleting clusterId:  " << id << " because too few counts (" << counter << ") on sensorID " << sensorID 
+          streamlog_out(MESSAGE2) << "  Deleting clusterId:  " << id << " because too few counts (" << counter << ") on sensorID " << sensorID 
                                   << endl;
           iter = clusterMap.erase(iter);
+          countReject += counter;
         } else {
           ++iter;
         }
       }
+      streamlog_out(MESSAGE3) << "Number of rejected clusters on sensorID " << sensorID << " is: " 
+                              << countReject << " (" << 100.0*countReject/countAll  << "%)"  << endl;
     }
     
     streamlog_out(MESSAGE3) << "Create the clusterDB ... " << endl; 

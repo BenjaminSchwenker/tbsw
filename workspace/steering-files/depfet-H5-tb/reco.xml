@@ -72,17 +72,17 @@
      <!--SigmaU for cluster with two uCells contributing [mm]-->
      <parameter name="SigmaU2" type="double" value="0.0033"/>
      <!--SigmaU for cluster with three or more uCells contributing [mm]-->
-     <parameter name="SigmaU3" type="double" value="0.0070"/>
+     <parameter name="SigmaU3" type="double" value="0.0050"/>
      <!--SigmaV for cluster with one vCell contributing [mm]-->
      <parameter name="SigmaV1" type="double" value="0.0037"/>
      <!--SigmaV for cluster with two vCells contributing [mm]-->
      <parameter name="SigmaV2" type="double" value="0.0033"/>
      <!--SigmaV for cluster with three or more vCells contributing [mm]-->
-     <parameter name="SigmaV3" type="double" value="0.0070"/>
+     <parameter name="SigmaV3" type="double" value="0.0050"/>
      <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
-     <parameter name="MaxSizeU" type="int" value="2"/>
+     <parameter name="MaxSizeU" type="int" value="3"/>
      <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
-     <parameter name="MaxSizeV" type="int" value="2"/>
+     <parameter name="MaxSizeV" type="int" value="3"/>
    </processor>
 
    <processor name="M26HitMaker-not-used" type="GoeHitMaker">
@@ -141,9 +141,9 @@
      <!--SigmaV for cluster with three or more vCells contributing [mm]-->
      <parameter name="SigmaV3" type="double" value="0.010"/>
      <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
-     <parameter name="MaxSizeU" type="int" value="3"/>
+     <parameter name="MaxSizeU" type="int" value="6"/>
      <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
-     <parameter name="MaxSizeV" type="int" value="3"/>
+     <parameter name="MaxSizeV" type="int" value="6"/>
    </processor>
  
     <processor name="VXDTracker" type="FastTracker">

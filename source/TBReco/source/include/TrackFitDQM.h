@@ -91,9 +91,6 @@ namespace depfet {
     // Handle to detector data 
     TBDetector  _detector;     
     
-    std::map<int, std::map<std::string, int> >  _clusterSpectrumMap;  
-    std::map<int, TDirectory *>  _clusterDirMap;  
-    
     // Handle to root file
     TFile * _rootFile;
     
