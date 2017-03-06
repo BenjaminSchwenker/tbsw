@@ -815,13 +815,15 @@ using namespace std ;
 	delete fithistogramsum;
   }
 
-  // Calculate the momentum from the mean momentum value, a reference u position where we expect the mean momentum value to be located,
-  // the slope of the momentum distribution and the current u position
-  double CalculateMomentum(double u, double u_reference, double mom0, double mom_slope)
-  {
-        double mom=mom0+mom_slope*(u_reference-u);
-        return mom;
-  }
+// Function, which returns beam momentum value for every point on the target plane
+// This is necessary because the beam profile at DESY often have beam energy gradients in the order of a few MeV/mm
+Double_t GetMomentum(double meanvalue,double ugrad,double vgrad, double u, double v)
+{
+	double p;
+	p=meanvalue+u*ugrad+v*vgrad;
+	return p;
+}
+  
 
 
 // This script is used to create a map of a plane in a test beam telescope. The input is a TTree including 
@@ -844,6 +846,10 @@ int x0imaging()
     // Read config file
     //------------------
     TEnv mEnv("x0image-partial.cfg");
+
+    // Read calibration results config file
+    //------------------
+    TEnv mEnv_res("x0cal_result.cfg");
 
 	// TString for the input root file name
 	TString histoname,range;
@@ -929,20 +935,29 @@ int x0imaging()
 	int numberofbins=200;
 
 	// Calibration factor lambda, used to change the reconstruction error to include systematical errors
-	double lambda=mEnv.GetValue("calibrationfactor", 1.0);
+	// The calibration factor is either taken from the x0 calibration results cfg file or
+	// from the cfg, where it must be inserted manually
+	double lambda_default=mEnv.GetValue("lambda", 1.0);
+	double lambda=mEnv_res.GetValue("lambda_start", lambda_default);
 	double recoerror=sqrt(getanglerecovar(X0file))*lambda;
 	cout<<"The reconstruction error is "<<recoerror*1E6<<" µrad!"<<endl;
 
 	// Beam energy in GeV
-        // The particle momenta are distributed due to the beam generation at the desy facility
-        // Particles of different momenta are sperated by a dipole magnet and a collimator. Due to
-        // the finite size of the collimator opening particles with momenta in a certain range p0+/-delta_p
-        // can traverse into the test beam area
-        // We expect a linear distribution with slope corresponding to ~500MeV/20mm
-	double mom0=mEnv.GetValue("momentummean", 4.0);           // in GeV
-    double mom_slope=mEnv.GetValue("momentumslope", 0.0);    // in GeV/mm
+    // The particle momenta are distributed due to the beam generation at the desy facility
+    // Particles of different momenta are sperated by a dipole magnet and a collimator. Due to
+    // the finite size of the collimator opening particles with momenta in a certain range p0+/-delta_p
+    // can traverse into the test beam area
+    // We expect a linear distribution with slope corresponding to ~500MeV/20mm
+	// Take either results from x0 calibration or manually inserted values from cfg file
+	double mom0_default=mEnv.GetValue("momentumoffset", 4.0);           // in GeV
+	double mom0=mEnv_res.GetValue("momentumoffset", mom0_default);
+    double mom_uslope_default=mEnv.GetValue("momentumugradient", 0.0);    // in GeV/mm
+	double mom_uslope=mEnv_res.GetValue("momentumugradient", mom_uslope_default);
+    double mom_vslope_default=mEnv.GetValue("momentumvgradient", 0.0);    // in GeV/mm
+	double mom_vslope=mEnv_res.GetValue("momentumvgradient", mom_vslope_default);
 	cout<<"The beam energy is "<<mom0<<" GeV!"<<endl;
-	cout<<"The beam energy gradient is "<<mom_slope<<" GeV/mm!"<<endl;
+	cout<<"The beam energy gradient (u direction) is "<<mom_uslope<<" GeV/mm!"<<endl;
+	cout<<"The beam energy gradient (v direction) is "<<mom_vslope<<" GeV/mm!"<<endl;
 	
 	
 
@@ -951,6 +966,7 @@ int x0imaging()
 	{
 		getcorrection(X0file, rootfile, plotrange, numberofbins, numcol, numrow, umin, vmin, umax, vmax);
 	}
+
 	savehistos(X0file, rootfile, plotrange, numberofbins, numcol, numrow, umin, vmin, umax, vmax, correctmean);
 
 	X0file->Close();
@@ -1113,9 +1129,11 @@ int x0imaging()
 
                         // Calculate the u position of this bin
                         double u=umin+col*upitch;
+                        double v=vmin+row*vpitch;
 
                         // Determine the momentum value from the u position and the p distribution parameters
-                        double mom=CalculateMomentum(u,u_center,mom0,mom_slope);
+                        double mom=GetMomentum(mom0, mom_uslope, mom_vslope, u, v);
+
 
 			// fit the histograms
 			fithisto(rootfile, fittype,model,col,numcol,row,numrow,mom, recoerror);
