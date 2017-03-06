@@ -6,7 +6,7 @@ in README_X0Calibration. All relevant calibration parameters should be present i
 The first step is to process all data files with a specific X0 target and unchanged beam and telescope conditions. The analysis 
 can be started by using the reco.py script.
 
-> ./reco.py -i '/path/to/slcio/files/run000AB.slcio' -x steering-files/x0-tb/reco.xml -c cal-tag
+> ./reco.py -i '/path/to/raw/files/run000AB.raw' -x steering-files/x0-tb/reco.xml -c cal-tag
 
 The reco.xml for the X0 analysis contains the following processors:
 
@@ -27,7 +27,8 @@ The reco.xml for the X0 analysis contains the following processors:
 
 The nominal beam energy and the determined beam energy gradient have to be set correctly in the Fasttracker and 
 BeamEnergyCorrector. The number of required hits should be 3 in both fasttrackers for the individual telescope arms.
-The produced X0 root file contains a TTree named MSCTree. The following variables are stored in the tree:
+The produced X0 root file (/path/to/workspace/root-files/X0-run000AB.root) contains a TTree named MSCTree. The following
+variables are stored in the tree:
 
 1)  iRun            : Run number of the track
 2)  iEvt            : Event number of the track
@@ -57,22 +58,27 @@ The next step is to merge the TTrees in root files with the same target and run 
 Once you have created the merged root file, you can begin with the generation of the calibrated X/X0 image. Assuming you are in the 
 workspace folder, the image can be produced with the command:
 
-> ./root-scripts/x0imaging/GenerateImage.py -i root-files/4GeV-alutarget/X0-merge.root 
-  -s root-scripts/x0imaging/ -d 0
+> ./root-scripts/x0imaging/GenerateImage.py -i root-files/X0-merge.root 
+  -c cal-tag -d 0
 
 The imaging procedure employs a cfg file (see "root-scripts/x0imaging/image.cfg"). The parameters 
 in the config file are
 
-1) calibrationfactor        : the calibration factor of the angle resolution, should be extracted beforehand with the 
-                              designated calibration measurement
-2) momentummean             : mean value of the momentum/beam energy in the center of the image (u=0,v=0)
-3) momentumslope            : momentum gradient of the beam in u direction
+1) lambda			        : the calibration factor of the angle resolution sigma, should be extracted beforehand
+                              with a designated calibration measurement
+2) momentumoffset           : mean value of the momentum/beam energy in the center of the image (u=0,v=0)
+3) momentumugradient        : momentum gradient of the beam in u direction
+3) momentumvgradient        : momentum gradient of the beam in u direction
 4) resultsfilename          : name of the results file, which is produced by the GenerateImage.py script
 5) u_length/v_length        : side lengths of the total image, should be 20 x 10 mm² for an image of the whole beam spot 
 6) umin/vmax                : Position of the upper left corner of the total image, should be (umin,vmax)=(-10mm,5mm) for 
                               an image of the whole beam spot
 7) u/v pixelsize            : Pixel size of the image in µm, should be chosen in such away, that at least 1000 particles 
                               pass through the area of most pixels
+
+If you performed a x0 calibration measurement before this step, a cfg file named x0cal_result.cfg will be present in
+path/to/workspace/cal-files/cal-tag/. If this is the case the default values of lambda and the beam momentum parameters
+will be updated accordingly.
 
 During the X0 imaging the angles theta1 and theta2 angles from the root tree are sorted into small pixels according to 
 their intersection coordinates (u,v) on the target plane. This yields a large set of kink angle distributions, which are
@@ -88,3 +94,11 @@ function. The GenerateImage.py script produces a rootfile, which contains the fo
 6) hX0relerrmap             : Image of relative X/X0 errors
 7) hmommap                  : Image of the particle momentum/beam energy
 8) hprobmap1/2/sum          : p values of the fit of the projected angle distributions and the combined distribution
+
+Ulf Stolzenberg
+
+Göttingen 2017 
+
+ulf.stolzenberg@phys.uni-goettingen.de 
+
+

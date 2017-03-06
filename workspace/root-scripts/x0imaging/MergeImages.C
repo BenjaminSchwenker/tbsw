@@ -86,7 +86,7 @@ int MergeImages()
 	}
 
 	// Results file
-	TString resultsfilename=mEnv.GetValue("resultsfilename", "X0-merge-completearea-image");
+	TString resultsfilename=mEnv.GetValue("resultsfilename", "X0-completeimage");
 	resultsfilename+=".root";
 	TFile *Resultsfile = new TFile(resultsfilename, "RECREATE");	
 
