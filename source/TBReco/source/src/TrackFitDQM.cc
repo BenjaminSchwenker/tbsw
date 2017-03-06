@@ -6,7 +6,7 @@
 // Local includes 
 #include "TrackFitDQM.h"
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "TBTrack.h"
 #include "TrackInputProvider.h"
 #include "GenericTrackFitter.h"
@@ -257,69 +257,8 @@ void TrackFitDQM::processEvent(LCEvent * evt)
       double pull_u = du / TMath::Sqrt( TE.GetState().GetCov()[2][2] + TE.GetHit().GetCov()[0][0] ) ; 
       double pull_v = dv / TMath::Sqrt( TE.GetState().GetCov()[3][3] + TE.GetHit().GetCov()[1][1] ) ;  
       
-      PixelCluster Cluster = TE.GetHit().GetCluster(); 
+      //PixelCluster Cluster = TE.GetHit().GetCluster(); 
       
-      string id = Cluster.getDigitalClusterID();
-      
-      // Register new cluster if needed
-      if (_clusterSpectrumMap[ipl].find(id) == _clusterSpectrumMap[ipl].end() ) {
-        //  Create a new folder for histos for this cluster id  
-        TDirectory *newfolder = _clusterDirMap[ipl]->mkdir(id.c_str());    
-        newfolder->cd(); 
-
-        double maxU = 5.0*_detector.GetDet(ipl).GetPitchU(); 
-        double maxV = 5.0*_detector.GetDet(ipl).GetPitchV(); 
-        
-        histoName = "hresU_sensor"+to_string( ipl )+"_"+id;
-        _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 500, -maxU, +maxU);
-        _histoMap[ histoName ]->SetXTitle("u residual [mm]"); 
-        _histoMap[ histoName ]->SetYTitle("tracks"); 
-        
-        histoName = "hresV_sensor"+to_string( ipl )+"_"+id;
-        _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 500, -maxV, +maxV);
-        _histoMap[ histoName ]->SetXTitle("v residual [mm]"); 
-        _histoMap[ histoName ]->SetYTitle("tracks"); 
-        
-        histoName = "hresUV_sensor"+to_string( ipl )+"_"+id;
-        _histoMap2D[ histoName ] = new TH2D(histoName.c_str(), "", 500, -maxU, +maxU, 500, -maxV, +maxV);
-        _histoMap2D[ histoName ]->SetXTitle("u residual [mm]"); 
-        _histoMap2D[ histoName ]->SetYTitle("v residual [mm]"); 
-        _histoMap2D[ histoName ]->SetZTitle("tracks"); 
-
-        histoName = "hpull_resU_sensor"+to_string( ipl )+"_"+id;
-        _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, -4, +4);
-        _histoMap[ histoName ]->SetXTitle(" pull u residual"); 
-        _histoMap[ histoName ]->SetYTitle(" tracks");    
-        
-        histoName = "hpull_resV_sensor"+to_string( ipl )+"_"+id;
-        _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, -4, +4);
-        _histoMap[ histoName ]->SetXTitle(" pull v residual"); 
-        _histoMap[ histoName ]->SetYTitle(" tracks");          
-        
-        // Create a counter for occurences of this cluster id
-        _clusterSpectrumMap[ipl][id] = 0;
-         
-        _rootFile->cd("");
-      }
-         
-      // Increment the clusterID counter 
-      _clusterSpectrumMap[ipl][id]++;
-      
-      histoName = "hresU_sensor"+to_string( ipl )+"_"+id;
-      _histoMap[ histoName ]->Fill( du ); 
-
-      histoName = "hresV_sensor"+to_string( ipl )+"_"+id;
-      _histoMap[ histoName ]->Fill( dv ); 
-
-      histoName = "hresUV_sensor"+to_string( ipl )+"_"+id;
-      _histoMap2D[ histoName ]->Fill( du, dv ); 
-
-      histoName = "hpull_resU_sensor"+to_string( ipl )+"_"+id;
-      _histoMap[ histoName ]->Fill( pull_u );
-
-      histoName = "hpull_resV_sensor"+to_string( ipl )+"_"+id;
-      _histoMap[ histoName ]->Fill( pull_v );
-
       histoName = "hresU_sensor"+to_string( ipl );
       _histoMap[ histoName ]->Fill( du ); 
        
@@ -438,71 +377,6 @@ void TrackFitDQM::end()
     _histoMap["hfit_res_rms_v"]->SetBinContent(ipl+1, res_rms_v );   
     _histoMap["hfit_res_rms_v"]->SetBinError(ipl+1, res_rms_error_v );  
 
-    // Fill summary histos on cluster shapes
-    
-    // Change into cluster shape folder
-    _clusterDirMap[ipl]->cd();    
-    
-    // Book histograms for clusterDB
-    int NCLUSTERS = _clusterSpectrumMap[ipl].size();   
-    
-    // No clusterID means nothing to do
-    if (NCLUSTERS == 0) continue;
-    
-    histoName = "hClusterID_fractions_sensor"+to_string( ipl );
-    _histoMap[histoName] = new TH1D(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-    _histoMap[histoName]->SetYTitle("clusterID fraction"); 
-    _histoMap[histoName]->SetStats( false );
-    
-    histoName = "hClusterID_rmsU_sensor"+to_string( ipl );
-    _histoMap[histoName] = new TH1D(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-    _histoMap[histoName]->SetYTitle("RMS u residual [mm]"); 
-    _histoMap[histoName]->SetStats( false );
-    
-    histoName = "hClusterID_rmsV_sensor"+to_string( ipl );
-    _histoMap[histoName] = new TH1D(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-    _histoMap[histoName]->SetYTitle("RMS v residual [mm]"); 
-    _histoMap[histoName]->SetStats( false );
-    
-    histoName = "hClusterID_corrUV_sensor"+to_string( ipl );
-    _histoMap[histoName] = new TH1D(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-    _histoMap[histoName]->SetYTitle("correlation factor u-v residual"); 
-    _histoMap[histoName]->SetStats( false );
-    
-    int i = 0; 
-    
-    // Go through all cluster shapes
-    for (auto iter =_clusterSpectrumMap[ipl].begin(); iter!=_clusterSpectrumMap[ipl].end(); iter++ ) {
-      int count = iter->second;  
-      string id = iter->first;
-      i++;  
-       
-      TH1D * tmpHistU = _histoMap["hresU_sensor"+to_string( ipl )+"_"+id];
-      TH1D * tmpHistV = _histoMap["hresV_sensor"+to_string( ipl )+"_"+id];
-      TH2D * tmpHistUV = _histoMap2D["hresUV_sensor"+to_string( ipl )+"_"+id];
-
-      histoName = "hClusterID_fractions_sensor"+to_string( ipl );
-      _histoMap[histoName]->SetBinContent( i, count );
-      _histoMap[histoName]->SetBinError( i, TMath::Sqrt(count) );
-      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
-
-      histoName = "hClusterID_rmsU_sensor"+to_string( ipl );
-      _histoMap[histoName]->SetBinContent( i, tmpHistU->GetRMS() );
-      _histoMap[histoName]->SetBinError( i, tmpHistU->GetRMSError() );
-      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
-      
-      histoName = "hClusterID_rmsV_sensor"+to_string( ipl );
-      _histoMap[histoName]->SetBinContent( i, tmpHistV->GetRMS() );
-      _histoMap[histoName]->SetBinError( i, tmpHistV->GetRMSError() );
-      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );  
-      
-      histoName = "hClusterID_corrUV_sensor"+to_string( ipl );
-      _histoMap[histoName]->SetBinContent( i, tmpHistUV->GetCorrelationFactor() );
-      //_histoMap[histoName]->SetBinError( i, 0.001 );
-      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
-      
-    }  
-    
     _rootFile->cd("");
     
   }
@@ -819,8 +693,7 @@ void TrackFitDQM::bookHistos()
     _profileMap[ histoName ]->SetYTitle("momentum [GeV]"); 
     _profileMap[ histoName ]->SetXTitle("v [mm]");      
     
-    // Create empty directory to store clusterID specific histos
-    _clusterDirMap[ipl] = sensDir->mkdir("ClusterShapes");
+    
     
     // Change current directory to root
     _rootFile->cd("");

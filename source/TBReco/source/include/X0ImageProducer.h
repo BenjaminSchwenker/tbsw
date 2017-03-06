@@ -129,18 +129,15 @@ protected:
    int _rootnUpTracks;    
    int _rootNMatched;
 
-   // Msc tree variables 
-  
-   int _rootDaqID; 
-   int _rootPlaneID;
-   int _rootTrackHits;
-   
+   // Msc tree variables    
    double _rootTrackProbUp;
    double _rootTrackProbDown;
    double _rootTrackProbCombo;
    
    double _root_u; 
    double _root_v; 
+   double _root_u_var; 
+   double _root_v_var; 
    double _root_u_in; 
    double _root_v_in; 
    double _root_u_out; 
@@ -149,8 +146,8 @@ protected:
    double _root_dvdw;
    double _root_angle1;
    double _root_angle2;
-   double _root_angle1_err;
-   double _root_angle2_err;
+   double _root_angle1_var;
+   double _root_angle2_var;
    double _root_momentum;
    
  private:

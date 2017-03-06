@@ -35,7 +35,7 @@ def reco_run(params):
   os.mkdir(tmpdir)
   
   # copy lcio file that is to be processed
-  shutil.copy(rawfile, tmpdir+'/tmp-rawdata.slcio')
+  shutil.copy(rawfile, tmpdir+'/inputfilename')
   # copy steering file 
   shutil.copy(xmlfile, tmpdir+'/reco.xml')
   
@@ -54,6 +54,8 @@ def reco_run(params):
   #subprocess.call('/$MARLIN/bin/Marlin reco.xml > log.txt 2>&1', shell=True)
   subprocess.call('/$MARLIN/bin/Marlin reco.xml', shell=True)
   
+  # clean up inputfile
+  os.remove('inputfilename')
 
   # clean up tmp files 
   for tmpfile in glob.glob('tmp*'):
@@ -66,15 +68,6 @@ def reco_run(params):
   for dqmfile in glob.glob('*.root'): 
     name = os.path.splitext(os.path.basename(dqmfile))[0]
     shutil.move(dqmfile, fullpath+'/root-files/'+name+'-'+runtag+'.root')  
-  
-  # store processed lcio files
-  if not os.path.isdir(fullpath+'/lcio-files'):
-    os.mkdir(fullpath+'/lcio-files')
-  
-  if store_lcio == False: 
-    for slciofile in glob.glob('*.slcio'):    
-      name = os.path.splitext(os.path.basename(slciofile))[0]
-      shutil.move(slciofile, fullpath+'/lcio-files/'+name+'-'+runtag+'.slcio')  
   
   os.chdir(fullpath)
   #shutil.rmtree(tmpdir)
@@ -107,7 +100,7 @@ if __name__ == '__main__':
       caltag = arg
   
   if inputfiles == []:
-    print ('missing option: -i path/to/inputfilename.slcio')
+    print ('missing option: -i path/to/inputfiles')
     sys.exit(2)  
   
   if xmlfile == '':

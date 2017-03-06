@@ -8,7 +8,9 @@
 
 // C++ includes
 #include <iostream>
+#include <cmath>
 #include <iomanip>
+
 
 // Include LCIO classes
 #include <lcio.h>
@@ -22,13 +24,11 @@
 #include <TRandom.h>
 #include <TRandom3.h>
 
-
-
 // Used namespaces
 using namespace std; 
 using namespace lcio;
 using namespace marlin;
-
+using namespace CLHEP;
 
 namespace depfet {
 
@@ -47,6 +47,7 @@ namespace depfet {
     // Processor description
     _description = "Particle gun processor for simulation of a directed particle beam";
    
+
     //
     // Output collections  
     registerOutputCollection(LCIO::MCPARTICLE,"MCParticleCollectionName",
@@ -54,56 +55,62 @@ namespace depfet {
                              m_MCParticleCollectionName, string ("MCParticles"));
     
     registerProcessorParameter ("ParticleMass", "Particle mass [GeV]",
-                                m_GunMass,  static_cast < double > (0.139));
+                                m_ParticleMass,  static_cast < double > (0.139));
     
     registerProcessorParameter ("ParticleCharge", "Particle charge [e]",
-                                m_GunCharge,  static_cast < double > (+1));
+                                m_ParticleCharge,  static_cast < double > (+1));
 
     registerProcessorParameter ("PDG", "PDG code",
-                                m_GunPDG,  static_cast < int > (22));
+                                m_ParticlePDG,  static_cast < int > (22));
   
-    registerProcessorParameter ("ParticleMomentum", "Particle momentum [GeV]",
-                                m_GunMomentum,  static_cast < double > (4.0));
+    registerProcessorParameter ("BeamMomentum", "Beam momentum [GeV]",
+                                m_BeamMomentum,  static_cast < double > (4.0));
 
-    registerProcessorParameter ("GunPositionX", "X position of particle gun [mm]",
-                                m_GunPositionX,  static_cast < double > (0));
+    registerProcessorParameter ("BeamVertexX", "Beam vertex position in X direction [mm]",
+                                m_BeamVertexX,  static_cast < double > (0));
   
-    registerProcessorParameter ("GunPositionY", "Y position of particle gun [mm]",
-                                m_GunPositionY,  static_cast < double > (0));
+    registerProcessorParameter ("BeamVertexY", "Beam vertex position in Y direction [mm]",
+                                m_BeamVertexY,  static_cast < double > (0));
 
-    registerProcessorParameter ("GunPositionZ", "Z position of particle gun [mm]",
-                                m_GunPositionZ,  static_cast < double > (-5000));
-  
-    registerProcessorParameter ("GunSpotSizeX", "Smearing of X vertex position at beam collimator [mm]",
-                                m_GunSpotSizeX,  static_cast < double > (1)); 
-
-    registerProcessorParameter ("GunSpotSizeY", "Smearing of Y vertex position at beam collimator [mm]",
-                                m_GunSpotSizeY,  static_cast < double > (1)); 
-  
-    registerProcessorParameter ("GunDivergenceX", "RMS track slope in XZ plane [rad]",
-                                m_GunDivergenceX,  static_cast < double > (0.0001)); 
-  
-    registerProcessorParameter ("GunDivergenceY", "RMS track slope in YZ plane [rad]",
-                                m_GunDivergenceY,  static_cast < double > (0.0001)); 
-  
-    registerProcessorParameter ("GunCorrelationX", "Beam correlation coefficient X",
-                                m_GunCorrelationX,  static_cast < double > (0.0)); 
-  
-    registerProcessorParameter ("GunCorralationY", "Beam correlation coefficient Y",
-                                m_GunCorrelationY,  static_cast < double > (0.0)); 
-   
-    registerProcessorParameter ("GunIntensity", "Number of particles per second",
-                                m_GunBeamIntensity,  static_cast < double > (10000)); 
-  
-    registerProcessorParameter ("GunTimeWindow", "A simulated event contains one particle at t=0 and extends for given time window in seconds",
-                                m_GunTimeWindow,  static_cast < double > (0.0001)); 
-   
+    registerProcessorParameter ("BeamVertexZ", "Beam vertex position in Z direction [mm]",
+                                m_BeamVertexZ,  static_cast < double > (-5000));
     
-   
+    registerProcessorParameter ("BeamVertexXSigma", "Beam vertex sigma in X direction [mm]",
+                                m_BeamVertexXSigma,  static_cast < double > (1)); 
+    
+    registerProcessorParameter ("BeamVertexYSigma", "Beam vertex sigma in Y direction [mm]",
+                                m_BeamVertexYSigma,  static_cast < double > (1)); 
+     
+    registerProcessorParameter ("BeamSlopeXSigma", "Beam slope sigma in XZ plane [rad]",
+                                m_BeamSlopeXSigma,  static_cast < double > (0.0001)); 
+    
+    registerProcessorParameter ("BeamSlopeYSigma", "Beam slope sigma in YZ plane [rad]",
+                                m_BeamSlopeYSigma,  static_cast < double > (0.0001)); 
+    
+    registerProcessorParameter ("BeamMomentumSigma", "Beam momentum sigma [GeV]",
+                                m_BeamMomentumSigma,  static_cast < double > (0.01)); 
+    
+    registerProcessorParameter ("CorrelationVertexXvsSlopeX", "Beam correlation factor between vertex position and slope",
+                                m_BeamCorrelationVertexXvsSlopeX,  static_cast < double > (0.0)); 
+    
+    registerProcessorParameter ("CorrelationVertexYvsSlopeY", "Beam correlation factor between vertex position and slope",
+                                m_BeamCorrelationVertexYvsSlopeY,  static_cast < double > (0.0)); 
+    
+    registerProcessorParameter ("CorrelationVertexXvsMomentum", "Beam correlation factor between vertex position and momentum",
+                                m_BeamCorrelationVertexXvsMomentum,  static_cast < double > (0.0)); 
+    
+    registerProcessorParameter ("CorrelationVertexYvsMomentum", "Beam correlation factor between vertex position and momentum",
+                                m_BeamCorrelationVertexYvsMomentum,  static_cast < double > (0.0)); 
+    
+    registerProcessorParameter ("BeamIntensity", "Number of beam particles per second",
+                                m_BeamIntensity,  static_cast < double > (10000)); 
+    
+    registerProcessorParameter ("BeamTimeWindow", "A simulated event contains one particle at t=0 and extends for given time window in seconds",
+                                m_BeamTimeWindow,  static_cast < double > (0.0001)); 
                                  
   }
-
-
+  
+  
   void ParticleGunGenerator::init () {
   
     // Initialize variables
@@ -115,6 +122,54 @@ namespace depfet {
   
     // CPU time start
     _timeCPU = clock()/1000;
+
+    // Construct beam covariance matrix S 
+    //
+    // The particle state is defined relativ to the Z= m_GunPositionZ
+    // plane. The 5 dimensional state vector of the beam particle is  
+    // (dx/dz,dy/dz,x,y,p) in global XYZ coordinates. 
+    HepSymMatrix S(5,0);
+    S[0][0] = std::pow(m_BeamSlopeXSigma,2);
+    S[1][1] = std::pow(m_BeamSlopeYSigma,2);
+    S[2][2] = std::pow(m_BeamVertexXSigma,2);
+    S[3][3] = std::pow(m_BeamVertexYSigma,2);
+    S[4][4] = std::pow(m_BeamMomentumSigma,2);    
+    S[0][2] = m_BeamCorrelationVertexXvsSlopeX*m_BeamSlopeXSigma*m_BeamVertexXSigma;
+    S[2][4] = m_BeamCorrelationVertexXvsMomentum*m_BeamVertexXSigma*m_BeamMomentumSigma;
+    S[1][3] = m_BeamCorrelationVertexYvsSlopeY*m_BeamVertexYSigma*m_BeamSlopeYSigma;
+    S[3][4] = m_BeamCorrelationVertexYvsMomentum*m_BeamVertexYSigma*m_BeamMomentumSigma;     
+    
+    // Construct average track state of beam particle 
+    m_Mean = HepVector(5);
+    m_Mean(1) = 0;
+    m_Mean(2) = 0;
+    m_Mean(3) = m_BeamVertexX;
+    m_Mean(4) = m_BeamVertexY;
+    m_Mean(5) = m_BeamMomentum;
+    
+    // Decompose S and store results to 
+    // later generate random deviates    
+    m_U  = HepMatrix(5,1);
+    m_Sigmas = HepVector(5);
+    
+    HepSymMatrix tempS ( S ); 
+    
+    m_U = diagonalize ( &tempS );               // S = U Sdiag U.T()
+    HepSymMatrix D = S.similarityT(m_U);        // D = U.T() S U = Sdiag
+    for (int i = 1; i <= S.num_row(); i++) {
+      double s2 = D(i,i);
+      if ( s2 > 0 ) {
+	    m_Sigmas(i) = std::sqrt ( s2 );
+      } else {
+        std::cerr << "In ParticelGunGenerator: " <<
+                    "      Beam covariance matrix is not positive definite.  Eigenvalues are:\n";
+        for (int ixx = 1; ixx <= S.num_row(); ixx++) {
+          std::cerr << "      " << D(ixx,ixx) << std::endl;
+        }
+        std::cerr << "---Exiting to System\n";
+        exit(1);
+      }
+    } 
   }
 
   //
@@ -148,43 +203,24 @@ namespace depfet {
     double time = 0; 
     int nParticle = 0; 
 
-    while ( time < m_GunTimeWindow ) { 
+    while ( time < m_BeamTimeWindow ) { 
 
+      // Sample 5 dimensional state vector for new beam particle 
+      HepVector state = deviates();
+    
+      double momentum = state(5);    // momentum in GeV        
+      double tx = state(1);          // direction tangent dx/dz
+      double ty = state(2);          // direction tangent dy/dz 
       
-      // Sample vertex and momentum from a directed particle beam.
-      // 
-      // Mean position and directions are always zero in collimator 
-      // frame. 
-      // 
-      // Variables are decomposed into two uncorrelated pairs, namely 
-      // (dx/dz,x) and (dy/dz,y). 
-      //
-      // We use a cholesky decomposition method to sample from the 
-      // correlated pairs. 
+      double Norm = momentum/std::sqrt( tx*tx + ty*ty + 1 );
+      double P1 = tx*Norm; 
+      double P2 = ty*Norm; 
+      double P3 = Norm; 
       
-      double X1 = gRandom->Gaus(0, 1); 
-      double X2 = gRandom->Gaus(0, 1); 
-      double Y1 = gRandom->Gaus(0, 1); 
-      double Y2 = gRandom->Gaus(0, 1);
-      
-      double covX = m_GunCorrelationX*m_GunDivergenceX*m_GunSpotSizeX;
-      double covY = m_GunCorrelationY*m_GunDivergenceY*m_GunSpotSizeY;  
-      double DX = std::sqrt( std::pow(m_GunDivergenceX,2)*std::pow(m_GunSpotSizeX,2) - covX*covX );
-      double DY = std::sqrt( std::pow(m_GunDivergenceY,2)*std::pow(m_GunSpotSizeY,2) - covY*covY );
-      
-      double P1 = m_GunDivergenceX*X1;                     // dx/dz
-      double P2 = m_GunDivergenceY*Y1;                     // dy/dz
-      double P3 = 1; 
-      
-      double Norm = m_GunMomentum/std::sqrt( P1*P1 + P2*P2 + 1 );
-      P1 *= Norm; 
-      P2 *= Norm; 
-      P3 *= Norm; 
-      
-      double V1 = m_GunPositionX + (covX*X1 + DX*X2) / m_GunDivergenceX;    // x 
-      double V2 = m_GunPositionY + (covY*Y1 + DY*Y2) / m_GunDivergenceY;    // y  
-      double V3 = m_GunPositionZ; 
-      
+      double V1 = state(3);          // x vertex position  
+      double V2 = state(4);          // y vertex position   
+      double V3 = m_BeamVertexZ;     // z vertex position  
+          
       //
 	  //  Create a MCParticle and fill it from stdhep info
 	  //
@@ -192,7 +228,7 @@ namespace depfet {
       //
 	  //  PDGID
 	  //
-	  mcp->setPDG(m_GunPDG);
+	  mcp->setPDG(m_ParticlePDG);
 	  //
 	  //  Momentum vector
 	  //
@@ -201,11 +237,11 @@ namespace depfet {
 	  //
 	  //  Mass
 	  //
-	  mcp->setMass(m_GunMass);
+	  mcp->setMass(m_ParticleMass);
       //
 	  //  Charge
 	  //
-	  mcp->setCharge(m_GunCharge);
+	  mcp->setCharge(m_ParticleCharge);
 	  //
 	  //  Vertex
 	  // 
@@ -231,7 +267,7 @@ namespace depfet {
       //
       //  Advance time until the next beam particle
       // 
-      time += gRandom->Exp(1.0/m_GunBeamIntensity);  
+      time += gRandom->Exp(1.0/m_BeamIntensity);  
       nParticle += 1;  
     
     }
@@ -293,9 +329,18 @@ namespace depfet {
 
 
   }
-
-
-
+  
+  HepVector ParticleGunGenerator::deviates( ) const
+  {
+    // Returns vector of gaussian randoms based on sigmas, rotated by U,
+    // with means of 0. 
+    HepVector v(5);  // The vector to be returned
+    for ( int i = 1; i <= 5; i++ ) {
+      v(i) = gRandom->Gaus(0, m_Sigmas(i));  
+    }
+    return m_Mean + m_U*v;
+  } 
+  
 } // Namespace
 
 

@@ -28,22 +28,6 @@ make install
 cd ../..
 
 ############################################################
-# Install eudaq
-cd eudaq
-export LCIO=${TBSW_HOME}/lcio
-make main 
-cd ..
-
-############################################################
-# Install lccd
-cd lccd
-mkdir build
-cd build 
-cmake -C ../BuildSetup.cmake ..
-make install
-cd ../..
-
-############################################################
 # Install Marlin  
 cd Marlin
 mkdir build
@@ -51,7 +35,16 @@ cd build
 cmake -C ../BuildSetup.cmake ..
 make install
 cd ../.. 
-        
+
+############################################################
+# Install EudaqInput
+cd EudaqInput
+mkdir build
+cd build 
+cmake -C ../config/BuildSetup.cmake ..
+make install 
+cd ../..
+
 ############################################################
 # Install TBTools  
 cd TBTools
@@ -95,17 +88,11 @@ echo "export LD_LIBRARY_PATH="$LCIO/lib:$LD_LIBRARY_PATH"" >> init_tbsw.sh
 echo "" >> init_tbsw.sh
 
 echo "#--------------------------------------------------------------------------------" >> init_tbsw.sh
-echo "#    EUDAQ                                                                       " >> init_tbsw.sh
-echo "#--------------------------------------------------------------------------------" >> init_tbsw.sh
-echo "export EUDAQ="${TBSW_HOME}/eudaq"" >> init_tbsw.sh
-echo "" >> init_tbsw.sh
-
-echo "#--------------------------------------------------------------------------------" >> init_tbsw.sh
 echo "#    Marlin                                                                      " >> init_tbsw.sh
 echo "#--------------------------------------------------------------------------------" >> init_tbsw.sh
 echo "export MARLIN="${TBSW_HOME}/Marlin"" >> init_tbsw.sh
 echo "export PATH="${MARLIN}/bin:${PATH}"" >> init_tbsw.sh
-echo "export MARLIN_DLL="${TBSW_HOME}/TBReco/lib/libTBReco.so:"" >> init_tbsw.sh
+echo "export MARLIN_DLL="${TBSW_HOME}/TBReco/lib/libTBReco.so:${TBSW_HOME}/EudaqInput/lib/libEudaqInput.so:"" >> init_tbsw.sh
 echo "" >> init_tbsw.sh
 
 

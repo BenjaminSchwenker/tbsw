@@ -11,10 +11,12 @@ if __name__ == '__main__':
   rawfile = ''
   xmlpath = ''
   caltag='dummy'
-  useMC = False
+  clusterMC = False
+  clusterShapeIter = 0
+  
   
   try:
-    opts, args = getopt.getopt(sys.argv[1:],"hi:x:c:",["ifile=","xmlfile=","caltag=","useMC="])
+    opts, args = getopt.getopt(sys.argv[1:],"hi:x:c:",["ifile=","xmlfile=","caltag=","clusterMC=","clusterShapeIter="])
   except getopt.GetoptError:
     print ('calibrate.py -i <inputfile>  -x <xmlfile> -c <caltag>')
     print ('-c is optional and defaults to: ' + caltag )
@@ -23,6 +25,7 @@ if __name__ == '__main__':
     if opt == '-h':
       print ('calibrate.py -i <inputfile> -x <xmlfile> -c <caltag>')
       print ('-c is optional and defaults to: ' + caltag )
+      print ('--clusterShapeIter is optional and defaults to: ' + '0' )
       sys.exit()
     elif opt in ("-i", "--ifile"):
       rawfile = arg
@@ -30,11 +33,13 @@ if __name__ == '__main__':
       xmlpath = arg
     elif opt in ("-c", "--caltag"):
       caltag = arg
-    elif opt in ("--useMC"):
-      useMC = arg
+    elif opt in ("--clusterMC"):
+      clusterMC = arg
+    elif opt in ("--clusterShapeIter"):
+      clusterShapeIter = int(arg)
    
   if rawfile == '':
-    print ('missing option: -i path/to/inputfilename.slcio')
+    print ('missing option: -i path/to/inputfilename')
     sys.exit(2)  
   
   if xmlpath == '':
@@ -65,7 +70,7 @@ if __name__ == '__main__':
     shutil.copy(srcname, tmpdir)
   
   # copy rawdata 
-  shutil.copy(rawfile, tmpdir+'/tmp-rawdata.slcio')
+  shutil.copy(rawfile, tmpdir+'/inputfilename')
   
   # run calibration in tmp dir  
   os.chdir(tmpdir)
@@ -73,13 +78,13 @@ if __name__ == '__main__':
   subprocess.call('/$MARLIN/bin/Marlin hotpixelkiller.xml > log-hotpixel.txt 2>&1', shell=True)
   print ('[Print] HotPixelKiller done ...')
   		  
-  if useMC:
-    subprocess.call('/$MARLIN/bin/Marlin cluster-calibration.xml > log-clustering.txt 2>&1', shell=True)
-    print ('[Print] ClusterDB done ...')    
-  
   subprocess.call('/$MARLIN/bin/Marlin correlator.xml > log-correlator.txt 2>&1', shell=True)    
   print ('[Print] Correlator done ...')           
-                  		              
+          
+  if clusterMC:
+    subprocess.call('/$MARLIN/bin/Marlin cluster-calibration-mc.xml > log-clustering-mc.txt 2>&1', shell=True)
+    print ('[Print] ClusterDB done ...')    
+        		              
   subprocess.call('/$MARLIN/bin/Marlin kalmanalign-iteration-1.xml > log-align-it1.txt 2>&1', shell=True)     
   print ('[Print] Alignment first iteration done ...')               
                	               
@@ -93,8 +98,15 @@ if __name__ == '__main__':
   print ('[Print] Alignment fourth iteration done ...')   
 	               
   subprocess.call('/$MARLIN/bin/Marlin telescope-dqm.xml > log-dqm.txt 2>&1', shell=True)     
-  print ('[Print] TelescopeDQM done.')   	
-
+  print ('[Print] TelescopeDQM done ...')   	
+  
+  for i in range(0, clusterShapeIter):
+    subprocess.call('/$MARLIN/bin/Marlin cluster-calibration-tb.xml > log-clustering-tb.txt 2>&1', shell=True)     
+    print ('[Print] clusterDB iteration done ...')   	
+  
+  # clean up inputfile
+  os.remove('inputfilename')
+  
   # clean up tmp files 
   for tmpfile in glob.glob('tmp*'):
     os.remove(tmpfile)

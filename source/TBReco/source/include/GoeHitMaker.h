@@ -1,6 +1,6 @@
 // ///////////////////////////////////////////////////////////////////////////////////////  //
 //                                                                                          //
-//    GoeHitMaker - Marlin Processor - Compute pixel hits from clusters                //
+//    GoeHitMaker - Marlin Processor - Compute pixel hits from clusters                     //
 // ///////////////////////////////////////////////////////////////////////////////////////  //
 
 
@@ -19,7 +19,6 @@
 #include <string>
 
 // Include ROOT classes
-#include <TFile.h>
 #include <TH1F.h>
 
 
@@ -30,6 +29,9 @@ namespace depfet {
   /*! This processor computes 2D hits from pixel clusters. The 
    *  processor uses a clusterDB file with pre-computed offsets 
    *  and covariance matrix entries. 
+   * 
+   *  The needed clusterDB is either produced by the GoeClusterCalibrator
+   *  or by the GoeClusterCalibratorForMC processors. 
    *  
    *  Author: Benjamin Schwenker, Göttingen University 
    *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
@@ -64,6 +66,9 @@ namespace depfet {
     void printProcessorParams() const;
     
    protected:
+    
+    //!Method searching for clusterID id on sensor sensorID in clusterDB. Returns success.  
+    bool searchDB(int sensorID, std::string id, double& u, double& v, double& sig2_u, double& sig2_v, double& cov_uv);
       
     //! Input cluster collection name
     std::string  _clusterCollectionName; 
@@ -74,22 +79,31 @@ namespace depfet {
     //! Name of clusterDB file 
     std::string  _clusterDBFileName;
     
+    //! Clusters having more cells in u/v are considered bad
+    int _maxSizeU;
+    int _maxSizeV;
+    
    private:
     
     // Handle to detector data 
-    TBDetector _detector;    
-    
-    //! ClusterDB 
-    TFile * _clusterDBFile;
-    TH1F *_DB_U;         
-    TH1F *_DB_V;       
-    TH1F *_DB_Sigma_U;   
-    TH1F *_DB_Sigma_V;  
-    TH1F *_DB_Cov_UV;   
-    
+    TBDetector _detector;  
+
+    // Store pre coomputed cluster measurements 
+    // Key is sensorID 
+    std::map< int, TH1F *> _DB_Map_ID;
+    std::map< int, TH1F *> _DB_Map_U; 
+    std::map< int, TH1F *> _DB_Map_V; 
+    std::map< int, TH1F *> _DB_Map_Sigma2_U;
+    std::map< int, TH1F *> _DB_Map_Sigma2_V; 
+    std::map< int, TH1F *> _DB_Map_Cov_UV;
+      
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number
     int    _nEvt ;   //!< Event number
+    
+    std::map< int, int> _countAllMap;   //!< Number of clusters per sensor
+    std::map< int, int> _countBadMap;   //!< Number of bad clusters per sensor
+    std::map< int, int> _countCalMap;   //!< Number of calibrated clusters per sensor
     
   }; // Class
 

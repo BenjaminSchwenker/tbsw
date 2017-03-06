@@ -3,7 +3,8 @@
 <marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
 
    <execute>
-      <processor name="LoadNoiseDB-M26"/>
+      <processor name="RawInputProcessor"/>
+      <processor name="M26Unpacker"/>
       <processor name="M26Clusterizer"/>
       <processor name="M26HitMaker"/>
       <processor name="DownstreamFinder"/>
@@ -14,7 +15,7 @@
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> tmp-rawdata.slcio </parameter>
+      <parameter name="LCIOInputFiles">  </parameter>
       <parameter name="GearXMLFile" value="cal-files/gear.xml"/>
       <parameter name="MaxRecordNumber" value="-1"/>
       <parameter name="SkipNEvents" value="0"/>
@@ -22,17 +23,29 @@
       <parameter name="Verbosity" value="MESSAGE3"/>
    </global>
    
-   <processor name="LoadNoiseDB-M26" type="ConditionsProcessor">
-     <!--Initialization of a simple conditions file handler-->
-     <parameter name="SimpleFileHandler" type="StringVec"> status_m26 cal-files/NoiseDB-M26.slcio status_m26 </parameter>
+   <processor name="RawInputProcessor" type="EudaqInputProcessor">
+     <!--Reads a EUDAQ .raw file event by event and stores raw data into lcio::LCEvents.
+         Make sure to not specify any LCIOInputFiles.-->
+     <!--Set name of the detector-->
+     <parameter name="DetectorName" type="string" value="EUTelescope"/>
+     <!--Input file-->
+     <parameter name="FileName" type="string" value="inputfilename"/>
    </processor>
-     
+   
+   <processor name="M26Unpacker" type="NIUnpacker">
+     <!--NIUnpacker: Unpacker for M26 sensors in EUDET/AIDA telescope raw data-->
+     <!--Name of collection containing raw data-->
+     <parameter name="InputCollectionName" type="string" lcioInType="TrackerRawData"> NI </parameter>
+     <!--Name of the output digit collection-->
+     <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerData"> zsdata_m26 </parameter>
+   </processor>
+   
    <processor name="M26Clusterizer" type="PixelClusterizer">
      <!--PixelClusterizer: Looking for clusters in zs pixel data-->
+     <!--This is the name of the ROOT file with the status mask (add .root)-->
+     <parameter name="NoiseDBFileName" type="string" value="cal-files/NoiseDB-M26.root"/>
      <!--Name of input sparsified pixel data collection-->
      <parameter name="SparseDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
-     <!--Input status collection name-->
-     <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status_m26 </parameter>
      <!--Name of the output cluster collection-->
      <parameter name="ClusterCollectionName" type="string" lcioOutType="TrackerPulse"> zscluster_m26 </parameter>
      <!--0: common side; 1: common corner; 3: max. one missing pixel-->
@@ -45,7 +58,17 @@
      <parameter name="SparseZSCut" type="float" value="0"/>
    </processor>
    
-   <processor name="M26HitMaker" type="CogHitMaker">
+   <processor name="M26HitMaker" type="GoeHitMaker">
+     <!--GoeHitMaker:  Compute hits from pixel clusters using a clusterDB-->
+     <!--Name of cluster collection-->
+     <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_m26 </parameter>
+     <!--Name of hit collection-->
+     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_m26 </parameter>
+     <!--This is the name of the ROOT file with the cluster constants (add .root)-->
+     <parameter name="ClusterDBFileName" type="string" value="cal-files/clusterDB-ALL.root"/>
+   </processor>
+     
+   <processor name="M26HitMaker-notused" type="CogHitMaker">
      <!--CogHitMaker:  Compute hits from pixel clusters -->
      <!--Name of cluster collection-->
      <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_m26 </parameter>
@@ -104,7 +127,7 @@
      <!--Particle mass [GeV]-->
      <parameter name="ParticleMass" type="double" value="0.000511"/>
      <!--Particle momentum [GeV]-->
-     <parameter name="ParticleMomentum" type="double" value="3.0"/>
+     <parameter name="ParticleMomentum" type="double" value="4.0"/>
      <!--Build track seeds from first plane and second plane-->
      <parameter name="PassOne_FirstPlane" type="int" value="4"/>
      <!--Build track seeds from first plane and second plane-->
@@ -150,7 +173,7 @@
      <!--Particle mass [GeV]-->
      <parameter name="ParticleMass" type="double" value="0.000511"/>
      <!--Particle momentum [GeV]-->
-     <parameter name="ParticleMomentum" type="double" value="3.0"/>
+     <parameter name="ParticleMomentum" type="double" value="4.0"/>
      <!--Build track seeds from first plane and second plane-->
      <parameter name="PassOne_FirstPlane" type="int" value="0"/>
      <!--Build track seeds from first plane and second plane-->
@@ -170,11 +193,11 @@
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="cal-files/eudet-alignmentDB.slcio"/>
      <!--Momentum at centre of reference plane [GeV]-->
-     <parameter name="CentralMomentum" type="double" value="3.16"/>
+     <parameter name="CentralMomentum" type="double" value="4.0"/>
      <!--Plane number along the beam line-->
      <parameter name="ReferencePlane" type="int" value="3"/>
      <!--Momentum slope along u [GeV/mm]-->
-     <parameter name="SlopeUMomentum" type="double" value="-0.006"/>
+     <parameter name="SlopeUMomentum" type="double" value="0.0"/>
      <!--Momentum slope along v [GeV/mm]-->
      <parameter name="SlopeVMomentum" type="double" value="0"/>
    </processor>
@@ -188,11 +211,11 @@
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="cal-files/eudet-alignmentDB.slcio"/>
      <!--Momentum at centre of reference plane [GeV]-->
-     <parameter name="CentralMomentum" type="double" value="3.16"/>
+     <parameter name="CentralMomentum" type="double" value="4.0"/>
      <!--Plane number along the beam line-->
      <parameter name="ReferencePlane" type="int" value="3"/>
      <!--Momentum slope along u [GeV/mm]-->
-     <parameter name="SlopeUMomentum" type="double" value="-0.006"/>
+     <parameter name="SlopeUMomentum" type="double" value="0.0"/>
      <!--Momentum slope along v [GeV/mm]-->
      <parameter name="SlopeVMomentum" type="double" value="0"/>
    </processor>

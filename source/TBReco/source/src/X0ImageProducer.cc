@@ -344,12 +344,16 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     // The u and v positions are needed for a position-resolved measurement
     HepMatrix p_in = InState.GetPars();
     HepMatrix p_out = OutState.GetPars();
+
+
+	// Get the covariance entries of the intersection coordinates
+	HepMatrix instate_covs=InState.GetCov();
+	HepMatrix outstate_covs=OutState.GetCov();
+	_root_u_var=0.25*(instate_covs[2][2]+outstate_covs[2][2]);
+	_root_v_var=0.25*(instate_covs[3][3]+outstate_covs[3][3]);
      	
     // Fill root variables 
-    _rootDaqID = dut.GetDAQID(); 
-    _rootPlaneID = _idut;
     _root_momentum = uptrack.GetMomentum(); 
-    _rootTrackHits = uptrack.GetNumHits() + downtrack.GetNumHits(); 
     _rootTrackProbUp = TMath::Prob(uptrack.GetChiSqu(),uptrack.GetNDF());
     _rootTrackProbDown = TMath::Prob(downtrack.GetChiSqu(),downtrack.GetNDF());
     _rootTrackProbCombo = TMath::Prob( comboChi2 ,uptrack.GetNDF()+downtrack.GetNDF());
@@ -365,8 +369,8 @@ void X0ImageProducer::processEvent(LCEvent * evt)
    
     _root_angle1 = theta[0][0];
     _root_angle2 = theta[1][0];
-    _root_angle1_err = TMath::Sqrt(Cov[0][0]);
-    _root_angle2_err = TMath::Sqrt(Cov[1][1]);
+    _root_angle1_var = Cov[0][0];
+    _root_angle2_var = Cov[1][1];
     
     _rootMscTree->Fill();       
     
@@ -448,11 +452,11 @@ void X0ImageProducer::bookHistos() {
   // 
   // Event Summary Tree 
   _rootEventTree = new TTree("Event","Event info");
-  _rootEventTree->Branch("iRun"            ,&_rootRunNumber      ,"iRun/I");
-  _rootEventTree->Branch("iEvt"            ,&_rootEventNumber    ,"iEvt/I");
+  _rootEventTree->Branch("iRun"             ,&_rootRunNumber       ,"iRun/I");
+  _rootEventTree->Branch("iEvt"             ,&_rootEventNumber     ,"iEvt/I");
   _rootEventTree->Branch("nDownTracks"      ,&_rootnDownTracks     ,"nDownTracks/I");
-  _rootEventTree->Branch("nUpTracks"      ,&_rootnUpTracks     ,"nUpTracks/I"); 
-  _rootEventTree->Branch("nMatched"      ,&_rootNMatched     ,"nMatched/I");
+  _rootEventTree->Branch("nUpTracks"        ,&_rootnUpTracks       ,"nUpTracks/I"); 
+  _rootEventTree->Branch("nMatched"         ,&_rootNMatched        ,"nMatched/I");
 
   
     
@@ -461,29 +465,27 @@ void X0ImageProducer::bookHistos() {
   _rootMscTree = new TTree("MSCTree","Multiple scattering data");
   _rootMscTree->Branch("iRun"            ,&_rootRunNumber       ,"iRun/I");
   _rootMscTree->Branch("iEvt"            ,&_rootEventNumber     ,"iEvt/I"); 
-  _rootMscTree->Branch("daqid"           ,&_rootDaqID           ,"daqid/I"); 
-  _rootMscTree->Branch("ipl"             ,&_rootPlaneID         ,"ipl/I"); 
-  _rootMscTree->Branch("nhits"           ,&_rootTrackHits       ,"nhits/I"); 
   _rootMscTree->Branch("prob_up"         ,&_rootTrackProbUp     ,"prob_up/D"); 
   _rootMscTree->Branch("prob_down"       ,&_rootTrackProbDown   ,"prob_down/D"); 
   _rootMscTree->Branch("prob_combo"      ,&_rootTrackProbCombo  ,"prob_combo/D"); 
 
-  _rootMscTree->Branch("u"            ,&_root_u             ,"u/D");
-  _rootMscTree->Branch("v"            ,&_root_v             ,"v/D");
-  _rootMscTree->Branch("dudw"         ,&_root_dudw          ,"dudw/D");
-  _rootMscTree->Branch("dvdw"         ,&_root_dvdw          ,"dvdw/D"); 
+  _rootMscTree->Branch("dudw"       	 ,&_root_dudw           ,"dudw/D");
+  _rootMscTree->Branch("dvdw"            ,&_root_dvdw           ,"dvdw/D"); 
 
+  _rootMscTree->Branch("u_in"            ,&_root_u_in           ,"u_in/D");
+  _rootMscTree->Branch("v_in"            ,&_root_v_in           ,"v_in/D");
+  _rootMscTree->Branch("u_out"           ,&_root_u_out          ,"u_out/D");
+  _rootMscTree->Branch("v_out"           ,&_root_v_out          ,"v_out/D");
+  _rootMscTree->Branch("u"               ,&_root_u              ,"u/D");
+  _rootMscTree->Branch("v"               ,&_root_v              ,"v/D");
+  _rootMscTree->Branch("u_var"           ,&_root_u_var          ,"u_var/D");
+  _rootMscTree->Branch("v_var"           ,&_root_v_var          ,"v_var/D");
 
-  _rootMscTree->Branch("u_in"         ,&_root_u_in          ,"u_in/D");
-  _rootMscTree->Branch("v_in"         ,&_root_v_in          ,"v_in/D");
-  _rootMscTree->Branch("u_out"        ,&_root_u_out         ,"u_out/D");
-  _rootMscTree->Branch("v_out"        ,&_root_v_out         ,"v_out/D");
-
-  _rootMscTree->Branch("theta1_val"      ,&_root_angle1      ,"theta1_val/D"); 
-  _rootMscTree->Branch("theta2_val"      ,&_root_angle2      ,"theta2_val/D");
-  _rootMscTree->Branch("theta1_err"      ,&_root_angle1_err  ,"theta1_err/D");
-  _rootMscTree->Branch("theta2_err"      ,&_root_angle2_err  ,"theta2_err/D");
-  _rootMscTree->Branch("momentum"        ,&_root_momentum    ,"momentum/D");
+  _rootMscTree->Branch("theta1"          ,&_root_angle1         ,"theta1/D"); 
+  _rootMscTree->Branch("theta2"          ,&_root_angle2         ,"theta2/D");
+  _rootMscTree->Branch("theta1_var"      ,&_root_angle1_var     ,"theta1_var/D");
+  _rootMscTree->Branch("theta2_var"      ,&_root_angle2_var     ,"theta2_var/D");
+  _rootMscTree->Branch("momentum"        ,&_root_momentum       ,"momentum/D");
   
 
 }

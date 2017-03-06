@@ -20,20 +20,13 @@
 #############################################################################
 
 # Path to LCIO
-SET( LCIO_HOME "$ENV{TBSW_HOME}/lcio"
-    CACHE PATH "Path to LCIO" FORCE )
+SET( LCIO_HOME "$ENV{TBSW_HOME}/lcio" CACHE PATH "Path to LCIO" FORCE )
 
 # Path to GEAR
-SET( GEAR_HOME "$ENV{TBSW_HOME}/gear"
-    CACHE PATH "Path to GEAR" FORCE )
-
-# Path to LCCD
-SET( LCCD_HOME "$ENV{TBSW_HOME}/lccd"
-    CACHE PATH "Path to LCCD" FORCE )
+SET( GEAR_HOME "$ENV{TBSW_HOME}/gear" CACHE PATH "Path to GEAR" FORCE )
 
 # CMake Modules Path
-SET( CMAKE_MODULE_PATH "$ENV{TBSW_HOME}/CMakeModules"
-    CACHE PATH "Path to CMake Modules" FORCE )
+SET( CMAKE_MODULE_PATH "$ENV{TBSW_HOME}/CMakeModules" CACHE PATH "Path to CMake Modules" FORCE )
 
 #############################################################################
 # Marlin GUI

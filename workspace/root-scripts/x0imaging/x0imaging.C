@@ -3,32 +3,26 @@
 using namespace std ;
 
 
-  // Function to sort the MSC angles depending on their u,v crossing point
-  double getrecoerror(TFile* file, double lambda)
+  // Returns the mean value of the angle reco error squared
+  double getanglerecovar(TFile* file)
   {
 	//TTree in input root file, that contains the MSC projected angle distributions and reconstruction error distribution
 	file->cd("");
 	TTree *msc_tree = (TTree*)file->Get("MSCTree");
 
 	// Draw reconstruction error 1 histogram
-	msc_tree->Draw("theta1_err", "", "P*");
+	msc_tree->Draw("theta1_var", "", "P*");
 
 	// Get mean value
-	double recoerror = msc_tree->GetHistogram()->GetMean();		//mean methode
+	double recovar = msc_tree->GetHistogram()->GetMean();
 
 	// Get maximum value
-	double recoerror_max = msc_tree->GetHistogram()->GetBinCenter(msc_tree->GetHistogram()->GetMaximumBin());	//max methode
+	double recovar_error = msc_tree->GetHistogram()->GetMeanError();	//max methode
 
-	// The difference of results between the two methods of reading out the recoerror shouldn't be larger than 10%
-	if(2*abs(recoerror-recoerror_max)/(recoerror+recoerror_max)>0.1)
-	{
-		cout<<"Reconstruction error not well defined!"<<endl; 
-	}
+	// The recovar error shouldn't be too large! 
+	cout<<"Angle Reconstruction Variance is "<<recovar<<" +/- "<<recovar_error<<endl; 
 
-	//Calibration of the Reco Error
-	double recoerror_cali=recoerror*lambda;
-
-	return recoerror_cali;
+	return recovar;
   }
 
 
@@ -62,8 +56,6 @@ using namespace std ;
 	TH1F *histo_vresidual[numcol][numrow];
 	TH1F *histo_thetasum[numcol][numrow];
 	TH2F *histo_2d[numcol][numrow];
-
-	TH1F *histo_trackchi2[numcol][numrow];
 
 	for (int i=0; i<numcol; i++)
 	{
@@ -132,7 +124,6 @@ using namespace std ;
 	Double_t v_in;
 	Double_t u_out;
 	Double_t v_out;
-	Double_t track_chi2;
 
 	// Array of mean theta1 and theta2 values in each map pixel
 	double mean1[numcol][numrow];
@@ -151,7 +142,6 @@ using namespace std ;
 	msc_tree->SetBranchAddress("v_in",&v_in);
 	msc_tree->SetBranchAddress("u_out",&u_out);
 	msc_tree->SetBranchAddress("v_out",&v_out);
-	msc_tree->SetBranchAddress("chi2",&track_chi2);
 
 	file2->cd("");
 	file2->cd("mapping/raw");
@@ -164,8 +154,6 @@ using namespace std ;
 	TH1F *histo_thetasum[numcol][numrow];
 	TH2F *histo_2d[numcol][numrow];
 
-	TH1F *histo_trackchi2[numcol][numrow];
-
 	for (int i=0; i<numcol; i++)
 	{
 		for (int j=0; j<numrow; j++)
@@ -176,8 +164,6 @@ using namespace std ;
 		 	histo_vresidual[i][j] = new TH1F("","",1000,-1.0,1.0);
 		 	histo_thetasum[i][j] = new TH1F("","",numberofbins,-plotrange,plotrange);
 			histo_2d[i][j] = new TH2F("","",numberofbins,-plotrange,plotrange,numberofbins,-plotrange,plotrange);
-
-			histo_trackchi2[i][j] = new TH1F("","",numberofbins,0.0,100.0);
 
 			// Get the histograms generated in the getcorrection function
 			// Name of the histograms
@@ -246,8 +232,6 @@ using namespace std ;
 		histo_thetasum[col][row]->Fill(theta2);
 
 		histo_2d[col][row]->Fill(theta1,theta2);
-
-		histo_trackchi2[col][row]->Fill(track_chi2);
 	}
 
 	for (int i=0; i<numcol; i++)
@@ -270,9 +254,6 @@ using namespace std ;
 			histo_thetasum[i][j]->Delete();
 			histo_2d[i][j]->Write("2Dhisto_"+histoname);
 			histo_2d[i][j]->Delete();
-
-			histo_trackchi2[i][j]->Write("trackchi2_"+histoname);
-			histo_trackchi2[i][j]->Delete();
 		}
 		
 	}
@@ -446,8 +427,6 @@ using namespace std ;
 	histogramv=(TH1*)file->Get("mapping/raw/vresidual_"+histoname);
 	histogramsum=(TH1*)file->Get("mapping/raw/sumhisto_"+histoname);
 
-	trackchi2_histogram=(TH1*)file->Get("mapping/raw/trackchi2_"+histoname);
-
 	file->cd("");
 	file->cd("mapping/fit");
 
@@ -480,10 +459,6 @@ using namespace std ;
 	double minvalue=1.0/(2.0*2.7);
 
 	int NumberOfTracks=fithistogram1->GetEntries();
-
-	// Fill the track chi2 map and write it
-	double trackchi2=trackchi2_histogram->GetMean();
-	cout<<"Track chi2: "<<trackchi2<<endl;	
 
 	uresidual_mean=histogramu->GetMean();
 	vresidual_mean=histogramv->GetMean();
@@ -632,6 +607,8 @@ using namespace std ;
 		chi2ndof_2=0.0;
 		prob2=0.0;
 
+		sigmasum=0.0;
+
 		cout<<"Histograms (nearly) empty... no fit possible!"<<endl;
 	}
 
@@ -653,9 +630,6 @@ using namespace std ;
 
 	// Get the mean v residual histogram
 	vresidual_meanmap=(TH2*)file->Get("mapping/result/hvresidualmeanmap");
-
-	trackchi2map=(TH2*)file->Get("mapping/result/htrackchi2map");
-
         // Get the momentum 2D histogram
 	mommap=(TH2*)file->Get("mapping/result/hmommap");
 
@@ -666,8 +640,6 @@ using namespace std ;
 	// Fill both maps containing the residual means
 	uresidual_meanmap->SetBinContent(col+1,row+1,uresidual_mean*1E3);
 	vresidual_meanmap->SetBinContent(col+1,row+1,vresidual_mean*1E3);
-
-	trackchi2map->SetBinContent(col+1,row+1,trackchi2);
 
         // Fill the momentum image
 	mommap->SetBinContent(col+1,row+1,mom);
@@ -817,7 +789,6 @@ using namespace std ;
 
 		uresidual_meanmap->Write();
 		vresidual_meanmap->Write();
-		trackchi2map->Write();
 
 		nummap->Write();
                 X0relerrmap->Write();
@@ -844,13 +815,15 @@ using namespace std ;
 	delete fithistogramsum;
   }
 
-  // Calculate the momentum from the mean momentum value, a reference u position where we expect the mean momentum value to be located,
-  // the slope of the momentum distribution and the current u position
-  double CalculateMomentum(double u, double u_reference, double mom0, double mom_slope)
-  {
-        double mom=mom0+mom_slope*(u_reference-u);
-        return mom;
-  }
+// Function, which returns beam momentum value for every point on the target plane
+// This is necessary because the beam profile at DESY often have beam energy gradients in the order of a few MeV/mm
+Double_t GetMomentum(double meanvalue,double ugrad,double vgrad, double u, double v)
+{
+	double p;
+	p=meanvalue+u*ugrad+v*vgrad;
+	return p;
+}
+  
 
 
 // This script is used to create a map of a plane in a test beam telescope. The input is a TTree including 
@@ -861,19 +834,26 @@ int x0imaging()
 	gSystem->Load("libTreePlayer.so");
 
 	gROOT->Reset(); 
-	//gROOT->SetStyle("Plain"); 
 
 	// display mode
 	gStyle->SetPalette(1);
 	gStyle->SetOptStat(11111111);
-        gStyle->SetPadRightMargin(0.15);
-        gStyle->SetPadLeftMargin(0.15);
+    gStyle->SetPadRightMargin(0.15);
+    gStyle->SetPadLeftMargin(0.15);
 
-        gROOT->ForceStyle();
+    gROOT->ForceStyle();
+
+    // Read config file
+    //------------------
+    TEnv mEnv("x0image-partial.cfg");
+
+    // Read calibration results config file
+    //------------------
+    TEnv mEnv_res("x0cal_result.cfg");
 
 	// TString for the input root file name
-	TString filename,histoname,range;
-	filename="X0-allcomb-merged";
+	TString histoname,range;
+	TString filename=mEnv.GetValue("x0filename", "X0-merge");
 
 	// Set preprocessing parameter
 	// 0: Use standard procedure
@@ -884,7 +864,7 @@ int x0imaging()
 	TFile *X0file = new TFile(filename+".root", "READ");
 
 	//Open the copied file
-	filename=filename+"-image-200mum-06MeV1mm_test2";
+	filename=filename+mEnv.GetValue("x0fileidentifier", "-part-1-1");
 	TFile *rootfile = new TFile(filename+".root", "RECREATE");
 
 	// Create directories containing map histograms, fits and results
@@ -894,16 +874,16 @@ int x0imaging()
 	rootfile->mkdir("mapping/result");
 
 	// Number of Rows and Columns of the sensor map
-	int numcol = 75;//160;
-	int numrow = 40;//100;
+	int numcol = mEnv.GetValue("maxupixels", 100);
+	int numrow = mEnv.GetValue("maxvpixels", 50);
 
 	// u minimum and v maximum value (in mm)
-	double umin=-6.0;
-	double vmax=4.0;
+	double umin=mEnv.GetValue("umin", -10.0);
+	double vmax=mEnv.GetValue("vmax", 5.0);
 
 	// u and v length of the map (in mm)
-	double ulength=15.0;
-	double vlength=8.0;
+	double ulength=mEnv.GetValue("ulength", 20.0);
+	double vlength=mEnv.GetValue("vlength", -10.0);
 
 	// u and v pitch (length of one pixel in the map, in mm)
 	double upitch=ulength/(1.0*numcol);
@@ -955,24 +935,38 @@ int x0imaging()
 	int numberofbins=200;
 
 	// Calibration factor lambda, used to change the reconstruction error to include systematical errors
-	double lambda=1.000;
-	double recoerror=getrecoerror(X0file,lambda);
+	// The calibration factor is either taken from the x0 calibration results cfg file or
+	// from the cfg, where it must be inserted manually
+	double lambda_default=mEnv.GetValue("lambda", 1.0);
+	double lambda=mEnv_res.GetValue("lambda_start", lambda_default);
+	double recoerror=sqrt(getanglerecovar(X0file))*lambda;
 	cout<<"The reconstruction error is "<<recoerror*1E6<<" µrad!"<<endl;
 
 	// Beam energy in GeV
-        // The particle momenta are distributed due to the beam generation at the desy facility
-        // Particles of different momenta are sperated by a dipole magnet and a collimator. Due to
-        // the finite size of the collimator opening particles with momenta in a certain range p0+/-delta_p
-        // can traverse into the test beam area
-        // We expect a linear distribution with slope corresponding to ~500MeV/20mm
-	double mom0=3.0;           // in GeV
-        double mom_slope=-0.006;    // in GeV/mm
+    // The particle momenta are distributed due to the beam generation at the desy facility
+    // Particles of different momenta are sperated by a dipole magnet and a collimator. Due to
+    // the finite size of the collimator opening particles with momenta in a certain range p0+/-delta_p
+    // can traverse into the test beam area
+    // We expect a linear distribution with slope corresponding to ~500MeV/20mm
+	// Take either results from x0 calibration or manually inserted values from cfg file
+	double mom0_default=mEnv.GetValue("momentumoffset", 4.0);           // in GeV
+	double mom0=mEnv_res.GetValue("momentumoffset", mom0_default);
+    double mom_uslope_default=mEnv.GetValue("momentumugradient", 0.0);    // in GeV/mm
+	double mom_uslope=mEnv_res.GetValue("momentumugradient", mom_uslope_default);
+    double mom_vslope_default=mEnv.GetValue("momentumvgradient", 0.0);    // in GeV/mm
+	double mom_vslope=mEnv_res.GetValue("momentumvgradient", mom_vslope_default);
+	cout<<"The beam energy is "<<mom0<<" GeV!"<<endl;
+	cout<<"The beam energy gradient (u direction) is "<<mom_uslope<<" GeV/mm!"<<endl;
+	cout<<"The beam energy gradient (v direction) is "<<mom_vslope<<" GeV/mm!"<<endl;
+	
+	
 
 	// Save the theta1 histogram of this pixel to the root file
 	if(correctmean==1)
 	{
 		getcorrection(X0file, rootfile, plotrange, numberofbins, numcol, numrow, umin, vmin, umax, vmax);
 	}
+
 	savehistos(X0file, rootfile, plotrange, numberofbins, numcol, numrow, umin, vmin, umax, vmax, correctmean);
 
 	X0file->Close();
@@ -1105,16 +1099,6 @@ int x0imaging()
         hvresidualmeanmap->GetZaxis()->SetTitle("v residual[µm]");
         hvresidualmeanmap->GetZaxis()->SetTitleSize(0.02);
         hvresidualmeanmap->GetZaxis()->SetLabelSize(0.02);
-
-	// track chi2 mean value
-	TH2F * htrackchi2map = new TH2F("htrackchi2map","htrackchi2map",numcol,umin,umax,numrow,vmin,vmax);
-	htrackchi2map->SetStats(kFALSE);
-        htrackchi2map->GetXaxis()->SetTitle("u [mm]");
-        htrackchi2map->GetYaxis()->SetTitle("v [mm]");
-        htrackchi2map->GetZaxis()->SetTitle("track chi2");
-        htrackchi2map->GetZaxis()->SetTitleOffset(1.4);
-        htrackchi2map->GetZaxis()->SetTitleSize(0.02);
-        htrackchi2map->GetZaxis()->SetLabelSize(0.02);
 	
 	// #Tracks map
 	TH2F * hnummap = new TH2F("hnummap","hnummap",numcol,umin,umax,numrow,vmin,vmax);
@@ -1145,9 +1129,11 @@ int x0imaging()
 
                         // Calculate the u position of this bin
                         double u=umin+col*upitch;
+                        double v=vmin+row*vpitch;
 
                         // Determine the momentum value from the u position and the p distribution parameters
-                        double mom=CalculateMomentum(u,u_center,mom0,mom_slope);
+                        double mom=GetMomentum(mom0, mom_uslope, mom_vslope, u, v);
+
 
 			// fit the histograms
 			fithisto(rootfile, fittype,model,col,numcol,row,numrow,mom, recoerror);

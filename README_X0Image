@@ -1,0 +1,104 @@
+
+
+This README is a step-by-step explanation of how to generate a calibrated X0 image with the test beam software framework.
+We assume, that the calibration constants have already been extracted from a designated calibration measurement as described 
+in README_X0Calibration. All relevant calibration parameters should be present in the files in the cal-files/cal-tag folder. 
+The first step is to process all data files with a specific X0 target and unchanged beam and telescope conditions. The analysis 
+can be started by using the reco.py script.
+
+> ./reco.py -i '/path/to/raw/files/run000AB.raw' -x steering-files/x0-tb/reco.xml -c cal-tag
+
+The reco.xml for the X0 analysis contains the following processors:
+
+1) M26Clusterizer                       : Input: NoiseDB (must be present in cal-files/cal-tag) and M26 digit collection, 
+                                          Output: M26 clusters
+2) GoeHitMaker                          : Input: clusterDB (must be present in cal-files/cal-tag) and M26 clusters, 
+                                          Output: M26 hits 
+3) Fastracker (downstream)              : Input: alignmentDB (must be in cal-files/cal-tag) and M26 hits (only downstream hits), 
+                                          Output: downstream tracks 
+4) Fastracker (upstream)                : Input: alignmentDB (must be in cal-files/cal-tag) and M26 hits (only upstream hits), 
+                                          Output: upstream tracks
+5) BeamEnergyCorrector (downstream)     : Input: downstream tracks, 
+                                          Output: downstream tracks with corrected BE (necessary if beam energy gradients present)
+6) BeamEnergyCorrector (upstream)       : Input: upstream tracks, 
+                                          Output: upstream tracks with corrected BE (necessary if beam energy gradients present)
+7) X0ImageProducer                      : Input: alignmentDB (must be present in cal-files/cal-tag),
+                                          get kink calculates angles from tracks, Output: X0 root file
+
+The nominal beam energy and the determined beam energy gradient have to be set correctly in the Fasttracker and 
+BeamEnergyCorrector. The number of required hits should be 3 in both fasttrackers for the individual telescope arms.
+The produced X0 root file (/path/to/workspace/root-files/X0-run000AB.root) contains a TTree named MSCTree. The following
+variables are stored in the tree:
+
+1)  iRun            : Run number of the track
+2)  iEvt            : Event number of the track
+3)  probup          : p value of the upstream track
+4)  probdown        : p value of the downstream track
+5)  probcombo       : p value of the combined track
+6)  du/dw           : mean of the two track slopes in u-w plane (rad)
+7)  dv/dw           : mean of the two track slopes in v-w plane (rad)
+8)  u_in            : u intersection of upstream track on the target (in local coordinates (mm))
+9)  v_in            : v intersection of upstream track on the target (in local coordinates (mm))
+10) u_out           : u intersection of downstream track on the target (in local coordinates (mm))
+11) v_out           : v intersection of downstream track on the target (in local coordinates (mm))
+12) u               : mean of u_in and u_out (in local coordinates (mm))
+13) v               : mean of v_in and v_out (in local coordinates (mm))
+12) u_var           : variance of u (mm^2)
+13) v_var           : variance of v (mm^2)
+14) theta1          : Projected kink angle in u-w plane (rad)
+15) theta2          : Projected kink angle inv-w plane (rad)
+16) theta1_var      : Theta1 variance calculated via error propagation from Kalman filter (rad^2)
+17) theta2_var      : Theta2 variance calculated via error propagation from Kalman filter (rad^2)
+18) momentum        : Track momentum in GeV
+
+The next step is to merge the TTrees in root files with the same target and run conditions:
+
+> hadd X0-merge.root X0-runAB.root ... X0-runXY.root
+
+Once you have created the merged root file, you can begin with the generation of the calibrated X/X0 image. Assuming you are in the 
+workspace folder, the image can be produced with the command:
+
+> ./root-scripts/x0imaging/GenerateImage.py -i root-files/X0-merge.root 
+  -c cal-tag -d 0
+
+The imaging procedure employs a cfg file (see "root-scripts/x0imaging/image.cfg"). The parameters 
+in the config file are
+
+1) lambda			        : the calibration factor of the angle resolution sigma, should be extracted beforehand
+                              with a designated calibration measurement
+2) momentumoffset           : mean value of the momentum/beam energy in the center of the image (u=0,v=0)
+3) momentumugradient        : momentum gradient of the beam in u direction
+3) momentumvgradient        : momentum gradient of the beam in u direction
+4) resultsfilename          : name of the results file, which is produced by the GenerateImage.py script
+5) u_length/v_length        : side lengths of the total image, should be 20 x 10 mm² for an image of the whole beam spot 
+6) umin/vmax                : Position of the upper left corner of the total image, should be (umin,vmax)=(-10mm,5mm) for 
+                              an image of the whole beam spot
+7) u/v pixelsize            : Pixel size of the image in µm, should be chosen in such away, that at least 1000 particles 
+                              pass through the area of most pixels
+
+If you performed a x0 calibration measurement before this step, a cfg file named x0cal_result.cfg will be present in
+path/to/workspace/cal-files/cal-tag/. If this is the case the default values of lambda and the beam momentum parameters
+will be updated accordingly.
+
+During the X0 imaging the angles theta1 and theta2 angles from the root tree are sorted into small pixels according to 
+their intersection coordinates (u,v) on the target plane. This yields a large set of kink angle distributions, which are
+then fitted with a gaussian function. The radiation length can be extracted from the fitted width of the gaussian fit 
+function. The GenerateImage.py script produces a rootfile, which contains the following histograms:
+
+1) hX0map                   : Radiation length (X/X0) image 
+2) hX0errmap                : Image of the statistical errors of the image (due to the fit)
+3) hchi2map                 : Image of the fit chi2 values
+4) hmeanmap1/2              : Image of the mean values of the projected kink angle distributions
+4) h(u/v)residualmeanmap    : Image of the u and v residuals of down and upstream track
+5) hnummap                  : Image of number of tracks (i.e. beamspot)
+6) hX0relerrmap             : Image of relative X/X0 errors
+7) hmommap                  : Image of the particle momentum/beam energy
+8) hprobmap1/2/sum          : p values of the fit of the projected angle distributions and the combined distribution
+
+Ulf Stolzenberg
+
+Göttingen 2017 
+
+ulf.stolzenberg@phys.uni-goettingen.de 
+
+
