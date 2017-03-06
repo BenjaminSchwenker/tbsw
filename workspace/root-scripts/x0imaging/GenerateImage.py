@@ -241,7 +241,7 @@ if __name__ == '__main__':
   os.remove(this_x0filename+'.root') 
 
   # Move results to results directory
-  resdir=fullpath+'/root-files/'+caltag
+  resdir=fullpath+'/root-files'
 
   if os.path.isdir(resdir):
 	

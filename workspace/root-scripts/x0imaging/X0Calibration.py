@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
 
   # Directory where the results will be stored and where the image file should be
-  resdir=fullpath+'/root-files/'+caltag
+  resdir=fullpath+'/root-files'
   imagefile=resdir+'/X0-completeimage.root'
 
   if os.path.isfile(imagefile):

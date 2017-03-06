@@ -18,14 +18,19 @@ as simple rectangular shapes (MA in the cfg file) with a center position, length
 Alternatively a line can be defined, which constructs multiple measurement areas at the same time. More detailed 
 descriptions of the options can be found in the cfg file itself.
 
-We assume, that the alignment and cluster files have already been generated from calibration run as described 
-in README. All relevant calibration parameters should be present in the files in the cal-files/cal-tag folder. 
-The first step is to process the run with a designated X0 target and unchanged beam and telescope conditions. The analysis 
-can be started by using the reco.py script.
+As a concrete example, we assume that a 5x5mm2 and 2 mm thick aluminium plate was used as a calibration object. 
+Let us further assume that the aluminium plate was installed in the center of the telescope and a calibration run was
+taken in a 2GeV electron beam. The basic steps to calibrate the telescope and reconstruct the raw data can be found 
+in the main README. After editing the steering files, the telescope calibration is started using the command:
 
-> ./reco.py -i '/path/to/slcio/files/run000AB.slcio' -x steering-files/x0-tb/reco.xml -c cal-tag
+> ./calibrate.py -i '/path/to/raw/files/run000AB.raw' -x steering-files/x0-tb/ -c cal-tag
 
-This creates a root file in /root-files/cal-tag/X0-run000AB.slcio. If you want to use more than one run in the X0
+The command produces the folder cal-files/cal-tag containing the telescope calibration data 
+(alignment, hotpixelmask, ...). The actual reconstruction (tracking) of the full run is started via:
+
+> ./reco.py -i '/path/to/raw/files/run000AB.raw' -x steering-files/x0-tb/reco.xml -c cal-tag
+
+This creates the root file /root-files/X0-run000AB.root. If you want to use more than one run in the X0
 calibration, you need to merge the different X0 files via
 
 > hadd X0.root X0-runAB.root ... X0-runXY.root
