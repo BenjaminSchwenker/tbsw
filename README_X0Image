@@ -27,7 +27,7 @@ The reco.xml for the X0 analysis contains the following processors:
 
 The nominal beam energy and the determined beam energy gradient have to be set correctly in the Fasttracker and 
 BeamEnergyCorrector. The number of required hits should be 3 in both fasttrackers for the individual telescope arms.
-The produced X0 root file (/path/to/workspace/root-files/X0-run000AB.root) contains a TTree named MSCTree. The following
+The produced X0 root file (/path/to/workspace/root-files/X0-run000AB-cal-tag.root) contains a TTree named MSCTree. The following
 variables are stored in the tree:
 
 1)  iRun            : Run number of the track
@@ -53,7 +53,7 @@ variables are stored in the tree:
 
 The next step is to merge the TTrees in root files with the same target and run conditions:
 
-> hadd X0-merge.root X0-runAB.root ... X0-runXY.root
+> hadd X0-merge.root X0-runAB-cal-tag.root ... X0-runXY-cal-tag.root
 
 Once you have created the merged root file, you can begin with the generation of the calibrated X/X0 image. Assuming you are in the 
 workspace folder, the image can be produced with the command:

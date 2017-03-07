@@ -67,7 +67,7 @@ def reco_run(params):
   
   for dqmfile in glob.glob('*.root'): 
     name = os.path.splitext(os.path.basename(dqmfile))[0]
-    shutil.move(dqmfile, fullpath+'/root-files/'+name+'-'+runtag+'.root')  
+    shutil.move(dqmfile, fullpath+'/root-files/'+name+'-'+runtag+'-'+cal-tag+'.root')  
   
   os.chdir(fullpath)
   #shutil.rmtree(tmpdir)

@@ -41,8 +41,8 @@ using namespace std ;
 
 	TTree * msc_tree = (TTree*) file1->Get("MSCTree");
 
-	msc_tree->SetBranchAddress("theta1_val",&theta1);
-	msc_tree->SetBranchAddress("theta2_val",&theta2);
+	msc_tree->SetBranchAddress("theta1",&theta1);
+	msc_tree->SetBranchAddress("theta2",&theta2);
 	msc_tree->SetBranchAddress("u",&u);
 	msc_tree->SetBranchAddress("v",&v);
 
@@ -134,8 +134,8 @@ using namespace std ;
 
 	TTree * msc_tree = (TTree*) file1->Get("MSCTree");
 
-	msc_tree->SetBranchAddress("theta1_val",&theta1);
-	msc_tree->SetBranchAddress("theta2_val",&theta2);
+	msc_tree->SetBranchAddress("theta1",&theta1);
+	msc_tree->SetBranchAddress("theta2",&theta2);
 	msc_tree->SetBranchAddress("u",&u);
 	msc_tree->SetBranchAddress("v",&v);
 	msc_tree->SetBranchAddress("u_in",&u_in);
