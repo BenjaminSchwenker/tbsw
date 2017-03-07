@@ -105,37 +105,37 @@ namespace depfet {
       _countBadMap[sensorID] = 0;   
       _countCalMap[sensorID] = 0;  
       
-      histoName = "hDB_sensor" + to_string(sensorID) + "_ID";
+      histoName = "hDB_ID";
       if ( (TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
         _DB_Map_ID[sensorID] = (TH1F *) clusterDBFile->Get(histoName.c_str());  
         _DB_Map_ID[sensorID]->SetDirectory(0);
-      }
+      } 
        
-      histoName = "hDB_sensor" + to_string(sensorID) + "_U";
+      histoName = "hDB_U";
       if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
         _DB_Map_U[sensorID] = (TH1F *) clusterDBFile->Get(histoName.c_str());
         _DB_Map_U[sensorID]->SetDirectory(0);
       } 
       
-      histoName = "hDB_sensor" + to_string(sensorID) + "_V"; 
+      histoName = "hDB_V"; 
       if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
         _DB_Map_V[sensorID] = (TH1F *) clusterDBFile->Get(histoName.c_str());
         _DB_Map_V[sensorID]->SetDirectory(0);
       } 
       
-      histoName = "hDB_sensor" + to_string(sensorID) + "_Sigma2_U";
+      histoName = "hDB_Sigma2_U";
       if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
         _DB_Map_Sigma2_U[sensorID] = (TH1F *) clusterDBFile->Get(histoName.c_str());
         _DB_Map_Sigma2_U[sensorID]->SetDirectory(0);
       } 
       
-      histoName = "hDB_sensor" + to_string(sensorID) + "_Sigma2_V";
+      histoName = "hDB_Sigma2_V";
       if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
         _DB_Map_Sigma2_V[sensorID] = (TH1F *) clusterDBFile->Get(histoName.c_str());
         _DB_Map_Sigma2_V[sensorID]->SetDirectory(0);
       } 
       
-      histoName = "hDB_sensor" + to_string(sensorID) + "_Cov_UV";
+      histoName = "hDB_Cov_UV";
       if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
         _DB_Map_Cov_UV[sensorID] = (TH1F *) clusterDBFile->Get(histoName.c_str());
         _DB_Map_Cov_UV[sensorID]->SetDirectory(0);

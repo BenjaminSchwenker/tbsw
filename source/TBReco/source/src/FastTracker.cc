@@ -477,7 +477,7 @@ void FastTracker::processEvent(LCEvent * evt)
          // Delete incompatible track
          if (  check_incompatible(*ctrack,*otrack)  ) { 
            otrack = TrackCollector.erase(otrack);
-           streamlog_out ( MESSAGE4 ) << "   erase track" << endl; 
+           streamlog_out ( MESSAGE2 ) << "   erase track" << endl; 
          } else {
            ++otrack;
          } 
