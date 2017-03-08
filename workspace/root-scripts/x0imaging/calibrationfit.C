@@ -884,7 +884,7 @@ void correcthisto(TFile* file,TFile* file2, TString histoname, TString range, do
 
 
 	// Draw histogram of the first scattering angle in the given u and v range and save it
-	msc_tree->Draw("theta1_val>>histo1("+range+")",cutall,"");
+	msc_tree->Draw("theta1>>histo1("+range+")",cutall,"");
 
 	// Get the histogram and save it in the raw folder
 	TH1 * aidhistogram=msc_tree->GetHistogram();
@@ -902,7 +902,7 @@ void correcthisto(TFile* file,TFile* file2, TString histoname, TString range, do
 	delete aidhistogram;
 
 	// Draw histogram of second scattering angle in the given u and v range and save it
-	msc_tree->Draw("theta2_val>>histo2("+range+")",cutall,"");
+	msc_tree->Draw("theta2>>histo2("+range+")",cutall,"");
 
 	// Get the histogram and save it in the raw folder
 	TH1 * aidhistogram2=msc_tree->GetHistogram();
@@ -921,11 +921,11 @@ void correcthisto(TFile* file,TFile* file2, TString histoname, TString range, do
 
 	// Draw sum histogram of the scattering angles in the given u and v range and save it
 	TH1 * hsum1;
-	msc_tree->Draw("theta1_val>>hsum1("+range+")",cutall,"");
+	msc_tree->Draw("theta1>>hsum1("+range+")",cutall,"");
 	hsum1=msc_tree->GetHistogram();
 
 	TH1 * hsum2;
-	msc_tree->Draw("theta2_val>>hsum2("+range+")",cutall,"");
+	msc_tree->Draw("theta2>>hsum2("+range+")",cutall,"");
 	hsum2=msc_tree->GetHistogram();
 
 	// Give the two histograms to a listOperator
@@ -999,7 +999,7 @@ void savehisto(TFile* file, TFile* file2, TString histoname, TString range, doub
 	}
 
 	// Draw histogram of the first scattering angle in the given u and v range and save it
-	msc_tree->Draw("theta1_val>>h("+range+")",cutall,"");
+	msc_tree->Draw("theta1>>h("+range+")",cutall,"");
 
 	// Get the histogram and save it in the raw folder
 	TH1 * aidhistogram=msc_tree->GetHistogram();
@@ -1021,7 +1021,7 @@ void savehisto(TFile* file, TFile* file2, TString histoname, TString range, doub
 	delete aidhistogram;
 
 	// Draw histogram of second scattering angle in the given u and v range and save it
-	msc_tree->Draw("theta2_val>>h("+range+")",cutall,"");
+	msc_tree->Draw("theta2>>h("+range+")",cutall,"");
 
 	// Get the histogram and save it in the raw folder
 	TH1 * aidhistogram2=msc_tree->GetHistogram();
@@ -1044,14 +1044,14 @@ void savehisto(TFile* file, TFile* file2, TString histoname, TString range, doub
 
 	// Draw sum histogram of the scattering angles in the given u and v range and save it
 	TH1 * hsum1;
-	msc_tree->Draw("theta1_val>>hsum1("+range+")",cutall,"");
+	msc_tree->Draw("theta1>>hsum1("+range+")",cutall,"");
 	hsum1=msc_tree->GetHistogram();
 
 	// Shift the bins of the histogram to reduce the offset
 	if(correctmean==1) shiftbins(hsum1,mean1);
 
 	TH1 * hsum2;
-	msc_tree->Draw("theta2_val>>hsum2("+range+")",cutall,"");
+	msc_tree->Draw("theta2>>hsum2("+range+")",cutall,"");
 	hsum2=msc_tree->GetHistogram();
 
 	// Shift the bins of the histogram to reduce the offset
