@@ -170,6 +170,23 @@ namespace eudaqinput {
         m_event.push_back(m_subevent);
       }
       
+      LCCollectionVec* depfet_info = new LCCollectionVec( LCIO::LCGENERICOBJECT )  ;
+      
+      //-----------------------------------------------
+      // Decode DEPFET event info to LCIO format      
+      for (size_t iframe=0;iframe<m_event.size();iframe++) {
+        
+        // Get read fully decoded data  
+        const depfet::DEPFETADCValues& data = m_event[iframe];
+        
+        LCGenericObjectImpl* metaobj = new LCGenericObjectImpl(2,0,0);
+        metaobj->setIntVal(0,data.getGoodEvent());
+        metaobj->setIntVal(1,data.getStartGate());
+        
+        depfet_info->addElement( metaobj) ;   
+      }
+      evt->addCollection( depfet_info , "DEPFET_EVENT_INFO" ) ;
+      
       // Prepare collection for unpacked digits 
       LCCollectionVec * result = new LCCollectionVec(LCIO::TRACKERDATA);
       
@@ -253,7 +270,7 @@ namespace eudaqinput {
             zsFrame->chargeValues().push_back( val );   
           }
         }
-      
+        
         // Add event to LCIO collection 
         result2->push_back(zsFrame);
       }  
@@ -334,7 +351,7 @@ namespace eudaqinput {
       unsigned int nextHeaderIndex=rc;
       unsigned int lastByte=Npixels+rc; 
       bool finished = false; 
-	  //uint16_t lastWord = 0;
+	  bool first_pixel=true;
             
       while( (!finished) && (nextHeaderIndex<lastByte) ){ 
           
@@ -386,9 +403,6 @@ namespace eudaqinput {
           }
           printf("\n");
         }
-        
-        //if ( !(DHH_Header.DataType==2 || DHH_Header.DataType==3 || DHH_Header.DataType==4 || DHH_Header.DataType==5 ))  
-        //  printf("GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGg\n");
             
         if(DHH_Header.DataType==3){
           if(debug)printf("StartOfFrame arrived\n");
@@ -414,10 +428,19 @@ namespace eudaqinput {
           finished=true;
           continue;
         }
+        
+        if(DHH_Header.DataType==2){
+          if(debug)printf("GhostFrame arrived\n");
+          // if this arrived, the DHE responded!
+          m_event.setGoodEvent(true);
+          continue;
+        }
            
         if(DHH_Header.DataType==5){  
              
           // This is ZS data from DHH/Onsen
+          // if this arrived, the DHE responded!
+          m_event.setGoodEvent(true);
           rc = currentPayloadBeginIndex; 
           for (unsigned int index =0;index<payloadLength/2;index++){
             tempZSFrameData[index] = *(uint16_t *) &data[rc];
@@ -488,8 +511,12 @@ namespace eudaqinput {
                  
               //mapping
               mappedCol= (current_col^0x3C) + 64*mydhpid; 
-              mappedRow=current_row;           
-              
+              mappedRow=current_row;   
+
+              if(first_pixel){
+                  first_pixel=false;
+                  m_event.setStartGate(mappedRow/4);
+              }        
               if (   (mappedRow < 960) && (mappedCol < 192)){     
                                     m_event.at(0).push_back(mappedRow);
                                     m_event.at(1).push_back(mappedCol);
