@@ -235,7 +235,6 @@ if __name__ == '__main__':
     os.remove('image.cfg') 
 
   # remove MergeImage.C and config file script
-  os.remove('MergeImages.C') 
   os.remove('x0merge.cfg') 
   os.remove('x0image-partial.cfg') 
   os.remove(this_x0filename+'.root') 
@@ -252,7 +251,15 @@ if __name__ == '__main__':
   else :
     print ('[Print] Results folder does not exist! cfg file will not be copied. ') 
                
-		           
+  # Remove other files
+  for file in glob.glob('*.root'):
+    os.remove(file) 
+  for file in glob.glob('*.cfg'):
+    os.remove(file) 
+  for file in glob.glob('*.txt'):
+    os.remove(file) 
+  for file in glob.glob('*.C'):
+    os.remove(file) 		           
                 
 
 
