@@ -58,9 +58,6 @@ namespace eudaqinput {
     
    protected:
     
-    //! Method to unpack source (raw data) -> result (digits)
-    bool UnpackRawCollection(lcio::LCCollectionVec * result, lcio::LCCollectionVec * source);
-    
     //! Method to decode raw frame 
     depfet::DEPFETADCValues ConvertDEPFETEvent(const std::vector<unsigned char> & data, unsigned id);
          
