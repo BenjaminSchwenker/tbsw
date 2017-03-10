@@ -15,7 +15,7 @@
     <parameter name="SupressCheck" value="false"/>
     <parameter name="Verbosity" value="MESSAGE3"/>
   </global>
-  
+
   <processor name="M26HitMaker" type="GoeHitMaker">
     <!--GoeHitMaker:  Compute hits from pixel clusters using a clusterDB-->
     <!--Name of cluster collection-->
@@ -23,7 +23,11 @@
     <!--Name of hit collection-->
     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> goehit_m26 </parameter>
     <!--This is the name of the ROOT file with the cluster constants (add .root)-->
-    <parameter name="ClusterDBFileName" type="string" value="clusterDB-ALL.root"/>
+    <parameter name="ClusterDBFileName" type="string" value="clusterDB-M26.root"/>
+    <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
+    <parameter name="MaxSizeU" type="int" value="3"/>
+    <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
+    <parameter name="MaxSizeV" type="int" value="3"/>
   </processor>
   
   <processor name="M26ClusterDBCreator" type="GoeClusterCalibratorForMC">
@@ -34,6 +38,8 @@
     <parameter name="SimTrackerHitCollection" type="string" lcioInType="SimTrackerHit"> SimTrackerHits </parameter>
     <!--Output clusterDB file name-->
     <parameter name="ClusterDBFileName" type="string" value="clusterDB-M26.root"/>
+    <!--Ignore clusters from this list of sensorIDs-->
+    <parameter name="FilterIDs" type="IntVec"> </parameter>
     <!--Maximum u residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
     <parameter name="MaxResidualU" type="double" value="0.02"/>
     <!--Maximum v residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->

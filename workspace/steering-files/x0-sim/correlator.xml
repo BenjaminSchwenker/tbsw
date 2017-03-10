@@ -43,7 +43,7 @@
      <!--Name of hit collection-->
      <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_m26 </parameter>
      <!--This is the name of the ROOT file with the cluster constants (add .root)-->
-     <parameter name="ClusterDBFileName" type="string" value="clusterDB-ALL.root"/>
+     <parameter name="ClusterDBFileName" type="string" value="clusterDB-M26.root"/>
    </processor>
     
    <processor name="M26HitMaker-notused" type="CogHitMaker">
