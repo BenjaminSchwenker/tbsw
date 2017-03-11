@@ -43,7 +43,11 @@
      <!--Name of hit collection-->
      <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_m26 </parameter>
      <!--This is the name of the ROOT file with the cluster constants (add .root)-->
-     <parameter name="ClusterDBFileName" type="string" value="clusterDB-M26.root"/>
+     <parameter name="ClusterDBFileName" type="string" value="clusterDB-M26-MC.root"/>
+     <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
+     <parameter name="MaxSizeU" type="int" value="3"/>
+     <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
+     <parameter name="MaxSizeV" type="int" value="3"/>
    </processor>
     
    <processor name="M26HitMaker-notused" type="CogHitMaker">
@@ -65,9 +69,9 @@
      <!--SigmaV for cluster with three or more vCells contributing [mm]-->
      <parameter name="SigmaV3" type="double" value="0.0070"/>
      <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
-     <parameter name="MaxSizeU" type="int" value="2"/>
+     <parameter name="MaxSizeU" type="int" value="3"/>
      <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
-     <parameter name="MaxSizeV" type="int" value="2"/>
+     <parameter name="MaxSizeV" type="int" value="3"/>
    </processor>
   
    <processor name="M26RawDQM" type="RawHitDQM">
