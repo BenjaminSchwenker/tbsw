@@ -76,7 +76,7 @@ if __name__ == '__main__':
     if os.path.isfile(src):
       shutil.move(src, dest)
   
-  src = 'outputfile'
+  src = 'outputfile.slcio'
   dest = os.path.join(fullpath, ofile)	
   move_over(src, dest)      	
   	                       
