@@ -90,15 +90,18 @@ namespace depfet {
     //! Max residual for hit-track matching in mm
     double _maxResidualU; 
     double _maxResidualV; 
+
+    //! Ignore clusters from these sensorIDs 
+    std::vector<int >  _ignoreIDVec;
     
    private:
     
     // Intermediate histos to compute calibrated measurements 
-    // Outer key is sensorID, inner key is clusterID 
-    std::map<int, std::map<std::string, int> >  _sensorMap;  
-    std::map< int, std::map<std::string, TH1F *> > _clusterUMap;
-    std::map< int, std::map<std::string, TH1F *> > _clusterVMap;
-    std::map< int, std::map<std::string, TH2F *> > _clusterUVMap;
+    // Key is clusterID 
+    std::map<std::string, int>   _sensorMap;  
+    std::map<std::string, TH1F *>  _clusterUMap;
+    std::map<std::string, TH1F *>  _clusterVMap;
+    std::map<std::string, TH2F *>  _clusterUVMap;
     
     std::map< std::string, TH1F *> _histoMap;
     

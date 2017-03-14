@@ -204,17 +204,17 @@
      <!--To use only GoodQuality write 0 here-->
      <parameter name="HitQualitySelection" type="int" value="0"/>
      <!--Maximum hit residual [mm]-->
-     <parameter name="MaxResidualU" type="FloatVec" value="0.3"/>
+     <parameter name="MaxResidualU" type="FloatVec" value="0.4"/>
      <!--Maximum hit residual [mm]-->
-     <parameter name="MaxResidualV" type="FloatVec" value="0.3"/>
+     <parameter name="MaxResidualV" type="FloatVec" value="0.4"/>
      <!--Maximum track chisq in track fit-->
      <parameter name="MaxTrackChi2" type="float" value="100"/>
      <!--Maximum number of consecutive missing hits in track-->
-     <parameter name="MaximumGap" type="int" value="0"/>
+     <parameter name="MaximumGap" type="int" value="2"/>
      <!--Maximum slope of candiate tracks in Z=0 plane (rad). Set cut to zero to deactivate.-->
      <parameter name="MaximumSlope" type="float" value="0.1"/>
      <!--Minimum number of hits in track-->
-     <parameter name="MinimumHits" type="int" value="6"/>
+     <parameter name="MinimumHits" type="int" value="4"/>
      <!--Chi2 cut for removal of bad hits-->
      <parameter name="OutlierChi2Cut" type="float" value="40"/>
      <!--Fitting iteration for removal of bad hits-->
@@ -230,9 +230,9 @@
      <!--Build track seeds from first plane and second plane-->
      <parameter name="PassOne_SecondPlane" type="int" value="1"/>
      <!--Build track seeds from first plane and second plane-->
-     <parameter name="PassTwo_FirstPlane" type="int" value="-1"/>
+     <parameter name="PassTwo_FirstPlane" type="int" value="4"/>
      <!--Build track seeds from first plane and second plane-->
-     <parameter name="PassTwo_SecondPlane" type="int" value="-1"/>
+     <parameter name="PassTwo_SecondPlane" type="int" value="5"/>
    </processor>
 
    <processor name="TelescopeDQM" type="TrackFitDQM">

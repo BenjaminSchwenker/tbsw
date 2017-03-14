@@ -78,13 +78,13 @@ if __name__ == '__main__':
   subprocess.call('/$MARLIN/bin/Marlin hotpixelkiller.xml > log-hotpixel.txt 2>&1', shell=True)
   print ('[Print] HotPixelKiller done ...')
   		  
-  subprocess.call('/$MARLIN/bin/Marlin correlator.xml > log-correlator.txt 2>&1', shell=True)    
-  print ('[Print] Correlator done ...')           
-          
   if clusterMC:
     subprocess.call('/$MARLIN/bin/Marlin cluster-calibration-mc.xml > log-clustering-mc.txt 2>&1', shell=True)
-    print ('[Print] ClusterDB done ...')    
-        		              
+    print ('[Print] ClusterDB from MC done ...')  
+  
+  subprocess.call('/$MARLIN/bin/Marlin correlator.xml > log-correlator.txt 2>&1', shell=True)    
+  print ('[Print] Correlator done ...')           
+                		              
   subprocess.call('/$MARLIN/bin/Marlin kalmanalign-iteration-1.xml > log-align-it1.txt 2>&1', shell=True)     
   print ('[Print] Alignment first iteration done ...')               
                	               

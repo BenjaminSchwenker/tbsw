@@ -30,10 +30,10 @@ The command produces the folder cal-files/cal-tag containing the telescope calib
 
 > ./reco.py -i '/path/to/raw/files/run000AB.raw' -x steering-files/x0-tb/reco.xml -c cal-tag
 
-This creates the root file /root-files/X0-run000AB.root. If you want to use more than one run in the X0
+This creates the root file /root-files/X0-run000AB-cal-tag.root. If you want to use more than one run in the X0
 calibration, you need to merge the different X0 files via
 
-> hadd X0.root X0-runAB.root ... X0-runXY.root
+> hadd X0.root X0-runAB-cal-tag.root ... X0-runXY-cal-tag.root
 
 The next step is to produce a X0 image from the target with all calibration constants at their start values. To do 
 that, first modify /path/to/workspace/root-scripts/x0imaging/image.cfg file. As start values use the following

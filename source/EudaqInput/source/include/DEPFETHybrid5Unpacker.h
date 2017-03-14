@@ -16,6 +16,7 @@
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerDataImpl.h>
 #include <IMPL/TrackerRawDataImpl.h>
+#include <IMPL/LCGenericObjectImpl.h>
 
 // Include Marlin classes
 #include <marlin/Global.h>
@@ -57,9 +58,6 @@ namespace eudaqinput {
     virtual void end();
     
    protected:
-    
-    //! Method to unpack source (raw data) -> result (digits)
-    bool UnpackRawCollection(lcio::LCCollectionVec * result, lcio::LCCollectionVec * source);
     
     //! Method to decode raw frame 
     depfet::DEPFETADCValues ConvertDEPFETEvent(const std::vector<unsigned char> & data, unsigned id);

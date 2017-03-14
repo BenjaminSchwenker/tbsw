@@ -117,7 +117,7 @@
   <!--Maximum distance between ionization points (in mm)-->
   <parameter name="MaxSegmentLength" type="double" value="0.005"/>
   <!--Set fraction of noise hits per sensor per readout frame-->
-  <parameter name="NoiseFraction" type="float" value="0.000005"/>
+  <parameter name="NoiseFraction" type="float" value="0.00000"/>
   <!--Effective bulk doping concentration, in um^-3-->
   <parameter name="SiBulkDoping" type="double" value="10"/>
   <!--Only Simulated hits after the StartIntegration time in ns will be digitized-->

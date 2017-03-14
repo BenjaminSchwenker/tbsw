@@ -107,21 +107,24 @@ namespace depfet {
     //! Minimum variance of clusters covariance matrix
     float _minVarianceU; 
     float _minVarianceV;
+    
+    //! Ignore clusters from these sensorIDs 
+    std::vector<int >  _ignoreIDVec;
         
    private:
     
     // Intermediate histos to compute averaged covariance matrix
     // Key is sensorID 
-    std::map< int, TH1F *> _trackVarUMap;
-    std::map< int, TH1F *> _trackVarVMap;
-    std::map< int, TH1F *> _trackCovUVMap;
+    TH1F * _trackVarUMap;
+    TH1F * _trackVarVMap;
+    TH1F * _trackCovUVMap;
     
     // Intermediate histos to compute calibrated measurements 
     // Outer key is sensorID, inner key is clusterID 
-    std::map<int, std::map<std::string, int> >  _sensorMap;  
-    std::map< int, std::map<std::string, TH1F *> > _clusterUMap;
-    std::map< int, std::map<std::string, TH1F *> > _clusterVMap;
-    std::map< int, std::map<std::string, TH2F *> > _clusterUVMap;
+    std::map<std::string, int>    _sensorMap;  
+    std::map<std::string, TH1F *> _clusterUMap;
+    std::map<std::string, TH1F *> _clusterVMap;
+    std::map<std::string, TH2F *> _clusterUVMap;
     
     std::map< std::string, TH1F *> _histoMap;
           

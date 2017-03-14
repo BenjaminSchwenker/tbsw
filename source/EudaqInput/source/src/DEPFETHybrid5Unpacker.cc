@@ -157,91 +157,99 @@ namespace eudaqinput {
     try {
       
       // Open raw data collection   
-      LCCollectionVec * inputCollection = dynamic_cast < LCCollectionVec * > (evt->getCollection(_inputCollectionName)); 
+      LCCollectionVec * source = dynamic_cast < LCCollectionVec * > (evt->getCollection(_inputCollectionName)); 
+       
+      // Helper class for decoding raw data 
+      CellIDDecoder<TrackerRawDataImpl> inputDecoder( source );  
+      
+      //-----------------------------------------------
+      // Decode event data to a DEPFETEvent format   
+      size_t numplanes =  source->size();  
+      depfet::DEPFETEvent m_event; 
+      
+      for (size_t iPlane = 0; iPlane < numplanes; ++iPlane) { 
+      
+        TrackerRawDataImpl* rawDataBlock = dynamic_cast<TrackerRawDataImpl* > ( source->getElementAt(iPlane) );
+        
+        // Get blockID 
+        int blockID = inputDecoder(rawDataBlock)["blockID"]; 
+         
+        // FIXME: This is only needed, because i do not know how to put 
+        // vector<unsigned char> directly into the lcio::LCEvent. 
+        datavect  char_data;
+        ShortVec& short_data = rawDataBlock->adcValues();
+        for (size_t j = 0; j < short_data.size(); j++) 
+        {   
+          char_data.push_back( static_cast<unsigned char> (short_data[j]) ); 
+        }
+        
+        // Get read fully encoded subevent
+        depfet::DEPFETADCValues m_subevent = ConvertDEPFETEvent(char_data, blockID);    
+        m_event.push_back(m_subevent);
+      }
+      
+      LCCollectionVec* depfet_info = new LCCollectionVec( LCIO::LCGENERICOBJECT )  ;
+      
+      //-----------------------------------------------
+      // Decode DEPFET event info to LCIO format      
+      for (size_t iframe=0;iframe<m_event.size();iframe++) {
+        
+        // Get read fully decoded data  
+        const depfet::DEPFETADCValues& data = m_event[iframe];
+        
+        LCGenericObjectImpl* metaobj = new LCGenericObjectImpl(2,0,0);
+        metaobj->setIntVal(0,data.getGoodEvent());
+        metaobj->setIntVal(1,data.getStartGate());
+        
+        depfet_info->addElement( metaobj) ;   
+      }
+      evt->addCollection( depfet_info , "DEPFET_EVENT_INFO" ) ;
       
       // Prepare collection for unpacked digits 
-      LCCollectionVec * outputCollection = new LCCollectionVec(LCIO::TRACKERDATA);
+      LCCollectionVec * result = new LCCollectionVec(LCIO::TRACKERDATA);
+
+      // Helper class for encoding digit data 
+      CellIDEncoder<TrackerDataImpl> outputEncoder( "sensorID:6,sparsePixelType:5", result  );
       
-      // Unpack raw data collection
-      UnpackRawCollection(outputCollection, inputCollection);
+      //-----------------------------------------------
+      // Decode event data to a LCIO format      
+      for (size_t iframe=0;iframe<m_event.size();iframe++) {
       
+        // Get read fully decoded data  
+        const depfet::DEPFETADCValues& data = m_event[iframe];
+        
+        // Prepare a TrackerData to store zs pixels
+        TrackerDataImpl* zsFrame = new TrackerDataImpl;
+        
+        // Set description for zsFrame
+        outputEncoder["sensorID"] = data.getModuleNr();
+        outputEncoder["sparsePixelType"] = 0;
+        outputEncoder.setCellID( zsFrame );
+        
+        int nPixel = (int) data.at(0).size(); 
+            
+        for ( int iPixel = 0; iPixel < nPixel; iPixel++ ) {
+          int val = data.at(2).at(iPixel);
+          int col = data.at(1).at(iPixel);   
+          int row = data.at(0).at(iPixel);  
+          //int cm = data.at(3).at(iPixel);
+          
+          // Store pixel data int lcio format 
+          zsFrame->chargeValues().push_back( col );
+          zsFrame->chargeValues().push_back( row );
+          zsFrame->chargeValues().push_back( val );   
+        }
+      
+        // Add event to LCIO collection 
+        result->push_back(zsFrame);
+      }  
+         
       // Add output collection to event
-      evt->addCollection( outputCollection, _outputCollectionName );
+      evt->addCollection( result, _outputCollectionName );
              	    
     } catch(DataNotAvailableException &e){}  
     _nEvt ++ ;
   }
-  
-  
-  bool DEPFETHybrid5Unpacker::UnpackRawCollection(LCCollectionVec * result, LCCollectionVec * source){
-     
-    // Helper class for decoding raw data 
-    CellIDDecoder<TrackerRawDataImpl> inputDecoder( source );  
-    
-    // Helper class for encoding digit data 
-    CellIDEncoder<TrackerDataImpl> outputEncoder( "sensorID:6,sparsePixelType:5", result  );
-     
-    //-----------------------------------------------
-    // Decode event data to a DEPFETEvent format   
-    size_t numplanes =  source->size();  
-    depfet::DEPFETEvent m_event; 
-    
-    for (size_t iPlane = 0; iPlane < numplanes; ++iPlane) { 
-      
-      TrackerRawDataImpl* rawDataBlock = dynamic_cast<TrackerRawDataImpl* > ( source->getElementAt(iPlane) );
-      
-      // Get blockID 
-      int blockID = inputDecoder(rawDataBlock)["blockID"]; 
-
-      // FIXME: This is only needed, because i do not know how to put 
-      // vector<unsigned char> directly into the lcio::LCEvent. 
-      datavect  char_data;
-      ShortVec& short_data = rawDataBlock->adcValues();
-      for (size_t j = 0; j < short_data.size(); j++) 
-      {   
-        char_data.push_back( static_cast<unsigned char> (short_data[j]) ); 
-      }
-      
-      // Get read fully encoded subevent
-      depfet::DEPFETADCValues m_subevent = ConvertDEPFETEvent(char_data, blockID);    
-      m_event.push_back(m_subevent);
-    }
-     
-    //-----------------------------------------------
-    // Decode event data to a LCIO format      
-    for (size_t iframe=0;iframe<m_event.size();iframe++) {
-      
-      // Get read fully decoded data  
-      const depfet::DEPFETADCValues& data = m_event[iframe];
-     
-      // Prepare a TrackerData to store zs pixels
-      TrackerDataImpl* zsFrame = new TrackerDataImpl;
-      
-      // Set description for zsFrame
-      outputEncoder["sensorID"] = data.getModuleNr();
-      outputEncoder["sparsePixelType"] = 0;
-      outputEncoder.setCellID( zsFrame );
-      
-      int nPixel = (int) data.at(0).size(); 
-           
-      for ( int iPixel = 0; iPixel < nPixel; iPixel++ ) {
-        int val = data.at(2).at(iPixel);
-        int col = data.at(1).at(iPixel);   
-        int row = data.at(0).at(iPixel);  
-        //int cm = data.at(3).at(iPixel);
-        
-        // Store pixel data int lcio format 
-        zsFrame->chargeValues().push_back( col );
-        zsFrame->chargeValues().push_back( row );
-        zsFrame->chargeValues().push_back( val );   
-      }
-      
-      // Add event to LCIO collection 
-      result->push_back(zsFrame);
-    }  
-    return true;
-  }
-
   
   depfet::DEPFETADCValues DEPFETHybrid5Unpacker::ConvertDEPFETEvent(const std::vector<unsigned char> & data, unsigned id)
   {
@@ -311,7 +319,7 @@ namespace eudaqinput {
       unsigned int nextHeaderIndex=rc;
       unsigned int lastByte=Npixels+rc; 
       bool finished = false; 
-	  //uint16_t lastWord = 0;
+	  bool first_pixel=true;
             
       while( (!finished) && (nextHeaderIndex<lastByte) ){ 
           
@@ -391,10 +399,19 @@ namespace eudaqinput {
           finished=true;
           continue;
         }
-           
+        
+        if(DHH_Header.DataType==2){
+          if(debug)printf("GhostFrame arrived\n");
+          // if this arrived, the DHE responded!
+          m_event.setGoodEvent(true);
+          continue;
+        }           
+        
         if(DHH_Header.DataType==5){  
              
           // This is ZS data from DHH/Onsen
+          // if this arrived, the DHE responded!
+          m_event.setGoodEvent(true);
           rc = currentPayloadBeginIndex; 
           for (unsigned int index =0;index<payloadLength/2;index++){
             tempZSFrameData[index] = *(uint16_t *) &data[rc];
@@ -470,6 +487,11 @@ namespace eudaqinput {
               mappedCol=mappedDrain>>2;
               mappedRowOffset=3-mappedDrain%4;
               mappedRow=(current_row>>2)*4+mappedRowOffset;
+              
+              if(first_pixel){
+                  first_pixel=false;
+                  m_event.setStartGate(mappedRow/4);
+              }    
                  
               if (   (mappedRow < 960) && (mappedCol < 192)){     
                                     m_event.at(0).push_back(mappedRow);

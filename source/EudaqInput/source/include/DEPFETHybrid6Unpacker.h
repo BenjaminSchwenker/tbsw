@@ -16,6 +16,7 @@
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerDataImpl.h>
 #include <IMPL/TrackerRawDataImpl.h>
+#include <IMPL/LCGenericObjectImpl.h>
 
 // Include Marlin classes
 #include <marlin/Global.h>

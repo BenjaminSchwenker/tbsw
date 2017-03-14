@@ -90,6 +90,11 @@ namespace depfet {
                                 "Minimum number of cluster ID occurances for clusterDB",
                                 _minClusters,  static_cast < int > (2000));
     
+    std::vector<int> initIgnoreIDVec;
+    registerProcessorParameter ("FilterIDs",
+                                "Ignore clusters from this list of sensorIDs",
+                                _ignoreIDVec, initIgnoreIDVec);
+    
   }
   
   //
@@ -185,7 +190,12 @@ namespace depfet {
       streamlog_out(MESSAGE2) << " SimHit with sensorID " << sensorID << " at: (" << simHit->getPosition()[0] << ", " << simHit->getPosition()[1] << ")" 
                               << endl;
           
-      SimHitMap[sensorID].push_back(simHit);            
+      bool ignoreID = false;
+      for (auto id :  _ignoreIDVec)  {
+        if  (id == sensorID) ignoreID = true; 
+      }
+      
+      if ( !ignoreID ) SimHitMap[sensorID].push_back(simHit);            
     } 
     
     
@@ -199,7 +209,12 @@ namespace depfet {
       streamlog_out(MESSAGE2) << " RecoHit with sensorID " << sensorID << " at: (" << recoHit.GetCoord()[0][0] << ", " << recoHit.GetCoord()[1][0] << ")" 
                               << endl;
         
-      RecoHitMap[sensorID].push_back( recoHit );    
+      bool ignoreID = false;
+      for (auto id :  _ignoreIDVec)  {
+        if  (id == sensorID) ignoreID = true; 
+      }
+
+      if ( !ignoreID ) RecoHitMap[sensorID].push_back( recoHit );    
     } 
     
     // Go through all sensors 
@@ -305,30 +320,30 @@ namespace depfet {
           string id = Cluster.getClusterID(); 
           
           // Register new cluster if needed
-          if (_sensorMap[sensorID].find(id) == _sensorMap[sensorID].end() ) {
-            _sensorMap[sensorID][id] = 0;
+          if (_sensorMap.find(id) == _sensorMap.end() ) {
+            _sensorMap[id] = 0;
             
-            _clusterUMap[sensorID][id] = new TH1F("","",1,0,1);
-            _clusterUMap[sensorID][id]->SetDirectory(0);
-            _clusterUMap[sensorID][id]->StatOverflows(); 	
+            _clusterUMap[id] = new TH1F("","",1,0,1);
+            _clusterUMap[id]->SetDirectory(0);
+            _clusterUMap[id]->StatOverflows(); 	
              
-            _clusterVMap[sensorID][id] = new TH1F("","",1,0,1);
-            _clusterVMap[sensorID][id]->SetDirectory(0); 
-            _clusterVMap[sensorID][id]->StatOverflows(); 	
+            _clusterVMap[id] = new TH1F("","",1,0,1);
+            _clusterVMap[id]->SetDirectory(0); 
+            _clusterVMap[id]->StatOverflows(); 	
             
-            _clusterUVMap[sensorID][id] = new TH2F("","",1,0,1,1,0,1);
-            _clusterUVMap[sensorID][id]->SetDirectory(0);
-            _clusterUVMap[sensorID][id]->StatOverflows(); 	
+            _clusterUVMap[id] = new TH2F("","",1,0,1,1,0,1);
+            _clusterUVMap[id]->SetDirectory(0);
+            _clusterUVMap[id]->StatOverflows(); 	
           }
           
           trk_u -= Sensor.GetPixelCenterCoordU( Cluster.getVStart(), Cluster.getUStart()); 
           trk_v -= Sensor.GetPixelCenterCoordV( Cluster.getVStart(), Cluster.getUStart()); 
           
           // Count how many times a clusterID appear 
-          _sensorMap[sensorID][id]++;  
-          _clusterUMap[sensorID][id]->Fill( trk_u ); 
-          _clusterVMap[sensorID][id]->Fill( trk_v );     
-          _clusterUVMap[sensorID][id]->Fill( trk_u, trk_v ); 
+          _sensorMap[id]++;  
+          _clusterUMap[id]->Fill( trk_u ); 
+          _clusterVMap[id]->Fill( trk_v );     
+          _clusterUVMap[id]->Fill( trk_u, trk_v ); 
           
         }
       }
@@ -367,24 +382,17 @@ namespace depfet {
                             << std::endl;
     
     // We remove all cluster IDs which have to few counts and cannot be 
-    // calibrated :( 
-    for(auto it = _sensorMap.begin(); it != _sensorMap.end(); it++) {
-      auto sensorID = it->first;
-      auto&& clusterMap = it->second;
-      
-      // Delete cluster ids with too small counter
-      
-      for(auto iter = clusterMap.begin(); iter != clusterMap.end(); ) {
-        auto id = iter->first; 
-        auto counter = iter->second;
+    // calibrated :(  
+    for(auto iter = _sensorMap.begin(); iter != _sensorMap.end(); ) {
+      auto id = iter->first; 
+      auto counter = iter->second;
         
-        if(counter < _minClusters ) {
-          streamlog_out(MESSAGE3) << "  Deleting clusterId:  " << id << " because too few counts (" << counter << ") on sensorID " << sensorID 
-                                  << endl;
-          iter = clusterMap.erase(iter);
-        } else {
-          ++iter;
-        }
+      if(counter < _minClusters ) {
+        streamlog_out(MESSAGE3) << "  Deleting clusterId:  " << id << " because too few counts (" << counter << ")" 
+                                << endl;
+        iter = _sensorMap.erase(iter);
+      } else {
+        ++iter;
       }
     }
     
@@ -392,127 +400,120 @@ namespace depfet {
     
     TFile * _rootFile = new TFile( _clusterDBFileName.c_str(),"recreate");
     _rootFile->cd("");   
-    
-    // Loop over all registered sensors 
-    for(auto it = _sensorMap.begin(); it != _sensorMap.end(); it++) {
-      auto sensorID = it->first;
-      auto&& clusterMap = it->second;
       
-      // Book histograms for clusterDB
-      int NCLUSTERS = clusterMap.size(); 
-      string histoName;  
+    // Book histograms for clusterDB
+    int NCLUSTERS = _sensorMap.size(); 
+    string histoName;  
        
-      _rootFile->cd("");
+    _rootFile->cd("");
       
-      histoName = "hDB_sensor" + to_string(sensorID) + "_ID";
-      _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-      _histoMap[histoName]->SetStats( false );
-      _histoMap[histoName]->SetYTitle("clusterID fraction");  
+    histoName = "hDB_ID";
+    _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
+    _histoMap[histoName]->SetStats( false );
+    _histoMap[histoName]->SetYTitle("clusterID fraction");  
       
-      histoName = "hDB_sensor" + to_string(sensorID) + "_U";
-      _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-      _histoMap[histoName]->SetStats( false );
-      _histoMap[histoName]->SetYTitle("offset u [mm]");  
+    histoName = "hDB_U";
+    _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
+    _histoMap[histoName]->SetStats( false );
+    _histoMap[histoName]->SetYTitle("offset u [mm]");  
       
-      histoName = "hDB_sensor" + to_string(sensorID) + "_V";
-      _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-      _histoMap[histoName]->SetStats( false );
-      _histoMap[histoName]->SetYTitle("offset v [mm]");  
+    histoName = "hDB_V";
+    _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
+    _histoMap[histoName]->SetStats( false );
+    _histoMap[histoName]->SetYTitle("offset v [mm]");  
       
-      histoName = "hDB_sensor" + to_string(sensorID) + "_Sigma2_U";
-      _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-      _histoMap[histoName]->SetStats( false );
-      _histoMap[histoName]->SetYTitle("sigma2 offset u [mm^2]");        
+    histoName = "hDB_Sigma2_U";
+    _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
+    _histoMap[histoName]->SetStats( false );
+    _histoMap[histoName]->SetYTitle("sigma2 offset u [mm^2]");        
 
-      histoName = "hDB_sensor" + to_string(sensorID) + "_Sigma2_V";
-      _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-      _histoMap[histoName]->SetStats( false );
-      _histoMap[histoName]->SetYTitle("sigma2 offset v [mm^2]"); 
-
-      histoName = "hDB_sensor" + to_string(sensorID) + "_Cov_UV";
-      _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-      _histoMap[histoName]->SetStats( false );
-      _histoMap[histoName]->SetYTitle("covariance u-v [mm^2]"); 
+    histoName = "hDB_Sigma2_V";
+    _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
+    _histoMap[histoName]->SetStats( false );
+    _histoMap[histoName]->SetYTitle("sigma2 offset v [mm^2]"); 
+      
+    histoName = "hDB_Cov_UV";
+    _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
+    _histoMap[histoName]->SetStats( false );
+    _histoMap[histoName]->SetYTitle("covariance u-v [mm^2]"); 
                    
-      // Go through all cluster shapes
-      int i = 0; 
-      for (auto iter =clusterMap.begin(); iter!=clusterMap.end(); iter++ ) {
-        int counter = iter->second;  
-        string id = iter->first;
-        i++; 
+    // Go through all cluster shapes
+    int i = 0; 
+    for (auto iter =_sensorMap.begin(); iter!=_sensorMap.end(); iter++ ) {
+      int counter = iter->second;  
+      string id = iter->first;
+      i++; 
         
-        // Perform the calibration for u position 
-        double clu_mean_u = _clusterUMap[sensorID][id]->GetMean();
-        double clu_mean_u_error = _clusterUMap[sensorID][id]->GetMeanError();        
-        double clu_rms_u = _clusterUMap[sensorID][id]->GetRMS();
-        double clu_rms_u_error = _clusterUMap[sensorID][id]->GetRMSError();
+      // Perform the calibration for u position 
+      double clu_mean_u = _clusterUMap[id]->GetMean();
+      double clu_mean_u_error = _clusterUMap[id]->GetMeanError();        
+      double clu_rms_u = _clusterUMap[id]->GetRMS();
+      double clu_rms_u_error = _clusterUMap[id]->GetRMSError();
         
-        double clu_rms2_u = clu_rms_u*clu_rms_u;
-        double clu_rms2_u_error = 2*clu_rms_u*clu_rms_u_error;
+      double clu_rms2_u = clu_rms_u*clu_rms_u;
+      double clu_rms2_u_error = 2*clu_rms_u*clu_rms_u_error;
          
-        // Perform the calibration for v position  
-        double clu_mean_v = _clusterVMap[sensorID][id]->GetMean();
-        double clu_mean_v_error = _clusterVMap[sensorID][id]->GetMeanError();   
-        double clu_rms_v = _clusterVMap[sensorID][id]->GetRMS();
-        double clu_rms_v_error = _clusterVMap[sensorID][id]->GetRMSError();   
+      // Perform the calibration for v position  
+      double clu_mean_v = _clusterVMap[id]->GetMean();
+      double clu_mean_v_error = _clusterVMap[id]->GetMeanError();   
+      double clu_rms_v = _clusterVMap[id]->GetRMS();
+      double clu_rms_v_error = _clusterVMap[id]->GetRMSError();   
         
-        double clu_rms2_v = clu_rms_v*clu_rms_v;  
-        double clu_rms2_v_error = 2*clu_rms_v*clu_rms_v_error;
+      double clu_rms2_v = clu_rms_v*clu_rms_v;  
+      double clu_rms2_v_error = 2*clu_rms_v*clu_rms_v_error;
          
-        // Perform the calibration for uv covariance   
-        double clu_cov_uv = _clusterUVMap[sensorID][id]->GetCovariance();
+      // Perform the calibration for uv covariance   
+      double clu_cov_uv = _clusterUVMap[id]->GetCovariance();
                  
-        // Store calibration result   
-        histoName = "hDB_sensor" + to_string(sensorID) + "_ID";
-        _histoMap[histoName]->SetBinContent( i, counter );
-        _histoMap[histoName]->SetBinError( i, TMath::Sqrt(counter) );
-        _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
+      // Store calibration result   
+      histoName = "hDB_ID";
+      _histoMap[histoName]->SetBinContent( i, counter );
+      _histoMap[histoName]->SetBinError( i, TMath::Sqrt(counter) );
+      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
         
-        histoName = "hDB_sensor" + to_string(sensorID) + "_U";
-        _histoMap[histoName]->SetBinContent( i, clu_mean_u );
-        _histoMap[histoName]->SetBinError( i, clu_mean_u_error );
-        _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
+      histoName = "hDB_U";
+      _histoMap[histoName]->SetBinContent( i, clu_mean_u );
+      _histoMap[histoName]->SetBinError( i, clu_mean_u_error );
+      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
         
-        histoName = "hDB_sensor" + to_string(sensorID) + "_V"; 
-        _histoMap[histoName]->SetBinContent( i, clu_mean_v );
-        _histoMap[histoName]->SetBinError( i, clu_mean_v_error );
-        _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
+      histoName = "hDB_V"; 
+      _histoMap[histoName]->SetBinContent( i, clu_mean_v );
+      _histoMap[histoName]->SetBinError( i, clu_mean_v_error );
+      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
         
-        histoName = "hDB_sensor" + to_string(sensorID) + "_Sigma2_U";
-        _histoMap[histoName]->SetBinContent( i, clu_rms2_u );
-        _histoMap[histoName]->SetBinError( i, clu_rms2_u_error );
-        _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
+      histoName = "hDB_Sigma2_U";
+      _histoMap[histoName]->SetBinContent( i, clu_rms2_u );
+      _histoMap[histoName]->SetBinError( i, clu_rms2_u_error );
+      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
          
-        histoName = "hDB_sensor" + to_string(sensorID) + "_Sigma2_V";
-        _histoMap[histoName]->SetBinContent( i, clu_rms2_v );
-        _histoMap[histoName]->SetBinError( i, clu_rms2_v_error );
-        _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );  
+      histoName = "hDB_Sigma2_V";
+      _histoMap[histoName]->SetBinContent( i, clu_rms2_v );
+      _histoMap[histoName]->SetBinError( i, clu_rms2_v_error );
+      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );  
         
-        histoName = "hDB_sensor" + to_string(sensorID) + "_Cov_UV";
-        _histoMap[histoName]->SetBinContent( i, clu_cov_uv );
-        _histoMap[histoName]->SetBinError( i, 0 );
-        _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
-
-        streamlog_out(MESSAGE3) << "  ClusterId:  " << id << " sensorID: " << sensorID << endl
-                                << std::setiosflags(std::ios::fixed | std::ios::internal )
-                                << std::setprecision(8)
-                                << "  u: " << clu_mean_u  << ", sigma2: " << clu_rms2_u << endl
-                                << "  v: " << clu_mean_v  << ", sigma2: " << clu_rms2_v << endl
-                                << "  cov: " << clu_cov_uv
-                                << std::setprecision(3)
-                                << endl;
+      histoName = "hDB_Cov_UV";
+      _histoMap[histoName]->SetBinContent( i, clu_cov_uv );
+      _histoMap[histoName]->SetBinError( i, 0 );
+      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
+        
+      streamlog_out(MESSAGE3) << "  ClusterId:  " << id  << endl
+                              << std::setiosflags(std::ios::fixed | std::ios::internal )
+                              << std::setprecision(8)
+                              << "  u: " << clu_mean_u  << ", sigma2: " << clu_rms2_u << endl
+                              << "  v: " << clu_mean_v  << ", sigma2: " << clu_rms2_v << endl
+                              << "  cov: " << clu_cov_uv
+                              << std::setprecision(3)
+                              << endl;
          
-      }  
+    }  
             
-      // Normalaize the cluster ID spectrum to unit area for 
-      // better comparison between data sets 
+    // Normalaize the cluster ID spectrum to unit area for 
+    // better comparison between data sets 
       
-      histoName = "hDB_sensor" + to_string(sensorID) + "_ID";
-      double normID = _histoMap[histoName]->Integral();
-      if (normID > 0 ) _histoMap[histoName]->Scale(1.0/normID, "width");
+    histoName = "hDB_ID";
+    double normID = _histoMap[histoName]->Integral();
+    if (normID > 0 ) _histoMap[histoName]->Scale(1.0/normID, "width");
       
-    }
-    
     streamlog_out(MESSAGE3) << "ClusterDB written to file " << _clusterDBFileName 
                             << endl; 
     

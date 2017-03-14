@@ -129,6 +129,8 @@ protected:
    // Variables in hit tree       
    int _rootEventNumber;             // Event number from lcio file
    int _rootRunNumber;               // Run number from lcio file 
+   int _rootDEPFETGoodEvent;         // DEPFET good event flag
+   int _rootDEPFETStartGate;         // DEPFET startgate
    int _rootSensorID;                // SensorID from lcio file (this is typically NOT the plane number!!)
    int _rootNTelTracks;              // Number of tracks in reference telescope in same event as hit
    int _rootNDUTHits;                // Number of DUT hits in the same event as hit   
@@ -161,7 +163,6 @@ protected:
    int _rootHitTrackNHits;           // Number of telescope hits used for track fitting 
    
    
- 
    // Variables in track tree  
    int _rootTrackHasHit;             // Track can be matched to a DUT hit (== 0) 
    double _rootTrackFitMomentum;     // Estimated track momentum from fit    
