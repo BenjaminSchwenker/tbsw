@@ -123,6 +123,12 @@ namespace depfet {
     // CPU time start
     _timeCPU = clock()/1000;
 
+    if ( m_BeamSlopeXSigma <= 0 ) m_BeamSlopeXSigma = 0.00001;     // in rad 
+    if ( m_BeamSlopeYSigma <= 0 ) m_BeamSlopeYSigma = 0.00001;     // in rad 
+    if ( m_BeamVertexXSigma <= 0 ) m_BeamVertexXSigma = 0.001;     // in mm
+    if ( m_BeamVertexYSigma <= 0 ) m_BeamVertexYSigma = 0.001;     // in mm
+    if ( m_BeamMomentumSigma <= 0 ) m_BeamMomentumSigma = 0.00001; // in GeV
+    
     // Construct beam covariance matrix S 
     //
     // The particle state is defined relativ to the Z= m_GunPositionZ
