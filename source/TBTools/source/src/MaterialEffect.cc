@@ -16,6 +16,79 @@ using namespace CLHEP;
 
 namespace materialeffect {
 
+/** Most probable energy loss in silicon 
+ *
+ * Computes the most probable energy loss of a heavy charged particle in silicon of given 
+ * thickness according to Landau theory (see PDG)
+ */ 
+double GetMostProbableEnergyLossInSilicon(double thick, double mass, double charge, double mom)
+{
+  double A = 28; 
+  double Z = 14; 
+  double rho = 0.2329; 
+          
+  double eMass = 0.5109989E-3;
+  double exciteE = 173.0E-9;
+           
+  double m2 = mass*mass;
+  double p2 = mom*mom;
+  double e2 = m2 + p2;
+          
+  double beta2 = p2/e2;
+  double gamma2 = e2/m2;
+          
+  double charge2 = charge*charge;
+  
+  // Energy loss spread in GeV
+  double eSpread = 0.1536E-3*charge2*(Z/A)*rho*thick/beta2;
+                  
+  // Most probable energy loss (from integrated Bethe-Bloch equation)
+  double mostProbableLoss = eSpread * ( std::log( 2.0 * eMass * beta2 * gamma2 * eSpread / (exciteE *exciteE ) )  - beta2 + 0.200 );
+           
+  // This one can be needed on output (but is not used internally)
+  // double meanEnergyLoss = 2.*eSpread * ( std::log ( 2.*eMass*beta2*gama2 /excitE ) - beta2 );
+          
+  // Generate energy loss with Landau fluctuation
+  return mostProbableLoss; 
+} 
+
+
+/** Simulate energy loss in silicon 
+ *
+ * Samples an energy loss of a heavy charged particle in silicon of given 
+ * thickness according to Landau theory (see PDG)
+*/ 
+double SimulateEnergyLossInSilicon(double thick, double mass, double charge, double mom, double lambda) 
+{
+  double A = 28; 
+  double Z = 14; 
+  double rho = 0.2329; 
+          
+  double eMass = 0.5109989E-3;
+  double exciteE = 173.0E-9;
+           
+  double m2 = mass*mass;
+  double p2 = mom*mom;
+  double e2 = m2 + p2;
+          
+  double beta2 = p2/e2;
+  double gamma2 = e2/m2;
+          
+  double charge2 = charge*charge;
+          
+  // Energy loss spread in GeV
+  double eSpread = 0.1536E-3*charge2*(Z/A)*rho*thick/beta2;
+          
+  // Most probable energy loss (from integrated Bethe-Bloch equation)
+  double mostProbableLoss = eSpread * ( std::log( 2.0 * eMass * beta2 * gamma2 * eSpread / (exciteE *exciteE ) )  - beta2 + 0.200 );
+           
+  // This one can be needed on output (but is not used internally)
+  // double meanEnergyLoss = 2.*eSpread * ( std::log ( 2.*eMass*beta2*gama2 /excitE ) - beta2 );
+          
+  // Generate energy loss with Landau fluctuation
+  return mostProbableLoss + eSpread * lambda;  
+} 
+
 /** Calculate variance of the projected angular deflection due to multiple
  *  scattering of a particle for x/x0 a la Highland.
  *

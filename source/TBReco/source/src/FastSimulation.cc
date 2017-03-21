@@ -73,9 +73,9 @@ namespace depfet {
     
     registerProcessorParameter ("ScatterModel", "Choose model for multiple scattering: Highland(0)",
                                 m_scatterModel,  static_cast < int > (0));
-   
-    registerProcessorParameter ("ElossModel", "Choose model for energy loss: G4UniversalFluctuation(0)",
-                                m_eLossModel,  static_cast < int > (0));
+    
+    registerProcessorParameter ("DoEnergyLossStraggling", "Flag (true/false) for simulating energy loss straggling",
+                                m_doEnergyLossStraggling,  static_cast < bool > (false));
     
     registerProcessorParameter ("AlignmentDBFileName",
                              "This is the name of the LCIO file with the alignment constants (add .slcio)",
@@ -125,6 +125,11 @@ namespace depfet {
   //
   void FastSimulation::processEvent(LCEvent * evt)
   {
+
+    // Print event number
+    if ((evt->getEventNumber())%100 == 0) streamlog_out(MESSAGE3) << "Events processed: "
+                                                                  << (evt->getEventNumber())
+                                                                  << std::endl << std::endl;
     
     //////////////////////////////////////////////////////////////////////  
     // Process next event
@@ -223,8 +228,14 @@ namespace depfet {
           double v = state[3][0]; 
           double mom = mcp->getCharge()/state[4][0]; 
           double l0 = current_det.GetThickness(u,v)*std::sqrt(1 + dudw*dudw + dvdw*dvdw);  
-          double eDep = l0*1000*82*3.64*1.E-9;
-             
+          
+          // Simulate energy loss in material layer
+          double eDep = materialeffect::GetMostProbableEnergyLossInSilicon(l0, mcp->getMass(), mcp->getCharge(), mom); 
+          if ( m_doEnergyLossStraggling ) {
+            double lambda = gRandom->Landau();
+            eDep = materialeffect::SimulateEnergyLossInSilicon(l0, mcp->getMass(), mcp->getCharge(), mom, lambda); 
+          }                     
+
           // Create a new LCIO SimTracker hit
           SimTrackerHitImpl * simHit = new SimTrackerHitImpl;
           simHit->setdEdx(eDep); 

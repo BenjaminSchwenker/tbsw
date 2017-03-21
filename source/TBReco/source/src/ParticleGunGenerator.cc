@@ -199,6 +199,11 @@ namespace depfet {
   void ParticleGunGenerator::processEvent(LCEvent * evt)
   {
     
+    // Print event number
+    if ((evt->getEventNumber())%100 == 0) streamlog_out(MESSAGE3) << "Events processed: "
+                                                                  << (evt->getEventNumber())
+                                                                  << std::endl << std::endl;
+    
     //////////////////////////////////////////////////////////////////////  
     // Process next event
     ++_nEvt;
@@ -214,6 +219,9 @@ namespace depfet {
       // Sample 5 dimensional state vector for new beam particle 
       HepVector state = deviates();
     
+      // The sampling may return a negative momentum 
+      if ( state(5) <= 0.001 ) state(5) = 0.001;
+
       double momentum = state(5);    // momentum in GeV        
       double tx = state(1);          // direction tangent dx/dz
       double ty = state(2);          // direction tangent dy/dz 

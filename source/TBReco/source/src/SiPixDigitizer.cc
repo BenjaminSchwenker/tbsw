@@ -225,7 +225,12 @@ namespace depfet {
   //
   void SiPixDigitizer::processEvent(LCEvent * evt)
   {
-   
+    
+    // Print event number
+    if ((evt->getEventNumber())%100 == 0) streamlog_out(MESSAGE3) << "Events processed: "
+                                                                  << (evt->getEventNumber())
+                                                                  << std::endl << std::endl;
+    
     //
     // Open collections
     try {

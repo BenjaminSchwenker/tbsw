@@ -78,10 +78,10 @@
   <parameter name="SimTrackerHitCollectionName" type="string" lcioOutType="SimTrackerHit"> SimTrackerHits </parameter>
   <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
   <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
-  <!--Choose model for energy loss: G4UniversalFluctuation(0)-->
-  <parameter name="ElossModel" type="int" value="0"/>
   <!--Choose model for multiple scattering: Highland(0)-->
   <parameter name="ScatterModel" type="int" value="0"/>
+  <!--Flag (true/false) for simulating energy loss straggling-->
+  <parameter name="DoEnergyLossStraggling" type="bool" value="false"/>
 </processor>
 
  <processor name="M26Digitizer" type="SiPixDigitizer">

@@ -78,10 +78,11 @@ namespace depfet
     
     // Choose model for multiple scattering ( Highland:0 )
     int m_scatterModel;  
+ 
+    // Flag for simulating energy loss straggling 
+    bool m_doEnergyLossStraggling;  
     
-    // Choose model for energy loss ( G4UniversalFluctuation:0 )
-    int m_eLossModel;  
-    
+   
    private: 
     
     // Handle to detector data sheets 

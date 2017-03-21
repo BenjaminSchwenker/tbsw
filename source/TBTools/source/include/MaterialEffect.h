@@ -32,6 +32,20 @@ namespace materialeffect {
    * by state after scattering.
    */ 
   void ScatterTrack(CLHEP::HepMatrix& State, double kink_u, double kink_v);  
+
+  /** Simulate energy loss in silicon 
+   *
+   * Samples an energy loss of a heavy charged particle in silicon of given 
+   * thickness according to Landau theory (see PDG)
+   */ 
+  double SimulateEnergyLossInSilicon(double thick, double mass, double charge, double mom, double lambda); 
+  
+  /** Get most probable energy loss in silicon 
+   *
+   * Computes the most probable energy loss of a heavy charged particle in silicon of given 
+   * thickness according to Landau theory (see PDG)
+   */ 
+  double GetMostProbableEnergyLossInSilicon(double thick, double mass, double charge, double mom); 
   
   // Highland radiation length for air [mm] (NTP: 20 deg, 1bar)   
   static const float X0_air = 305000;
