@@ -16,6 +16,34 @@ using namespace CLHEP;
 
 namespace materialeffect {
 
+/** Compute density effect in silicon
+ *
+ * Compute the density correction term for the most probable energy loss in 
+ * silicon
+ */ 
+double ComputeDeltaInSilicon(double gamma2, double beta2)
+{
+
+  double S0 = 0.201;
+  double S1 = 2.872;
+  double hv = 31.06E-9;
+  double md = 3.255;
+  double a = 0.149;
+  double delta0 = 0.14;
+  double exciteE = 170.0E-9;
+  
+  double betagamma = sqrt(gamma2*beta2);
+  double A = a*std::pow( log( pow(10.0,S1) / betagamma )/log(10.0) ,md);
+  double C = -2.0*log(exciteE/hv) -1 ; 
+  
+  if (betagamma < std::pow(10.0,S0)) {
+    return delta0*std::pow(betagamma/std::pow(10.0,S0),2);
+  } else if ( betagamma >  std::pow(10.0,S1) ) { 
+    return  2*log(sqrt(beta2*gamma2)) + C;
+  } 
+  return  2*log(sqrt(beta2*gamma2)) + C + A;
+}
+
 /** Most probable energy loss in silicon 
  *
  * Computes the most probable energy loss of a heavy charged particle in silicon of given 
@@ -28,7 +56,7 @@ double GetMostProbableEnergyLossInSilicon(double thick, double mass, double char
   double rho = 0.2329; 
           
   double eMass = 0.5109989E-3;
-  double exciteE = 173.0E-9;
+  double exciteE = 170.0E-9;
            
   double m2 = mass*mass;
   double p2 = mom*mom;
@@ -38,12 +66,15 @@ double GetMostProbableEnergyLossInSilicon(double thick, double mass, double char
   double gamma2 = e2/m2;
           
   double charge2 = charge*charge;
+
+  // Density correction 
+  double delta =  ComputeDeltaInSilicon(gamma2, beta2); 
   
   // Energy loss spread in GeV
   double eSpread = 0.1536E-3*charge2*(Z/A)*rho*thick/beta2;
                   
   // Most probable energy loss (from integrated Bethe-Bloch equation)
-  double mostProbableLoss = eSpread * ( std::log( 2.0 * eMass * beta2 * gamma2 * eSpread / (exciteE *exciteE ) )  - beta2 + 0.200 );
+  double mostProbableLoss = eSpread * ( std::log( 2.0 * eMass * beta2 * gamma2 * eSpread / (exciteE *exciteE ) )  - beta2 + 0.200 - delta*0.5);
            
   // This one can be needed on output (but is not used internally)
   // double meanEnergyLoss = 2.*eSpread * ( std::log ( 2.*eMass*beta2*gama2 /excitE ) - beta2 );
@@ -65,7 +96,7 @@ double SimulateEnergyLossInSilicon(double thick, double mass, double charge, dou
   double rho = 0.2329; 
           
   double eMass = 0.5109989E-3;
-  double exciteE = 173.0E-9;
+  double exciteE = 170.0E-9;
            
   double m2 = mass*mass;
   double p2 = mom*mom;
@@ -76,11 +107,14 @@ double SimulateEnergyLossInSilicon(double thick, double mass, double charge, dou
           
   double charge2 = charge*charge;
           
+  // Density correction 
+  double delta =  ComputeDeltaInSilicon(gamma2, beta2); 
+
   // Energy loss spread in GeV
   double eSpread = 0.1536E-3*charge2*(Z/A)*rho*thick/beta2;
           
   // Most probable energy loss (from integrated Bethe-Bloch equation)
-  double mostProbableLoss = eSpread * ( std::log( 2.0 * eMass * beta2 * gamma2 * eSpread / (exciteE *exciteE ) )  - beta2 + 0.200 );
+  double mostProbableLoss = eSpread * ( std::log( 2.0 * eMass * beta2 * gamma2 * eSpread / (exciteE *exciteE ) )  - beta2 + 0.200 - delta*0.5);
            
   // This one can be needed on output (but is not used internally)
   // double meanEnergyLoss = 2.*eSpread * ( std::log ( 2.*eMass*beta2*gama2 /excitE ) - beta2 );

@@ -47,6 +47,13 @@ namespace materialeffect {
    */ 
   double GetMostProbableEnergyLossInSilicon(double thick, double mass, double charge, double mom); 
   
+  /** Compute density effect in silicon
+   *
+   * Compute the density correction term for the most probable energy loss in 
+   * silicon
+   */ 
+  double ComputeDeltaInSilicon(double gamma2, double beta2);
+  
   // Highland radiation length for air [mm] (NTP: 20 deg, 1bar)   
   static const float X0_air = 305000;
 
