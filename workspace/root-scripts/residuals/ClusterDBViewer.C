@@ -1,14 +1,10 @@
 { 
 
-gROOT->Reset(); 
-gROOT->SetStyle("Plain"); 
 
-gStyle->SetOptFit();
-gStyle->SetPalette(1);
-gStyle->SetCanvasColor(0);
-gStyle->SetTitleFillColor(0);
-gStyle->SetPaintTextFormat("1f");
 
+// Define a cluster shape 
+//TRegexp e("^1D0\\.0\\.[0-9]+$");
+TRegexp e("^2D0\\.0\\.[0-9]+D0\\.1\\.[0-9]+$");
 
 //
 // get histos from db
@@ -72,7 +68,8 @@ for (int bin = 1; bin<= h_ID->GetNbinsX(); bin++) {
   TObjArray *tx = x.Tokenize("D");
   int nDigits =  ((TObjString *)(tx->At(0)))->String().Atoi();
    
-  if (nDigits == 1) {
+  if (x.Contains(e)) {
+  //if (nDigits == 1) {
     map_id[x] = h_ID->GetBinContent(bin);
     map_u[x] = h_U->GetBinContent(bin);
     map_v[x] = h_V->GetBinContent(bin);
@@ -83,7 +80,7 @@ for (int bin = 1; bin<= h_ID->GetNbinsX(); bin++) {
 
 //
 // cluster db file  
-TFile *fDB = new TFile("ClusterDBViewer.root","UPDATE");
+TFile *fDB = new TFile("ClusterDBViewer.root","RECREATE");
 
 //
 // these are the reprocessed histos for viewing
