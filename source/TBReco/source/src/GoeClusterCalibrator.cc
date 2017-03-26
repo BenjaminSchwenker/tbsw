@@ -302,7 +302,7 @@ namespace depfet {
       countAll += counter;
         
       if(counter < _minClusters ) {
-        streamlog_out(MESSAGE2) << "  Deleting clusterId:  " << id << " because too few counts (" << counter  << ")" << endl;
+        streamlog_out(MESSAGE3) << "  Deleting clusterId:  " << id << " because too few counts (" << counter  << ")" << endl;
         iter = _sensorMap.erase(iter);
         countReject += counter;
       } else {
@@ -515,14 +515,7 @@ namespace depfet {
                               << endl;
          
     }  
-            
-    // Normalaize the cluster ID spectrum to unit area for 
-    // better comparison between data sets 
-      
-    histoName = "hDB_ID";
-    double normID = _histoMap[histoName]->Integral();
-    if (normID > 0 ) _histoMap[histoName]->Scale(1.0/normID, "width");
-      
+              
     streamlog_out(MESSAGE3) << "ClusterDB written to file " << _clusterDBFileName 
                             << endl; 
     

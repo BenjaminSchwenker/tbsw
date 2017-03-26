@@ -383,18 +383,30 @@ namespace depfet {
     
     // We remove all cluster IDs which have to few counts and cannot be 
     // calibrated :(  
+    
+    // Count all clusters
+    double countAll = 0;
+    
+    // Count reject clusters
+    int countReject = 0;
+    
     for(auto iter = _sensorMap.begin(); iter != _sensorMap.end(); ) {
       auto id = iter->first; 
       auto counter = iter->second;
+      
+      countAll += counter;
         
       if(counter < _minClusters ) {
-        streamlog_out(MESSAGE3) << "  Deleting clusterId:  " << id << " because too few counts (" << counter << ")" 
-                                << endl;
+        streamlog_out(MESSAGE3) << "  Deleting clusterId:  " << id << " because too few counts (" << counter << ")" << endl;
         iter = _sensorMap.erase(iter);
+        countReject += counter;
       } else {
         ++iter;
       }
     }
+    
+    streamlog_out(MESSAGE3) << "Number of rejected clusters is: " 
+                            << countReject << " (" << 100.0*countReject/countAll  << "%)"  << endl; 
     
     streamlog_out(MESSAGE3) << "Create the clusterDB ... " << endl; 
     
@@ -507,12 +519,7 @@ namespace depfet {
          
     }  
             
-    // Normalaize the cluster ID spectrum to unit area for 
-    // better comparison between data sets 
-      
-    histoName = "hDB_ID";
-    double normID = _histoMap[histoName]->Integral();
-    if (normID > 0 ) _histoMap[histoName]->Scale(1.0/normID, "width");
+    
       
     streamlog_out(MESSAGE3) << "ClusterDB written to file " << _clusterDBFileName 
                             << endl; 
