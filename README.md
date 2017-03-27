@@ -20,12 +20,15 @@ is to make a working copy of this folder. For example:
 > cp -r workspace ~/workspace-my-beam-test
 
 The idea of the folder 'workspace-my-beam-test' is to collect all steering files and analysis results from a specific beam test. 
-Please replace the 'my-beam-test' part with something more specific like 'desy_october_2016' or similar. Note that the steering 
-files and scripts in the workspace folder come with a specific version of tbsw and are not guaranteed to be backward compatible.
-For simplicity, we will call this folder just workspace in the following.  
+Please replace the 'my-beam-test' part with something more specific like 'desy_october_2016' or similar. For simplicity, we will
+call this folder just workspace in the following. 
 
-Raw data files (.raw) should not be stored directly in your workspace folder. It is advised to create a folder outside of your 
-workspace and to collect all raw data files there.
+It is a good idea to copy the workspace to some place outside of the tbsw installation. In case you want to reprocess your data with 
+a new (different) version of tbsw, you typically just have to make sure the environment variables in 'init_tbsw.sh' point to the
+desired installation.
+
+Raw data files (.raw) should not be stored directly in your workspace folder. Again, this simplifies switching version of tbsw. It is
+advised to create a seperate folder and to collect all raw data files there.
 
 For example: 
 
