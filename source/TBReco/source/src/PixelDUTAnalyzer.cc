@@ -689,7 +689,7 @@ void PixelDUTAnalyzer::bookHistos()
    _rootTrackTree->Branch("cellU_fit"       ,&_rootTrackFitCellU       ,"cellU_fit/I");
    _rootTrackTree->Branch("cellV_fit"       ,&_rootTrackFitCellV       ,"cellV_fit/I");
    _rootTrackTree->Branch("cellUCenter_fit" ,&_rootTrackFitCellUCenter ,"cellUCenter_fit/D");
-   _rootTrackTree->Branch("cellUCenter_fit" ,&_rootTrackFitCellVCenter ,"cellVCenter_fit/D");
+   _rootTrackTree->Branch("cellVCenter_fit" ,&_rootTrackFitCellVCenter ,"cellVCenter_fit/D");
    _rootTrackTree->Branch("trackChi2"       ,&_rootTrackChi2           ,"trackChi2/D");
    _rootTrackTree->Branch("trackNdof"       ,&_rootTrackNDF            ,"trackNdof/I");
    _rootTrackTree->Branch("trackNHits"      ,&_rootTrackNHits          ,"trackNHits/I");  
