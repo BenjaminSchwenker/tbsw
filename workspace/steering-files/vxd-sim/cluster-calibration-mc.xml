@@ -67,7 +67,7 @@
     <!--Output clusterDB file name-->
     <parameter name="ClusterDBFileName" type="string" value="clusterDB-MC.root"/>
     <!--Ignore clusters from this list of sensorIDs-->
-    <parameter name="FilterIDs" type="IntVec"> </parameter>
+    <parameter name="IgnoreIDs" type="IntVec"> </parameter>
     <!--Maximum u residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
     <parameter name="MaxResidualU" type="double" value="0.1"/>
     <!--Maximum v residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->

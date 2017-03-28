@@ -85,7 +85,7 @@
      <!--Output clusterDB file name-->
      <parameter name="ClusterDBFileName" type="string" value="clusterDB-M26.root"/>
      <!--Ignore clusters from this list of sensorIDs-->
-     <parameter name="FilterIDs" type="IntVec"> </parameter>
+     <parameter name="IgnoreIDs" type="IntVec"> </parameter>
      <!--Minimum number of cluster ID occurances for clusterDB-->
      <parameter name="MinClusters" type="int" value="2000"/>
      <!--Minimum value of variance for u position measurement [mm^2]-->

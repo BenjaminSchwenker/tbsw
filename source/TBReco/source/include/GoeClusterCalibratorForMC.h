@@ -87,6 +87,9 @@ namespace depfet {
     //! Minimum number of clusters occurances 
     int _minClusters; 
       
+    //! Soft rescaleing of ADC codes for labels
+    int m_scale; 
+
     //! Max residual for hit-track matching in mm
     double _maxResidualU; 
     double _maxResidualV; 
@@ -97,7 +100,7 @@ namespace depfet {
    private:
     
     // Intermediate histos to compute calibrated measurements 
-    // Key is clusterID 
+    // Key is cluster label
     std::map<std::string, int>   _sensorMap;  
     std::map<std::string, TH1F *>  _clusterUMap;
     std::map<std::string, TH1F *>  _clusterVMap;

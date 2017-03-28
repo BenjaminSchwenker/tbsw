@@ -68,6 +68,10 @@ namespace depfet {
                                 "Minimum number of cluster ID occurances for clusterDB",
                                 _minClusters,  static_cast < int > (2000));
     
+    registerProcessorParameter ("SoftScale",
+                                "Software rescaling of adc codes for cluster labels (new_code = code/scale)",
+                                m_scale,  static_cast < int > (1));
+    
     registerProcessorParameter ("MinVarianceU", "Minimum value of variance for u position measurement [mm^2]",
                                 _minVarianceU, static_cast < float > (1.0E-6) );
     
@@ -79,8 +83,8 @@ namespace depfet {
                                 _alignmentDBFileName, static_cast< string > ( "eudet-alignmentDB.slcio" ) ); 
     
     std::vector<int> initIgnoreIDVec;
-    registerProcessorParameter ("FilterIDs",
-                                "Ignore clusters from this list of sensorIDs",
+    registerProcessorParameter ("IgnoreIDs",
+                                "Ignore clusters from list of sensorIDs",
                                 _ignoreIDVec, initIgnoreIDVec);
     
   }
@@ -217,7 +221,7 @@ namespace depfet {
           
           // Get cluster id  
           PixelCluster Cluster = TE.GetHit().GetCluster(); 
-          string id = Cluster.getClusterID(); 
+          string id = Cluster.getLabel(m_scale); 
           
           // Register new cluster if needed
           if (_sensorMap.find(id) == _sensorMap.end() ) {
@@ -239,7 +243,7 @@ namespace depfet {
           trk_u -= Sensor.GetPixelCenterCoordU( Cluster.getVStart(), Cluster.getUStart()); 
           trk_v -= Sensor.GetPixelCenterCoordV( Cluster.getVStart(), Cluster.getUStart()); 
           
-          // Count how many times a clusterID appear 
+          // Count how many times a label appears 
           _sensorMap[id]++;  
           _clusterUMap[id]->Fill( trk_u ); 
           _clusterVMap[id]->Fill( trk_v );     
@@ -302,7 +306,7 @@ namespace depfet {
       countAll += counter;
         
       if(counter < _minClusters ) {
-        streamlog_out(MESSAGE3) << "  Deleting clusterId:  " << id << " because too few counts (" << counter  << ")" << endl;
+        streamlog_out(MESSAGE3) << "  Deleting label:  " << id << " because too few counts (" << counter  << ")" << endl;
         iter = _sensorMap.erase(iter);
         countReject += counter;
       } else {
@@ -328,7 +332,7 @@ namespace depfet {
     histoName = "hDB_ID";
     _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
     _histoMap[histoName]->SetStats( false );
-    _histoMap[histoName]->SetYTitle("clusterID fraction");  
+    _histoMap[histoName]->SetYTitle("label weight");  
       
     histoName = "hDB_U";
     _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
@@ -505,7 +509,7 @@ namespace depfet {
       _histoMap[histoName]->SetBinError( i, 0 );
       _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
       
-      streamlog_out(MESSAGE3) << "  ClusterId:  " << id  << endl
+      streamlog_out(MESSAGE3) << "  Label:  " << id  << endl
                               << std::setiosflags(std::ios::fixed | std::ios::internal )
                               << std::setprecision(8)
                               << "  u: " << clu_mean_u  << ", sigma2: " << clu_rms2_u << endl
