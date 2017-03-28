@@ -33,9 +33,9 @@ def reco_run(params):
     shutil.rmtree(tmpdir)
        
   os.mkdir(tmpdir)
-  
-  # copy lcio file that is to be processed
-  shutil.copy(rawfile, tmpdir+'/inputfilename')
+ 
+  # create symlink to raw file 
+  os.symlink( os.path.join(fullpath, rawfile), tmpdir+'/inputfilename')
   # copy steering file 
   shutil.copy(xmlfile, tmpdir+'/reco.xml')
   
