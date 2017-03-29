@@ -427,12 +427,12 @@ void TrackFitDQM::end()
 		//
 		// Fill alignment histograms
 
-		_histoMap["hxshift_diff"]->SetBinContent(ipl,pos_f_nominal[0]-pos_f[0]);
-		_histoMap["hyshift_diff"]->SetBinContent(ipl,pos_f_nominal[1]-pos_f[1]);
-		_histoMap["hzshift_diff"]->SetBinContent(ipl,pos_f_nominal[2]-pos_f[2]);
-		_histoMap["hxrot_diff"]->SetBinContent(ipl,alpha_f_nominal-alpha_f);
-		_histoMap["hyrot_diff"]->SetBinContent(ipl,beta_f_nominal-beta_f);
-		_histoMap["hzrot_diff"]->SetBinContent(ipl,gamma_f_nominal-gamma_f);
+		_histoMap["hxshift_diff"]->SetBinContent(ipl+1,pos_f_nominal[0]-pos_f[0]);
+		_histoMap["hyshift_diff"]->SetBinContent(ipl+1,pos_f_nominal[1]-pos_f[1]);
+		_histoMap["hzshift_diff"]->SetBinContent(ipl+1,pos_f_nominal[2]-pos_f[2]);
+		_histoMap["hxrot_diff"]->SetBinContent(ipl+1,alpha_f_nominal-alpha_f);
+		_histoMap["hyrot_diff"]->SetBinContent(ipl+1,beta_f_nominal-beta_f);
+		_histoMap["hzrot_diff"]->SetBinContent(ipl+1,gamma_f_nominal-gamma_f);
 
 	}
       
