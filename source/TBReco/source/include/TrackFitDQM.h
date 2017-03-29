@@ -88,8 +88,11 @@ namespace depfet {
     int    _nRun ;   //!< Run number
     int    _nEvt ;   //!< Event number
     
-    // Handle to detector data 
+    // Handle to aligned detector data 
     TBDetector  _detector;     
+
+    // Handle to nominal detector data 
+    TBDetector  _detector_nominal;  
     
     // Handle to root file
     TFile * _rootFile;
