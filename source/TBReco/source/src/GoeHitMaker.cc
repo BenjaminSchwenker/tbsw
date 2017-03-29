@@ -26,6 +26,7 @@
 
 // Include ROOT classes
 #include <TFile.h>
+#include <TVectorD.h>
 
 
 // Used namespaces
@@ -75,11 +76,7 @@ namespace depfet {
                                 "Clusters having more v cells marked as bad [and can be filterd in track finder]",
                                 _maxSizeV,  
                                 static_cast < int > (3));
-    
-    registerProcessorParameter ("SoftScale",
-                                "Software rescaling of adc codes for cluster labels (new_code = code/scale)",
-                                m_scale,  static_cast < int > (1));
-    
+     
   }
   
   //
@@ -103,7 +100,7 @@ namespace depfet {
     
     // Read calibration data  
     string histoName;
-    
+
     histoName = "hDB_ID";
     if ( (TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
       m_DB_Weight = (TH1F *) clusterDBFile->Get(histoName.c_str());  
@@ -138,6 +135,14 @@ namespace depfet {
     if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
       m_DB_Cov_UV = (TH1F *) clusterDBFile->Get(histoName.c_str());
       m_DB_Cov_UV->SetDirectory(0);
+    } 
+    
+    histoName = "DB_Scale";
+    if ((TVectorD*) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+      TVectorD *DB_Scale = (TVectorD*) clusterDBFile->Get( histoName.c_str() );
+      m_scale = (*DB_Scale)[0];  
+    } else {
+      m_scale = 1;
     } 
     
     // Close root  file

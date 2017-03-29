@@ -35,6 +35,7 @@
 // Include ROOT classes
 #include <TFile.h>
 #include <TMath.h>
+#include <TVectorD.h>
 
 
 // Used namespaces
@@ -523,7 +524,11 @@ namespace depfet {
          
     }  
             
-    
+    // Finally, we must store the scale that was used to compute the 
+    // cluster labels 
+    TVectorD DB_Scale(1);
+    DB_Scale[0] = m_scale;
+    DB_Scale.Write("DB_Scale");
       
     streamlog_out(MESSAGE3) << "ClusterDB written to file " << _clusterDBFileName 
                             << endl; 

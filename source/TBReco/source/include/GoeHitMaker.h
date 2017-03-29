@@ -79,8 +79,7 @@ namespace depfet {
     //! Name of clusterDB file 
     std::string  _clusterDBFileName;
     
-    //! Soft rescaleing of ADC codes for labels
-    int m_scale; 
+    
     
     //! Clusters having more cells in u/v are considered bad
     int _maxSizeU;
@@ -98,7 +97,10 @@ namespace depfet {
     TH1F * m_DB_Sigma2_U;
     TH1F * m_DB_Sigma2_V; 
     TH1F * m_DB_Cov_UV;
-      
+    
+    // Soft re-scaleing of ADC codes for labels
+    int m_scale; 
+  
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number
     int    _nEvt ;   //!< Event number
