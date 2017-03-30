@@ -88,9 +88,6 @@ void TrackFitDQM::init() {
       
   // Read alignment data base file 
   _detector.ReadAlignmentDB( _alignmentDBFileName ); 
-
-  // Read detector constants from gear file
-  _detector_nominal.ReadGearConfiguration();  
   
   // Book all needed histograms 
   bookHistos();
@@ -383,6 +380,12 @@ void TrackFitDQM::end()
     _histoMap["hfit_res_rms_v"]->SetBinContent(ipl+1, res_rms_v );   
     _histoMap["hfit_res_rms_v"]->SetBinError(ipl+1, res_rms_error_v );  
 
+    // Handle to nominal detector data 
+    TBDetector  _detector_nominal;  
+
+    // Read detector constants from gear file
+    _detector_nominal.ReadGearConfiguration();  
+
     _rootFile->cd("");
 
     // Fill summary histos on telescope alignment
@@ -570,28 +573,29 @@ void TrackFitDQM::bookHistos()
   TDirectory *alignDir = _rootFile->mkdir("alignment");
   alignDir->cd();
 
-  _histoMap["hxshift_diff"] = new TH1D("hxshift_diff", "", 7, 0, 7); 
+
+  _histoMap["hxshift_diff"] = new TH1D("hxshift_diff", "", nSens,0,nSens); 
   _histoMap["hxshift_diff"]->SetYTitle("x shift diff [mm]"); 
   _histoMap["hxshift_diff"]->SetXTitle("sensor"); 
 
-  _histoMap["hyshift_diff"] = new TH1D("hyshift_diff", "", 7, 0, 7); 
+  _histoMap["hyshift_diff"] = new TH1D("hyshift_diff", "", nSens,0,nSens); 
   _histoMap["hyshift_diff"]->SetYTitle("y shift diff [mm]"); 
   _histoMap["hyshift_diff"]->SetXTitle("sensor"); 
 
-  _histoMap["hzshift_diff"] = new TH1D("hzshift_diff", "", 7, 0, 7); 
+  _histoMap["hzshift_diff"] = new TH1D("hzshift_diff", "", nSens,0,nSens); 
   _histoMap["hzshift_diff"]->SetYTitle("z shift diff [mm]"); 
   _histoMap["hzshift_diff"]->SetXTitle("sensor"); 
 
-  _histoMap["hxrot_diff"] = new TH1D("hxrot_diff", "", 7, 0, 7); 
-  _histoMap["hxrot_diff"]->SetYTitle("x rot diff [mm]"); 
+  _histoMap["hxrot_diff"] = new TH1D("hxrot_diff", "", nSens,0,nSens); 
+  _histoMap["hxrot_diff"]->SetYTitle("x rot diff [rad]"); 
   _histoMap["hxrot_diff"]->SetXTitle("sensor"); 
 
-  _histoMap["hyrot_diff"] = new TH1D("hyrot_diff", "", 7, 0, 7); 
-  _histoMap["hyrot_diff"]->SetYTitle("y rot diff [mm]"); 
+  _histoMap["hyrot_diff"] = new TH1D("hyrot_diff", "", nSens,0,nSens); 
+  _histoMap["hyrot_diff"]->SetYTitle("y rot diff [rad]"); 
   _histoMap["hyrot_diff"]->SetXTitle("sensor"); 
 
-  _histoMap["hzrot_diff"] = new TH1D("hzrot_diff", "", 7, 0, 7); 
-  _histoMap["hzrot_diff"]->SetYTitle("z rot diff [mm]"); 
+  _histoMap["hzrot_diff"] = new TH1D("hzrot_diff", "", nSens,0,nSens); 
+  _histoMap["hzrot_diff"]->SetYTitle("z rot diff [rad]"); 
   _histoMap["hzrot_diff"]->SetXTitle("sensor");
 
   // Change current directory to root
