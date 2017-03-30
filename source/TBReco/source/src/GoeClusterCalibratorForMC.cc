@@ -424,7 +424,7 @@ namespace depfet {
        
     _rootFile->cd("");
       
-    histoName = "hDB_ID";
+    histoName = "hDB_Weight";
     _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
     _histoMap[histoName]->SetStats( false );
     _histoMap[histoName]->SetYTitle("label weight");  
@@ -483,7 +483,7 @@ namespace depfet {
       double clu_cov_uv = _clusterUVMap[id]->GetCovariance();
                  
       // Store calibration result   
-      histoName = "hDB_ID";
+      histoName = "hDB_Weight";
       _histoMap[histoName]->SetBinContent( i, counter );
       _histoMap[histoName]->SetBinError( i, TMath::Sqrt(counter) );
       _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );

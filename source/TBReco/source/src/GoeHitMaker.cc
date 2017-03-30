@@ -101,7 +101,7 @@ namespace depfet {
     // Read calibration data  
     string histoName;
 
-    histoName = "hDB_ID";
+    histoName = "hDB_Weight";
     if ( (TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
       m_DB_Weight = (TH1F *) clusterDBFile->Get(histoName.c_str());  
       m_DB_Weight->SetDirectory(0);
