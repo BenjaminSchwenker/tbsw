@@ -2,9 +2,9 @@
 
 //
 // get histos from db
-TFile *ftb = new TFile("cal-files/vxd/clusterDB-MC.root");
+TFile *ftb = new TFile("cal-files/vxd-s16-new/clusterDB-MC.root");
 
-TH1F * h_ID = (TH1F*) ftb->Get("hDB_ID");
+TH1F * h_ID = (TH1F*) ftb->Get("hDB_Weight");
 h_ID->SetDirectory(0);
 
 TH1F * h_U = (TH1F*) ftb->Get("hDB_U");
@@ -64,7 +64,7 @@ cout << "total number of types in clusterDB is " << typeset.size() << endl;
 
 //
 // output root file with final cluster db histos 
-TFile *fDB = new TFile("ClusterDBViewer.root","RECREATE");
+TFile *fDB = new TFile("ClusterDBViewer-s4.root","RECREATE");
 
 std::map<TString, TH1F *> histomap_id;
 std::map<TString, TH1F *> histomap_u;

@@ -85,13 +85,15 @@
      <!--Output clusterDB file name-->
      <parameter name="ClusterDBFileName" type="string" value="clusterDB-M26.root"/>
      <!--Ignore clusters from this list of sensorIDs-->
-     <parameter name="IgnoreIDs" type="IntVec"> </parameter>
+     <parameter name="FilterIDs" type="IntVec"> </parameter>
      <!--Minimum number of cluster ID occurances for clusterDB-->
      <parameter name="MinClusters" type="int" value="2000"/>
      <!--Minimum value of variance for u position measurement [mm^2]-->
-     <parameter name="MinVarianceU" type="float" value="1e-06"/>
+     <parameter name="MinVarianceU" type="float" value="2e-06"/>
      <!--Minimum value of variance for v position measurement [mm^2]-->
-     <parameter name="MinVarianceV" type="float" value="1.1e-06"/>
+     <parameter name="MinVarianceV" type="float" value="2e-06"/>
+     <!--Software rescaling of adc codes for cluster labels (new_code = code/scale)-->
+     <parameter name="SoftScale" type="int" value="1"/>
    </processor>
     
    <processor name="ClusterDQM" type="TrackFitDQM">

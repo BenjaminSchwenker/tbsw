@@ -26,7 +26,7 @@
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
      <!--Enter plane numbers of bad detectors-->
-     <parameter name="ExcludeDetector" type="IntVec" value=""/>
+     <parameter name="ExcludeDetector" type="IntVec" value="3"/>
      <!--To use only GoodQuality write 0 here-->
      <parameter name="HitQualitySelection" type="int" value="0"/>
      <!--Maximum hit residual [mm]-->

@@ -12,7 +12,7 @@
    <global>
       <parameter name="LCIOInputFiles"> inputfilename </parameter>
       <parameter name="GearXMLFile" value="cal-files/gear.xml"/>
-      <parameter name="MaxRecordNumber" value="100000"/>
+      <parameter name="MaxRecordNumber" value="-1"/>
       <parameter name="SkipNEvents" value="0"/>
       <parameter name="SupressCheck" value="false"/>
       <parameter name="Verbosity" value="MESSAGE3"/>

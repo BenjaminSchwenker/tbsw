@@ -5,6 +5,7 @@
    <execute>
       <processor name="TelTrackFinder"/>
       <processor name="TelescopeDQM"/>
+      <processor name="Analyzer"/>
    </execute>
 
    <global>
@@ -25,7 +26,7 @@
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
      <!--Enter plane numbers of bad detectors-->
-     <parameter name="ExcludeDetector" type="IntVec" value=""/>
+     <parameter name="ExcludeDetector" type="IntVec" value="3"/>
      <!--To use only GoodQuality write 0 here-->
      <parameter name="HitQualitySelection" type="int" value="0"/>
      <!--Maximum hit residual [mm]-->
@@ -72,6 +73,22 @@
      <parameter name="RootFileName" type="string" value="TelescopeDQM.root"/>
    </processor>
 
-  
+   <processor name="Analyzer" type="PixelDUTAnalyzer">
+     <!--PixelDUTAnalyzer: DUT Analysis Processor-->
+     <!--Name of DUT hit collection-->
+     <parameter name="HitCollection" type="string" lcioInType="TrackerHit"> hit_m26 </parameter>
+     <!--Name of telescope track collection-->
+     <parameter name="TrackCollection" type="string" lcioInType="Track"> aligntracks </parameter>
+     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+     <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
+     <!--Plane number of DUT along the beam line-->
+     <parameter name="DUTPlane" type="int" value="3"/>
+     <!--Maximum u residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.-->
+     <parameter name="MaxResidualU" type="double" value="0.2"/>
+     <!--Maximum v residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.-->
+     <parameter name="MaxResidualV" type="double" value="0.2"/>
+     <!--Output root file name-->
+     <parameter name="RootFileName" type="string" value="m26Histos.root"/>
+   </processor>
 
 </marlin>

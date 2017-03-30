@@ -13,7 +13,7 @@
    <global>
       <parameter name="LCIOInputFiles"> </parameter>
       <parameter name="GearXMLFile" value="gear.xml"/>
-      <parameter name="MaxRecordNumber" value="5000000"/>
+      <parameter name="MaxRecordNumber" value="20000000"/>
       <parameter name="SkipNEvents" value="0"/>
       <parameter name="SupressCheck" value="false"/>
       <parameter name="Verbosity" value="MESSAGE3"/>
@@ -97,7 +97,7 @@
   <!--Set threshold for comparator (in e)-->
   <parameter name="ComparatorThrehold" type="float" value="1100"/>
   <!--Set how many bits the ADC uses-->
-  <parameter name="ADCBits" type="int" value="3"/>
+  <parameter name="ADCBits" type="int" value="4"/>
   <!--Set analog-to-digital converter range 0 - ? (in e)-->
   <parameter name="ADCRange" type="int" value="15000"/>
   <!--Back contact voltage wrt. source, in Volts-->
@@ -109,7 +109,7 @@
   <!--Apply electronic effects?-->
   <parameter name="ElectronicEffects" type="bool" value="true"/>
   <!--Noise added by the electronics, set in ENC (one value for each detector)-->
-  <parameter name="ElectronicNoise" type="double" value="200"/>
+  <parameter name="ElectronicNoise" type="double" value="500"/>
   <!--Apply digitization only to SimTrackerHits for sensors having DAQ IDs in this list-->
   <parameter name="FilterIDs" type="IntVec" value="0 1 2 3 4 5"/>
   <!--Use integration window?-->

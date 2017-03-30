@@ -43,11 +43,13 @@
      <!--Name of hit collection-->
      <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_m26 </parameter>
      <!--This is the name of the ROOT file with the cluster constants (add .root)-->
-     <parameter name="ClusterDBFileName" type="string" value="clusterDB-MC.root"/>
+     <parameter name="ClusterDBFileName" type="string" value="clusterDB-M26-MC.root"/>
      <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
      <parameter name="MaxSizeU" type="int" value="3"/>
      <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
      <parameter name="MaxSizeV" type="int" value="3"/>
+     <!--Software rescaling of adc codes for cluster labels (new_code = code/scale)-->
+     <parameter name="SoftScale" type="int" value="1"/>
    </processor>
     
    <processor name="M26HitMaker-notused" type="CogHitMaker">
