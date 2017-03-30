@@ -390,54 +390,49 @@ void TrackFitDQM::end()
 
     // Fill summary histos on telescope alignment
     // ------------------------------  
+		
+	// This is the position vector of the sensor in the nominal telescope geometry
+	HepVector pos_f_nominal = _detector_nominal.GetDet(ipl).GetNominal().GetPosition(); 
+		
+	// This is the rotation matrix of the sensor in the nominal telescope geoemtry; it 
+	// contains a discrete and a continuous factor. 
+	HepMatrix Rot_f_nominal = _detector_nominal.GetDet(ipl).GetNominal().GetRotation();
 
-	for(int ipl=0; ipl<_detector.GetNSensors(); ipl++)
-	{
+	// This is the discrete factor of sensor rotation in the nominal telescope geometry. 
+	HepMatrix DRot_nominal = _detector_nominal.GetDet(ipl).GetDiscrete().GetRotation();
 		
-		// This is the position vector of the sensor in the nominal telescope geometry
-		HepVector pos_f_nominal = _detector_nominal.GetDet(ipl).GetNominal().GetPosition(); 
+	// This is finally the continous factor of the rotation in the nominal telescope geometry
+	HepMatrix CRot_f_nominal = Rot_f_nominal*DRot_nominal.T(); 
 		
-		// This is the rotation matrix of the sensor in the nominal telescope geoemtry; it 
-		// contains a discrete and a continuous factor. 
-		HepMatrix Rot_f_nominal = _detector_nominal.GetDet(ipl).GetNominal().GetRotation();
+	// Euler angles are defined wrt. the continous rotation in the nominal telescope geometry
+	double alpha_f_nominal, beta_f_nominal, gamma_f_nominal; 
+	GetAnglesKarimaki(CRot_f_nominal, alpha_f_nominal, beta_f_nominal, gamma_f_nominal); 
 
-		// This is the discrete factor of sensor rotation in the nominal telescope geometry. 
-		HepMatrix DRot_nominal = _detector_nominal.GetDet(ipl).GetDiscrete().GetRotation();
+	// This is the position vector of the sensor in the aligned telescope geometry
+	HepVector pos_f = _detector.GetDet(ipl).GetNominal().GetPosition(); 
 		
-		// This is finally the continous factor of the rotation in the nominal telescope geometry
-		HepMatrix CRot_f_nominal = Rot_f_nominal*DRot_nominal.T(); 
-		
-		// Euler angles are defined wrt. the continous rotation in the nominal telescope geometry
-		double alpha_f_nominal, beta_f_nominal, gamma_f_nominal; 
-		GetAnglesKarimaki(CRot_f_nominal, alpha_f_nominal, beta_f_nominal, gamma_f_nominal); 
+	// This is the rotation matrix of the sensor in the aligned telescope geometry; it 
+	// contains a discrete and a continuous factor. 
+	HepMatrix Rot_f = _detector.GetDet(ipl).GetNominal().GetRotation();
 
-		// This is the position vector of the sensor in the aligned telescope geometry
-		HepVector pos_f = _detector.GetDet(ipl).GetNominal().GetPosition(); 
+	// This is the discrete factor of sensor rotation in the aligned telescope geometry. 
+	HepMatrix DRot = _detector.GetDet(ipl).GetDiscrete().GetRotation();
 		
-		// This is the rotation matrix of the sensor in the aligned telescope geometry; it 
-		// contains a discrete and a continuous factor. 
-		HepMatrix Rot_f = _detector.GetDet(ipl).GetNominal().GetRotation();
-
-		// This is the discrete factor of sensor rotation in the aligned telescope geometry. 
-		HepMatrix DRot = _detector.GetDet(ipl).GetDiscrete().GetRotation();
+	// This is finally the continous factor of the rotation in the aligned telescope geometry
+	HepMatrix CRot_f = Rot_f*DRot.T(); 
 		
-		// This is finally the continous factor of the rotation in the aligned telescope geometry
-		HepMatrix CRot_f = Rot_f*DRot.T(); 
-		
-		// Euler angles are defined wrt. the continous rotation in the aligned telescope geometry
-		double alpha_f, beta_f, gamma_f; 
-		GetAnglesKarimaki(CRot_f, alpha_f, beta_f, gamma_f); 
-		//
-		// Fill alignment histograms
+	// Euler angles are defined wrt. the continous rotation in the aligned telescope geometry
+	double alpha_f, beta_f, gamma_f; 
+	GetAnglesKarimaki(CRot_f, alpha_f, beta_f, gamma_f); 
+	//
+	// Fill alignment histograms
 
-		_histoMap["hxshift_diff"]->SetBinContent(ipl+1,pos_f_nominal[0]-pos_f[0]);
-		_histoMap["hyshift_diff"]->SetBinContent(ipl+1,pos_f_nominal[1]-pos_f[1]);
-		_histoMap["hzshift_diff"]->SetBinContent(ipl+1,pos_f_nominal[2]-pos_f[2]);
-		_histoMap["hxrot_diff"]->SetBinContent(ipl+1,alpha_f_nominal-alpha_f);
-		_histoMap["hyrot_diff"]->SetBinContent(ipl+1,beta_f_nominal-beta_f);
-		_histoMap["hzrot_diff"]->SetBinContent(ipl+1,gamma_f_nominal-gamma_f);
-
-	}
+	_histoMap["hxshift_diff"]->SetBinContent(ipl+1,pos_f_nominal[0]-pos_f[0]);
+	_histoMap["hyshift_diff"]->SetBinContent(ipl+1,pos_f_nominal[1]-pos_f[1]);
+	_histoMap["hzshift_diff"]->SetBinContent(ipl+1,pos_f_nominal[2]-pos_f[2]);
+	_histoMap["hxrot_diff"]->SetBinContent(ipl+1,alpha_f_nominal-alpha_f);
+	_histoMap["hyrot_diff"]->SetBinContent(ipl+1,beta_f_nominal-beta_f);
+	_histoMap["hzrot_diff"]->SetBinContent(ipl+1,gamma_f_nominal-gamma_f);
       
     
   }
