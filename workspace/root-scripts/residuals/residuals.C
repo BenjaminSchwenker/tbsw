@@ -1,252 +1,114 @@
 { 
 
-gROOT->Reset(); 
-gROOT->SetStyle("Plain"); 
-
-gStyle->SetOptFit();
-gStyle->SetPalette(1);
-gStyle->SetCanvasColor(0);
-gStyle->SetTitleFillColor(0);
-gStyle->SetPaintTextFormat("1f");
-//gStyle->SetOptStat(0);
-
 // 
 // Analysis cuts 
-TCut hitcut = "trackChi2 < 100  && hasTrack == 0 && clusterQuality == 0";
-TCut roicut = "";
+TCut hitcut = "trackChi2 < 100  && hasTrack == 0 && clusterQuality == 0 && iEvt < 100000 ";
 TCut trkcut = "";
 
-//
-// event data 
-TFile *ftb = new TFile("root-files/DUT-Histos-dutmc.root");
+// Input file name
+TString inputfile = "root-files/H6-S2-Histos-DB-run000065-run65-s8.root";
 
-TTree *ttb = (TTree*) ftb->Get("Hit");
-TTree *ttbtrack = (TTree*) ftb->Get("Track");
+// Output file name
+TString histofile = "ResidualHistos.root";
 
 
 // ----------------------------------------------------------------------
 
-Double_t Norm; 
+TFile *ftb = new TFile(inputfile);
+TFile *fnew = new TFile(histofile,"RECREATE");
 
-TCanvas * c0  = new TCanvas("c0","c0",600,400);
-c0->SetLeftMargin(0.2);
-c0->SetRightMargin(0.1);
-c0->SetTopMargin(0.1);
-c0->SetBottomMargin(0.16);
+//
+// event data 
+TTree *ttb = (TTree*) ftb->Get("Hit");
+TTree *ttbtrack = (TTree*) ftb->Get("Track");
 
-ttb->Draw("cellV_hit:cellU_hit>>hspot", hitcut);
-hspot->SetName(""); 
+ttb->Draw("cellV_hit:cellU_hit>>hspot", hitcut,"goff");
+hspot->SetName("hhitmap_clusters_cells"); 
+hspot->SetTitle(""); 
 hspot->GetXaxis()->SetTitle("cell U [cell ID]");
 hspot->GetYaxis()->SetTitle("cell V [cell ID]");
 hspot->GetZaxis()->SetTitle("number of clusters");
-hspot->GetXaxis()->SetTitleSize(0.08);
-hspot->GetYaxis()->SetTitleSize(0.08);
-hspot->GetZaxis()->SetTitleSize(0.08);
-hspot->GetXaxis()->SetLabelSize(0.08);
-hspot->GetYaxis()->SetLabelSize(0.08);
-hspot->GetZaxis()->SetLabelSize(0.08);
-hspot->Draw("colz");
+hspot->SetStats(0);
 
-TCanvas * c1  = new TCanvas("c1","c1",600,400);
-c1->SetLeftMargin(0.2);
-c1->SetRightMargin(0.1);
-c1->SetTopMargin(0.1);
-c1->SetBottomMargin(0.16);
-
-ttbtrack->Draw("cellV_fit:cellU_fit>>htrackspot", trkcut && roicut);
-htrackspot->SetName("htrackspot"); 
+ttbtrack->Draw("cellV_fit:cellU_fit>>htrackspot", trkcut, "goff");
+htrackspot->SetName("hhitmap_tracks_uv"); 
+htrackspot->SetTitle(""); 
 htrackspot->GetXaxis()->SetTitle("cell U [cell ID]");
 htrackspot->GetYaxis()->SetTitle("cell V [cell ID]");
 htrackspot->GetZaxis()->SetTitle("number of tracks");
-htrackspot->GetXaxis()->SetTitleSize(0.08);
-htrackspot->GetYaxis()->SetTitleSize(0.08);
-htrackspot->GetZaxis()->SetTitleSize(0.08);
-htrackspot->GetXaxis()->SetLabelSize(0.08);
-htrackspot->GetYaxis()->SetLabelSize(0.08);
-htrackspot->GetZaxis()->SetLabelSize(0.08);
-htrackspot->Draw("colz");
+htrackspot->SetStats(0);
 
-
-
-TCanvas * c2  = new TCanvas("c2","c2",600,400);
-c2->SetLeftMargin(0.2);
-c2->SetRightMargin(0.1);
-c2->SetTopMargin(0.1);
-c2->SetBottomMargin(0.16);
-
-ttbtrack->Draw("v_fit:u_fit>>hbeamspot", trkcut);
-hbeamspot->SetName("hbeamspot"); 
+ttbtrack->Draw("v_fit:u_fit>>hbeamspot", trkcut,"goff");
+hbeamspot->SetName("hhitmap_tracks_uv"); 
+hbeamspot->SetTitle("");
 hbeamspot->GetXaxis()->SetTitle("u [mm]");
 hbeamspot->GetYaxis()->SetTitle("v [mm]");
 hbeamspot->GetZaxis()->SetTitle("number of tracks");
-hbeamspot->GetXaxis()->SetTitleSize(0.08);
-hbeamspot->GetYaxis()->SetTitleSize(0.08);
-hbeamspot->GetZaxis()->SetTitleSize(0.08);
-hbeamspot->GetXaxis()->SetLabelSize(0.08);
-hbeamspot->GetYaxis()->SetLabelSize(0.08);
-hbeamspot->GetZaxis()->SetLabelSize(0.08);
- 
-hbeamspot->Draw("colz");
+hbeamspot->SetStats(0);
 
-
-
-TCanvas * c3  = new TCanvas("c3","c3",600,400);
-c3->SetLeftMargin(0.2);
-c3->SetRightMargin(0.1);
-c3->SetTopMargin(0.1);
-c3->SetBottomMargin(0.16);
-
-ttb->Draw("(u_hit - u_fit)*1000 >>hu(101,-75.,+75.)", hitcut);
-hu->SetName("hu"); 
+ttb->Draw("(u_hit - u_fit)*1000 >>hu(101,-75.,+75.)", hitcut,"goff");
+hu->SetName("hresidual_u"); 
 hu->SetTitle("");
 hu->GetXaxis()->SetTitle("residuals u [#mum]");
 hu->GetYaxis()->SetTitle("number of hits");
-hu->GetXaxis()->SetTitleSize(0.06);
-hu->GetYaxis()->SetTitleSize(0.06);
-hu->GetYaxis()->SetTitleOffset(1.5);
-hu->GetXaxis()->SetLabelSize(0.06);
-hu->GetYaxis()->SetLabelSize(0.06);
-hu->Draw("");
+hu->GetYaxis()->SetTitleOffset(1.2);
 
-
-
-TCanvas * c4  = new TCanvas("c4","c4",600,400);
-c4->SetLeftMargin(0.2);
-c4->SetRightMargin(0.1);
-c4->SetTopMargin(0.1);
-c4->SetBottomMargin(0.16);
-
-ttb->Draw("(v_hit - v_fit)*1000 >>hv(81,-75.,+75.)", hitcut);
-hv->SetName("hv"); 
+ttb->Draw("(v_hit - v_fit)*1000 >>hv(81,-75.,+75.)", hitcut,"goff");
+hv->SetName("hresidual_v"); 
 hv->SetTitle("");
 hv->GetXaxis()->SetTitle("residuals v [#mum]");
 hv->GetYaxis()->SetTitle("number of hits");
-hv->GetXaxis()->SetTitleSize(0.06);
-hv->GetYaxis()->SetTitleSize(0.06);
-hv->GetYaxis()->SetTitleOffset(1.5);
-hv->GetXaxis()->SetLabelSize(0.06);
-hv->GetYaxis()->SetLabelSize(0.06);
-hv->Draw("");
+hv->GetYaxis()->SetTitleOffset(1.2);
 
-TCanvas * c5  = new TCanvas("c5","c5",600,400);
-c5->SetLeftMargin(0.2);
-c5->SetRightMargin(0.1);
-c5->SetTopMargin(0.1);
-c5->SetBottomMargin(0.16);
-
-ttb->Draw("trackChi2 / trackNdof >> hchisqundof(100,0,10)", hitcut);
-hchisqundof->SetName(""); 
+ttb->Draw("trackChi2 / trackNdof >> hchisqundof(100,0,10)", hitcut,"goff");
+hchisqundof->SetName("hchisqundof"); 
 hchisqundof->SetTitle("");
 hchisqundof->GetXaxis()->SetTitle("#chi^2/ndof");
 hchisqundof->GetYaxis()->SetTitle("number of tracks");
-hchisqundof->GetXaxis()->SetTitleSize(0.06);
-hchisqundof->GetYaxis()->SetTitleSize(0.06);
-hchisqundof->GetYaxis()->SetTitleOffset(1.5);
-hchisqundof->GetXaxis()->SetLabelSize(0.06);
-hchisqundof->GetYaxis()->SetLabelSize(0.06);
-hchisqundof->Draw();
+hchisqundof->GetYaxis()->SetTitleOffset(1.2);
 
-
-
-
-TCanvas * c7  = new TCanvas("c7","c7",600,400);
-c7->SetLeftMargin(0.2);
-c7->SetRightMargin(0.1);
-c7->SetTopMargin(0.1);
-c7->SetBottomMargin(0.16);
-
-
-ttb->Draw("seedCharge >>hCharge(101,0,100)", hitcut);
-hCharge->SetName("hCharge"); 
+ttb->Draw("seedCharge >>hCharge(101,0,100)", hitcut,"goff");
+hCharge->SetName("hSeedCharge"); 
 hCharge->SetTitle("");
 hCharge->GetXaxis()->SetTitle("seed charge [ADU]");
 hCharge->GetYaxis()->SetTitle("number of hits");
-hCharge->GetXaxis()->SetTitleSize(0.06);
-hCharge->GetYaxis()->SetTitleSize(0.06);
-hCharge->GetYaxis()->SetTitleOffset(1.5);
-hCharge->GetXaxis()->SetLabelSize(0.06);
-hCharge->GetYaxis()->SetLabelSize(0.06);
-hCharge->Draw();
+hCharge->GetYaxis()->SetTitleOffset(1.2);
 
-
-TCanvas * c8  = new TCanvas("c8","c8",600,400);
-c8->SetLeftMargin(0.2);
-c8->SetRightMargin(0.1);
-c8->SetTopMargin(0.1);
-c8->SetBottomMargin(0.16);
-
-
-ttb->Draw("clusterCharge >>hCCharge(101,0,100)", hitcut);
-hCCharge->SetName("hCCharge"); 
+ttb->Draw("clusterCharge >>hCCharge(101,0,100)", hitcut,"goff");
+hCCharge->SetName("hClusterCharge"); 
 hCCharge->SetTitle("");
 hCCharge->GetXaxis()->SetTitle("cluster charge [ADU]");
 hCCharge->GetYaxis()->SetTitle("number of hits");
-hCCharge->GetXaxis()->SetTitleSize(0.06);
-hCCharge->GetYaxis()->SetTitleSize(0.06);
-hCCharge->GetYaxis()->SetTitleOffset(1.5);
-hCCharge->GetXaxis()->SetLabelSize(0.06);
-hCCharge->GetYaxis()->SetLabelSize(0.06);
-hCCharge->Draw();
+hCCharge->GetYaxis()->SetTitleOffset(1.2);
 
-
-TCanvas * c10  = new TCanvas("c10","c10",600,400);
-c10->SetLeftMargin(0.2);
-c10->SetRightMargin(0.1);
-c10->SetTopMargin(0.1);
-c10->SetBottomMargin(0.16);
-
-ttb->Draw("size >>hsize(20,0,20)", hitcut);
+ttb->Draw("size >>hsize(20,0,20)", hitcut,"goff");
 hsize->SetName("hsize"); 
 hsize->SetTitle("");
 hsize->GetXaxis()->SetTitle("cluster size [pixels]");
 hsize->GetYaxis()->SetTitle("number of hits");
-hsize->GetXaxis()->SetTitleSize(0.06);
-hsize->GetYaxis()->SetTitleSize(0.06);
-hsize->GetYaxis()->SetTitleOffset(1.5);
-hsize->GetXaxis()->SetLabelSize(0.06);
-hsize->GetYaxis()->SetLabelSize(0.06);
-hsize->Draw();
+hsize->GetYaxis()->SetTitleOffset(1.2);
+
+ttb->Draw("sizeU >>hsizeU(10,0,10)", hitcut,"goff");
+hsizeU->SetName("hsizeU"); 
+hsizeU->SetTitle("");
+hsizeU->GetXaxis()->SetTitle("size [ucells]");
+hsizeU->GetYaxis()->SetTitle("number of hits");
+hsizeU->GetYaxis()->SetTitleOffset(1.2);
+
+ttb->Draw("sizeV >>hsizeV(10,0,10)", hitcut,"goff");
+hsizeV->SetName("hsizeV"); 
+hsizeV->SetTitle("");
+hsizeV->GetXaxis()->SetTitle("size [vcells]");
+hsizeV->GetYaxis()->SetTitle("number of hits");
+hsizeV->GetYaxis()->SetTitleOffset(1.2);
+hsizeV->SetLineColor(4);
+hsizeV->SetLineStyle(2);
 
 
-TCanvas * c11  = new TCanvas("c11","c11",600,400);
-c11->SetLeftMargin(0.2);
-c11->SetRightMargin(0.1);
-c11->SetTopMargin(0.1);
-c11->SetBottomMargin(0.16);
 
-ttb->Draw("sizeU >>hcol(10,0,10)", hitcut);
-hcol->SetName("hcol"); 
-hcol->SetTitle("");
-hcol->GetXaxis()->SetTitle("size [cells]");
-hcol->GetYaxis()->SetTitle("number of hits");
-hcol->GetXaxis()->SetTitleSize(0.06);
-hcol->GetYaxis()->SetTitleSize(0.06);
-hcol->GetYaxis()->SetTitleOffset(1.5);
-hcol->GetXaxis()->SetLabelSize(0.06);
-hcol->GetYaxis()->SetLabelSize(0.06);
+fnew->Write();
+fnew->Close();
+ftb->Close();
 
-
-ttb->Draw("sizeV >>hrow(10,0,10)", hitcut);
-hrow->SetName("hrow"); 
-hrow->SetTitle("");
-hrow->GetXaxis()->SetTitle("size [cells]");
-hrow->GetYaxis()->SetTitle("number of hits");
-hrow->GetXaxis()->SetTitleSize(0.06);
-hrow->GetYaxis()->SetTitleSize(0.06);
-hrow->GetYaxis()->SetTitleOffset(1.5);
-hrow->GetXaxis()->SetLabelSize(0.06);
-hrow->GetYaxis()->SetLabelSize(0.06);
-hrow->SetLineColor(4);
-hrow->SetLineStyle(2);
-
-hcol->Draw();
-hrow->Draw("same");
-
-TLegend* lc = new TLegend(0.6,0.5,0.85,0.7);
-lc->SetFillColor(kWhite); 
-lc->SetBorderSize(0);
-lc->AddEntry("hcol","sizeU","l");
-lc->AddEntry("hrow","sizeV","l");
-lc->Draw();
 
 }
