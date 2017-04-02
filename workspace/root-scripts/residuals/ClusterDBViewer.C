@@ -1,8 +1,17 @@
 { 
 
+// Input file name
+TString inputfile = "cal-files/run65-s8/clusterDB-DEP2.root";
+
+// Output file name
+TString histofile = "ViewClusterDB-s8.root";
+
+//------------------------------------------------------------------------
+
+
 //
 // get histos from db
-TFile *ftb = new TFile("cal-files/vxd-s1/clusterDB-MC.root");
+TFile *ftb = new TFile(inputfile);
 
 TH1F * h_Weight = (TH1F*) ftb->Get("hDB_Weight");
 h_Weight->SetDirectory(0);
@@ -61,30 +70,9 @@ for (int bin = 1; bin<= h_Weight->GetNbinsX(); bin++) {
 cout << "Number of labels in clusterDB is " << h_Weight->GetNbinsX() << endl;
 cout << "Number of types in clusterDB is " << typeset.size() << endl;
 
-double weightedVarU = 0;
-double weightedVarV = 0;
-double norm = 0;
-
-for (int bin = 1; bin<= h_Weight->GetNbinsX(); bin++) {
-
-  double w = h_Weight->GetBinContent(bin);
-  norm += w;
-  
-  weightedVarU += w*h_Var_U->GetBinContent(bin);
-  weightedVarV += w*h_Var_V->GetBinContent(bin);
-}
-
-if (norm >0) {
-  weightedVarU/=norm;
-  weightedVarV/=norm;
-
-  cout << "Weighted clusterDB sigmaU [mm]: " << TMath::Sqrt(weightedVarU) << endl;
-  cout << "Weighted clusterDB sigmaV [mm]: " << TMath::Sqrt(weightedVarV) << endl;
-}
-
 //
 // output root file with final cluster db histos 
-TFile *fDB = new TFile("ViewClusterDB.root","RECREATE");
+TFile *fDB = new TFile(histofile,"RECREATE");
 
 std::map<TString, TH1F *> histomap_weight;
 std::map<TString, TH1F *> histomap_u;
@@ -191,6 +179,92 @@ for (auto currenttype : typeset ) {
 
 }
 
+//
+// summary histograms on type resolution 
+fDB->cd("");
+
+int TYPES = typeset.size();
+
+htypes_sigu = new TH1F("htypes_sigu","",TYPES,0,TYPES);
+htypes_sigu->SetStats(0);
+htypes_sigu->SetFillColor(38);
+htypes_sigu->SetYTitle("weighted cluster sigma u [mm]");  
+  
+htypes_sigv = new TH1F("htypes_sigv","",TYPES,0,TYPES);
+htypes_sigv->SetStats(0);
+htypes_sigv->SetFillColor(38);
+htypes_sigv->SetYTitle("weighted cluster sigma v [mm]");  
+
+int j = 0;
+for (auto currenttype : typeset ) {
+  j++;
+
+  htypes_sigu->GetXaxis()->SetBinLabel(j, currenttype);  
+  htypes_sigv->GetXaxis()->SetBinLabel(j, currenttype); 
+  
+  double weightedTypeVarU = 0;
+  double weightedTypeVarV = 0;
+  double typeNorm = 0;
+  
+  for (int bin = 1; bin<= histomap_weight[currenttype]->GetNbinsX(); bin++) {
+    
+    double w = histomap_weight[currenttype]->GetBinContent(bin);
+    typeNorm += w;
+     
+    weightedTypeVarU += w*TMath::Power(histomap_sigu[currenttype]->GetBinContent(bin),2);
+    weightedTypeVarV += w*TMath::Power(histomap_sigv[currenttype]->GetBinContent(bin),2);
+  }
+
+  if (typeNorm >0) {
+    weightedTypeVarU/=typeNorm;
+    weightedTypeVarV/=typeNorm;
+    htypes_sigu->SetBinContent(j, TMath::Sqrt(weightedTypeVarU));  
+    htypes_sigv->SetBinContent(j, TMath::Sqrt(weightedTypeVarV)); 
+  } else {
+    htypes_sigu->SetBinContent(j, 0);  // invalid
+    htypes_sigv->SetBinContent(j, 0);  // invalid
+  }
+}
+
+//
+// summary histograms on overall resolution
+
+hweighted_sigma_sensor = new TH1F("hweighted_sigma_sensor","",2,0,2);
+hweighted_sigma_sensor->SetStats(0);
+hweighted_sigma_sensor->SetFillColor(38);
+hweighted_sigma_sensor->SetYTitle("cluster sigma [mm]");  
+
+hweighted_sigma_sensor->GetXaxis()->SetBinLabel(1, "sigma u");  
+hweighted_sigma_sensor->GetXaxis()->SetBinLabel(2, "sigma v"); 
+
+double weightedVarU = 0;
+double weightedVarV = 0;
+double norm = 0;
+
+for (int bin = 1; bin<= h_Weight->GetNbinsX(); bin++) {
+
+  double w = h_Weight->GetBinContent(bin);
+  norm += w;
+  
+  weightedVarU += w*h_Var_U->GetBinContent(bin);
+  weightedVarV += w*h_Var_V->GetBinContent(bin);
+}
+
+cout << "Number of tracks used for calibration is " << norm << endl;
+
+if (norm >0) {
+  weightedVarU/=norm;
+  weightedVarV/=norm;
+
+  hweighted_sigma_sensor->SetBinContent(1, TMath::Sqrt(weightedVarU));  
+  hweighted_sigma_sensor->SetBinContent(2, TMath::Sqrt(weightedVarV)); 
+
+  cout << "Weighted clusterDB sigmaU [mm]: " << TMath::Sqrt(weightedVarU) << endl;
+  cout << "Weighted clusterDB sigmaV [mm]: " << TMath::Sqrt(weightedVarV) << endl;
+} else {
+  hweighted_sigma_sensor->SetBinContent(1, 0);  // invalid
+  hweighted_sigma_sensor->SetBinContent(2, 0);  // invalid
+}
 
 fDB->Write();
 fDB->Close();
