@@ -176,6 +176,9 @@ void FastTracker::init() {
   _noOfTracks  = 0;
   _noOfEventMinHits = 0;
   _noOfFailedFits = 0;  
+
+  _noOfCandTracks = 0;   
+  _noOfAmbiguousHits = 0;
   
   // Read detector constants from gear file
   _detector.ReadGearConfiguration();    
@@ -241,25 +244,24 @@ void FastTracker::init() {
   }
 
   if ( (int)_maxResidualU.size() == 0 ) {
-    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter maxResidualU not set. Using 1mm for all planes." << endl;  
-    _maxResidualU.resize(_nTelPlanes, 1.0);  
+    _maxResidualU.resize(_nTelPlanes, 1.0);
+    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter maxResidualU not set. Using default value " <<  _maxResidualU[0] << "mm." << endl;  
   } else if ( (int)_maxResidualU.size() != _nTelPlanes ) {
-    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Paremeter maxResidualU not set for all planes. Appending with value " 
-                               << _maxResidualU[0] << "mm." << endl; 
     double max = _maxResidualU[0];
     _maxResidualU.resize(_nTelPlanes, max);  
+    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Paremeter maxResidualU not set for all planes. Appending with value " 
+                               << _maxResidualU[0] << "mm." << endl; 
   }
   
   if ( (int)_maxResidualV.size() == 0 ) {
-    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter maxResidualV not set. Using 1mm for all planes." << endl;  
     _maxResidualV.resize(_nTelPlanes, 1.0);  
-  } else if ( (int)_maxResidualV.size() != _nTelPlanes ) {
-    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Paremeter maxResidualV not set for all planes. Appending with value " 
-                               << _maxResidualV[0] << "mm." << endl; 
+    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter maxResidualU not set. Using default value " <<  _maxResidualV[0] << "mm." << endl;  
+  } else if ( (int)_maxResidualV.size() != _nTelPlanes ) { 
     double max = _maxResidualV[0];
     _maxResidualV.resize(_nTelPlanes, max);  
+    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Paremeter maxResidualV not set for all planes. Appending with value " 
+                               << _maxResidualV[0] << "mm." << endl;
   }
-
   
   streamlog_out ( MESSAGE3 ) <<  "Use residual cuts for " << _nTelPlanes << " planes" << endl;
    
@@ -321,8 +323,6 @@ void FastTracker::processEvent(LCEvent * evt)
    for ( size_t iCol = 0 ; iCol < _hitCollectionNameVec.size(); ++iCol ) {
      
      try {
-
-       
        
        LCCollectionVec * col = dynamic_cast < LCCollectionVec * > (evt->getCollection( _hitCollectionNameVec.at( iCol ) ) );
        
@@ -419,7 +419,7 @@ void FastTracker::processEvent(LCEvent * evt)
    if ( _firstPass_firstPlane != _firstPass_secondPlane) {
      
      findTracks(TrackCollector , HitStore , _firstPass_firstPlane , _firstPass_secondPlane); 
-    
+     
      streamlog_out ( MESSAGE2 ) << "Total of " << TrackCollector.size() << " forward candidate tracks found" << endl;
    }
    
@@ -604,10 +604,9 @@ void FastTracker::end()
                           << "Total number of reconstructed tracks: " << setw(10) << setiosflags(ios::right) << _noOfTracks << resetiosflags(ios::right)
                           << resetiosflags(ios::right) << endl
                           << "Number of events with " << _minHits << " firing planes: " << setw(9) << setiosflags(ios::right) << _noOfEventMinHits << resetiosflags(ios::right) << endl
-                          << "Number of failed final fits: " << setw(10) << setiosflags(ios::right) <<  _noOfFailedFits << resetiosflags(ios::right)
+                          << "Number of failed final fits: " << setw(10) << setiosflags(ios::right) <<  _noOfFailedFits << resetiosflags(ios::right) << endl
+                          << "Number of ambiguous hits " << _noOfAmbiguousHits << " for number of cand tracks " << _noOfCandTracks << resetiosflags(ios::right) << endl                     
                           << endl; 
-    
- 
 
    
   // CPU time end
@@ -695,7 +694,7 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
              continue; 
            }
          } 
-       
+         
          // Extrapolate seed to all planes
          bool exerr = TrackFitter.ExtrapolateSeed(trk);
          if ( exerr ) { // just skip the track 
@@ -714,7 +713,10 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
          int nhits = 0; 
        
          // Flag success of track building
-         bool isValid = true;   
+         bool isValid = true;
+         
+         // Count hit ambiguities per track  
+         int nAmbiguousHits = 0;   
                               
          // Follow track along beam direction    
          for(int ipl=0;ipl<_nTelPlanes;ipl++)  { 
@@ -747,7 +749,10 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
                // Discard hits with too large residuals
                if ( std::abs(u - uhit) >= _maxResidualU[ipl] && _maxResidualU[ipl] > 0) continue; 
                if ( std::abs(v - vhit) >= _maxResidualV[ipl] && _maxResidualV[ipl] > 0) continue; 
-
+               
+               // This hit could(?) belong to the track 
+               nAmbiguousHits++;
+               
                // Remember hit with smallest residual 
                double hitdist = 0; 
                if ( _maxResidualU[ipl] > 0 )  hitdist += std::abs(u - uhit); 
@@ -764,7 +769,10 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
              // Check iff good hit found 
              if ( besthitid!=-1 )  {
               
-               // Add hit to candidate track 
+               // Add closest hit to candidate track
+               // This is a simple greedy selection and may be wrong in 
+               // there are hit ambiguities or the reference track is 
+               // too bad.  
                TBHit& BestHit = HitStore.GetRecoHitFromID(besthitid, ipl);
                BestHit.SetUniqueID(besthitid);            
                trk.GetTE(ipl).SetHit(BestHit);
@@ -820,7 +828,11 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
            streamlog_out ( MESSAGE1 ) << "Track chisq too big. Skipping candidate track!" << endl;
            continue;      
          }
-              
+         
+         // update the running counters  
+         _noOfCandTracks++;    
+         _noOfAmbiguousHits += nAmbiguousHits;
+     
          // Ok, we keep this track for final selection      
          TrackCollector.push_back( trk ); 
        } 

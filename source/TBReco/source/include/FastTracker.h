@@ -183,6 +183,10 @@ protected:
     */
    int _noOfTracks;    
 
+   
+   int _noOfCandTracks;    
+   int _noOfAmbiguousHits;
+
    //! Total number of failed final fits
    int _noOfFailedFits;    
    
