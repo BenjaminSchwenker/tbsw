@@ -8,6 +8,7 @@
 #include "FastTracker.h"
 #include "SeedGenerator.h"
 #include "GenericTrackFitter.h"
+#include "TBKalmanB.h"
 #include "TBHit.h"
 #include "TrackInputProvider.h"
 
@@ -644,12 +645,12 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
    
    // Check plane numbers are valid
    if (firstplane < 0 || secondplane < 0) return; 
- 
+   
    // Configure Kalman track fitter
-   GenericTrackFitter TrackFitter(_detector);
+   TBKalmanB TrackFitter(_detector);
    TrackFitter.SetNumIterations(_outlierIterations+1);
    TrackFitter.SetOutlierCut(_outlierChi2Cut); 
-
+    
    // Loop over different momentum hypothesis 
    
    for (int imom = 0; imom < (int) _momentum_list.size() ; imom++ ) {
@@ -717,16 +718,34 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
          
          // Count hit ambiguities per track  
          int nAmbiguousHits = 0;   
-                              
+         
+         // This is the initial track state vector
+         HepMatrix x0(5,1,0);
+         
+         // This is the initial covariance matrix 
+         HepSymMatrix C0(5,0);
+         for (int i = 0; i < 2; i++) {
+           C0[i][i] = 1E-2;
+           C0[i+2][i+2] = 1E1; 
+         } 
+         C0[4][4] = 1;  
+          
          // Follow track along beam direction    
          for(int ipl=0;ipl<_nTelPlanes;ipl++)  { 
-                
+            
+           // This is the reference state on the current track element
+           HepMatrix& xref = trk.GetTE(ipl).GetState().GetPars();
+                     
            // Skip passive sensors    
            if( _isActive[ipl] && trk.GetTE(ipl).IsCrossed() ) { 
                   
+             // This is the filtered local track state using all hits 
+             // encountered so far      
+             HepMatrix x = xref + x0;
+             
              // Get extrapolated intersection coordinates
-             double u = trk.GetTE(ipl).GetState().GetPars()[2][0]; 
-             double v = trk.GetTE(ipl).GetState().GetPars()[3][0]; 
+             double u = x[2][0]; 
+             double v = x[3][0]; 
              
              // Fast preselection of hit candidates compatible to   
              // predicted intersection coordinates. 
@@ -772,9 +791,12 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
                // Add closest hit to candidate track
                // This is a simple greedy selection and may be wrong in 
                // there are hit ambiguities or the reference track is 
-               // too bad.  
+               // too bad.
+
                TBHit& BestHit = HitStore.GetRecoHitFromID(besthitid, ipl);
-               BestHit.SetUniqueID(besthitid);            
+               BestHit.SetUniqueID(besthitid);
+                
+               double hitchi2 = TrackFitter.FilterHit(BestHit, xref, x0, C0);             
                trk.GetTE(ipl).SetHit(BestHit);
                  
                // Some bookkeeping    
@@ -792,22 +814,33 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
                }
               
              }
-           } // End is active 
-          
-         } // End subdetector loop 
-                
+           } // End is active
+
+           // Extrapolate filtered state to next track element 
+           if (ipl < _nTelPlanes -1) {  
+             HepMatrix& nxref = trk.GetTE(ipl+1).GetState().GetPars();
+             exerr = TrackFitter.PropagateState(trk.GetTE(ipl), trk.GetTE(ipl+1), xref, nxref, x0, C0); 
+             if ( exerr ) { // just skip the track 
+               _noOfFailedFits++;
+               streamlog_out ( MESSAGE2 ) << "Extrapolation of track seed into telescope failed!!" << endl; 
+               continue;
+             }  
+           }
+
+         } // End sensor loop  
+                            
          // Check if track candidate is valid, otherwise proceed to 
          // next. 
          // =============================
-       
+         
          if( !isValid ) {
            continue;
          }  
-       
+         
          if ( nhits<_minHits ) {
            continue;
          }
-         
+          
          // Fit track candidate 
          bool trkerr = TrackFitter.Fit(trk); 
          if( trkerr ) {

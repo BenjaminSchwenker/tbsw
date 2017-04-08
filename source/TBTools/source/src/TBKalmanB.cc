@@ -370,6 +370,134 @@ bool TBKalmanB::Fit(TBTrack& trk)
   return false;
 }
 
+/** Filters a new hit 
+ */
+double TBKalmanB::FilterHit(TBHit& hit, HepMatrix& xref, HepMatrix& x0, HepSymMatrix& C0) 
+{ 
+ 
+  // To start ierr is set to 0 (= OK)
+  int ierr = 0; 
+       
+  // Here, the measurment update takes place  
+  double predchi2 = 0; 
+    
+  // Measured hit coordinates, 2x1 matrix 
+  HepMatrix& m = hit.GetCoord();
+        
+  // Covariance for hit coordinates, 2x2 matrix 
+  HepSymMatrix& V = hit.GetCov();
+      
+  // Linearization: Measured deviation from reference 
+  m -= H*xref; 
+            
+  // Weigth matrix of measurment 
+  HepSymMatrix W = (V + C0.similarity(H)).inverse(ierr);
+  if (ierr != 0) {
+    streamlog_out(ERROR) << "Hit filtering: Matrix inversion failed. Quit fitting!"
+                         << std::endl;
+    return -1;
+  }	
+       
+  // This is the predicted residual 
+  HepMatrix r = m - H*x0; 
+      
+  // This is the predicted chi2 
+  HepMatrix chi2mat = r.T()*W*r;
+  predchi2 = chi2mat[0][0];   
+      
+  // Kalman gain matrix K 
+  HepMatrix K = C0 * H.T() * W; 
+       
+  // This is the filtered state
+  x0 += K * r;
+  C0 -= (W.similarityT(H)).similarity(C0);
+        
+  return predchi2;
+}
+
+
+/** Propagte state from trackelement te to next track element nte 
+ */
+int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, HepMatrix& xref, HepMatrix& nxref, HepMatrix& x0, HepSymMatrix& C0) 
+{ 
+       
+  // Reference frame for next track element          
+  ReferenceFrame& nSurf = nte.GetDet().GetNominal();
+
+  // Reference frame for current track element          
+  ReferenceFrame& Surf = te.GetDet().GetNominal();
+   
+  // This fitter takes into account scatter in air
+  // gaps between sensors. Therefor, we add a virtual 
+  // air surface between the detectors which scatters 
+  // the track with a material budget equal to the 
+  // extrapolation step length between the sensors.
+        
+  // Get signed flight length in air between detectors 
+  double length = TrackModel->GetSignedStepLength(xref, Surf, nSurf); 
+      
+  // Extraploate half step along straight line 
+  HepMatrix xref_air = xref; 
+  ReferenceFrame Surf_air = Surf; 
+  TrackModel->Extrapolate(xref_air, Surf_air, length/2);
+  
+  int idir = 1;
+    
+  // To start ierr is set to 0 (= OK)
+  int ierr = 0; 
+
+  if ( idir > 0 ) {
+          
+    // MAP estimate [x0,C0] from te to air surface
+    // ---------------------------------------
+    double l0 = te.GetDet().GetTrackLength(xref[2][0], xref[3][0], xref[0][0], xref[1][0]);
+    double X0 = te.GetDet().GetRadLength(xref[2][0],xref[3][0]);    
+    double theta2_det = materialeffect::GetScatterTheta2(l0, X0, mass, charge, mom );   
+    ierr = MAP_FORWARD( theta2_det, xref, Surf, xref_air, Surf_air, x0, C0 );
+    if (ierr != 0) {
+      streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
+                           << std::endl;
+      return -1;
+    }	
+         
+    // MAP estimate [x0,C0] from air to next te 
+    // ---------------------------------------
+    double theta2_air = materialeffect::GetScatterTheta2(length, materialeffect::X0_air, mass, charge, mom );   
+    ierr = MAP_FORWARD( theta2_air, xref_air, Surf_air, nxref, nSurf, x0, C0 );
+    if (ierr != 0) {
+      streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
+                           << std::endl;
+      return -1;
+    }	
+          
+  } else {
+        
+    // MAP estimate [x0,C0] from old det to air surface
+    // ---------------------------------------
+    double theta2_air = materialeffect::GetScatterTheta2(length, materialeffect::X0_air, mass, charge, mom ) ;   // Backward form 
+    ierr = MAP_BACKWARD( theta2_air, xref, Surf, xref_air, Surf_air, x0, C0 );
+    if (ierr != 0) {
+      streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
+                           << std::endl;
+      return -1;
+    }	
+        
+    // MAP estimate [x0,C0] from air to new det surface
+    // ---------------------------------------
+    double l0 = nte.GetDet().GetTrackLength(nxref[2][0], nxref[3][0], nxref[0][0], nxref[1][0]);
+    double X0 = nte.GetDet().GetRadLength(nxref[2][0],nxref[3][0]);    
+    double theta2_det = materialeffect::GetScatterTheta2(l0, X0, mass, charge, mom );   // Backward form    
+    ierr = MAP_BACKWARD( theta2_det, xref_air, Surf_air, nxref, nSurf, x0, C0 );          
+    if (ierr != 0) {
+      streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
+                           << std::endl;
+      return -1;
+    }	
+               
+  }
+      
+  return 0;
+}
 
 
 /** Runs filter. Returns fit chi2. 

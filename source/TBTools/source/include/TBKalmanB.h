@@ -174,6 +174,18 @@ class TBKalmanB {
   /** Returns the predicted chi2
    */
   double GetPredictedChi2( CLHEP::HepMatrix& r, CLHEP::HepMatrix& H, CLHEP::HepSymMatrix& C, CLHEP::HepSymMatrix& V); 
+  
+  /** Propagte state from trackelement te to next track element nte 
+   */
+  int PropagateState(TBTrackElement& te, TBTrackElement& nte, CLHEP::HepMatrix& xref, CLHEP::HepMatrix& nxref, CLHEP::HepMatrix& x0, CLHEP::HepSymMatrix& C0);
+  
+  /** Filters a new hit. Returns predicted chi2 
+   */
+  double FilterHit(TBHit& hit, CLHEP::HepMatrix& xref, CLHEP::HepMatrix& x0, CLHEP::HepSymMatrix& C0);  
+
+  /** Get underlying track model
+   */
+  GenericTrackModel* GetTrackModel() {return TrackModel;}  
    
   CLHEP::HepMatrix& GetHMatrix()
     { return H;} 
