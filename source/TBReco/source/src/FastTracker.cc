@@ -859,26 +859,20 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
          */
          //std::cout << "bennu finder chi2 " << finderChi2 << std::endl; 
          //std::cout << "bennu fitter chi2 " << trk.GetChiSqu() << std::endl;
-        
-
+         
          trk.SetChiSqu(finderChi2);
          TrackFitter.SetNdof(trk);  
 
-         
-        
-         
          // Reject hit if total chisq gets too large
          if(  trk.GetChiSqu() >= _maxTrkChi2  ) { 
            streamlog_out ( MESSAGE1 ) << "Track chisq too big. Skipping candidate track!" << endl;
            continue;      
          }
-
- 
          
          // update the running counters  
          _noOfCandTracks++;    
          _noOfAmbiguousHits += nAmbiguousHits;
-     
+         
          // Ok, we keep this track for final selection      
          TrackCollector.push_back( trk ); 
        } 
@@ -901,7 +895,7 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
    if (seedplane < 0 ) return; 
  
    // Configure Kalman track fitter
-   GenericTrackFitter TrackFitter(_detector);
+   TBKalmanB TrackFitter(_detector);
    TrackFitter.SetNumIterations(_outlierIterations+1);
    TrackFitter.SetOutlierCut(_outlierChi2Cut); 
    
