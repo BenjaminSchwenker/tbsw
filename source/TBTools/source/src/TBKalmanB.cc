@@ -405,6 +405,8 @@ double TBKalmanB::FilterHit(TBHit& hit, HepMatrix& xref, HepMatrix& x0, HepSymMa
   // Kalman gain matrix K 
   HepMatrix K = C0 * H.T() * W; 
        
+  std::cout << "benni K*r " << K * r << std::endl;
+
   // This is the filtered state
   x0 += K * r;
   C0 -= (W.similarityT(H)).similarity(C0);
