@@ -798,15 +798,17 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
 
                TBHit& BestHit = HitStore.GetRecoHitFromID(besthitid, ipl);
                BestHit.SetUniqueID(besthitid);
-                
-               double hitchi2 = TrackFitter.FilterHit(BestHit, xref, x0, C0);             
-               trk.GetTE(ipl).SetHit(BestHit);
-                 
-               finderChi2 += hitchi2;
-
-               // Some bookkeeping    
-               nhits++;  
-               ngap = 0;
+               
+               if ( TrackFitter.GetPredictedChi2(x, C0, BestHit) < _outlierChi2Cut ) {
+                 double hitchi2 = TrackFitter.FilterHit(BestHit, xref, x0, C0);             
+                 trk.GetTE(ipl).SetHit(BestHit); 
+                 // Some bookkeeping   
+                 finderChi2 += hitchi2; 
+                 nhits++;  
+                 ngap = 0;
+               } else {
+                 std::cout << "new outlier cut triggered " << TrackFitter.GetPredictedChi2(x, C0, BestHit) << std::endl;
+               }
              
              } else {
            

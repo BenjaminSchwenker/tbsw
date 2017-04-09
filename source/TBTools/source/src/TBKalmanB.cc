@@ -423,6 +423,9 @@ int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, HepMatrix
 
   // Reference frame for current track element          
   ReferenceFrame& Surf = te.GetDet().GetNominal();
+  
+  // Direction of propagation (idir > 0 means along beam direction)
+  int idir = nte.GetDet().GetPlaneNumber() - te.GetDet().GetPlaneNumber();
    
   // This fitter takes into account scatter in air
   // gaps between sensors. Therefor, we add a virtual 
@@ -437,8 +440,6 @@ int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, HepMatrix
   HepMatrix xref_air = xref; 
   ReferenceFrame Surf_air = Surf; 
   TrackModel->Extrapolate(xref_air, Surf_air, length/2);
-  
-  int idir = 1;
     
   // To start ierr is set to 0 (= OK)
   int ierr = 0; 
@@ -852,8 +853,8 @@ int TBKalmanB::MAP_BACKWARD(  double theta2,
 double TBKalmanB::GetPredictedChi2(CLHEP::HepMatrix& p, CLHEP::HepSymMatrix& C, TBHit& hit)
 {
   // Get measurement
-  HepMatrix m = hit.GetCoord();  
-  HepSymMatrix V = hit.GetCov();
+  HepMatrix& m = hit.GetCoord();  
+  HepSymMatrix& V = hit.GetCov();
   // Compute residual 
   HepMatrix& H = GetHMatrix();   
   HepMatrix r = m - H*p; 
@@ -880,7 +881,7 @@ double TBKalmanB::GetChi2Increment(HepMatrix& p, HepSymMatrix& C, TBHit& hit)
  */
 double TBKalmanB::GetPredictedChi2( CLHEP::HepMatrix& r, CLHEP::HepMatrix& H, CLHEP::HepSymMatrix& C, CLHEP::HepSymMatrix& V)
 {
-  // Residuals weight: W=(V - HCH^T)^-1
+  // Residuals weight: W=(V + HCH^T)^-1
   int ierr;
   HepSymMatrix W = (V + C.similarity(H)).inverse(ierr);
   if (ierr) {
