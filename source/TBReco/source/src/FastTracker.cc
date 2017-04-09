@@ -730,6 +730,8 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
          } 
          C0[4][4] = 1;  
           
+         double finderChi2 = 0; 
+
          // Follow track along beam direction    
          for(int ipl=0;ipl<_nTelPlanes;ipl++)  { 
             
@@ -742,8 +744,8 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
              // This is the filtered local track state using all hits 
              // encountered so far
 
-             std::cout << "bennu xref " << xref << std::endl;   
-             std::cout << "bennu x0 " << x0 << std::endl;     
+             //std::cout << "bennu xref " << xref << std::endl;   
+             //std::cout << "bennu x0 " << x0 << std::endl;     
              HepMatrix x = xref + x0;
              
              // Get extrapolated intersection coordinates
@@ -802,9 +804,11 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
                double hitchi2 = TrackFitter.FilterHit(BestHit, xref, x0, C0);             
                trk.GetTE(ipl).SetHit(BestHit);
                  
-               std::cout << "bennu hitchi2 " << hitchi2 << std::endl; 
-               std::cout << "bennu filtered x0 " << x0 << std::endl; 
-               std::cout << "bennu filtered C0 " << C0 << std::endl; 
+               finderChi2 += hitchi2;
+
+               //std::cout << "bennu hitchi2 " << hitchi2 << std::endl; 
+               //std::cout << "bennu filtered x0 " << x0 << std::endl; 
+               //std::cout << "bennu filtered C0 " << C0 << std::endl; 
 
                // Some bookkeeping    
                nhits++;  
@@ -855,7 +859,10 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
            streamlog_out ( MESSAGE1 ) << "Fit failed. Skipping candidate track!" << endl;
            continue;
          }
-         
+ 
+         std::cout << "bennu finder chi2 " << finderChi2 << std::endl; 
+         std::cout << "bennu fitter chi2 " << trk.GetChiSqu() << std::endl;
+        
          // Reject track candidate if number of hits too small
          // Can change in outlier rejection of fitter
          if(  trk.GetNumHits() < _minHits  ) { 
@@ -868,6 +875,8 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
            streamlog_out ( MESSAGE1 ) << "Track chisq too big. Skipping candidate track!" << endl;
            continue;      
          }
+
+ 
          
          // update the running counters  
          _noOfCandTracks++;    
