@@ -1047,7 +1047,7 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
          continue;
        }
        */
-       trk.SetChiSqu(finderChi2);
+       trk.SetChiSqu(1);
        TrackFitter.SetNdof(trk); 
          
        // Reject track candidate if number of hits too small
