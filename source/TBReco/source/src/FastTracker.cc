@@ -385,8 +385,8 @@ void FastTracker::processEvent(LCEvent * evt)
    }
    
    if (firingPlanes>= _minHits) _noOfEventMinHits++;
-  
-
+   
+   
    // Combinatorial Track Finder   
    //=========================================================
    // Track candidates are seeded from pairs of hits from two 
@@ -797,22 +797,19 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
                // too bad.
 
                TBHit& BestHit = HitStore.GetRecoHitFromID(besthitid, ipl);
-               BestHit.SetUniqueID(besthitid);
                
                if ( TrackFitter.GetPredictedChi2(x, C0, BestHit) < _outlierChi2Cut ) {
-                 double hitchi2 = TrackFitter.FilterHit(BestHit, xref, x0, C0);             
-                 trk.GetTE(ipl).SetHit(BestHit); 
+                 double hitchi2 = TrackFitter.FilterHit(BestHit, xref, x0, C0);
+                 BestHit.SetUniqueID(besthitid);             
+                 trk.GetTE(ipl).SetHit(BestHit);               
                  // Some bookkeeping   
                  finderChi2 += hitchi2; 
                  nhits++;  
                  ngap = 0;
-               } else {
-                 std::cout << "new outlier cut triggered " << TrackFitter.GetPredictedChi2(x, C0, BestHit) << std::endl;
-               }
+               } 
              
              } else {
-           
-               // Ok, missing hit for that seed track 
+               // Ok, no matching hit found on this sensor
                ngap++;    
                if( ngap > _maxGap ) {
                  streamlog_out(MESSAGE1) << "Too many missing hits. Skip seed track! " << endl;  
@@ -822,7 +819,7 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
               
              }
            } // End is active
-
+           
            // Extrapolate filtered state to next track element 
            if (ipl < _nTelPlanes -1) {  
              HepMatrix& nxref = trk.GetTE(ipl+1).GetState().GetPars();
@@ -848,6 +845,7 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
            continue;
          }
           
+         /*
          // Fit track candidate 
          bool trkerr = TrackFitter.Fit(trk); 
          if( trkerr ) {
@@ -855,10 +853,14 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
            streamlog_out ( MESSAGE1 ) << "Fit failed. Skipping candidate track!" << endl;
            continue;
          }
- 
+         */
          //std::cout << "bennu finder chi2 " << finderChi2 << std::endl; 
          //std::cout << "bennu fitter chi2 " << trk.GetChiSqu() << std::endl;
         
+
+         trk.SetChiSqu(finderChi2);
+         TrackFitter.SetNdof(trk);  
+
          // Reject track candidate if number of hits too small
          // Can change in outlier rejection of fitter
          if(  trk.GetNumHits() < _minHits  ) { 
@@ -1035,7 +1037,8 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
        if ( nhits<_minHits ) {
          continue;
        }
-         
+        
+       /* 
        // Fit track candidate 
        bool trkerr = TrackFitter.Fit(trk); 
        if( trkerr ) {
@@ -1043,6 +1046,9 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
          streamlog_out ( MESSAGE1 ) << "Fit failed. Skipping candidate track!" << endl;
          continue;
        }
+       */
+       trk.SetChiSqu(finderChi2);
+       TrackFitter.SetNdof(trk); 
          
        // Reject track candidate if number of hits too small
        // Can change in outlier rejection of fitter
