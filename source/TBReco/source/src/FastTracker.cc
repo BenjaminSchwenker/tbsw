@@ -648,8 +648,10 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
    
    // Configure Kalman track fitter
    TBKalmanB TrackFitter(_detector);
-   TrackFitter.SetNumIterations(_outlierIterations+1);
-   TrackFitter.SetOutlierCut(_outlierChi2Cut); 
+   //TrackFitter.SetNumIterations(_outlierIterations+1);
+   //TrackFitter.SetOutlierCut(_outlierChi2Cut); 
+   TrackFitter.SetNumIterations(1);
+   TrackFitter.SetOutlierCut(1000000000); 
     
    // Loop over different momentum hypothesis 
    
@@ -742,10 +744,7 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
            if( _isActive[ipl] && trk.GetTE(ipl).IsCrossed() ) { 
                   
              // This is the filtered local track state using all hits 
-             // encountered so far
-
-             //std::cout << "bennu xref " << xref << std::endl;   
-             //std::cout << "bennu x0 " << x0 << std::endl;     
+             // encountered so far 
              HepMatrix x = xref + x0;
              
              // Get extrapolated intersection coordinates
@@ -805,10 +804,6 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
                trk.GetTE(ipl).SetHit(BestHit);
                  
                finderChi2 += hitchi2;
-
-               //std::cout << "bennu hitchi2 " << hitchi2 << std::endl; 
-               //std::cout << "bennu filtered x0 " << x0 << std::endl; 
-               //std::cout << "bennu filtered C0 " << C0 << std::endl; 
 
                // Some bookkeeping    
                nhits++;  

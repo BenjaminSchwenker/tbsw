@@ -374,7 +374,7 @@ bool TBKalmanB::Fit(TBTrack& trk)
  */
 double TBKalmanB::FilterHit(TBHit& hit, HepMatrix& xref, HepMatrix& x0, HepSymMatrix& C0) 
 { 
- 
+  
   // To start ierr is set to 0 (= OK)
   int ierr = 0; 
        
@@ -394,9 +394,6 @@ double TBKalmanB::FilterHit(TBHit& hit, HepMatrix& xref, HepMatrix& x0, HepSymMa
                          << std::endl;
     return -1;
   }	
-
-  //std::cout << "m " << m << std::endl;
-  //std::cout << "V " << V << std::endl;
      
   // This is the predicted residual 
   HepMatrix r = m - H*x0 - H*xref; 
@@ -408,10 +405,6 @@ double TBKalmanB::FilterHit(TBHit& hit, HepMatrix& xref, HepMatrix& x0, HepSymMa
   // Kalman gain matrix K 
   HepMatrix K = C0 * H.T() * W; 
        
-  //std::cout << "r " << r << std::endl;
-  //std::cout << "K " << K << std::endl;
-  //std::cout << "benni K*r " << K * r << std::endl;
-
   // This is the filtered state
   x0 += K * r;
   C0 -= (W.similarityT(H)).similarity(C0);
