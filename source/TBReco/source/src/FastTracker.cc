@@ -107,9 +107,9 @@ FastTracker::FastTracker() : Processor("FastTracker")
                              "Chi2 cut for removal of bad hits",                       
                              _outlierChi2Cut, static_cast <float> (50) ); 
 
-   registerProcessorParameter("OutlierIterations",  
-                             "Fitting iteration for removal of bad hits",                       
-                             _outlierIterations, static_cast <int> (0) ); 
+   registerProcessorParameter("FitIterations",  
+                             "Number of iterations for Kalman filter track fit",                       
+                             _fitIterations, static_cast <int> (1) );
    
    registerProcessorParameter ("MinimumHits",
                               "Minimum number of hits in track",
@@ -223,9 +223,12 @@ void FastTracker::init() {
   
   // Deactivate hit removal in final fit
   if (_outlierChi2Cut <= 0) {
-    _outlierIterations = 0; // no iteration, one pass 
     _outlierChi2Cut = numeric_limits< double >::max();
   }
+  
+  if ( _fitIterations <= 0) {
+    _fitIterations = 1; // only one pass 
+  }  
   
   // Basic sanity check for particle hypthesis 
   if (_mass <= 0) {
@@ -750,8 +753,7 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
 {
   // Configure Kalman track fitter
   TBKalmanB TrackFitter(_detector);
-  TrackFitter.SetNumIterations(_outlierIterations+1);
-  TrackFitter.SetOutlierCut(_outlierChi2Cut); 
+  TrackFitter.SetNumIterations(_fitIterations);
    
   // Extrapolate seed to all planes
   bool exerr = TrackFitter.ExtrapolateSeed(trk);
@@ -880,7 +882,6 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
   } // End sensor loop  
                                    
   // Reject track candidate if number of hits too small
-  // Can change in outlier rejection of fitter
   if ( nhits<_minHits ) {
     streamlog_out ( MESSAGE1 ) << "Number of hits too small. Skipping candidate track!" << endl;
     return;

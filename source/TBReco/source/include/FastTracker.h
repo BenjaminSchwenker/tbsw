@@ -134,7 +134,7 @@ protected:
    float _maxSlope; 
    float _maxTrkChi2; 
    float _outlierChi2Cut; 
-   int _outlierIterations;
+   int _fitIterations;
 
 //! Perform single hit seeding for these plane numbers 
    std::vector<int>  _singleHitSeedingPlanes; 

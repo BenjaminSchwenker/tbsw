@@ -43,23 +43,6 @@ namespace depfet {
  * calculated for all sub detectors. Moreover, the reference trajectory 
  * is updated using the smoother output. 
  * 
- * 4) An outlier rejection can be performed using a cut on the smoothed 
- * hit chi2. In that case, one more iterations of the track fit (restart
- * at step 1) should be done.
- * 
- * As is, the tracking code makes a number of important assumptions:
- * 
- * a) No magnetic field in tracking; a straight line track model. 
- * b) Curvature q/p is not part of the state vector; user must supply a guess.   
- * c) Energy loss is not taken into account; 
- * d) Only pixel measurments used. So far, i never tried strips. 
- * 
- * These assumptions are save as long as there is no magnetic field and 
- * the relative total energy loss dE/E is small (<1%). Typically, this  
- * requires beam energies (>100MeV) and a small material budget (<1%X0)
- * per sub detector. Strip detectors could be integrated using appropriatly 
- * large errors for the v axis. 
- * 
  * @Author B. Schwenker, University of Göttingen
  * <mailto:benjamin.schwenker@phys.uni-goettingen.de>
  */
@@ -127,11 +110,7 @@ class TBKalmanB {
    */
   void SetNumIterations(int i){NumIt=i;}
   
-  /** Set outlier removal cut 
-   */
-  void SetOutlierCut(double cut){OutlierCut=cut;}
-  
-  /** Set outlier removal cut (Smoother ChiSqu)
+  /** Set use beam constraint
    */
   void SetUseBeamConstraint(bool useBC){m_useBC=useBC;}
   
@@ -234,9 +213,6 @@ class TBKalmanB {
    
   // Project states to hit coord
   CLHEP::HepMatrix H; 
-   
-  // Outlier chisqu cut  
-  double OutlierCut; 
   
   double mom; 
   double mass;

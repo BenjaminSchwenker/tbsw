@@ -35,19 +35,16 @@ TBKalmanB::TBKalmanB(TBDetector& detector)
   NumIt = 1;       
 
   ndim = 5; // dimension of state vector
-  
-  // By default, no cut is used
-  OutlierCut = numeric_limits< double >::max();               
-  
+   
   // Project hit coord out of track state
   H = HepMatrix(2,ndim,0);
   H[0][2] = 1.;
   H[1][3] = 1.;
-
+  
   mom = 0; 
   mass = 0;
   charge = 0;
-
+  
   // By default, beam constraint is not used 
   m_useBC = false; 
   
@@ -68,9 +65,6 @@ TBKalmanB::TBKalmanB(TBDetector& detector)
   } else {
     TrackModel = new HelixTrackModel(field); 
   }
-
-  
-  
 }
 
 /** Destructor 
@@ -136,8 +130,6 @@ bool TBKalmanB::Fit(TBTrack& trk)
   //    x and a covariance matrix C.
   // 2) The track state is local, i.e. it is defined with respect to the 
   //    w=0 surface local sensor frame. 
-  // 3) A fit iterations means to ignore measured hits which are not compatible 
-  //    to the track model -> outlier rejection. 
   
   
   double chisqu = -1;    
@@ -316,40 +308,8 @@ bool TBKalmanB::Fit(TBTrack& trk)
         TBHit& hit =  TE.GetHit();            
         TE.SetChiSqu(GetPredictedChi2(xs, Cs, hit));
       } 
-         
-       
     }  
-    
-    // Outlier logic
-    // 
-    // Remove hit with largest smoother chi2 value, i.e.
-    // the worst measurment. This requires one more 
-    // fitter iteration!
-    
-    double WorstChi2 = 0;   // Worst Chisqu  
-    int WorstTE = -1;       // Worst TE
-    
-    for(int is=0; is<nCrossed; ++is) {
-       
-      // Get plane number 
-      int iTE = CrossedTEs[is];  
-      
-      // Get track element 
-      TBTrackElement& TE = trk.GetTE( iTE ); 
      
-      // Remember TE with max chi2
-      if ( WorstChi2 < TE.GetChiSqu() ) {
-        WorstChi2 = TE.GetChiSqu(); 
-        WorstTE = iTE;   
-      }
-    }
-    
-    // Exclude worst hit from track
-    // One iteration is needed to refit
-    if ( iter < NumIt-1 &&  WorstChi2 > OutlierCut ) {    
-      trk.GetTE( WorstTE ).RemoveHit();
-    }    
-    
     // Linearization 
     // 
     // We can exploit the current fit to improve the linearization point 
@@ -361,9 +321,7 @@ bool TBKalmanB::Fit(TBTrack& trk)
     trk.SetMomentum(std::abs(charge/trk.GetTE( CrossedTEs[0] ).GetState().GetPars()[4][0]));
      
   } // end iterations
-
-  
-       
+     
   // Everything is ok
   trk.SetChiSqu(chisqu);
   SetNdof(trk);  

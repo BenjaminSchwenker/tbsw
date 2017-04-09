@@ -48,12 +48,8 @@ class GenericTrackFitter {
   /** Set number of iterations for Kalman filter
    */
   void SetNumIterations(int i){m_TrackFitter->SetNumIterations(i);}
-  
-  /** Set outlier removal cut (Smoother ChiSqu)
-   */
-  void SetOutlierCut(double cut){m_TrackFitter->SetOutlierCut(cut);}
-  
-  /** Set outlier removal cut (Smoother ChiSqu)
+   
+  /** Set use beam constraint
    */
   void SetUseBeamConstraint(bool useBC){m_TrackFitter->SetUseBeamConstraint(useBC);}
   
