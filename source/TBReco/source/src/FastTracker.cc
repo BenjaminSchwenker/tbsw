@@ -740,7 +740,10 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
            if( _isActive[ipl] && trk.GetTE(ipl).IsCrossed() ) { 
                   
              // This is the filtered local track state using all hits 
-             // encountered so far      
+             // encountered so far
+
+             std::cout << "bennu xref " << xref << std::endl;   
+             std::cout << "bennu x0 " << x0 << std::endl;     
              HepMatrix x = xref + x0;
              
              // Get extrapolated intersection coordinates
@@ -799,6 +802,10 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
                double hitchi2 = TrackFitter.FilterHit(BestHit, xref, x0, C0);             
                trk.GetTE(ipl).SetHit(BestHit);
                  
+               std::cout << "bennu hitchi2 " << hitchi2 << std::endl; 
+               std::cout << "bennu filtered x0 " << x0 << std::endl; 
+               std::cout << "bennu filtered C0 " << C0 << std::endl; 
+
                // Some bookkeeping    
                nhits++;  
                ngap = 0;
