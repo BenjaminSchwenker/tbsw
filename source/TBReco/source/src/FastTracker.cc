@@ -648,10 +648,9 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
    
    // Configure Kalman track fitter
    TBKalmanB TrackFitter(_detector);
-   //TrackFitter.SetNumIterations(_outlierIterations+1);
-   //TrackFitter.SetOutlierCut(_outlierChi2Cut); 
-   TrackFitter.SetNumIterations(1);
-   TrackFitter.SetOutlierCut(1000000000); 
+   TrackFitter.SetNumIterations(_outlierIterations+1);
+   TrackFitter.SetOutlierCut(_outlierChi2Cut); 
+   
     
    // Loop over different momentum hypothesis 
    
@@ -855,8 +854,8 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
            continue;
          }
  
-         std::cout << "bennu finder chi2 " << finderChi2 << std::endl; 
-         std::cout << "bennu fitter chi2 " << trk.GetChiSqu() << std::endl;
+         //std::cout << "bennu finder chi2 " << finderChi2 << std::endl; 
+         //std::cout << "bennu fitter chi2 " << trk.GetChiSqu() << std::endl;
         
          // Reject track candidate if number of hits too small
          // Can change in outlier rejection of fitter
