@@ -189,6 +189,10 @@ class TBKalmanB {
    
   CLHEP::HepMatrix& GetHMatrix()
     { return H;} 
+
+  /** Set number of degrees of freedom in trk
+   */
+  void SetNdof(TBTrack& trk);
      
  // Private Methods -----------------
  private:
@@ -207,9 +211,7 @@ class TBKalmanB {
   bool GetSmoothedData( CLHEP::HepMatrix& xb, CLHEP::HepSymMatrix& Cb, CLHEP::HepMatrix& rf, CLHEP::HepSymMatrix& Cf,
                         CLHEP::HepMatrix& xs, CLHEP::HepSymMatrix& Cs);
 
-  /** Set number of degrees of freedom in trk
-   */
-  void SetNdof(TBTrack& trk);
+  
   
   int MAP_FORWARD(   double theta2, 
                         CLHEP::HepMatrix& xref, ReferenceFrame& Surf, 

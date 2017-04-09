@@ -841,7 +841,10 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
            continue;
          }  
          
+         // Reject track candidate if number of hits too small
+         // Can change in outlier rejection of fitter
          if ( nhits<_minHits ) {
+           streamlog_out ( MESSAGE1 ) << "Number of hits too small. Skipping candidate track!" << endl;
            continue;
          }
           
@@ -861,12 +864,8 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
          trk.SetChiSqu(finderChi2);
          TrackFitter.SetNdof(trk);  
 
-         // Reject track candidate if number of hits too small
-         // Can change in outlier rejection of fitter
-         if(  trk.GetNumHits() < _minHits  ) { 
-           streamlog_out ( MESSAGE1 ) << "Number of hits too small. Skipping candidate track!" << endl;
-           continue;      
-         }   
+         
+        
          
          // Reject hit if total chisq gets too large
          if(  trk.GetChiSqu() >= _maxTrkChi2  ) { 
