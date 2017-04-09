@@ -394,6 +394,9 @@ double TBKalmanB::FilterHit(TBHit& hit, HepMatrix& xref, HepMatrix& x0, HepSymMa
                          << std::endl;
     return -1;
   }	
+
+  std::cout << "m " << m << std::endl;
+  std::cout << "V " << V << std::endl;
      
   // This is the predicted residual 
   HepMatrix r = m - H*x0 - H*xref; 
@@ -405,6 +408,8 @@ double TBKalmanB::FilterHit(TBHit& hit, HepMatrix& xref, HepMatrix& x0, HepSymMa
   // Kalman gain matrix K 
   HepMatrix K = C0 * H.T() * W; 
        
+  std::cout << "r " << r << std::endl;
+  std::cout << "K " << K << std::endl;
   std::cout << "benni K*r " << K * r << std::endl;
 
   // This is the filtered state
