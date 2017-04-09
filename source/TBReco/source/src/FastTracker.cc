@@ -177,7 +177,6 @@ void FastTracker::init() {
   _noOfTracks  = 0;
   _noOfEventMinHits = 0;
   _noOfFailedFits = 0;  
-
   _noOfCandTracks = 0;   
   _noOfAmbiguousHits = 0;
   
@@ -390,13 +389,11 @@ void FastTracker::processEvent(LCEvent * evt)
    // Combinatorial Track Finder   
    //=========================================================
    // Track candidates are seeded from pairs of hits from two 
-   // different subdetectors. A hit pair defines a reference 
-   // trajectory (or seed track) for searching compatible hits
-   // on subdetectors. Tracks are seeded from both ends of 
-   // the telescope to increase the track finding efficiency.
+   // different sensor planes. A hit pair defines a reference 
+   // trajectory (or seed track) for searching compatible hits.
    // 
-   // All seed tracks are followed through the entire detector. 
-   // At each subdetector, we add the best compatible hit to 
+   // All seed tracks are followed through the entire telescope. 
+   // At each sensor plane, we add the best compatible hit to 
    // the seed track. Compatible hits lie in a rectangular field
    // of length MaxResidual around the seed track. In case multiple  
    // hits are compatible, the track finder selects always the 
@@ -406,8 +403,7 @@ void FastTracker::processEvent(LCEvent * evt)
    // After all hits are assigned to a seed track, a Kalman Filter 
    // based track fit is performed. If the fit quality is good, the 
    // track candidate is stored in the TrackCollector. 
-    
-    
+   
    // Container for candidate tracks 
    std::list<TBTrack> TrackCollector; 
    
@@ -416,7 +412,7 @@ void FastTracker::processEvent(LCEvent * evt)
    // Seed tracks are constructed from hits in two planes. 
    // Track seeds are followed in the beam direction.
    
-   // We need at least two active planes to seed a straight track
+   // Use two sensors to seed a track candidate
    if ( _firstPass_firstPlane != _firstPass_secondPlane) {
      
      findTracks(TrackCollector , HitStore , _firstPass_firstPlane , _firstPass_secondPlane); 
@@ -424,20 +420,14 @@ void FastTracker::processEvent(LCEvent * evt)
      streamlog_out ( MESSAGE2 ) << "Total of " << TrackCollector.size() << " forward candidate tracks found" << endl;
    }
    
-   // Second track finder pass      
-   //=========================================================
-   // Seed tracks are constructed from hits in two planes. 
-   // Track seeds are followed in the beam direction.
-   
-  
-   // We need at least three active planes to find new straight track; otherwise, we would just repeat forward pass;)
+   // Use two sensors to seed a track candidate
    if ( _secondPass_firstPlane != _secondPass_secondPlane) {
      
      findTracks(TrackCollector , HitStore ,  _secondPass_firstPlane  , _secondPass_secondPlane ); 
      
      streamlog_out ( MESSAGE2 ) << "Total of " << TrackCollector.size() << " candidate tracks found" << endl;
    }
-
+   
    // Single hit finding     
    //=========================================================
    // Seed tracks are constructed from just a single hit and propagated 
@@ -645,15 +635,8 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
    
    // Check plane numbers are valid
    if (firstplane < 0 || secondplane < 0) return; 
-   
-   // Configure Kalman track fitter
-   TBKalmanB TrackFitter(_detector);
-   TrackFitter.SetNumIterations(_outlierIterations+1);
-   TrackFitter.SetOutlierCut(_outlierChi2Cut); 
-   
     
-   // Loop over different momentum hypothesis 
-   
+   // Scan momentum hypotheses 
    for (int imom = 0; imom < (int) _momentum_list.size() ; imom++ ) {
      
      double my_momentum = _momentum_list[imom];
@@ -681,201 +664,24 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
          TBHit& firsthit = HitStore.GetRecoHitFromID(ihit, firstplane);  
          TBHit& secondhit = HitStore.GetRecoHitFromID(jhit, secondplane);
          TBTrackState Seed = TrackSeeder.CreateSeedTrack(firsthit, secondhit, _detector);   
-         trk.SetReferenceState(Seed);
          
-         // Option: Skip all candidate tracks with a very 
+         // Skip all candidate tracks with a very 
          // large angle relative to Z axis. 
          if ( _maxSlope > 0 ) {         
-         
            double dxdz = Seed.GetPars()[0][0];
-           double dydz = Seed.GetPars()[1][0];  
-                  
+           double dydz = Seed.GetPars()[1][0]; 
            if ( ( std::abs(dxdz) > _maxSlope ) || ( std::abs(dydz) > _maxSlope )  ) 
            {
              streamlog_out ( MESSAGE2 ) << "Slope too large. Skipping track candidate!! " << endl; 
              continue; 
            }
-         } 
-         
-         // Extrapolate seed to all planes
-         bool exerr = TrackFitter.ExtrapolateSeed(trk);
-         if ( exerr ) { // just skip the track 
-           _noOfFailedFits++;
-           streamlog_out ( MESSAGE2 ) << "Extrapolation of track seed into telescope failed!!" << endl; 
-           continue;
          }  
-         
-         // Add hits to candidate track  
-         //============================
-       
-         // Counts consecutive missing hits
-         int ngap = 0 ;    
-         
-         // Count number of added hits 
-         int nhits = 0; 
-       
-         // Flag success of track building
-         bool isValid = true;
-         
-         // Count hit ambiguities per track  
-         int nAmbiguousHits = 0;   
-         
-         // This is the initial track state vector
-         HepMatrix x0(5,1,0);
-         
-         // This is the initial covariance matrix 
-         HepSymMatrix C0(5,0);
-         for (int i = 0; i < 2; i++) {
-           C0[i][i] = 1E-2;
-           C0[i+2][i+2] = 1E1; 
-         } 
-         C0[4][4] = 1;  
-          
-         double finderChi2 = 0; 
 
-         // Follow track along beam direction    
-         for(int ipl=0;ipl<_nTelPlanes;ipl++)  { 
-            
-           // This is the reference state on the current track element
-           HepMatrix& xref = trk.GetTE(ipl).GetState().GetPars();
-                     
-           // Skip passive sensors    
-           if( _isActive[ipl] && trk.GetTE(ipl).IsCrossed() ) { 
-                  
-             // This is the filtered local track state using all hits 
-             // encountered so far 
-             HepMatrix x = xref + x0;
-             
-             // Get extrapolated intersection coordinates
-             double u = x[2][0]; 
-             double v = x[3][0]; 
-             
-             // Fast preselection of hit candidates compatible to   
-             // predicted intersection coordinates. 
-             vector<int> HitIdVec = HitStore.GetCompatibleHitIds(ipl, u, v, _maxResidualU[ipl], _maxResidualV[ipl]);
-             
-             // Now, we select the best hit candidate 
-             int ncandhits = HitIdVec.size();
-             int besthitid=-1;
-             double bestdist = numeric_limits< double >::max();
-             
-             for (int icand = 0; icand < ncandhits; ++icand ) 
-             {    
-             
-               // Get reco hit at plane ipl 
-               int hitid = HitIdVec[icand];
-               TBHit & RecoHit = HitStore.GetRecoHitFromID(hitid, ipl);   
-               double uhit = RecoHit.GetCoord()[0][0];              
-               double vhit = RecoHit.GetCoord()[1][0]; 
-
-               // Discard hits with too large residuals
-               if ( std::abs(u - uhit) >= _maxResidualU[ipl] && _maxResidualU[ipl] > 0) continue; 
-               if ( std::abs(v - vhit) >= _maxResidualV[ipl] && _maxResidualV[ipl] > 0) continue; 
-               
-               // This hit could(?) belong to the track 
-               nAmbiguousHits++;
-               
-               // Remember hit with smallest residual 
-               double hitdist = 0; 
-               if ( _maxResidualU[ipl] > 0 )  hitdist += std::abs(u - uhit); 
-               if ( _maxResidualV[ipl] > 0 )  hitdist += std::abs(v - vhit); 
-
-
-               if( hitdist < bestdist )
-               {
-                 bestdist = hitdist;
-                 besthitid=hitid;
-               }
-             } 
-              
-             // Check iff good hit found 
-             if ( besthitid!=-1 )  {
-              
-               // Add closest hit to candidate track
-               // This is a simple greedy selection and may be wrong in 
-               // there are hit ambiguities or the reference track is 
-               // too bad.
-
-               TBHit& BestHit = HitStore.GetRecoHitFromID(besthitid, ipl);
-               
-               if ( TrackFitter.GetPredictedChi2(x, C0, BestHit) < _outlierChi2Cut ) {
-                 double hitchi2 = TrackFitter.FilterHit(BestHit, xref, x0, C0);
-                 BestHit.SetUniqueID(besthitid);             
-                 trk.GetTE(ipl).SetHit(BestHit);               
-                 // Some bookkeeping   
-                 finderChi2 += hitchi2; 
-                 nhits++;  
-                 ngap = 0;
-               } 
-             
-             } else {
-               // Ok, no matching hit found on this sensor
-               ngap++;    
-               if( ngap > _maxGap ) {
-                 streamlog_out(MESSAGE1) << "Too many missing hits. Skip seed track! " << endl;  
-                 isValid = false;
-                 break;       
-               }
-              
-             }
-           } // End is active
-           
-           // Extrapolate filtered state to next track element 
-           if (ipl < _nTelPlanes -1) {  
-             HepMatrix& nxref = trk.GetTE(ipl+1).GetState().GetPars();
-             exerr = TrackFitter.PropagateState(trk.GetTE(ipl), trk.GetTE(ipl+1), xref, nxref, x0, C0); 
-             if ( exerr ) { // just skip the track 
-               _noOfFailedFits++;
-               streamlog_out ( MESSAGE2 ) << "Extrapolation of track seed into telescope failed!!" << endl; 
-               continue;
-             }  
-           }
-
-         } // End sensor loop  
-                            
-         // Check if track candidate is valid, otherwise proceed to 
-         // next. 
-         // =============================
+         trk.SetReferenceState(Seed);
          
-         if( !isValid ) {
-           continue;
-         }  
+         buildTrackCand(trk, HitStore, TrackCollector);
          
-         // Reject track candidate if number of hits too small
-         // Can change in outlier rejection of fitter
-         if ( nhits<_minHits ) {
-           streamlog_out ( MESSAGE1 ) << "Number of hits too small. Skipping candidate track!" << endl;
-           continue;
-         }
-          
-         /*
-         // Fit track candidate 
-         bool trkerr = TrackFitter.Fit(trk); 
-         if( trkerr ) {
-           _noOfFailedFits++;
-           streamlog_out ( MESSAGE1 ) << "Fit failed. Skipping candidate track!" << endl;
-           continue;
-         }
-         */
-         //std::cout << "bennu finder chi2 " << finderChi2 << std::endl; 
-         //std::cout << "bennu fitter chi2 " << trk.GetChiSqu() << std::endl;
-         
-         trk.SetChiSqu(finderChi2);
-         TrackFitter.SetNdof(trk);  
-
-         // Reject hit if total chisq gets too large
-         if(  trk.GetChiSqu() >= _maxTrkChi2  ) { 
-           streamlog_out ( MESSAGE1 ) << "Track chisq too big. Skipping candidate track!" << endl;
-           continue;      
-         }
-         
-         // update the running counters  
-         _noOfCandTracks++;    
-         _noOfAmbiguousHits += nAmbiguousHits;
-         
-         // Ok, we keep this track for final selection      
-         TrackCollector.push_back( trk ); 
-       } 
+       } // End track seeding
      } // End track seeding  
    } // End momentum scan 
 }
@@ -893,12 +699,7 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
    
    // Check plane numbers are valid
    if (seedplane < 0 ) return; 
- 
-   // Configure Kalman track fitter
-   TBKalmanB TrackFitter(_detector);
-   TrackFitter.SetNumIterations(_outlierIterations+1);
-   TrackFitter.SetOutlierCut(_outlierChi2Cut); 
-   
+  
    // Loop over different momentum hypothesis 
    
    for (int imom = 0; imom < (int) _momentum_list.size() ; imom++ ) {
@@ -925,142 +726,191 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
          
        // Compute seed track 
        TBHit& seedhit = HitStore.GetRecoHitFromID(ihit, seedplane);  
-       TBTrackState Seed = TrackSeeder.CreateSeedTrack(seedhit, _detector);   
+       TBTrackState Seed = TrackSeeder.CreateSeedTrack(seedhit, _detector); 
+       
+       // Skip all candidate tracks with a very 
+       // large angle relative to Z axis. 
+       if ( _maxSlope > 0 ) {         
+         double dxdz = Seed.GetPars()[0][0];
+         double dydz = Seed.GetPars()[1][0]; 
+         if ( ( std::abs(dxdz) > _maxSlope ) || ( std::abs(dydz) > _maxSlope )  ) 
+         {
+           streamlog_out ( MESSAGE2 ) << "Slope too large. Skipping track candidate!! " << endl; 
+           continue; 
+         }
+       }         
        trk.SetReferenceState(Seed);
-         
-       // Extrapolate seed to all planes
-       bool exerr = TrackFitter.ExtrapolateSeed(trk);
-       if ( exerr ) { // just skip the track 
-         _noOfFailedFits++;
-         streamlog_out ( MESSAGE2 ) << "Extrapolation of track seed into telescope failed!!" << endl; 
-         continue;
-       }  
-         
-       // Add hits to candidate track  
-       //============================
        
-       // Counts consecutive missing hits
-       int ngap = 0 ;    
+       buildTrackCand(trk, HitStore, TrackCollector);
+     }
+   }      
+}
+
+void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<TBTrack>& TrackCollector)
+{
+  // Configure Kalman track fitter
+  TBKalmanB TrackFitter(_detector);
+  TrackFitter.SetNumIterations(_outlierIterations+1);
+  TrackFitter.SetOutlierCut(_outlierChi2Cut); 
+   
+  // Extrapolate seed to all planes
+  bool exerr = TrackFitter.ExtrapolateSeed(trk);
+  if ( exerr ) { // just skip the track 
+    _noOfFailedFits++;
+    streamlog_out ( MESSAGE2 ) << "Extrapolation of track seed into telescope failed!!" << endl; 
+    return;
+  }  
          
-       // Count number of added hits 
-       int nhits = 0; 
+  // Add hits to candidate track  
+  //============================
        
-       // Flag success of track building
-       bool isValid = true;   
-                              
-       // Follow track along beam direction    
-       for(int ipl=0;ipl<_nTelPlanes;ipl++)  { 
-                
-         // Skip passive sensors    
-         if( _isActive[ipl] && trk.GetTE(ipl).IsCrossed() ) { 
-                  
-           // Get extrapolated intersection coordinates
-           double u = trk.GetTE(ipl).GetState().GetPars()[2][0]; 
-           double v = trk.GetTE(ipl).GetState().GetPars()[3][0]; 
-             
-           // Fast preselection of hit candidates compatible to   
-           // predicted intersection coordinates. 
-           vector<int> HitIdVec = HitStore.GetCompatibleHitIds(ipl, u, v, _maxResidualU[ipl], _maxResidualV[ipl]);
-             
-           // Now, we select the best hit candidate 
-           int ncandhits = HitIdVec.size();
-           int besthitid=-1;
-           double bestdist = numeric_limits< double >::max();
-             
-           for (int icand = 0; icand < ncandhits; ++icand ) 
-           {    
-             
-             // Get reco hit at plane ipl 
-             int hitid = HitIdVec[icand];
-             TBHit & RecoHit = HitStore.GetRecoHitFromID(hitid, ipl);   
-             double uhit = RecoHit.GetCoord()[0][0];              
-             double vhit = RecoHit.GetCoord()[1][0]; 
-
-             // Discard hits with too large residuals
-             if ( std::abs(u - uhit) >= _maxResidualU[ipl] && _maxResidualU[ipl] > 0) continue; 
-             if ( std::abs(v - vhit) >= _maxResidualV[ipl] && _maxResidualV[ipl] > 0) continue; 
-
-             // Remember hit with smallest residual 
-             double hitdist = 0; 
-             if ( _maxResidualU[ipl] > 0 )  hitdist += std::abs(u - uhit); 
-             if ( _maxResidualV[ipl] > 0 )  hitdist += std::abs(v - vhit); 
-
-             if( hitdist < bestdist )
-             {
-               bestdist = hitdist;
-               besthitid=hitid;
-             }
-           } 
-              
-           // Check iff good hit found 
-           if ( besthitid!=-1 )  {
-              
-             // Add hit to candidate track 
-             TBHit& BestHit = HitStore.GetRecoHitFromID(besthitid, ipl);
-             BestHit.SetUniqueID(besthitid);            
-             trk.GetTE(ipl).SetHit(BestHit);
-                 
-             // Some bookkeeping    
-             nhits++;  
-             ngap = 0;
-             
-           } else {
-           
-             // Ok, missing hit for that seed track 
-             ngap++;    
-             if( ngap > _maxGap ) {
-               streamlog_out(MESSAGE1) << "Too many missing hits. Skip seed track! " << endl;  
-               isValid = false;
-               break;       
-             }
-              
-           }
-         } // End is active 
+  // Counts consecutive missing hits
+  int ngap = 0 ;    
+         
+  // Count number of added hits 
+  int nhits = 0; 
+               
+  // Count hit ambiguities per track  
+  int nAmbiguousHits = 0;   
+         
+  // This is the initial track state vector
+  HepMatrix x0(5,1,0);
+         
+  // This is the initial covariance matrix 
+  HepSymMatrix C0(5,0);
+  for (int i = 0; i < 2; i++) {
+    C0[i][i] = 1E-2;
+    C0[i+2][i+2] = 1E1; 
+  } 
+  C0[4][4] = 1;  
           
-       } // End subdetector loop 
-                
-       // Check if track candidate is valid, otherwise proceed to 
-       // next. 
-       // =============================
+  double finderChi2 = 0; 
+  
+  // Follow track along beam direction    
+  for(int ipl=0;ipl<_nTelPlanes;ipl++)  { 
+            
+    // This is the reference state on the current track element
+    HepMatrix& xref = trk.GetTE(ipl).GetState().GetPars();
+                     
+    // Skip passive sensors    
+    if( _isActive[ipl] && trk.GetTE(ipl).IsCrossed() ) { 
+                  
+      // This is the filtered local track state using all hits 
+      // encountered so far 
+      HepMatrix x = xref + x0;
+             
+      // Get extrapolated intersection coordinates
+      double u = x[2][0]; 
+      double v = x[3][0]; 
+             
+      // Fast preselection of hit candidates compatible to   
+      // predicted intersection coordinates. 
+      vector<int> HitIdVec = HitStore.GetCompatibleHitIds(ipl, u, v, _maxResidualU[ipl], _maxResidualV[ipl]);
+             
+      // Now, we select the best hit candidate 
+      int ncandhits = HitIdVec.size();
+      int besthitid=-1;
+      double bestdist = numeric_limits< double >::max();
+             
+      for (int icand = 0; icand < ncandhits; ++icand ) 
+      {           
+        // Get reco hit at plane ipl 
+        int hitid = HitIdVec[icand];
+        TBHit & RecoHit = HitStore.GetRecoHitFromID(hitid, ipl);   
+        double uhit = RecoHit.GetCoord()[0][0];              
+        double vhit = RecoHit.GetCoord()[1][0]; 
        
-       if( !isValid ) {
-         continue;
-       }  
+        // Discard hits with too large residuals
+        if ( std::abs(u - uhit) >= _maxResidualU[ipl] && _maxResidualU[ipl] > 0) continue; 
+        if ( std::abs(v - vhit) >= _maxResidualV[ipl] && _maxResidualV[ipl] > 0) continue; 
+               
+        // This hit could(?) belong to the track 
+        nAmbiguousHits++;
+               
+        // Remember hit with smallest residual 
+        double hitdist = 0; 
+        if ( _maxResidualU[ipl] > 0 )  hitdist += std::abs(u - uhit); 
+        if ( _maxResidualV[ipl] > 0 )  hitdist += std::abs(v - vhit); 
        
-       if ( nhits<_minHits ) {
-         continue;
-       }
-        
-       /* 
-       // Fit track candidate 
-       bool trkerr = TrackFitter.Fit(trk); 
-       if( trkerr ) {
-         _noOfFailedFits++;
-         streamlog_out ( MESSAGE1 ) << "Fit failed. Skipping candidate track!" << endl;
-         continue;
-       }
-       */
-       trk.SetChiSqu(1);
-       TrackFitter.SetNdof(trk); 
-         
-       // Reject track candidate if number of hits too small
-       // Can change in outlier rejection of fitter
-       if(  trk.GetNumHits() < _minHits  ) { 
-         streamlog_out ( MESSAGE1 ) << "Number of hits too small. Skipping candidate track!" << endl;
-         continue;      
-       }   
-         
-       // Reject hit if total chisq gets too large
-       if(  trk.GetChiSqu() >= _maxTrkChi2  ) { 
-         streamlog_out ( MESSAGE1 ) << "Track chisq too big. Skipping candidate track!" << endl;
-         continue;      
-       }
+        if( hitdist < bestdist )
+        {
+          bestdist = hitdist;
+          besthitid=hitid;
+        }
+      } 
               
-       // Ok, we keep this track for final selection      
-       TrackCollector.push_back( trk ); 
-        
-     } // End track seeding  
-   } // End momentum scan 
+      if ( besthitid!=-1 )  {
+        // Add closest hit to candidate track
+        // This is a simple greedy selection and may be wrong in 
+        // there are hit ambiguities or the reference track is 
+        // too bad.
+               
+        TBHit& BestHit = HitStore.GetRecoHitFromID(besthitid, ipl);
+               
+        if ( TrackFitter.GetPredictedChi2(x, C0, BestHit) < _outlierChi2Cut ) {
+          double hitchi2 = TrackFitter.FilterHit(BestHit, xref, x0, C0);
+          BestHit.SetUniqueID(besthitid);             
+          trk.GetTE(ipl).SetHit(BestHit);               
+          // Some bookkeeping   
+          finderChi2 += hitchi2; 
+          nhits++;  
+          ngap = 0;
+        }          
+      } else {
+        // No matching hit found on this sensor
+        ngap++;    
+        if( ngap > _maxGap ) {
+          streamlog_out(MESSAGE1) << "Too many missing hits. Skip seed track! " << endl;  
+          return;       
+        }          
+      }
+    } // End is active
+           
+    // Extrapolate filtered state to next track element 
+    if (ipl < _nTelPlanes -1) {  
+      HepMatrix& nxref = trk.GetTE(ipl+1).GetState().GetPars();
+      exerr = TrackFitter.PropagateState(trk.GetTE(ipl), trk.GetTE(ipl+1), xref, nxref, x0, C0); 
+      if ( exerr ) { // just skip the track 
+        _noOfFailedFits++;
+        streamlog_out ( MESSAGE2 ) << "Extrapolation of track seed into telescope failed!!" << endl; 
+        return;
+      }  
+    }
+  
+  } // End sensor loop  
+                                   
+  // Reject track candidate if number of hits too small
+  // Can change in outlier rejection of fitter
+  if ( nhits<_minHits ) {
+    streamlog_out ( MESSAGE1 ) << "Number of hits too small. Skipping candidate track!" << endl;
+    return;
+  }
+         
+  // Reject hit if total chisq gets too large
+  if( finderChi2>_maxTrkChi2  ) { 
+    streamlog_out ( MESSAGE1 ) << "Track chisq too big. Skipping candidate track!" << endl;
+    return;      
+  }
+          
+  // Fit track candidate 
+  bool trkerr = TrackFitter.Fit(trk); 
+  if( trkerr ) {
+    _noOfFailedFits++;
+    streamlog_out ( MESSAGE1 ) << "Fit failed. Skipping candidate track!" << endl;
+    return;
+  }
+         
+  //trk.SetChiSqu(finderChi2);
+  //TrackFitter.SetNdof(trk);  
+         
+  // update the running counters  
+  _noOfCandTracks++;    
+  _noOfAmbiguousHits += nAmbiguousHits;
+              
+  // Ok, we keep this track for final selection      
+  TrackCollector.push_back( trk ); 
+  
+  return;
 }
 
 //
