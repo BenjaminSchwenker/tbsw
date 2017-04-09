@@ -386,10 +386,7 @@ double TBKalmanB::FilterHit(TBHit& hit, HepMatrix& xref, HepMatrix& x0, HepSymMa
         
   // Covariance for hit coordinates, 2x2 matrix 
   HepSymMatrix& V = hit.GetCov();
-      
-  // Linearization: Measured deviation from reference 
-  m -= H*xref; 
-            
+               
   // Weigth matrix of measurment 
   HepSymMatrix W = (V + C0.similarity(H)).inverse(ierr);
   if (ierr != 0) {
@@ -397,9 +394,9 @@ double TBKalmanB::FilterHit(TBHit& hit, HepMatrix& xref, HepMatrix& x0, HepSymMa
                          << std::endl;
     return -1;
   }	
-       
+     
   // This is the predicted residual 
-  HepMatrix r = m - H*x0; 
+  HepMatrix r = m - H*x0 - H*xref; 
       
   // This is the predicted chi2 
   HepMatrix chi2mat = r.T()*W*r;
