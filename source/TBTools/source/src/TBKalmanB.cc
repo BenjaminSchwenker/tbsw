@@ -389,7 +389,7 @@ int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, HepMatrix
   double length = TrackModel->GetSignedStepLength(xref, Surf, nSurf); 
   
   // Get momentum from the reference state    
-  double mom = std::abs(charge/xref[4][0])); 
+  double mom = std::abs(charge/xref[4][0]); 
 
   // Extraploate half step along straight line 
   HepMatrix xref_air = xref; 
@@ -566,7 +566,7 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
       double length = TrackModel->GetSignedStepLength(xref, Surf, nSurf); 
       
       // Get momentum from the reference state    
-      double mom = std::abs(charge/xref[4][0])); 
+      double mom = std::abs(charge/xref[4][0]); 
       
       // Extraploate half step along straight line 
       TrackModel->Extrapolate(xref_air, Surf_air, length/2);
