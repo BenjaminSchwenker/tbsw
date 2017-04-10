@@ -31,16 +31,15 @@ namespace depfet {
  * a TBTrack instance. The algorithm works as follows
  * 
  * 1) Compute all intersections of the reference trajectory in the 
- * TBTrack with all sub detectors (TE). Without a magnetic field, a
- * straight line track model is used for track extrapolation. 
+ * TBTrack with all sub detectors (TE).
  *                                                                              
- * 2) Perform a double digital filter (forward and backward pass) and 
- * compute optimal estimates at all surfaces. The current track
+ * 2) Perform  double filter pass (forward and backward) and 
+ * compute optimal predicted estimates at all sensor planes. The current track
  * state is used to linearize the computation of transport matrices 
  * and material effects.           
  * 
  * 3) Smoothed track parameter estimates and covariances and chi2's are 
- * calculated for all sub detectors. Moreover, the reference trajectory 
+ * calculated for all sensor planes. Moreover, the reference trajectory 
  * is updated using the smoother output. 
  * 
  * @Author B. Schwenker, University of Göttingen
@@ -54,7 +53,7 @@ namespace depfet {
  * 
  * The FilterState class stores [x,C] variable pairs for the 
  * estimated track states. The [x,C] pair is stored both for 
- * predicted and updated estimates. 
+ * predicted estimate only 
  * 
  * @Author B. Schwenker, University of Göttingen
  * <mailto:benjamin.schwenker@phys.uni-goettingen.de>
