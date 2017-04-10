@@ -7,7 +7,6 @@
 // TBTools includes 
 #include "FastTracker.h"
 #include "SeedGenerator.h"
-#include "GenericTrackFitter.h"
 #include "TBKalmanB.h"
 #include "TBHit.h"
 #include "TrackInputProvider.h"
@@ -237,7 +236,7 @@ void FastTracker::init() {
     streamlog_out ( MESSAGE3 ) <<  "Bad steering file: zero charge set." << endl;  
     _momentum_list.push_back(4.0); 
   }
-
+  
   if ( (int)_maxResidualU.size() == 0 ) {
     _maxResidualU.resize(_nTelPlanes, 1.0);
     streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter maxResidualU not set. Using default value " <<  _maxResidualU[0] << "mm." << endl;  
@@ -790,8 +789,7 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
   } 
   
   // Follow track along beam direction  
-  for(int ipl=istart; ipl!=istop; ipl+=idir) {
-  //for(int ipl=0;ipl<_nTelPlanes;ipl++)  { 
+  for(int ipl=istart; ipl!=istop; ipl+=idir) { 
             
     // This is the reference state on the current track element
     HepMatrix& xref = trk.GetTE(ipl).GetState().GetPars();
@@ -895,23 +893,14 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
     streamlog_out ( MESSAGE1 ) << "Bad chisq. Skipping track candidate!" << endl;
     return;      
   }
-          
-  // Fit track candidate 
-  bool trkerr = TrackFitter.Fit(trk); 
-  if( trkerr ) {
-    _noOfFailedFits++;
-    streamlog_out ( MESSAGE1 ) << "Fit failed. Skipping candidate track!" << endl;
-    return;
-  }
-         
-  //trk.SetChiSqu(finderChi2);
-  //TrackFitter.SetNdof(trk);  
-         
+                        
   // update the running counters  
   _noOfCandTracks++;    
   _noOfAmbiguousHits += nAmbiguousHits;
               
-  // Ok, we keep this track for final selection      
+  // Ok, we keep this track for final selection
+  trk.SetChiSqu(finderChi2);
+  TrackFitter.SetNdof(trk);      
   TrackCollector.push_back( trk ); 
   
   return;

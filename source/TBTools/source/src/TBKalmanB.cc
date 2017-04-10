@@ -33,7 +33,7 @@ TBKalmanB::TBKalmanB(TBDetector& detector)
 { 
   // Number of iterations for double filter
   NumIt = 1;       
-
+  
   ndim = 5; // dimension of state vector
    
   // Project hit coord out of track state
