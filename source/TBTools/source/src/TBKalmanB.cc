@@ -41,13 +41,11 @@ TBKalmanB::TBKalmanB(TBDetector& detector)
   H[0][2] = 1.;
   H[1][3] = 1.;
   
-  mom = 0; 
-  mass = 0;
-  charge = 0;
+  mass = 0.139;
+  charge = -1;
   
   // By default, beam constraint is not used 
   m_useBC = false; 
-  
   m_sizex = 0;       // spot size, mm
   m_sizey = 0;       // spot size, mm
   m_divx = 0;     // divergence, rad
@@ -79,8 +77,7 @@ TBKalmanB::~TBKalmanB()
 bool TBKalmanB::ExtrapolateSeed(TBTrack& trk) 
 {
   
-  // Get particle hypothesis 
-  mom = trk.GetMomentum(); 
+  // Get particle hypothesis
   mass = trk.GetMass();
   charge = trk.GetCharge();
    
@@ -131,12 +128,9 @@ bool TBKalmanB::Fit(TBTrack& trk)
   // 2) The track state is local, i.e. it is defined with respect to the 
   //    w=0 surface local sensor frame. 
   
-  
   double chisqu = -1;    
-  trk.SetChiSqu(chisqu);
   
-  // Particle hypothesis 
-  mom = trk.GetMomentum(); 
+  // Particle hypothesis  
   mass = trk.GetMass();
   charge = trk.GetCharge();
    
@@ -393,7 +387,10 @@ int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, HepMatrix
         
   // Get signed flight length in air between detectors 
   double length = TrackModel->GetSignedStepLength(xref, Surf, nSurf); 
-      
+  
+  // Get momentum from the reference state    
+  double mom = std::abs(charge/xref[4][0])); 
+
   // Extraploate half step along straight line 
   HepMatrix xref_air = xref; 
   ReferenceFrame Surf_air = Surf; 
@@ -407,7 +404,7 @@ int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, HepMatrix
     // MAP estimate [x0,C0] from te to air surface
     // ---------------------------------------
     double l0 = te.GetDet().GetTrackLength(xref[2][0], xref[3][0], xref[0][0], xref[1][0]);
-    double X0 = te.GetDet().GetRadLength(xref[2][0],xref[3][0]);    
+    double X0 = te.GetDet().GetRadLength(xref[2][0],xref[3][0]);   
     double theta2_det = materialeffect::GetScatterTheta2(l0, X0, mass, charge, mom );   
     ierr = MAP_FORWARD( theta2_det, xref, Surf, xref_air, Surf_air, x0, C0 );
     if (ierr != 0) {
@@ -567,12 +564,13 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
       
       // Get signed flight length in air between detectors 
       double length = TrackModel->GetSignedStepLength(xref, Surf, nSurf); 
-
+      
+      // Get momentum from the reference state    
+      double mom = std::abs(charge/xref[4][0])); 
+      
       // Extraploate half step along straight line 
       TrackModel->Extrapolate(xref_air, Surf_air, length/2);
       
-      
-
       if ( idir > 0 ) {
           
         // MAP estimate [x0,C0] from old det to air surface

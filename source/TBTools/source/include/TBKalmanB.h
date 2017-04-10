@@ -205,14 +205,13 @@ class TBKalmanB {
   // Project states to hit coord
   CLHEP::HepMatrix H; 
   
-  double mom; 
   double mass;
   double charge;
   
   GenericTrackModel* TrackModel; 
-
+  
   int ndim; // dimension of state
-
+  
   // Use beam constraint in fitter
   bool m_useBC; 
   double m_divx;      // divergence, rad
