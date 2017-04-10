@@ -538,9 +538,8 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
     
     // Store results and update chisqu
     chisqu += predchi2;
-    Result[is].Chi2Pred = predchi2; 
-    Result[is].Up_x = x0;  
-    Result[is].Up_C = C0;
+    
+    
      
     // Propagate to next surface
     int inext = is+idir;
@@ -627,7 +626,6 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
       }
       
       // Store results        
-      Result[inext].Chi2Pred = 0; 
       Result[inext].Pr_x = x0;  
       Result[inext].Pr_C = C0;  
       

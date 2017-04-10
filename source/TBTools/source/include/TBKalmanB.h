@@ -68,15 +68,6 @@ class FilterState
    */
   CLHEP::HepMatrix Pr_x;     
   CLHEP::HepSymMatrix Pr_C; 
-  
-  /* Updated estimator 
-   */
-  CLHEP::HepMatrix Up_x;     
-  CLHEP::HepSymMatrix Up_C;  
-  
-  /* Predicted Chi2, zero if no hit found 
-   */  
-  double Chi2Pred; 
 };
 
 
