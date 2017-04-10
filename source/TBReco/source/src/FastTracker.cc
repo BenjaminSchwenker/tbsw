@@ -751,6 +751,8 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
 
 void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<TBTrack>& TrackCollector)
 {
+  int idir = 1;
+
   // Configure Kalman track fitter
   TBKalmanB TrackFitter(_detector);
   TrackFitter.SetNumIterations(_fitIterations);
@@ -788,8 +790,18 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
           
   double finderChi2 = 0; 
   
-  // Follow track along beam direction    
-  for(int ipl=0;ipl<_nTelPlanes;ipl++)  { 
+  int istart, istop;   
+  if (idir > 0) {
+    istart = 0; 
+    istop = _nTelPlanes; 
+  } else {
+    istart = _nTelPlanes-1; 
+    istop = -1; 
+  } 
+  
+  // Follow track along beam direction  
+  for(int ipl=istart; ipl!=istop; ipl+=idir) {
+  //for(int ipl=0;ipl<_nTelPlanes;ipl++)  { 
             
     // This is the reference state on the current track element
     HepMatrix& xref = trk.GetTE(ipl).GetState().GetPars();
@@ -869,9 +881,10 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
     } // End is active
            
     // Extrapolate filtered state to next track element 
-    if (ipl < _nTelPlanes -1) {  
-      HepMatrix& nxref = trk.GetTE(ipl+1).GetState().GetPars();
-      exerr = TrackFitter.PropagateState(trk.GetTE(ipl), trk.GetTE(ipl+1), xref, nxref, x0, C0); 
+    int inext = ipl+idir;
+    if (inext!=istop)  {
+      HepMatrix& nxref = trk.GetTE(inext).GetState().GetPars();
+      exerr = TrackFitter.PropagateState(trk.GetTE(ipl), trk.GetTE(inext), xref, nxref, x0, C0); 
       if ( exerr ) { // just skip the track 
         _noOfFailedFits++;
         streamlog_out ( MESSAGE2 ) << "Extrapolation of track seed into telescope failed!!" << endl; 
@@ -888,8 +901,8 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
   }
          
   // Reject hit if total chisq gets too large
-  if( finderChi2>_maxTrkChi2  ) { 
-    streamlog_out ( MESSAGE1 ) << "Track chisq too big. Skipping candidate track!" << endl;
+  if( finderChi2>_maxTrkChi2  ||  std::isnan(finderChi2)  || finderChi2 < 0 ) { 
+    streamlog_out ( MESSAGE1 ) << "Bad chisq. Skipping track candidate!" << endl;
     return;      
   }
           
