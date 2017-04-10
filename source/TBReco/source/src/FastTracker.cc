@@ -415,31 +415,31 @@ void FastTracker::processEvent(LCEvent * evt)
    // Seed tracks are constructed from hits in two planes. 
    // Track seeds are followed in the beam direction.
    
-   // Use two sensors to seed a track candidate
+   // Seed forward Kalman filter using hits on two sensor planes on upstream side
    if ( _firstPass_firstPlane != _firstPass_secondPlane) {
      
-     findTracks(TrackCollector , HitStore , _firstPass_firstPlane , _firstPass_secondPlane); 
+     findTracks(TrackCollector , HitStore , _firstPass_firstPlane , _firstPass_secondPlane,+1); 
      
      streamlog_out ( MESSAGE2 ) << "Total of " << TrackCollector.size() << " forward candidate tracks found" << endl;
    }
    
-   // Use two sensors to seed a track candidate
+   // Seed backward Kalman filter using hits in two sensor planes on downstream side
    if ( _secondPass_firstPlane != _secondPass_secondPlane) {
      
-     findTracks(TrackCollector , HitStore ,  _secondPass_firstPlane  , _secondPass_secondPlane ); 
+     findTracks(TrackCollector , HitStore ,  _secondPass_firstPlane  , _secondPass_secondPlane,-1); 
      
      streamlog_out ( MESSAGE2 ) << "Total of " << TrackCollector.size() << " candidate tracks found" << endl;
    }
    
    // Single hit finding     
    //=========================================================
-   // Seed tracks are constructed from just a single hit and propagated 
+   // Seed forward Kalman filter using hits from a single seed plane and propagate along beam axis 
    // along the z axis. 
    for ( int seedplane : _singleHitSeedingPlanes ) {
      
-     findTracks(TrackCollector , HitStore ,  seedplane ); 
+     findTracks(TrackCollector , HitStore ,  seedplane, +1); 
      
-     streamlog_out ( MESSAGE2 ) << "Single hit finding: Total of " << TrackCollector.size() << " candidate tracks found" << endl;
+     streamlog_out ( MESSAGE2 ) << "Total of " << TrackCollector.size() << " candidate tracks found" << endl;
    } 
    
    // Final Track Selection  
@@ -628,7 +628,7 @@ void FastTracker::end()
 //
 // Called by the processEvent() to add tracks to trackcollector using hits in hitstore
 //
-void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& HitStore , int firstplane , int secondplane) 
+void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& HitStore , int firstplane , int secondplane, int idir) 
 {
    
    streamlog_out ( MESSAGE2 ) << "First active plane is " << firstplane  << " and has " 
@@ -682,7 +682,7 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
 
          trk.SetReferenceState(Seed);
          
-         buildTrackCand(trk, HitStore, TrackCollector);
+         buildTrackCand(trk, HitStore, TrackCollector,idir);
          
        } // End track seeding
      } // End track seeding  
@@ -693,7 +693,7 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
 //
 // Called by the processEvent() to add tracks to trackcollector using hits in hitstore
 //
-void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& HitStore , int seedplane) 
+void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& HitStore , int seedplane, int idir) 
 {
    
    streamlog_out ( MESSAGE2 ) << "Seed plane is " << seedplane  << " and has " 
@@ -744,15 +744,14 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
        }         
        trk.SetReferenceState(Seed);
        
-       buildTrackCand(trk, HitStore, TrackCollector);
+       buildTrackCand(trk, HitStore, TrackCollector, idir);
      }
    }      
 }
 
-void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<TBTrack>& TrackCollector)
+void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<TBTrack>& TrackCollector, int idir)
 {
-  int idir = 1;
-
+  
   // Configure Kalman track fitter
   TBKalmanB TrackFitter(_detector);
   TrackFitter.SetNumIterations(_fitIterations);

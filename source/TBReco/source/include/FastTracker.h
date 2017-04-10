@@ -92,13 +92,13 @@ protected:
    void printProcessorParams() const;
    
 //! Called by the processEvent() to find track candidates  
-   void findTracks( std::list<TBTrack>& TrackCollector , HitFactory& HitStore , int firstplane , int secondplane);  
+   void findTracks( std::list<TBTrack>& TrackCollector , HitFactory& HitStore , int firstplane , int secondplane, int idir);  
 
 //! Called by the processEvent() to add tracks to trackcollector using hits in hitstore
-   void findTracks( std::list<TBTrack>& TrackCollector , HitFactory& HitStore , int seedplane); 
+   void findTracks( std::list<TBTrack>& TrackCollector , HitFactory& HitStore , int seedplane, int idir); 
 
 //! Method for building track candidate from seed. Candidate is added to track collector.
-   void buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<TBTrack>& TrackCollector);
+   void buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<TBTrack>& TrackCollector, int idir);
 
 // Processor Parameters
    
