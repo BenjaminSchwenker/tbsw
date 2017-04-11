@@ -41,7 +41,10 @@ TBKalmanB::TBKalmanB(TBDetector& detector)
   H[0][2] = 1.;
   H[1][3] = 1.;
   
-  mass = 0.139;
+  // Electron mass, in GeV 
+  mass = 0.000511;
+
+  // Electron charge in, e
   charge = -1;
   
   // By default, beam constraint is not used 
