@@ -428,7 +428,7 @@ void FastTracker::processEvent(LCEvent * evt)
    // along the z axis. 
    for ( int seedplane : _singleHitSeedingPlanes ) {
      
-     findTracks(TrackCollector , HitStore ,  seedplane, +1); 
+     findTracks(TrackCollector , HitStore ,  seedplane); 
      
      streamlog_out ( MESSAGE2 ) << "Total of " << TrackCollector.size() << " candidate tracks found" << endl;
    } 
@@ -621,15 +621,15 @@ void FastTracker::end()
 //
 void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& HitStore , int firstplane , int secondplane, int idir) 
 {
+   // Check plane numbers are valid
+   if (firstplane < 0 || secondplane < 0) return; 
+   if (firstplane >= _nTelPlanes || secondplane >= _nTelPlanes) return; 
    
    streamlog_out ( MESSAGE2 ) << "First active plane is " << firstplane  << " and has " 
                               << HitStore.GetNHits(firstplane) << " good hits." << endl;
    streamlog_out ( MESSAGE2 ) << "Second active plane is " << secondplane << " and has " 
                               << HitStore.GetNHits(secondplane) << " good hits." << endl;
    
-   // Check plane numbers are valid
-   if (firstplane < 0 || secondplane < 0) return; 
-    
    // Scan momentum hypotheses 
    for (int imom = 0; imom < (int) _momentum_list.size() ; imom++ ) {
      
@@ -684,16 +684,18 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
 //
 // Called by the processEvent() to add tracks to trackcollector using hits in hitstore
 //
-void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& HitStore , int seedplane, int idir) 
+void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& HitStore , int seedplane) 
 {
+   // Check plane numbers are valid
+   if (seedplane < 0 || seedplane >= _nTelPlanes) return; 
+     
+   // Compute direction of filter: forward (+1) or backward (-1)
+   int idir = 1;
+   if (seedplane > _nTelPlanes/2 ) idir = -1;
    
    streamlog_out ( MESSAGE2 ) << "Seed plane is " << seedplane  << " and has " 
-                              << HitStore.GetNHits(seedplane) << " good hits." << endl;
-   
-   
-   // Check plane numbers are valid
-   if (seedplane < 0 ) return; 
-  
+                              << HitStore.GetNHits(seedplane) << " good hits. Filter runs in direction " << idir << endl;
+    
    // Loop over different momentum hypothesis 
    
    for (int imom = 0; imom < (int) _momentum_list.size() ; imom++ ) {
