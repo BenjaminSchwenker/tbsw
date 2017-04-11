@@ -96,14 +96,14 @@ FastTracker::FastTracker() : Processor("FastTracker")
    
    std::vector<float> initMaxResidual;
    initMaxResidual.push_back(1);
-   registerProcessorParameter ("MaxResidualU", "Maximum hit residual [mm]",
+   registerProcessorParameter ("MaxResidualU", "Maximum hit residual [mm]. Only used for pre-seleciton of hits",
                               _maxResidualU, initMaxResidual );
    
-   registerProcessorParameter ("MaxResidualV", "Maximum hit residual [mm]",
+   registerProcessorParameter ("MaxResidualV", "Maximum hit residual [mm]. Only used for pre-seleciton of hits",
                               _maxResidualV, initMaxResidual );
    
    registerProcessorParameter("OutlierChi2Cut",  
-                             "Chi2 cut for removal of bad hits",                       
+                             "Maximum chi2 increment for any hit added to a track candidate",                       
                              _outlierChi2Cut, static_cast <float> (50) ); 
     
    registerProcessorParameter ("MinimumHits",
@@ -111,23 +111,23 @@ FastTracker::FastTracker() : Processor("FastTracker")
                               _minHits,  static_cast < int > (2));
    
    std::vector<int> initSingleHitSeeding;
-   registerProcessorParameter ("SingleHitSeeding", "Start seeding tracks using single hits for plane numbers",
+   registerProcessorParameter ("SingleHitSeeding", "Seed tracks using hits from these planes",
                               _singleHitSeedingPlanes, initSingleHitSeeding );
    
-   registerProcessorParameter ("PassOne_FirstPlane",
-                              "Build track seeds from first plane and second plane",
+   registerProcessorParameter ("ForwardPass_FirstPlane",
+                              "First plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass",
                               _firstPass_firstPlane,  static_cast < int > (-1));
    
-   registerProcessorParameter ("PassOne_SecondPlane",
-                              "Build track seeds from first plane and second plane",
+   registerProcessorParameter ("ForwardPass_SecondPlane",
+                              "Second plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass",
                               _firstPass_secondPlane,  static_cast < int > (-1));
 
-   registerProcessorParameter ("PassTwo_FirstPlane",
-                              "Build track seeds from first plane and second plane",
+   registerProcessorParameter ("BackwardPass_FirstPlane",
+                              "First plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass",
                               _secondPass_firstPlane,  static_cast < int > (-1)); 
 
-   registerProcessorParameter ("PassTwo_SecondPlane",
-                              "Build track seeds from first plane and second plane",
+   registerProcessorParameter ("BackwardPass_SecondPlane",
+                              "Second plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass",
                               _secondPass_secondPlane,  static_cast < int > (-1)); 
      
    registerProcessorParameter ("MaximumGap",

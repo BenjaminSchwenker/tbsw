@@ -42,8 +42,8 @@ namespace depfet {
  *  sorts hits first by sensorID and assigns two indices to each hit. The HitID is a
  *  unique identifier for all hits in an event and will be used to find overlaps 
  *  between tracks. The SectorID assigns each hit to a small sector from a network of 
- *  sectors covering the full sensor area. The sector size can be optimized by the 
- *  user to speed up track finding. 
+ *  sectors covering the full sensor. The sectors are computed from the residual cuts 
+ *  supplied as steering parameters. 
  *  
  *  The second step is to build seed tracks from  pairs of sensors along the beam 
  *  line. The user is free to select any pair of sensors. In order to reduce combinatorial 
@@ -97,7 +97,7 @@ protected:
 //! Called by the processEvent() to add tracks to trackcollector using hits in hitstore
    void findTracks( std::list<TBTrack>& TrackCollector , HitFactory& HitStore , int seedplane); 
 
-//! Method for building track candidate from seed. Candidate is added to track collector.
+//! Method for building a track candidate from a seed. The finished candidate is added to the track collector.
    void buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<TBTrack>& TrackCollector, int idir);
 
 // Processor Parameters
@@ -127,15 +127,17 @@ protected:
 //! Quality criteria for seed tracks 
    int _minHits; 
    int _maxGap;  
-   int _firstPass_firstPlane;
-   int _firstPass_secondPlane;
-   int _secondPass_firstPlane;
-   int _secondPass_secondPlane;
    float _maxSlope; 
    float _maxTrkChi2; 
    float _outlierChi2Cut; 
 
-//! Perform single hit seeding for these plane numbers 
+//! Perform double hit seeding using these plane 
+   int _firstPass_firstPlane;
+   int _firstPass_secondPlane;
+   int _secondPass_firstPlane;
+   int _secondPass_secondPlane;
+
+//! Perform single hit seeding using these planes 
    std::vector<int>  _singleHitSeedingPlanes; 
    
 //! Parameters for beam particles 
