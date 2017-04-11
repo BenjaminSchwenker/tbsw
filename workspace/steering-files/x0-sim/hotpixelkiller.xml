@@ -15,6 +15,8 @@
       <parameter name="Verbosity" value="MESSAGE3"/>
    </global>
    
+   
+   
    <processor name="M26HotPixelKiller" type="HotPixelKiller">
      <!--HotPixelKiller: Masking of hot pixels-->
      <!--Name of zero suppressed data collection-->
