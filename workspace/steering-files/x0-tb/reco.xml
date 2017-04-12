@@ -9,11 +9,9 @@
       <processor name="M26HitMaker"/>
       <processor name="DownstreamFinder"/>
       <processor name="UpstreamFinder"/>
-      <processor name="UpstreamCorrector"/>
-      <processor name="DownstreamCorrector"/>
       <processor name="X0Imager"/>
    </execute>
-
+   
    <global>
       <parameter name="LCIOInputFiles">  </parameter>
       <parameter name="GearXMLFile" value="cal-files/gear.xml"/>
@@ -57,42 +55,46 @@
      <!--Threshold for zero suppression-->
      <parameter name="SparseZSCut" type="float" value="0"/>
    </processor>
-   
-   <processor name="M26HitMaker" type="GoeHitMaker">
+
+   <processor name="M26HitMaker-notused" type="GoeHitMaker">
      <!--GoeHitMaker:  Compute hits from pixel clusters using a clusterDB-->
      <!--Name of cluster collection-->
      <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_m26 </parameter>
      <!--Name of hit collection-->
      <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_m26 </parameter>
      <!--This is the name of the ROOT file with the cluster constants (add .root)-->
-     <parameter name="ClusterDBFileName" type="string" value="cal-files/clusterDB-ALL.root"/>
+     <parameter name="ClusterDBFileName" type="string" value="cal-files/clusterDB-M26.root"/>
+     <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
+     <parameter name="MaxSizeU" type="int" value="3"/>
+     <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
+     <parameter name="MaxSizeV" type="int" value="3"/>
    </processor>
-     
-   <processor name="M26HitMaker-notused" type="CogHitMaker">
+   
+   <processor name="M26HitMaker" type="CogHitMaker">
      <!--CogHitMaker:  Compute hits from pixel clusters -->
      <!--Name of cluster collection-->
      <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_m26 </parameter>
      <!--Name of hit collection-->
      <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_m26 </parameter>
      <!--SigmaU for cluster with one uCell contributing [mm]-->
-     <parameter name="SigmaU1" type="double" value="0.00375"/>
+     <parameter name="SigmaU1" type="double" value="0.0037"/>
      <!--SigmaU for cluster with two uCells contributing [mm]-->
-     <parameter name="SigmaU2" type="double" value="0.00190"/>
+     <parameter name="SigmaU2" type="double" value="0.0033"/>
      <!--SigmaU for cluster with three or more uCells contributing [mm]-->
-     <parameter name="SigmaU3" type="double" value="0.0070"/>
+     <parameter name="SigmaU3" type="double" value="0.0050"/>
      <!--SigmaV for cluster with one vCell contributing [mm]-->
-     <parameter name="SigmaV1" type="double" value="0.00375"/>
+     <parameter name="SigmaV1" type="double" value="0.0037"/>
      <!--SigmaV for cluster with two vCells contributing [mm]-->
-     <parameter name="SigmaV2" type="double" value="0.00190"/>
+     <parameter name="SigmaV2" type="double" value="0.0033"/>
      <!--SigmaV for cluster with three or more vCells contributing [mm]-->
-     <parameter name="SigmaV3" type="double" value="0.0070"/>
+     <parameter name="SigmaV3" type="double" value="0.0050"/>
      <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
-     <parameter name="MaxSizeU" type="int" value="2"/>
+     <parameter name="MaxSizeU" type="int" value="3"/>
      <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
-     <parameter name="MaxSizeV" type="int" value="2"/>
+     <parameter name="MaxSizeV" type="int" value="3"/>
    </processor>
-   
-   <processor name="DownstreamFinder" type="FastTracker">
+      
+    <processor name="DownstreamFinder" type="FastTracker">
      <!--FastTracker: Performs track finding and fitting for beam tests-->
      <!--Input hit collection names-->
      <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> hit_m26 </parameter>
@@ -106,36 +108,36 @@
      <parameter name="ExcludeDetector" type="IntVec" value="0 1 2 3"/>
      <!--To use only GoodQuality write 0 here-->
      <parameter name="HitQualitySelection" type="int" value="0"/>
-     <!--Maximum hit residual [mm]-->
-     <parameter name="MaxResidualU" type="FloatVec" value="0.2"/>
-     <!--Maximum hit residual [mm]-->
-     <parameter name="MaxResidualV" type="FloatVec" value="0.2"/>
+     <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
+     <parameter name="MaxResidualU" type="FloatVec" value="0.4"/>
+     <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
+     <parameter name="MaxResidualV" type="FloatVec" value="0.4"/>
      <!--Maximum track chisq in track fit-->
-     <parameter name="MaxTrackChi2" type="float" value="15"/>
+     <parameter name="MaxTrackChi2" type="float" value="20"/>
      <!--Maximum number of consecutive missing hits in track-->
      <parameter name="MaximumGap" type="int" value="0"/>
      <!--Maximum slope of candiate tracks in Z=0 plane (rad). Set cut to zero to deactivate.-->
      <parameter name="MaximumSlope" type="float" value="0.1"/>
      <!--Minimum number of hits in track-->
      <parameter name="MinimumHits" type="int" value="3"/>
-     <!--Chi2 cut for removal of bad hits-->
-     <parameter name="OutlierChi2Cut" type="float" value="10"/>
-     <!--Fitting iteration for removal of bad hits-->
-     <parameter name="OutlierIterations" type="int" value="2"/>
+     <!--Maximum chi2 increment for any hit added to a track candidate-->
+     <parameter name="OutlierChi2Cut" type="float" value="20"/>
      <!--Particle charge [e]-->
      <parameter name="ParticleCharge" type="double" value="-1"/>
      <!--Particle mass [GeV]-->
      <parameter name="ParticleMass" type="double" value="0.000511"/>
      <!--Particle momentum [GeV]-->
      <parameter name="ParticleMomentum" type="double" value="4.0"/>
-     <!--Build track seeds from first plane and second plane-->
-     <parameter name="PassOne_FirstPlane" type="int" value="4"/>
-     <!--Build track seeds from first plane and second plane-->
-     <parameter name="PassOne_SecondPlane" type="int" value="5"/>
-     <!--Build track seeds from first plane and second plane-->
-     <parameter name="PassTwo_FirstPlane" type="int" value="-1"/>
-     <!--Build track seeds from first plane and second plane-->
-     <parameter name="PassTwo_SecondPlane" type="int" value="-1"/>
+     <!--First plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="BackwardPass_FirstPlane" type="int" value="5"/>
+     <!--Second plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="BackwardPass_SecondPlane" type="int" value="6"/>
+     <!--First plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="ForwardPass_FirstPlane" type="int" value="-1"/>
+     <!--Second plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="ForwardPass_SecondPlane" type="int" value="-1"/>
+     <!--Seed tracks using hits from these planes-->
+     <parameter name="SingleHitSeeding" type="IntVec"> </parameter>
    </processor>
 
    <processor name="UpstreamFinder" type="FastTracker">
@@ -152,80 +154,44 @@
      <parameter name="ExcludeDetector" type="IntVec" value="3 4 5 6"/>
      <!--To use only GoodQuality write 0 here-->
      <parameter name="HitQualitySelection" type="int" value="0"/>
-     <!--Maximum hit residual [mm]-->
-     <parameter name="MaxResidualU" type="FloatVec" value="0.2"/>
-     <!--Maximum hit residual [mm]-->
-     <parameter name="MaxResidualV" type="FloatVec" value="0.2"/>
+     <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
+     <parameter name="MaxResidualU" type="FloatVec" value="0.4"/>
+     <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
+     <parameter name="MaxResidualV" type="FloatVec" value="0.4"/>
      <!--Maximum track chisq in track fit-->
-     <parameter name="MaxTrackChi2" type="float" value="15"/>
+     <parameter name="MaxTrackChi2" type="float" value="20"/>
      <!--Maximum number of consecutive missing hits in track-->
      <parameter name="MaximumGap" type="int" value="0"/>
      <!--Maximum slope of candiate tracks in Z=0 plane (rad). Set cut to zero to deactivate.-->
      <parameter name="MaximumSlope" type="float" value="0.1"/>
      <!--Minimum number of hits in track-->
      <parameter name="MinimumHits" type="int" value="3"/>
-     <!--Chi2 cut for removal of bad hits-->
-     <parameter name="OutlierChi2Cut" type="float" value="10"/>
-     <!--Fitting iteration for removal of bad hits-->
-     <parameter name="OutlierIterations" type="int" value="2"/>
+     <!--Maximum chi2 increment for any hit added to a track candidate-->
+     <parameter name="OutlierChi2Cut" type="float" value="20"/>
      <!--Particle charge [e]-->
      <parameter name="ParticleCharge" type="double" value="-1"/>
      <!--Particle mass [GeV]-->
      <parameter name="ParticleMass" type="double" value="0.000511"/>
      <!--Particle momentum [GeV]-->
      <parameter name="ParticleMomentum" type="double" value="4.0"/>
-     <!--Build track seeds from first plane and second plane-->
-     <parameter name="PassOne_FirstPlane" type="int" value="0"/>
-     <!--Build track seeds from first plane and second plane-->
-     <parameter name="PassOne_SecondPlane" type="int" value="1"/>
-     <!--Build track seeds from first plane and second plane-->
-     <parameter name="PassTwo_FirstPlane" type="int" value="-1"/>
-     <!--Build track seeds from first plane and second plane-->
-     <parameter name="PassTwo_SecondPlane" type="int" value="-1"/>
+     <!--First plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="BackwardPass_FirstPlane" type="int" value="-1"/>
+     <!--Second plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="BackwardPass_SecondPlane" type="int" value="-1"/>
+     <!--First plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="ForwardPass_FirstPlane" type="int" value="0"/>
+     <!--Second plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="ForwardPass_SecondPlane" type="int" value="1"/>
+     <!--Seed tracks using hits from these planes-->
+     <parameter name="SingleHitSeeding" type="IntVec"> </parameter>
    </processor>
-
-   <processor name="UpstreamCorrector" type="BeamEnergyCorrector">
-     <!--BeamEnergyCorrector: Applies corrections to the beam energy profile-->
-     <!--Track input collection-->
-     <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> up_tracks </parameter>
-     <!--Collection name for corrected tracks-->
-     <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> up_tracks2 </parameter>
-     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-     <parameter name="AlignmentDBFileName" type="string" value="cal-files/eudet-alignmentDB.slcio"/>
-     <!--Momentum at centre of reference plane [GeV]-->
-     <parameter name="CentralMomentum" type="double" value="4.0"/>
-     <!--Plane number along the beam line-->
-     <parameter name="ReferencePlane" type="int" value="3"/>
-     <!--Momentum slope along u [GeV/mm]-->
-     <parameter name="SlopeUMomentum" type="double" value="0.0"/>
-     <!--Momentum slope along v [GeV/mm]-->
-     <parameter name="SlopeVMomentum" type="double" value="0"/>
-   </processor>
-
-   <processor name="DownstreamCorrector" type="BeamEnergyCorrector">
-     <!--BeamEnergyCorrector: Applies corrections to the beam energy profile-->
-     <!--Track input collection-->
-     <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> down_tracks </parameter>
-     <!--Collection name for corrected tracks-->
-     <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> down_tracks2 </parameter>
-     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-     <parameter name="AlignmentDBFileName" type="string" value="cal-files/eudet-alignmentDB.slcio"/>
-     <!--Momentum at centre of reference plane [GeV]-->
-     <parameter name="CentralMomentum" type="double" value="4.0"/>
-     <!--Plane number along the beam line-->
-     <parameter name="ReferencePlane" type="int" value="3"/>
-     <!--Momentum slope along u [GeV/mm]-->
-     <parameter name="SlopeUMomentum" type="double" value="0.0"/>
-     <!--Momentum slope along v [GeV/mm]-->
-     <parameter name="SlopeVMomentum" type="double" value="0"/>
-   </processor>
-    
+   
    <processor name="X0Imager" type="X0ImageProducer">
      <!--X0ImageProducer: X/X0 measurement for EUDET/AIDA telescope data-->
      <!--Name of upstream track collection-->
-     <parameter name="UpStreamTrackCollection" type="string" lcioInType="Track"> up_tracks2 </parameter>
+     <parameter name="UpStreamTrackCollection" type="string" lcioInType="Track"> up_tracks </parameter>
      <!--Name of downstream track collection-->
-     <parameter name="DownStreamTrackCollection" type="string" lcioInType="Track"> down_tracks2 </parameter>
+     <parameter name="DownStreamTrackCollection" type="string" lcioInType="Track"> down_tracks </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="cal-files/eudet-alignmentDB.slcio"/>
      <!--Plane number of DUT along the beam line-->
@@ -233,5 +199,5 @@
      <!--Output root file name-->
      <parameter name="RootFileName" type="string" value="X0.root"/>
    </processor>
-
+   
 </marlin>

@@ -33,31 +33,29 @@ namespace depfet {
 
 //! FastTracker Processor
 /*! This processor performs track finding and track fitting in beam test 
- *  experiments. The processor allows a globel track finding in all sensors 
- *  specified in the gear file. Multiple hit collections can be specied as 
- *  as input data. The processor outputs a single track collection which can 
+ *  experiments. The processor allows a track finding in all sensors 
+ *  specified in the gear file. Multiple hit collections can be given as 
+ *  as input. The processor outputs a single track collection which can 
  *  be used in downstream processors. 
  *
- *  Track finder starts by registering all hits into the HitFactory. The HitFactory 
+ *  Track finder starts by registering all hits into a HitStore. The HitStore 
  *  sorts hits first by sensorID and assigns two indices to each hit. The HitID is a
  *  unique identifier for all hits in an event and will be used to find overlaps 
  *  between tracks. The SectorID assigns each hit to a small sector from a network of 
- *  sectors covering the full sensor area. The sector size can be optimized by the 
- *  user to speed up track finding. 
+ *  sectors covering the full sensor. The sectors are computed from the residual cuts 
+ *  supplied as steering parameters. 
  *  
- *  The second step is to build seed tracks from a pair of sensors along the beam 
+ *  The second step is to build seed tracks from  pairs of sensors along the beam 
  *  line. The user is free to select any pair of sensors. In order to reduce combinatorial 
- *  background, the used can select of cut on the maximal angle between the direction 
+ *  background, the user can select a cut on the maximal angle between the direction 
  *  of the seed track and the telescope z axis, which is typically also the beam axis.  
- *  For track inside a magnetic field, the user has to provide an initial gues for the 
+ *  For tracks inside a magnetic field, the user has to provide an initial gues for the 
  *  particle momentum and charge. All seed tracks are followed through all sensor along 
- *  the beam line and compatible hits a picked up along the way. The user can impose cuts 
- *  on the minimum number of hits and misses. Track candidates passing all cuts are feed 
- *  into a 2pass Kalman filter and stored in a TrackCollector. Finally, a opitmal set of 
- *  non overlapping tracks is selected from the collector and stored in the final track 
- *  collection.
+ *  the beam line and compatible hits are picked up. The user can impose cuts 
+ *  on the minimum number of hits and misses. Track candidates passing all cuts are stored
+ *  in a TrackCollector. Finally, a opitmal set of non overlapping tracks is selected from
+ *  the collector and stored in the final track  collection.
  *  
- *   
  *  Author: Benjamin Schwenker, Göttingen University 
  *  <mailto:benjamin.schwenker@phys.uni-goettingen.de> 
  */
@@ -94,10 +92,13 @@ protected:
    void printProcessorParams() const;
    
 //! Called by the processEvent() to find track candidates  
-   void findTracks( std::list<TBTrack>& TrackCollector , HitFactory& HitStore , int firstplane , int secondplane);  
+   void findTracks( std::list<TBTrack>& TrackCollector , HitFactory& HitStore , int firstplane , int secondplane, int idir);  
 
 //! Called by the processEvent() to add tracks to trackcollector using hits in hitstore
    void findTracks( std::list<TBTrack>& TrackCollector , HitFactory& HitStore , int seedplane); 
+
+//! Method for building a track candidate from a seed. The finished candidate is added to the track collector.
+   void buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<TBTrack>& TrackCollector, int idir);
 
 // Processor Parameters
    
@@ -126,16 +127,17 @@ protected:
 //! Quality criteria for seed tracks 
    int _minHits; 
    int _maxGap;  
+   float _maxSlope; 
+   float _maxTrkChi2; 
+   float _outlierChi2Cut; 
+
+//! Perform double hit seeding using these plane 
    int _firstPass_firstPlane;
    int _firstPass_secondPlane;
    int _secondPass_firstPlane;
    int _secondPass_secondPlane;
-   float _maxSlope; 
-   float _maxTrkChi2; 
-   float _outlierChi2Cut; 
-   int _outlierIterations;
 
-//! Perform single hit seeding for these plane numbers 
+//! Perform single hit seeding using these planes 
    std::vector<int>  _singleHitSeedingPlanes; 
    
 //! Parameters for beam particles 

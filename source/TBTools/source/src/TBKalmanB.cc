@@ -33,24 +33,22 @@ TBKalmanB::TBKalmanB(TBDetector& detector)
 { 
   // Number of iterations for double filter
   NumIt = 1;       
-
+  
   ndim = 5; // dimension of state vector
-  
-  // By default, no cut is used
-  OutlierCut = numeric_limits< double >::max();               
-  
+   
   // Project hit coord out of track state
   H = HepMatrix(2,ndim,0);
   H[0][2] = 1.;
   H[1][3] = 1.;
+  
+  // Electron mass, in GeV 
+  mass = 0.000511;
 
-  mom = 0; 
-  mass = 0;
-  charge = 0;
-
+  // Electron charge in, e
+  charge = -1;
+  
   // By default, beam constraint is not used 
   m_useBC = false; 
-  
   m_sizex = 0;       // spot size, mm
   m_sizey = 0;       // spot size, mm
   m_divx = 0;     // divergence, rad
@@ -68,9 +66,6 @@ TBKalmanB::TBKalmanB(TBDetector& detector)
   } else {
     TrackModel = new HelixTrackModel(field); 
   }
-
-  
-  
 }
 
 /** Destructor 
@@ -85,8 +80,7 @@ TBKalmanB::~TBKalmanB()
 bool TBKalmanB::ExtrapolateSeed(TBTrack& trk) 
 {
   
-  // Get particle hypothesis 
-  mom = trk.GetMomentum(); 
+  // Get particle hypothesis
   mass = trk.GetMass();
   charge = trk.GetCharge();
    
@@ -136,15 +130,10 @@ bool TBKalmanB::Fit(TBTrack& trk)
   //    x and a covariance matrix C.
   // 2) The track state is local, i.e. it is defined with respect to the 
   //    w=0 surface local sensor frame. 
-  // 3) A fit iterations means to ignore measured hits which are not compatible 
-  //    to the track model -> outlier rejection. 
-  
   
   double chisqu = -1;    
-  trk.SetChiSqu(chisqu);
   
-  // Particle hypothesis 
-  mom = trk.GetMomentum(); 
+  // Particle hypothesis  
   mass = trk.GetMass();
   charge = trk.GetCharge();
    
@@ -316,40 +305,8 @@ bool TBKalmanB::Fit(TBTrack& trk)
         TBHit& hit =  TE.GetHit();            
         TE.SetChiSqu(GetPredictedChi2(xs, Cs, hit));
       } 
-         
-       
     }  
-    
-    // Outlier logic
-    // 
-    // Remove hit with largest smoother chi2 value, i.e.
-    // the worst measurment. This requires one more 
-    // fitter iteration!
-    
-    double WorstChi2 = 0;   // Worst Chisqu  
-    int WorstTE = -1;       // Worst TE
-    
-    for(int is=0; is<nCrossed; ++is) {
-       
-      // Get plane number 
-      int iTE = CrossedTEs[is];  
-      
-      // Get track element 
-      TBTrackElement& TE = trk.GetTE( iTE ); 
      
-      // Remember TE with max chi2
-      if ( WorstChi2 < TE.GetChiSqu() ) {
-        WorstChi2 = TE.GetChiSqu(); 
-        WorstTE = iTE;   
-      }
-    }
-    
-    // Exclude worst hit from track
-    // One iteration is needed to refit
-    if ( iter < NumIt-1 &&  WorstChi2 > OutlierCut ) {    
-      trk.GetTE( WorstTE ).RemoveHit();
-    }    
-    
     // Linearization 
     // 
     // We can exploit the current fit to improve the linearization point 
@@ -361,15 +318,142 @@ bool TBKalmanB::Fit(TBTrack& trk)
     trk.SetMomentum(std::abs(charge/trk.GetTE( CrossedTEs[0] ).GetState().GetPars()[4][0]));
      
   } // end iterations
-
-  
-       
+     
   // Everything is ok
   trk.SetChiSqu(chisqu);
   SetNdof(trk);  
   return false;
 }
 
+/** Filters a new hit 
+ */
+double TBKalmanB::FilterHit(TBHit& hit, HepMatrix& xref, HepMatrix& x0, HepSymMatrix& C0) 
+{ 
+  
+  // To start ierr is set to 0 (= OK)
+  int ierr = 0; 
+       
+  // Here, the measurment update takes place  
+  double predchi2 = 0; 
+    
+  // Measured hit coordinates, 2x1 matrix 
+  HepMatrix& m = hit.GetCoord();
+        
+  // Covariance for hit coordinates, 2x2 matrix 
+  HepSymMatrix& V = hit.GetCov();
+               
+  // Weigth matrix of measurment 
+  HepSymMatrix W = (V + C0.similarity(H)).inverse(ierr);
+  if (ierr != 0) {
+    streamlog_out(ERROR) << "Hit filtering: Matrix inversion failed. Quit fitting!"
+                         << std::endl;
+    return -1;
+  }	
+     
+  // This is the predicted residual 
+  HepMatrix r = m - H*x0 - H*xref; 
+      
+  // This is the predicted chi2 
+  HepMatrix chi2mat = r.T()*W*r;
+  predchi2 = chi2mat[0][0];   
+      
+  // Kalman gain matrix K 
+  HepMatrix K = C0 * H.T() * W; 
+       
+  // This is the filtered state
+  x0 += K * r;
+  C0 -= (W.similarityT(H)).similarity(C0);
+        
+  return predchi2;
+}
+
+
+/** Propagte state from trackelement te to next track element nte 
+ */
+int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, HepMatrix& xref, HepMatrix& nxref, HepMatrix& x0, HepSymMatrix& C0) 
+{ 
+       
+  // Reference frame for next track element          
+  ReferenceFrame& nSurf = nte.GetDet().GetNominal();
+
+  // Reference frame for current track element          
+  ReferenceFrame& Surf = te.GetDet().GetNominal();
+  
+  // Direction of propagation (idir > 0 means along beam direction)
+  int idir = nte.GetDet().GetPlaneNumber() - te.GetDet().GetPlaneNumber();
+   
+  // This fitter takes into account scatter in air
+  // gaps between sensors. Therefor, we add a virtual 
+  // air surface between the detectors which scatters 
+  // the track with a material budget equal to the 
+  // extrapolation step length between the sensors.
+        
+  // Get signed flight length in air between detectors 
+  double length = TrackModel->GetSignedStepLength(xref, Surf, nSurf); 
+  
+  // Get momentum from the reference state    
+  double mom = std::abs(charge/xref[4][0]); 
+
+  // Extraploate half step along straight line 
+  HepMatrix xref_air = xref; 
+  ReferenceFrame Surf_air = Surf; 
+  TrackModel->Extrapolate(xref_air, Surf_air, length/2);
+    
+  // To start ierr is set to 0 (= OK)
+  int ierr = 0; 
+
+  if ( idir > 0 ) {
+          
+    // MAP estimate [x0,C0] from te to air surface
+    // ---------------------------------------
+    double l0 = te.GetDet().GetTrackLength(xref[2][0], xref[3][0], xref[0][0], xref[1][0]);
+    double X0 = te.GetDet().GetRadLength(xref[2][0],xref[3][0]);   
+    double theta2_det = materialeffect::GetScatterTheta2(l0, X0, mass, charge, mom );   
+    ierr = MAP_FORWARD( theta2_det, xref, Surf, xref_air, Surf_air, x0, C0 );
+    if (ierr != 0) {
+      streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
+                           << std::endl;
+      return -1;
+    }	
+         
+    // MAP estimate [x0,C0] from air to next te 
+    // ---------------------------------------
+    double theta2_air = materialeffect::GetScatterTheta2(length, materialeffect::X0_air, mass, charge, mom );   
+    ierr = MAP_FORWARD( theta2_air, xref_air, Surf_air, nxref, nSurf, x0, C0 );
+    if (ierr != 0) {
+      streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
+                           << std::endl;
+      return -1;
+    }	
+          
+  } else {
+        
+    // MAP estimate [x0,C0] from old det to air surface
+    // ---------------------------------------
+    double theta2_air = materialeffect::GetScatterTheta2(length, materialeffect::X0_air, mass, charge, mom ) ;   // Backward form 
+    ierr = MAP_BACKWARD( theta2_air, xref, Surf, xref_air, Surf_air, x0, C0 );
+    if (ierr != 0) {
+      streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
+                           << std::endl;
+      return -1;
+    }	
+        
+    // MAP estimate [x0,C0] from air to new det surface
+    // ---------------------------------------
+    double l0 = nte.GetDet().GetTrackLength(nxref[2][0], nxref[3][0], nxref[0][0], nxref[1][0]);
+    double X0 = nte.GetDet().GetRadLength(nxref[2][0],nxref[3][0]);    
+    double theta2_det = materialeffect::GetScatterTheta2(l0, X0, mass, charge, mom );   // Backward form    
+    ierr = MAP_BACKWARD( theta2_det, xref_air, Surf_air, nxref, nSurf, x0, C0 );          
+    if (ierr != 0) {
+      streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
+                           << std::endl;
+      return -1;
+    }	
+               
+  }
+      
+  return 0;
+}
 
 
 /** Runs filter. Returns fit chi2. 
@@ -454,9 +538,8 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
     
     // Store results and update chisqu
     chisqu += predchi2;
-    Result[is].Chi2Pred = predchi2; 
-    Result[is].Up_x = x0;  
-    Result[is].Up_C = C0;
+    
+    
      
     // Propagate to next surface
     int inext = is+idir;
@@ -484,12 +567,13 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
       
       // Get signed flight length in air between detectors 
       double length = TrackModel->GetSignedStepLength(xref, Surf, nSurf); 
-
+      
+      // Get momentum from the reference state    
+      double mom = std::abs(charge/xref[4][0]); 
+      
       // Extraploate half step along straight line 
       TrackModel->Extrapolate(xref_air, Surf_air, length/2);
       
-      
-
       if ( idir > 0 ) {
           
         // MAP estimate [x0,C0] from old det to air surface
@@ -543,7 +627,6 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
       }
       
       // Store results        
-      Result[inext].Chi2Pred = 0; 
       Result[inext].Pr_x = x0;  
       Result[inext].Pr_C = C0;  
       
@@ -727,8 +810,8 @@ int TBKalmanB::MAP_BACKWARD(  double theta2,
 double TBKalmanB::GetPredictedChi2(CLHEP::HepMatrix& p, CLHEP::HepSymMatrix& C, TBHit& hit)
 {
   // Get measurement
-  HepMatrix m = hit.GetCoord();  
-  HepSymMatrix V = hit.GetCov();
+  HepMatrix& m = hit.GetCoord();  
+  HepSymMatrix& V = hit.GetCov();
   // Compute residual 
   HepMatrix& H = GetHMatrix();   
   HepMatrix r = m - H*p; 
@@ -755,7 +838,7 @@ double TBKalmanB::GetChi2Increment(HepMatrix& p, HepSymMatrix& C, TBHit& hit)
  */
 double TBKalmanB::GetPredictedChi2( CLHEP::HepMatrix& r, CLHEP::HepMatrix& H, CLHEP::HepSymMatrix& C, CLHEP::HepSymMatrix& V)
 {
-  // Residuals weight: W=(V - HCH^T)^-1
+  // Residuals weight: W=(V + HCH^T)^-1
   int ierr;
   HepSymMatrix W = (V + C.similarity(H)).inverse(ierr);
   if (ierr) {
