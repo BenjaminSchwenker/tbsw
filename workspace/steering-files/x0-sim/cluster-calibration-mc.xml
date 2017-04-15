@@ -57,8 +57,8 @@
     <parameter name="SimTrackerHitCollection" type="string" lcioInType="SimTrackerHit"> SimTrackerHits </parameter>
     <!--Output clusterDB file name-->
     <parameter name="ClusterDBFileName" type="string" value="clusterDB-M26-MC.root"/>
-    <!--Ignore clusters from this list of sensorIDs-->
-    <parameter name="FilterIDs" type="IntVec"> </parameter>
+    <!--Ignore clusters from list of sensorIDs-->
+    <parameter name="IgnoreIDs" type="IntVec"> 11 </parameter>
     <!--Maximum u residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
     <parameter name="MaxResidualU" type="double" value="0.1"/>
     <!--Maximum v residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
