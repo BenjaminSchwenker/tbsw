@@ -102,6 +102,7 @@ namespace depfet
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number
     int    _nEvt ;   //!< Event number
+    int    _nParticles; //!< Number of particles  
             
   };
  

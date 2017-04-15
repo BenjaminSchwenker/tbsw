@@ -116,6 +116,7 @@ namespace depfet {
     // Initialize variables
     _nRun = 0 ;
     _nEvt = 0 ;
+    _nParticles = 0;
   
     // Print set parameters
     printProcessorParams();
@@ -285,11 +286,18 @@ namespace depfet {
       nParticle += 1;  
     
     }
-    
+
     //
     // Add MCParticle collection
     //     
     evt->addCollection(mcVec, m_MCParticleCollectionName); 
+    
+    // 
+    // Increment counter for particles 
+    // 
+    _nParticles += nParticle;
+    
+    streamlog_out(MESSAGE2) << "Number of particels in this event is: " << nParticle << std::endl << std::endl;
 
   }
 
@@ -306,6 +314,8 @@ namespace depfet {
    
     streamlog_out ( MESSAGE3 ) << endl;
     streamlog_out ( MESSAGE3 ) << "Successfully finished" << endl;
+
+    streamlog_out ( MESSAGE3 ) << "Number of simulated particles is " << _nParticles  << endl;
     
     // CPU time end
     _timeCPU = clock()/1000 - _timeCPU;
