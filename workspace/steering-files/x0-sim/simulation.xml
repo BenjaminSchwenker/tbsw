@@ -121,7 +121,7 @@
   <!--Only Simulated hits after the StartIntegration time in ns will be digitized-->
   <parameter name="StartIntegration" type="double" value="0"/>
   <!--Only Simulated hits before the StopIntegration time in ns will be digitized-->
-  <parameter name="StopIntegration" type="double" value="20000"/>
+  <parameter name="StopIntegration" type="double" value="100000"/>
   <!--Tangent of Lorentz angle-->
   <parameter name="TanLorentz" type="double" value="0"/>
   <!--Top contact voltage wrt. source, in Volts-->
