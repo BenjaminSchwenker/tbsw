@@ -50,7 +50,7 @@ if __name__ == '__main__':
   if not os.path.isdir(tmpdir):
     os.mkdir(tmpdir)
           
-  tmpdir = os.path.join(tmpdir,runtag)  
+  tmpdir = os.path.join(tmpdir,runtag+'-sim')  
   
   if os.path.isdir(tmpdir):
     shutil.rmtree(tmpdir)

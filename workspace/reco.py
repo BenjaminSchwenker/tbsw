@@ -51,8 +51,8 @@ def reco_run(params):
   # run reco in tmp dir 
   os.chdir(tmpdir)
                        
-  #subprocess.call('/$MARLIN/bin/Marlin reco.xml > log.txt 2>&1', shell=True)
-  subprocess.call('/$MARLIN/bin/Marlin reco.xml', shell=True)
+  subprocess.call('/$MARLIN/bin/Marlin reco.xml > log.txt 2>&1', shell=True)
+  #subprocess.call('/$MARLIN/bin/Marlin reco.xml', shell=True)
   
   # clean up inputfile
   os.remove('inputfilename')
