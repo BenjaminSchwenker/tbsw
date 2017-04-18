@@ -635,7 +635,7 @@ double TBKalmanMSC::KalmanFilter(TBTrack& trk, int idir, int istart, int istop, 
 
       double l0 = te.GetDet().GetTrackLength(xref[2][0], xref[3][0], xref[0][0], xref[1][0]);
       double X0 = te.GetDet().GetRadLength(xref[2][0],xref[3][0]);    
-      double theta2_det = materialeffect::GetScatterTheta2(l0, X0, mass, charge, mom );    
+      double theta2_det = materialeffect::GetScatterTheta2(xref, l0, X0, mass, charge);    
       Q_det *= theta2_det;
             
       C1 += Q_det.similarity(G_det);    
@@ -664,7 +664,7 @@ double TBKalmanMSC::KalmanFilter(TBTrack& trk, int idir, int istart, int istop, 
         
       // Variance of projected scatter angles   
       HepSymMatrix Q_air(2, 1);     
-      double theta2_air = materialeffect::GetScatterTheta2(length, materialeffect::X0_air, mass, charge, mom );   
+      double theta2_air = materialeffect::GetScatterTheta2(xref_air, length, materialeffect::X0_air, mass, charge );   
       Q_air *= theta2_air;
             
       C1 += Q_air.similarity(G_air);    

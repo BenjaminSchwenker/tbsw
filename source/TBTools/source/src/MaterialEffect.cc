@@ -9,12 +9,44 @@
 
 #include <cmath>
 #include "TMath.h"
+#include <Math/DistFunc.h>
 
 using namespace std;
 using namespace CLHEP;
 
 
 namespace materialeffect {
+
+/** Simulate fractional energy loss due to Bremsstrahlung (Bethe Heitler theory)  
+ *
+ * Samples energy loss fraction z using a uniform random number rndm. The State 
+ * parameter gets updated. The thickness t is given in units of the 
+ * radiation length X0.
+ */ 
+void SimulateBetherHeitlerEnergyLoss(HepMatrix& State, double t, double mass, double charge, double rndm)     
+{
+  if ( t > 0  ) { 
+    // Comput energy loss fraction
+    double c = t/TMath::Log(2);
+    double u = ROOT::Math::gamma_quantile(rndm,c,1.0);
+    double z = TMath::Exp(-u);
+    
+    // Compute initial energy 
+    double mom = charge/State[4][0];
+    double m2 = mass*mass;
+    double p2 = mom*mom;
+    double e2 = m2 + p2;
+    
+    // Compute momentum after energy loss 
+    e2 *= z*z; 
+    p2 = e2 - m2;
+    if (p2>0) mom = TMath::Sqrt(p2);
+    else mom = 0.001*mass;
+    
+    // Finally, update the state
+    State[4][0] = charge/mom;  
+  } 
+}
 
 /** Compute density effect in silicon
  *
@@ -44,12 +76,15 @@ double ComputeDeltaInSilicon(double gamma2, double beta2)
   return  2*log(sqrt(beta2*gamma2)) + C + A;
 }
 
+
+
+
 /** Most probable energy loss in silicon 
  *
  * Computes the most probable energy loss of a heavy charged particle in silicon of given 
  * thickness according to Landau theory (see PDG)
  */ 
-double GetMostProbableEnergyLossInSilicon(double thick, double mass, double charge, double mom)
+double GetMostProbableEnergyLossInSilicon(HepMatrix& State, double thick, double mass, double charge)
 {
   double A = 28; 
   double Z = 14; 
@@ -57,7 +92,8 @@ double GetMostProbableEnergyLossInSilicon(double thick, double mass, double char
           
   double eMass = 0.5109989E-3;
   double exciteE = 170.0E-9;
-           
+         
+  double mom = charge/State[4][0];   
   double m2 = mass*mass;
   double p2 = mom*mom;
   double e2 = m2 + p2;
@@ -75,10 +111,7 @@ double GetMostProbableEnergyLossInSilicon(double thick, double mass, double char
                   
   // Most probable energy loss (from integrated Bethe-Bloch equation)
   double mostProbableLoss = eSpread * ( std::log( 2.0 * eMass * beta2 * gamma2 * eSpread / (exciteE *exciteE ) )  - beta2 + 0.200 - delta*0.5);
-           
-  // This one can be needed on output (but is not used internally)
-  // double meanEnergyLoss = 2.*eSpread * ( std::log ( 2.*eMass*beta2*gama2 /excitE ) - beta2 );
-          
+                    
   // Generate energy loss with Landau fluctuation
   return mostProbableLoss; 
 } 
@@ -89,7 +122,7 @@ double GetMostProbableEnergyLossInSilicon(double thick, double mass, double char
  * Samples an energy loss of a heavy charged particle in silicon of given 
  * thickness according to Landau theory (see PDG)
 */ 
-double SimulateEnergyLossInSilicon(double thick, double mass, double charge, double mom, double lambda) 
+double SimulateEnergyLossInSilicon(HepMatrix& State, double thick, double mass, double charge, double lambda) 
 {
   double A = 28; 
   double Z = 14; 
@@ -98,6 +131,7 @@ double SimulateEnergyLossInSilicon(double thick, double mass, double charge, dou
   double eMass = 0.5109989E-3;
   double exciteE = 170.0E-9;
            
+  double mom = charge/State[4][0]; 
   double m2 = mass*mass;
   double p2 = mom*mom;
   double e2 = m2 + p2;
@@ -109,16 +143,13 @@ double SimulateEnergyLossInSilicon(double thick, double mass, double charge, dou
           
   // Density correction 
   double delta =  ComputeDeltaInSilicon(gamma2, beta2); 
-
+  
   // Energy loss spread in GeV
   double eSpread = 0.1536E-3*charge2*(Z/A)*rho*thick/beta2;
           
   // Most probable energy loss (from integrated Bethe-Bloch equation)
   double mostProbableLoss = eSpread * ( std::log( 2.0 * eMass * beta2 * gamma2 * eSpread / (exciteE *exciteE ) )  - beta2 + 0.200 - delta*0.5);
-           
-  // This one can be needed on output (but is not used internally)
-  // double meanEnergyLoss = 2.*eSpread * ( std::log ( 2.*eMass*beta2*gama2 /excitE ) - beta2 );
-          
+                   
   // Generate energy loss with Landau fluctuation
   return mostProbableLoss + eSpread * lambda;  
 } 
@@ -130,11 +161,16 @@ double SimulateEnergyLossInSilicon(double thick, double mass, double charge, dou
  *  one-dimensional projection on one axis of a plane that is perpendicular
  *  to the particle direction before scattering. 
  */ 
-double GetScatterTheta2(double x, double x0, double mass, double charge, double mom )
+double GetScatterTheta2(HepMatrix& State, double x, double x0, double mass, double charge)  
 {
-  // Sanity check - momentum mass 
-  if (mass <= 0 || mom <= 0) return 0;
+  double mom = charge/State[4][0]; 
   
+  // Sanity check -  mass 
+  if (mass <= 0) return 0;
+  
+  // Sanity check - momentum 
+  if (mom <= 0) return 0;
+
   // Sanity check - use unsigned lenght 
   if (x < 0) x*=-1;
   

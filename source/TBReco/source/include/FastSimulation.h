@@ -79,9 +79,11 @@ namespace depfet
     // Choose model for multiple scattering ( Highland:0 )
     int m_scatterModel;  
  
-    // Flag for simulating energy loss straggling 
+    // Flag for simulating energy loss straggling from ionization 
     bool m_doEnergyLossStraggling;  
     
+    // Flag for simulating fractional bethe heitler energy loss 
+    bool m_doFractionalBetheHeitlerEnergyLoss; 
    
    private: 
     

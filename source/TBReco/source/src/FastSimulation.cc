@@ -25,6 +25,7 @@
 #include <TRandom.h>
 #include <TRandom3.h>
 
+
 // TBTools includes 
 #include "MaterialEffect.h"
 #include "HelixTrackModel.h"
@@ -76,6 +77,9 @@ namespace depfet {
     
     registerProcessorParameter ("DoEnergyLossStraggling", "Flag (true/false) for simulating energy loss straggling",
                                 m_doEnergyLossStraggling,  static_cast < bool > (false));
+    
+    registerProcessorParameter ("DoFractionalBetheHeitlerEnergyLoss", "Flag (true/false) for simulating fractional Bethe Heitler energy loss",
+                                m_doFractionalBetheHeitlerEnergyLoss,  static_cast < bool > (false));
     
     registerProcessorParameter ("AlignmentDBFileName",
                              "This is the name of the LCIO file with the alignment constants (add .slcio)",
@@ -198,13 +202,13 @@ namespace depfet {
       double p1 = mcp->getMomentum()[0];
       double p2 = mcp->getMomentum()[1];
       double p3 = mcp->getMomentum()[2];  
-      double momentum = std::sqrt(p1*p1 + p2*p2 + p3*p3);
+     
       
-      state[0][0] = p1/p3;                              // du/dw
-      state[1][0] = p2/p3;                              // dv/dw
-      state[2][0] = 0;                                  // u 
-      state[3][0] = 0;                                  // v  
-      state[4][0] = mcp->getCharge()/momentum;          // q/p
+      state[0][0] = p1/p3;                                                      // du/dw
+      state[1][0] = p2/p3;                                                      // dv/dw
+      state[2][0] = 0;                                                          // u 
+      state[3][0] = 0;                                                          // v  
+      state[4][0] = mcp->getCharge()/std::sqrt(p1*p1 + p2*p2 + p3*p3);          // q/p
         
       
       // Enter main loop to propagate particle through telescope
@@ -230,12 +234,12 @@ namespace depfet {
           double l0 = current_det.GetThickness(u,v)*std::sqrt(1 + dudw*dudw + dvdw*dvdw);  
           
           // Simulate energy loss in material layer
-          double eDep = materialeffect::GetMostProbableEnergyLossInSilicon(l0, mcp->getMass(), mcp->getCharge(), mom); 
+          double eDep = materialeffect::GetMostProbableEnergyLossInSilicon(state, l0, mcp->getMass(), mcp->getCharge()); 
           if ( m_doEnergyLossStraggling ) {
             double lambda = gRandom->Landau();
-            eDep = materialeffect::SimulateEnergyLossInSilicon(l0, mcp->getMass(), mcp->getCharge(), mom, lambda); 
-          }                     
-
+            eDep = materialeffect::SimulateEnergyLossInSilicon(state, l0, mcp->getMass(), mcp->getCharge(), lambda); 
+          }          
+          
           // Create a new LCIO SimTracker hit
           SimTrackerHitImpl * simHit = new SimTrackerHitImpl;
           simHit->setdEdx(eDep); 
@@ -247,7 +251,7 @@ namespace depfet {
           // Set local hit momentum 
           float hitMom[3] = { dudw*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1), dvdw*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1) , 1.0*mom/std::sqrt(dudw*dudw + dvdw*dvdw +1) };
           simHit->setMomentum(hitMom);
-
+          
           // Set CellID
           cellIDEnc["sensorID"] = m_detector.GetDet(ipl).GetDAQID();
           cellIDEnc["isEntry"] = 0;
@@ -256,17 +260,24 @@ namespace depfet {
           
           // Set particle that has interacted in the detector
           simHit->setMCParticle( mcp );
-    
+           
           // Put the hit into LCIO collection
           simHitVec->push_back( simHit );
            
           if(  m_scatterModel==0  ) { 
             // Highland model scattering
-            double theta2 = materialeffect::GetScatterTheta2(l0, current_det.GetRadLength(u,v), mcp->getMass(), mcp->getCharge(), mom );      
+            double theta2 = materialeffect::GetScatterTheta2(state, l0, current_det.GetRadLength(u,v), mcp->getMass(), mcp->getCharge() );      
             double kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
             double kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 ));      
             // Scatter track ('in' state -> 'out' state)
             materialeffect::ScatterTrack(state, kink_u, kink_v); 
+          }
+          
+          // Simulate energy loss by bremsstrahlung (Bethe Heitler theory)
+          if (m_doFractionalBetheHeitlerEnergyLoss) {
+            double t = l0/current_det.GetRadLength(u,v);
+            double rndm = gRandom->Rndm(1);
+            materialeffect::SimulateBetherHeitlerEnergyLoss(state, t, mcp->getMass(), mcp->getCharge(), rndm);    
           }
         }
          
@@ -297,11 +308,18 @@ namespace depfet {
         
         if( m_scatterModel==0 ) { 
           // Highland model scattering     
-          double theta2 = materialeffect::GetScatterTheta2(length, materialeffect::X0_air, mcp->getMass(), mcp->getCharge(), momentum ) ;   
+          double theta2 = materialeffect::GetScatterTheta2(state, length, materialeffect::X0_air, mcp->getMass(), mcp->getCharge()) ;   
           double kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
           double kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 )); 
           // Scatter track ('in' state -> 'out' state)
           materialeffect::ScatterTrack(state, kink_u, kink_v);     
+        }
+        
+        // Simulate energy loss by bremsstrahlung (Bethe Heitler theory)
+        if (m_doFractionalBetheHeitlerEnergyLoss) {
+          double t = length/materialeffect::X0_air;
+          double rndm = gRandom->Rndm(1);
+          materialeffect::SimulateBetherHeitlerEnergyLoss(state, t, mcp->getMass(), mcp->getCharge(), rndm); 
         } 
           
         // Get state on next detector

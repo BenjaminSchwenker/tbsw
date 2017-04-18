@@ -390,9 +390,7 @@ int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, HepMatrix
         
   // Get signed flight length in air between detectors 
   double length = TrackModel->GetSignedStepLength(xref, Surf, nSurf); 
-  
-  // Get momentum from the reference state    
-  double mom = std::abs(charge/xref[4][0]); 
+   
 
   // Extraploate half step along straight line 
   HepMatrix xref_air = xref; 
@@ -408,7 +406,7 @@ int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, HepMatrix
     // ---------------------------------------
     double l0 = te.GetDet().GetTrackLength(xref[2][0], xref[3][0], xref[0][0], xref[1][0]);
     double X0 = te.GetDet().GetRadLength(xref[2][0],xref[3][0]);   
-    double theta2_det = materialeffect::GetScatterTheta2(l0, X0, mass, charge, mom );   
+    double theta2_det = materialeffect::GetScatterTheta2(xref, l0, X0, mass, charge );   
     ierr = MAP_FORWARD( theta2_det, xref, Surf, xref_air, Surf_air, x0, C0 );
     if (ierr != 0) {
       streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
@@ -418,8 +416,8 @@ int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, HepMatrix
          
     // MAP estimate [x0,C0] from air to next te 
     // ---------------------------------------
-    double theta2_air = materialeffect::GetScatterTheta2(length, materialeffect::X0_air, mass, charge, mom );   
-    ierr = MAP_FORWARD( theta2_air, xref_air, Surf_air, nxref, nSurf, x0, C0 );
+    double theta2_air = materialeffect::GetScatterTheta2(xref, length, materialeffect::X0_air, mass, charge);   
+    ierr = MAP_FORWARD( theta2_air, xref, Surf_air, nxref, nSurf, x0, C0 );
     if (ierr != 0) {
       streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
                            << std::endl;
@@ -430,7 +428,7 @@ int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, HepMatrix
         
     // MAP estimate [x0,C0] from old det to air surface
     // ---------------------------------------
-    double theta2_air = materialeffect::GetScatterTheta2(length, materialeffect::X0_air, mass, charge, mom ) ;   // Backward form 
+    double theta2_air = materialeffect::GetScatterTheta2(xref, length, materialeffect::X0_air, mass, charge) ;   // Backward form 
     ierr = MAP_BACKWARD( theta2_air, xref, Surf, xref_air, Surf_air, x0, C0 );
     if (ierr != 0) {
       streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
@@ -442,7 +440,7 @@ int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, HepMatrix
     // ---------------------------------------
     double l0 = nte.GetDet().GetTrackLength(nxref[2][0], nxref[3][0], nxref[0][0], nxref[1][0]);
     double X0 = nte.GetDet().GetRadLength(nxref[2][0],nxref[3][0]);    
-    double theta2_det = materialeffect::GetScatterTheta2(l0, X0, mass, charge, mom );   // Backward form    
+    double theta2_det = materialeffect::GetScatterTheta2(xref, l0, X0, mass, charge);   // Backward form    
     ierr = MAP_BACKWARD( theta2_det, xref_air, Surf_air, nxref, nSurf, x0, C0 );          
     if (ierr != 0) {
       streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
@@ -568,8 +566,7 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
       // Get signed flight length in air between detectors 
       double length = TrackModel->GetSignedStepLength(xref, Surf, nSurf); 
       
-      // Get momentum from the reference state    
-      double mom = std::abs(charge/xref[4][0]); 
+      
       
       // Extraploate half step along straight line 
       TrackModel->Extrapolate(xref_air, Surf_air, length/2);
@@ -580,7 +577,7 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
         // ---------------------------------------
         double l0 = te.GetDet().GetTrackLength(xref[2][0], xref[3][0], xref[0][0], xref[1][0]);
         double X0 = te.GetDet().GetRadLength(xref[2][0],xref[3][0]);    
-        double theta2_det = materialeffect::GetScatterTheta2(l0, X0, mass, charge, mom );   
+        double theta2_det = materialeffect::GetScatterTheta2(xref, l0, X0, mass, charge);   
         ierr = MAP_FORWARD( theta2_det, xref, Surf, xref_air, Surf_air, x0, C0 );
         if (ierr != 0) {
           streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
@@ -590,7 +587,7 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
          
         // MAP estimate [x0,C0] from air to new det surface
         // ---------------------------------------
-        double theta2_air = materialeffect::GetScatterTheta2(length, materialeffect::X0_air, mass, charge, mom );   
+        double theta2_air = materialeffect::GetScatterTheta2(xref, length, materialeffect::X0_air, mass, charge);   
         ierr = MAP_FORWARD( theta2_air, xref_air, Surf_air, nxref, nSurf, x0, C0 );
         if (ierr != 0) {
           streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
@@ -603,7 +600,7 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
         
         // MAP estimate [x0,C0] from old det to air surface
         // ---------------------------------------
-        double theta2_air = materialeffect::GetScatterTheta2(length, materialeffect::X0_air, mass, charge, mom ) ;   // Backward form 
+        double theta2_air = materialeffect::GetScatterTheta2(xref, length, materialeffect::X0_air, mass, charge) ;   // Backward form 
         ierr = MAP_BACKWARD( theta2_air, xref, Surf, xref_air, Surf_air, x0, C0 );
         if (ierr != 0) {
           streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
@@ -615,7 +612,7 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
         // ---------------------------------------
         double l0 = nte.GetDet().GetTrackLength(nxref[2][0], nxref[3][0], nxref[0][0], nxref[1][0]);
         double X0 = nte.GetDet().GetRadLength(nxref[2][0],nxref[3][0]);    
-        double theta2_det = materialeffect::GetScatterTheta2(l0, X0, mass, charge, mom );   // Backward form    
+        double theta2_det = materialeffect::GetScatterTheta2(xref, l0, X0, mass, charge );   // Backward form    
         ierr = MAP_BACKWARD( theta2_det, xref_air, Surf_air, nxref, nSurf, x0, C0 );          
         if (ierr != 0) {
           streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
