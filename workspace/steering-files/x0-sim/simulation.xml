@@ -33,7 +33,7 @@
     <!--Collection name for MCParticles-->
     <parameter name="MCParticleCollectionName" type="string" lcioOutType="MCParticle"> MCParticles </parameter>
     <!--Number of beam particles per second-->
-    <parameter name="BeamIntensity" type="double" value="15000"/>
+    <parameter name="BeamIntensity" type="double" value="20000"/>
     <!--Beam momentum [GeV]-->
     <parameter name="BeamMomentum" type="double" value="4"/>
     <!--Beam momentum sigma [GeV]-->
@@ -53,7 +53,7 @@
     <!--Beam vertex sigma in Y direction [mm]-->
     <parameter name="BeamVertexYSigma" type="double" value="10"/>
     <!--Beam vertex position in Z direction [mm]-->
-    <parameter name="BeamVertexZ" type="double" value="-10"/>
+    <parameter name="BeamVertexZ" type="double" value="-10000"/>
     <!--Beam correlation factor between vertex position and momentum-->
     <parameter name="CorrelationVertexXvsMomentum" type="double" value="0.05"/>
     <!--Beam correlation factor between vertex position and slope-->
@@ -82,6 +82,8 @@
   <parameter name="ScatterModel" type="int" value="0"/>
   <!--Flag (true/false) for simulating energy loss straggling-->
   <parameter name="DoEnergyLossStraggling" type="bool" value="true"/>
+  <!--Flag (true/false) for simulating fractional Bethe Heitler energy loss-->
+  <parameter name="DoFractionalBetheHeitlerEnergyLoss" type="bool" value="true"/>
 </processor>
 
  <processor name="M26Digitizer" type="SiPixDigitizer">
@@ -140,8 +142,6 @@
   <parameter name="LCIOOutputFile" type="string" value="outputfile"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="None"/>
-  <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
-  <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
 </processor>
 
 </marlin>
