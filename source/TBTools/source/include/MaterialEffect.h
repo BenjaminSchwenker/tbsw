@@ -63,8 +63,8 @@ namespace materialeffect {
    */ 
   double ComputeDeltaInSilicon(double gamma2, double beta2);
   
-  // Highland radiation length for air [mm] (NTP: 20 deg, 1bar)   
-  static const float X0_air = 305000;
+  // Highland radiation length for air [mm] (NTP: 20 deg, 1bar, PDG value)   
+  static const float X0_air = 303900;
 
 } // Namespace
 
