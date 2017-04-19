@@ -417,7 +417,7 @@ int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, HepMatrix
     // MAP estimate [x0,C0] from air to next te 
     // ---------------------------------------
     double theta2_air = materialeffect::GetScatterTheta2(xref, length, materialeffect::X0_air, mass, charge);   
-    ierr = MAP_FORWARD( theta2_air, xref, Surf_air, nxref, nSurf, x0, C0 );
+    ierr = MAP_FORWARD( theta2_air, xref_air, Surf_air, nxref, nSurf, x0, C0 );
     if (ierr != 0) {
       streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
                            << std::endl;
