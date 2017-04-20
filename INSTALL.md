@@ -47,7 +47,7 @@ repository.
 
 # JAVA #
 
-sudo apt-get install default-jdk
+- sudo apt-get install default-jdk
 
 # Root #
 
@@ -78,7 +78,7 @@ There are many ways to get python. One convinient way is to use the ANACONDA pac
 
 # QT4 #
 
-sudo apt install libqt4-dev    
+- sudo apt install libqt4-dev    
 
 # TBSW #  
  
@@ -122,29 +122,4 @@ Thats all;)
 
 benjamin.schwenker@phys.uni-goettingen.de
 
-
-
-
-
-
-
-
-
-
-
-4) TBSW:
-
-git clone https://fmu984@bitbucket.org/BenjaminSchwenker/tbsw.git
-
-install.sh
-
-edit: export CLHEP_HOME=/home/fmu/basf2/externals/v01-01-07/Linux_x86_64/opt/lib/CLHEP-2.2.0.4
-
-edit: export ROOTSYS=/home/fmu/root_v5.34.24
-
-cd tbsw cd workspace source init_tbsw.sh
-
-./calibrate.py -i /home/fmu/TB_Benjamin/data/run000096_svdpxdteldigits_35k.slcio -x steering-files/vxd-april16-run96
-
-./reco.py -i '/home/fmu/TB_Benjamin/data/run000096_svdpxdteldigits_35k.slcio' -x 'steering-files/vxd-april16-run96/reco.xml'
 
