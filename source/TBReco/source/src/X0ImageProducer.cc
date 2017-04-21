@@ -347,8 +347,9 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 
 
 	// Get the covariance entries of the intersection coordinates
-	HepMatrix instate_covs=InState.GetCov();
-	HepMatrix outstate_covs=OutState.GetCov();
+	HepSymMatrix instate_covs=InState.GetCov();
+	HepSymMatrix outstate_covs=OutState.GetCov();
+ 
 	_root_u_var=0.25*(instate_covs[2][2]+outstate_covs[2][2]);
 	_root_v_var=0.25*(instate_covs[3][3]+outstate_covs[3][3]);
      	
@@ -371,6 +372,18 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     _root_angle2 = theta[1][0];
     _root_angle1_var = Cov[0][0];
     _root_angle2_var = Cov[1][1];
+
+
+	// Construct the u and v residuals and calculate a chi2 value from them
+	HepMatrix res=p_in-p_out;
+	HepSymMatrix res_covs=instate_covs+outstate_covs;
+
+    int ierr; 
+	// Use only the sub matrices, which describe the spatial coordinates of the trackstate
+    HepMatrix jchisq = res.sub(3,4,1,1).T()*res_covs.sub(3,4).inverse(ierr)*res.sub(3,4,1,1);
+	
+	_root_up_down_chi2=jchisq[0][0];
+	_root_up_down_prob=TMath::Prob(jchisq[0][0], 2);
     
     _rootMscTree->Fill();       
     
@@ -486,6 +499,9 @@ void X0ImageProducer::bookHistos() {
   _rootMscTree->Branch("theta1_var"      ,&_root_angle1_var     ,"theta1_var/D");
   _rootMscTree->Branch("theta2_var"      ,&_root_angle2_var     ,"theta2_var/D");
   _rootMscTree->Branch("momentum"        ,&_root_momentum       ,"momentum/D");
+
+  _rootMscTree->Branch("up_down_chi2"    ,&_root_up_down_chi2   ,"up_down_chi2/D");
+  _rootMscTree->Branch("up_down_prob"    ,&_root_up_down_prob   ,"up_down_prob/D");
   
 
 }

@@ -149,6 +149,8 @@ protected:
    double _root_angle1_var;
    double _root_angle2_var;
    double _root_momentum;
+   double _root_up_down_chi2;
+   double _root_up_down_prob;
    
  private:
    
