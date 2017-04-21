@@ -35,6 +35,7 @@
 // Include ROOT classes
 #include <TFile.h>
 #include <TMath.h>
+#include <TVectorD.h>
 
 
 // Used namespaces
@@ -89,10 +90,14 @@ namespace depfet {
     registerProcessorParameter ("MinClusters",
                                 "Minimum number of cluster ID occurances for clusterDB",
                                 _minClusters,  static_cast < int > (2000));
+
+    registerProcessorParameter ("SoftScale",
+                                "Software rescaling of adc codes for cluster labels (new_code = code/scale)",
+                                m_scale,  static_cast < int > (1));
     
     std::vector<int> initIgnoreIDVec;
-    registerProcessorParameter ("FilterIDs",
-                                "Ignore clusters from this list of sensorIDs",
+    registerProcessorParameter ("IgnoreIDs",
+                                "Ignore clusters from list of sensorIDs",
                                 _ignoreIDVec, initIgnoreIDVec);
     
   }
@@ -317,7 +322,7 @@ namespace depfet {
           
           // Get cluster id 
           PixelCluster Cluster = hit.GetCluster();
-          string id = Cluster.getClusterID(); 
+          string id = Cluster.getLabel(m_scale); 
           
           // Register new cluster if needed
           if (_sensorMap.find(id) == _sensorMap.end() ) {
@@ -339,7 +344,7 @@ namespace depfet {
           trk_u -= Sensor.GetPixelCenterCoordU( Cluster.getVStart(), Cluster.getUStart()); 
           trk_v -= Sensor.GetPixelCenterCoordV( Cluster.getVStart(), Cluster.getUStart()); 
           
-          // Count how many times a clusterID appear 
+          // Count how many times a label appear 
           _sensorMap[id]++;  
           _clusterUMap[id]->Fill( trk_u ); 
           _clusterVMap[id]->Fill( trk_v );     
@@ -383,18 +388,30 @@ namespace depfet {
     
     // We remove all cluster IDs which have to few counts and cannot be 
     // calibrated :(  
+    
+    // Count all clusters
+    double countAll = 0;
+    
+    // Count reject clusters
+    int countReject = 0;
+    
     for(auto iter = _sensorMap.begin(); iter != _sensorMap.end(); ) {
       auto id = iter->first; 
       auto counter = iter->second;
+      
+      countAll += counter;
         
       if(counter < _minClusters ) {
-        streamlog_out(MESSAGE3) << "  Deleting clusterId:  " << id << " because too few counts (" << counter << ")" 
-                                << endl;
+        streamlog_out(MESSAGE3) << "  Deleting label:  " << id << " because too few counts (" << counter << ")" << endl;
         iter = _sensorMap.erase(iter);
+        countReject += counter;
       } else {
         ++iter;
       }
     }
+    
+    streamlog_out(MESSAGE3) << "Number of rejected clusters is: " 
+                            << countReject << " (" << 100.0*countReject/countAll  << "%)"  << endl; 
     
     streamlog_out(MESSAGE3) << "Create the clusterDB ... " << endl; 
     
@@ -407,10 +424,10 @@ namespace depfet {
        
     _rootFile->cd("");
       
-    histoName = "hDB_ID";
+    histoName = "hDB_Weight";
     _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
     _histoMap[histoName]->SetStats( false );
-    _histoMap[histoName]->SetYTitle("clusterID fraction");  
+    _histoMap[histoName]->SetYTitle("label weight");  
       
     histoName = "hDB_U";
     _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
@@ -466,7 +483,7 @@ namespace depfet {
       double clu_cov_uv = _clusterUVMap[id]->GetCovariance();
                  
       // Store calibration result   
-      histoName = "hDB_ID";
+      histoName = "hDB_Weight";
       _histoMap[histoName]->SetBinContent( i, counter );
       _histoMap[histoName]->SetBinError( i, TMath::Sqrt(counter) );
       _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
@@ -496,7 +513,7 @@ namespace depfet {
       _histoMap[histoName]->SetBinError( i, 0 );
       _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
         
-      streamlog_out(MESSAGE3) << "  ClusterId:  " << id  << endl
+      streamlog_out(MESSAGE3) << "  Label:  " << id  << endl
                               << std::setiosflags(std::ios::fixed | std::ios::internal )
                               << std::setprecision(8)
                               << "  u: " << clu_mean_u  << ", sigma2: " << clu_rms2_u << endl
@@ -507,12 +524,11 @@ namespace depfet {
          
     }  
             
-    // Normalaize the cluster ID spectrum to unit area for 
-    // better comparison between data sets 
-      
-    histoName = "hDB_ID";
-    double normID = _histoMap[histoName]->Integral();
-    if (normID > 0 ) _histoMap[histoName]->Scale(1.0/normID, "width");
+    // Finally, we must store the scale that was used to compute the 
+    // cluster labels 
+    TVectorD DB_Scale(1);
+    DB_Scale[0] = m_scale;
+    DB_Scale.Write("DB_Scale");
       
     streamlog_out(MESSAGE3) << "ClusterDB written to file " << _clusterDBFileName 
                             << endl; 

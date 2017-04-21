@@ -11,6 +11,7 @@
 #include "TrackInputProvider.h"
 #include "GenericTrackFitter.h"
 #include "PixelCluster.h"
+#include "ThreeDModel.h"
 
 // C++ includes
 #include <iomanip>
@@ -86,7 +87,7 @@ void TrackFitDQM::init() {
   _detector.ReadGearConfiguration();    
       
   // Read alignment data base file 
-  _detector.ReadAlignmentDB( _alignmentDBFileName );    
+  _detector.ReadAlignmentDB( _alignmentDBFileName ); 
   
   // Book all needed histograms 
   bookHistos();
@@ -167,13 +168,14 @@ void TrackFitDQM::processEvent(LCEvent * evt)
     _histoMap["hchi2prob"]->Fill(TMath::Prob(track.GetChiSqu(), track.GetNDF()));
     _histoMap["hmom"]->Fill(track.GetMomentum());  
     _histoMap["hcharge"]->Fill(track.GetCharge());  
-      
+
     //
     // Sensor level histograms 
   
     // Get number of sensors
     int nSens = _detector.GetNSensors(); 
     std::string histoName; 
+
 
     for (int ipl= 0; ipl< nSens; ++ipl) {  
         
@@ -246,6 +248,7 @@ void TrackFitDQM::processEvent(LCEvent * evt)
       
       histoName = "htrk_mom_sensor"+to_string( ipl );
       _histoMap[ histoName  ]->Fill(trk_mom);
+	
        
       // Skip sensor w/o measurment
       if ( !TE.HasHit() ) continue;  
@@ -377,7 +380,60 @@ void TrackFitDQM::end()
     _histoMap["hfit_res_rms_v"]->SetBinContent(ipl+1, res_rms_v );   
     _histoMap["hfit_res_rms_v"]->SetBinError(ipl+1, res_rms_error_v );  
 
+    // Handle to nominal detector data 
+    TBDetector  _detector_nominal;  
+
+    // Read detector constants from gear file
+    _detector_nominal.ReadGearConfiguration();  
+
     _rootFile->cd("");
+
+    // Fill summary histos on telescope alignment
+    // ------------------------------  
+		
+	// This is the position vector of the sensor in the nominal telescope geometry
+	HepVector pos_f_nominal = _detector_nominal.GetDet(ipl).GetNominal().GetPosition(); 
+		
+	// This is the rotation matrix of the sensor in the nominal telescope geoemtry; it 
+	// contains a discrete and a continuous factor. 
+	HepMatrix Rot_f_nominal = _detector_nominal.GetDet(ipl).GetNominal().GetRotation();
+
+	// This is the discrete factor of sensor rotation in the nominal telescope geometry. 
+	HepMatrix DRot_nominal = _detector_nominal.GetDet(ipl).GetDiscrete().GetRotation();
+		
+	// This is finally the continous factor of the rotation in the nominal telescope geometry
+	HepMatrix CRot_f_nominal = Rot_f_nominal*DRot_nominal.T(); 
+		
+	// Euler angles are defined wrt. the continous rotation in the nominal telescope geometry
+	double alpha_f_nominal, beta_f_nominal, gamma_f_nominal; 
+	GetAnglesKarimaki(CRot_f_nominal, alpha_f_nominal, beta_f_nominal, gamma_f_nominal); 
+
+	// This is the position vector of the sensor in the aligned telescope geometry
+	HepVector pos_f = _detector.GetDet(ipl).GetNominal().GetPosition(); 
+		
+	// This is the rotation matrix of the sensor in the aligned telescope geometry; it 
+	// contains a discrete and a continuous factor. 
+	HepMatrix Rot_f = _detector.GetDet(ipl).GetNominal().GetRotation();
+
+	// This is the discrete factor of sensor rotation in the aligned telescope geometry. 
+	HepMatrix DRot = _detector.GetDet(ipl).GetDiscrete().GetRotation();
+		
+	// This is finally the continous factor of the rotation in the aligned telescope geometry
+	HepMatrix CRot_f = Rot_f*DRot.T(); 
+		
+	// Euler angles are defined wrt. the continous rotation in the aligned telescope geometry
+	double alpha_f, beta_f, gamma_f; 
+	GetAnglesKarimaki(CRot_f, alpha_f, beta_f, gamma_f); 
+	//
+	// Fill alignment histograms
+
+	_histoMap["hxshift_diff"]->SetBinContent(ipl+1,pos_f_nominal[0]-pos_f[0]);
+	_histoMap["hyshift_diff"]->SetBinContent(ipl+1,pos_f_nominal[1]-pos_f[1]);
+	_histoMap["hzshift_diff"]->SetBinContent(ipl+1,pos_f_nominal[2]-pos_f[2]);
+	_histoMap["hxrot_diff"]->SetBinContent(ipl+1,alpha_f_nominal-alpha_f);
+	_histoMap["hyrot_diff"]->SetBinContent(ipl+1,beta_f_nominal-beta_f);
+	_histoMap["hzrot_diff"]->SetBinContent(ipl+1,gamma_f_nominal-gamma_f);
+      
     
   }
   
@@ -506,6 +562,39 @@ void TrackFitDQM::bookHistos()
   _histoMap["hfit_res_rms_v"]->SetStats( false );
   _histoMap["hfit_res_rms_v"]->SetXTitle("plane number"); 
   _histoMap["hfit_res_rms_v"]->SetYTitle("RMS v residual");  
+
+
+  // Create subdir for alignment plots
+  TDirectory *alignDir = _rootFile->mkdir("alignment");
+  alignDir->cd();
+
+
+  _histoMap["hxshift_diff"] = new TH1D("hxshift_diff", "", nSens,0,nSens); 
+  _histoMap["hxshift_diff"]->SetYTitle("x shift diff [mm]"); 
+  _histoMap["hxshift_diff"]->SetXTitle("sensor"); 
+
+  _histoMap["hyshift_diff"] = new TH1D("hyshift_diff", "", nSens,0,nSens); 
+  _histoMap["hyshift_diff"]->SetYTitle("y shift diff [mm]"); 
+  _histoMap["hyshift_diff"]->SetXTitle("sensor"); 
+
+  _histoMap["hzshift_diff"] = new TH1D("hzshift_diff", "", nSens,0,nSens); 
+  _histoMap["hzshift_diff"]->SetYTitle("z shift diff [mm]"); 
+  _histoMap["hzshift_diff"]->SetXTitle("sensor"); 
+
+  _histoMap["hxrot_diff"] = new TH1D("hxrot_diff", "", nSens,0,nSens); 
+  _histoMap["hxrot_diff"]->SetYTitle("x rot diff [rad]"); 
+  _histoMap["hxrot_diff"]->SetXTitle("sensor"); 
+
+  _histoMap["hyrot_diff"] = new TH1D("hyrot_diff", "", nSens,0,nSens); 
+  _histoMap["hyrot_diff"]->SetYTitle("y rot diff [rad]"); 
+  _histoMap["hyrot_diff"]->SetXTitle("sensor"); 
+
+  _histoMap["hzrot_diff"] = new TH1D("hzrot_diff", "", nSens,0,nSens); 
+  _histoMap["hzrot_diff"]->SetYTitle("z rot diff [rad]"); 
+  _histoMap["hzrot_diff"]->SetXTitle("sensor");
+
+  // Change current directory to root
+  _rootFile->cd("");
    
   //
   // Sensor level histograms 

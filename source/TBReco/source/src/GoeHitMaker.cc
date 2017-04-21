@@ -26,6 +26,7 @@
 
 // Include ROOT classes
 #include <TFile.h>
+#include <TVectorD.h>
 
 
 // Used namespaces
@@ -75,7 +76,7 @@ namespace depfet {
                                 "Clusters having more v cells marked as bad [and can be filterd in track finder]",
                                 _maxSizeV,  
                                 static_cast < int > (3));
-   
+     
   }
   
   //
@@ -97,55 +98,63 @@ namespace depfet {
     // Open clusterDB file 
     TFile * clusterDBFile = new TFile(_clusterDBFileName.c_str(), "READ");
     
-    for(int ipl=0;ipl<_detector.GetNSensors();ipl++)  { 
-      int sensorID = _detector.GetDet(ipl).GetDAQID();
-      string histoName;
+    // Read calibration data  
+    string histoName;
 
-      _countAllMap[sensorID] = 0;   
-      _countBadMap[sensorID] = 0;   
-      _countCalMap[sensorID] = 0;  
-      
-      histoName = "hDB_ID";
-      if ( (TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
-        _DB_Map_ID[sensorID] = (TH1F *) clusterDBFile->Get(histoName.c_str());  
-        _DB_Map_ID[sensorID]->SetDirectory(0);
-      } 
+    histoName = "hDB_Weight";
+    if ( (TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+      m_DB_Weight = (TH1F *) clusterDBFile->Get(histoName.c_str());  
+      m_DB_Weight->SetDirectory(0);
+    } 
        
-      histoName = "hDB_U";
-      if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
-        _DB_Map_U[sensorID] = (TH1F *) clusterDBFile->Get(histoName.c_str());
-        _DB_Map_U[sensorID]->SetDirectory(0);
-      } 
+    histoName = "hDB_U";
+    if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+      m_DB_U = (TH1F *) clusterDBFile->Get(histoName.c_str());
+      m_DB_U->SetDirectory(0);
+    } 
       
-      histoName = "hDB_V"; 
-      if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
-        _DB_Map_V[sensorID] = (TH1F *) clusterDBFile->Get(histoName.c_str());
-        _DB_Map_V[sensorID]->SetDirectory(0);
-      } 
+    histoName = "hDB_V"; 
+    if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+      m_DB_V = (TH1F *) clusterDBFile->Get(histoName.c_str());
+      m_DB_V->SetDirectory(0);
+    } 
       
-      histoName = "hDB_Sigma2_U";
-      if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
-        _DB_Map_Sigma2_U[sensorID] = (TH1F *) clusterDBFile->Get(histoName.c_str());
-        _DB_Map_Sigma2_U[sensorID]->SetDirectory(0);
-      } 
+    histoName = "hDB_Sigma2_U";
+    if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+      m_DB_Sigma2_U = (TH1F *) clusterDBFile->Get(histoName.c_str());
+      m_DB_Sigma2_U->SetDirectory(0);
+    } 
       
-      histoName = "hDB_Sigma2_V";
-      if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
-        _DB_Map_Sigma2_V[sensorID] = (TH1F *) clusterDBFile->Get(histoName.c_str());
-        _DB_Map_Sigma2_V[sensorID]->SetDirectory(0);
-      } 
+    histoName = "hDB_Sigma2_V";
+    if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+      m_DB_Sigma2_V = (TH1F *) clusterDBFile->Get(histoName.c_str());
+      m_DB_Sigma2_V->SetDirectory(0);
+    } 
       
-      histoName = "hDB_Cov_UV";
-      if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
-        _DB_Map_Cov_UV[sensorID] = (TH1F *) clusterDBFile->Get(histoName.c_str());
-        _DB_Map_Cov_UV[sensorID]->SetDirectory(0);
-      } 
-    }
+    histoName = "hDB_Cov_UV";
+    if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+      m_DB_Cov_UV = (TH1F *) clusterDBFile->Get(histoName.c_str());
+      m_DB_Cov_UV->SetDirectory(0);
+    } 
+    
+    histoName = "DB_Scale";
+    if ((TVectorD*) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+      TVectorD *DB_Scale = (TVectorD*) clusterDBFile->Get( histoName.c_str() );
+      m_scale = (*DB_Scale)[0];  
+    } else {
+      m_scale = 1;
+    } 
     
     // Close root  file
     clusterDBFile->Close();
     delete clusterDBFile;
-    
+
+    for(int ipl=0;ipl<_detector.GetNSensors();ipl++)  { 
+      int sensorID = _detector.GetDet(ipl).GetDAQID();
+      _countAllMap[sensorID] = 0;   
+      _countBadMap[sensorID] = 0;   
+      _countCalMap[sensorID] = 0;  
+    }
   }
   
   //
@@ -202,10 +211,10 @@ namespace depfet {
       _countAllMap[sensorID]++;
       
       // Compute the cluster ID string
-      PixelCluster aCluster(cluster->getTrackerData());   
-      string id = (string) aCluster; 
+      PixelCluster aCluster(cluster->getTrackerData());    
+      string id = aCluster.getLabel(m_scale); 
       
-      streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID << " with clusterID " << id << endl; 
+      streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID << " with label " << id << endl; 
       
       // Compute position measurement and its 2x2 covariance matrix   
       double u{0.0}, v{0.0}, sig2_u{0.0}, sig2_v{0.0}, cov_uv{0.0};
@@ -252,7 +261,7 @@ namespace depfet {
       // Add hit to the hit collection
       hitCollection->push_back( trackerhit );
       
-      streamlog_out(MESSAGE2) << "  ClusterId " << id << " found: " << endl
+      streamlog_out(MESSAGE2) << "  Label " << id << " found: " << endl
                                 << std::setiosflags(std::ios::fixed | std::ios::internal )
                                 << std::setprecision(8)
                                 << "  offset u: " << u << ", sigma: " << TMath::Sqrt(sig2_u) << endl
@@ -320,21 +329,21 @@ namespace depfet {
   bool GoeHitMaker::searchDB(int sensorID, string id, double& u, double& v, double& sig2_u, double& sig2_v, double& cov_uv)
   {
     
-    if ( _DB_Map_ID.find(sensorID) == _DB_Map_ID.end() ) {
+    if ( m_DB_Weight == nullptr ) {
       return false;  
     }
     
-    int bin = _DB_Map_ID[sensorID]->GetXaxis()->FindFixBin(id.c_str());
+    int bin = m_DB_Weight->GetXaxis()->FindFixBin(id.c_str());
     if (bin == -1) {
       return false;
     }
     
     // Get calibrated measurement 
-    u      =  _DB_Map_U[sensorID]->GetBinContent(bin);
-    v      =  _DB_Map_V[sensorID]->GetBinContent(bin);
-    sig2_u =  _DB_Map_Sigma2_U[sensorID]->GetBinContent(bin);
-    sig2_v =  _DB_Map_Sigma2_V[sensorID]->GetBinContent(bin);
-    cov_uv =  _DB_Map_Cov_UV[sensorID]->GetBinContent(bin);
+    u      =  m_DB_U->GetBinContent(bin);
+    v      =  m_DB_V->GetBinContent(bin);
+    sig2_u =  m_DB_Sigma2_U->GetBinContent(bin);
+    sig2_v =  m_DB_Sigma2_V->GetBinContent(bin);
+    cov_uv =  m_DB_Cov_UV->GetBinContent(bin);
     
     if (sig2_u <=0 || sig2_v <= 0) {
       return false;

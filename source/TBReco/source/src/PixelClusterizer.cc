@@ -211,7 +211,10 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
   // The original data collection contains the sparse pixel data for 
   // each accpeted cluster.
   LCCollectionVec * originalDataCollection = new LCCollectionVec(LCIO::TRACKERDATA);
-  
+  // Helper class for encoding clsuters  
+  CellIDEncoder<TrackerDataImpl> originalDataEncoder( DEPFET::ZSCLUSTERDEFAULTENCODING, originalDataCollection );  
+  CellIDEncoder<TrackerPulseImpl> clusterEncoder(DEPFET::ZSCLUSTERDEFAULTENCODING, clusterCollection ); 
+
   // Clustering loop over pixel detectors 
   for (unsigned int iDet = 0; iDet < Pix_collection->size(); iDet++) { 
      
@@ -391,16 +394,12 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
         // Verify if the cluster candidates is a good cluster
         if ( ( seedSignal >= seedThreshold ) && 
              ( clusterSignal >= clusterThreshold ) ) {
-        
+          
                 
- 	  // New accpeted cluster
+ 	      // New accpeted cluster
           clusterID++; 
           
-          // Ok good cluster ... save it 
-          CellIDEncoder<TrackerDataImpl> originalDataEncoder( DEPFET::ZSCLUSTERDEFAULTENCODING, originalDataCollection );
-          CellIDEncoder<TrackerPulseImpl> clusterEncoder(DEPFET::ZSCLUSTERDEFAULTENCODING, clusterCollection ); 
-           
-          // Set the ID for this zsCluster
+          // Ok good cluster ... save it   
           originalDataEncoder["sensorID"] = sensorID;
           originalDataEncoder["clusterID"] = 0;
           originalDataEncoder["sparsePixelType"] = static_cast<int> (kSimpleSparsePixel);

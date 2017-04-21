@@ -103,6 +103,9 @@ namespace depfet {
     
     //! Minimum number of clusters occurances 
     int _minClusters; 
+
+    //! Soft rescaleing of ADC codes for labels
+    int m_scale; 
     
     //! Minimum variance of clusters covariance matrix
     float _minVarianceU; 
@@ -120,7 +123,7 @@ namespace depfet {
     TH1F * _trackCovUVMap;
     
     // Intermediate histos to compute calibrated measurements 
-    // Outer key is sensorID, inner key is clusterID 
+    // Outer key is sensorID, inner key is cluster label
     std::map<std::string, int>    _sensorMap;  
     std::map<std::string, TH1F *> _clusterUMap;
     std::map<std::string, TH1F *> _clusterVMap;

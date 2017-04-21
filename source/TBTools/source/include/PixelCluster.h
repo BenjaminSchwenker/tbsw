@@ -58,7 +58,7 @@ namespace depfet {
     /** Default constructor */
     PixelCluster():
       m_sensorID(0), m_clsCharge(0), m_seedCharge(0),
-      m_clsSize(0), m_uSize(0), m_vSize(0), m_uStart(0), m_vStart(0), m_id("") 
+      m_clsSize(0), m_uSize(0), m_vSize(0), m_uStart(0), m_vStart(0)
     {}
     
     /** Constructor */
@@ -109,34 +109,41 @@ namespace depfet {
      * @return first vCell contributing to the cluster.
      */
     unsigned short getVStart() const { return m_vStart; }
-
-    /** Get cluster ID string. 
-     * @return cluster ID string with signal charge.
+    
+    /** Get cluster label string 
+     * @return label string
      */
-    std::string getClusterID() const { return m_id; }
-
-    /** Get digital cluster ID string. 
-     * @return digital cluster ID string w/o signal charge.
+    std::string getLabel(int scale = 1) const;
+     
+    /** Get cluster type string. 
+     * @return type string
      */
-    std::string getDigitalClusterID() const { return m_digitalID; }
+    std::string getType() const;
+    
+    /** Get sorted vector of raw digits 
+     */
+    const std::vector<RawDigit>& getRawDigits() const { return m_sortedDigits; }
     
   protected:
-      
-    unsigned short m_sensorID;   // SensorID
-    unsigned short m_clsCharge;  // Deposited charge 
-    unsigned short m_seedCharge; // Cluster seed charge 
-    unsigned short m_clsSize;    // Cluster size in pixels 
-    unsigned short m_uSize;      // Cluster size in ucells
-    unsigned short m_vSize;      // Cluster size in vcells  
-    unsigned short m_uStart;     // Start ucell of the cluster 
-    unsigned short m_vStart;     // Start vcell of the cluster 
-    std::string m_id;            // Analog cluster id   
-    std::string m_digitalID;     // Digital cluster id   
-    
+     
+    // SensorID 
+    unsigned short m_sensorID;  
+    // Cluster charge charge in ADC units 
+    unsigned short m_clsCharge;  
+    // Seed charge in ADC units 
+    unsigned short m_seedCharge; 
+    // Cluster size in digits 
+    unsigned short m_clsSize;   
+    // Cluster size in ucells 
+    unsigned short m_uSize;  
+    // Cluster size in vcells     
+    unsigned short m_vSize; 
+    // Start ucell of the cluster      
+    unsigned short m_uStart;   
+    // Start vcell of the cluster   
+    unsigned short m_vStart;     
+    // Sorted vector of raw digits 
+    std::vector<RawDigit> m_sortedDigits;
   };
-
-  /** Print id to stream by converting it to string */
-  std::ostream& operator<<(std::ostream& out, const PixelCluster& id);
- 
 }
 #endif

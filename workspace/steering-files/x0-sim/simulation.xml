@@ -33,7 +33,7 @@
     <!--Collection name for MCParticles-->
     <parameter name="MCParticleCollectionName" type="string" lcioOutType="MCParticle"> MCParticles </parameter>
     <!--Number of beam particles per second-->
-    <parameter name="BeamIntensity" type="double" value="15000"/>
+    <parameter name="BeamIntensity" type="double" value="20000"/>
     <!--Beam momentum [GeV]-->
     <parameter name="BeamMomentum" type="double" value="4"/>
     <!--Beam momentum sigma [GeV]-->
@@ -49,11 +49,11 @@
     <!--Beam vertex sigma in X direction [mm]-->
     <parameter name="BeamVertexXSigma" type="double" value="7"/>
     <!--Beam vertex position in Y direction [mm]-->
-    <parameter name="BeamVertexY" type="double" value="-0"/>
+    <parameter name="BeamVertexY" type="double" value="0"/>
     <!--Beam vertex sigma in Y direction [mm]-->
     <parameter name="BeamVertexYSigma" type="double" value="10"/>
     <!--Beam vertex position in Z direction [mm]-->
-    <parameter name="BeamVertexZ" type="double" value="-10"/>
+    <parameter name="BeamVertexZ" type="double" value="-10000"/>
     <!--Beam correlation factor between vertex position and momentum-->
     <parameter name="CorrelationVertexXvsMomentum" type="double" value="0.05"/>
     <!--Beam correlation factor between vertex position and slope-->
@@ -78,10 +78,12 @@
   <parameter name="SimTrackerHitCollectionName" type="string" lcioOutType="SimTrackerHit"> SimTrackerHits </parameter>
   <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
   <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
-  <!--Choose model for energy loss: G4UniversalFluctuation(0)-->
-  <parameter name="ElossModel" type="int" value="0"/>
   <!--Choose model for multiple scattering: Highland(0)-->
   <parameter name="ScatterModel" type="int" value="0"/>
+  <!--Flag (true/false) for simulating energy loss straggling-->
+  <parameter name="DoEnergyLossStraggling" type="bool" value="true"/>
+  <!--Flag (true/false) for simulating fractional Bethe Heitler energy loss-->
+  <parameter name="DoFractionalBetheHeitlerEnergyLoss" type="bool" value="true"/>
 </processor>
 
  <processor name="M26Digitizer" type="SiPixDigitizer">
@@ -90,8 +92,6 @@
   <parameter name="SimTrackerHitCollectionName" type="string" lcioInType="SimTrackerHit"> SimTrackerHits </parameter>
   <!--Collection name for Digits-->
   <parameter name="DigitCollectionName" type="string" lcioOutType="TrackerData"> zsdata_m26 </parameter>
-  <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-  <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
   <!--Choose front-end electronics: ADC(0) or Comparator(1) or None(2) -->
   <parameter name="FrontEndType" type="int" value="1"/>
   <!--Set threshold for comparator (in e)-->
@@ -123,7 +123,7 @@
   <!--Only Simulated hits after the StartIntegration time in ns will be digitized-->
   <parameter name="StartIntegration" type="double" value="0"/>
   <!--Only Simulated hits before the StopIntegration time in ns will be digitized-->
-  <parameter name="StopIntegration" type="double" value="20000"/>
+  <parameter name="StopIntegration" type="double" value="100000"/>
   <!--Tangent of Lorentz angle-->
   <parameter name="TanLorentz" type="double" value="0"/>
   <!--Top contact voltage wrt. source, in Volts-->
@@ -142,8 +142,6 @@
   <parameter name="LCIOOutputFile" type="string" value="outputfile"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="None"/>
-  <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
-  <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
 </processor>
 
 </marlin>

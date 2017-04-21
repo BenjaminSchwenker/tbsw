@@ -33,9 +33,9 @@ def reco_run(params):
     shutil.rmtree(tmpdir)
        
   os.mkdir(tmpdir)
-  
-  # copy lcio file that is to be processed
-  shutil.copy(rawfile, tmpdir+'/inputfilename')
+ 
+  # create symlink to raw file 
+  os.symlink( os.path.join(fullpath, rawfile), tmpdir+'/inputfilename')
   # copy steering file 
   shutil.copy(xmlfile, tmpdir+'/reco.xml')
   
@@ -51,8 +51,8 @@ def reco_run(params):
   # run reco in tmp dir 
   os.chdir(tmpdir)
                        
-  #subprocess.call('/$MARLIN/bin/Marlin reco.xml > log.txt 2>&1', shell=True)
-  subprocess.call('/$MARLIN/bin/Marlin reco.xml', shell=True)
+  subprocess.call('/$MARLIN/bin/Marlin reco.xml > log.txt 2>&1', shell=True)
+  #subprocess.call('/$MARLIN/bin/Marlin reco.xml', shell=True)
   
   # clean up inputfile
   os.remove('inputfilename')

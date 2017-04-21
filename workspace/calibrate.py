@@ -69,8 +69,8 @@ if __name__ == '__main__':
     srcname = os.path.join(xmlpath, name)
     shutil.copy(srcname, tmpdir)
   
-  # copy rawdata 
-  shutil.copy(rawfile, tmpdir+'/inputfilename')
+  # create symlink to rawdata file 
+  os.symlink( os.path.join(fullpath, rawfile), tmpdir+'/inputfilename')  
   
   # run calibration in tmp dir  
   os.chdir(tmpdir)

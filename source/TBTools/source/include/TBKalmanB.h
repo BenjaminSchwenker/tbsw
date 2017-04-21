@@ -31,34 +31,16 @@ namespace depfet {
  * a TBTrack instance. The algorithm works as follows
  * 
  * 1) Compute all intersections of the reference trajectory in the 
- * TBTrack with all sub detectors (TE). Without a magnetic field, a
- * straight line track model is used for track extrapolation. 
+ * TBTrack with all sub detectors (TE).
  *                                                                              
- * 2) Perform a double digital filter (forward and backward pass) and 
- * compute optimal estimates at all surfaces. The current track
+ * 2) Perform  double filter pass (forward and backward) and 
+ * compute optimal predicted estimates at all sensor planes. The current track
  * state is used to linearize the computation of transport matrices 
  * and material effects.           
  * 
  * 3) Smoothed track parameter estimates and covariances and chi2's are 
- * calculated for all sub detectors. Moreover, the reference trajectory 
+ * calculated for all sensor planes. Moreover, the reference trajectory 
  * is updated using the smoother output. 
- * 
- * 4) An outlier rejection can be performed using a cut on the smoothed 
- * hit chi2. In that case, one more iterations of the track fit (restart
- * at step 1) should be done.
- * 
- * As is, the tracking code makes a number of important assumptions:
- * 
- * a) No magnetic field in tracking; a straight line track model. 
- * b) Curvature q/p is not part of the state vector; user must supply a guess.   
- * c) Energy loss is not taken into account; 
- * d) Only pixel measurments used. So far, i never tried strips. 
- * 
- * These assumptions are save as long as there is no magnetic field and 
- * the relative total energy loss dE/E is small (<1%). Typically, this  
- * requires beam energies (>100MeV) and a small material budget (<1%X0)
- * per sub detector. Strip detectors could be integrated using appropriatly 
- * large errors for the v axis. 
  * 
  * @Author B. Schwenker, University of Göttingen
  * <mailto:benjamin.schwenker@phys.uni-goettingen.de>
@@ -71,7 +53,7 @@ namespace depfet {
  * 
  * The FilterState class stores [x,C] variable pairs for the 
  * estimated track states. The [x,C] pair is stored both for 
- * predicted and updated estimates. 
+ * predicted estimate only 
  * 
  * @Author B. Schwenker, University of Göttingen
  * <mailto:benjamin.schwenker@phys.uni-goettingen.de>
@@ -85,15 +67,6 @@ class FilterState
    */
   CLHEP::HepMatrix Pr_x;     
   CLHEP::HepSymMatrix Pr_C; 
-  
-  /* Updated estimator 
-   */
-  CLHEP::HepMatrix Up_x;     
-  CLHEP::HepSymMatrix Up_C;  
-  
-  /* Predicted Chi2, zero if no hit found 
-   */  
-  double Chi2Pred; 
 };
 
 
@@ -127,11 +100,7 @@ class TBKalmanB {
    */
   void SetNumIterations(int i){NumIt=i;}
   
-  /** Set outlier removal cut 
-   */
-  void SetOutlierCut(double cut){OutlierCut=cut;}
-  
-  /** Set outlier removal cut (Smoother ChiSqu)
+  /** Set use beam constraint
    */
   void SetUseBeamConstraint(bool useBC){m_useBC=useBC;}
   
@@ -174,9 +143,25 @@ class TBKalmanB {
   /** Returns the predicted chi2
    */
   double GetPredictedChi2( CLHEP::HepMatrix& r, CLHEP::HepMatrix& H, CLHEP::HepSymMatrix& C, CLHEP::HepSymMatrix& V); 
+  
+  /** Propagte state from trackelement te to next track element nte 
+   */
+  int PropagateState(TBTrackElement& te, TBTrackElement& nte, CLHEP::HepMatrix& xref, CLHEP::HepMatrix& nxref, CLHEP::HepMatrix& x0, CLHEP::HepSymMatrix& C0);
+  
+  /** Filters a new hit. Returns predicted chi2 
+   */
+  double FilterHit(TBHit& hit, CLHEP::HepMatrix& xref, CLHEP::HepMatrix& x0, CLHEP::HepSymMatrix& C0);  
+
+  /** Get underlying track model
+   */
+  GenericTrackModel* GetTrackModel() {return TrackModel;}  
    
   CLHEP::HepMatrix& GetHMatrix()
     { return H;} 
+
+  /** Set number of degrees of freedom in trk
+   */
+  void SetNdof(TBTrack& trk);
      
  // Private Methods -----------------
  private:
@@ -195,9 +180,7 @@ class TBKalmanB {
   bool GetSmoothedData( CLHEP::HepMatrix& xb, CLHEP::HepSymMatrix& Cb, CLHEP::HepMatrix& rf, CLHEP::HepSymMatrix& Cf,
                         CLHEP::HepMatrix& xs, CLHEP::HepSymMatrix& Cs);
 
-  /** Set number of degrees of freedom in trk
-   */
-  void SetNdof(TBTrack& trk);
+  
   
   int MAP_FORWARD(   double theta2, 
                         CLHEP::HepMatrix& xref, ReferenceFrame& Surf, 
@@ -220,18 +203,14 @@ class TBKalmanB {
    
   // Project states to hit coord
   CLHEP::HepMatrix H; 
-   
-  // Outlier chisqu cut  
-  double OutlierCut; 
   
-  double mom; 
   double mass;
   double charge;
   
   GenericTrackModel* TrackModel; 
-
+  
   int ndim; // dimension of state
-
+  
   // Use beam constraint in fitter
   bool m_useBC; 
   double m_divx;      // divergence, rad

@@ -116,6 +116,7 @@ namespace depfet {
     // Initialize variables
     _nRun = 0 ;
     _nEvt = 0 ;
+    _nParticles = 0;
   
     // Print set parameters
     printProcessorParams();
@@ -123,6 +124,12 @@ namespace depfet {
     // CPU time start
     _timeCPU = clock()/1000;
 
+    if ( m_BeamSlopeXSigma <= 0 ) m_BeamSlopeXSigma = 0.00001;     // in rad 
+    if ( m_BeamSlopeYSigma <= 0 ) m_BeamSlopeYSigma = 0.00001;     // in rad 
+    if ( m_BeamVertexXSigma <= 0 ) m_BeamVertexXSigma = 0.001;     // in mm
+    if ( m_BeamVertexYSigma <= 0 ) m_BeamVertexYSigma = 0.001;     // in mm
+    if ( m_BeamMomentumSigma <= 0 ) m_BeamMomentumSigma = 0.00001; // in GeV
+    
     // Construct beam covariance matrix S 
     //
     // The particle state is defined relativ to the Z= m_GunPositionZ
@@ -193,6 +200,11 @@ namespace depfet {
   void ParticleGunGenerator::processEvent(LCEvent * evt)
   {
     
+    // Print event number
+    if ((evt->getEventNumber())%100 == 0) streamlog_out(MESSAGE3) << "Events processed: "
+                                                                  << (evt->getEventNumber())
+                                                                  << std::endl << std::endl;
+    
     //////////////////////////////////////////////////////////////////////  
     // Process next event
     ++_nEvt;
@@ -208,6 +220,9 @@ namespace depfet {
       // Sample 5 dimensional state vector for new beam particle 
       HepVector state = deviates();
     
+      // The sampling may return a negative momentum 
+      if ( state(5) <= 0.001 ) state(5) = 0.001;
+
       double momentum = state(5);    // momentum in GeV        
       double tx = state(1);          // direction tangent dx/dz
       double ty = state(2);          // direction tangent dy/dz 
@@ -271,11 +286,18 @@ namespace depfet {
       nParticle += 1;  
     
     }
-    
+
     //
     // Add MCParticle collection
     //     
     evt->addCollection(mcVec, m_MCParticleCollectionName); 
+    
+    // 
+    // Increment counter for particles 
+    // 
+    _nParticles += nParticle;
+    
+    streamlog_out(MESSAGE2) << "Number of particels in this event is: " << nParticle << std::endl << std::endl;
 
   }
 
@@ -292,6 +314,8 @@ namespace depfet {
    
     streamlog_out ( MESSAGE3 ) << endl;
     streamlog_out ( MESSAGE3 ) << "Successfully finished" << endl;
+
+    streamlog_out ( MESSAGE3 ) << "Number of simulated particles is " << _nParticles  << endl;
     
     // CPU time end
     _timeCPU = clock()/1000 - _timeCPU;

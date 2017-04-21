@@ -79,6 +79,8 @@ namespace depfet {
     //! Name of clusterDB file 
     std::string  _clusterDBFileName;
     
+    
+    
     //! Clusters having more cells in u/v are considered bad
     int _maxSizeU;
     int _maxSizeV;
@@ -88,15 +90,17 @@ namespace depfet {
     // Handle to detector data 
     TBDetector _detector;  
 
-    // Store pre coomputed cluster measurements 
-    // Key is sensorID 
-    std::map< int, TH1F *> _DB_Map_ID;
-    std::map< int, TH1F *> _DB_Map_U; 
-    std::map< int, TH1F *> _DB_Map_V; 
-    std::map< int, TH1F *> _DB_Map_Sigma2_U;
-    std::map< int, TH1F *> _DB_Map_Sigma2_V; 
-    std::map< int, TH1F *> _DB_Map_Cov_UV;
-      
+    // Store cluster calibration
+    TH1F * m_DB_Weight;
+    TH1F * m_DB_U; 
+    TH1F * m_DB_V; 
+    TH1F * m_DB_Sigma2_U;
+    TH1F * m_DB_Sigma2_V; 
+    TH1F * m_DB_Cov_UV;
+    
+    // Soft re-scaleing of ADC codes for labels
+    int m_scale; 
+  
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number
     int    _nEvt ;   //!< Event number

@@ -48,7 +48,7 @@
     <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
     <parameter name="MaxSizeV" type="int" value="3"/>
   </processor>
-  
+    
   <processor name="M26ClusterDBCreator" type="GoeClusterCalibratorForMC">
     <!--GoeClusterCalibratorForMC: Create clusterDB for clusters using simhits-->
     <!--Name of hit collection-->
@@ -57,13 +57,15 @@
     <parameter name="SimTrackerHitCollection" type="string" lcioInType="SimTrackerHit"> SimTrackerHits </parameter>
     <!--Output clusterDB file name-->
     <parameter name="ClusterDBFileName" type="string" value="clusterDB-M26-MC.root"/>
-    <!--Ignore clusters from this list of sensorIDs-->
-    <parameter name="FilterIDs" type="IntVec"> </parameter>
+    <!--Ignore clusters from list of sensorIDs-->
+    <parameter name="IgnoreIDs" type="IntVec"> 11 </parameter>
     <!--Maximum u residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
     <parameter name="MaxResidualU" type="double" value="0.1"/>
     <!--Maximum v residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
     <parameter name="MaxResidualV" type="double" value="0.1"/>
     <!--Minimum number of cluster ID occurances for clusterDB-->
     <parameter name="MinClusters" type="int" value="2000"/>
+    <!--Software rescaling of adc codes for cluster labels (new_code = code/scale)-->
+    <parameter name="SoftScale" type="int" value="1"/>
   </processor>
 </marlin>

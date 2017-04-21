@@ -225,7 +225,12 @@ namespace depfet {
   //
   void SiPixDigitizer::processEvent(LCEvent * evt)
   {
-   
+    
+    // Print event number
+    if ((evt->getEventNumber())%100 == 0) streamlog_out(MESSAGE3) << "Events processed: "
+                                                                  << (evt->getEventNumber())
+                                                                  << std::endl << std::endl;
+    
     //
     // Open collections
     try {
@@ -965,8 +970,15 @@ namespace depfet {
   // Method returning collected charge in ADC units
   //
   int SiPixDigitizer::getInADCUnits(double charge) {
-    static double ADCunit = m_ADCRange/short(pow(2, m_ADCBits));
-    return int(charge/ADCunit);
+    static double ADCunit = m_ADCRange/int(pow(2, m_ADCBits));
+    static int ADCmax  = (int) pow(2, m_ADCBits) - 1.0;
+    int val = int(charge/ADCunit);
+    
+    // lower end of dynamic range
+    if (val <= 0) return 0;
+    // upper end of dynamic range
+    if (val > ADCmax) return ADCmax;
+    return val;
   }
 
   //

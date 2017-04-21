@@ -559,7 +559,7 @@ double TBKalmanSRIF::KalmanFilterPass(TBTrack& trk, std::vector<int>& CrossedTEs
         // ---------------------------------------
         double l0 = te.GetDet().GetTrackLength(xref[2][0], xref[3][0], xref[0][0], xref[1][0]);
         double X0 = te.GetDet().GetRadLength(xref[2][0],xref[3][0]);    
-        double theta2_det = materialeffect::GetScatterTheta2(l0, X0, mass, charge, mom );   
+        double theta2_det = materialeffect::GetScatterTheta2(xref, l0, X0, mass, charge);   
         ierr = MAP_FORWARD( theta2_det, xref, Surf, xref_air, Surf_air, z0, R0 );
         if (ierr != 0) {
           streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
@@ -569,7 +569,7 @@ double TBKalmanSRIF::KalmanFilterPass(TBTrack& trk, std::vector<int>& CrossedTEs
          
         // MAP estimate [z0,R0] from air to new det surface
         // ---------------------------------------
-        double theta2_air = materialeffect::GetScatterTheta2(length, materialeffect::X0_air, mass, charge, mom );   
+        double theta2_air = materialeffect::GetScatterTheta2(xref_air, length, materialeffect::X0_air, mass, charge);   
         ierr = MAP_FORWARD( theta2_air, xref_air, Surf_air, nxref, nSurf, z0, R0 );
         if (ierr != 0) {
           streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
@@ -581,7 +581,7 @@ double TBKalmanSRIF::KalmanFilterPass(TBTrack& trk, std::vector<int>& CrossedTEs
         
         // MAP estimate [z0,R0] from old det to air surface
         // ---------------------------------------
-        double theta2_air = materialeffect::GetScatterTheta2(length, materialeffect::X0_air, mass, charge, mom ) ;   // Backward form 
+        double theta2_air = materialeffect::GetScatterTheta2(xref, length, materialeffect::X0_air, mass, charge) ;   // Backward form 
         ierr = MAP_BACKWARD( theta2_air, xref, Surf, xref_air, Surf_air, z0, R0 );
         if (ierr != 0) {
           streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
@@ -593,7 +593,7 @@ double TBKalmanSRIF::KalmanFilterPass(TBTrack& trk, std::vector<int>& CrossedTEs
         // ---------------------------------------
         double l0 = nte.GetDet().GetTrackLength(nxref[2][0], nxref[3][0], nxref[0][0], nxref[1][0]);
         double X0 = nte.GetDet().GetRadLength(nxref[2][0],nxref[3][0]);    
-        double theta2_det = materialeffect::GetScatterTheta2(l0, X0, mass, charge, mom );   // Backward form    
+        double theta2_det = materialeffect::GetScatterTheta2( xref_air, l0, X0, mass, charge);   // Backward form    
         ierr = MAP_BACKWARD( theta2_det, xref_air, Surf_air, nxref, nSurf, z0, R0 );          
         if (ierr != 0) {
           streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
@@ -1102,7 +1102,7 @@ HepMatrix TBKalmanSRIF::ComputeBeamConstraint( HepMatrix& z0, HepMatrix& R0, Ref
   
   // MAP [z0,R0] from collimator to firsr sensor 
   // ---------------------------------------
-  double theta2_col = materialeffect::GetScatterTheta2(0.01 , 300, mass, charge, mom );  // 10micron kapton
+  double theta2_col = materialeffect::GetScatterTheta2(xref_col, 0.01 , 300, mass, charge );  // 10micron kapton
   ierr = MAP_FORWARD( theta2_col, xref_col, CollimatorFrame, xref_first, FirstSensorFrame, z0, R0 );
   if (ierr != 0) {
     streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"

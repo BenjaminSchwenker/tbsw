@@ -50,7 +50,7 @@ if __name__ == '__main__':
   if not os.path.isdir(tmpdir):
     os.mkdir(tmpdir)
           
-  tmpdir = os.path.join(tmpdir,runtag)  
+  tmpdir = os.path.join(tmpdir,runtag+'-sim')  
   
   if os.path.isdir(tmpdir):
     shutil.rmtree(tmpdir)
@@ -66,8 +66,8 @@ if __name__ == '__main__':
   # run simulation in tmp dir  
   os.chdir(tmpdir)
   
-  #subprocess.call('/$MARLIN/bin/Marlin sim.xml > log-sim.txt 2>&1', shell=True)
-  subprocess.call('/$MARLIN/bin/Marlin sim.xml', shell=True)
+  subprocess.call('/$MARLIN/bin/Marlin sim.xml > log-sim.txt 2>&1', shell=True)
+  #subprocess.call('/$MARLIN/bin/Marlin sim.xml', shell=True)
   print ('[Print] Simulation done ...')
   
   def move_over(src, dest):

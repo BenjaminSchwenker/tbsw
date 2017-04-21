@@ -14,28 +14,15 @@ using namespace lcio;
 
 namespace depfet {
   
-  PixelCluster::operator string() const
-  {
-    return  m_id;
-  }
-  
-  std::ostream& operator<<(std::ostream& out, const PixelCluster& id)
-  {
-    out << ((string)id);
-    return out;
-  }
-  
+    
   /** Constructor */
   PixelCluster::PixelCluster( TrackerData * Digits, unsigned short sensorID) : 
                                   m_sensorID(sensorID), m_clsCharge(0), m_seedCharge(0),
-                                  m_clsSize(0), m_uSize(0), m_vSize(0), m_uStart(0), m_vStart(0), m_id(""), m_digitalID("")
+                                  m_clsSize(0), m_uSize(0), m_vSize(0), m_uStart(0), m_vStart(0)
   {
     FloatVec rawDigits = Digits->getChargeValues();
     int size = rawDigits.size()/3; 
     
-    // Sort for ascending v cell, look at u cell in case of equality
-    std::vector<RawDigit> sortedDigits;
- 
     unsigned short vMin = std::numeric_limits<unsigned short>::max();
     unsigned short vMax = 0;
     unsigned short uMin = std::numeric_limits<unsigned short>::max();
@@ -54,7 +41,7 @@ namespace depfet {
       if (iU < uMin) uMin = iU;
       if (iU > uMax) uMax = iU;  
       
-      sortedDigits.push_back(RawDigit(iU,iV,charge));
+      m_sortedDigits.push_back(RawDigit(iU,iV,charge));
     }
     
     // Compute some variables 
@@ -64,22 +51,32 @@ namespace depfet {
     m_uSize = uMax-uMin+1;
     m_vSize = vMax-vMin+1; 
     
-    std::sort(sortedDigits.begin(), sortedDigits.end());
-    
-    // Compute Id string from sorted digits
-    stringstream streamID;     
-    stringstream streamDigitalID;    
-    
-    streamID << size; 
-    streamDigitalID << size;     
-    
-    for (auto digit : sortedDigits ) {
-      streamID << "D" << digit.m_cellIDV - vMin <<  "." << digit.m_cellIDU - uMin << "." << digit.m_charge;  
-      streamDigitalID << "D" << digit.m_cellIDV - vMin <<  "." << digit.m_cellIDU - uMin;  
+    std::sort(m_sortedDigits.begin(), m_sortedDigits.end());
+  }
+  
+  std::string PixelCluster::getLabel(int scale) const 
+  {
+    // Compute cluster label string
+    stringstream streamLabel;         
+    streamLabel << m_clsSize; 
+     
+    for (auto digit : m_sortedDigits ) {
+      streamLabel << "D" << digit.m_cellIDV - m_vStart  <<  "." << digit.m_cellIDU - m_uStart << "." << digit.m_charge/scale;  
     } 
+    return streamLabel.str();   
+  }
+
     
-    m_id = streamID.str();   
-    m_digitalID = streamDigitalID.str(); 
+  std::string PixelCluster::getType() const 
+  { 
+    // Compute cluster type string
+    stringstream streamType;    
+    streamType << m_clsSize;     
+    
+    for (auto digit : m_sortedDigits ) { 
+      streamType << "D" << digit.m_cellIDV - m_vStart  <<  "." << digit.m_cellIDU - m_uStart;  
+    } 
+    return streamType.str();  
   }
 
 }
