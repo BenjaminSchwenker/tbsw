@@ -28,6 +28,7 @@ def reco_run(params):
   if not os.path.isdir(fullpath+'/tmp-runs'):
     os.mkdir(fullpath+'/tmp-runs')
   tmpdir = os.path.join(fullpath+'/tmp-runs',runtag)  
+  tmpdir = tmpdir + '-' + caltag + '-reco' 
   
   if os.path.isdir(tmpdir):
     shutil.rmtree(tmpdir)

@@ -57,7 +57,7 @@ if __name__ == '__main__':
     os.mkdir(fullpath+'/tmp-runs')
   
   tmpdir = os.path.join(fullpath+'/tmp-runs',runtag)
-  tmpdir = tmpdir + '-' + caltag  
+  tmpdir = tmpdir + '-' + caltag + '-cal' 
   
   if os.path.isdir(tmpdir):
     shutil.rmtree(tmpdir)
