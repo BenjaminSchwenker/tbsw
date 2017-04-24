@@ -1,10 +1,6 @@
 #!/usr/bin/python3
 
-import os
-import shutil
-import subprocess
-import sys, getopt 
-import glob
+import utility
 
 if __name__ == '__main__':
   
