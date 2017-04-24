@@ -6,7 +6,7 @@ if __name__ == '__main__':
   
   rawfile = ''
   xmlpath = ''
-  caltag='dummy'
+  caltag='default'
   clusterMC = False
   clusterShapeIter = 0
   

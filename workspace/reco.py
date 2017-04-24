@@ -7,7 +7,7 @@ if __name__ == '__main__':
   
   rawfile = ''
   xmlfile = ''
-  caltag='dummy'
+  caltag='default'
     
   try:
     opts, args = getopt.getopt(sys.argv[1:],"hi:x:c:",["ifile=","xmlfile=","caltag="])
