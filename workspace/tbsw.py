@@ -29,6 +29,8 @@ class Environment(object):
         name of the folder holding steer and config files  
     """
     self.tag = tag
+    self.runtag = ''
+    self.caltag = ''
     self.fullpath = os.getcwd() 
     self.tmpdir = os.path.join(fullpath+'/tmp-runs',tag)  
     
@@ -46,6 +48,7 @@ class Environment(object):
       shutil.copytree(steerfiles,self.tmpdir)
       
   def add_caltag(self, caltag):  
+    self.caltag = caltag
     # check that calibration files exist
     caldir = self.fullpath+'/cal-files/'+caltag   
     if not os.path.isdir(caldir):
@@ -53,8 +56,10 @@ class Environment(object):
     else: 
       # copy calibration files 
       shutil.copytree(caldir,self.tmpdir+'/cal-files')
+    
   
   def create_caltag(self, caltag):
+    self.caltag = caltag
     # create new calibration tag    
     if not os.path.isdir(self.fullpath+'/cal-files'):
       os.mkdir(self.fullpath+'/cal-files')
@@ -69,61 +74,86 @@ class Environment(object):
     # treat the gear file as a calibration file as well
     shutil.copy('gear.xml', os.path.join(caldir,'gear.xml'))  
   	                           
-  def add_inputfile(self, inputfile):
+  def link_input(self, inputfile):
+    self.runtag = os.path.splitext(os.path.basename(inputfile))[0]
     os.symlink( os.path.join(self.fullpath, inputfile), self.tmpdir+'/inputfilename') 
 
-  def execute(self,path):
-    # execute in tmp dir  
-    os.chdir(tmpdir)
+  def run(self,path):
+    # run Marlin in tmpdir  
+    os.chdir(self.tmpdir)
     
     for xmlfile in path:
-      action = '/$MARLIN/bin/Marlin ' + xmlfile + ' > log-' + xmlfile + ' 2>&1'
+      logfile = os.path.splitext( os.path.basename(xmlfile))[0] + '.log'
+      action = '/$MARLIN/bin/Marlin ' + xmlfile + ' > ' + logfile + ' 2>&1'
       subprocess.call(action, shell=True)
+      print ('[Print] Executing Marlin ' + xmlfile + ' is done')    
     
-    os.chdir(fullpath) 
-  
-  def cleanup(self):
+    # remove tmp* files 
     for tmpfile in glob.glob('tmp*'):
       os.remove(tmpfile)
-
+    
+    # go back to workspace
+    os.chdir(self.fullpath) 
+  
   def copy_rootfiles(self):
-    # store dqm files 
-    if not os.path.isdir(fullpath+'/root-files'):
-      os.mkdir(fullpath+'/root-files')
+    # cd into tmpdir  
+    os.chdir(self.tmpdir)
+     
+    # copy root files 
+    if not os.path.isdir(self.fullpath+'/root-files'):
+      os.mkdir(self.fullpath+'/root-files')
     
-    for dqmfile in glob.glob('*.root'): 
-      name = os.path.splitext(os.path.basename(dqmfile))[0]
-      shutil.move(dqmfile, fullpath+'/root-files/'+name+'-'+runtag+'-'+caltag+'.root')  
+    for rootfile  in glob.glob('*.root'): 
+      name = os.path.splitext(os.path.basename(rootfile))[0]
+      shutil.move(rootfile, self.fullpath+'/root-files/'+name+'-'+self.runtag+'-'+self.caltag+'.root')  
     
 
 
-def simulate(steerfiles, marlinpath, caltag, ofile):
+def simulate(steerfiles, path, caltag, ofile):
   """
   Creates a lcio file containing N events. The events contain collections for 
   simulated tracks measured signals. 
   
   :@steerfile:  name of folder containing all steering files  
-  :@marlinpath: list containing Marlin xml files that will be executed 
+  :@path:       list containing Marlin xml files that will be executed 
   :@caltag:     name of calibration tag (optional)
   :@ofile:      name of output lcio file
   
   :author: benjamin.schwenker@phys.uni-goettinge.de  
   """
-
+  
+  tag = os.path.splitext(os.path.basename(ofile))[0] + '-' + caltag + '-sim'
+  env = Environment(tag=tag, steerfiles=steerfiles)  
+  env.add_caltag(caltag)
+  env.run(path)
+  
+  src =  os.path.join(env.tmpdir, 'outputfile.slcio')	
+  dest = os.path.join(env.fullpath, ofile)	
+  shutil.move(src, dest)
+  
   return None
-
-
-def reconstruct(steerfiles, marlinpath, caltag, ifile):
+  
+   
+def reconstruct(steerfiles, path, caltag, ifile):
   """
   Reconstructs an input file with raw data using a caltag for calibration. 
   
   :@steerfile:  name of folder containing all steering files 
-  :@marlinpath: list containing Marlin xml files that will be executed 
+  :@path:       list containing Marlin xml files that will be executed 
   :@caltag:     name of calibration tag (optional)
   :@ifile:      name of input file with raw data
   
   :author: benjamin.schwenker@phys.uni-goettinge.de  
   """   
+  
+  print ('[Print] Starting to process file ' + ifile + ' ...')  
+  
+  tag = os.path.splitext(os.path.basename(ifile))[0] + '-' + caltag + '-reco'
+  env = Environment(tag=tag, steerfiles=steerfiles)  
+  env.add_caltag(caltag)
+  env.link_input(ifile)
+  env.run(path)
+  env.copy_rootfiles()
 
   return None
 
@@ -139,6 +169,12 @@ def calibrate(steerfiles, marlinpath, caltag, ifile):
   
   :author: benjamin.schwenker@phys.uni-goettinge.de  
   """     
-
+  
+  tag = os.path.splitext(os.path.basename(ifile))[0] + '-' + caltag + '-cal'
+  env = Environment(tag=tag, steerfiles=steerfiles)  
+  env.link_input(ifile)
+  env.run(path)
+  env.create_caltag(caltag) 
+     
   return None
 
