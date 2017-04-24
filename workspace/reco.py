@@ -5,15 +5,40 @@ import os
 import shutil
 import subprocess
 import glob
-from multiprocessing import Pool
-from itertools import repeat
 
 
-def reco_run(params):
+if __name__ == '__main__':
   
-  # unpack arguments
-  (rawfile,xmlfile,caltag) = params
-
+  rawfile = ''
+  xmlfile = ''
+  caltag='dummy'
+    
+  try:
+    opts, args = getopt.getopt(sys.argv[1:],"hi:x:c:",["ifile=","xmlfile=","caltag="])
+  except getopt.GetoptError:
+    print ('reco.py -i <inputfiles>  -x <xmlfile> -c <caltag>')
+    print ('-c is optional and defaults to: ' + caltag )
+    sys.exit(2)
+  for opt, arg in opts:
+    if opt == '-h':
+      print ('reco.py -i <inputfiles> -x <xmlfile> -c <caltag>')
+      print ('-c is optional and defaults to: ' + caltag )
+      sys.exit()
+    elif opt in ("-i", "--ifile"):
+      rawfile = arg
+    elif opt in ("-x", "--xmlfile"):
+      xmlfile = arg
+    elif opt in ("-c", "--caltag"):
+      caltag = arg
+  
+  if rawfile == '':
+    print ('missing option: -i path/to/inputfilename')
+    sys.exit(2)  
+  
+  if xmlfile == '':
+    print ('missing option: -x path/to/steeringfilename.xml')
+    sys.exit(2)  
+  
   # remember current working dir 
   fullpath = os.getcwd() 
    
@@ -23,7 +48,7 @@ def reco_run(params):
   runtag = os.path.splitext(os.path.basename(rawfile))[0]
                     
   print ('[Print] Starting to process file ' + runtag + ' ...')
-
+  
   # create tmp dir
   if not os.path.isdir(fullpath+'/tmp-runs'):
     os.mkdir(fullpath+'/tmp-runs')
@@ -53,7 +78,6 @@ def reco_run(params):
   os.chdir(tmpdir)
                        
   subprocess.call('/$MARLIN/bin/Marlin reco.xml > log.txt 2>&1', shell=True)
-  #subprocess.call('/$MARLIN/bin/Marlin reco.xml', shell=True)
   
   # clean up inputfile
   os.remove('inputfilename')
@@ -71,48 +95,7 @@ def reco_run(params):
     shutil.move(dqmfile, fullpath+'/root-files/'+name+'-'+runtag+'-'+caltag+'.root')  
   
   os.chdir(fullpath)
-  #shutil.rmtree(tmpdir)
 
   print ('[Print] Processing file ' + runtag + ' done!')
-	                        
-
-if __name__ == '__main__':
-  
-  inputfiles = []
-  xmlfile = ''
-  caltag='dummy'
-    
-  try:
-    opts, args = getopt.getopt(sys.argv[1:],"hi:x:c:",["ifile=","xmlfile=","caltag="])
-  except getopt.GetoptError:
-    print ('reco.py -i <inputfiles>  -x <xmlfile> -c <caltag>')
-    print ('-c is optional and defaults to: ' + caltag )
-    sys.exit(2)
-  for opt, arg in opts:
-    if opt == '-h':
-      print ('reco.py -i <inputfiles> -x <xmlfile> -c <caltag>')
-      print ('-c is optional and defaults to: ' + caltag )
-      sys.exit()
-    elif opt in ("-i", "--ifile"):
-      inputfiles = glob.glob(arg)
-    elif opt in ("-x", "--xmlfile"):
-      xmlfile = arg
-    elif opt in ("-c", "--caltag"):
-      caltag = arg
-  
-  if inputfiles == []:
-    print ('missing option: -i path/to/inputfiles')
-    sys.exit(2)  
-  
-  if xmlfile == '':
-    print ('missing option: -x path/to/steeringfilename.xml')
-    sys.exit(2)  
-  
-  # pack params for multiprocessing
-  params = [(rawfile,xmlfile,caltag) for rawfile in inputfiles]
-  
-  p = Pool()
-  p.map(reco_run, params )	
-
 
  

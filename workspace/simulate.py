@@ -67,7 +67,6 @@ if __name__ == '__main__':
   os.chdir(tmpdir)
   
   subprocess.call('/$MARLIN/bin/Marlin sim.xml > log-sim.txt 2>&1', shell=True)
-  #subprocess.call('/$MARLIN/bin/Marlin sim.xml', shell=True)
   print ('[Print] Simulation done ...')
   
   def move_over(src, dest):
