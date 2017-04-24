@@ -19,24 +19,24 @@ class Environment(object):
   
   :author: benjamin.schwenker@phys.uni-goettinge.de  
   """
-  def __init__(self, tag, steerfiles):
+  def __init__(self, name, steerfiles):
     """
     Parameters
     ----------
-    tag : string 
+    name : string 
         name of the temporary folder holding the environment
     steerfiles : string 
         name of the folder holding steer and config files  
     """
-    self.tag = tag
+    self.name = name
     self.runtag = ''
     self.caltag = ''
-    self.fullpath = os.getcwd() 
-    self.tmpdir = os.path.join(fullpath+'/tmp-runs',tag)  
+    self.cwdir = os.getcwd() 
+    self.tmpdir = os.path.join(self.cwdir+'/tmp-runs',self.name)  
     
     # create an empty tmpdir
-    if not os.path.isdir(fullpath+'/tmp-runs'):
-      os.mkdir(fullpath+'/tmp-runs')
+    if not os.path.isdir(self.cwdir+'/tmp-runs'):
+      os.mkdir(self.cwdir+'/tmp-runs')
     if os.path.isdir(self.tmpdir):
       shutil.rmtree(self.tmpdir)
     os.mkdir(self.tmpdir)   
@@ -50,7 +50,7 @@ class Environment(object):
   def add_caltag(self, caltag):  
     self.caltag = caltag
     # check that calibration files exist
-    caldir = self.fullpath+'/cal-files/'+caltag   
+    caldir = self.cwdir+'/cal-files/'+caltag   
     if not os.path.isdir(caldir):
       print ('[Print] warning: no calibration data found')  
     else: 
@@ -61,9 +61,9 @@ class Environment(object):
   def create_caltag(self, caltag):
     self.caltag = caltag
     # create new calibration tag    
-    if not os.path.isdir(self.fullpath+'/cal-files'):
-      os.mkdir(self.fullpath+'/cal-files')
-    caldir = self.fullpath+'/cal-files/'+caltag  
+    if not os.path.isdir(self.cwdir+'/cal-files'):
+      os.mkdir(self.cwdir+'/cal-files')
+    caldir = self.cwdir+'/cal-files/'+caltag  
     if os.path.isdir(caldir):
       shutil.rmtree(caldir)   
     os.mkdir(caldir)		
@@ -76,7 +76,7 @@ class Environment(object):
   	                           
   def link_input(self, inputfile):
     self.runtag = os.path.splitext(os.path.basename(inputfile))[0]
-    os.symlink( os.path.join(self.fullpath, inputfile), self.tmpdir+'/inputfilename') 
+    os.symlink( os.path.join(self.cwdir, inputfile), self.tmpdir+'/inputfilename') 
 
   def run(self,path):
     # run Marlin in tmpdir  
@@ -93,19 +93,19 @@ class Environment(object):
       os.remove(tmpfile)
     
     # go back to workspace
-    os.chdir(self.fullpath) 
+    os.chdir(self.cwdir) 
   
   def copy_rootfiles(self):
     # cd into tmpdir  
     os.chdir(self.tmpdir)
      
     # copy root files 
-    if not os.path.isdir(self.fullpath+'/root-files'):
-      os.mkdir(self.fullpath+'/root-files')
+    if not os.path.isdir(self.cwdir+'/root-files'):
+      os.mkdir(self.cwdir+'/root-files')
     
     for rootfile  in glob.glob('*.root'): 
       name = os.path.splitext(os.path.basename(rootfile))[0]
-      shutil.move(rootfile, self.fullpath+'/root-files/'+name+'-'+self.runtag+'-'+self.caltag+'.root')  
+      shutil.move(rootfile, self.cwdir+'/root-files/'+name+'-'+self.runtag+'-'+self.caltag+'.root')  
     
 
 
@@ -122,13 +122,13 @@ def simulate(steerfiles, path, caltag, ofile):
   :author: benjamin.schwenker@phys.uni-goettinge.de  
   """
   
-  tag = os.path.splitext(os.path.basename(ofile))[0] + '-' + caltag + '-sim'
-  env = Environment(tag=tag, steerfiles=steerfiles)  
+  name = os.path.splitext(os.path.basename(ofile))[0] + '-' + caltag + '-sim'
+  env = Environment(name=name, steerfiles=steerfiles)  
   env.add_caltag(caltag)
   env.run(path)
   
   src =  os.path.join(env.tmpdir, 'outputfile.slcio')	
-  dest = os.path.join(env.fullpath, ofile)	
+  dest = os.path.join(env.cwdir, ofile)	
   shutil.move(src, dest)
   
   return None
@@ -148,8 +148,8 @@ def reconstruct(steerfiles, path, caltag, ifile):
   
   print ('[Print] Starting to process file ' + ifile + ' ...')  
   
-  tag = os.path.splitext(os.path.basename(ifile))[0] + '-' + caltag + '-reco'
-  env = Environment(tag=tag, steerfiles=steerfiles)  
+  name = os.path.splitext(os.path.basename(ifile))[0] + '-' + caltag + '-reco'
+  env = Environment(name=name, steerfiles=steerfiles)  
   env.add_caltag(caltag)
   env.link_input(ifile)
   env.run(path)
@@ -170,8 +170,8 @@ def calibrate(steerfiles, marlinpath, caltag, ifile):
   :author: benjamin.schwenker@phys.uni-goettinge.de  
   """     
   
-  tag = os.path.splitext(os.path.basename(ifile))[0] + '-' + caltag + '-cal'
-  env = Environment(tag=tag, steerfiles=steerfiles)  
+  name = os.path.splitext(os.path.basename(ifile))[0] + '-' + caltag + '-cal'
+  env = Environment(name=name, steerfiles=steerfiles)  
   env.link_input(ifile)
   env.run(path)
   env.create_caltag(caltag) 
