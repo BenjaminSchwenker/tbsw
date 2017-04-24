@@ -15,6 +15,7 @@ if __name__ == '__main__':
     print ('reco.py -i <inputfiles>  -x <xmlfile> -c <caltag>')
     print ('-c is optional and defaults to: ' + caltag )
     sys.exit(2)
+  
   for opt, arg in opts:
     if opt == '-h':
       print ('reco.py -i <inputfiles> -x <xmlfile> -c <caltag>')

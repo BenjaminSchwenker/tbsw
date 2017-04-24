@@ -11,9 +11,9 @@ if __name__ == '__main__':
   
   try:
     opts, args = getopt.getopt(sys.argv[1:],"hg:x:o:c:",["gearfile=", "xmlfile=", "ofile=", "caltag="])
-  except getopt.GetoptError:
-    
+  except getopt.GetoptError:    
     sys.exit(2)
+  
   for opt, arg in opts:
     if opt == '-h':
       print ('simulate.py -g <gearfile>  -x <xmlfile> -o <outputfile> -c <caltag>')
@@ -40,7 +40,7 @@ if __name__ == '__main__':
    
   # get runtag
   runtag = os.path.splitext(os.path.basename(ofile))[0]
-
+  
   # create tmp dir
   if not os.path.isdir(fullpath+'/tmp-runs'):
     os.mkdir(fullpath+'/tmp-runs')

@@ -17,6 +17,7 @@ if __name__ == '__main__':
     print ('calibrate.py -i <inputfile>  -x <xmlfile> -c <caltag>')
     print ('-c is optional and defaults to: ' + caltag )
     sys.exit(2)
+  
   for opt, arg in opts:
     if opt == '-h':
       print ('calibrate.py -i <inputfile> -x <xmlfile> -c <caltag>')
@@ -46,7 +47,7 @@ if __name__ == '__main__':
   fullpath = os.getcwd() 
   
   # get runtag
-  runtag = os.path.splitext(os.path.basename(rawfile))[0]
+  runtag = os.path.splitext( os.path.basename(rawfile) )[0]
   
   # create tmp dir
   if not os.path.isdir(fullpath+'/tmp-runs'):
