@@ -381,9 +381,12 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     int ierr; 
 	// Use only the sub matrices, which describe the spatial coordinates of the trackstate
     HepMatrix jchisq = res.sub(3,4,1,1).T()*res_covs.sub(3,4).inverse(ierr)*res.sub(3,4,1,1);
+
+	streamlog_out(MESSAGE1) << "Complete Covariance matrix: "<<res_covs.sub(1,4)<<endl;
+	streamlog_out(MESSAGE1) << "Part of Covariance matrix used here: "<<res_covs.sub(3,4)<<endl;
 	
-	_root_up_down_chi2=jchisq[0][0];
-	_root_up_down_prob=TMath::Prob(jchisq[0][0], 2);
+	_root_vertex_chi2=jchisq[0][0];
+	_root_vertex_prob=TMath::Prob(jchisq[0][0], 2);
     
     _rootMscTree->Fill();       
     
@@ -500,8 +503,8 @@ void X0ImageProducer::bookHistos() {
   _rootMscTree->Branch("theta2_var"      ,&_root_angle2_var     ,"theta2_var/D");
   _rootMscTree->Branch("momentum"        ,&_root_momentum       ,"momentum/D");
 
-  _rootMscTree->Branch("up_down_chi2"    ,&_root_up_down_chi2   ,"up_down_chi2/D");
-  _rootMscTree->Branch("up_down_prob"    ,&_root_up_down_prob   ,"up_down_prob/D");
+  _rootMscTree->Branch("vertex_chi2"    ,&_root_vertex_chi2   ,"vertex_chi2/D");
+  _rootMscTree->Branch("vertex_prob"    ,&_root_vertex_prob   ,"vertex_prob/D");
   
 
 }
