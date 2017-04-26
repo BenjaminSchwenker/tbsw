@@ -1,13 +1,15 @@
 #!/usr/bin/python3
 
 import tbsw
+import getopt 
+import sys
 
 if __name__ == '__main__':
   
   steerfiles = ''
   ofile = 'mcdata.slcio'
   caltag = 'default'
-  path = ['simulate.xml']
+  path = []
   
   try:
     opts, args = getopt.getopt(sys.argv[1:],"hs:x:o:c:",["steerfiles=", "xmlfile=", "ofile=", "caltag="])
@@ -32,7 +34,7 @@ if __name__ == '__main__':
     print ('missing option: -s path/to/steerfiles')
     sys.exit(2)  
   
-  if xmlfile == '':
+  if path == []:
     print ('missing option: -x steerfile.xml')
     sys.exit(2)  
 

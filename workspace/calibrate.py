@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 
 import tbsw
+import getopt 
+import sys
 
 if __name__ == '__main__':
   
@@ -20,32 +22,26 @@ if __name__ == '__main__':
          ]
   
   try:
-    opts, args = getopt.getopt(sys.argv[1:],"hs:x:i:c:",["steerfiles=", "xmlfiles=", "ifile=", "caltag="])
+    opts, args = getopt.getopt(sys.argv[1:],"hs:i:c:",["steerfiles=", "ifile=", "caltag="])
   except getopt.GetoptError: 
     print ('For help, please execute: reco.py -h ')   
     sys.exit()   
   
   for opt, arg in opts:
     if opt == '-h':
-      print ('reco.py -s <steerfiles>  -x <xmlfile> -i <ifile> -c <caltag>')
+      print ('reco.py -s <steerfiles>  -i <ifile> -c <caltag>')
       sys.exit()
     elif opt in ("-s", "--steerfiles"):
       steerfiles = arg
-    elif opt in ("-x", "--xmlfiles"):
-      path = [arg]
     elif opt in ("-i", "--ifile"):
-      ofile = arg
+      ifile = arg
     elif opt in ("-c", "--caltag"):
       caltag = arg
   
   if steerfiles == '':
     print ('missing option: -s path/to/steerfiles')
     sys.exit()  
-  
-  if xmlfile == '':
-    print ('missing option: -x steerfile.xml')
-    sys.exit()   
-  
+   
   if ifile == '':
     print ('missing option: -i path/to/inputfilename')
     sys.exit()  

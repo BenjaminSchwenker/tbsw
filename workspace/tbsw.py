@@ -9,7 +9,6 @@ Utility code to use TBSW in pyhton scripts
 import os
 import shutil
 import subprocess
-import sys, getopt 
 import glob
 
 class Environment(object):
@@ -34,45 +33,49 @@ class Environment(object):
     self.cwdir = os.getcwd() 
     self.tmpdir = os.path.join(self.cwdir+'/tmp-runs',self.name)  
     
-    # create an empty tmpdir
+    # create tmp-runs if not exist
     if not os.path.isdir(self.cwdir+'/tmp-runs'):
       os.mkdir(self.cwdir+'/tmp-runs')
+
+    # remove old tmpdir if exists 
     if os.path.isdir(self.tmpdir):
       shutil.rmtree(self.tmpdir)
-    os.mkdir(self.tmpdir)   
     
-    # copy the steer files 
-    if not os.path.isdir(steerfiles):
-      print ('[PRINT] error: no steerfiles found')        
+    # create tmpdir (containing steer files)
+    if os.path.isdir(steerfiles):
+      shutil.copytree(steerfiles,self.tmpdir)   
     else: 
-      shutil.copytree(steerfiles,self.tmpdir)
-      
+      raise ValueError('No steerfiles can be found')
+     
   def add_caltag(self, caltag):  
     self.caltag = caltag
     # check that calibration files exist
     caldir = self.cwdir+'/cal-files/'+caltag   
-    if not os.path.isdir(caldir):
-      print ('[Print] warning: no calibration data found')  
-    else: 
+    if os.path.isdir(caldir):
       # copy calibration files 
-      shutil.copytree(caldir,self.tmpdir+'/cal-files')
+      shutil.copytree(caldir,self.tmpdir+'/cal-files')  
+    else: 
+      print ('[INFO] Caltag not found') 
     
   
   def create_caltag(self, caltag):
     self.caltag = caltag
-    # create new calibration tag    
+    caldir = self.cwdir+'/cal-files/'+caltag
+    
+    # create folder cal-files if not exist    
     if not os.path.isdir(self.cwdir+'/cal-files'):
       os.mkdir(self.cwdir+'/cal-files')
-    caldir = self.cwdir+'/cal-files/'+caltag  
+    # overwrite caltag if exists     
     if os.path.isdir(caldir):
-      shutil.rmtree(caldir)   
-    os.mkdir(caldir)		
+      shutil.rmtree(caldir)
     
-    # popule caltag with DB files    
-    for dbfile in glob.glob('*DB*'): 
-      shutil.copy(dbfile, os.path.join(caldir,dbfile))  
-    # treat the gear file as a calibration file as well
-    shutil.copy('gear.xml', os.path.join(caldir,'gear.xml'))  
+    #create caltag and populate with DB files    
+    os.mkdir(caldir)		 
+    for dbfile in glob.glob(self.tmpdir + '/*DB*'): 
+      shutil.copy(dbfile, os.path.join(caldir,os.path.basename(dbfile)))  
+    
+    print ('[INFO] Created new caltag ', caltag) 
+     
   	                           
   def link_input(self, inputfile):
     self.runtag = os.path.splitext(os.path.basename(inputfile))[0]
@@ -86,7 +89,7 @@ class Environment(object):
       logfile = os.path.splitext( os.path.basename(xmlfile))[0] + '.log'
       action = '/$MARLIN/bin/Marlin ' + xmlfile + ' > ' + logfile + ' 2>&1'
       subprocess.call(action, shell=True)
-      print ('[Print] Executing Marlin ' + xmlfile + ' is done')    
+      print ('[INFO] Marlin ' + xmlfile + ' is done')    
     
     # remove tmp* files 
     for tmpfile in glob.glob('tmp*'):
@@ -146,7 +149,7 @@ def reconstruct(steerfiles, path, caltag, ifile):
   :author: benjamin.schwenker@phys.uni-goettinge.de  
   """   
   
-  print ('[Print] Starting to process file ' + ifile + ' ...')  
+  print ('[INFO] Starting to process file ' + ifile + ' ...')  
   
   name = os.path.splitext(os.path.basename(ifile))[0] + '-' + caltag + '-reco'
   env = Environment(name=name, steerfiles=steerfiles)  
@@ -155,7 +158,7 @@ def reconstruct(steerfiles, path, caltag, ifile):
   env.run(path)
   env.copy_rootfiles()
 
-  print ('[Print] Done processing file ' + ifile)  
+  print ('[INFO] Done processing file ' + ifile)  
 
   return None
 
@@ -172,7 +175,7 @@ def calibrate(steerfiles, path, caltag, ifile):
   :author: benjamin.schwenker@phys.uni-goettinge.de  
   """   
   
-  print ('[Print] Starting to process file ' + ifile + ' ...')    
+  print ('[INFO] Starting to process file ' + ifile + ' ...')    
   
   name = os.path.splitext(os.path.basename(ifile))[0] + '-' + caltag + '-cal'
   env = Environment(name=name, steerfiles=steerfiles)  
@@ -180,7 +183,7 @@ def calibrate(steerfiles, path, caltag, ifile):
   env.run(path)
   env.create_caltag(caltag) 
   
-  print ('[Print] Done processing file ' + ifile)  
+  print ('[INFO] Done processing file ' + ifile)  
      
   return None
 

@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 
 import tbsw
+import getopt 
+import sys
 
 
 if __name__ == '__main__':
@@ -8,7 +10,7 @@ if __name__ == '__main__':
   steerfiles = ''
   ifile = ''
   caltag = 'default'
-  path = ['reco.xml']
+  path = []
 
   try:
     opts, args = getopt.getopt(sys.argv[1:],"hs:x:i:c:",["steerfiles=", "xmlfile=", "ifile=", "caltag="])
@@ -25,7 +27,7 @@ if __name__ == '__main__':
     elif opt in ("-x", "--xmlfile"):
       path = [arg]
     elif opt in ("-i", "--ifile"):
-      ofile = arg
+      ifile = arg
     elif opt in ("-c", "--caltag"):
       caltag = arg
   
@@ -33,7 +35,7 @@ if __name__ == '__main__':
     print ('missing option: -s path/to/steerfiles')
     sys.exit()  
   
-  if xmlfile == '':
+  if path == []:
     print ('missing option: -x steerfile.xml')
     sys.exit()   
 
