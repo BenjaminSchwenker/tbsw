@@ -5,18 +5,19 @@ import tbsw
 if __name__ == '__main__':
   
   steerfiles = ''
-  path = ['reco.xml']
   ofile = 'mcdata.slcio'
   caltag = 'default'
+  path = ['simulate.xml']
   
   try:
     opts, args = getopt.getopt(sys.argv[1:],"hs:x:o:c:",["steerfiles=", "xmlfile=", "ofile=", "caltag="])
   except getopt.GetoptError:    
-    sys.exit(2)
+    print ('For help, please execute: simulate.py -h ')
+    sys.exit()
   
   for opt, arg in opts:
     if opt == '-h':
-      print ('simulate.py -s <steerfiles>  -x <xmlfile> -o <outputfile> -c <caltag>')
+      print ('simulate.py -s <steerfiles>  -x <xmlfile> -o <ofile> -c <caltag>')
       sys.exit()
     elif opt in ("-s", "--steerfiles"):
       steerfiles = arg
@@ -35,5 +36,5 @@ if __name__ == '__main__':
     print ('missing option: -x steerfile.xml')
     sys.exit(2)  
 
-  tbsw.simulate(steerfiles, path, caltag, ofile)
+  tbsw.simulate(steerfiles=steerfiles, path=path, caltag=caltag, ofile=ofile)
 

@@ -155,10 +155,12 @@ def reconstruct(steerfiles, path, caltag, ifile):
   env.run(path)
   env.copy_rootfiles()
 
+  print ('[Print] Done processing file ' + ifile)  
+
   return None
 
 
-def calibrate(steerfiles, marlinpath, caltag, ifile):
+def calibrate(steerfiles, path, caltag, ifile):
   """
   Calibrate raw data from a test beam experiment. 
   
@@ -168,13 +170,17 @@ def calibrate(steerfiles, marlinpath, caltag, ifile):
   :@ifile:      name of input file with raw data
   
   :author: benjamin.schwenker@phys.uni-goettinge.de  
-  """     
+  """   
+  
+  print ('[Print] Starting to process file ' + ifile + ' ...')    
   
   name = os.path.splitext(os.path.basename(ifile))[0] + '-' + caltag + '-cal'
   env = Environment(name=name, steerfiles=steerfiles)  
   env.link_input(ifile)
   env.run(path)
   env.create_caltag(caltag) 
+  
+  print ('[Print] Done processing file ' + ifile)  
      
   return None
 
