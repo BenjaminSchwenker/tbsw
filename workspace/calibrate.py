@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 
-import tbsw
-import getopt 
-import sys
+from tbsw import *
 
 if __name__ == '__main__':
   
@@ -37,14 +35,7 @@ if __name__ == '__main__':
       ifile = arg
     elif opt in ("-c", "--caltag"):
       caltag = arg
-  
-  if steerfiles == '':
-    print ('missing option: -s path/to/steerfiles')
-    sys.exit()  
-   
-  if ifile == '':
-    print ('missing option: -i path/to/inputfilename')
-    sys.exit()  
-  
-  tbsw.calibrate(steerfiles=steerfiles, path=path, caltag=caltag, ifile=ifile) 
 
+   name = os.path.splitext(os.path.basename(ifile))[0] + '-' + caltag + '-cal' 
+   CalObj = Calibration(steerfiles=steerfiles, name=name )
+   CalObj.calibrate(path=path,ifile=ifile,caltag=caltag)  
