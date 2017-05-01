@@ -1,5 +1,5 @@
-### Welcome to the world of test beam data analysis  ### 
 
+### Introduction to the test beam analysis software (TBSW) ###
 
 The test beam software framework (tbsw) deals with the reconstruction and analysis of test beam data obtained with the 
 EUDET/AIDA reference telescope. Test beams are all about learning about a device under test, or DUT, installed in the 
