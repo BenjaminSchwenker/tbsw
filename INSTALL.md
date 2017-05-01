@@ -102,18 +102,16 @@ After the installation is done, you can test the software by running a small tes
 
 - . init_tbsw.sh 
 
-All actuall work with tbsw is encapsulated in workspaces. The installation comes with a workspace template workspace. The script init_tbsw.sh sets all needed
-environment variables needed for working with TBSW.
+All actuall work with tbsw is encapsulated in workspaces. The installation comes with a template workspace. You can test the installation by entering the 
+workspace folder and do: 
 
-- ./simulate.py -g steering-files/x0-sim/gear-misaligned.xml -x steering-files/x0-sim/simulation.xml -o mctest.slcio
+- . init_tbsw.sh
+- python tbsw_example.py
 
-- ./calibrate.py -i mctest.slcio -x steering-files/x0-sim/ -c test
 
-- ./reco.py -i mctest.slcio -x steering-files/x0-sim/reco.xml -c test
+The script init_tbsw.sh sets all needed environment variables needed for working with TBSW. The script tbsw_example.py shows how to work with TBSW using 
+python scripting. 
 
-The first command creates a file mctest.slcio containing a number of events with tracks crossing a pixel telescope. The second command calibrates the telescope 
-from data and creates a calibration tag 'test'. The thrid command uses the calibration tag 'test' to reconstruct all simulated events. The result is a root file 
-in the folder root-files.  
 
 Some more information on the usage of tbsw can be found in the README files. 
 
