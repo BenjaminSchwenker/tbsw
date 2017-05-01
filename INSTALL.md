@@ -1,49 +1,49 @@
 
-### INSTALL test beam analysis software (TBSW) ###
+# INSTALL test beam analysis software (TBSW) 
 
 The installation procedure is tested on ubuntu 16.04. 
 
 
-# Prerequisites #
+# Prerequisites 
 
 Make sure the following packages are installed on your local machine before you try to install TBSW. 
 
-# Cmake #
+# Cmake 
 
 You need version of Cmake greater 3. You can find more information about Cmake at this URL https://cmake.org/download/. 
 
 In case you are working with Ubuntu, the following recipe may work for you as well: 
 
-- sudo apt-get install software-properties-common
-
-- sudo add-apt-repository ppa:george-edison55/cmake-3.x
-
-- sudo apt-get update
-
-- sudo apt-get install cmake
+```
+$ sudo apt-get install software-properties-common
+```
+```
+$ sudo add-apt-repository ppa:george-edison55/cmake-3.x
+```
+```
+$ sudo apt-get update
+```
+```
+$ sudo apt-get install cmake
+```
 
 taken from http://askubuntu.com/questions/610291/how-to-install-cmake-3-2-on-ubuntu-14-04
 
-# CLHEP #
+# CLHEP 
 
 The project home page can be found at this URL http://proj-clhep.web.cern.ch/proj-clhep/. It is most convinient to install CLHEP from the git 
 repository. 
 
-- git clone https://gitlab.cern.ch/CLHEP/CLHEP.git
-
-- mkdir CLHEP_Install
-
-- mkdir CLHEP_Build
-
-- cd CLHEP_Build
-
-- cmake -DCMAKE_INSTALL_PREFIX=/home/fmu/CLHEP_Install /home/fmu/CLHEP
-
-- cmake --build . --config RelWithDebInfo
-
-- ctest
-
-- cmake --build . --target install
+```
+$ git clone https://gitlab.cern.ch/CLHEP/CLHEP.git
+$ mkdir CLHEP_Install
+$ mkdir CLHEP_Build
+$ cd CLHEP_Build
+$ cmake -DCMAKE_INSTALL_PREFIX=/home/fmu/CLHEP_Install /home/fmu/CLHEP
+$ cmake --build . --config RelWithDebInfo
+$ ctest
+$ cmake --build . --target install
+```
 
 # JAVA #
 
