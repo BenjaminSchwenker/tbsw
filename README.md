@@ -146,14 +146,32 @@ RecObj.reconstruct(path=['reco.xml'],ifile=rawfile,caltag=caltag)
 
 ```
 
-
-
 You can run the script by typing:  
 
 ```
 $ python tbsw_example.py
 ```
 
+In case the script is working, your console should display the following: 
+
+```
+[INFO] Starting to simulate mc.slcio ...
+[INFO] Marlin simulation.xml is done
+[INFO] Starting to calibrate file mc.slcio ...
+[INFO] Marlin hotpixelkiller.xml is done
+[INFO] Marlin cluster-calibration-mc.xml is done
+[INFO] Marlin correlator.xml is done
+[INFO] Marlin kalmanalign-iteration-1.xml is done
+[INFO] Marlin kalmanalign-iteration-2.xml is done
+[INFO] Marlin kalmanalign-iteration-2.xml is done
+[INFO] Marlin kalmanalign-iteration-2.xml is done
+[INFO] Marlin telescope-dqm.xml is done
+[INFO] Created new caltag  default
+[INFO] Done processing file mc.slcio
+[INFO] Starting to reconstruct file mc.slcio ...
+[INFO] Marlin reco.xml is done
+[INFO] Done processing file mc.slcio
+```
 
 
 
