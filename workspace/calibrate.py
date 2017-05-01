@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 from tbsw import *
+import getopt, sys
 
 if __name__ == '__main__':
   
@@ -35,7 +36,7 @@ if __name__ == '__main__':
       ifile = arg
     elif opt in ("-c", "--caltag"):
       caltag = arg
-
-   name = os.path.splitext(os.path.basename(ifile))[0] + '-' + caltag + '-cal' 
-   CalObj = Calibration(steerfiles=steerfiles, name=name )
-   CalObj.calibrate(path=path,ifile=ifile,caltag=caltag)  
+   
+  name = os.path.splitext(os.path.basename(ifile))[0] + '-' + caltag + '-cal' 
+  CalObj = Calibration(steerfiles=steerfiles, name=name )
+  CalObj.calibrate(path=path,ifile=ifile,caltag=caltag)  

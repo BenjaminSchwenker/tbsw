@@ -1,20 +1,21 @@
 #!/usr/bin/python3
 
 from tbsw import *
+import getopt, sys
 
 if __name__ == '__main__':
   
-  steerfiles = ''
+  steerfiles = 'reco.xml'
   ifile = ''
   caltag = 'default'
   path = []
-
+  
   try:
     opts, args = getopt.getopt(sys.argv[1:],"hs:x:i:c:",["steerfiles=", "xmlfile=", "ifile=", "caltag="])
   except getopt.GetoptError: 
     print ('For help, please execute: reco.py -h ')   
     sys.exit()   
-
+  
   for opt, arg in opts:
     if opt == '-h':
       print ('reco.py -s <steerfiles>  -x <xmlfile> -i <ifile> -c <caltag>')

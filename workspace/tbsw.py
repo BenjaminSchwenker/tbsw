@@ -8,6 +8,7 @@ import os
 import shutil
 import subprocess
 import glob
+import xml.etree.ElementTree
 
 class Environment(object):
   """
@@ -95,7 +96,7 @@ class Environment(object):
     else: 
       raise ValueError('No input file found')
   
-  def get_name(self, filename):
+  def get_filename(self, filename):
     localname = os.path.join(self.tmpdir,filename)
     if os.path.isfile(localname):
       return localname  
@@ -205,4 +206,26 @@ class Calibration(Environment):
     self.create_caltag(caltag) 
     
     print ('[INFO] Done processing file ' + ifile)  
+
+
+def override_xmlfile(xmlfile=None, procname=None, paramname=None, value=None):
+  """
+  Overrides proecessor parameters in Marlin XML steering file. 
+    :@xmlfile:    Marlin steering file to be overwritten  
+    :@procname:   name of a processor in xmlfile 
+    :@procname:   name of procesesor parameter   
+    :@value:      value of the parameter 
+ 
+    :author: benjamin.schwenker@phys.uni-goettinge.de  
+    """   
+  tree = xml.etree.ElementTree.parse(xmlfile)
+  root = tree.getroot() 
+  
+  for proc in root.findall('processor'):
+    if proc.get('name') == procname:
+      for param in proc.findall('parameter'):
+        if param.get('name') ==  paramname:
+          param.set('value', str(value)) 
+  
+  tree.write(xmlfile)    
      
