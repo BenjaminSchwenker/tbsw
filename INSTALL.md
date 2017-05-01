@@ -17,6 +17,7 @@ In case you are working with Ubuntu, the following recipe may work for you as we
 ```
 $ sudo apt-get install software-properties-common
 ```
+
 ```
 $ sudo add-apt-repository ppa:george-edison55/cmake-3.x
 ```
