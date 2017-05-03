@@ -332,8 +332,9 @@ namespace depfet {
     string histoName;  
        
     _rootFile->cd("");
-
+    
     histoName = "hDB_Coverage";
+    _histoMap[histoName] = new TH1F(histoName.c_str(),"",1,0,1);
     _histoMap[histoName]->SetStats( false );
     _histoMap[histoName]->SetYTitle("fraction [%]");
     _histoMap[histoName]->SetBinContent( 1, 100.0*countReject/countAll );
