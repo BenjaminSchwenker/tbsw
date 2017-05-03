@@ -11,7 +11,6 @@ Author: Benjamin Schwenker <benjamin.schwenker@phys.uni-goettingen.de>
 """
 
 from tbsw import *
-import getopt, sys
 
 # Path to steering files 
 steerfiles = 'steering-files/x0-sim/'
