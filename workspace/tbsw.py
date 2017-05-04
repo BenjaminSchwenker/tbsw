@@ -45,7 +45,7 @@ class Environment(object):
     if os.path.isdir(steerfiles):
       shutil.copytree(steerfiles,self.tmpdir)   
     else: 
-      raise ValueError('No steerfiles can be found')
+      raise ValueError('Steerfiles ', steerfiles, ' cannot be found. ', os.getcwd() )
     
   def run(self,path):
     # run Marlin in tmpdir  
@@ -104,14 +104,11 @@ class Environment(object):
       raise ValueError('No file found')   
     
   def copy_rootfiles(self):
-    # cd into tmpdir  
-    os.chdir(self.tmpdir)
-     
-    # copy root files 
+    # create root-files if not exist 
     if not os.path.isdir(self.cwdir+'/root-files'):
       os.mkdir(self.cwdir+'/root-files')
     
-    for rootfile  in glob.glob('*.root'): 
+    for rootfile  in glob.glob(self.tmpdir + '/*.root'): 
       basename = os.path.splitext(os.path.basename(rootfile))[0]
       shutil.move(rootfile, self.cwdir+'/root-files/'+basename+'-'+self.name+'.root')  
     
