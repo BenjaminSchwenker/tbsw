@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="us-ascii"?>
+
+<marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
+
+   <execute>
+      <processor name="M26Unpacker"/>
+      <processor name="M26Clusterizer"/>
+      <processor name="M26HitMaker"/>
+      <processor name="M26RawDQM"/>
+      <processor name="StripUnpacker"/>
+      <processor name="StripClusterizer"/>
+      <processor name="StripHitMaker"/>
+      <processor name="StripRawDQM"/>
+      <processor name="TelCorrelator"/>
+      <processor name="LCIOOutput"/>
+   </execute>
+
+   <global>
+      <parameter name="LCIOInputFiles"> inputfilename </parameter>
+      <parameter name="GearXMLFile" value="gear.xml"/>
+      <parameter name="MaxRecordNumber" value="200000"/>
+      <parameter name="SkipNEvents" value="0"/>
+      <parameter name="SupressCheck" value="false"/>
+      <parameter name="Verbosity" value="MESSAGE3"/>
+   </global>
+    
+   
+
+   <processor name="M26Unpacker" type="TelUnpacker">
+ <!--TelUnpacker: Reformat telescope cluster data to raw data-->
+  <!--Name of collection containing telescope data-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData"> original_zsdata </parameter>
+  <!--Name of the output cluster collection-->
+  <parameter name="ClusterCollectionName" type="string" lcioOutType="TrackerData"> zsdata_m26 </parameter>
+  <!--Unpack digits from detectors having DAQ IDs in this list-->
+  <parameter name="FilterIDs" type="IntVec" value="0 1 2 3 4 5"/>
+  <!--How many floats are used to encode a digit-->
+  <parameter name="Modulus" type="int" value="4"/>
+ </processor>
+
+  <processor name="M26Clusterizer" type="PixelClusterizer">
+     <!--PixelClusterizer: Looking for clusters in zs pixel data-->
+     <!--This is the name of the ROOT file with the status mask (add .root)-->
+     <parameter name="NoiseDBFileName" type="string" value="NoiseDB-M26.root"/>
+     <!--Name of input sparsified pixel data collection-->
+     <parameter name="SparseDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
+     <!--Name of the output cluster collection-->
+     <parameter name="ClusterCollectionName" type="string" lcioOutType="TrackerPulse"> zscluster_m26 </parameter>
+     <!--0: common side; 1: common corner; 3: max. one missing pixel-->
+     <parameter name="AcceptDiagonalCluster" type="int" value="1"/>
+     <!--Threshold for cluster signal-->
+     <parameter name="SparseClusterCut" type="float" value="0"/>
+     <!--Threshold for seed pixel signal-->
+     <parameter name="SparseSeedCut" type="float" value="0"/>
+     <!--Threshold for zero suppression-->
+     <parameter name="SparseZSCut" type="float" value="0"/>
+   </processor>
+   
+   <processor name="M26HitMaker-notused" type="GoeHitMaker">
+     <!--GoeHitMaker:  Compute hits from pixel clusters using a clusterDB-->
+     <!--Name of cluster collection-->
+     <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_m26 </parameter>
+     <!--Name of hit collection-->
+     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_m26 </parameter>
+     <!--This is the name of the ROOT file with the cluster constants (add .root)-->
+     <parameter name="ClusterDBFileName" type="string" value="clusterDB-M26.root"/>
+     <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
+     <parameter name="MaxSizeU" type="int" value="3"/>
+     <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
+     <parameter name="MaxSizeV" type="int" value="3"/>
+   </processor>
+    
+   <processor name="M26HitMaker" type="CogHitMaker">
+     <!--CogHitMaker:  Compute hits from pixel clusters -->
+     <!--Name of cluster collection-->
+     <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_m26 </parameter>
+     <!--Name of hit collection-->
+     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_m26 </parameter>
+     <!--SigmaU for cluster with one uCell contributing [mm]-->
+     <parameter name="SigmaU1" type="double" value="0.0037"/>
+     <!--SigmaU for cluster with two uCells contributing [mm]-->
+     <parameter name="SigmaU2" type="double" value="0.0033"/>
+     <!--SigmaU for cluster with three or more uCells contributing [mm]-->
+     <parameter name="SigmaU3" type="double" value="0.0050"/>
+     <!--SigmaV for cluster with one vCell contributing [mm]-->
+     <parameter name="SigmaV1" type="double" value="0.0037"/>
+     <!--SigmaV for cluster with two vCells contributing [mm]-->
+     <parameter name="SigmaV2" type="double" value="0.0033"/>
+     <!--SigmaV for cluster with three or more vCells contributing [mm]-->
+     <parameter name="SigmaV3" type="double" value="0.0050"/>
+     <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
+     <parameter name="MaxSizeU" type="int" value="3"/>
+     <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
+     <parameter name="MaxSizeV" type="int" value="3"/>
+   </processor>
+  
+   <processor name="M26RawDQM" type="RawHitDQM">
+     <!--RawHitDQM: Producing DQM histos from hits-->
+     <!--Hit collection names-->
+     <parameter name="InputHitCollectionNameVec" type="string" lcioInType="TrackerHit"> hit_m26 </parameter>
+     <!--Output root file name-->
+     <parameter name="RootFileName" type="string" value="RawDQM-M26.root"/>
+   </processor>
+   
+
+    <processor name="StripUnpacker" type="TelUnpacker">
+ <!--TelUnpacker: Reformat telescope cluster data to raw data-->
+  <!--Name of collection containing telescope data-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData"> original_zsdata </parameter>
+  <!--Name of the output cluster collection-->
+  <parameter name="ClusterCollectionName" type="string" lcioOutType="TrackerData"> zsdata_strip </parameter>
+  <!--Unpack digits from detectors having DAQ IDs in this list-->
+  <parameter name="FilterIDs" type="IntVec" value="6 7"/>
+  <!--How many floats are used to encode a digit-->
+  <parameter name="Modulus" type="int" value="4"/>
+ </processor>
+
+  
+   <processor name="StripClusterizer" type="PixelClusterizer">
+     <!--PixelClusterizer: Looking for clusters in zs pixel data-->
+     <!--This is the name of the ROOT file with the status mask (add .root)-->
+     <parameter name="NoiseDBFileName" type="string" value="NoiseDB-Strip.root"/>
+     <!--Name of input sparsified pixel data collection-->
+     <parameter name="SparseDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_strip </parameter>
+     <!--Name of the output cluster collection-->
+     <parameter name="ClusterCollectionName" type="string" lcioOutType="TrackerPulse"> zscluster_strip </parameter>
+     <!--0: common side; 1: common corner; 3: max. one missing pixel-->
+     <parameter name="AcceptDiagonalCluster" type="int" value="1"/>
+     <!--Threshold for cluster signal-->
+     <parameter name="SparseClusterCut" type="float" value="30"/>
+     <!--Threshold for seed pixel signal-->
+     <parameter name="SparseSeedCut" type="float" value="30"/>
+     <!--Threshold for zero suppression-->
+     <parameter name="SparseZSCut" type="float" value="30"/>
+   </processor>
+
+   <processor name="StripHitMaker-notused" type="GoeHitMaker">
+     <!--GoeHitMaker:  Compute hits from pixel clusters using a clusterDB-->
+     <!--Name of cluster collection-->
+     <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_strip </parameter>
+     <!--Name of hit collection-->
+     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_strip </parameter>
+     <!--This is the name of the ROOT file with the cluster constants (add .root)-->
+     <parameter name="ClusterDBFileName" type="string" value="clusterDB-Strip.root"/>
+     <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
+     <parameter name="MaxSizeU" type="int" value="3"/>
+     <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
+     <parameter name="MaxSizeV" type="int" value="3"/>
+   </processor>
+    
+   <processor name="StripHitMaker" type="CogHitMaker">
+     <!--CogHitMaker:  Compute hits from pixel clusters -->
+     <!--Name of cluster collection-->
+     <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_strip </parameter>
+     <!--Name of hit collection-->
+     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_strip </parameter>
+     <!--SigmaU for cluster with one uCell contributing [mm]-->
+     <parameter name="SigmaU1" type="double" value="0.020"/>
+     <!--SigmaU for cluster with two uCells contributing [mm]-->
+     <parameter name="SigmaU2" type="double" value="0.016"/>
+     <!--SigmaU for cluster with three or more uCells contributing [mm]-->
+     <parameter name="SigmaU3" type="double" value="0.100"/>
+     <!--SigmaV for cluster with one vCell contributing [mm]-->
+     <parameter name="SigmaV1" type="double" value="2.3"/>
+     <!--SigmaV for cluster with two vCells contributing [mm]-->
+     <parameter name="SigmaV2" type="double" value="2.3"/>
+     <!--SigmaV for cluster with three or more vCells contributing [mm]-->
+     <parameter name="SigmaV3" type="double" value="2.3"/>
+     <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
+     <parameter name="MaxSizeU" type="int" value="3"/>
+     <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
+     <parameter name="MaxSizeV" type="int" value="3"/>
+   </processor>
+  
+   <processor name="StripRawDQM" type="RawHitDQM">
+     <!--RawHitDQM: Producing DQM histos from hits-->
+     <!--Hit collection names-->
+     <parameter name="InputHitCollectionNameVec" type="string" lcioInType="TrackerHit"> hit_strip </parameter>
+     <!--Output root file name-->
+     <parameter name="RootFileName" type="string" value="RawDQM-Strip.root"/>
+   </processor>
+    
+   
+  <processor name="TelCorrelator" type="Correlator">
+     <!--Correlator: Pre- alignment in xy of tracking telescopes-->
+     <!--Hit collection names-->
+     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> hit_m26  </parameter>
+     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+     <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
+     <!--This is the name of the output root file-->
+     <parameter name="OutputRootFileName" type="string" value="XCorrelator.root"/>
+     <!--Reference sensor plane number, counted along beam line-->
+     <parameter name="ReferencePlane" type="int" value="0"/>
+     <!--Particle charge [e]-->
+     <parameter name="ParticleCharge" type="double" value="-1"/>
+     <!--Particle mass [GeV]-->
+     <parameter name="ParticleMass" type="double" value="0.000511"/>
+     <!--Particle momentum [GeV]-->
+     <parameter name="ParticleMomentum" type="double" value="4.0"/>
+     <!--Update alignment DB using offset corrections (true/false)?-->
+     <parameter name="UpdateAlignment" type="bool" value="true"/>
+   </processor>
+   
+   <processor name="LCIOOutput" type="LCIOOutputProcessor">
+     <!--Writes the current event to the specified LCIO outputfile. Needs to be the last ActiveProcessor.-->
+     <!-- name of output file -->
+     <parameter name="LCIOOutputFile" type="string" value="tmp.slcio "/>
+     <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
+     <parameter name="LCIOWriteMode" type="string" value="None"/>
+     <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
+     <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
+   </processor>
+   
+</marlin>
