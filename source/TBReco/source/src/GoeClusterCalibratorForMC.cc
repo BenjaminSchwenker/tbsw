@@ -423,6 +423,13 @@ namespace depfet {
     string histoName;  
        
     _rootFile->cd("");
+    
+    histoName = "hDB_Coverage";
+    _histoMap[histoName] = new TH1F(histoName.c_str(),"",1,0,1);
+    _histoMap[histoName]->SetStats( false );
+    _histoMap[histoName]->SetYTitle("coverage [%]");
+    _histoMap[histoName]->SetBinContent( 1, 100.0 - 100.0*countReject/countAll );
+    _histoMap[histoName]->GetXaxis()->SetBinLabel( 1, "cluster found in clusterDB" );
       
     histoName = "hDB_Weight";
     _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);

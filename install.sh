@@ -77,6 +77,7 @@ echo "#-------------------------------------------------------------------------
 echo "export ROOTSYS="${ROOTSYS}"" >> init_tbsw.sh
 echo "export PATH="${ROOTSYS}/bin:${PATH}"" >> init_tbsw.sh
 echo "export LD_LIBRARY_PATH="${ROOTSYS}/lib:${LD_LIBRARY_PATH}"" >> init_tbsw.sh
+echo "export PYTHONPATH="${ROOTSYS}/lib"" >> init_tbsw.sh
 echo "" >> init_tbsw.sh
 
 echo "#--------------------------------------------------------------------------------" >> init_tbsw.sh
