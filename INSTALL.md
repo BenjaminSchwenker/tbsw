@@ -30,14 +30,23 @@ repository.
 
 ```
 $ git clone https://gitlab.cern.ch/CLHEP/CLHEP.git
-$ mkdir CLHEP_Install
-$ mkdir CLHEP_Build
-$ cd CLHEP_Build
-$ cmake -DCMAKE_INSTALL_PREFIX=/home/fmu/CLHEP_Install /home/fmu/CLHEP
-$ cmake --build . --config RelWithDebInfo
+```
+
+This create a folder CLHEP in your current working directory containing the CLHEP repository. Now create two further directories <installdir> and <builddir>
+and build the software.  
+
+
+```
+$ mkdir <installdir> 
+$ mkdir <builddir> 
+$ cd <builddir> 
+$ cmake -DCMAKE_INSTALL_PREFIX=<installdir>  ../CLHEP
+$ cmake --build . 
 $ ctest
 $ cmake --build . --target install
 ```
+
+In the end, the folder <installdir> should contain bin/ include/ and lib/ subfolders. 
 
 # JAVA 
 
@@ -70,7 +79,7 @@ $ cmake ../root
 $ cmake --build . 
 ```
 
-Add bin/ to PATH and lib/ to LD_LIBRARY_PATH. For the sh shell family do:
+For the sh shell family do:
  
 ```  
 $ . bin/thisroot.sh
@@ -78,7 +87,7 @@ $ . bin/thisroot.sh
 
 # Python 
 
-There are many ways to get python. One convinient way is to use the ANACONDA package that can be found here https://www.continuum.io/DOWNLOADS. 
+You should use your default system version of Python. This was also used for installing Root and is needed for working with PyRoot.
 
 # QT4 
 
