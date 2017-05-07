@@ -62,7 +62,7 @@
      <!--Name of zero suppressed data collection-->
      <parameter name="InputCollectionName" type="string" lcioInType="TrackerData"> zsdata_strip </parameter>
      <!--Maximum hit rate (hits/events) for normal pixels-->
-     <parameter name="MaxOccupancy" type="float" value="0.01"/>
+     <parameter name="MaxOccupancy" type="float" value="0.5"/>
      <!--This is the name of the noiseDB file-->
      <parameter name="NoiseDBFileName" type="string" value="NoiseDB-Strip.root"/>
      <!--Zero suppression threshold for digits [ADU]-->

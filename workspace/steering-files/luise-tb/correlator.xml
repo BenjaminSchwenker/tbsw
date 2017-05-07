@@ -184,7 +184,7 @@
   <processor name="TelCorrelator" type="Correlator">
      <!--Correlator: Pre- alignment in xy of tracking telescopes-->
      <!--Hit collection names-->
-     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> hit_m26  </parameter>
+     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> hit_m26 hit_strip </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
      <!--This is the name of the output root file-->
