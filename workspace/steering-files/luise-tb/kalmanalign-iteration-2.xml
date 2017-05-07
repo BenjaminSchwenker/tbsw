@@ -37,7 +37,7 @@
      <!--Maximum track chisq in track fit-->
      <parameter name="MaxTrackChi2" type="float" value="100"/>
      <!--Maximum number of consecutive missing hits in track-->
-     <parameter name="MaximumGap" type="int" value="0"/>
+     <parameter name="MaximumGap" type="int" value="1"/>
      <!--Maximum slope of candiate tracks in Z=0 plane (rad). Set cut to zero to deactivate.-->
      <parameter name="MaximumSlope" type="float" value="0.1"/>
      <!--Minimum number of hits in track-->
