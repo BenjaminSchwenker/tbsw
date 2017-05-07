@@ -104,8 +104,15 @@ $ git clone https://BenjaminSchwenker@bitbucket.org/BenjaminSchwenker/tbsw.git
 $ cd tbsw
 ```
 
-Now, open the script install.sh and edit the two first lines with exports for ROOTSYS and CLHEP to the locations on your local machine. Save the edits and 
-close the file. Run the install script: 
+Open the script install.sh and edit the two first lines with exports for ROOTSYS and CLHEP_HOME to the locations on your local machine. 
+For example: 
+
+```
+export CLHEP_HOME=/home/benjamin/soft/CLHEP-2-3-4-3/lib/CLHEP-2.3.4.3   # points to folder containing CLHEPConfig.cmake
+export ROOTSYS=/home/benjamin/soft/root                                 # points to your root installation 
+```
+
+Save the edits and close the file. Run the install script: 
 
 ```
 $ . install.sh
