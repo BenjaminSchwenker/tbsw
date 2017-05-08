@@ -37,16 +37,17 @@ and build the software.
 
 
 ```
-$ mkdir <installdir> 
-$ mkdir <builddir> 
-$ cd <builddir> 
-$ cmake -DCMAKE_INSTALL_PREFIX=<installdir>  ../CLHEP
+$ mkdir <clhep-installdir> 
+$ mkdir <clhep-builddir> 
+$ cd <clhep-builddir> 
+$ cmake -DCMAKE_INSTALL_PREFIX=<clhep-installdir>  ../CLHEP
 $ cmake --build . 
 $ ctest
 $ cmake --build . --target install
 ```
 
-In the end, the folder <installdir> should contain bin/ include/ and lib/ subfolders. 
+The folder <clhep-builddir> may be deleted afterwards. In the end, the folder <clhep-installdir> should contain bin/ include/ and lib/ subfolders. 
+
 
 # JAVA 
 
@@ -68,21 +69,27 @@ The release specific tag can be obtained using for example:
 ```
 $ cd root
 $ git checkout -b v6-08-06 v6-08-06  
+$ cd ..
 ```
 
 You want to install in a generic directory, depending on environment variables ROOTSYS, LD_LIBRARY_PATH, and PATH.
 
 ```
-$ mkdir <builddir>
-$ cd <builddir>
-$ cmake ../root
-$ cmake --build . 
+$ mkdir <root-installdir>
+$ mkdir <root-builddir>
+$ cd <root-builddir>
+$ cmake -DCMAKE_INSTALL_PREFIX=<root-installdir>  ../root
+$ cmake --build . --target install
 ```
 
-For the sh shell family do:
+The folder <root-builddir> may be deleted afterwards. In the end, the folder <root-installdir> should contain bin/ include/ and lib/ subfolders.
+In order to test the root installation, just do:
+
  
 ```  
+$ cd <absolute-path-to-root-installdir>
 $ . bin/thisroot.sh
+$ root 
 ```
 
 # Python 
@@ -108,8 +115,8 @@ Open the script install.sh and edit the two first lines with exports for ROOTSYS
 For example: 
 
 ```
-export CLHEP_HOME=/home/benjamin/soft/CLHEP-2-3-4-3/lib/CLHEP-2.3.4.3   # points to folder containing CLHEPConfig.cmake
-export ROOTSYS=/home/benjamin/soft/root                                 # points to your root installation 
+export CLHEP_HOME=<absolute-path-to-clhep-installdir>/lib/CLHEP-2.3.4.3         # See CLHEP section above, points to folder containing CLHEPConfig.cmake
+export ROOTSYS=<absolute-path-to-root-installdir>                               # See Root section above
 ```
 
 Save the edits and close the file. Run the install script: 
