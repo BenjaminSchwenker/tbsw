@@ -126,14 +126,13 @@ $ . install.sh
 ```
 
 After the installation is done, you can test the software by running a small test beam simulation. All actuall work with tbsw is encapsulated in workspaces. The installation comes with a template workspace. The first two lines make a copy of the template workspace and cd into it. 
-needed for working with TBSW. 
 
 ```
-$ cp -r workspace /home/myself/workspace-test
-$ cd /home/me/workspace-test 
+$ cp -r workspace ~/workspace-test
+$ cd ~/workspace-test 
 ```
 
-The script init_tbsw.sh sets all needed environment variables. The script tbsw_example.py shows how to work with TBSW using python scripting. 
+The script init_tbsw.sh sets all needed environment variables. The script tbsw_example.py shows how to run the simulation using python scripting. 
 
 ```
 $ . init_tbsw.sh 
