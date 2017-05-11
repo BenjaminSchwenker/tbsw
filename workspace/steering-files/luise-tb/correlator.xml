@@ -64,10 +64,6 @@
      <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_m26 </parameter>
      <!--This is the name of the ROOT file with the cluster constants (add .root)-->
      <parameter name="ClusterDBFileName" type="string" value="clusterDB-M26.root"/>
-     <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
-     <parameter name="MaxSizeU" type="int" value="3"/>
-     <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
-     <parameter name="MaxSizeV" type="int" value="3"/>
    </processor>
     
    <processor name="M26HitMaker" type="CogHitMaker">
@@ -142,10 +138,6 @@
      <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_strip </parameter>
      <!--This is the name of the ROOT file with the cluster constants (add .root)-->
      <parameter name="ClusterDBFileName" type="string" value="clusterDB-Strip.root"/>
-     <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
-     <parameter name="MaxSizeU" type="int" value="3"/>
-     <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
-     <parameter name="MaxSizeV" type="int" value="3"/>
    </processor>
     
    <processor name="StripHitMaker" type="CogHitMaker">
