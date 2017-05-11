@@ -66,16 +66,6 @@ namespace depfet {
     registerProcessorParameter("ClusterDBFileName",
                                "This is the name of the ROOT file with the cluster constants (add .root)",
                                _clusterDBFileName, static_cast< string > ( "ClusterDB.root" ) ); 
-    
-    registerProcessorParameter ("MaxSizeU", 
-                                "Clusters having more u cells marked as bad [and can be filterd in track finder]",
-                                _maxSizeU,  
-                                static_cast < int > (3));
-    
-    registerProcessorParameter ("MaxSizeV", 
-                                "Clusters having more v cells marked as bad [and can be filterd in track finder]",
-                                _maxSizeV,  
-                                static_cast < int > (3));
      
   }
   
@@ -152,7 +142,6 @@ namespace depfet {
     for(int ipl=0;ipl<_detector.GetNSensors();ipl++)  { 
       int sensorID = _detector.GetDet(ipl).GetDAQID();
       _countAllMap[sensorID] = 0;   
-      _countBadMap[sensorID] = 0;   
       _countCalMap[sensorID] = 0;  
     }
   }
@@ -211,7 +200,7 @@ namespace depfet {
       _countAllMap[sensorID]++;
       
       // Compute the cluster ID string
-      PixelCluster aCluster(cluster->getTrackerData());    
+      PixelCluster aCluster(cluster->getTrackerData());   
       string id = aCluster.getLabel(m_scale); 
       
       streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID << " with label " << id << endl; 
@@ -227,49 +216,31 @@ namespace depfet {
         // Shift position into local sensor coordinates
         u += Det.GetPixelCenterCoordU( aCluster.getVStart(), aCluster.getUStart()); 
         v += Det.GetPixelCenterCoordV( aCluster.getVStart(), aCluster.getUStart()); 
-      } else { 
-        // Fallback for computing position measurement
-        double ustart = Det.GetPixelCenterCoordU( aCluster.getVStart(), aCluster.getUStart());
-        double ustop  = Det.GetPixelCenterCoordU( aCluster.getVStart(), aCluster.getUStart() + aCluster.getUSize()-1);
-        u       = 0.5*( ustart + ustop );
-        double vstart = Det.GetPixelCenterCoordV( aCluster.getVStart(), aCluster.getUStart());
-        double vstop  = Det.GetPixelCenterCoordV( aCluster.getVStart() + aCluster.getVSize()-1 , aCluster.getUStart());
-        v       = 0.5*( vstart + vstop ); 
-        sig2_u  = std::pow(aCluster.getUSize()*Det.GetPitchU()/TMath::Sqrt(12),2);  
-        sig2_v  = std::pow(aCluster.getVSize()*Det.GetPitchV()/TMath::Sqrt(12),2);   
-        cov_uv  = 0; 
-      }
-      
-      // Too large clusters are marked as bad and can be ignored 
-      // in the track finder stage
-      if ( aCluster.getUSize() > _maxSizeU  ||  aCluster.getVSize() > _maxSizeV ) {
-        quality = 1; 
-        _countBadMap[sensorID]++;   
-      }
-      
-      // Make TBHit 
-      TBHit hit(sensorID, u, v, sig2_u, sig2_v, cov_uv, quality);
-      
-      // Make LCIO TrackerHit
-      TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
-            
-      // Add link to full cluster data 
-      LCObjectVec clusterVec;
-      clusterVec.push_back( cluster->getTrackerData() );
-      trackerhit->rawHits() = clusterVec;
-      
-      // Add hit to the hit collection
-      hitCollection->push_back( trackerhit );
-      
-      streamlog_out(MESSAGE2) << "  Label " << id << " found: " << endl
+        
+        streamlog_out(MESSAGE2) << "  Label " << id << " found: " << endl
                                 << std::setiosflags(std::ios::fixed | std::ios::internal )
                                 << std::setprecision(8)
-                                << "  offset u: " << u << ", sigma: " << TMath::Sqrt(sig2_u) << endl
-                                << "  offset v: " << v << ", sigma: " << TMath::Sqrt(sig2_v) << endl
+                                << "  u: " << u << ", sigma: " << TMath::Sqrt(sig2_u) << endl
+                                << "  v: " << v << ", sigma: " << TMath::Sqrt(sig2_v) << endl
                                 << "  cov(u,v): " << cov_uv
                                 << std::setprecision(3)
-                                << endl;   
-          
+                                << endl; 
+        
+        // Make TBHit 
+        TBHit hit(sensorID, u, v, sig2_u, sig2_v, cov_uv, quality);
+        
+        // Make LCIO TrackerHit
+        TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
+            
+        // Add link to full cluster data 
+        LCObjectVec clusterVec;
+        clusterVec.push_back( cluster->getTrackerData() );
+        trackerhit->rawHits() = clusterVec;
+        
+        // Add hit to the hit collection
+        hitCollection->push_back( trackerhit ); 
+      } 
+               
     } // End cluster loop 
       
     // Store hitCollection in LCIO file
@@ -300,11 +271,6 @@ namespace depfet {
                               << 100.0*((float)_countCalMap[sensorID]/_countAllMap[sensorID])
                               << " %"
                               << std::endl
-                              << "Fraction of bad clusters on sensorID " << sensorID << ": "
-                              << std::setprecision(4)
-                              << 100.0*((float)_countBadMap[sensorID]/_countAllMap[sensorID])
-                              << " %"
-                              << std::endl    
                               << std::endl;
     }
      

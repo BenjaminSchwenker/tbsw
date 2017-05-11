@@ -79,12 +79,6 @@ namespace depfet {
     //! Name of clusterDB file 
     std::string  _clusterDBFileName;
     
-    
-    
-    //! Clusters having more cells in u/v are considered bad
-    int _maxSizeU;
-    int _maxSizeV;
-    
    private:
     
     // Handle to detector data 
@@ -106,7 +100,6 @@ namespace depfet {
     int    _nEvt ;   //!< Event number
     
     std::map< int, int> _countAllMap;   //!< Number of clusters per sensor
-    std::map< int, int> _countBadMap;   //!< Number of bad clusters per sensor
     std::map< int, int> _countCalMap;   //!< Number of calibrated clusters per sensor
     
   }; // Class
