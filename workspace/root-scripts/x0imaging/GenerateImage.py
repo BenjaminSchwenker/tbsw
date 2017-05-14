@@ -13,7 +13,7 @@ if __name__ == '__main__':
   
   rootfile = ''
   caltag=''
-  deletetag=str(1)
+  deletetag=1
 
   try:
     opts, args = getopt.getopt(sys.argv[1:],"hi:c:d:",["ifile=","caltag=","deletetag="])
@@ -85,6 +85,9 @@ if __name__ == '__main__':
 
   # get X0 filename without path
   this_x0filename = os.path.splitext(os.path.basename(rootfile))[0]
+
+  # Get the path without the X0 filename
+  this_x0filepath = os.path.splitext(os.path.dirname(rootfile))[0]
 
   # copy rootfile to current work directory
   shutil.copy(rootfile, this_x0filename+'.root')
@@ -227,7 +230,7 @@ if __name__ == '__main__':
   for tmpfile in glob.glob('*part_*.C'):
     os.remove(tmpfile) 
 
-  if deletetag == "1":
+  if deletetag == 1:
     # clean up root files
     for tmpfile in glob.glob('*part_*.root'):
       os.remove(tmpfile) 
@@ -240,7 +243,7 @@ if __name__ == '__main__':
   os.remove(this_x0filename+'.root') 
 
   # Move results to results directory
-  resdir=fullpath+'/root-files'
+  resdir=this_x0filepath
 
   if os.path.isdir(resdir):
 	

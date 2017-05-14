@@ -14,14 +14,14 @@ if __name__ == '__main__':
   caltag=''
 
   try:
-    opts, args = getopt.getopt(sys.argv[1:],"hi:c:",["ifile=","imagefile=","scriptsfolder=","caltag="])
+    opts, args = getopt.getopt(sys.argv[1:],"hi:c:",["ifile=","caltag="])
   except getopt.GetoptError:
-    print ('GenerateImage.py -i <inputfile> -c <cal-tag>' )
+    print ('X0Calibration.py -i <inputfile> -c <cal-tag>' )
     sys.exit(2)
 
   for opt, arg in opts:
     if opt == '-h':
-      print ('GenerateImage.py -i <inputfile> -c <cal-tag>')
+      print ('X0Calibration.py -i <inputfile> -c <cal-tag>')
       sys.exit()
     elif opt in ("-i", "--ifile"):
       rootfile = arg
@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
 
   # Directory where the results will be stored and where the image file should be
-  resdir=fullpath+'/root-files'
+  resdir=os.path.splitext(os.path.dirname(rootfile))[0]
   imagefile=resdir+'/X0-completeimage.root'
 
   if os.path.isfile(imagefile):
@@ -98,28 +98,29 @@ if __name__ == '__main__':
 
   caldir=fullpath+'/cal-files/'+caltag
 
-  if os.path.isdir(caldir):
+  if not os.path.isdir(caldir):
+    os.mkdir(caldir)
 	
-    print ('[Print] Copy cfg file ') 
+  print ('[Print] Copy cfg file ') 
 
-    # save all interesting files to common folder   
-    for cfgfile in glob.glob('*.cfg'): 
-      shutil.copy(cfgfile, os.path.join(caldir,cfgfile))  
-
-  else :
-    print ('[Print] Cal tag folder does not exist! cfg file will not be copied. ') 
+  # save all interesting files to common folder   
+  for cfgfile in glob.glob('*.cfg'): 
+    shutil.copy(cfgfile, os.path.join(caldir,cfgfile))  
 
   if os.path.isdir(resdir):
+
+    if not os.path.isdir(resdir+'/calibration'):
+      os.mkdir(resdir+'/calibration')
 	
     # save all interesting files to common folder   
     for pdffile in glob.glob('*.pdf'): 
-      shutil.copy(pdffile, os.path.join(resdir,pdffile))  
+      shutil.copy(pdffile, os.path.join(resdir+'/calibration',pdffile))  
 
     for rootfile in glob.glob('*.root'): 
-      shutil.copy(rootfile, os.path.join(resdir,rootfile))  
+      shutil.copy(rootfile, os.path.join(resdir+'/calibration',rootfile))  
 
     for txtfile in glob.glob('*.txt'): 
-      shutil.copy(txtfile, os.path.join(resdir,txtfile)) 
+      shutil.copy(txtfile, os.path.join(resdir+'/calibration',txtfile)) 
 
   else :
     print ('[Print] Results folder does not exist! cfg file will not be copied. ') 
