@@ -1,22 +1,118 @@
 from ROOT import TFile, TH1F, TH2F, TGraphAsymmErrors
 from ROOT import gROOT, Double, TCut
 
-BINSU = 256
-BINSV = 128
 
-MAXU = 1152
-MAXV = 576
-
- 
-# Analysis cuts 
-basecut = TCut("trackNHits  == 6 && nTelTracks == 1")
-matched = TCut("hasHit == 0 && seedCharge > 0") 
-u_cut = TCut("cellU_fit >= 0 && cellU_fit < %d" % MAXU)
-v_cut = TCut("cellV_fit >= 0 && cellV_fit < %d" % MAXV) 
-
-
-def plot_efficiency(inputfilename = None, histofilename = "EfficiencyHistos.root"):
+def plot_unit_inpix(inputfilename = None, histofilename = "EfficiencyHistos.root", basecut = "nTelTracks == 1", matchcut="hasHit == 0", upitch=0.0, vpitch=0.0, ubins=10, vbins=10):
   
+  if inputfilename == None:
+    return None
+  
+  total_cut = TCut(basecut)
+  pass_cut   = TCut(basecut) + TCut(matchcut)   
+  
+  rawfile = gROOT.FindObject( inputfilename )
+  if rawfile:
+    rawfile.Close()
+  rawfile = TFile( inputfilename, 'READ' )
+  
+  histofile = gROOT.FindObject( histofilename )
+  if histofile:
+    histofile.Close()
+  histofile = TFile( histofilename, 'RECREATE', 'Efficiency histos created from input file ' + inputfilename )
+  
+  # Get access to tracks 
+  tree = rawfile.Get("Track")
+
+  h_track_total = TH2F("h_track_total","",ubins,0,2*upitch,vbins,0,2*vpitch)
+  tree.Draw("(v_fit-cellVCenter_fit)+%0.5f+(cellV_fit%%2)*%0.5f:(u_fit-cellUCenter_fit)+%0.5f+(cellU_fit%%2)*%0.5f >>+h_track_total" % (vpitch/2,vpitch,upitch/2,upitch),total_cut,"goff")
+  h_track_total.GetXaxis().SetTitle("u_{m} [mm]")
+  h_track_total.GetYaxis().SetTitle("v_{m} [mm]")
+  h_track_total.GetZaxis().SetTitle("tracks")
+  h_track_total.SetStats(0)
+
+  h_track_pass = TH2F("h_track_pass","",ubins,0,2*upitch,vbins,0,2*vpitch)
+  tree.Draw("(v_fit-cellVCenter_fit)+%0.5f+(cellV_fit%%2)*%0.5f:(u_fit-cellUCenter_fit)+%0.5f+(cellU_fit%%2)*%0.5f >>+h_track_pass" % (vpitch/2,vpitch,upitch/2,upitch),pass_cut,"goff")
+  h_track_pass.GetXaxis().SetTitle("u_{m} [mm]")
+  h_track_pass.GetYaxis().SetTitle("v_{m} [mm]")
+  h_track_pass.GetZaxis().SetTitle("tracks")
+  h_track_pass.SetStats(0) 
+
+  h_efficiency =  h_track_pass
+  h_efficiency.SetName("h_efficiency")
+  h_efficiency.Divide(h_track_total)
+  h_efficiency.SetTitle("")
+  h_efficiency.SetXTitle("u_{m} [mm]")
+  h_efficiency.SetYTitle("v_{m} [mm]")
+  h_efficiency.SetZTitle("efficiency")
+  h_efficiency.SetStats(0) 
+
+  # write the tree into the output file and close the file
+  histofile.Write()
+  histofile.Close()
+  rawfile.Close()
+
+
+def plot_inpix(inputfilename = None, histofilename = "EfficiencyHistos.root", basecut = "nTelTracks == 1", matchcut="hasHit == 0", usize=0.0, vsize=0.0, ubins=10, vbins=10):
+  
+  if inputfilename == None:
+    return None
+  
+  total_cut = TCut(basecut)
+  pass_cut   = TCut(basecut) + TCut(matchcut)   
+  
+  rawfile = gROOT.FindObject( inputfilename )
+  if rawfile:
+    rawfile.Close()
+  rawfile = TFile( inputfilename, 'READ' )
+  
+  histofile = gROOT.FindObject( histofilename )
+  if histofile:
+    histofile.Close()
+  histofile = TFile( histofilename, 'RECREATE', 'Efficiency histos created from input file ' + inputfilename )
+  
+  # Get access to tracks 
+  tree = rawfile.Get("Track")
+
+  h_track_total = TH2F("h_track_total","",ubins,-usize,+usize,vbins,-vsize,vsize)
+  tree.Draw(" v_fit:u_fit >> +h_track_total", total_cut , "goff" )
+  h_track_total.GetXaxis().SetTitle("u_fit [mm]")
+  h_track_total.GetYaxis().SetTitle("v_fit [mm]")
+  h_track_total.GetZaxis().SetTitle("tracks")
+  h_track_total.SetStats(0)
+  
+  h_track_pass = TH2F("h_track_pass","",ubins,-usize,usize,vbins,-vsize,+usize)
+  tree.Draw(" v_fit:u_fit >> +h_track_pass" , pass_cut , "goff" )
+  h_track_pass.GetXaxis().SetTitle("u_fit [mm]")
+  h_track_pass.GetYaxis().SetTitle("v_fit [mm]")
+  h_track_pass.GetZaxis().SetTitle("tracks")
+  h_track_pass.SetStats(0) 
+  
+  h_efficiency =  h_track_pass
+  h_efficiency.SetName("h_efficiency")
+  h_efficiency.Divide(h_track_total)
+  h_efficiency.SetTitle("")
+  h_efficiency.SetXTitle("u_fit [mm]")
+  h_efficiency.SetYTitle("v_fit [mm]")
+  h_efficiency.SetZTitle("efficiency")
+  h_efficiency.SetStats(0) 
+
+  # write the tree into the output file and close the file
+  histofile.Write()
+  histofile.Close()
+  rawfile.Close()
+
+
+
+
+def plot(inputfilename = None, histofilename = "EfficiencyHistos.root", basecut = "nTelTracks == 1", matchcut="hasHit == 0", ucells=0, vcells=0 ):
+
+  ubins = ucells
+  vbins = vcells
+   
+  total_cut = TCut(basecut)
+  pass_cut   = TCut(basecut) + TCut(matchcut)   
+  
+   
   if inputfilename == None:
     return None
   
@@ -28,60 +124,73 @@ def plot_efficiency(inputfilename = None, histofilename = "EfficiencyHistos.root
   histofile = gROOT.FindObject( histofilename )
   if histofile:
     histofile.Close()
-  histofile = TFile( histofilename, 'RECREATE', 'Efficiency plots created from input file ' + inputfilename )
+  histofile = TFile( histofilename, 'RECREATE', 'Efficiency histos created from input file ' + inputfilename )
   
   
   # Get access to tracks 
   tree = rawfile.Get("Track")
 
-  # Compute efficiency for rows 
-  
-  h_track_row_total = TH1F("h_track_row_total","",BINSV,0,MAXV)
-  tree.Draw("cellV_fit >> +h_track_row_total", basecut + u_cut  ,  "goff")
+  # Compute efficiency for v cells 
+  h_track_v_total = TH1F("h_track_v_total","",vbins,0,vcells)
+  tree.Draw("cellV_fit >> +h_track_v_total", total_cut  ,  "goff")
+  h_track_v_total.GetXaxis().SetTitle("cellV_fit [cellID]")
+  h_track_v_total.GetYaxis().SetTitle("tracks") 
  
-  h_track_row_pass = TH1F("h_track_row_pass","",BINSV,0,MAXV)
-  tree.Draw("cellV_fit >> +h_track_row_pass"  ,  basecut + u_cut + matched , "goff" )
+  h_track_v_pass = TH1F("h_track_v_pass","",vbins,0,vcells)
+  tree.Draw("cellV_fit >> +h_track_v_pass"  ,  pass_cut , "goff" )
+  h_track_v_pass.GetXaxis().SetTitle("cellV_fit [cellID]")
+  h_track_v_pass.GetYaxis().SetTitle("tracks") 
    
-  g_effi_row = TGraphAsymmErrors()
-  g_effi_row.Divide(h_track_row_pass,h_track_row_total) 
+  g_efficiency_v = TGraphAsymmErrors()
+  g_efficiency_v.SetName("g_efficiency_v")
+  g_efficiency_v.Divide(h_track_v_pass,h_track_v_total) 
+  g_efficiency_v.SetTitle("")
+  g_efficiency_v.GetXaxis().SetTitle("cellV_fit [cellID]")
+  g_efficiency_v.GetYaxis().SetTitle("efficiency") 
+  g_efficiency_v.Write()
+
+  # Compute efficiency for u cells 
+  h_track_u_total = TH1F("h_track_u_total","",ubins,0,ucells)
+  tree.Draw("cellU_fit >> +h_track_u_total", total_cut ,  "goff")
+  h_track_u_total.GetXaxis().SetTitle("cellU_fit [cellID]")
+  h_track_u_total.GetYaxis().SetTitle("tracks")  
   
-  g_effi_row.SetTitle("")
-  g_effi_row.GetXaxis().SetTitle("cellV [cellID]")
-  g_effi_row.GetYaxis().SetTitle("efficiency") 
-  g_effi_row.Write()
 
-  # Compute efficiency for columns 
-
-  h_track_col_total = TH1F("h_track_col_total","",BINSU,0,MAXU)
-  tree.Draw("cellU_fit >> +h_track_col_total", basecut + v_cut  ,  "goff")
+  h_track_u_pass = TH1F("h_track_u_pass","",ubins,0,ucells)
+  tree.Draw("cellU_fit >> +h_track_u_pass"  , pass_cut , "goff" )
+  h_track_u_pass.GetXaxis().SetTitle("cellU_fit [cellID]")
+  h_track_u_pass.GetYaxis().SetTitle("tracks")  
+   
+  g_efficiency_u = TGraphAsymmErrors()
+  g_efficiency_u.SetName("g_efficiency_u")
+  g_efficiency_u.Divide(h_track_u_pass,h_track_u_total) 
+  g_efficiency_u.SetTitle("")
+  g_efficiency_u.GetXaxis().SetTitle("cellU_fit [cellID]")
+  g_efficiency_u.GetYaxis().SetTitle("efficiency") 
+  g_efficiency_u.Write()
+  
+  # Compute efficiency for u:v 
+  h_track_total = TH2F("h_track_total","",ubins,0,ucells,vbins,0,vcells)
+  tree.Draw("cellV_fit:cellU_fit >> +h_track_total", total_cut  ,  "goff")
+  h_track_total.GetXaxis().SetTitle("cellU_fit [cellID]")
+  h_track_total.GetYaxis().SetTitle("cellV_fit [cellID]")
+  h_track_total.GetZaxis().SetTitle("tracks")
  
-  h_track_col_pass = TH1F("h_track_col_pass","",BINSU,0,MAXU)
-  tree.Draw("cellU_fit >> +h_track_col_pass"  ,  basecut + v_cut + matched , "goff" )
-   
-  g_effi_col = TGraphAsymmErrors()
-  g_effi_col.Divide(h_track_col_pass,h_track_col_total) 
-  
-  g_effi_col.SetTitle("")
-  g_effi_col.GetXaxis().SetTitle("cellU [cellID]")
-  g_effi_col.GetYaxis().SetTitle("efficiency") 
-  g_effi_col.Write()
-  
-  # Compute efficiency for cols:rows 
+  h_track_pass = TH2F("h_track_pass","",ubins,0,ucells,vbins,0,vcells)
+  tree.Draw("cellV_fit:cellU_fit >> +h_track_pass"  ,  pass_cut , "goff" )
+  h_track_pass.GetXaxis().SetTitle("cellU_fit [cellID]")
+  h_track_pass.GetYaxis().SetTitle("cellV_fit [cellID]")
+  h_track_pass.GetZaxis().SetTitle("tracks")
 
-  h_track_total = TH2F("h_track_total","",BINSU,0,MAXU,BINSV,0,MAXV)
-  tree.Draw("cellV_fit:cellU_fit >> +h_track_total", basecut  ,  "goff")
- 
-  h_track_pass = TH2F("h_track_pass","",BINSU,0,MAXU,BINSV,0,MAXV)
-  tree.Draw("cellV_fit:cellU_fit >> +h_track_pass"  ,  basecut  + matched , "goff" )
-
-  g_effi = h_track_pass
-  g_effi.Divide(h_track_pass,h_track_total,1.0,1.0,"B")
-   
-  g_effi.SetTitle("")
-  g_effi.GetXaxis().SetTitle("cellU [cellID]")
-  g_effi.GetYaxis().SetTitle("cellV [cellID]")
-  g_effi.GetZaxis().SetTitle("efficiency") 
-  g_effi.Write()
+  g_efficiency = h_track_pass
+  g_efficiency.SetName("g_efficiency")
+  g_efficiency.Divide(h_track_pass,h_track_total)
+  g_efficiency.SetTitle("")
+  g_efficiency.GetXaxis().SetTitle("cellU_fit [cellID]")
+  g_efficiency.GetYaxis().SetTitle("cellV_fit [cellID]")
+  g_efficiency.GetZaxis().SetTitle("efficiency") 
+  g_efficiency.SetStats(0)
+  g_efficiency.Write()
 
  
   # write the tree into the output file and close the file
@@ -89,6 +198,4 @@ def plot_efficiency(inputfilename = None, histofilename = "EfficiencyHistos.root
   histofile.Close()
   rawfile.Close()
 
-if __name__ == '__main__':
-  plot_efficiency(inputfilename = "root-files/Strip-ID6-Histos-run000282-merger-reco.root", histofilename = "EfficiencyHistos.root")
 
