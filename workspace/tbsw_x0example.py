@@ -90,7 +90,7 @@ xmlfile = SimObj_air.get_filename('simulation.xml')
 override_xmlfileglobal(xmlfile=xmlfile, paramname='GearXMLFile', value='gear-air.xml') 
 override_xmlfileglobal(xmlfile=xmlfile, paramname='MaxRecordNumber', value=200000) 
 
-#SimObj_air.simulate(path=['simulation.xml'], ofile=rawfile_air, caltag=None)  
+SimObj_air.simulate(path=['simulation.xml'], ofile=rawfile_air, caltag=None)  
 
 
 # Base name for temporary folder created in tmp-runs/ 
@@ -101,18 +101,18 @@ name_alu = os.path.splitext(os.path.basename(rawfile_alu))[0] + '-' + caltag
 # copies of steering files. After processing, the folder contains
 # also logfiles. 
 # Air data for telescope calibration
-#SimObj_alu = Simulation(steerfiles=steerfiles, name=name_alu + '-sim' )
-#SimObj_alu.simulate(path=['simulation.xml'], ofile=rawfile_alu, caltag=None)  
+SimObj_alu = Simulation(steerfiles=steerfiles, name=name_alu + '-sim' )
+SimObj_alu.simulate(path=['simulation.xml'], ofile=rawfile_alu, caltag=None)  
    
 # Calibrate the telescope using the air rawfile. Creates a folder caltag 
 # containing all calibrations. 
-#CalObj = Calibration(steerfiles=steerfiles, name=name_air + '-cal') 
-#CalObj.calibrate(path=calpath,ifile=rawfile_air,caltag=caltag)  
+CalObj = Calibration(steerfiles=steerfiles, name=name_air + '-cal') 
+CalObj.calibrate(path=calpath,ifile=rawfile_air,caltag=caltag)  
    
 # Reconsruct the alu rawfile using caltag. Resulting root files are 
 # written to folder root-files/
-#RecObj = Reconstruction(steerfiles=steerfiles, name=name_alu + '-reco' )
-#RecObj.reconstruct(path=['reco.xml'],ifile=rawfile_alu,caltag=caltag) 
+RecObj = Reconstruction(steerfiles=steerfiles, name=name_alu + '-reco' )
+RecObj.reconstruct(path=['reco.xml'],ifile=rawfile_alu,caltag=caltag) 
 
 imagefilename='root-files/cal-tag-default/uncalibrated_x0image/X0-completeimage.root'
 deletetag=1
