@@ -1,8 +1,10 @@
 
-# Introduction to X/X0 measurements with the test beam analysis software (tbsw)
+#Introduction to X/X0 measurements with the test beam analysis software (tbsw)#
 
 This README is a step-by-step explanation of how to generate a calibrated X0 image with the test beam software framework. The 
-data reconstruction will be explained on the simple example script workspace/tbsw_x0.py. Its source code is:
+data reconstruction will be explained on the simple example script workspace/tbsw_x0.py. The script simulates a test beam 
+experiment where charged tracks cross a misaligned pixel telescope containing six Mimosa 26 detector planes and a centered DUT.
+Afterwards, the simulated raw data is calibrated and reconstucted. Its source code is:
 
 
 ```
@@ -23,109 +25,10 @@ Author: Ulf Stolzenberg <ulf.stolzenberg@phys.uni-goettingen.de>
 
 from tbsw import *
 
-# Path to steering files 
-steerfiles = 'steering-files/x0-sim/'
-# Tag for calibration data 
-caltag = 'default'
-# File name for raw data 
-runname='mc' 
-rawfile = runname+'.slcio'
-
-# Defines the sequence of calibration steps. 
-# XML steer files are taken from steerfiles. 
-calpath = [ 
-           'hotpixelkiller.xml' ,              
-           'cluster-calibration-mc.xml',     # creates clusterDB, but it will not be used
-           'correlator-iteration-1.xml' ,
-           'kalmanalign-iteration-1.xml',
-           'kalmanalign-iteration-2.xml',
-           'kalmanalign-iteration-2.xml',
-           'kalmanalign-iteration-2.xml',
-           'telescope-dqm-iteration-1.xml',
-           'cluster-calibration-tb-iteration-1.xml',
-           'cluster-calibration-tb-iteration-2.xml',
-           'cluster-calibration-tb-iteration-2.xml',
-           'cluster-calibration-tb-iteration-2.xml',
-           'cluster-calibration-tb-iteration-2.xml',
-           'cluster-calibration-tb-iteration-2.xml',
-           'cluster-calibration-tb-iteration-2.xml',
-           'correlator-iteration-2.xml',
-           'kalmanalign-iteration-3.xml',
-           'kalmanalign-iteration-4.xml',
-           'kalmanalign-iteration-4.xml',
-           'kalmanalign-iteration-4.xml',
-           'telescope-dqm-iteration-2.xml',
-         ]
-
-# Base name for temporary folder created in tmp-runs/ 
-name = os.path.splitext(os.path.basename(rawfile))[0] + '-' + caltag  
-
-# Simulate a rawfile from a test beam experiment
-# SimObj creates folder tmp-runs/name-sim/ and populates it with 
-# copies of steering files. After processing, the folder contains
-# also logfiles. 
-#SimObj = Simulation(steerfiles=steerfiles, name=name + '-sim' )
-#SimObj.simulate(path=['simulation.xml'], ofile=rawfile, caltag=None)  
-   
-# Calibrate the telescope using the rawfile. Creates a folder caltag 
-# containing all calibrations. 
-#CalObj = Calibration(steerfiles=steerfiles, name=name + '-cal') 
-#CalObj.calibrate(path=calpath,ifile=rawfile,caltag=caltag)  
-   
-# Reconsruct the rawfile using caltag. Resulting root files are 
-# written to folder root-files/
-#RecObj = Reconstruction(steerfiles=steerfiles, name=name + '-reco' )
-#RecObj.reconstruct(path=['reco.xml'],ifile=rawfile,caltag=caltag) 
-
-filename='root-files/cal-tag-default/X0-mc-default-reco.root'
-imagefilename='root-files/cal-tag-default/uncalibrated_x0image/X0-completeimage.root'
-deletetag=1
-
-# Function which starts the imaging script
-def x0imaging(filename,caltag,deletetag):
-
-  flag='./root-scripts/x0imaging/GenerateImage.py -i '+filename+' -c '+caltag+' -d '+`deletetag`
-  print(flag)
-  subprocess.call(flag, shell=True)
-
-  return None
-
-# Function which starts the x0 calibration script
-def x0calibration(filename,imagefilename,caltag):
-
-  flag='./root-scripts/x0imaging/X0Calibration.py -i '+filename+'-m '+imagefilename+' -c '+caltag
-  print(flag)
-  subprocess.call(flag, shell=True)
-
-  return None
-
-
-# Create a new folder at workspace/root-files/cal-tag-default/ and store the X/X0 results there
-cwdir = os.getcwd()
-rootpath=cwdir+'/root-files/cal-tag-'+caltag+'/' 
-if not os.path.isdir(rootpath):
-   os.mkdir(rootpath)
-
-# Copy root file
-rootfile=cwdir+'/root-files/X0-'+name+'-'+'reco.root'
-shutil.copy(cwdir+'/root-files/X0-mc-default-reco.root', rootpath)  
-  
-# Generate a uncalibrated X/X0 image
-x0imaging(filename,'',deletetag)
-
-# Rename the directory in which the imaging results are stored
-if os.path.isdir(rootpath+'x0image'):
-   shutil.move(rootpath+'x0image', rootpath+'uncalibrated_x0image')  
-
-# Do a calibration of the angle resolution
-x0calibration(filename,imagefilename,caltag)
-
-# Generate a calibrated X/X0 image
-x0imaging(filename,caltag,deletetag)
-
-# Rename the directory in which the imaging results are stored
-if os.path.isdir(rootpath+'x0image'):
-   shutil.move(rootpath+'x0image', rootpath+'calibrated_x0image')  
+.
+.
+.
+etc.
 
 
 ```
@@ -134,28 +37,37 @@ There are a number of different reconstruction steps, which are necessary for
 generating a calibrated X/X0 image. All of these steps are included in the
 example script. The different steps are described in the following bullet points:
 
-1) Telescope Calibration: 
 
-   In this first step a noisy pixel mask, a cluster calibration and telescope alignment is performed.
-   The steering files, which are used during this process are described in README.md and can be
-   found in workspace/steering-files/x0-sim/ .The calibration results can be found in 
-   workspace/cal-files/default/ .
+__0. Simulation of digits:__
 
-2) Scattering angle Reconstruction:
+   The example script generates two data sets of raw digits  stored in slcio files. One set coming 
+   from a simulation of the telescope without any additional material within the telescope arms is used
+   in the calibration step. The other simulation includes a 16x8mm aluminium plate with a material step in
+   the center of the telescope. The data from this simulation will be reconstructed (using the calibration
+   from the air data set) and a calibrated image of the the material distribution will be generated. 
 
-   Using the calibration results from the previous step the scattering angles on the DUT are
+__1. Telescope Calibration:__
+
+   In this first analysis step noisy pixel masks will be produced and cluster calibration and telescope alignment
+   is carried out. The steering files, which are used during this process are described in README.md and can
+   be found in workspace/steering-files/x0-sim/ .The calibration results can be found in 
+   workspace/cal-files/default/ . For the calibration the air MC data is used.
+
+__2. Scattering angle Reconstruction:__
+
+   Using the calibration results from the previous step the scattering angles on the aluminium DUT are
    reconstructed. During the angle reconstruction step the workspace/steering-files/x0-sim/reco.xml
-   steering file is used. The reco.xml for the X0 analysis contains the following processors:
+   steering file is employed. The reco.xml for the X0 analysis contains the following processors:
 
-     2.1) M26Clusterizer:			Input: NoiseDB (must be present in cal-files/default) and M26 digit collection, 
-                         	    	Output: M26 clusters
-     2.2) GoeHitMaker:				Input: clusterDB (must be present in cal-files/default) and M26 clusters, 
+     _1. M26Clusterizer:_			Input: NoiseDB (must be present in cal-files/default) and M26 digit collection, 
+                         	        Output: M26 clusters
+     _2. GoeHitMaker:_				Input: clusterDB (must be present in cal-files/default) and M26 clusters, 
                         	    	Output: M26 hits 
-	 2.3) Fastracker (downstream):  Input: alignmentDB (must be in cal-files/default) and M26 hits (only downstream hits), 
+	 _3. Fastracker (downstream):_  Input: alignmentDB (must be in cal-files/default) and M26 hits (only downstream hits), 
                                     Output: downstream tracks 
-     2.4) Fastracker (upstream):    Input: alignmentDB (must be in cal-files/cal-tag) and M26 hits (only upstream hits), 
+     _4. Fastracker (upstream):_    Input: alignmentDB (must be in cal-files/cal-tag) and M26 hits (only upstream hits), 
                                     Output: upstream tracks
-     2.7) X0ImageProducer:          Input: alignmentDB (must be present in cal-files/cal-tag),
+     _5. X0ImageProducer:_          Input: alignmentDB (must be present in cal-files/cal-tag),
                                     get kink calculates angles from tracks, Output: X0 root file 
 
    The results of the angle reconstruction can be found at 
@@ -185,10 +97,10 @@ example script. The different steps are described in the following bullet points
      *  vertex_chi2     : Chi2 of the determined vertex of the up- and downstream track
      *  momentum        : p value of the determined vertex of the up- and downstream track
 
-3) X/X0 Imaging (uncalibrated):
+__3. X/X0 Imaging (uncalibrated):__
 
      The tree, which was generated in the last step will now be used to generate a uncalibrated
-     radiation length image of the DUT. The imaging procedure employs a cfg file 
+     radiation length image of the aluminium DUT. The imaging procedure employs a cfg file 
      (see "workspace/root-scripts/x0imaging/image.cfg"). The parameters in the config file are
 
      * lambda			        : The calibration factor of the angle resolution sigma, during this first
@@ -218,7 +130,7 @@ example script. The different steps are described in the following bullet points
      * beamspot                         : Image of number of tracks 
      * BE_image                         : Image of the particle momentum/beam energy
 
-3) Calibration of BE and telescope angle resolution:
+__4. Calibration of BE and telescope angle resolution:__
 
      The relevant calibration constants ares: 
 
@@ -246,7 +158,7 @@ example script. The different steps are described in the following bullet points
      workspace/root-files/cal-tag-default/x0calibration/ . The results of the calibration are also stored as a cfg file
      in workspace/cal-files/default/x0cal_result.cfg.
 
-3) X/X0 Imaging (calibrated):
+__5. X/X0 Imaging (calibrated):__
 
      In the last step an calibrated X/X0 image is produced, which used the cfg file from the previous calibration step.
      The results can be found in workspace/root-files/cal-tag-default/calibrated_x0image/X0-completeimage.root

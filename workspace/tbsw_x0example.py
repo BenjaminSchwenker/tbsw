@@ -3,10 +3,12 @@ This is an example script to demonstrate how TBSW can be used to analyze test be
 data using Python scripts.
 
 The script below simulates a test beam experiment where charged tracks cross a misaligned
-pixel telescope containing six Mimosa 26 detector planes and a 05mm aluminium plate,
-centered in the telescope. Afterwards, the simulated raw data is calibrated and
-reconstucted. Afterwards an X/X0 of the aluminium plate is generated and a
-calibration of the angle resolution of the telescope is performed
+pixel telescope containing six Mimosa 26 detector planes. In order to have a realistic scenario
+two runs are simulated. One with only air between the two telescope arms and one with an aluminium
+plate, centered in the telescope. After the simulations, the simulated raw data without DUT is
+calibrated. The calibration data is used in the next step to reconstuct the aluminium run. Then
+an X/X0 of the aluminium plate is generated and a calibration of the angle resolution
+of the telescope is performed
 
 Author: Ulf Stolzenberg <ulf.stolzenberg@phys.uni-goettingen.de>  
 """
@@ -14,18 +16,23 @@ Author: Ulf Stolzenberg <ulf.stolzenberg@phys.uni-goettingen.de>
 from tbsw import *
 
 # Path to steering files 
+# Steeringfiles are xml files and define details of the simulation like how many events are produced
+# or how M26 sensors are digitized. XML parameters can be adjusted using any test editor
 steerfiles = 'steering-files/x0-sim/'
 # Tag for calibration data 
 caltag = 'default'
 # File name for raw data 
-runname='mc' 
-rawfile = runname+'.slcio'
+runname_air='mc-air' 
+runname_alu='mc-alu'
+
+rawfile_air = runname_air+'.slcio'
+rawfile_alu = runname_alu+'.slcio'
 
 # Defines the sequence of calibration steps. 
 # XML steer files are taken from steerfiles. 
 calpath = [ 
            'hotpixelkiller.xml' ,              
-           'cluster-calibration-mc.xml',     # creates clusterDB, but it will not be used
+           'cluster-calibration-mc.xml',     # creates clusterDB using MC truth information, but will not be used for reconstruction
            'correlator-iteration-1.xml' ,
            'kalmanalign-iteration-1.xml',
            'kalmanalign-iteration-2.xml',
@@ -47,27 +54,66 @@ calpath = [
            'telescope-dqm-iteration-2.xml',
          ]
 
+# Function which is required to change the global settings of a steer file
+def override_xmlfileglobal(xmlfile=None, paramname=None, value=None):
+  """
+  Overrides proecessor parameters in Marlin XML steering file. 
+    :@xmlfile:    Marlin steering file to be overwritten  
+    :@procname:   name of global parameter   
+    :@value:      value of the parameter 
+ 
+    :author: benjamin.schwenker@phys.uni-goettinge.de  
+    """   
+  tree = xml.etree.ElementTree.parse(xmlfile)
+  root = tree.getroot() 
+  
+  for glob in root.findall('global'):
+      for param in glob.findall('parameter'):
+        if param.get('name') ==  paramname:
+          param.set('value', str(value)) 
+  
+  tree.write(xmlfile)  
+
 # Base name for temporary folder created in tmp-runs/ 
-name = os.path.splitext(os.path.basename(rawfile))[0] + '-' + caltag  
+name_air = os.path.splitext(os.path.basename(rawfile_air))[0] + '-' + caltag  
 
 # Simulate a rawfile from a test beam experiment
 # SimObj creates folder tmp-runs/name-sim/ and populates it with 
 # copies of steering files. After processing, the folder contains
 # also logfiles. 
-SimObj = Simulation(steerfiles=steerfiles, name=name + '-sim' )
-SimObj.simulate(path=['simulation.xml'], ofile=rawfile, caltag=None)  
-   
-# Calibrate the telescope using the rawfile. Creates a folder caltag 
-# containing all calibrations. 
-CalObj = Calibration(steerfiles=steerfiles, name=name + '-cal') 
-CalObj.calibrate(path=calpath,ifile=rawfile,caltag=caltag)  
-   
-# Reconsruct the rawfile using caltag. Resulting root files are 
-# written to folder root-files/
-RecObj = Reconstruction(steerfiles=steerfiles, name=name + '-reco' )
-RecObj.reconstruct(path=['reco.xml'],ifile=rawfile,caltag=caltag) 
+# Air data for telescope calibration
+SimObj_air = Simulation(steerfiles=steerfiles, name=name_air + '-sim' )
 
-filename='root-files/cal-tag-default/X0-mc-default-reco.root'
+# The following lines show how to change parameters in copied 
+# XML steer files managed by CalObj 
+xmlfile = SimObj_air.get_filename('simulation.xml')
+override_xmlfileglobal(xmlfile=xmlfile, paramname='GearXMLFile', value='gear-air.xml') 
+override_xmlfileglobal(xmlfile=xmlfile, paramname='MaxRecordNumber', value=200000) 
+
+#SimObj_air.simulate(path=['simulation.xml'], ofile=rawfile_air, caltag=None)  
+
+
+# Base name for temporary folder created in tmp-runs/ 
+name_alu = os.path.splitext(os.path.basename(rawfile_alu))[0] + '-' + caltag  
+
+# Simulate a rawfile from a test beam experiment
+# SimObj creates folder tmp-runs/name-sim/ and populates it with 
+# copies of steering files. After processing, the folder contains
+# also logfiles. 
+# Air data for telescope calibration
+#SimObj_alu = Simulation(steerfiles=steerfiles, name=name_alu + '-sim' )
+#SimObj_alu.simulate(path=['simulation.xml'], ofile=rawfile_alu, caltag=None)  
+   
+# Calibrate the telescope using the air rawfile. Creates a folder caltag 
+# containing all calibrations. 
+#CalObj = Calibration(steerfiles=steerfiles, name=name_air + '-cal') 
+#CalObj.calibrate(path=calpath,ifile=rawfile_air,caltag=caltag)  
+   
+# Reconsruct the alu rawfile using caltag. Resulting root files are 
+# written to folder root-files/
+#RecObj = Reconstruction(steerfiles=steerfiles, name=name_alu + '-reco' )
+#RecObj.reconstruct(path=['reco.xml'],ifile=rawfile_alu,caltag=caltag) 
+
 imagefilename='root-files/cal-tag-default/uncalibrated_x0image/X0-completeimage.root'
 deletetag=1
 
@@ -75,7 +121,6 @@ deletetag=1
 def x0imaging(filename,caltag,deletetag):
 
   flags='./root-scripts/x0imaging/GenerateImage.py -i '+filename+' -c '+caltag+' -d '+`deletetag`
-  print(flags)
   subprocess.call(flags, shell=True)
 
   return None
@@ -84,7 +129,6 @@ def x0imaging(filename,caltag,deletetag):
 def x0calibration(filename,imagefilename,caltag):
 
   flags='./root-scripts/x0imaging/X0Calibration.py -i '+filename+' -m '+imagefilename+' -c '+caltag
-  print(flags)
   subprocess.call(flags, shell=True)
 
   return None
@@ -97,11 +141,13 @@ if not os.path.isdir(rootpath):
    os.mkdir(rootpath)
 
 # Copy root file
-rootfile=cwdir+'/root-files/X0-'+name+'-'+'reco.root'
-shutil.copy(cwdir+'/root-files/X0-mc-default-reco.root', rootpath)  
+rootfile=cwdir+'/root-files/X0-'+name_alu+'-'+'reco.root'
+shutil.copy(rootfile, rootpath)  
+
+filename='root-files/cal-tag-default/X0-'+name_alu+'-'+'reco.root'
   
 # Generate a uncalibrated X/X0 image
-#x0imaging(filename,'',deletetag)
+x0imaging(filename,'',deletetag)
 
 # Rename the directory in which the imaging results are stored
 if os.path.isdir(rootpath+'x0image'):
@@ -111,7 +157,7 @@ if os.path.isdir(rootpath+'x0image'):
 x0calibration(filename,imagefilename,caltag)
 
 # Generate a calibrated X/X0 image
-#x0imaging(filename,caltag,deletetag)
+x0imaging(filename,caltag,deletetag)
 
 # Rename the directory in which the imaging results are stored
 if os.path.isdir(rootpath+'x0image'):
