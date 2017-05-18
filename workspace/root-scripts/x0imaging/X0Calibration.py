@@ -59,7 +59,7 @@ if __name__ == '__main__':
   this_x0filename = os.path.splitext(os.path.basename(rootfile))[0]
 
   # copy rootfile to current work directory
-  shutil.copy(rootfile, 'X0.root')
+  shutil.copy(fullpath+'/'+rootfile, 'X0.root')
 
   # Copy cfg file
   cfgname="x0calibration.cfg"
