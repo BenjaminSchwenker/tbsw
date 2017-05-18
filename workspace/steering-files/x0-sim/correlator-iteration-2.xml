@@ -2,8 +2,6 @@
 <marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
 
    <execute>
-      <processor name="RawInputProcessor"/>
-      <processor name="M26Unpacker"/>
       <processor name="M26Clusterizer"/>
       <processor name="M26HitMaker"/>
       <processor name="M26RawDQM"/>
@@ -12,30 +10,13 @@
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles">  </parameter>
+      <parameter name="LCIOInputFiles">  inputfilename </parameter>
       <parameter name="GearXMLFile" value="gear.xml"/>
       <parameter name="MaxRecordNumber" value="200000"/>
       <parameter name="SkipNEvents" value="0"/>
       <parameter name="SupressCheck" value="false"/>
       <parameter name="Verbosity" value="MESSAGE3"/>
    </global>
-   
-   <processor name="RawInputProcessor" type="EudaqInputProcessor">
-     <!--Reads a EUDAQ .raw file event by event and stores raw data into lcio::LCEvents.
-         Make sure to not specify any LCIOInputFiles.-->
-     <!--Set name of the detector-->
-     <parameter name="DetectorName" type="string" value="EUTelescope"/>
-     <!--Input file-->
-     <parameter name="FileName" type="string" value="inputfilename"/>
-   </processor>
-   
-   <processor name="M26Unpacker" type="NIUnpacker">
-     <!--NIUnpacker: Unpacker for M26 sensors in EUDET/AIDA telescope raw data-->
-     <!--Name of collection containing raw data-->
-     <parameter name="InputCollectionName" type="string" lcioInType="TrackerRawData"> NI </parameter>
-     <!--Name of the output digit collection-->
-     <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerData"> zsdata_m26 </parameter>
-   </processor>
    
    <processor name="M26Clusterizer" type="PixelClusterizer">
      <!--PixelClusterizer: Looking for clusters in zs pixel data-->
@@ -55,7 +36,7 @@
      <parameter name="SparseZSCut" type="float" value="0"/>
    </processor>
    
-   <processor name="M26HitMaker-notused" type="GoeHitMaker">
+   <processor name="M26HitMaker" type="GoeHitMaker">
      <!--GoeHitMaker:  Compute hits from pixel clusters using a clusterDB-->
      <!--Name of cluster collection-->
      <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_m26 </parameter>
@@ -63,30 +44,6 @@
      <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_m26 </parameter>
      <!--This is the name of the ROOT file with the cluster constants (add .root)-->
      <parameter name="ClusterDBFileName" type="string" value="clusterDB-M26.root"/>
-   </processor>
-    
-   <processor name="M26HitMaker" type="CogHitMaker">
-     <!--CogHitMaker:  Compute hits from pixel clusters -->
-     <!--Name of cluster collection-->
-     <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_m26 </parameter>
-     <!--Name of hit collection-->
-     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit_m26 </parameter>
-     <!--SigmaU for cluster with one uCell contributing [mm]-->
-     <parameter name="SigmaU1" type="double" value="0.0037"/>
-     <!--SigmaU for cluster with two uCells contributing [mm]-->
-     <parameter name="SigmaU2" type="double" value="0.0033"/>
-     <!--SigmaU for cluster with three or more uCells contributing [mm]-->
-     <parameter name="SigmaU3" type="double" value="0.0050"/>
-     <!--SigmaV for cluster with one vCell contributing [mm]-->
-     <parameter name="SigmaV1" type="double" value="0.0037"/>
-     <!--SigmaV for cluster with two vCells contributing [mm]-->
-     <parameter name="SigmaV2" type="double" value="0.0033"/>
-     <!--SigmaV for cluster with three or more vCells contributing [mm]-->
-     <parameter name="SigmaV3" type="double" value="0.0050"/>
-     <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
-     <parameter name="MaxSizeU" type="int" value="3"/>
-     <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
-     <parameter name="MaxSizeV" type="int" value="3"/>
    </processor>
   
    <processor name="M26RawDQM" type="RawHitDQM">
@@ -104,7 +61,7 @@
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
      <!--This is the name of the output root file-->
-     <parameter name="OutputRootFileName" type="string" value="XCorrelator.root"/>
+     <parameter name="OutputRootFileName" type="string" value="XCorrelator-iteration-2.root"/>
      <!--Reference sensor plane number, counted along beam line-->
      <parameter name="ReferencePlane" type="int" value="0"/>
      <!--Particle charge [e]-->
@@ -112,7 +69,7 @@
      <!--Particle mass [GeV]-->
      <parameter name="ParticleMass" type="double" value="0.000511"/>
      <!--Particle momentum [GeV]-->
-     <parameter name="ParticleMomentum" type="double" value="4.0"/>
+     <parameter name="ParticleMomentum" type="double" value="2.0"/>
      <!--Update alignment DB using offset corrections (true/false)?-->
      <parameter name="UpdateAlignment" type="bool" value="true"/>
    </processor>
@@ -120,7 +77,7 @@
    <processor name="LCIOOutput" type="LCIOOutputProcessor">
      <!--Writes the current event to the specified LCIO outputfile. Needs to be the last ActiveProcessor.-->
      <!-- name of output file -->
-     <parameter name="LCIOOutputFile" type="string" value="tmp.slcio"/>
+     <parameter name="LCIOOutputFile" type="string" value="tmp-iteration-2.slcio"/>
      <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
      <parameter name="LCIOWriteMode" type="string" value="None"/>
    </processor>

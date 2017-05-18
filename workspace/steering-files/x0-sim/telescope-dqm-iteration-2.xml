@@ -8,7 +8,7 @@
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> tmp.slcio </parameter>
+      <parameter name="LCIOInputFiles"> tmp-iteration-2.slcio </parameter>
       <parameter name="GearXMLFile" value="gear.xml"/>
       <parameter name="MaxRecordNumber" value="-1"/>
       <parameter name="SkipNEvents" value="0"/>
@@ -43,13 +43,13 @@
      <!--Minimum number of hits in track-->
      <parameter name="MinimumHits" type="int" value="6"/>
      <!--Maximum chi2 increment for any hit added to a track candidate-->
-     <parameter name="OutlierChi2Cut" type="float" value="20"/>
+     <parameter name="OutlierChi2Cut" type="float" value="10"/>
      <!--Particle charge [e]-->
      <parameter name="ParticleCharge" type="double" value="-1"/>
      <!--Particle mass [GeV]-->
      <parameter name="ParticleMass" type="double" value="0.000511"/>
      <!--Particle momentum [GeV]-->
-     <parameter name="ParticleMomentum" type="double" value="4.0"/>
+     <parameter name="ParticleMomentum" type="double" value="2.0"/>
      <!--First plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
      <parameter name="BackwardPass_FirstPlane" type="int" value="-1"/>
      <!--Second plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
@@ -69,7 +69,7 @@
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
      <!--Output root file name-->
-     <parameter name="RootFileName" type="string" value="TelescopeDQM.root"/>
+     <parameter name="RootFileName" type="string" value="TelescopeDQM-iteration-2.root"/>
    </processor>
 
 </marlin>

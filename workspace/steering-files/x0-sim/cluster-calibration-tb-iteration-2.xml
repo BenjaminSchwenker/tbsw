@@ -1,26 +1,37 @@
 <?xml version="1.0" encoding="us-ascii"?>
 
-
 <marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
+  
+  <execute>
+    <processor name="M26HitMaker"/>
+    <processor name="TelTrackFinder"/>
+    <processor name="ClusterCalibrator"/>
+    <processor name="ClusterDQM"/>
+  </execute>
+    
+  <global>
+    <parameter name="LCIOInputFiles"> tmp-iteration-1.slcio </parameter>
+    <parameter name="GearXMLFile" value="gear.xml"/>
+    <parameter name="MaxRecordNumber" value="-1"/>
+    <parameter name="SkipNEvents" value="0"/>
+    <parameter name="SupressCheck" value="false"/>
+    <parameter name="Verbosity" value="MESSAGE3"/>
+  </global>
+     
+  <processor name="M26HitMaker" type="GoeHitMaker">
+    <!--GoeHitMaker:  Compute hits from pixel clusters using a clusterDB-->
+    <!--Name of cluster collection-->
+    <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_m26 </parameter>
+    <!--Name of hit collection-->
+    <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> goehit_m26 </parameter>
+    <!--This is the name of the ROOT file with the cluster constants (add .root)-->
+    <parameter name="ClusterDBFileName" type="string" value="clusterDB-M26.root"/>
+  </processor>
 
-   <execute>
-      <processor name="TelTrackFinder"/>
-      <processor name="TelAligner"/>
-   </execute>
-
-   <global>
-      <parameter name="LCIOInputFiles"> tmp-iteration-1.slcio </parameter>
-      <parameter name="GearXMLFile" value="gear.xml"/>
-      <parameter name="MaxRecordNumber" value="-1"/>
-      <parameter name="SkipNEvents" value="0"/>
-      <parameter name="SupressCheck" value="false"/>
-      <parameter name="Verbosity" value="MESSAGE3 "/>
-   </global>
-
-   <processor name="TelTrackFinder" type="FastTracker">
+  <processor name="TelTrackFinder" type="FastTracker">
      <!--FastTracker: Performs track finding and fitting for beam tests-->
      <!--Input hit collection names-->
-     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> hit_m26 </parameter>
+     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> goehit_m26 </parameter>
      <!--Name of not used hit collection-->
      <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> unusedhits </parameter>
      <!--Collection name for fitted tracks-->
@@ -62,19 +73,35 @@
      <!--Seed tracks using hits from these planes-->
      <parameter name="SingleHitSeeding" type="IntVec"> </parameter>
    </processor>
-
-   <processor name="TelAligner" type="KalmanAligner">
-     <!--KalmanAligner: Tracking telescope alignment using the Kalman Alignment Algorithm (KAA) with annealing-->
-     <!--Track collection for alignment-->
-     <parameter name="TrackCollectionName" type="string" lcioInType="Track"> aligntracks </parameter>
-     <!--Name of the alignment config file-->
-     <parameter name="AlignConfigFileName" type="string" value="align-config-iteration-2.cfg"/>
+   
+   <processor name="ClusterCalibrator" type="GoeClusterCalibrator">
+     <!--GoeClusterCalibrator: Create clusterDB for clusters using reco tracks-->
+     <!--Track input collection-->
+     <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> aligntracks </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB-iteration-1.slcio"/>
-     <!--Root file containing alignment validation plots-->
-     <parameter name="RootFileName" type="string" value="KalmanAlign-iteration-2.root"/>
-     <!--Update lcio alignmentDB using alignment results (true/false)?-->
-     <parameter name="UpdateAlignment" type="bool" value="true"/>
+     <!--Output clusterDB file name-->
+     <parameter name="ClusterDBFileName" type="string" value="clusterDB-M26.root"/>
+     <!--Ignore clusters from list of sensorIDs-->
+     <parameter name="IgnoreIDs" type="IntVec"> 11 </parameter>
+     <!--Minimum number of cluster ID occurances for clusterDB-->
+     <parameter name="MinClusters" type="int" value="2000"/>
+     <!--Minimum value of variance for u position measurement [mm^2]-->
+     <parameter name="MinVarianceU" type="float" value="1e-06"/>
+     <!--Minimum value of variance for v position measurement [mm^2]-->
+     <parameter name="MinVarianceV" type="float" value="1e-06"/>
+     <!--Software rescaling of adc codes for cluster labels (new_code = code/scale)-->
+     <parameter name="SoftScale" type="int" value="1"/>
    </processor>
-
+   
+   <processor name="ClusterDQM" type="TrackFitDQM">
+     <!--TrackFitDQM: DQM plots for monitor quality of track fitting-->
+     <!--Track input collection-->
+     <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> aligntracks </parameter>
+     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+     <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB-iteration-1.slcio"/>
+     <!--Output root file name-->
+     <parameter name="RootFileName" type="string" value="ClusterValidation-iteration-2.root"/>
+   </processor>
+   
 </marlin>

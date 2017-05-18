@@ -8,7 +8,7 @@
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> tmp.slcio </parameter>
+      <parameter name="LCIOInputFiles"> tmp-iteration-1.slcio </parameter>
       <parameter name="GearXMLFile" value="gear.xml"/>
       <parameter name="MaxRecordNumber" value="-1"/>
       <parameter name="SkipNEvents" value="0"/>
@@ -25,7 +25,7 @@
      <!--Collection name for fitted tracks-->
      <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> aligntracks </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-     <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
+     <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB-iteration-1.slcio"/>
      <!--Enter plane numbers of bad detectors-->
      <parameter name="ExcludeDetector" type="IntVec" value="3"/>
      <!--To use only GoodQuality write 0 here-->
@@ -49,7 +49,7 @@
      <!--Particle mass [GeV]-->
      <parameter name="ParticleMass" type="double" value="0.000511"/>
      <!--Particle momentum [GeV]-->
-     <parameter name="ParticleMomentum" type="double" value="4.0"/>
+     <parameter name="ParticleMomentum" type="double" value="2.0"/>
      <!--First plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
      <parameter name="BackwardPass_FirstPlane" type="int" value="-1"/>
      <!--Second plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
