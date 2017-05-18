@@ -954,188 +954,188 @@ int x0imaging()
 	rootfile->cd("mapping/result");
 
 	// X0 map
-	TH2F * hX0map = new TH2F("x0_image","x0_image",numcol,umin,umax,numrow,vmin,vmax);
-    hX0map->SetStats(kFALSE);
-    hX0map->SetMaximum(10);
-    hX0map->SetMinimum(0);
-    hX0map->GetXaxis()->SetTitle("u [mm]");
-    hX0map->GetYaxis()->SetTitle("v [mm]");
-    hX0map->GetZaxis()->SetTitle("X/X0 [%]");
-    hX0map->GetZaxis()->SetTitleSize(0.02);
-    hX0map->GetZaxis()->SetLabelSize(0.02);
+	TH2F * x0_image = new TH2F("x0_image","x0_image",numcol,umin,umax,numrow,vmin,vmax);
+    x0_image->SetStats(kFALSE);
+    x0_image->SetMaximum(10);
+    x0_image->SetMinimum(0);
+    x0_image->GetXaxis()->SetTitle("u [mm]");
+    x0_image->GetYaxis()->SetTitle("v [mm]");
+    x0_image->GetZaxis()->SetTitle("X/X0 [%]");
+    x0_image->GetZaxis()->SetTitleSize(0.02);
+    x0_image->GetZaxis()->SetLabelSize(0.02);
 
 	// X0 statistical error map (absolute value)
-	TH2F * hX0errmap = new TH2F("x0err_image","x0err_image",numcol,umin,umax,numrow,vmin,vmax);
-    hX0errmap->SetStats(kFALSE);
-    hX0errmap->SetMaximum(10);
-    hX0errmap->SetMinimum(0);
-    hX0errmap->GetXaxis()->SetTitle("u [mm]");
-    hX0errmap->GetYaxis()->SetTitle("v [mm]");
-    hX0errmap->GetZaxis()->SetTitle("X/X0 [%]");
-    hX0errmap->GetZaxis()->SetTitleSize(0.02);
-    hX0errmap->GetZaxis()->SetLabelSize(0.02);
+	TH2F * x0err_image = new TH2F("x0err_image","x0err_image",numcol,umin,umax,numrow,vmin,vmax);
+    x0err_image->SetStats(kFALSE);
+    x0err_image->SetMaximum(10);
+    x0err_image->SetMinimum(0);
+    x0err_image->GetXaxis()->SetTitle("u [mm]");
+    x0err_image->GetYaxis()->SetTitle("v [mm]");
+    x0err_image->GetZaxis()->SetTitle("X/X0 [%]");
+    x0err_image->GetZaxis()->SetTitleSize(0.02);
+    x0err_image->GetZaxis()->SetLabelSize(0.02);
 
 	// X0 statistical error map (relative value)
-	TH2F * hX0relerrmap = new TH2F("x0relerr_image","x0relerr_image",numcol,umin,umax,numrow,vmin,vmax);
-    hX0relerrmap->SetStats(kFALSE);
-    hX0relerrmap->SetMaximum(100);
-    hX0relerrmap->SetMinimum(0);
-    hX0relerrmap->GetXaxis()->SetTitle("u [mm]");
-    hX0relerrmap->GetYaxis()->SetTitle("v [mm]");
-    hX0relerrmap->GetZaxis()->SetTitle("rel. error [%]");
-    hX0relerrmap->GetZaxis()->SetTitleOffset(1.4);
-    hX0relerrmap->GetZaxis()->SetTitleSize(0.02);
-    hX0relerrmap->GetZaxis()->SetLabelSize(0.02);
+	TH2F * x0relerr_image = new TH2F("x0relerr_image","x0relerr_image",numcol,umin,umax,numrow,vmin,vmax);
+    x0relerr_image->SetStats(kFALSE);
+    x0relerr_image->SetMaximum(100);
+    x0relerr_image->SetMinimum(0);
+    x0relerr_image->GetXaxis()->SetTitle("u [mm]");
+    x0relerr_image->GetYaxis()->SetTitle("v [mm]");
+    x0relerr_image->GetZaxis()->SetTitle("rel. error [%]");
+    x0relerr_image->GetZaxis()->SetTitleOffset(1.4);
+    x0relerr_image->GetZaxis()->SetTitleSize(0.02);
+    x0relerr_image->GetZaxis()->SetLabelSize(0.02);
 
 	// Fit Chi2 image of the merged angle distribution
-	TH2F * hchi2mapsum = new TH2F("fitsumchi2ndof_image","fitsumchi2ndof_image",numcol,umin,umax,numrow,vmin,vmax);
-    hchi2mapsum->SetStats(kFALSE);
-    hchi2mapsum->GetXaxis()->SetTitle("u [mm]");
-    hchi2mapsum->GetYaxis()->SetTitle("v [mm]");
-    hchi2mapsum->GetZaxis()->SetTitle("fitsum chi2");
-    hchi2mapsum->GetZaxis()->SetTitleSize(0.02);
-    hchi2mapsum->GetZaxis()->SetLabelSize(0.02);
+	TH2F * fitsumchi2ndof_image = new TH2F("fitsumchi2ndof_image","fitsumchi2ndof_image",numcol,umin,umax,numrow,vmin,vmax);
+    fitsumchi2ndof_image->SetStats(kFALSE);
+    fitsumchi2ndof_image->GetXaxis()->SetTitle("u [mm]");
+    fitsumchi2ndof_image->GetYaxis()->SetTitle("v [mm]");
+    fitsumchi2ndof_image->GetZaxis()->SetTitle("fitsum chi2");
+    fitsumchi2ndof_image->GetZaxis()->SetTitleSize(0.02);
+    fitsumchi2ndof_image->GetZaxis()->SetLabelSize(0.02);
 
 	// Fit Chi2 image of the merged angle distribution
-	TH2F * hchi2map1 = new TH2F("fit1chi2ndof_image","fit1chi2ndof_image",numcol,umin,umax,numrow,vmin,vmax);
-    hchi2map1->SetStats(kFALSE);
-    hchi2map1->GetXaxis()->SetTitle("u [mm]");
-    hchi2map1->GetYaxis()->SetTitle("v [mm]");
-    hchi2map1->GetZaxis()->SetTitle("fit1 chi2");
-    hchi2map1->GetZaxis()->SetTitleSize(0.02);
-    hchi2map1->GetZaxis()->SetLabelSize(0.02);
+	TH2F * fit1chi2ndof_image = new TH2F("fit1chi2ndof_image","fit1chi2ndof_image",numcol,umin,umax,numrow,vmin,vmax);
+    fit1chi2ndof_image->SetStats(kFALSE);
+    fit1chi2ndof_image->GetXaxis()->SetTitle("u [mm]");
+    fit1chi2ndof_image->GetYaxis()->SetTitle("v [mm]");
+    fit1chi2ndof_image->GetZaxis()->SetTitle("fit1 chi2");
+    fit1chi2ndof_image->GetZaxis()->SetTitleSize(0.02);
+    fit1chi2ndof_image->GetZaxis()->SetLabelSize(0.02);
 
 	// Fit Chi2 image of the merged angle distribution
-	TH2F * hchi2map2 = new TH2F("fit2chi2ndof_image","fit2chi2ndof_image",numcol,umin,umax,numrow,vmin,vmax);
-    hchi2map2->SetStats(kFALSE);
-    hchi2map2->GetXaxis()->SetTitle("u [mm]");
-    hchi2map2->GetYaxis()->SetTitle("v [mm]");
-    hchi2map2->GetZaxis()->SetTitle("fit2 chi2");
-    hchi2map2->GetZaxis()->SetTitleSize(0.02);
-    hchi2map2->GetZaxis()->SetLabelSize(0.02);
+	TH2F * fit2chi2ndof_image = new TH2F("fit2chi2ndof_image","fit2chi2ndof_image",numcol,umin,umax,numrow,vmin,vmax);
+    fit2chi2ndof_image->SetStats(kFALSE);
+    fit2chi2ndof_image->GetXaxis()->SetTitle("u [mm]");
+    fit2chi2ndof_image->GetYaxis()->SetTitle("v [mm]");
+    fit2chi2ndof_image->GetZaxis()->SetTitle("fit2 chi2");
+    fit2chi2ndof_image->GetZaxis()->SetTitleSize(0.02);
+    fit2chi2ndof_image->GetZaxis()->SetLabelSize(0.02);
 
     // Fit Probability distribution for first angle dist
-	TH1F * hprobhisto1 = new TH1F("fit1prob_histo","fit1prob_histo",50,0.0,1.0);
-	hprobhisto1->SetStats(kFALSE);
-    hprobhisto1->GetXaxis()->SetTitle("fit1 p value");
-    hprobhisto1->GetYaxis()->SetTitle("number of fits");
+	TH1F * fit1prob_histo = new TH1F("fit1prob_histo","fit1prob_histo",50,0.0,1.0);
+	fit1prob_histo->SetStats(kFALSE);
+    fit1prob_histo->GetXaxis()->SetTitle("fit1 p value");
+    fit1prob_histo->GetYaxis()->SetTitle("number of fits");
 
 	// Fit probability map for first angle dist
-	TH2F * hprobmap1 = new TH2F("fit1prob_image","fit1prob_image",numcol,umin,umax,numrow,vmin,vmax);
-	hprobmap1->SetStats(kFALSE);
-    hprobmap1->GetXaxis()->SetTitle("u [mm]");
-    hprobmap1->GetYaxis()->SetTitle("v [mm]");
-    hprobmap1->GetZaxis()->SetTitle("fit1 p value");
-    hprobmap1->GetZaxis()->SetTitleSize(0.02);
-    hprobmap1->GetZaxis()->SetLabelSize(0.02);
+	TH2F * fit1prob_image = new TH2F("fit1prob_image","fit1prob_image",numcol,umin,umax,numrow,vmin,vmax);
+	fit1prob_image->SetStats(kFALSE);
+    fit1prob_image->GetXaxis()->SetTitle("u [mm]");
+    fit1prob_image->GetYaxis()->SetTitle("v [mm]");
+    fit1prob_image->GetZaxis()->SetTitle("fit1 p value");
+    fit1prob_image->GetZaxis()->SetTitleSize(0.02);
+    fit1prob_image->GetZaxis()->SetLabelSize(0.02);
 
 
 	// Fit Probability distribution for second angle dist
-	TH1F * hprobhisto2 = new TH1F("fit2prob_histo","fit2prob_histo",50,0.0,1.0);
-	hprobhisto2->SetStats(kFALSE);
-    hprobhisto2->GetXaxis()->SetTitle("fit2 p value");
-    hprobhisto2->GetYaxis()->SetTitle("number of fits");
+	TH1F * fit2prob_histo = new TH1F("fit2prob_histo","fit2prob_histo",50,0.0,1.0);
+	fit2prob_histo->SetStats(kFALSE);
+    fit2prob_histo->GetXaxis()->SetTitle("fit2 p value");
+    fit2prob_histo->GetYaxis()->SetTitle("number of fits");
 
 	// Fit probability map for second angle dist
-	TH2F * hprobmap2 = new TH2F("fit2prob_image","fit2prob_image",numcol,umin,umax,numrow,vmin,vmax);
-	hprobmap2->SetStats(kFALSE);
-    hprobmap2->GetXaxis()->SetTitle("u [mm]");
-    hprobmap2->GetYaxis()->SetTitle("v [mm]");
-    hprobmap2->GetZaxis()->SetTitle("fit2 p value");
-    hprobmap2->GetZaxis()->SetTitleSize(0.02);
-    hprobmap2->GetZaxis()->SetLabelSize(0.02);
+	TH2F * fit2prob_image = new TH2F("fit2prob_image","fit2prob_image",numcol,umin,umax,numrow,vmin,vmax);
+	fit2prob_image->SetStats(kFALSE);
+    fit2prob_image->GetXaxis()->SetTitle("u [mm]");
+    fit2prob_image->GetYaxis()->SetTitle("v [mm]");
+    fit2prob_image->GetZaxis()->SetTitle("fit2 p value");
+    fit2prob_image->GetZaxis()->SetTitleSize(0.02);
+    fit2prob_image->GetZaxis()->SetLabelSize(0.02);
 
 	// Fit Probability distribution for merged angle dist
-	TH1F * hprobhistosum = new TH1F("fitsumprob_histo","fitsumprob_histo",50,0.0,1.0);
-	hprobhistosum->SetStats(kFALSE);
-    hprobhistosum->GetXaxis()->SetTitle("fitsum p value");
-    hprobhistosum->GetYaxis()->SetTitle("number of fits");
+	TH1F * fitsumprob_histo = new TH1F("fitsumprob_histo","fitsumprob_histo",50,0.0,1.0);
+	fitsumprob_histo->SetStats(kFALSE);
+    fitsumprob_histo->GetXaxis()->SetTitle("fitsum p value");
+    fitsumprob_histo->GetYaxis()->SetTitle("number of fits");
 
 	// Fit probability map for merged angle dist
-	TH2F * hprobmapsum = new TH2F("fitsumprob_image","fitsumprob_image",numcol,umin,umax,numrow,vmin,vmax);
-	hprobmapsum->SetStats(kFALSE);
-    hprobmapsum->GetXaxis()->SetTitle("u [mm]");
-    hprobmapsum->GetYaxis()->SetTitle("v [mm]");
-    hprobmapsum->GetZaxis()->SetTitle("fitsum p value");
-    hprobmapsum->GetZaxis()->SetTitleSize(0.02);
-    hprobmapsum->GetZaxis()->SetLabelSize(0.02);
+	TH2F * fitsumprob_image = new TH2F("fitsumprob_image","fitsumprob_image",numcol,umin,umax,numrow,vmin,vmax);
+	fitsumprob_image->SetStats(kFALSE);
+    fitsumprob_image->GetXaxis()->SetTitle("u [mm]");
+    fitsumprob_image->GetYaxis()->SetTitle("v [mm]");
+    fitsumprob_image->GetZaxis()->SetTitle("fitsum p value");
+    fitsumprob_image->GetZaxis()->SetTitleSize(0.02);
+    fitsumprob_image->GetZaxis()->SetLabelSize(0.02);
 
 
 	// Fit mean value of first distribution
-	TH2F * hmeanmap1 = new TH2F("theta1mean_image","theta1mean_image",numcol,umin,umax,numrow,vmin,vmax);
-	hmeanmap1->SetStats(kFALSE);
-    hmeanmap1->GetXaxis()->SetTitle("u [mm]");
-    hmeanmap1->GetYaxis()->SetTitle("v [mm]");
-    hmeanmap1->GetZaxis()->SetTitle("theta1 mean value[rad]");
-    hmeanmap1->GetZaxis()->SetTitleSize(0.02);
-    hmeanmap1->GetZaxis()->SetLabelSize(0.02);
+	TH2F * theta1mean_image = new TH2F("theta1mean_image","theta1mean_image",numcol,umin,umax,numrow,vmin,vmax);
+	theta1mean_image->SetStats(kFALSE);
+    theta1mean_image->GetXaxis()->SetTitle("u [mm]");
+    theta1mean_image->GetYaxis()->SetTitle("v [mm]");
+    theta1mean_image->GetZaxis()->SetTitle("theta1 mean value[rad]");
+    theta1mean_image->GetZaxis()->SetTitleSize(0.02);
+    theta1mean_image->GetZaxis()->SetLabelSize(0.02);
 
 
     // Fit mean value of second distribution
-	TH2F * hmeanmap2 = new TH2F("theta2mean_image","theta2mean_image",numcol,umin,umax,numrow,vmin,vmax);
-	hmeanmap2->SetStats(kFALSE);
-    hmeanmap2->GetXaxis()->SetTitle("u [mm]");
-    hmeanmap2->GetYaxis()->SetTitle("v [mm]");
-    hmeanmap2->GetZaxis()->SetTitle("theta2 mean value[rad]");
-    hmeanmap2->GetZaxis()->SetTitleSize(0.02);
-    hmeanmap2->GetZaxis()->SetLabelSize(0.02);
+	TH2F * theta2mean_image = new TH2F("theta2mean_image","theta2mean_image",numcol,umin,umax,numrow,vmin,vmax);
+	theta2mean_image->SetStats(kFALSE);
+    theta2mean_image->GetXaxis()->SetTitle("u [mm]");
+    theta2mean_image->GetYaxis()->SetTitle("v [mm]");
+    theta2mean_image->GetZaxis()->SetTitle("theta2 mean value[rad]");
+    theta2mean_image->GetZaxis()->SetTitleSize(0.02);
+    theta2mean_image->GetZaxis()->SetLabelSize(0.02);
 
 	// Fit mean value of first distribution
-	TH2F * hcorrectedmeanmap1 = new TH2F("correctedtheta1mean_image","correctedtheta1mean_image",numcol,umin,umax,numrow,vmin,vmax);
-	hcorrectedmeanmap1->SetStats(kFALSE);
-    hcorrectedmeanmap1->GetXaxis()->SetTitle("u [mm]");
-    hcorrectedmeanmap1->GetYaxis()->SetTitle("v [mm]");
-    hcorrectedmeanmap1->GetZaxis()->SetTitle("theta1 mean value[rad]");
-    hcorrectedmeanmap1->GetZaxis()->SetTitleSize(0.02);
-    hcorrectedmeanmap1->GetZaxis()->SetLabelSize(0.02);
+	TH2F * correctedtheta1mean_image = new TH2F("correctedtheta1mean_image","correctedtheta1mean_image",numcol,umin,umax,numrow,vmin,vmax);
+	correctedtheta1mean_image->SetStats(kFALSE);
+    correctedtheta1mean_image->GetXaxis()->SetTitle("u [mm]");
+    correctedtheta1mean_image->GetYaxis()->SetTitle("v [mm]");
+    correctedtheta1mean_image->GetZaxis()->SetTitle("theta1 mean value[rad]");
+    correctedtheta1mean_image->GetZaxis()->SetTitleSize(0.02);
+    correctedtheta1mean_image->GetZaxis()->SetLabelSize(0.02);
 
 	// Fit mean value of second distribution
-	TH2F * hcorrectedmeanmap2 = new TH2F("correctedtheta2mean_image","correctedtheta2mean_image",numcol,umin,umax,numrow,vmin,vmax);
-	hcorrectedmeanmap2->SetStats(kFALSE);
-    hcorrectedmeanmap2->GetXaxis()->SetTitle("u [mm]");
-    hcorrectedmeanmap2->GetYaxis()->SetTitle("v [mm]");
-    hcorrectedmeanmap2->GetZaxis()->SetTitle("theta2 mean value[rad]");
-    hcorrectedmeanmap2->GetZaxis()->SetTitleSize(0.02);
-    hcorrectedmeanmap2->GetZaxis()->SetLabelSize(0.02);
+	TH2F * correctedtheta2mean_image = new TH2F("correctedtheta2mean_image","correctedtheta2mean_image",numcol,umin,umax,numrow,vmin,vmax);
+	correctedtheta2mean_image->SetStats(kFALSE);
+    correctedtheta2mean_image->GetXaxis()->SetTitle("u [mm]");
+    correctedtheta2mean_image->GetYaxis()->SetTitle("v [mm]");
+    correctedtheta2mean_image->GetZaxis()->SetTitle("theta2 mean value[rad]");
+    correctedtheta2mean_image->GetZaxis()->SetTitleSize(0.02);
+    correctedtheta2mean_image->GetZaxis()->SetLabelSize(0.02);
 
 
 	// Fit mean value of u residuals
-	TH2F * huresidualmeanmap = new TH2F("uresidualmean_image","uresidualmean_image",numcol,umin,umax,numrow,vmin,vmax);
-	huresidualmeanmap->SetStats(kFALSE);
-    huresidualmeanmap->GetXaxis()->SetTitle("u [mm]");
-    huresidualmeanmap->GetYaxis()->SetTitle("v [mm]");
-    huresidualmeanmap->GetZaxis()->SetTitle("u residual[µm]");
-    huresidualmeanmap->GetZaxis()->SetTitleSize(0.02);
-    huresidualmeanmap->GetZaxis()->SetLabelSize(0.02);
+	TH2F * uresidualmean_image = new TH2F("uresidualmean_image","uresidualmean_image",numcol,umin,umax,numrow,vmin,vmax);
+	uresidualmean_image->SetStats(kFALSE);
+    uresidualmean_image->GetXaxis()->SetTitle("u [mm]");
+    uresidualmean_image->GetYaxis()->SetTitle("v [mm]");
+    uresidualmean_image->GetZaxis()->SetTitle("u residual[µm]");
+    uresidualmean_image->GetZaxis()->SetTitleSize(0.02);
+    uresidualmean_image->GetZaxis()->SetLabelSize(0.02);
 
 	// Fit mean value of v residuals
-	TH2F * hvresidualmeanmap = new TH2F("vresidualmean_image","vresidualmean_image",numcol,umin,umax,numrow,vmin,vmax);
-	hvresidualmeanmap->SetStats(kFALSE);
-    hvresidualmeanmap->GetXaxis()->SetTitle("u [mm]");
-    hvresidualmeanmap->GetYaxis()->SetTitle("v [mm]");
-    hvresidualmeanmap->GetZaxis()->SetTitle("v residual[µm]");
-    hvresidualmeanmap->GetZaxis()->SetTitleSize(0.02);
-    hvresidualmeanmap->GetZaxis()->SetLabelSize(0.02);
+	TH2F * vresidualmean_image = new TH2F("vresidualmean_image","vresidualmean_image",numcol,umin,umax,numrow,vmin,vmax);
+	vresidualmean_image->SetStats(kFALSE);
+    vresidualmean_image->GetXaxis()->SetTitle("u [mm]");
+    vresidualmean_image->GetYaxis()->SetTitle("v [mm]");
+    vresidualmean_image->GetZaxis()->SetTitle("v residual[µm]");
+    vresidualmean_image->GetZaxis()->SetTitleSize(0.02);
+    vresidualmean_image->GetZaxis()->SetLabelSize(0.02);
 	
 	// #Tracks map
-	TH2F * hnummap = new TH2F("beamspot","beamspot",numcol,umin,umax,numrow,vmin,vmax);
-    hnummap->SetStats(kFALSE);
-    hnummap->GetXaxis()->SetTitle("u [mm]");
-    hnummap->GetYaxis()->SetTitle("v [mm]");
-    hnummap->GetZaxis()->SetTitle("number of tracks");
-    hnummap->GetZaxis()->SetTitleOffset(1.4);
-    hnummap->GetZaxis()->SetTitleSize(0.02);
-    hnummap->GetZaxis()->SetLabelSize(0.02);
+	TH2F * beamspot = new TH2F("beamspot","beamspot",numcol,umin,umax,numrow,vmin,vmax);
+    beamspot->SetStats(kFALSE);
+    beamspot->GetXaxis()->SetTitle("u [mm]");
+    beamspot->GetYaxis()->SetTitle("v [mm]");
+    beamspot->GetZaxis()->SetTitle("number of tracks");
+    beamspot->GetZaxis()->SetTitleOffset(1.4);
+    beamspot->GetZaxis()->SetTitleSize(0.02);
+    beamspot->GetZaxis()->SetLabelSize(0.02);
 
 	// Momentum map
-	TH2F * hmommap = new TH2F("BE_image","BE_image",numcol,umin,umax,numrow,vmin,vmax);
-    hmommap->SetStats(kFALSE);
-    hmommap->GetXaxis()->SetTitle("u [mm]");
-    hmommap->GetYaxis()->SetTitle("v [mm]");
-    hmommap->GetZaxis()->SetTitle("momentum [GeV/c]");
-    hmommap->GetZaxis()->SetTitleOffset(1.4);
-    hmommap->GetZaxis()->SetTitleSize(0.02);
-    hmommap->GetZaxis()->SetLabelSize(0.02);
+	TH2F * BE_image = new TH2F("BE_image","BE_image",numcol,umin,umax,numrow,vmin,vmax);
+    BE_image->SetStats(kFALSE);
+    BE_image->GetXaxis()->SetTitle("u [mm]");
+    BE_image->GetYaxis()->SetTitle("v [mm]");
+    BE_image->GetZaxis()->SetTitle("momentum [GeV/c]");
+    BE_image->GetZaxis()->SetTitleOffset(1.4);
+    BE_image->GetZaxis()->SetTitleSize(0.02);
+    BE_image->GetZaxis()->SetLabelSize(0.02);
 
 	for(int col=0; col<numcol; col++)
 	{
