@@ -323,7 +323,7 @@ using namespace std ;
   { 
 	// Calculate number of parameters
 	int num_parameters = 7;
-	cout<<num_parameters<<endl;
+	//cout<<num_parameters<<endl;
 
 	// Open the histograms
  

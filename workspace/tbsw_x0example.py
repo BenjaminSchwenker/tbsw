@@ -54,18 +54,18 @@ name = os.path.splitext(os.path.basename(rawfile))[0] + '-' + caltag
 # SimObj creates folder tmp-runs/name-sim/ and populates it with 
 # copies of steering files. After processing, the folder contains
 # also logfiles. 
-#SimObj = Simulation(steerfiles=steerfiles, name=name + '-sim' )
-#SimObj.simulate(path=['simulation.xml'], ofile=rawfile, caltag=None)  
+SimObj = Simulation(steerfiles=steerfiles, name=name + '-sim' )
+SimObj.simulate(path=['simulation.xml'], ofile=rawfile, caltag=None)  
    
 # Calibrate the telescope using the rawfile. Creates a folder caltag 
 # containing all calibrations. 
-#CalObj = Calibration(steerfiles=steerfiles, name=name + '-cal') 
-#CalObj.calibrate(path=calpath,ifile=rawfile,caltag=caltag)  
+CalObj = Calibration(steerfiles=steerfiles, name=name + '-cal') 
+CalObj.calibrate(path=calpath,ifile=rawfile,caltag=caltag)  
    
 # Reconsruct the rawfile using caltag. Resulting root files are 
 # written to folder root-files/
-#RecObj = Reconstruction(steerfiles=steerfiles, name=name + '-reco' )
-#RecObj.reconstruct(path=['reco.xml'],ifile=rawfile,caltag=caltag) 
+RecObj = Reconstruction(steerfiles=steerfiles, name=name + '-reco' )
+RecObj.reconstruct(path=['reco.xml'],ifile=rawfile,caltag=caltag) 
 
 filename='root-files/cal-tag-default/X0-mc-default-reco.root'
 imagefilename='root-files/cal-tag-default/uncalibrated_x0image/X0-completeimage.root'
