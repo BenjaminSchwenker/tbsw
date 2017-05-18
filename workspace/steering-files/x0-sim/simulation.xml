@@ -81,9 +81,9 @@
   <!--Choose model for multiple scattering: Highland(0)-->
   <parameter name="ScatterModel" type="int" value="0"/>
   <!--Flag (true/false) for simulating energy loss straggling-->
-  <parameter name="DoEnergyLossStraggling" type="bool" value="true"/>
+  <parameter name="DoEnergyLossStraggling" type="bool" value="false"/>
   <!--Flag (true/false) for simulating fractional Bethe Heitler energy loss-->
-  <parameter name="DoFractionalBetheHeitlerEnergyLoss" type="bool" value="true"/>
+  <parameter name="DoFractionalBetheHeitlerEnergyLoss" type="bool" value="false"/>
 </processor>
 
  <processor name="M26Digitizer" type="SiPixDigitizer">

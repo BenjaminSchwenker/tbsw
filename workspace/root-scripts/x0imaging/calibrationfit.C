@@ -1376,8 +1376,8 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		cout<<"Fit function "<<i<<endl;
 		//cout<<"Chi2 value for this individual fit is: "<<fitFcn[i]->GetChisquare()<<endl;
 		cout<<"Chi2 value for this individual fit is: "<<fithistogramsum[i]->Chisquare(fitFcn[i],"R")<<endl;
-		cout<<"Number of degrees of freedom is: "<<fitFcn[i]->GetNDF()<<endl;
-		cout<<"Alternatively: Chi2 is: "<<chi2.at(i)(fitFcn[i]->GetParameters())<<endl;
+//		cout<<"Number of degrees of freedom is: "<<fitFcn[i]->GetNDF()<<endl;
+//		cout<<"Alternatively: Chi2 is: "<<chi2.at(i)(fitFcn[i]->GetParameters())<<endl;
 		cout<<"--------------------------"<<endl;
 
 		chi2_summation+=pow(fithistogramsum[i]->Chisquare(fitFcn[i],"R"),2);

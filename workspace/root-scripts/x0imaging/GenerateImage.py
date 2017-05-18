@@ -13,7 +13,7 @@ if __name__ == '__main__':
   
   rootfile = ''
   caltag=''
-  deletetag=1
+  deletetag=0
 
   try:
     opts, args = getopt.getopt(sys.argv[1:],"hi:c:d:",["ifile=","caltag=","deletetag="])
@@ -42,6 +42,22 @@ if __name__ == '__main__':
 
   # remember current working dir 
   fullpath = os.getcwd() 
+
+  # get X0 filename without path
+  this_x0filename = os.path.splitext(os.path.basename(rootfile))[0]
+
+  # Get the path without the X0 filename
+  this_x0filepath = os.path.splitext(os.path.dirname(rootfile))[0]
+
+  # Change to work directory
+  workdir = this_x0filepath + '/x0image/'
+
+  print (workdir)
+
+  if not os.path.isdir(workdir):
+    os.mkdir(workdir)
+
+  os.chdir(workdir)
 
   scriptsfolder = fullpath+'/root-scripts/x0imaging'
 
@@ -83,14 +99,8 @@ if __name__ == '__main__':
   u_pixel_size = config.getfloat('x0image', 'u_pixel_size')
   v_pixel_size = config.getfloat('x0image', 'v_pixel_size')
 
-  # get X0 filename without path
-  this_x0filename = os.path.splitext(os.path.basename(rootfile))[0]
-
-  # Get the path without the X0 filename
-  this_x0filepath = os.path.splitext(os.path.dirname(rootfile))[0]
-
   # copy rootfile to current work directory
-  shutil.copy(rootfile, this_x0filename+'.root')
+  shutil.copy(fullpath+'/'+rootfile, this_x0filename+'.root')
 
   # number of pixels needed
   num_u_pixels = u_length * 1000.0 / u_pixel_size
@@ -232,7 +242,7 @@ if __name__ == '__main__':
 
   if deletetag == 1:
     # clean up root files
-    for tmpfile in glob.glob('*part_*.root'):
+    for tmpfile in glob.glob('*part*.root'):
       os.remove(tmpfile) 
     # also remove the input cfg file
     os.remove('image.cfg') 
@@ -240,26 +250,10 @@ if __name__ == '__main__':
   # remove MergeImage.C and config file script
   os.remove('x0merge.cfg') 
   os.remove('x0image-partial.cfg') 
-  os.remove(this_x0filename+'.root') 
-
-  # Move results to results directory
-  resdir=this_x0filepath
-
-  if os.path.isdir(resdir):
-	
-    # save all interesting files to results folder    
-    for rootfile in glob.glob('*.root'): 
-      shutil.copy(rootfile, os.path.join(resdir,rootfile))  
-
-  else :
-    print ('[Print] Results folder does not exist! cfg file will not be copied. ') 
+  os.remove(this_x0filename+'.root')   
                
   # Remove other files
-  for file in glob.glob('*.root'):
-    os.remove(file) 
   for file in glob.glob('*.cfg'):
-    os.remove(file) 
-  for file in glob.glob('*.txt'):
     os.remove(file) 
   for file in glob.glob('*.C'):
     os.remove(file) 		           
