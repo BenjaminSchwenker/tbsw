@@ -2,11 +2,10 @@
 This is an example script to demonstrate how TBSW can be used to analyze test beam 
 data using Python scripts.
 
-The script below calibrates  single run. Afterwards it reconstructs all runs from a
-runlist. In this example, one common set of steerfiles is applied to all runs. The
-calibration of the telescope is done only for a single run. The data processing uses
-Pythons multiprocessing.Pool to distribute runs to multiple cores and speed up 
-processing time. 
+The script below calibrates a single run. Afterwards it reconstructs all runs from a
+runlist using the calibration data. In this example, one common set of steerfiles is
+applied to all runs. The second part of the data processing uses Pythons 
+multiprocessing.Pool to distribute runs to multiple cores and speed up processing time. 
 
 Author: Ulf Stolzenberg <ulf.stolzenberg@phys.uni-goettingen.de>  
 """

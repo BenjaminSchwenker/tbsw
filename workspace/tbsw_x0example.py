@@ -5,8 +5,8 @@ data using Python scripts.
 The script below simulates a test beam experiment where charged tracks cross a misaligned
 pixel telescope containing six Mimosa 26 detector planes and a 05mm aluminium plate,
 centered in the telescope. Afterwards, the simulated raw data is calibrated and
-reconstucted. Afterwards an X/X0 of the aluminium plate is generated and a
-calibration of the angle resolution of the telescope is performed
+reconstucted. The last step is the creation of an X/X0 of the aluminium plate. Additionally
+a calibration of the angle resolution of the telescope is performed.
 
 Author: Ulf Stolzenberg <ulf.stolzenberg@phys.uni-goettingen.de>  
 """
