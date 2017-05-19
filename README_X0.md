@@ -22,7 +22,7 @@ generating a calibrated X/X0 image. All of these steps are included in the
 example script. The different steps are described in the following bullet points:
 
 
-__0. Simulation of digits:
+##0. Simulation of digits:
 
    The example script generates two data sets of raw digits  stored in slcio files. One set coming 
    from a simulation of the telescope without any additional material within the telescope arms is used
@@ -93,10 +93,10 @@ __3. X/X0 Imaging (uncalibrated):__
      * momentumugradient        : momentum gradient of the beam in u direction
      * momentumvgradient        : momentum gradient of the beam in u direction
      * resultsfilename          : name of the results file, which is produced by the GenerateImage.py script
-     * u_length/v_length        : side lengths of the total image, should be 20 x 10 mm² for an image of the whole beam spot 
+     * u_length/v_length        : side lengths of the total image, should be 20 x 10 mmï¿½ for an image of the whole beam spot 
      * umin/vmax                : Position of the upper left corner of the total image, should be (umin,vmax)=(-10mm,5mm) for 
                                   an image of the whole beam spot
-     * u/v pixelsize            : Pixel size of the image in µm, should be chosen in such away, that at least 1000 particles 
+     * u/v pixelsize            : Pixel size of the image in ï¿½m, should be chosen in such away, that at least 1000 particles 
                                   pass through the area of most pixels
 
      After the imaging process the uncalibrated radiation length image is located in 
@@ -154,7 +154,7 @@ which was explained here and change it accordingly in order to generate radiatio
 
 Ulf Stolzenberg
 
-Göttingen 2017 
+Gï¿½ttingen 2017 
 
 ulf.stolzenberg@phys.uni-goettingen.de 
 
