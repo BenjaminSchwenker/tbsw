@@ -4,7 +4,22 @@
 This README is a step-by-step explanation of how to generate a calibrated X0 image with the test beam software framework. The 
 data reconstruction will be explained on the simple example script workspace/tbsw_x0.py. The script simulates a test beam 
 experiment where charged tracks cross a misaligned pixel telescope containing six Mimosa 26 detector planes and a centered DUT.
+<<<<<<< HEAD
 Afterwards, the simulated raw data is calibrated and reconstucted. 
+=======
+Afterwards, the simulated raw data is calibrated and reconstucted. Its source code is:
+
+This is an example script to demonstrate how TBSW can be used to analyze test beam 
+data using Python scripts.
+
+The script below simulates a test beam experiment where charged tracks cross a misaligned
+pixel telescope containing six Mimosa 26 detector planes and a 05mm aluminium plate,
+centered in the telescope. Afterwards, the simulated raw data is calibrated and
+reconstucted. Afterwards an X/X0 of the aluminium plate is generated and a
+calibration of the angle resolution of the telescope is performed
+
+
+>>>>>>> 8219adef2a582f2e5db1bc77e70944b50c742a05
 
 There are a number of different reconstruction steps, which are necessary for
 generating a calibrated X/X0 image. All of these steps are included in the
@@ -13,6 +28,7 @@ example script. The different steps are described in the following bullet points
 
 ##0. Simulation of digits:
 
+<<<<<<< HEAD
 The example script generates two runs with raw digits stored in slcio files. The first run also called air run
 is an simulation of the telescope without any additional material within the telescope arms. It is used
 for the calibration of the telescope. The other simulation, the aluminium run, includes an aluminium plate with
@@ -32,6 +48,26 @@ workspace/cal-files/default/ . For the calibration the air run is used.
 Using the calibration results from the previous step the scattering angles on the aluminium DUT are
 reconstructed. During the angle reconstruction step the workspace/steering-files/x0-sim/reco.xml
 steering file is employed. The reco.xml for the X0 analysis contains the following processors:
+=======
+   The example script generates two data sets of raw digits  stored in slcio files. One set coming 
+   from a simulation of the telescope without any additional material within the telescope arms is used
+   in the calibration step. The other simulation includes a 16x8mm aluminium plate with a material step in
+   the center of the telescope. The data from this simulation will be reconstructed (using the calibration
+   from the air data set) and a calibrated image of the the material distribution will be generated. 
+
+##1. Telescope Calibration:
+
+   In this first analysis step noisy pixel masks will be produced and cluster calibration and telescope alignment
+   is carried out. The steering files, which are used during this process are described in README.md and can
+   be found in workspace/steering-files/x0-sim/ .The calibration results can be found in 
+   workspace/cal-files/default/ . For the calibration the air MC data is used.
+
+##2. Scattering angle Reconstruction:
+
+   Using the calibration results from the previous step the scattering angles on the aluminium DUT are
+   reconstructed. During the angle reconstruction step the workspace/steering-files/x0-sim/reco.xml
+   steering file is employed. The reco.xml for the X0 analysis contains the following processors:
+>>>>>>> 8219adef2a582f2e5db1bc77e70944b50c742a05
 
    _1. M26Clusterizer:_			  Input: NoiseDB (must be present in cal-files/default) and M26 digit collectiion, Output: M26 clusters
    
@@ -136,6 +172,10 @@ in workspace/cal-files/default/x0cal_result.cfg.
 
 In the last step an calibrated X/X0 image is produced, which used the cfg file from the previous calibration step.
 The results can be found in workspace/root-files/cal-tag-default/calibrated_x0image/X0-completeimage.root
+<<<<<<< HEAD
+=======
+
+>>>>>>> 8219adef2a582f2e5db1bc77e70944b50c742a05
 
 If you are performing an analysis of actual test beam data, it is probably a good idea to start with the example script,
 which was explained here and change it accordingly in order to generate radiation length images of your DUTs. The most
