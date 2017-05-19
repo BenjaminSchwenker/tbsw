@@ -1,16 +1,11 @@
 
-#Introduction to X/X0 measurements with the test beam analysis software (tbsw)#
+#Introduction to X/X0 measurements with the test beam analysis software (tbsw)
 
 This README is a step-by-step explanation of how to generate a calibrated X0 image with the test beam software framework. The 
 data reconstruction will be explained on the simple example script workspace/tbsw_x0.py. The script simulates a test beam 
 experiment where charged tracks cross a misaligned pixel telescope containing six Mimosa 26 detector planes and a centered DUT.
 Afterwards, the simulated raw data is calibrated and reconstucted. Its source code is:
 
-
-```
-#!python
-
-"""
 This is an example script to demonstrate how TBSW can be used to analyze test beam 
 data using Python scripts.
 
@@ -20,25 +15,14 @@ centered in the telescope. Afterwards, the simulated raw data is calibrated and
 reconstucted. Afterwards an X/X0 of the aluminium plate is generated and a
 calibration of the angle resolution of the telescope is performed
 
-Author: Ulf Stolzenberg <ulf.stolzenberg@phys.uni-goettingen.de>  
-"""
 
-from tbsw import *
-
-.
-.
-.
-etc.
-
-
-```
 
 There are a number of different reconstruction steps, which are necessary for
 generating a calibrated X/X0 image. All of these steps are included in the
 example script. The different steps are described in the following bullet points:
 
 
-__0. Simulation of digits:__
+__0. Simulation of digits:
 
    The example script generates two data sets of raw digits  stored in slcio files. One set coming 
    from a simulation of the telescope without any additional material within the telescope arms is used
@@ -46,14 +30,14 @@ __0. Simulation of digits:__
    the center of the telescope. The data from this simulation will be reconstructed (using the calibration
    from the air data set) and a calibrated image of the the material distribution will be generated. 
 
-__1. Telescope Calibration:__
+__1. Telescope Calibration:
 
    In this first analysis step noisy pixel masks will be produced and cluster calibration and telescope alignment
    is carried out. The steering files, which are used during this process are described in README.md and can
    be found in workspace/steering-files/x0-sim/ .The calibration results can be found in 
    workspace/cal-files/default/ . For the calibration the air MC data is used.
 
-__2. Scattering angle Reconstruction:__
+__2. Scattering angle Reconstruction:
 
    Using the calibration results from the previous step the scattering angles on the aluminium DUT are
    reconstructed. During the angle reconstruction step the workspace/steering-files/x0-sim/reco.xml
@@ -109,10 +93,10 @@ __3. X/X0 Imaging (uncalibrated):__
      * momentumugradient        : momentum gradient of the beam in u direction
      * momentumvgradient        : momentum gradient of the beam in u direction
      * resultsfilename          : name of the results file, which is produced by the GenerateImage.py script
-     * u_length/v_length        : side lengths of the total image, should be 20 x 10 mmÂ² for an image of the whole beam spot 
+     * u_length/v_length        : side lengths of the total image, should be 20 x 10 mm² for an image of the whole beam spot 
      * umin/vmax                : Position of the upper left corner of the total image, should be (umin,vmax)=(-10mm,5mm) for 
                                   an image of the whole beam spot
-     * u/v pixelsize            : Pixel size of the image in Âµm, should be chosen in such away, that at least 1000 particles 
+     * u/v pixelsize            : Pixel size of the image in µm, should be chosen in such away, that at least 1000 particles 
                                   pass through the area of most pixels
 
      After the imaging process the uncalibrated radiation length image is located in 
@@ -170,7 +154,7 @@ which was explained here and change it accordingly in order to generate radiatio
 
 Ulf Stolzenberg
 
-GÃ¶ttingen 2017 
+Göttingen 2017 
 
 ulf.stolzenberg@phys.uni-goettingen.de 
 
