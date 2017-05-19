@@ -8,6 +8,9 @@
 // Include basic C
 #include <cstdlib>
 #include <iostream>
+#include <iomanip>
+#include <cmath>
+#include <algorithm>
 
 // Include LCIO classes
 #include <lcio.h>

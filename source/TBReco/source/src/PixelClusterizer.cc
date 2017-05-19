@@ -11,6 +11,8 @@
 // Include ROOT classes
 #include <TFile.h>
 
+#include <iomanip>
+
 // Used namespaces
 using namespace std; 
 using namespace lcio;

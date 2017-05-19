@@ -30,7 +30,6 @@ calpath = [
            'kalmanalign-iteration-2.xml',
            'kalmanalign-iteration-2.xml',
            'telescope-dqm.xml',
-           #'cluster-calibration-tb.xml',
          ]
 
 # Base name for temporary folder created in tmp-runs/ 

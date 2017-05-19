@@ -25,10 +25,10 @@
 
 // Include basic C
 #include <string>
-#include <cmath>
 #include <map>
 #include <vector>
-#include <algorithm>
+
+
 
 namespace depfet {
 
