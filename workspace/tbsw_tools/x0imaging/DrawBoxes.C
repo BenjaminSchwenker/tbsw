@@ -89,7 +89,7 @@ void DrawBoxes()
 	filename="X0image";
 
 	// Copy the X0 Analysis Root file 
-	TFile *rootFile = new TFile(filename+".root", "READ");
+	TFile *rootFile = new TFile(filename, "READ");
 
 	rootFile->cd("");
     gStyle->SetPalette(1,0);

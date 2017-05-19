@@ -1654,10 +1654,10 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 	// TString for the input root file name
 	TString filename,histoname,range;
-	filename.Form("X0");
+	filename.Form("X0File");
 
 	// Copy the X0 Analysis Root file and rename it
-	TFile *X0file = new TFile(filename+".root", "READ");
+	TFile *X0file = new TFile(filename, "READ");
 
 	//Open the copied file
 	filename=filename+"CalibrationDQM_"+model+"fit";

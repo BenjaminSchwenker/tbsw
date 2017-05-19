@@ -12,13 +12,14 @@ from configparser import ConfigParser
 if __name__ == '__main__':
   
   rootfile = ''
+  cfgfile = ''
   caltag=''
   deletetag=0
 
   try:
-    opts, args = getopt.getopt(sys.argv[1:],"hi:c:d:",["ifile=","caltag=","deletetag="])
+    opts, args = getopt.getopt(sys.argv[1:],"hi:f:c:d:",["ifile=","cfgfile=","caltag=","deletetag="])
   except getopt.GetoptError:
-    print ('GenerateImage.py -i <inputfile> -c <cal-tag> -d <deletetag>')
+    print ('GenerateImage.py -i <inputfile> -f <cfgfile> -c <cal-tag> -d <deletetag>')
     print ('-d is optional and defaults to: ' + deletetag )
     print (' 1: delete partial rootfiles' )
     print (' 0: dont delete partial rootfiles' )
@@ -26,11 +27,13 @@ if __name__ == '__main__':
 
   for opt, arg in opts:
     if opt == '-h':
-      print ('GenerateImage.py -i <inputfile> -c <cal-tag> -d <deletetag>')
+      print ('GenerateImage.py -i <inputfile> -f <cfgfile> -c <cal-tag> -d <deletetag>')
       print ('-d is optional and defaults to: ' + deletetag )
       sys.exit()
     elif opt in ("-i", "--ifile"):
       rootfile = arg
+    elif opt in ("-f", "--cfgfile"):
+      cfgfile = arg
     elif opt in ("-c", "--caltag"):
       caltag = arg
     elif opt in ("-d", "--deletetag"):
@@ -38,6 +41,10 @@ if __name__ == '__main__':
 
   if rootfile == '':
     print ('missing option: -i path/to/inputfilename.root')
+    sys.exit(2)  
+
+  if cfgfile == '':
+    print ('missing option: -i path/to/cfgfile.cfg')
     sys.exit(2)  
 
   # remember current working dir 
@@ -50,19 +57,20 @@ if __name__ == '__main__':
   this_x0filepath = os.path.splitext(os.path.dirname(rootfile))[0]
 
   # Change to work directory
-  workdir = this_x0filepath + '/x0image/'
+  workdir = 'tmp-runs/'+this_x0filename+'-X0image'
 
-  print (workdir)
-
-  if not os.path.isdir(workdir):
-    os.mkdir(workdir)
-
+  # remove old workdir if exists 
+  if os.path.isdir(workdir):
+    shutil.rmtree(workdir)
+    
+  # create workdir and change directory
+  os.mkdir(workdir) 
   os.chdir(workdir)
 
-  scriptsfolder = fullpath+'/root-scripts/x0imaging'
+  scriptsfolder = fullpath+'/tbsw_tools/x0imaging'
 
   # copy cfg text file to current work directory
-  shutil.copy(scriptsfolder+'/image.cfg','image.cfg')
+  shutil.copy(fullpath+'/'+cfgfile,'image.cfg')
 
   # Read config txt file
   config = ConfigParser(delimiters=(':'))
@@ -99,8 +107,9 @@ if __name__ == '__main__':
   u_pixel_size = config.getfloat('x0image', 'u_pixel_size')
   v_pixel_size = config.getfloat('x0image', 'v_pixel_size')
 
-  # copy rootfile to current work directory
-  shutil.copy(fullpath+'/'+rootfile, this_x0filename+'.root')
+  # Create X0 root file link in the current work dir
+  os.symlink(fullpath+'/'+rootfile,this_x0filename)
+
 
   # number of pixels needed
   num_u_pixels = u_length * 1000.0 / u_pixel_size
@@ -121,11 +130,11 @@ if __name__ == '__main__':
   # Overall number of X0 image parts required
   num_parts=u_splits * v_splits
 
-  # Copy the results cfg file from previous calibrations, of it exists
-  cfgfilename="x0cal_result.cfg"
-  cfgfile=fullpath+'/cal-files/'+caltag+'/'+cfgfilename
-  if os.path.isfile(cfgfile):
-    shutil.copy(cfgfile, cfgfilename)
+  # Copy the results cfg file from previous calibrations, if it exists
+  calicfgfilename="x0cal_result.cfg"
+  calicfgfile=fullpath+'/cal-files/'+caltag+'/'+calicfgfilename
+  if os.path.isfile(calicfgfile):
+    shutil.copy(calicfgfile, calicfgfilename)
 
   scriptname="x0imaging.C"
 
@@ -249,14 +258,13 @@ if __name__ == '__main__':
 
   # remove MergeImage.C and config file script
   os.remove('x0merge.cfg') 
-  os.remove('x0image-partial.cfg') 
-  os.remove(this_x0filename+'.root')   
-               
-  # Remove other files
-  for file in glob.glob('*.cfg'):
-    os.remove(file) 
+  os.remove('x0image-partial.cfg')  
   for file in glob.glob('*.C'):
-    os.remove(file) 		           
+    os.remove(file) 
+
+  # Copy complete image file to root-files directory
+  shutil.copy(this_resultsfilename+'.root', fullpath+'/root-files/'+this_x0filename+'-X0image.root')
+  		           
                 
 
 

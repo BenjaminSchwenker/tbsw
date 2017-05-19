@@ -445,6 +445,10 @@ using namespace std ;
    		fit2->SetParLimits(6,-0.0001,0.0001);
    		fitsum->SetParLimits(6,-0.0001,0.0001);
 
+   		fit1->SetParLimits(3,0.00001,200.0);
+   		fit2->SetParLimits(3,0.00001,200.0);
+   		fitsum->SetParLimits(3,0.00001,200.0);
+
 		fithistogram1->Fit("theta1_fit","R");
 		fithistogram2->Fit("theta2_fit","R");
 		fithistogramsum->Fit("thetasum_fit","R");
@@ -456,7 +460,7 @@ using namespace std ;
 		chi2ndofsum=fitsum->GetChisquare()/(fitsum->GetNDF()*1.0);	
 
 		// define chi2 cut
-		double chi2_cut=5.0;
+		double chi2_cut=7.0;
 
 		// Use the chi2 values for quality cuts
 		if((fittype==0)&&((chi2ndof1+chi2ndof2)>chi2_cut*2.0))
@@ -785,7 +789,7 @@ int x0imaging()
 	TString filename=mEnv.GetValue("x0filename", "X0-merge");
 
 	// Copy the X0 Analysis Root file 
-	TFile *X0file = new TFile(filename+".root", "READ");
+	TFile *X0file = new TFile(filename, "READ");
 
 	//Open the copied file
 	filename=filename+mEnv.GetValue("x0fileidentifier", "-part-1-1");
@@ -861,6 +865,7 @@ int x0imaging()
 	double lambda=mEnv_res.GetValue("lambda_start", lambda_default);
 	double recoerror=sqrt(getanglerecovar(X0file))*lambda;
 	cout<<"The reconstruction error is "<<recoerror*1E6<<" µrad!"<<endl;
+	cout<<"This includes the calibration factor of "<<lambda<<endl;
 
 	// Beam energy in GeV
     // The particle momenta are distributed due to the beam generation at the desy facility

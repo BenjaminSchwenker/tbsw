@@ -90,7 +90,7 @@ xmlfile = SimObj_air.get_filename('simulation.xml')
 override_xmlfileglobal(xmlfile=xmlfile, paramname='GearXMLFile', value='gear-air.xml') 
 override_xmlfileglobal(xmlfile=xmlfile, paramname='MaxRecordNumber', value=200000) 
 
-SimObj_air.simulate(path=['simulation.xml'], ofile=rawfile_air, caltag=None)  
+#SimObj_air.simulate(path=['simulation.xml'], ofile=rawfile_air, caltag=None)  
 
 
 # Base name for temporary folder created in tmp-runs/ 
@@ -102,25 +102,29 @@ name_alu = os.path.splitext(os.path.basename(rawfile_alu))[0] + '-' + caltag
 # also logfiles. 
 # Air data for telescope calibration
 SimObj_alu = Simulation(steerfiles=steerfiles, name=name_alu + '-sim' )
-SimObj_alu.simulate(path=['simulation.xml'], ofile=rawfile_alu, caltag=None)  
+#SimObj_alu.simulate(path=['simulation.xml'], ofile=rawfile_alu, caltag=None)  
    
 # Calibrate the telescope using the air rawfile. Creates a folder caltag 
 # containing all calibrations. 
 CalObj = Calibration(steerfiles=steerfiles, name=name_air + '-cal') 
-CalObj.calibrate(path=calpath,ifile=rawfile_air,caltag=caltag)  
+#CalObj.calibrate(path=calpath,ifile=rawfile_air,caltag=caltag)  
    
 # Reconsruct the alu rawfile using caltag. Resulting root files are 
 # written to folder root-files/
 RecObj = Reconstruction(steerfiles=steerfiles, name=name_alu + '-reco' )
-RecObj.reconstruct(path=['reco.xml'],ifile=rawfile_alu,caltag=caltag) 
+#RecObj.reconstruct(path=['reco.xml'],ifile=rawfile_alu,caltag=caltag) 
 
-imagefilename='root-files/cal-tag-default/uncalibrated_x0image/X0-completeimage.root'
+imagefilename='root-files/X0-mc-alu-default-reco-Uncalibrated-X0image.root'
+imagecfgfilename='steering-files/x0-sim/image.cfg'
+calibrationcfgfilename='steering-files/x0-sim/x0calibration.cfg'
 deletetag=1
 
 # Function which starts the imaging script
 def x0imaging(filename,caltag,deletetag):
 
-  flags='./root-scripts/x0imaging/GenerateImage.py -i '+filename+' -c '+caltag+' -d '+`deletetag`
+  flags='./tbsw_tools/x0imaging/GenerateImage.py -i '+filename+' -f '+imagecfgfilename+' -c '+caltag+' -d '+`deletetag`
+  print('Starting X0 imaging')
+  print(flags)
   subprocess.call(flags, shell=True)
 
   return None
@@ -128,30 +132,48 @@ def x0imaging(filename,caltag,deletetag):
 # Function which starts the x0 calibration script
 def x0calibration(filename,imagefilename,caltag):
 
-  flags='./root-scripts/x0imaging/X0Calibration.py -i '+filename+' -m '+imagefilename+' -c '+caltag
+  flags='./tbsw_tools/x0imaging/X0Calibration.py -i '+filename+' -f '+calibrationcfgfilename+' -m '+imagefilename+' -c '+caltag
+  print('Starting X0 calibration')
+  print(flags)
   subprocess.call(flags, shell=True)
 
   return None
 
-
-# Create a new folder at workspace/root-files/cal-tag-default/ and store the X/X0 results there
+# Some strings which will be needed in file operations later
+# current directory
 cwdir = os.getcwd()
-rootpath=cwdir+'/root-files/cal-tag-'+caltag+'/' 
-if not os.path.isdir(rootpath):
-   os.mkdir(rootpath)
 
-# Copy root file
-rootfile=cwdir+'/root-files/X0-'+name_alu+'-'+'reco.root'
-shutil.copy(rootfile, rootpath)  
+# Base filename of the X0 root file
+basefilename='X0-'+name_alu+'-'+'reco'
 
-filename='root-files/cal-tag-default/X0-'+name_alu+'-'+'reco.root'
-  
+# Total path of X0 root file
+filename='root-files/'+basefilename+'.root'
+
+# Total path if the different kinds of X0 image files
+imagefile=cwdir+'/root-files/'+basefilename+'-X0image.root'
+uncalibratedimagefile=cwdir+'/root-files/'+basefilename+'-Uncalibrated-X0image.root'
+calibratedimagefile=cwdir+'/root-files/'+basefilename+'-Calibrated-X0image.root'
+
+# Total path to the different temporary work directories,
+# in which the images are generated
+tmpdir = cwdir+'/tmp-runs/'+basefilename+'-X0image'
+uncaltmpdir = cwdir+'/tmp-runs/'+basefilename+'-UncalibratedX0image'
+caltmpdir = cwdir+'/tmp-runs/'+basefilename+'-CalibratedX0image'
+
 # Generate a uncalibrated X/X0 image
 x0imaging(filename,'',deletetag)
 
-# Rename the directory in which the imaging results are stored
-if os.path.isdir(rootpath+'x0image'):
-   shutil.move(rootpath+'x0image', rootpath+'uncalibrated_x0image')  
+# Rename the image file
+if os.path.isfile(uncalibratedimagefile):
+   os.remove(uncalibratedimagefile) 
+if os.path.isfile(imagefile):
+   shutil.move(imagefile,uncalibratedimagefile)
+
+# Rename the directory in tmp-runs, in which the image was generated
+if os.path.isdir(uncaltmpdir):
+   shutil.rmtree(uncaltmpdir) 
+if os.path.isdir(tmpdir):
+   shutil.copytree(tmpdir, uncaltmpdir)
 
 # Do a calibration of the angle resolution
 x0calibration(filename,imagefilename,caltag)
@@ -159,8 +181,17 @@ x0calibration(filename,imagefilename,caltag)
 # Generate a calibrated X/X0 image
 x0imaging(filename,caltag,deletetag)
 
-# Rename the directory in which the imaging results are stored
-if os.path.isdir(rootpath+'x0image'):
-   shutil.move(rootpath+'x0image', rootpath+'calibrated_x0image')  
+# Rename the image file
+if os.path.isfile(calibratedimagefile):
+   os.remove(calibratedimagefile) 
+if os.path.isfile(imagefile):
+   shutil.move(imagefile,calibratedimagefile)
+
+# Rename the directory in tmp-runs, in which the image was generated
+if os.path.isdir(caltmpdir):
+   shutil.rmtree(caltmpdir) 
+if os.path.isdir(tmpdir):
+   shutil.copytree(tmpdir, caltmpdir)
+
 
 
