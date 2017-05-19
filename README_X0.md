@@ -93,10 +93,10 @@ radiation length image of the aluminium DUT. The imaging procedure employs a cfg
   * momentumugradient        : momentum gradient of the beam in u direction
   * momentumvgradient        : momentum gradient of the beam in u direction
   * resultsfilename          : name of the results file, which is produced by the GenerateImage.py script
-  * u_length/v_length        : side lengths of the total image, should be 20 x 10 mm� for an image of the whole beam spot 
+  * u_length/v_length        : side lengths of the total image, should be 20 x 10 mm^2 for an image of the whole beam spot 
   * umin/vmax                : Position of the upper left corner of the total image, should be (umin,vmax)=(-10mm,5mm) for 
                                an image of the whole beam spot
-  * u/v pixelsize            : Pixel size of the image in �m, should be chosen in such away, that at least 1000 particles 
+  * u/v pixelsize            : Pixel size of the image in microns, should be chosen in such away, that at least 1000 particles 
                                pass through the area of most pixels
 
 After the imaging process the uncalibrated radiation length image is located in 
