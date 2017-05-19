@@ -30,29 +30,24 @@ example script. The different steps are described in the following bullet points
    the center of the telescope. The data from this simulation will be reconstructed (using the calibration
    from the air data set) and a calibrated image of the the material distribution will be generated. 
 
-__1. Telescope Calibration:
+##1. Telescope Calibration:
 
    In this first analysis step noisy pixel masks will be produced and cluster calibration and telescope alignment
    is carried out. The steering files, which are used during this process are described in README.md and can
    be found in workspace/steering-files/x0-sim/ .The calibration results can be found in 
    workspace/cal-files/default/ . For the calibration the air MC data is used.
 
-__2. Scattering angle Reconstruction:
+##2. Scattering angle Reconstruction:
 
    Using the calibration results from the previous step the scattering angles on the aluminium DUT are
    reconstructed. During the angle reconstruction step the workspace/steering-files/x0-sim/reco.xml
    steering file is employed. The reco.xml for the X0 analysis contains the following processors:
 
-     _1. M26Clusterizer:_			Input: NoiseDB (must be present in cal-files/default) and M26 digit collection, 
-                         	        Output: M26 clusters
-     _2. GoeHitMaker:_				Input: clusterDB (must be present in cal-files/default) and M26 clusters, 
-                        	    	Output: M26 hits 
-	 _3. Fastracker (downstream):_  Input: alignmentDB (must be in cal-files/default) and M26 hits (only downstream hits), 
-                                    Output: downstream tracks 
-     _4. Fastracker (upstream):_    Input: alignmentDB (must be in cal-files/cal-tag) and M26 hits (only upstream hits), 
-                                    Output: upstream tracks
-     _5. X0ImageProducer:_          Input: alignmentDB (must be present in cal-files/cal-tag),
-                                    get kink calculates angles from tracks, Output: X0 root file 
+   _1. M26Clusterizer:_			  Input: NoiseDB (must be present in cal-files/default) and M26 digit collectiion, Output: M26 clusters
+   _2. GoeHitMaker:_			  Input: clusterDB (must be present in cal-files/default) and M26 clusters, Output: M26 hits 
+   _3. Fastracker (downstream):_  Input: alignmentDB (must be in cal-files/default) and M26 hits (only downstream hits), Output: downstream tracks 
+   _4. Fastracker (upstream):_    Input: alignmentDB (must be in cal-files/cal-tag) and M26 hits (only upstream hits), Output: upstream tracks
+   _5. X0ImageProducer:_          Input: alignmentDB (must be present in cal-files/cal-tag), Get kink calculates angles from tracks, Output: X0 root file 
 
    The results of the angle reconstruction can be found at 
    workspace/root-files/cal-tag-default/X0-mc-reco-cal-tag-default.root . The results file contains a 
