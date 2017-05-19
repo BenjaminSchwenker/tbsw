@@ -44,9 +44,13 @@ example script. The different steps are described in the following bullet points
    steering file is employed. The reco.xml for the X0 analysis contains the following processors:
 
    _1. M26Clusterizer:_			  Input: NoiseDB (must be present in cal-files/default) and M26 digit collectiion, Output: M26 clusters
+   
    _2. GoeHitMaker:_			  Input: clusterDB (must be present in cal-files/default) and M26 clusters, Output: M26 hits 
+   
    _3. Fastracker (downstream):_  Input: alignmentDB (must be in cal-files/default) and M26 hits (only downstream hits), Output: downstream tracks 
+   
    _4. Fastracker (upstream):_    Input: alignmentDB (must be in cal-files/cal-tag) and M26 hits (only upstream hits), Output: upstream tracks
+   
    _5. X0ImageProducer:_          Input: alignmentDB (must be present in cal-files/cal-tag), Get kink calculates angles from tracks, Output: X0 root file 
 
    The results of the angle reconstruction can be found at 
@@ -76,7 +80,7 @@ example script. The different steps are described in the following bullet points
      *  vertex_chi2     : Chi2 of the determined vertex of the up- and downstream track
      *  momentum        : p value of the determined vertex of the up- and downstream track
 
-__3. X/X0 Imaging (uncalibrated):__
+##3. X/X0 Imaging (uncalibrated):
 
      The tree, which was generated in the last step will now be used to generate a uncalibrated
      radiation length image of the aluminium DUT. The imaging procedure employs a cfg file 
@@ -109,7 +113,7 @@ __3. X/X0 Imaging (uncalibrated):__
      * beamspot                         : Image of number of tracks 
      * BE_image                         : Image of the particle momentum/beam energy
 
-__4. Calibration of BE and telescope angle resolution:__
+## Calibration of BE and telescope angle resolution:
 
      The relevant calibration constants ares: 
 
@@ -137,7 +141,7 @@ __4. Calibration of BE and telescope angle resolution:__
      workspace/root-files/cal-tag-default/x0calibration/ . The results of the calibration are also stored as a cfg file
      in workspace/cal-files/default/x0cal_result.cfg.
 
-__5. X/X0 Imaging (calibrated):__
+## X/X0 Imaging (calibrated):
 
      In the last step an calibrated X/X0 image is produced, which used the cfg file from the previous calibration step.
      The results can be found in workspace/root-files/cal-tag-default/calibrated_x0image/X0-completeimage.root
@@ -149,7 +153,7 @@ which was explained here and change it accordingly in order to generate radiatio
 
 Ulf Stolzenberg
 
-G�ttingen 2017 
+Goettingen 2017
 
 ulf.stolzenberg@phys.uni-goettingen.de 
 
