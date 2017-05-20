@@ -76,6 +76,9 @@ namespace depfet {
     streamLabel << m_clsSize; 
      
     for (auto digit : m_sortedDigits ) {
+
+      auto lower =  std::lower_bound(jumps.begin(), jumps.end(), digit.m_charge);
+      cout << "lower bound is " << *lower << endl;
       int mapped_charge = std::distance(jumps.cbegin(), std::lower_bound(jumps.begin(), jumps.end(), digit.m_charge) );
       streamLabel << "D" << digit.m_cellIDV - m_vStart  <<  "." << digit.m_cellIDU - m_uStart << "." << mapped_charge;  
     } 
