@@ -77,9 +77,13 @@ namespace depfet {
      
     for (auto digit : m_sortedDigits ) {
 
+      auto upper =  std::upper_bound(jumps.begin(), jumps.end(), digit.m_charge);
+      cout << "upper bound is " << *upper << endl;
+      
       auto lower =  std::lower_bound(jumps.begin(), jumps.end(), digit.m_charge);
       cout << "lower bound is " << *lower << endl;
-      int mapped_charge = std::distance(jumps.cbegin(), std::lower_bound(jumps.begin(), jumps.end(), digit.m_charge) );
+      
+      int mapped_charge = std::distance(jumps.cbegin(), std::upper_bound(jumps.begin(), jumps.end(), digit.m_charge) );
       streamLabel << "D" << digit.m_cellIDV - m_vStart  <<  "." << digit.m_cellIDU - m_uStart << "." << mapped_charge;  
     } 
     return streamLabel.str();   
