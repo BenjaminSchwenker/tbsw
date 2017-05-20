@@ -98,7 +98,7 @@ namespace depfet {
     
     std::vector<int> initSoftADCSteps;
     registerProcessorParameter ("SoftwareADC",
-                                "List of steps for software ADC. Put -1 to disable the software ADC",
+                                "List of steps for software ADC. An empty list gives a constant transfer curve (0bit limit)",
                                 _softADCSteps, initSoftADCSteps);
         
   }
