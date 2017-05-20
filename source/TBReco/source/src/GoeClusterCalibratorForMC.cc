@@ -322,7 +322,19 @@ namespace depfet {
           
           // Get cluster id 
           PixelCluster Cluster = hit.GetCluster();
-          string id = Cluster.getLabel(m_scale); 
+          //string id = Cluster.getLabel(m_scale); 
+
+          
+          string id = Cluster.getLabel(); 
+          
+          std::vector<int> jumps;
+          jumps.push_back(22);
+          jumps.push_back(60);
+          string id2 = Cluster.getLabel(jumps); 
+
+          cout << "old label " << id << endl;
+          cout << "new label " << id2 << endl;
+          
           
           // Register new cluster if needed
           if (_sensorMap.find(id) == _sensorMap.end() ) {
