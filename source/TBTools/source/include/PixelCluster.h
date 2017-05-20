@@ -110,10 +110,15 @@ namespace depfet {
      */
     unsigned short getVStart() const { return m_vStart; }
     
-    /** Get cluster label string 
-     * @return label string
+    /** Get cluster label string  
+     * @return cluster label used for cluster calibration 
      */
     std::string getLabel(int scale = 1) const;
+
+    /** Get cluster label string 
+     * @return cluster label used for cluster calibration 
+     */
+    std::string getLabel(const std::vector<int>& jumps) const; 
      
     /** Get cluster type string. 
      * @return type string
