@@ -30,53 +30,43 @@ int MergeImages()
 	const int num_vsplits=mEnv.GetValue("vsplits", 1);
 
 	// TString for the input root file name
-	TString filenameB[num_usplits][num_vsplits];
+	TString filenameB;
 
 	// Input root files
-	TFile *X0file[num_usplits][num_vsplits]; 
+	TFile* X0file; 
 
 	// TString for the input root file name
 	TString filenameA;
 	filenameA=mEnv.GetValue("x0filename", "X0-merge");
 
-	for(int i=0;i<num_usplits;i++) 
-	{
-		for(int j=0;j<num_vsplits;j++) 
-		{
-			filenameB[i][j].Form("-part-%i-%i.root",i+1,j+1); 
-			TString filename=filenameA+filenameB[i][j];
-			X0file[i][j] = new TFile(filename, "READ");
-		}
-	}
+	// Aid Histograms from the X0 image parts
+	TH2F * x0_image_aid;		   		            // X0 images
+	TH2F * x0err_image_aid;				            // statistical error images
+	TH2F * x0relerr_image_aid;			            // relative X0 error images
+	TH2F * fit1chi2ndof_image_aid;				    // fit chi2 images
+	TH2F * fit2chi2ndof_image_aid;				    // fit chi2 images
+	TH2F * fitsumchi2ndof_image_aid;			    // fit chi2 images
+	TH2F * fit1prob_image_aid;				        // fit prob images of first scattering angle
+	TH2F * fit2prob_image_aid;				        // fit prob images of second scattering angle
+	TH2F * fitsumprob_image_aid;			        // fit prob images of merged scattering angle distribution
+	TH2F * theta1mean_image_aid;				    // images of mean value of first scattering angle distribution
+	TH2F * theta2mean_image_aid;				    // images of mean value of second scattering angle distribution
+	TH2F * correctedtheta1mean_image_aid;	        // images of mean value of first scattering angle distribution
+	TH2F * correctedtheta2mean_image_aid;	        // images of mean value of second scattering angle distribution
+	TH2F * uresidualmean_image_aid;		            // u residual images
+	TH2F * vresidualmean_image_aid;		            // v residual images
+	TH2F * htrackchi2map_aid;			            // track chi2 images
+	TH2F * beamspot_aid;				            // hit map
+	TH2F * BE_image_aid;				            // Momentum images
 
-	// Histogras from the X0 image parts
-	TH2F * x0_image_aid[num_usplits][num_vsplits];		   		// X0 images
-	TH2F * x0err_image_aid[num_usplits][num_vsplits];				// statistical error images
-	TH2F * x0relerr_image_aid[num_usplits][num_vsplits];			// relative X0 error images
-	TH2F * fit1chi2ndof_image_aid[num_usplits][num_vsplits];				// fit chi2 images
-	TH2F * fit2chi2ndof_image_aid[num_usplits][num_vsplits];				// fit chi2 images
-	TH2F * fitsumchi2ndof_image_aid[num_usplits][num_vsplits];			// fit chi2 images
-	TH2F * fit1prob_image_aid[num_usplits][num_vsplits];				// fit prob images of first scattering angle
-	TH2F * fit2prob_image_aid[num_usplits][num_vsplits];				// fit prob images of second scattering angle
-	TH2F * fitsumprob_image_aid[num_usplits][num_vsplits];			// fit prob images of merged scattering angle distribution
-	TH2F * theta1mean_image_aid[num_usplits][num_vsplits];				// images of mean value of first scattering angle distribution
-	TH2F * theta2mean_image_aid[num_usplits][num_vsplits];				// images of mean value of second scattering angle distribution
-	TH2F * correctedtheta1mean_image_aid[num_usplits][num_vsplits];	// images of mean value of first scattering angle distribution
-	TH2F * correctedtheta2mean_image_aid[num_usplits][num_vsplits];	// images of mean value of second scattering angle distribution
-	TH2F * uresidualmean_image_aid[num_usplits][num_vsplits];		// u residual images
-	TH2F * vresidualmean_image_aid[num_usplits][num_vsplits];		// v residual images
-	TH2F * htrackchi2map_aid[num_usplits][num_vsplits];			// track chi2 images
-	TH2F * beamspot_aid[num_usplits][num_vsplits];				// hit map
-	TH2F * BE_image_aid[num_usplits][num_vsplits];				// Momentum images
+	TH1F * fit1prob_histo_aid;	    	            // fit prob histo of first scattering angle
+	TH1F * fit2prob_histo_aid;			            // fit prob histo of second scattering angle
+	TH1F * fitsumprob_histo_aid;			        // fit prob histo of merged scattering angle distribution
 
-	TH1F * fit1prob_histo_aid[num_usplits][num_vsplits];	    	// fit prob histo of first scattering angle
-	TH1F * fit2prob_histo_aid[num_usplits][num_vsplits];			// fit prob histo of second scattering angle
-	TH1F * fitsumprob_histo_aid[num_usplits][num_vsplits];			// fit prob histo of merged scattering angle distribution
-
-	TH2F * hscatt_theta1_vs_resu_aid;	// theta vs residual scatter plot
-	TH2F * hscatt_theta1_vs_resv_aid;	// theta vs residual scatter plot
-	TH2F * hscatt_theta2_vs_resu_aid;	// theta vs residual scatter plot
-	TH2F * hscatt_theta2_vs_resv_aid;	// theta vs residual scatter plot
+	TH2F * hscatt_theta1_vs_resu_aid;	            // theta vs residual scatter plot
+	TH2F * hscatt_theta1_vs_resv_aid;	            // theta vs residual scatter plot
+	TH2F * hscatt_theta2_vs_resu_aid;	            // theta vs residual scatter plot
+	TH2F * hscatt_theta2_vs_resv_aid;	            // theta vs residual scatter plot
 
 
     // Fit Probability distribution for first angle dist
@@ -137,50 +127,19 @@ int MergeImages()
     hscatt_theta2_vs_resv->GetZaxis()->SetTitleSize(0.02);
     hscatt_theta2_vs_resv->GetZaxis()->SetLabelSize(0.02);
 
-	for(int i=0;i<num_usplits;i++) 
-	{
-		for(int j=0;j<num_vsplits;j++) 
-		{
-			x0_image_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/x0_image");
-			x0err_image_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/x0err_image");
-			x0relerr_image_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/x0relerr_image");
-			fit1chi2ndof_image_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/fit1chi2ndof_image");
-			fit2chi2ndof_image_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/fit2chi2ndof_image");
-			fitsumchi2ndof_image_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/fitsumchi2ndof_image");
-			fit1prob_image_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/fit1prob_image");
-			fit2prob_image_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/fit2prob_image");
-			fitsumprob_image_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/fitsumprob_image");
-			theta1mean_image_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/theta2mean_image");
-			theta2mean_image_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/theta2mean_image");
-			correctedtheta1mean_image_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/correctedtheta1mean_image");
-			correctedtheta2mean_image_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/correctedtheta2mean_image");
-			uresidualmean_image_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/uresidualmean_image");
-			vresidualmean_image_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/vresidualmean_image");
-			beamspot_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/beamspot");
-			BE_image_aid[i][j]=(TH2F*)X0file[i][j]->Get("mapping/result/BE_image");
-
-			fit1prob_histo_aid[i][j]=(TH1F*)X0file[i][j]->Get("mapping/result/fit1prob_histo");
-			fit2prob_histo_aid[i][j]=(TH1F*)X0file[i][j]->Get("mapping/result/fit2prob_histo");
-			fitsumprob_histo_aid[i][j]=(TH1F*)X0file[i][j]->Get("mapping/result/fitsumprob_histo");
-
-			fit1prob_histo->Add(fit1prob_histo_aid[i][j]);
-			fit2prob_histo->Add(fit2prob_histo_aid[i][j]);
-			fitsumprob_histo->Add(fitsumprob_histo_aid[i][j]);
-
-			if((i==0)&&(j==0))
-			{
-
-				hscatt_theta1_vs_resu_aid=(TH2F*)X0file[i][j]->Get("mapping/result/hscatt_theta1_vs_resu");
-				hscatt_theta1_vs_resv_aid=(TH2F*)X0file[i][j]->Get("mapping/result/hscatt_theta1_vs_resv");
-				hscatt_theta2_vs_resu_aid=(TH2F*)X0file[i][j]->Get("mapping/result/hscatt_theta2_vs_resu");
-				hscatt_theta2_vs_resv_aid=(TH2F*)X0file[i][j]->Get("mapping/result/hscatt_theta2_vs_resv");
-
-			}
-		}
-	}
 
 
+	// Get the root file of the first partial image
+	// and copy the scatter plots
+	filenameB.Form("-part-1-1.root"); 
 
+	TString filename=filenameA+filenameB;
+    X0file = new TFile(filename, "READ");
+
+	hscatt_theta1_vs_resu_aid=(TH2F*)X0file->Get("mapping/result/hscatt_theta1_vs_resu");
+	hscatt_theta1_vs_resv_aid=(TH2F*)X0file->Get("mapping/result/hscatt_theta1_vs_resv");
+	hscatt_theta2_vs_resu_aid=(TH2F*)X0file->Get("mapping/result/hscatt_theta2_vs_resu");
+	hscatt_theta2_vs_resv_aid=(TH2F*)X0file->Get("mapping/result/hscatt_theta2_vs_resv");
 
 	hscatt_theta1_vs_resu=hscatt_theta1_vs_resu_aid;
 	hscatt_theta1_vs_resv=hscatt_theta1_vs_resv_aid;
@@ -411,29 +370,67 @@ int MergeImages()
 	{
 		for(int row=0; row<numrow; row++)
 		{
+			// Get the root file of this prtial image
+			filenameB.Form("-part-%i-%i.root",int(col/max_u_pixels)+1,num_vsplits-int(row/max_v_pixels)); 
+			cout<<"Part "<<(int(col/max_u_pixels)+1)<<" "<<(num_vsplits-int(row/max_v_pixels))<<endl;
+
+			filename=filenameA+filenameB;
+			X0file = new TFile(filename, "READ");
+
+			x0_image_aid=(TH2F*)X0file->Get("mapping/result/x0_image");
+			x0err_image_aid=(TH2F*)X0file->Get("mapping/result/x0err_image");
+			x0relerr_image_aid=(TH2F*)X0file->Get("mapping/result/x0relerr_image");
+			fit1chi2ndof_image_aid=(TH2F*)X0file->Get("mapping/result/fit1chi2ndof_image");
+			fit2chi2ndof_image_aid=(TH2F*)X0file->Get("mapping/result/fit2chi2ndof_image");
+			fitsumchi2ndof_image_aid=(TH2F*)X0file->Get("mapping/result/fitsumchi2ndof_image");
+			fit1prob_image_aid=(TH2F*)X0file->Get("mapping/result/fit1prob_image");
+			fit2prob_image_aid=(TH2F*)X0file->Get("mapping/result/fit2prob_image");
+			fitsumprob_image_aid=(TH2F*)X0file->Get("mapping/result/fitsumprob_image");
+			theta1mean_image_aid=(TH2F*)X0file->Get("mapping/result/theta2mean_image");
+			theta2mean_image_aid=(TH2F*)X0file->Get("mapping/result/theta2mean_image");
+			correctedtheta1mean_image_aid=(TH2F*)X0file->Get("mapping/result/correctedtheta1mean_image");
+			correctedtheta2mean_image_aid=(TH2F*)X0file->Get("mapping/result/correctedtheta2mean_image");
+			uresidualmean_image_aid=(TH2F*)X0file->Get("mapping/result/uresidualmean_image");
+			vresidualmean_image_aid=(TH2F*)X0file->Get("mapping/result/vresidualmean_image");
+			beamspot_aid=(TH2F*)X0file->Get("mapping/result/beamspot");
+			BE_image_aid=(TH2F*)X0file->Get("mapping/result/BE_image");
+
+			fit1prob_histo_aid=(TH1F*)X0file->Get("mapping/result/fit1prob_histo");
+			fit2prob_histo_aid=(TH1F*)X0file->Get("mapping/result/fit2prob_histo");
+			fitsumprob_histo_aid=(TH1F*)X0file->Get("mapping/result/fitsumprob_histo");
+
+			fit1prob_histo->Add(fit1prob_histo_aid);
+			fit2prob_histo->Add(fit2prob_histo_aid);
+			fitsumprob_histo->Add(fitsumprob_histo_aid);
+
 			// Copy entries of first images
-			x0_image->SetBinContent(col+1,row+1,x0_image_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			x0_image->SetBinError(col+1,row+1,x0err_image_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			x0err_image->SetBinContent(col+1,row+1,x0err_image_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			x0relerr_image->SetBinContent(col+1,row+1,x0relerr_image_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			fit1chi2ndof_image->SetBinContent(col+1,row+1,fit1chi2ndof_image_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			fit2chi2ndof_image->SetBinContent(col+1,row+1,fit2chi2ndof_image_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			fitsumchi2ndof_image->SetBinContent(col+1,row+1,fitsumchi2ndof_image_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			fit1prob_image->SetBinContent(col+1,row+1,fit1prob_image_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			fit2prob_image->SetBinContent(col+1,row+1,fit2prob_image_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			fitsumprob_image->SetBinContent(col+1,row+1,fitsumprob_image_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			theta1mean_image->SetBinContent(col+1,row+1,theta1mean_image_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			theta2mean_image->SetBinContent(col+1,row+1,theta2mean_image_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			correctedtheta1mean_image->SetBinContent(col+1,row+1,correctedtheta1mean_image_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			correctedtheta2mean_image->SetBinContent(col+1,row+1,correctedtheta2mean_image_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			uresidualmean_image->SetBinContent(col+1,row+1,uresidualmean_image_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			vresidualmean_image->SetBinContent(col+1,row+1,vresidualmean_image_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			beamspot->SetBinContent(col+1,row+1,beamspot_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			BE_image->SetBinContent(col+1,row+1,BE_image_aid[int(col/max_u_pixels)][num_vsplits-(int(row/max_v_pixels)+1)]->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			x0_image->SetBinContent(col+1,row+1,x0_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			x0_image->SetBinError(col+1,row+1,x0err_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			x0err_image->SetBinContent(col+1,row+1,x0err_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			x0relerr_image->SetBinContent(col+1,row+1,x0relerr_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			fit1chi2ndof_image->SetBinContent(col+1,row+1,fit1chi2ndof_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			fit2chi2ndof_image->SetBinContent(col+1,row+1,fit2chi2ndof_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			fitsumchi2ndof_image->SetBinContent(col+1,row+1,fitsumchi2ndof_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			fit1prob_image->SetBinContent(col+1,row+1,fit1prob_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			fit2prob_image->SetBinContent(col+1,row+1,fit2prob_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			fitsumprob_image->SetBinContent(col+1,row+1,fitsumprob_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			theta1mean_image->SetBinContent(col+1,row+1,theta1mean_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			theta2mean_image->SetBinContent(col+1,row+1,theta2mean_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			correctedtheta1mean_image->SetBinContent(col+1,row+1,correctedtheta1mean_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			correctedtheta2mean_image->SetBinContent(col+1,row+1,correctedtheta2mean_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			uresidualmean_image->SetBinContent(col+1,row+1,uresidualmean_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			vresidualmean_image->SetBinContent(col+1,row+1,vresidualmean_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			beamspot->SetBinContent(col+1,row+1,beamspot_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			BE_image->SetBinContent(col+1,row+1,BE_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+
+			delete X0file;
+			X0file = ((TFile *)0);
 
 
 		}
 	}
+
+	Resultsfile->cd("");
 	
 	x0_image->Write();
 	x0err_image->Write();

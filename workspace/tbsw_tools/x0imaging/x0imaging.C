@@ -331,11 +331,11 @@ using namespace std ;
 	TString histoname;
 	histoname.Form("area(%i,%i)",col,row);
 	file->cd("");
-	histogram1=(TH1*)file->Get("mapping/raw/theta1_"+histoname);
-	histogram2=(TH1*)file->Get("mapping/raw/theta2_"+histoname);
-	histogramu=(TH1*)file->Get("mapping/raw/uresidual_"+histoname);
-	histogramv=(TH1*)file->Get("mapping/raw/vresidual_"+histoname);
-	histogramsum=(TH1*)file->Get("mapping/raw/sumhisto_"+histoname);
+	TH1* histogram1=(TH1*)file->Get("mapping/raw/theta1_"+histoname);
+	TH1* histogram2=(TH1*)file->Get("mapping/raw/theta2_"+histoname);
+	TH1* histogramu=(TH1*)file->Get("mapping/raw/uresidual_"+histoname);
+	TH1* histogramv=(TH1*)file->Get("mapping/raw/vresidual_"+histoname);
+	TH1* histogramsum=(TH1*)file->Get("mapping/raw/sumhisto_"+histoname);
 
 
 	double uncorrected_mean1=histogram1->GetMean();
@@ -746,6 +746,24 @@ using namespace std ;
 
 	fithistogramsum->SetDirectory(gROOT);
 	delete fithistogramsum;
+
+	//delete all histograms from memory
+	histogram1->SetDirectory(gROOT);
+	delete histogram1;
+
+	histogram2->SetDirectory(gROOT);
+	delete histogram2;
+
+	//delete all histograms from memory
+	histogramu->SetDirectory(gROOT);
+	delete histogramu;
+
+	histogramv->SetDirectory(gROOT);
+	delete histogramv;
+
+	histogramsum->SetDirectory(gROOT);
+	delete histogramsum;
+
   }
 
 // Function, which returns beam momentum value for every point on the target plane

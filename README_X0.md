@@ -44,8 +44,8 @@ steering file is employed. The reco.xml for the X0 analysis contains the followi
    _5. X0ImageProducer:_          Input: alignmentDB (must be present in cal-files/cal-tag), Get kink calculates angles from tracks, Output: X0 root file 
 
 The results of the angle reconstruction can be found at 
-workspace/root-files/cal-tag-default/X0-mc-reco-cal-tag-default.root . The results file contains a 
-root tree named MSCTree. The following variables are stored in the tree:
+workspace/root-files/X0-mc-reco-cal-tag-default.root . The results file contains a root tree named MSCTree. 
+The following variables are stored in the tree:
 
    *  iRun            : Run number of the track
    *  iEvt            : Event number of the track
@@ -75,7 +75,7 @@ root tree named MSCTree. The following variables are stored in the tree:
 
 The tree, which was generated in the last step will now be used to generate a uncalibrated
 radiation length image of the aluminium DUT. The imaging procedure employs a cfg file 
-(see "workspace/root-scripts/x0imaging/image.cfg"). The parameters in the config file are
+(see "workspace/steering-files/x0-sim/image.cfg"). The parameters in the config file are
 
   * lambda			         : The calibration factor of the angle resolution sigma, during this first
                               uncalibrated imaging, lambda should be 1.0
@@ -90,7 +90,7 @@ radiation length image of the aluminium DUT. The imaging procedure employs a cfg
                                pass through the area of most pixels
 
 After the imaging process the uncalibrated radiation length image is located in 
-workspace/root-files/cal-tag-default/uncalibrated_x0image/X0-completeimage.root . The file contains many 2D histograms, the
+workspace/root-files/X0-mc-alu-default-reco-Uncalibrated-X0image.root . The file contains many 2D histograms, the
 most important ones are:
 
   * x0_image                         : Radiation length (X/X0) image 
@@ -119,7 +119,7 @@ momentum = momentumoffset+momentumugradient*u+momentumvgradient*v
 
 The calibration parameters are measured by fitting a X0 image from a calibration target. The calibration target is
 expected to be a planar object with areas of well defined  X/X0. For the calibration software, the calibration target
-must be described in a cfg file. This file is located at workspace/root-scripts/x0imaging/x0calibration.cfg. It is 
+must be described in a cfg file. This file is located at workspace/steering-files/x0-sim/x0calibration.cfg. It is 
 used to to set starting parameters, measurement areas (MA) and fit options. The measurement areas can be added
 as simple rectangular shapes (MA in the cfg file) with a center position, length, thickness and material parameters. 
 Alternatively a line can be defined, which constructs multiple measurement areas at the same time. More detailed 
@@ -129,13 +129,13 @@ In the example script a 0.5mm thick aluminium plate is used as the DUT. The cfg 
 two measurement areas and a line in order to fit the alibration parameters.
 
 The results of the calibration, including pictures of the fits, can be found in 
-workspace/root-files/cal-tag-default/x0calibration/ . The results of the calibration are also stored as a cfg file
+workspace/tmp-runs/X0-mc-alu-default-reco-X0Calibration/ . The results of the calibration are also stored as a cfg file
 in workspace/cal-files/default/x0cal_result.cfg.
 
 ## X/X0 Imaging (calibrated):
 
 In the last step an calibrated X/X0 image is produced, which used the cfg file from the previous calibration step.
-The results can be found in workspace/root-files/cal-tag-default/calibrated_x0image/X0-completeimage.root
+The results can be found in workspace/root-files/X0-mc-alu-default-reco-Calibrated-X0image.root
 
 If you are performing an analysis of actual test beam data, it is probably a good idea to start with the example script,
 which was explained here and change it accordingly in order to generate radiation length images of your DUTs. The most
