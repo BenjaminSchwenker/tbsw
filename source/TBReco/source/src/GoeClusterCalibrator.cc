@@ -222,17 +222,8 @@ namespace depfet {
           
           // Get cluster id  
           PixelCluster Cluster = TE.GetHit().GetCluster(); 
-          //string id = Cluster.getLabel(m_scale); 
-          string id = Cluster.getLabel(); 
+          string id = Cluster.getLabel(m_scale); 
           
-          std::vector<int> jumps;
-          jumps.push_back(22);
-          jumps.push_back(60);
-          string id2 = Cluster.getLabel(jumps); 
-
-          cout << "old label " << id << endl;
-          cout << "new label " << id2 << endl;
-
           // Register new cluster if needed
           if (_sensorMap.find(id) == _sensorMap.end() ) {
             _sensorMap[id] = 0;

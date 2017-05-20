@@ -90,16 +90,17 @@ namespace depfet {
     registerProcessorParameter ("MinClusters",
                                 "Minimum number of cluster ID occurances for clusterDB",
                                 _minClusters,  static_cast < int > (2000));
-
-    registerProcessorParameter ("SoftScale",
-                                "Software rescaling of adc codes for cluster labels (new_code = code/scale)",
-                                m_scale,  static_cast < int > (1));
     
     std::vector<int> initIgnoreIDVec;
     registerProcessorParameter ("IgnoreIDs",
                                 "Ignore clusters from list of sensorIDs",
                                 _ignoreIDVec, initIgnoreIDVec);
     
+    std::vector<int> initSoftADCSteps;
+    registerProcessorParameter ("SoftwareADC",
+                                "List of steps for software ADC. Put -1 to disable the software ADC",
+                                _softADCSteps, initSoftADCSteps);
+        
   }
   
   //
@@ -111,6 +112,16 @@ namespace depfet {
     _nRun = 0 ;
     _nEvt = 0 ;
     _timeCPU = clock()/1000 ;
+    
+    // Make sure adc steps are sorted
+    std::sort(_softADCSteps.begin(), _softADCSteps.end());
+    
+    // Erase duplicated entries
+    _softADCSteps.erase( std::unique( _softADCSteps.begin(), _softADCSteps.end() ), _softADCSteps.end() ); 
+    
+    for(auto step : _softADCSteps ) {
+      streamlog_out( MESSAGE3 ) << " step "  << step << endl;
+    }
     
     // Print set parameters
     printProcessorParams();
@@ -320,22 +331,10 @@ namespace depfet {
           double trk_v = simHit->getPosition()[1];    // mm
           double trk_mom = momentum.mag();            // GeV
           
-          // Get cluster id 
-          PixelCluster Cluster = hit.GetCluster();
-          //string id = Cluster.getLabel(m_scale); 
+          // Get cluster label  
+          PixelCluster Cluster = hit.GetCluster(); 
+          string id = Cluster.getLabel(_softADCSteps); 
 
-          
-          string id = Cluster.getLabel(); 
-          
-          std::vector<int> jumps;
-          jumps.push_back(22);
-          jumps.push_back(60);
-          string id2 = Cluster.getLabel(jumps); 
-
-          cout << "old label " << id << endl;
-          cout << "new label " << id2 << endl;
-          
-          
           // Register new cluster if needed
           if (_sensorMap.find(id) == _sensorMap.end() ) {
             _sensorMap[id] = 0;
@@ -546,7 +545,7 @@ namespace depfet {
     // Finally, we must store the scale that was used to compute the 
     // cluster labels 
     TVectorD DB_Scale(1);
-    DB_Scale[0] = m_scale;
+    DB_Scale[0] = 1;
     DB_Scale.Write("DB_Scale");
       
     streamlog_out(MESSAGE3) << "ClusterDB written to file " << _clusterDBFileName 
