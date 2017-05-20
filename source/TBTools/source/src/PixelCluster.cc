@@ -76,13 +76,6 @@ namespace depfet {
     streamLabel << m_clsSize; 
      
     for (auto digit : m_sortedDigits ) {
-
-      auto upper =  std::upper_bound(jumps.begin(), jumps.end(), digit.m_charge);
-      if (upper == jumps.end())
-        cout << "no element is greater " << endl; 
-      else 
-        cout << "upper bound is " << *upper << endl;  
-      
       int mapped_charge = std::distance(jumps.cbegin(), std::upper_bound(jumps.begin(), jumps.end(), digit.m_charge) );
       streamLabel << "D" << digit.m_cellIDV - m_vStart  <<  "." << digit.m_cellIDU - m_uStart << "." << mapped_charge;  
     } 
