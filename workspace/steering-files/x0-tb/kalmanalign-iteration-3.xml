@@ -8,7 +8,7 @@
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> tmp-iteration-1.slcio </parameter>
+      <parameter name="LCIOInputFiles"> tmp-iteration-2.slcio </parameter>
       <parameter name="GearXMLFile" value="gear.xml"/>
       <parameter name="MaxRecordNumber" value="-1"/>
       <parameter name="SkipNEvents" value="0"/>
@@ -25,15 +25,15 @@
      <!--Collection name for fitted tracks-->
      <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> aligntracks </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-     <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB-iteration-1.slcio"/>
+     <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
      <!--Enter plane numbers of bad detectors-->
      <parameter name="ExcludeDetector" type="IntVec" value="3"/>
      <!--To use only GoodQuality write 0 here-->
      <parameter name="HitQualitySelection" type="int" value="0"/>
      <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
-     <parameter name="maxResidualU" type="FloatVec" value="0.4"/>
+     <parameter name="MaxResidualU" type="FloatVec" value="0.4"/>
      <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
-     <parameter name="maxResidualV" type="FloatVec" value="0.4"/>
+     <parameter name="MaxResidualV" type="FloatVec" value="0.4"/>
      <!--Maximum track chisq in track fit-->
      <parameter name="MaxTrackChi2" type="float" value="100000"/>
      <!--Maximum number of consecutive missing hits in track-->
@@ -71,7 +71,7 @@
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
      <!--Root file containing alignment validation plots-->
-     <parameter name="RootFileName" type="string" value="KalmanAlign-iteration-1.root"/>
+     <parameter name="RootFileName" type="string" value="KalmanAlign-iteration-3.root"/>
      <!--Update lcio alignmentDB using alignment results (true/false)?-->
      <parameter name="UpdateAlignment" type="bool" value="true"/>
    </processor>

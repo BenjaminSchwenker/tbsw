@@ -544,23 +544,23 @@ Double_t molierefunction(Double_t *x, Double_t *par)
 
 	// Declaration of the histogram containing the values of the first function given in table 2
 	TH1F * h_f1_table = new TH1F("f1_table","f1_table",numbins,low,high);
-        h_f1_table->SetStats(kFALSE);
+    h_f1_table->SetStats(kFALSE);
 
 	// Declaration of the histogram containing the values of the first function given in table 2
 	TH1F * h_f2_table = new TH1F("f2_table","f2_table",numbins,low,high);
-        h_f2_table->SetStats(kFALSE);
+    h_f2_table->SetStats(kFALSE);
 
 	// Declaration of the histogram containing the overall moliere angle distibution (including reconstruction errors)
 	TH1F * h_moliere_conv = new TH1F("moliere_conv","moliere_conv",numbins,low,high);
-        h_moliere_conv->SetStats(kFALSE);
+    h_moliere_conv->SetStats(kFALSE);
 
 	// Declaration of the histogram containing the gaussian distribution
 	TH1F * h_gaus = new TH1F("gausfunc","gausfunc",numbins,low,high);
-        h_gaus->SetStats(kFALSE);
+    h_gaus->SetStats(kFALSE);
 
 	// Declaration of the histogram containing the overall angle distibution
 	TH1F * h_total1 = new TH1F("total1","total1",numbins,low,high);
-        h_total1->SetStats(kFALSE);
+    h_total1->SetStats(kFALSE);
 
 	// fill the f1 and f2 histograms with the corresponding values
 	for(int i=0; i<numbins;i++)
@@ -1376,8 +1376,8 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		cout<<"Fit function "<<i<<endl;
 		//cout<<"Chi2 value for this individual fit is: "<<fitFcn[i]->GetChisquare()<<endl;
 		cout<<"Chi2 value for this individual fit is: "<<fithistogramsum[i]->Chisquare(fitFcn[i],"R")<<endl;
-		cout<<"Number of degrees of freedom is: "<<fitFcn[i]->GetNDF()<<endl;
-		cout<<"Alternatively: Chi2 is: "<<chi2.at(i)(fitFcn[i]->GetParameters())<<endl;
+//		cout<<"Number of degrees of freedom is: "<<fitFcn[i]->GetNDF()<<endl;
+//		cout<<"Alternatively: Chi2 is: "<<chi2.at(i)(fitFcn[i]->GetParameters())<<endl;
 		cout<<"--------------------------"<<endl;
 
 		chi2_summation+=pow(fithistogramsum[i]->Chisquare(fitFcn[i],"R"),2);
@@ -1594,7 +1594,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	int correctmean=mEnv->GetValue("correctmean", 1 );
 
 	// Get the lambda starting value
-	double 	lambda_start_default=mEnv->GetValue("lambda_start", 1.0);
+	double 	lambda_start_default=mEnv->GetValue("lambda_start", 99.0);
 
 	// Define and set the parameters used in the Moliere fit
 	// BE: beam energy (GeV), z: charge of beam particle (e), mass: mass of beam particle (GeV),
@@ -1605,15 +1605,15 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	cout<<"-----------------Parameter settings----------------"<<endl;
 	cout<<"---------------------------------------------------"<<endl;
 	// Set mean beam energy (GeV) and slope
-	double BE_mean_default=mEnv->GetValue("momentumumoffset", 4.0);
-	double BE_ugrad_default=mEnv->GetValue("momentumugradient", 0.0);			// energy slope in GeV/mm in u direction
-	double BE_vgrad_default=mEnv->GetValue("momentumvgradient", 0.0);			// energy slope in GeV/mm in u direction
+	double BE_mean_default=mEnv->GetValue("momentumoffset", 99.0);
+	double BE_ugrad_default=mEnv->GetValue("momentumugradient", 99.0);			// energy slope in GeV/mm in u direction
+	double BE_vgrad_default=mEnv->GetValue("momentumvgradient", 99.0);			// energy slope in GeV/mm in u direction
 
 	// Set beam particle charge (e)	
 	z= mEnv->GetValue("particle.charge", 1);
 
 	// Set beam particle mass (GeV)	
-	mass= mEnv->GetValue("particle.mass", 4.0);
+	mass= mEnv->GetValue("particle.mass", 99.0);
 	cout<<"Mass: 					"<<mass<<" GeV"<<endl;
 	cout<<"Charge: 				"<<z<<" e"<<endl;
 
@@ -1654,10 +1654,10 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 	// TString for the input root file name
 	TString filename,histoname,range;
-	filename.Form("X0");
+	filename.Form("X0File");
 
 	// Copy the X0 Analysis Root file and rename it
-	TFile *X0file = new TFile(filename+".root", "READ");
+	TFile *X0file = new TFile(filename, "READ");
 
 	//Open the copied file
 	filename=filename+"CalibrationDQM_"+model+"fit";
@@ -1677,8 +1677,8 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// Binning and range of the histograms
 
 	int nbins=500;
-	double range1=-0.0025;
-	double range2=0.0025;
+	double range1=-0.005;
+	double range2=0.005;
 
 	// Set the range and number of bins of the histogram
 	range.Form("%i,%f,%f",nbins,range1,range2);
@@ -1707,7 +1707,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
     TEnv *mEnv_res=new TEnv("x0cal_result.cfg");
 	// Check whether there are entries, of this is the case use these entries as starting values
 
-	double lambda_start=mEnv_res->GetValue("lambda", lambda_start_default);
+	double lambda_start=mEnv_res->GetValue("lambda_start", lambda_start_default);
 	double BE_mean=mEnv_res->GetValue("momentumumoffset", BE_mean_default);
 	double BE_ugrad=mEnv_res->GetValue("momentumugradient", BE_ugrad_default);	
 	double BE_vgrad=mEnv_res->GetValue("momentumvgradient", BE_ugrad_default);

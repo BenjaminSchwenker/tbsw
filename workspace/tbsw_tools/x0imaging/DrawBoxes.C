@@ -89,13 +89,13 @@ void DrawBoxes()
 	filename="X0image";
 
 	// Copy the X0 Analysis Root file 
-	TFile *rootFile = new TFile(filename+".root", "READ");
+	TFile *rootFile = new TFile(filename, "READ");
 
 	rootFile->cd("");
     gStyle->SetPalette(1,0);
 
 	// X0 map
-	hX0map = (TH2*)rootFile->Get("hX0map");
+	hX0map = (TH2*)rootFile->Get("x0_image");
 
 	// Create a new canvas
 	TCanvas * c = new TCanvas("c", "c", 1400, 1000);

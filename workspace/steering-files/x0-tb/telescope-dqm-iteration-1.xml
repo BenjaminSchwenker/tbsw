@@ -4,7 +4,7 @@
 
    <execute>
       <processor name="TelTrackFinder"/>
-      <processor name="TelAligner"/>
+      <processor name="TelescopeDQM"/>
    </execute>
 
    <global>
@@ -31,11 +31,11 @@
      <!--To use only GoodQuality write 0 here-->
      <parameter name="HitQualitySelection" type="int" value="0"/>
      <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
-     <parameter name="maxResidualU" type="FloatVec" value="0.4"/>
+     <parameter name="MaxResidualU" type="FloatVec" value="0.4"/>
      <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
-     <parameter name="maxResidualV" type="FloatVec" value="0.4"/>
+     <parameter name="MaxResidualV" type="FloatVec" value="0.4"/>
      <!--Maximum track chisq in track fit-->
-     <parameter name="MaxTrackChi2" type="float" value="100000"/>
+     <parameter name="MaxTrackChi2" type="float" value="100"/>
      <!--Maximum number of consecutive missing hits in track-->
      <parameter name="MaximumGap" type="int" value="0"/>
      <!--Maximum slope of candiate tracks in Z=0 plane (rad). Set cut to zero to deactivate.-->
@@ -43,7 +43,7 @@
      <!--Minimum number of hits in track-->
      <parameter name="MinimumHits" type="int" value="6"/>
      <!--Maximum chi2 increment for any hit added to a track candidate-->
-     <parameter name="OutlierChi2Cut" type="float" value="100000"/>
+     <parameter name="OutlierChi2Cut" type="float" value="10"/>
      <!--Particle charge [e]-->
      <parameter name="ParticleCharge" type="double" value="-1"/>
      <!--Particle mass [GeV]-->
@@ -62,18 +62,14 @@
      <parameter name="SingleHitSeeding" type="IntVec"> </parameter>
    </processor>
    
-   <processor name="TelAligner" type="KalmanAligner">
-     <!--KalmanAligner: Tracking telescope alignment using the Kalman Alignment Algorithm (KAA) with annealing-->
-     <!--Track collection for alignment-->
-     <parameter name="TrackCollectionName" type="string" lcioInType="Track"> aligntracks </parameter>
-     <!--Name of the alignment config file-->
-     <parameter name="AlignConfigFileName" type="string" value="align-config-iteration-1.cfg"/>
+   <processor name="TelescopeDQM" type="TrackFitDQM">
+     <!--TrackFitDQM: DQM plots for monitor quality of track fitting-->
+     <!--Track input collection-->
+     <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> aligntracks </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-     <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
-     <!--Root file containing alignment validation plots-->
-     <parameter name="RootFileName" type="string" value="KalmanAlign-iteration-1.root"/>
-     <!--Update lcio alignmentDB using alignment results (true/false)?-->
-     <parameter name="UpdateAlignment" type="bool" value="true"/>
+     <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB-iteration-1.slcio"/>
+     <!--Output root file name-->
+     <parameter name="RootFileName" type="string" value="TelescopeDQM-iteration-1.root"/>
    </processor>
 
 </marlin>

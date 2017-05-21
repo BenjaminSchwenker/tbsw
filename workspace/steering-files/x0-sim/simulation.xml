@@ -13,7 +13,7 @@
    <global>
       <parameter name="LCIOInputFiles"> </parameter>
       <parameter name="GearXMLFile" value="gear.xml"/>
-      <parameter name="MaxRecordNumber" value="500000"/>
+      <parameter name="MaxRecordNumber" value="5000000"/>
       <parameter name="SkipNEvents" value="0"/>
       <parameter name="SupressCheck" value="false"/>
       <parameter name="Verbosity" value="MESSAGE3"/>
@@ -35,9 +35,9 @@
     <!--Number of beam particles per second-->
     <parameter name="BeamIntensity" type="double" value="20000"/>
     <!--Beam momentum [GeV]-->
-    <parameter name="BeamMomentum" type="double" value="4"/>
+    <parameter name="BeamMomentum" type="double" value="2.0"/>
     <!--Beam momentum sigma [GeV]-->
-    <parameter name="BeamMomentumSigma" type="double" value="0.1"/>
+    <parameter name="BeamMomentumSigma" type="double" value="0.001"/>
     <!--Beam slope sigma in XZ plane [rad]-->
     <parameter name="BeamSlopeXSigma" type="double" value="0.001"/>
     <!--Beam slope sigma in YZ plane [rad]-->
@@ -53,13 +53,13 @@
     <!--Beam vertex sigma in Y direction [mm]-->
     <parameter name="BeamVertexYSigma" type="double" value="10"/>
     <!--Beam vertex position in Z direction [mm]-->
-    <parameter name="BeamVertexZ" type="double" value="-10000"/>
+    <parameter name="BeamVertexZ" type="double" value="-10"/>
     <!--Beam correlation factor between vertex position and momentum-->
-    <parameter name="CorrelationVertexXvsMomentum" type="double" value="0.05"/>
+    <parameter name="CorrelationVertexXvsMomentum" type="double" value="0.005"/>
     <!--Beam correlation factor between vertex position and slope-->
     <parameter name="CorrelationVertexXvsSlopeX" type="double" value="0.1"/>
     <!--Beam correlation factor between vertex position and momentum-->
-    <parameter name="CorrelationVertexYvsMomentum" type="double" value="0.05"/>
+    <parameter name="CorrelationVertexYvsMomentum" type="double" value="0.005"/>
     <!--Beam correlation factor between vertex position and slope-->
     <parameter name="CorrelationVertexYvsSlopeY" type="double" value="0.1"/>
     <!--PDG code-->
@@ -81,9 +81,9 @@
   <!--Choose model for multiple scattering: Highland(0)-->
   <parameter name="ScatterModel" type="int" value="0"/>
   <!--Flag (true/false) for simulating energy loss straggling-->
-  <parameter name="DoEnergyLossStraggling" type="bool" value="true"/>
+  <parameter name="DoEnergyLossStraggling" type="bool" value="false"/>
   <!--Flag (true/false) for simulating fractional Bethe Heitler energy loss-->
-  <parameter name="DoFractionalBetheHeitlerEnergyLoss" type="bool" value="true"/>
+  <parameter name="DoFractionalBetheHeitlerEnergyLoss" type="bool" value="false"/>
 </processor>
 
  <processor name="M26Digitizer" type="SiPixDigitizer">

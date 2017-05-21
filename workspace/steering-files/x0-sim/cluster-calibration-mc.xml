@@ -42,7 +42,7 @@
     <!--Name of hit collection-->
     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> goehit_m26 </parameter>
     <!--This is the name of the ROOT file with the cluster constants (add .root)-->
-    <parameter name="ClusterDBFileName" type="string" value="clusterDB-M26.root"/>
+    <parameter name="ClusterDBFileName" type="string" value="clusterDB-M26-MC.root"/>
   </processor>
     
   <processor name="M26ClusterDBCreator" type="GoeClusterCalibratorForMC">
