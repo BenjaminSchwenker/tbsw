@@ -192,7 +192,7 @@ if __name__ == '__main__':
       with open('x0image-partial.cfg', 'w') as configfile:
          config.write(configfile,space_around_delimiters=False)
   
-      subprocess.call('root -q '+scriptname, shell=True)
+      subprocess.call('root -q -b '+scriptname, shell=True)
       print ('[Print] One part done ...')
 
   # Modify the merging script
@@ -242,7 +242,7 @@ if __name__ == '__main__':
   with open('x0merge.cfg', 'w') as configfile:
     config.write(configfile,space_around_delimiters=False)
    
-  subprocess.call('root -q '+scriptname, shell=True)            
+  subprocess.call('root -q -b '+scriptname, shell=True)            
   print ('[Print] All partial images created and merged... ')  
 
   # clean up partial image scripts 

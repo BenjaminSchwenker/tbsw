@@ -460,7 +460,7 @@ using namespace std ;
 		chi2ndofsum=fitsum->GetChisquare()/(fitsum->GetNDF()*1.0);	
 
 		// define chi2 cut
-		double chi2_cut=7.0;
+		double chi2_cut=20.0;
 
 		// Use the chi2 values for quality cuts
 		if((fittype==0)&&((chi2ndof1+chi2ndof2)>chi2_cut*2.0))
