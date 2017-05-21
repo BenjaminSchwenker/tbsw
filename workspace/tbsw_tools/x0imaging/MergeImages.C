@@ -372,7 +372,7 @@ int MergeImages()
 		{
 			// Get the root file of this prtial image
 			filenameB.Form("-part-%i-%i.root",int(col/max_u_pixels)+1,num_vsplits-int(row/max_v_pixels)); 
-			cout<<"Part "<<(int(col/max_u_pixels)+1)<<" "<<(num_vsplits-int(row/max_v_pixels))<<endl;
+			//cout<<"Part "<<(int(col/max_u_pixels)+1)<<" "<<(num_vsplits-int(row/max_v_pixels))<<endl;
 
 			filename=filenameA+filenameB;
 			X0file = new TFile(filename, "READ");
