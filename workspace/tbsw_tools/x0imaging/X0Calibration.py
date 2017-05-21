@@ -84,7 +84,7 @@ if __name__ == '__main__':
     scriptname="DrawBoxes.C"
     shutil.copy(scriptsfolder+'/DrawBoxes.C', scriptname)
   
-    subprocess.call('root -q '+scriptname, shell=True)
+    subprocess.call('root -q -b '+scriptname, shell=True)
     print ('[Print] Marking of measurement areas done... ')
 
     # remove DrawBoxes.C script and image file
@@ -104,7 +104,7 @@ if __name__ == '__main__':
   if os.path.isfile(cfgfile):
     shutil.copy(cfgfile, cfgfilename)
    
-  subprocess.call('root -x '+scriptname+' | tee log-x0cal.txt', shell=True)            
+  subprocess.call('root -x -b '+scriptname+' | tee log-x0cal.txt', shell=True)            
   print ('[Print] Calibration done... ')  
 
   # remove calibrationfit.C script
