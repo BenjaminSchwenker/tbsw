@@ -545,8 +545,8 @@ namespace depfet {
     // Finally, we must store the software ADC that was used to compute the 
     // cluster labels 
     TVectorD DB_swADCSteps(_swADCSteps.size());
-    for(auto i = 0; i <= _swADCSteps.size(); i++ ) {
-      DB_swADCSteps[i]  = _swADCSteps[i];
+    for(auto i = 0; i < _swADCSteps.size(); i++ ) {
+      DB_swADCSteps[i] = _swADCSteps[i];
     }
     DB_swADCSteps.Write("DB_swADCSteps");
       
