@@ -131,7 +131,7 @@ In the example script a aluminium plate with a material step is used as the DUT.
 several measurement areas and a line in order to fit the alibration parameters. The measurement areas are marked on the
 following image of the uncalibrated aluminium plate:
 
-[picture](workspace/tbsw_tools/validation/X0profile.png)
+[picture](workspace/tbsw_tools/validation/X0Image_Boxes.png)
 
 There is one measurement area in the 0.5mm thick aluminium (1), 6 measurement areas in the 1mm aluminium area (2,3 and 9-12)
 the remaining measurement areas lie in the air region.
