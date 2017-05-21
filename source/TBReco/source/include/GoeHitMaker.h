@@ -92,8 +92,8 @@ namespace depfet {
     TH1F * m_DB_Sigma2_V; 
     TH1F * m_DB_Cov_UV;
     
-    // Soft re-scaleing of ADC codes for labels
-    int m_scale; 
+    //! Position of steps for software ADC 
+    std::vector<int> _swADCSteps;  
   
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number

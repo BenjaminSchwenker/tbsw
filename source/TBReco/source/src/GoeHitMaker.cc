@@ -127,18 +127,22 @@ namespace depfet {
       m_DB_Cov_UV->SetDirectory(0);
     } 
     
-    histoName = "DB_Scale";
+    histoName = "DB_swADCSteps";
     if ((TVectorD*) clusterDBFile->Get(histoName.c_str()) != nullptr) {
-      TVectorD *DB_Scale = (TVectorD*) clusterDBFile->Get( histoName.c_str() );
-      m_scale = (*DB_Scale)[0];  
-    } else {
-      m_scale = 1;
+      TVectorD *DB_swADCSteps = (TVectorD*) clusterDBFile->Get( histoName.c_str() );
+      for(auto i = 0; i < DB_swADCSteps->GetNrows(); i++ ) {
+        _swADCSteps.push_back(  (*DB_swADCSteps)[i]  ); 
+      }  
     } 
     
+    for(auto step : _swADCSteps ) {
+      streamlog_out( MESSAGE3 ) << " step "  << step << endl;
+    }
+     
     // Close root  file
     clusterDBFile->Close();
     delete clusterDBFile;
-
+    
     for(int ipl=0;ipl<_detector.GetNSensors();ipl++)  { 
       int sensorID = _detector.GetDet(ipl).GetDAQID();
       _countAllMap[sensorID] = 0;   
@@ -201,7 +205,7 @@ namespace depfet {
       
       // Compute the cluster ID string
       PixelCluster aCluster(cluster->getTrackerData());   
-      string id = aCluster.getLabel(m_scale); 
+      string id = aCluster.getLabel(_swADCSteps); 
       
       streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID << " with label " << id << endl; 
       
