@@ -99,7 +99,7 @@ namespace depfet {
     std::vector<int> initSoftADCSteps;
     registerProcessorParameter ("SoftwareADC",
                                 "List of steps for software ADC. An empty list gives a constant transfer curve (0bit limit)",
-                                _softADCSteps, initSoftADCSteps);
+                                _swADCSteps, initSoftADCSteps);
         
   }
   
@@ -114,12 +114,12 @@ namespace depfet {
     _timeCPU = clock()/1000 ;
     
     // Make sure adc steps are sorted
-    std::sort(_softADCSteps.begin(), _softADCSteps.end());
+    std::sort(_swADCSteps.begin(), _swADCSteps.end());
     
     // Erase duplicated entries
-    _softADCSteps.erase( std::unique( _softADCSteps.begin(), _softADCSteps.end() ), _softADCSteps.end() ); 
+    _swADCSteps.erase( std::unique( _swADCSteps.begin(), _swADCSteps.end() ), _swADCSteps.end() ); 
     
-    for(auto step : _softADCSteps ) {
+    for(auto step : _swADCSteps ) {
       streamlog_out( MESSAGE3 ) << " step "  << step << endl;
     }
     
@@ -333,7 +333,7 @@ namespace depfet {
           
           // Get cluster label  
           PixelCluster Cluster = hit.GetCluster(); 
-          string id = Cluster.getLabel(_softADCSteps); 
+          string id = Cluster.getLabel(_swADCSteps); 
 
           // Register new cluster if needed
           if (_sensorMap.find(id) == _sensorMap.end() ) {
@@ -542,11 +542,13 @@ namespace depfet {
          
     }  
             
-    // Finally, we must store the scale that was used to compute the 
+    // Finally, we must store the software ADC that was used to compute the 
     // cluster labels 
-    TVectorD DB_Scale(1);
-    DB_Scale[0] = 1;
-    DB_Scale.Write("DB_Scale");
+    TVectorD DB_swADCSteps(_swADCSteps.size());
+    for(auto i = 0; i <= _swADCSteps.size(); i++ ) {
+      DB_swADCSteps[i]  = _swADCSteps[i];
+    }
+    DB_swADCSteps.Write("DB_swADCSteps");
       
     streamlog_out(MESSAGE3) << "ClusterDB written to file " << _clusterDBFileName 
                             << endl; 
