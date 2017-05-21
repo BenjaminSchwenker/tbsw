@@ -30,8 +30,8 @@ namespace depfet {
    *  The task of this processor is to create a clusterDB for all clusters
    *  contained in the input cluster collection. After calibration, the 
    *  clusterDB will be used by the GoeHitMaker processor to compute a 2D 
-   *  position measurement (hit) together with a 2x2 covariance matrix for 
-   *  all cluster registered in the clusterDB.
+   *  position measurement (hit) in local sensor coordinates together with
+   *  a 2x2 covariance matrix for all cluster registered in the clusterDB.
    * 
    *  This version of the ClusterCalibrator requires a collection of simHits 
    *  for creating the clusterDB. The final clusterDB can be used both for 
@@ -87,18 +87,18 @@ namespace depfet {
     //! Minimum number of clusters occurances 
     int _minClusters; 
       
-    //! Soft rescaleing of ADC codes for labels
-    int m_scale; 
+    //! Position of steps for software ADC 
+    std::vector<int> _swADCSteps; 
 
     //! Max residual for hit-track matching in mm
     double _maxResidualU; 
     double _maxResidualV; 
 
     //! Ignore clusters from these sensorIDs 
-    std::vector<int >  _ignoreIDVec;
+    std::vector<int>  _ignoreIDVec;
     
    private:
-    
+  
     // Intermediate histos to compute calibrated measurements 
     // Key is cluster label
     std::map<std::string, int>   _sensorMap;  

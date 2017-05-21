@@ -8,6 +8,7 @@
 #include "PixelCluster.h"
 #include <algorithm>
 #include <limits>
+#include <iterator>
 
 using namespace std;
 using namespace lcio; 
@@ -54,6 +55,7 @@ namespace depfet {
     std::sort(m_sortedDigits.begin(), m_sortedDigits.end());
   }
   
+  
   std::string PixelCluster::getLabel(int scale) const 
   {
     // Compute cluster label string
@@ -65,6 +67,21 @@ namespace depfet {
     } 
     return streamLabel.str();   
   }
+
+  
+  std::string PixelCluster::getLabel(const std::vector<int>& jumps) const 
+  {
+    // Compute cluster label string
+    stringstream streamLabel;         
+    streamLabel << m_clsSize; 
+     
+    for (auto digit : m_sortedDigits ) {
+      int mapped_charge = std::distance(jumps.cbegin(), std::upper_bound(jumps.begin(), jumps.end(), digit.m_charge) );
+      streamLabel << "D" << digit.m_cellIDV - m_vStart  <<  "." << digit.m_cellIDU - m_uStart << "." << mapped_charge;  
+    } 
+    return streamLabel.str();   
+  }
+  
 
     
   std::string PixelCluster::getType() const 

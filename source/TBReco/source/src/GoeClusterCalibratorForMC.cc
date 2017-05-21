@@ -90,16 +90,17 @@ namespace depfet {
     registerProcessorParameter ("MinClusters",
                                 "Minimum number of cluster ID occurances for clusterDB",
                                 _minClusters,  static_cast < int > (2000));
-
-    registerProcessorParameter ("SoftScale",
-                                "Software rescaling of adc codes for cluster labels (new_code = code/scale)",
-                                m_scale,  static_cast < int > (1));
     
     std::vector<int> initIgnoreIDVec;
     registerProcessorParameter ("IgnoreIDs",
                                 "Ignore clusters from list of sensorIDs",
                                 _ignoreIDVec, initIgnoreIDVec);
     
+    std::vector<int> initSoftADCSteps;
+    registerProcessorParameter ("SoftwareADC",
+                                "List of steps for software ADC. An empty list gives a constant transfer curve (0bit limit)",
+                                _swADCSteps, initSoftADCSteps);
+        
   }
   
   //
@@ -111,6 +112,16 @@ namespace depfet {
     _nRun = 0 ;
     _nEvt = 0 ;
     _timeCPU = clock()/1000 ;
+    
+    // Make sure adc steps are sorted
+    std::sort(_swADCSteps.begin(), _swADCSteps.end());
+    
+    // Erase duplicated entries
+    _swADCSteps.erase( std::unique( _swADCSteps.begin(), _swADCSteps.end() ), _swADCSteps.end() ); 
+    
+    for(auto step : _swADCSteps ) {
+      streamlog_out( MESSAGE2 ) << " sw adc step "  << step << endl;
+    }
     
     // Print set parameters
     printProcessorParams();
@@ -320,10 +331,10 @@ namespace depfet {
           double trk_v = simHit->getPosition()[1];    // mm
           double trk_mom = momentum.mag();            // GeV
           
-          // Get cluster id 
-          PixelCluster Cluster = hit.GetCluster();
-          string id = Cluster.getLabel(m_scale); 
-          
+          // Get cluster label  
+          PixelCluster Cluster = hit.GetCluster(); 
+          string id = Cluster.getLabel(_swADCSteps); 
+
           // Register new cluster if needed
           if (_sensorMap.find(id) == _sensorMap.end() ) {
             _sensorMap[id] = 0;
@@ -531,11 +542,13 @@ namespace depfet {
          
     }  
             
-    // Finally, we must store the scale that was used to compute the 
+    // Finally, we must store the software ADC that was used to compute the 
     // cluster labels 
-    TVectorD DB_Scale(1);
-    DB_Scale[0] = m_scale;
-    DB_Scale.Write("DB_Scale");
+    TVectorD DB_swADCSteps(_swADCSteps.size());
+    for(auto i = 0; i < _swADCSteps.size(); i++ ) {
+      DB_swADCSteps[i] = _swADCSteps[i];
+    }
+    DB_swADCSteps.Write("DB_swADCSteps");
       
     streamlog_out(MESSAGE3) << "ClusterDB written to file " << _clusterDBFileName 
                             << endl; 

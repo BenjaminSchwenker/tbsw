@@ -29,32 +29,13 @@ namespace depfet {
   //! GoeClusterCalibrator  
   /*! 
    *  The task of this processor is to create a clusterDB for all clusters
-   *  contained in the input track collection. After the calibration is 
-   *  finished, the clusterDB is used by the GoeHitMaker to compute a 2D  
-   *  position measurement (hit) together with a 2x2 covariance matrix 
-   *  for all cluster shapes registered in the clusterDB .  
+   *  contained in the input cluster collection. After calibration, the 
+   *  clusterDB will be used by the GoeHitMaker processor to compute a 2D 
+   *  position measurement (hit) in local sensor coordinates together with
+   *  a 2x2 covariance matrix for all cluster registered in the clusterDB.
    *   
    *  This version of the ClusterCalibrator requires a collection of reco
-   *  tracks in a fully aligned telescope for creating the clusterDB. A full 
-   *  calibration schema involves bootstraping and iterations:
-   *
-   *  1) In the first iteration, clustering must be carried out with an 
-   *     heuristic method like the center of gravity (bootstraping).  
-   * 
-   *     Center of gravity hits must also be used to as input to tracking 
-   *     and track based alignment processors. 
-   * 
-   *  2) After track finding, a Kalman filter/smoother is used to estimate 
-   *     local track states for all clusters in the track. 
-   * 
-   *  3) The cluster calibrator uses a sample of 'cluster:track-estimator' pairs
-   *     to compute the clusterDB.
-   *     
-   *  4) Now, the process can be iterated. This time using the clusterDB to 
-   *     compute hits instead of the center of gravity. 
-   *   
-   *  In many cases it will not be necessary to repeat the alignment processor 
-   *  using the hits from the clusterDB.    
+   *  tracks in a fully aligned telescope for creating the clusterDB.
    *  
    *  Author: B.Schwenker, Universität Göttingen
    *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
@@ -103,9 +84,9 @@ namespace depfet {
     
     //! Minimum number of clusters occurances 
     int _minClusters; 
-
-    //! Soft rescaleing of ADC codes for labels
-    int m_scale; 
+    
+    //! Position of steps for software ADC 
+    std::vector<int> _swADCSteps; 
     
     //! Minimum variance of clusters covariance matrix
     float _minVarianceU; 
