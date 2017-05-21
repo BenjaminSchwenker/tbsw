@@ -1,10 +1,12 @@
 
-#Introduction to X/X0 measurements with the test beam analysis software (tbsw)
+#Introduction to X/X0 measurements with the test beam software (tbsw)
 
 This README is a step-by-step explanation of how to generate a calibrated X0 image with the test beam software framework. The 
 data reconstruction will be explained on the simple example script workspace/tbsw_x0.py. The script simulates a test beam 
 experiment where charged tracks cross a misaligned pixel telescope containing six Mimosa 26 detector planes and a centered DUT.
 Afterwards, the simulated raw data is calibrated and reconstucted. 
+
+__ Due to the large track sample needed for the X/X0 imaging running this script will take several hours!__
 
 There are a number of different reconstruction steps, which are necessary for
 generating a calibrated X/X0 image. All of these steps are included in the
@@ -125,10 +127,16 @@ as simple rectangular shapes (MA in the cfg file) with a center position, length
 Alternatively a line can be defined, which constructs multiple measurement areas at the same time. More detailed 
 descriptions of the options can be found in the cfg file itself. 
 
-In the example script a 0.5mm thick aluminium plate is used as the DUT. The cfg file we are using here employs
-two measurement areas and a line in order to fit the alibration parameters.
+In the example script a aluminium plate with a material step is used as the DUT. The cfg file we are using here employs
+several measurement areas and a line in order to fit the alibration parameters. The measurement areas are marked on the
+following image of the uncalibrated aluminium plate:
 
-The results of the calibration, including pictures of the fits, can be found in 
+[picture](workspace/tbsw_tools/validation/X0profile.pdf)
+
+There is one measurement area in the 0.5mm thick aluminium (1), 6 measurement areas in the 1mm aluminium area (2,3 and 9-12)
+the remaining measurement areas lie in the air area.
+
+The results of the calibration, including pictures of the fits of the individual measurement areas, can be found in 
 workspace/tmp-runs/X0-mc-alu-default-reco-X0Calibration/ . The results of the calibration are also stored as a cfg file
 in workspace/cal-files/default/x0cal_result.cfg.
 
@@ -137,9 +145,17 @@ in workspace/cal-files/default/x0cal_result.cfg.
 In the last step an calibrated X/X0 image is produced, which used the cfg file from the previous calibration step. The
 calibrated X/X0 image should look like this:
 
-[picture](workspace/tbsw_tools/validation/x0image.png)
+[picture](workspace/tbsw_tools/validation/X0image.pdf)
 
-The results can be found in workspace/root-files/X0-mc-alu-default-reco-Calibrated-X0image.root
+The different aluminium thicknesses can be seen. The area with small X/X0 values surrounding the aluminium plate is the surrounding air.
+
+A X/X0 profile cut can be used for X/X0 measurements. In this example case the steps between thick and thin aluminium, as well as air is clearly visible:
+
+[picture](workspace/tbsw_tools/validation/X0profile.pdf)
+
+The complete results can be found in workspace/root-files/X0-mc-alu-default-reco-Calibrated-X0image.root
+
+## Analysis of Test Beam data:
 
 If you are performing an analysis of actual test beam data, it is probably a good idea to start with the example script,
 which was explained here and change it accordingly in order to generate radiation length images of your DUTs. The most
@@ -149,6 +165,8 @@ important changes are the following
      requiring any manual changes, you just have to use another steering-files folder (steering-files/x0-tb)
    * The gear files in x0-tb, describing the telescope geometry, should be changed according to the real setup 
    * Some changes in the x0 cfg files might be necessary (changing the measurement areas during the X0 calibration etc.)
+
+An example script for analysing test beam data can be found in workspace/testbeam_x0.py.
 
 
 Ulf Stolzenberg
