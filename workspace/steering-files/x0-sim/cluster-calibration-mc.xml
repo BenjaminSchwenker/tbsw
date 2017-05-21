@@ -61,7 +61,7 @@
     <parameter name="MaxResidualV" type="double" value="0.1"/>
     <!--Minimum number of cluster ID occurances for clusterDB-->
     <parameter name="MinClusters" type="int" value="2000"/>
-    <!--Software rescaling of adc codes for cluster labels (new_code = code/scale)-->
-    <parameter name="SoftScale" type="int" value="1"/>
+    <!--List of steps for software ADC. An empty list gives a constant transfer curve (0bit limit)-->
+    <parameter name="SoftwareADC" type="IntVec"> </parameter>
   </processor>
 </marlin>

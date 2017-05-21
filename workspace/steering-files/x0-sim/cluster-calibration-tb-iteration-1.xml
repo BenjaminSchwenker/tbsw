@@ -105,8 +105,8 @@
      <parameter name="MinVarianceU" type="float" value="1e-06"/>
      <!--Minimum value of variance for v position measurement [mm^2]-->
      <parameter name="MinVarianceV" type="float" value="1e-06"/>
-     <!--Software rescaling of adc codes for cluster labels (new_code = code/scale)-->
-     <parameter name="SoftScale" type="int" value="1"/>
+     <!--List of steps for software ADC. An empty list gives a constant transfer curve (0bit limit)-->
+     <parameter name="SoftwareADC" type="IntVec"> </parameter>
    </processor>
    
    <processor name="ClusterDQM" type="TrackFitDQM">
