@@ -42,13 +42,14 @@ def compare_clusterdb(dblist = [], histofilename = "MyHistos.root" , compare_typ
     dbfile = TFile( dbfilename, 'READ' )
   
     # read data for comparison plots 
-    scaleobj = dbfile.Get("DB_Scale")
-    if scaleobj: 
-      dict_trafo[dbfilename] = scaleobj[0] 
-    else: 
-      dict_trafo[dbfilename] = -1    
+    swADCSteps = dbfile.Get("DB_swADCSteps")  
+    adclabel = '' 
+    if swADCSteps:  
+      for index in range(0, swADCSteps.GetNrows()):
+        adclabel =  adclabel + 'S' + str(int(swADCSteps[index])) 
+    dict_trafo[dbfilename] = adclabel    
 
-    print ("db scale ", dict_trafo[dbfilename])
+    print ("db sw adc ", dict_trafo[dbfilename])
       
     coverageobj = dbfile.Get("hDB_Coverage")
     if coverageobj: 
@@ -463,11 +464,6 @@ def plot_clusterdb(dbfilename = None, histofilename = "MyHistos.root" ):
   histofile.Write()
   histofile.Close()
 
-
-if __name__ == '__main__':
-
-  plot_clusterdb(dbfilename = "cal-files/run65-python/clusterDB-DEP2.root", histofilename = "NEWClusterDB-python.root" )  
-
-  compare_clusterdb(dblist = ["cal-files/run65-python/clusterDB-DEP2.root"], histofilename = "dummy.root" )                        
+                      
 
 
