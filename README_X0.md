@@ -137,7 +137,7 @@ in workspace/cal-files/default/x0cal_result.cfg.
 In the last step an calibrated X/X0 image is produced, which used the cfg file from the previous calibration step. The
 calibrated X/X0 image should look like this:
 
-[picture](workspace/tbsw_tools/validation/x0image.pdf)
+[picture](workspace/tbsw_tools/validation/x0image.png)
 
 The results can be found in workspace/root-files/X0-mc-alu-default-reco-Calibrated-X0image.root
 
