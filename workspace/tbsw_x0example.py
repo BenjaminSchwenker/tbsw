@@ -1,14 +1,16 @@
 """
-This is an example script to demonstrate how TBSW can be used to analyze test beam 
-data using Python scripts.
+This is an example script to demonstrate how TBSW can be used to create an X0 image from a simulated
+test beam experiment.
 
-The script below simulates a test beam experiment where charged tracks cross a misaligned
-pixel telescope containing six Mimosa 26 detector planes. In order to have a realistic scenario
-two runs are simulated. One with only air between the two telescope arms and one with an aluminium
-plate, centered in the telescope. After the simulations, the simulated raw data without DUT is
-calibrated. The calibration data is used in the next step to reconstuct the aluminium run. Then
-an X/X0 of the aluminium plate is generated and a calibration of the angle resolution
-of the telescope is performed
+The script below simulates a test beam experiment where charged tracks from a monoenergetic beam 
+cross a a misaligned pixel telescope containing six Mimosa 26 detector planes. Two data sets are 
+simulated. A first 'air' run is done with no additional scatterer between the telescope arms. The 
+'air' run is used to calibrate the telescope. In a second 'aluminium' run, a aluminium plate with 
+a well known thickness profile is inserted in between the telescope arms. This second run is used 
+to compute a X0 image from the reconstructed scattering angles. The known comparison between the 
+reconstructed X0 image and the a priori known image is used to calibrate the beam energy and the 
+angular resolution of the telescope. This second step completes the calibration of the telescope
+for X0 imaging. 
 
 Author: Ulf Stolzenberg <ulf.stolzenberg@phys.uni-goettingen.de>  
 """
@@ -22,17 +24,14 @@ steerfiles = 'steering-files/x0-sim/'
 # Tag for calibration data 
 caltag = 'default'
 # File name for raw data 
-runname_air='mc-air' 
-runname_alu='mc-alu'
-
-rawfile_air = runname_air+'.slcio'
-rawfile_alu = runname_alu+'.slcio'
+rawfile_air = 'mc-air.slcio'
+rawfile_alu = 'mc-alu.slcio'
 
 # Defines the sequence of calibration steps. 
 # XML steer files are taken from steerfiles. 
 calpath = [ 
            'hotpixelkiller.xml' ,              
-           'cluster-calibration-mc.xml',     # creates clusterDB using MC truth information, but will not be used for reconstruction
+           'cluster-calibration-mc.xml',     
            'correlator-iteration-1.xml' ,
            'kalmanalign-iteration-1.xml',
            'kalmanalign-iteration-2.xml',
@@ -54,25 +53,7 @@ calpath = [
            'telescope-dqm-iteration-2.xml',
          ]
 
-# Function which is required to change the global settings of a steer file
-def override_xmlfileglobal(xmlfile=None, paramname=None, value=None):
-  """
-  Overrides proecessor parameters in Marlin XML steering file. 
-    :@xmlfile:    Marlin steering file to be overwritten  
-    :@procname:   name of global parameter   
-    :@value:      value of the parameter 
- 
-    :author: benjamin.schwenker@phys.uni-goettinge.de  
-    """   
-  tree = xml.etree.ElementTree.parse(xmlfile)
-  root = tree.getroot() 
   
-  for glob in root.findall('global'):
-      for param in glob.findall('parameter'):
-        if param.get('name') ==  paramname:
-          param.set('value', str(value)) 
-  
-  tree.write(xmlfile)  
 
 # Base name for temporary folder created in tmp-runs/ 
 name_air = os.path.splitext(os.path.basename(rawfile_air))[0] + '-' + caltag  

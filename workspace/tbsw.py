@@ -225,4 +225,24 @@ def override_xmlfile(xmlfile=None, procname=None, paramname=None, value=None):
           param.set('value', str(value)) 
   
   tree.write(xmlfile)    
+
+
+def override_xmlfileglobal(xmlfile=None, paramname=None, value=None):
+  """
+  Overrides proecessor parameters in Marlin XML steering file. 
+    :@xmlfile:    Marlin steering file to be overwritten  
+    :@procname:   name of global parameter   
+    :@value:      value of the parameter 
+ 
+    :author: benjamin.schwenker@phys.uni-goettinge.de  
+    """   
+  tree = xml.etree.ElementTree.parse(xmlfile)
+  root = tree.getroot() 
+  
+  for glob in root.findall('global'):
+      for param in glob.findall('parameter'):
+        if param.get('name') ==  paramname:
+          param.set('value', str(value)) 
+  
+  tree.write(xmlfile)
      
