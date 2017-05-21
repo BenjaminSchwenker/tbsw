@@ -29,7 +29,7 @@ is carried out. The steering files, which are used during this process are descr
 be found in workspace/steering-files/x0-sim/ .The calibration results can be found in 
 workspace/cal-files/default/ . For the calibration the air run is used.
 
-##2. Scattering angle Reconstruction:
+##2. Scattering angle reconstruction:
 
 Using the calibration results from the previous step the scattering angles on the aluminium DUT are
 reconstructed. During the angle reconstruction step the workspace/steering-files/x0-sim/reco.xml
@@ -73,7 +73,7 @@ The following variables are stored in the tree:
    *  momentum        : p value of the determined vertex of the up- and downstream track
    
 
-##3. X/X0 Imaging (uncalibrated):
+##3. X/X0 imaging (uncalibrated):
 
 The tree, which was generated in the last step will now be used to generate a uncalibrated
 radiation length image of the aluminium DUT. The imaging procedure employs a cfg file 
@@ -131,31 +131,31 @@ In the example script a aluminium plate with a material step is used as the DUT.
 several measurement areas and a line in order to fit the alibration parameters. The measurement areas are marked on the
 following image of the uncalibrated aluminium plate:
 
-[picture](workspace/tbsw_tools/validation/X0profile.pdf)
+[picture](workspace/tbsw_tools/validation/X0profile.png)
 
 There is one measurement area in the 0.5mm thick aluminium (1), 6 measurement areas in the 1mm aluminium area (2,3 and 9-12)
-the remaining measurement areas lie in the air area.
+the remaining measurement areas lie in the air region.
 
 The results of the calibration, including pictures of the fits of the individual measurement areas, can be found in 
 workspace/tmp-runs/X0-mc-alu-default-reco-X0Calibration/ . The results of the calibration are also stored as a cfg file
 in workspace/cal-files/default/x0cal_result.cfg.
 
-## X/X0 Imaging (calibrated):
+## X/X0 imaging (calibrated):
 
 In the last step an calibrated X/X0 image is produced, which used the cfg file from the previous calibration step. The
 calibrated X/X0 image should look like this:
 
-[picture](workspace/tbsw_tools/validation/X0image.pdf)
+[picture](workspace/tbsw_tools/validation/X0image.png)
 
 The different aluminium thicknesses can be seen. The area with small X/X0 values surrounding the aluminium plate is the surrounding air.
 
 A X/X0 profile cut can be used for X/X0 measurements. In this example case the steps between thick and thin aluminium, as well as air is clearly visible:
 
-[picture](workspace/tbsw_tools/validation/X0profile.pdf)
+[picture](workspace/tbsw_tools/validation/X0profile.png)
 
 The complete results can be found in workspace/root-files/X0-mc-alu-default-reco-Calibrated-X0image.root
 
-## Analysis of Test Beam data:
+## Analysis of test beam data:
 
 If you are performing an analysis of actual test beam data, it is probably a good idea to start with the example script,
 which was explained here and change it accordingly in order to generate radiation length images of your DUTs. The most
