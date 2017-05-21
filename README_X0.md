@@ -13,21 +13,26 @@ generating a calibrated X/X0 image. All of these steps are included in the
 example script. The different steps are described in the following bullet points:
 
 
-##0. Simulation of digits:
+##0. Simulation of telescope digits:
 
-The example script generates two runs with raw digits stored in slcio files. The first run also called air run
+The example script generates two runs with raw digits stored in two slcio files. The first run, called air run,
 is an simulation of the telescope without any additional material within the telescope arms. It is used
-for the calibration of the telescope. The other simulation, the aluminium run, includes an aluminium plate with
-a material step in the center of the telescope as a scattering target. The data from this simulation will be reconstructed 
-(using the calibration from the air data set) and a calibrated image of the the material distribution will 
-be generated. 
+for the calibration of the telescope, i.e. alignment, hot pixel masking and cluster calibration. The second run, called 
+aluminium run, includes an aluminium plate as a calibration object in the center of the telescope. The data from 
+the aluminium run  will be reconstructed (using the calibration from the air run) and a calibrated image of the the 
+material distribution will be generated. 
 
-##1. Telescope Calibration:
+##1. Telescope calibration:
 
-In this first analysis step noisy pixel masks will be produced and cluster calibration and telescope alignment
+During the telescope calibration, noisy pixel masks is produced and cluster calibration and telescope alignment
 is carried out. The steering files, which are used during this process are described in README.md and can
-be found in workspace/steering-files/x0-sim/ .The calibration results can be found in 
-workspace/cal-files/default/ . For the calibration the air run is used.
+be found in workspace/steering-files/x0-sim/ .The calibration results can be found in the folder  
+workspace/cal-files/default/. 
+
+It is preferred to use an air run for the telescope calibration. Afterwards, scattering objects must be installed 
+w/o moving the telescope arms. The reason for this approach is that unkown, or wrongly modelled, material inside
+the telescope may bias the telescope alignment. The size of possible bias effects can be estimated using toy simulations 
+within tbsw. 
 
 ##2. Scattering angle reconstruction:
 
@@ -45,9 +50,8 @@ steering file is employed. The reco.xml for the X0 analysis contains the followi
    
    _5. X0ImageProducer:_          Input: alignmentDB (must be present in cal-files/cal-tag), Get kink calculates angles from tracks, Output: X0 root file 
 
-The results of the angle reconstruction can be found at 
-workspace/root-files/X0-mc-reco-cal-tag-default.root . The results file contains a root tree named MSCTree. 
-The following variables are stored in the tree:
+The results of the angle reconstruction can be found at workspace/root-files/X0-mc-reco-cal-tag-default.root. The results file contains a root 
+tree named MSCTree. The following variables are stored in the tree:
 
    *  iRun            : Run number of the track
    *  iEvt            : Event number of the track
@@ -106,7 +110,7 @@ most important ones are:
   * beamspot                         : Image of number of tracks 
   * BE_image                         : Image of the particle momentum/beam energy
 
-## Calibration of BE and telescope angle resolution:
+## Calibration of beam energy and telescope angle resolution:
 
 The relevant calibration constants ares: 
 
@@ -161,7 +165,7 @@ If you are performing an analysis of actual test beam data, it is probably a goo
 which was explained here and change it accordingly in order to generate radiation length images of your DUTs. The most
 important changes are the following
 
-   * You will have to use .raw files recorded during the test beam instead of simulated .slcio files. This change is not
+   * You will want to use .raw files recorded during the test beam instead of simulated .slcio files. This change is not
      requiring any manual changes, you just have to use another steering-files folder (steering-files/x0-tb)
    * The gear files in x0-tb, describing the telescope geometry, should be changed according to the real setup 
    * Some changes in the x0 cfg files might be necessary (changing the measurement areas during the X0 calibration etc.)
