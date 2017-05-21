@@ -55,44 +55,41 @@ calpath = [
 
   
 
-# Base name for temporary folder created in tmp-runs/ 
-name_air = os.path.splitext(os.path.basename(rawfile_air))[0] + '-' + caltag  
+
+
 
 # Simulate a rawfile from a test beam experiment
-# SimObj creates folder tmp-runs/name-sim/ and populates it with 
+# SimObj creates folder tmp-runs/name/ and populates it with 
 # copies of steering files. After processing, the folder contains
 # also logfiles. 
-# Air data for telescope calibration
-SimObj_air = Simulation(steerfiles=steerfiles, name=name_air + '-sim' )
 
-# The following lines show how to change parameters in copied 
-# XML steer files managed by CalObj 
+# Simulate Air data for telescope calibration 
+SimObj_air = Simulation(steerfiles=steerfiles, name='mc-air-sim' )
+
+# The following lines show how to change XML parameters before execution
 xmlfile = SimObj_air.get_filename('simulation.xml')
 override_xmlfileglobal(xmlfile=xmlfile, paramname='GearXMLFile', value='gear-air.xml') 
 override_xmlfileglobal(xmlfile=xmlfile, paramname='MaxRecordNumber', value=200000) 
 
-SimObj_air.simulate(path=['simulation.xml'], ofile=rawfile_air, caltag=None)  
+# Now start the simulation of air run
+SimObj_air.simulate(path=['simulation.xml'], ofile=rawfile_air)  
 
+# Al data for calibration of X0 image
+SimObj_alu = Simulation(steerfiles=steerfiles, name='mc-alu-sim' )
+xmlfile = SimObj_alu.get_filename('simulation.xml')
+override_xmlfileglobal(xmlfile=xmlfile, paramname='GearXMLFile', value='gear.xml') 
+override_xmlfileglobal(xmlfile=xmlfile, paramname='MaxRecordNumber', value=200000) 
+SimObj_alu.simulate(path=['simulation.xml'], ofile=rawfile_alu)  
 
-# Base name for temporary folder created in tmp-runs/ 
-name_alu = os.path.splitext(os.path.basename(rawfile_alu))[0] + '-' + caltag  
-
-# Simulate a rawfile from a test beam experiment
-# SimObj creates folder tmp-runs/name-sim/ and populates it with 
-# copies of steering files. After processing, the folder contains
-# also logfiles. 
-# Air data for telescope calibration
-SimObj_alu = Simulation(steerfiles=steerfiles, name=name_alu + '-sim' )
-SimObj_alu.simulate(path=['simulation.xml'], ofile=rawfile_alu, caltag=None)  
    
 # Calibrate the telescope using the air rawfile. Creates a folder caltag 
-# containing all calibrations. 
-CalObj = Calibration(steerfiles=steerfiles, name=name_air + '-cal') 
+# containing all calibrations 
+CalObj = Calibration(steerfiles=steerfiles, name= 'mc-air-cal') 
 CalObj.calibrate(path=calpath,ifile=rawfile_air,caltag=caltag)  
    
 # Reconsruct the alu rawfile using caltag. Resulting root files are 
 # written to folder root-files/
-RecObj = Reconstruction(steerfiles=steerfiles, name=name_alu + '-reco' )
+RecObj = Reconstruction(steerfiles=steerfiles, name='mc_alu-reco' )
 RecObj.reconstruct(path=['reco.xml'],ifile=rawfile_alu,caltag=caltag) 
 
 imagefilename='root-files/X0-mc-alu-default-reco-Uncalibrated-X0image.root'
