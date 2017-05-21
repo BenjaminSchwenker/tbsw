@@ -29,10 +29,16 @@ namespace depfet {
   /*! This processor computes 2D hits from pixel clusters. The 
    *  processor uses a clusterDB file with pre-computed offsets 
    *  and covariance matrix entries. 
-   * 
+   *  
    *  The needed clusterDB is either produced by the GoeClusterCalibrator
    *  or by the GoeClusterCalibratorForMC processors. 
    *  
+   *  Clusters not found in the clusterDB are currently ignored. They are
+   *  not available for tracking or DUT efficiency studies. The fraction 
+   *  of ignored clusters is called clusterDB coverage inefficiency and is
+   *  computed for all sensors. Coverage efficiencies are finally written 
+   *  to the log file.  
+   * 
    *  Author: Benjamin Schwenker, Göttingen University 
    *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
    */

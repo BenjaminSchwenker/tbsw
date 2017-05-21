@@ -136,7 +136,7 @@ namespace depfet {
     } 
     
     for(auto step : _swADCSteps ) {
-      streamlog_out( MESSAGE3 ) << " step "  << step << endl;
+      streamlog_out( MESSAGE2 ) << " adc step "  << step << endl;
     }
      
     // Close root  file
@@ -267,12 +267,15 @@ namespace depfet {
     for(int ipl=0;ipl<_detector.GetNSensors();ipl++)  { 
       int sensorID = _detector.GetDet(ipl).GetDAQID();
       
+      float coverage_efficiency = 100.0*((float)_countCalMap[sensorID]/_countAllMap[sensorID]);
+      
+
       // Print message
       streamlog_out(MESSAGE3) << std::endl
                               << " "
-                              << "ClusterDB coverage on sensorID " << sensorID << ": "
+                              << "ClusterDB coverage efficiency on sensorID " << sensorID << ": "
                               << std::setprecision(4)
-                              << 100.0*((float)_countCalMap[sensorID]/_countAllMap[sensorID])
+                              <<  coverage_efficiency
                               << " %"
                               << std::endl
                               << std::endl;
