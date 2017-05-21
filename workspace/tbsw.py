@@ -205,44 +205,20 @@ class Calibration(Environment):
     print ('[INFO] Done processing file ' + ifile)  
 
 
-def override_xmlfile(xmlfile=None, procname=None, paramname=None, value=None):
+def override_xml(xmlfile=None, xpath=None, value=None):
   """
-  Overrides proecessor parameters in Marlin XML steering file. 
-    :@xmlfile:    Marlin steering file to be overwritten  
-    :@procname:   name of a processor in xmlfile 
-    :@procname:   name of procesesor parameter   
-    :@value:      value of the parameter 
- 
+  Overrides value field in all nodes specified by xpath found in xmlfile
+    :@xmlfile:    XML steering file to be overwritten  
+    :@xpath:      xpath to list of XML nodes to be modified    
+    :@value:      insert string value in field value 
     :author: benjamin.schwenker@phys.uni-goettinge.de  
-    """   
+  """   
   tree = xml.etree.ElementTree.parse(xmlfile)
   root = tree.getroot() 
   
-  for proc in root.findall('processor'):
-    if proc.get('name') == procname:
-      for param in proc.findall('parameter'):
-        if param.get('name') ==  paramname:
-          param.set('value', str(value)) 
-  
-  tree.write(xmlfile)    
-
-
-def override_xmlfileglobal(xmlfile=None, paramname=None, value=None):
-  """
-  Overrides proecessor parameters in Marlin XML steering file. 
-    :@xmlfile:    Marlin steering file to be overwritten  
-    :@procname:   name of global parameter   
-    :@value:      value of the parameter 
- 
-    :author: benjamin.schwenker@phys.uni-goettinge.de  
-    """   
-  tree = xml.etree.ElementTree.parse(xmlfile)
-  root = tree.getroot() 
-  
-  for glob in root.findall('global'):
-      for param in glob.findall('parameter'):
-        if param.get('name') ==  paramname:
-          param.set('value', str(value)) 
-  
+  for node in root.findall(xpath): 
+    print node.get('name')
+    node.set('value', str(value))   
   tree.write(xmlfile)
+
      
