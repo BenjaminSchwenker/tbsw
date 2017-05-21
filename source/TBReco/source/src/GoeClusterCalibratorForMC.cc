@@ -120,7 +120,7 @@ namespace depfet {
     _swADCSteps.erase( std::unique( _swADCSteps.begin(), _swADCSteps.end() ), _swADCSteps.end() ); 
     
     for(auto step : _swADCSteps ) {
-      streamlog_out( MESSAGE3 ) << " step "  << step << endl;
+      streamlog_out( MESSAGE2 ) << " sw adc step "  << step << endl;
     }
     
     // Print set parameters

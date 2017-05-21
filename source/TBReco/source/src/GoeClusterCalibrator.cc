@@ -69,9 +69,10 @@ namespace depfet {
                                 "Minimum number of cluster ID occurances for clusterDB",
                                 _minClusters,  static_cast < int > (2000));
     
-    registerProcessorParameter ("SoftScale",
-                                "Software rescaling of adc codes for cluster labels (new_code = code/scale)",
-                                m_scale,  static_cast < int > (1));
+    std::vector<int> initSoftADCSteps;
+    registerProcessorParameter ("SoftwareADC",
+                                "List of steps for software ADC. An empty list gives a constant transfer curve (0bit limit)",
+                                _swADCSteps, initSoftADCSteps);
     
     registerProcessorParameter ("MinVarianceU", "Minimum value of variance for u position measurement [mm^2]",
                                 _minVarianceU, static_cast < float > (1.0E-6) );
@@ -107,6 +108,16 @@ namespace depfet {
     if ( _minVarianceV <= 0 ) {
       _minVarianceV = 1.0E-6;  
     } 
+    
+    // Make sure adc steps are sorted
+    std::sort(_swADCSteps.begin(), _swADCSteps.end());
+    
+    // Erase duplicated entries
+    _swADCSteps.erase( std::unique( _swADCSteps.begin(), _swADCSteps.end() ), _swADCSteps.end() ); 
+    
+    for(auto step : _swADCSteps ) {
+      streamlog_out( MESSAGE2 ) << " sw adc step "  << step << endl;
+    }
     
     _trackVarUMap = new TH1F("","",1,0,1);
     _trackVarUMap->SetDirectory(0);
@@ -221,8 +232,8 @@ namespace depfet {
           _trackCovUVMap->Fill(cov_uv);  
           
           // Get cluster id  
-          PixelCluster Cluster = TE.GetHit().GetCluster(); 
-          string id = Cluster.getLabel(m_scale); 
+          PixelCluster Cluster = TE.GetHit().GetCluster();  
+          string id = Cluster.getLabel(_swADCSteps); 
           
           // Register new cluster if needed
           if (_sensorMap.find(id) == _sensorMap.end() ) {
@@ -531,11 +542,13 @@ namespace depfet {
          
     }  
     
-    // Finally, we must store the scale that was used to compute the 
+    // Finally, we must store the software ADC that was used to compute the 
     // cluster labels 
-    TVectorD DB_Scale(1);
-    DB_Scale[0] = m_scale;
-    DB_Scale.Write("DB_Scale");
+    TVectorD DB_swADCSteps(_swADCSteps.size());
+    for(auto i = 0; i < _swADCSteps.size(); i++ ) {
+      DB_swADCSteps[i] = _swADCSteps[i];
+    }
+    DB_swADCSteps.Write("DB_swADCSteps");
               
     streamlog_out(MESSAGE3) << "ClusterDB written to file " << _clusterDBFileName 
                             << endl; 
