@@ -122,7 +122,7 @@ def x0calibration(filename,imagefilename,caltag):
 cwdir = os.getcwd()
 
 # Base filename of the X0 root file
-basefilename='X0-'+name_alu+'-'+'reco'
+basefilename='X0-mc_alu-reco'
 
 # Total path of X0 root file
 filename='root-files/'+basefilename+'.root'
