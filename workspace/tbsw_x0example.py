@@ -67,9 +67,9 @@ calpath = [
 SimObj_air = Simulation(steerfiles=steerfiles, name='mc-air-sim' )
 
 # The following lines show how to change XML parameters before execution
-xmlfile = SimObj_air.get_filename('simulation.xml')
-override_xmlfileglobal(xmlfile=xmlfile, paramname='GearXMLFile', value='gear-air.xml') 
-override_xmlfileglobal(xmlfile=xmlfile, paramname='MaxRecordNumber', value=200000) 
+xmlfile = SimObj_air.get_filename('simulation.xml') 
+override_xml(xmlfile=xmlfile, xpath="./global/parameter[@name='GearXMLFile']", value='gear-air.xml')
+override_xml(xmlfile=xmlfile, xpath="./global/parameter[@name='MaxRecordNumber']", value=200000)
 
 # Now start the simulation of air run
 SimObj_air.simulate(path=['simulation.xml'], ofile=rawfile_air)  
@@ -77,8 +77,8 @@ SimObj_air.simulate(path=['simulation.xml'], ofile=rawfile_air)
 # Al data for calibration of X0 image
 SimObj_alu = Simulation(steerfiles=steerfiles, name='mc-alu-sim' )
 xmlfile = SimObj_alu.get_filename('simulation.xml')
-override_xmlfileglobal(xmlfile=xmlfile, paramname='GearXMLFile', value='gear.xml') 
-override_xmlfileglobal(xmlfile=xmlfile, paramname='MaxRecordNumber', value=200000) 
+override_xml(xmlfile=xmlfile, xpath="./global/parameter[@name='GearXMLFile']", value='gear.xml')
+override_xml(xmlfile=xmlfile, xpath="./global/parameter[@name='MaxRecordNumber']", value=5000000)
 SimObj_alu.simulate(path=['simulation.xml'], ofile=rawfile_alu)  
 
    

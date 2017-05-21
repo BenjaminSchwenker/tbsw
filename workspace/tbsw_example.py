@@ -45,12 +45,6 @@ SimObj.simulate(path=['simulation.xml'], ofile=rawfile, caltag=None)
 # Calibrate the telescope using the rawfile. Creates a folder caltag 
 # containing all calibrations. 
 CalObj = Calibration(steerfiles=steerfiles, name=name + '-cal') 
-
-# The following lines show how to change parameters in copied 
-# XML steer files managed by CalObj 
-xmlfile = CalObj.get_filename('cluster-calibration-mc.xml')
-override_xmlfile(xmlfile=xmlfile, procname='M26ClusterDBCreator', paramname='SoftScale', value=8) 
-
 CalObj.calibrate(path=calpath,ifile=rawfile,caltag=caltag)  
    
 # Reconsruct the rawfile using caltag. Resulting root files are 

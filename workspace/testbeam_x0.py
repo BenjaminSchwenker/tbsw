@@ -79,8 +79,8 @@ def calibrate(pars):
   # The following lines show how to change parameters in copied 
   # XML steer files managed by CalObj 
   xmlfile = CalObj.get_filename('hotpixelkiller.xml')
-  override_xmlfile(xmlfile=xmlfile, procname='M26HotPixelKiller', paramname='MaxOccupancy', value=pars[1]) 
-   
+  override_xml(xmlfile=xmlfile, xpath="./processor[@name='M26HotPixelKiller']/parameter[@name='MaxOccupancy']", value=pars[1])
+  
   CalObj.calibrate(path=calpath,ifile=pars[0],caltag=caltag) 
   
   return None
