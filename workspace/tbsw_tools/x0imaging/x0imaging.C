@@ -82,7 +82,7 @@ using namespace std ;
 
 
   // This function fills histograms corresponding to certain u v values with msc angle distributions 
-  void getcorrection(TFile* file1, TFile* file2, double plotrange, int numberofbins, const int numcol, const int numrow, double umin, double vmin, double umax, double vmax)
+  void getcorrection(TFile* file1, TFile* file2, std::vector<double> means, std::vector<double> plotranges, int numberofbins, const int numcol, const int numrow, double umin, double vmin, double umax, double vmax)
   {
 	// parameters which are read out from the root file
 	Double_t theta1;
@@ -115,8 +115,8 @@ using namespace std ;
 	{
 		for (int j=0; j<numrow; j++)
 		{
-		 	histo_theta1[i][j] = new TH1F("","",numberofbins,-plotrange,plotrange);
-		 	histo_theta2[i][j] = new TH1F("","",numberofbins,-plotrange,plotrange);
+		 	histo_theta1[i][j] = new TH1F("","",numberofbins,means.at(0)-1.0*plotranges.at(0),means.at(0)+plotranges.at(0));
+		 	histo_theta2[i][j] = new TH1F("","",numberofbins,means.at(1)-1.0*plotranges.at(1),means.at(1)+plotranges.at(1));
 		}
 	}
 
@@ -311,6 +311,7 @@ using namespace std ;
 			histo_thetasum[i][j]->Delete();
 			histo_2d[i][j]->Write("2Dhisto_"+histoname);
 			histo_2d[i][j]->Delete();
+
 		}
 		
 	}
@@ -864,17 +865,30 @@ int x0imaging()
 
 	TTree * tree = (TTree*) X0file->Get("MSCTree");
 
-	// Draw reconstruction error 1 histogram
+ 	std::vector<double> plotranges,means;
+
+	// Draw theta1 histogram
 	tree->Draw("theta1", "", "P*");
 
-	// Get plot range for first iteration of theta histograms
-	// The plot range for the fit histograms will be determined from these histograms (4*RMS value)
- 	double plotrange = 4*tree->GetHistogram()->GetRMS();
+	// Get plot range and mean value for first iteration of theta1 histograms
+	plotranges.push_back(4*tree->GetHistogram()->GetRMS());
+	means.push_back(tree->GetHistogram()->GetMean());
+
+	// Draw theta2 histogram
+	tree->Draw("theta2", "", "P*");
+
+	// Get plot range and mean value for first iteration of theta1 histograms
+	plotranges.push_back(4*tree->GetHistogram()->GetRMS());
+	means.push_back(tree->GetHistogram()->GetMean());
 	
 	// The number of bins is constant
 	int numberofbins=100;
 
-	cout<<"Scattering angle distributions will be plotted with range "<<plotrange<<" rad and "<<numberofbins<<" bins!"<<endl;
+	cout<<"The first Scattering angle distributions will be plotted with range "<<plotranges.at(0)<<" rad and "<<numberofbins<<" bins!"<<endl;
+	cout<<"The mean value of the histogram is "<<means.at(0)<<" rad !"<<endl;
+
+	cout<<"The second Scattering angle distributions will be plotted with range "<<plotranges.at(1)<<" rad and "<<numberofbins<<" bins!"<<endl;
+	cout<<"The mean value of the histogram is "<<means.at(1)<<" rad !"<<endl;
 
 	// Calibration factor lambda, used to change the reconstruction error to include systematical errors
 	// The calibration factor is either taken from the x0 calibration results cfg file or
@@ -913,7 +927,7 @@ int x0imaging()
 	rootfile->cd("mapping/result");
 
 	// Scatter theta1 vs residual u
-	TH2F * hscatt_theta1_vs_resu = new TH2F("hscatt_theta1_vs_resu","hscatt_theta1_vs_resu",100,-0.1,0.1,150,-plotrange,plotrange);
+	TH2F * hscatt_theta1_vs_resu = new TH2F("hscatt_theta1_vs_resu","hscatt_theta1_vs_resu",100,-0.1,0.1,150,means.at(0)-plotranges.at(0),means.at(0)+plotranges.at(0));
     hscatt_theta1_vs_resu->SetStats(kFALSE);
     hscatt_theta1_vs_resu->GetXaxis()->SetTitle("u residual[mm]");
     hscatt_theta1_vs_resu->GetYaxis()->SetTitle("theta1[rad]");
@@ -923,7 +937,7 @@ int x0imaging()
     hscatt_theta1_vs_resu->GetZaxis()->SetLabelSize(0.02);
 
 	// Scatter theta2 vs residual u
-	TH2F * hscatt_theta2_vs_resu = new TH2F("hscatt_theta2_vs_resu","hscatt_theta2_vs_resu",100,-0.1,0.1,150,-plotrange,plotrange);
+	TH2F * hscatt_theta2_vs_resu = new TH2F("hscatt_theta2_vs_resu","hscatt_theta2_vs_resu",100,-0.1,0.1,150,means.at(1)-plotranges.at(1),means.at(1)+plotranges.at(1));
     hscatt_theta2_vs_resu->SetStats(kFALSE);
     hscatt_theta2_vs_resu->GetXaxis()->SetTitle("u residual[mm]");
     hscatt_theta2_vs_resu->GetYaxis()->SetTitle("theta2[rad]");
@@ -933,7 +947,7 @@ int x0imaging()
     hscatt_theta2_vs_resu->GetZaxis()->SetLabelSize(0.02);
 
 	// Scatter theta1 vs residual v
-	TH2F * hscatt_theta1_vs_resv = new TH2F("hscatt_theta1_vs_resv","hscatt_theta1_vs_resv",100,-0.1,0.1,150,-plotrange,plotrange);
+	TH2F * hscatt_theta1_vs_resv = new TH2F("hscatt_theta1_vs_resv","hscatt_theta1_vs_resv",100,-0.1,0.1,150,means.at(0)-plotranges.at(0),means.at(0)+plotranges.at(0));
     hscatt_theta1_vs_resv->SetStats(kFALSE);
     hscatt_theta1_vs_resv->GetXaxis()->SetTitle("u residual[mm]");
     hscatt_theta1_vs_resv->GetYaxis()->SetTitle("theta1[rad]");
@@ -943,7 +957,7 @@ int x0imaging()
     hscatt_theta1_vs_resv->GetZaxis()->SetLabelSize(0.02);
 
 	// Scatter theta2 vs residual v
-	TH2F * hscatt_theta2_vs_resv = new TH2F("hscatt_theta2_vs_resv","hscatt_theta2_vs_resv",100,-0.1,0.1,150,-plotrange,plotrange);
+	TH2F * hscatt_theta2_vs_resv = new TH2F("hscatt_theta2_vs_resv","hscatt_theta2_vs_resv",100,-0.1,0.1,150,means.at(1)-plotranges.at(1),means.at(1)+plotranges.at(1));
     hscatt_theta2_vs_resv->SetStats(kFALSE);
     hscatt_theta2_vs_resv->GetXaxis()->SetTitle("u residual[mm]");
     hscatt_theta2_vs_resv->GetYaxis()->SetTitle("theta2[rad]");
@@ -968,7 +982,7 @@ int x0imaging()
 
 	rootfile->cd("");
 	
-	getcorrection(X0file, rootfile, plotrange, numberofbins, numcol, numrow, umin, vmin, umax, vmax);
+	getcorrection(X0file, rootfile, means, plotranges, numberofbins, numcol, numrow, umin, vmin, umax, vmax);
 	savehistos(X0file, rootfile, numberofbins, numcol, numrow, umin, vmin, umax, vmax);
 
 	X0file->Close();
@@ -1194,3 +1208,4 @@ int x0imaging()
 
 	
 }
+
