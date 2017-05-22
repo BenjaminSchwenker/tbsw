@@ -2,15 +2,23 @@
 #Introduction to X/X0 measurements with the test beam software (tbsw)
 
 This README is a step-by-step explanation of how to generate a calibrated X0 image with the test beam software framework. The 
-data reconstruction will be explained on the simple example script workspace/tbsw_x0.py. The script simulates a test beam 
-experiment where charged tracks cross a misaligned pixel telescope containing six Mimosa 26 detector planes and a centered DUT.
-Afterwards, the simulated raw data is calibrated and reconstucted. 
+data processing is explained on the heavily commented example script tbsw_x0example.py. The script simulates
+a test beam experiment where charged tracks cross a misaligned pixel telescope containing six Mimosa 26 detector planes and a 
+centered device under test (DUT). Afterwards, the simulated raw data is calibrated and reconstucted. Finally, a calibrated X0 
+image of the DUT is computed.
 
-__ Due to the large track sample needed for the X/X0 imaging running this script will take several hours!__
 
-There are a number of different reconstruction steps, which are necessary for
-generating a calibrated X/X0 image. All of these steps are included in the
-example script. The different steps are described in the following bullet points:
+```
+$ cp -r <path-to-tbsw-installdir>/workspace ~/workspace-x0-example
+$ cd ~/workspace-x0-example
+$ source init_tbsw.sh
+$ python tbsw_x0example.py
+```  
+
+__ Due to the large track sample needed for the X0 imaging, running this script can take several hours!__
+
+There are a number of different reconstruction steps, which are necessary for generating a calibrated X0 image. All of these steps 
+are included in the example script. The different steps are described in the following bullet points:
 
 
 ##0. Simulation of telescope digits:
@@ -84,7 +92,7 @@ radiation length image of the aluminium DUT. The imaging procedure employs a cfg
 (see "workspace/steering-files/x0-sim/image.cfg"). The parameters in the config file are
 
   * lambda			         : The calibration factor of the angle resolution sigma, during this first
-                              uncalibrated imaging, lambda should be 1.0
+                               uncalibrated imaging, lambda should be 1.0
   * momentumoffset           : mean value of the momentum/beam energy in the center of the image (u=0,v=0)
   * momentumugradient        : momentum gradient of the beam in u direction
   * momentumvgradient        : momentum gradient of the beam in u direction
@@ -131,8 +139,8 @@ as simple rectangular shapes (MA in the cfg file) with a center position, length
 Alternatively a line can be defined, which constructs multiple measurement areas at the same time. More detailed 
 descriptions of the options can be found in the cfg file itself. 
 
-In the example script a aluminium plate with a material step is used as the DUT. The cfg file we are using here employs
-several measurement areas and a line in order to fit the alibration parameters. The measurement areas are marked on the
+In the example script, an aluminium plate with a material step is used as the DUT. The cfg file we are using here employs
+several measurement areas and a line in order to fit the calibration parameters. The measurement areas are marked on the
 following image of the uncalibrated aluminium plate:
 
 [picture](workspace/tbsw_tools/validation/X0image_Boxes.png)
@@ -151,34 +159,45 @@ calibrated X/X0 image should look like this:
 
 [picture](workspace/tbsw_tools/validation/X0image.png)
 
-The different aluminium thicknesses can be seen. The area with small X/X0 values surrounding the aluminium plate is the surrounding air.
+The area of the aluminium plate is 8x8mm^2 and has a thickness of 1mm. The central part has a reduced thickness of 0.5mm. The aluminium plate is freely 
+hanging in air. 
 
-A X/X0 profile cut can be used for X/X0 measurements. In this example case the steps between thick and thin aluminium, as well as air is clearly visible:
+A X/X0 profile cut can be used for X/X0 measurements. In this example case the steps between thick and thin aluminium, as well as air is clearly visible.
 
 [picture](workspace/tbsw_tools/validation/X0profile.png)
 
 The complete results can be found in workspace/root-files/X0-mc-alu-default-reco-Calibrated-X0image.root
 
-## Analysis of test beam data:
+## Reconstruction of test beam data:
 
-If you are performing an analysis of actual test beam data, it is probably a good idea to start with the example script,
-which was explained here and change it accordingly in order to generate radiation length images of your DUTs. The most
-important changes are the following
+If you are performing an analysis of real test beam data, the basic processing steps do not change. The example script for processing test beam datat is 
+testbeam_x0.py. The most important changes are the following:
 
-   * You will want to use .raw files recorded during the test beam instead of simulated .slcio files. This change is not
-     requiring any manual changes, you just have to use another steering-files folder (steering-files/x0-tb)
-   * The gear files in x0-tb, describing the telescope geometry, should be changed according to the real setup 
-   * Some changes in the x0 cfg files might be necessary (changing the measurement areas during the X0 calibration etc.)
+   * You do not simulate the air and aluminium runs. You have to actually record the runs in a mono-energetic particle beam using a high resolution tracking 
+     telescope. 
+   * For test beams at DESY using the EUDET/AIDA telescope: We recommend to use 40mm as a spacing between telescope sensors and a beam energy of 2GeV. The air run can 
+     be short (~30min) while the aluminium run should last around two hours. 
+   * The raw data format from EUDAQ will be .raw files. The reading of .raw and .slcio files is slightly different. The required changes are already done in 
+     the steering files 'x0-tb' instead of 'x0-sim' used for simulations. 
+   * The file gear.xml in 'x0-tb' needs to be adjusted to your telescope geometry. In particular, the z positions of Mimosa 26 sensors along the beam axis must be carefully 
+     measured. 
+   * The track fitting w/o magnetic field needs a mean beam momentum as input. Change the momentum in the XML steering files to the beam momentum value 
+     selected for your runs. 
+   * Some changes in the x0 cfg files might be necessary as well. In particular, the measurement areas with known thicknessess for the X0 calibration will be different. 
+     The selection of the measurement areas can be done by looking at the uncalibrated X0 image.
+   * The uncalibrated X0 image is also useful to check that your scattering object is actually inside the beam. It is highly recommended to check this whenever you switch 
+     or move your object. Do it during the data taking, not weeks after you are home ;)
 
-An example script for analysing test beam data can be found in workspace/testbeam_x0.py.
+
 
 
 Ulf Stolzenberg
+Benjamin Schwenker
 
 Goettingen 2017
 
 ulf.stolzenberg@phys.uni-goettingen.de 
-
+benjamin.schwenker@phys.uni-goettingen.de
 
 
  
