@@ -217,7 +217,6 @@ def override_xml(xmlfile=None, xpath=None, value=None):
   root = tree.getroot() 
   
   for node in root.findall(xpath): 
-    print node.get('name')
     node.set('value', str(value))   
   tree.write(xmlfile)
 
