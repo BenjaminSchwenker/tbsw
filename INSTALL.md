@@ -1,5 +1,5 @@
 
-# INSTALL test beam analysis software (TBSW) 
+# INSTALL test beam software (tbsw) 
 
 The installation procedure is tested on ubuntu 16.04. 
 
