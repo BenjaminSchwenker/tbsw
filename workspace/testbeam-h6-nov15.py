@@ -66,10 +66,21 @@ def calibrate_and_reconstruct(params):
   RecObj.reconstruct(path=['reco.xml'],ifile=rawfile,caltag=caltag) 
   
   return None
-
+  
 if __name__ == '__main__':
   count = multiprocessing.cpu_count()
   pool = multiprocessing.Pool(processes=count)
+   
+  try:
+    import psutil
+    parent = psutil.Process()
+    parent.nice(18)
+    for child in parent.children():
+      child.nice(18)
+    print("All %d processes set to minimum priority"%(count))
+  except:
+    print("Could not change process priority. Please install psutil")
+    pass
   
   # Runs from first part must be processed with steerfiles_partone 
   params = [ (run, steerfiles_partone) for run in runlist_partone ]
