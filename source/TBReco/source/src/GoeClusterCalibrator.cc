@@ -19,6 +19,8 @@
 #include <limits>
 #include <iomanip>
 #include <algorithm>
+#include <sstream>
+
 
 // Include LCIO classes
 #include "lcio.h"
@@ -306,21 +308,32 @@ namespace depfet {
     
     // Count all clusters
     double countAll = 0;
+    std::map<std::string, int>  countAllMap;  
     
     // Count reject clusters
     int countReject = 0;
+    std::map<std::string, int>  countRejectMap; 
     
     // Delete cluster ids with too small counter
     for(auto iter = _sensorMap.begin(); iter != _sensorMap.end(); ) {
       auto id = iter->first; 
       auto counter = iter->second;
+      auto type = getClusterType(id); 
+      
+      // Add counter if type is new
+      if (countAllMap.find(type) == countAllMap.end() ) {
+        countAllMap[type] = 0;
+        countRejectMap[type] = 0;
+      }
         
       countAll += counter;
+      countAllMap[type] += counter;
         
       if(counter < _minClusters ) {
         streamlog_out(MESSAGE3) << "  Deleting label:  " << id << " because too few counts (" << counter  << ")" << endl;
         iter = _sensorMap.erase(iter);
         countReject += counter;
+        countRejectMap[type] += counter;
       } else {
         ++iter;
       }
@@ -336,8 +349,6 @@ namespace depfet {
     _rootFile->cd("");
     
     
-
-
     // Book histograms for clusterDB
     int NCLUSTERS = _sensorMap.size(); 
     string histoName;  
@@ -350,7 +361,27 @@ namespace depfet {
     _histoMap[histoName]->SetYTitle("coverage [%]");
     _histoMap[histoName]->SetBinContent( 1, 100.0 - 100.0*countReject/countAll );
     _histoMap[histoName]->GetXaxis()->SetBinLabel( 1, "cluster found in clusterDB" );
+
+    histoName = "hDB_CoverageTypes";
+    _histoMap[histoName] = new TH1F(histoName.c_str(),"",countAllMap.size(),0,countAllMap.size());
+    _histoMap[histoName]->SetStats( false );
+    _histoMap[histoName]->SetYTitle("coverage [%]");
+    _histoMap[histoName]->SetXTitle("type");
+    
+    auto it1 = countAllMap.begin();
+    auto it2 = countRejectMap.begin();
+    for (int bin = 1; bin <= countAllMap.size(); ++bin)
+    {
+      string type = it1->first;
+      int all = it1->second;  
+      int reject = it2->second;  
       
+      _histoMap[histoName]->SetBinContent( bin, 100.0 - 100.0*reject/all );
+      _histoMap[histoName]->GetXaxis()->SetBinLabel( bin, type.c_str() ); 
+      ++it1;
+      ++it2;
+    }
+       
     histoName = "hDB_Weight";
     _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
     _histoMap[histoName]->SetStats( false );
@@ -573,6 +604,29 @@ namespace depfet {
     
   }
   
+  std::string GoeClusterCalibrator::getClusterType(std::string & id) 
+  { 
+    string type("");    
+        
+    istringstream label(id);
+    string token;
+        
+    // Read number of digits in label  
+    std::getline(label, token, 'D');      
+    type += token;  
+        
+    // Read all digits in label 
+    while (std::getline(label, token, 'D')) {
+      istringstream codes(token);
+      string number("");
+      type += "D";
+      std::getline(codes, number, '.');
+      type += number + '.';
+      std::getline(codes, number, '.');
+      type += number; 
+    }
+    return type;
+  }   
   
 
 } // Namespace

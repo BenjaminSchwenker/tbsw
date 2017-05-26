@@ -65,6 +65,9 @@ namespace depfet {
     
     //!Method called after all data processing
     virtual void end();
+
+    //!Get cluster type from cluster label 
+    std::string getClusterType(std::string & label);
      
    protected:
     
