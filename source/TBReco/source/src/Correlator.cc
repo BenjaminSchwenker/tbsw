@@ -402,6 +402,9 @@ void Correlator::bookHistos() {
      
   // Create all the directories first
   vector< string > dirNames;
+  
+  // This is the reference detector   
+  Det & refdet = _detector.GetDet(_refPlane); 
     
   dirNames.push_back ("HitU");
   dirNames.push_back ("HitV");
@@ -425,7 +428,7 @@ void Correlator::bookHistos() {
     // This is a alignable detector   
     Det & det = _detector.GetDet(ipl); 
     
-    double safetyFactor = 2.0;  // 2 should be enough because it
+    double safetyFactor = 1.4;  // 2 should be enough because it
                                 // means that the sensor is wrong
                                 // by all its size.
         
@@ -441,13 +444,21 @@ void Correlator::bookHistos() {
     
     // avoid too many bins 
     if (uBins > 2000 ) uBins = 2000;            
-               
+    
+    double  uMinRef = - 0.6 * refdet.GetSensitiveSizeU();               
+    double  uMaxRef = + 0.6 * refdet.GetSensitiveSizeU(); 
+    int     uBinsRef = static_cast<int>( (uMax - uMin)/(2*refdet.GetPitchU()) );   
+    
+    // avoid too many bins 
+    if (uBinsRef > 2000 ) uBinsRef = 2000;   
+
+           
     tempHistoName  = "HitUCorrelationHisto_d" + to_string( ipl );
     tempHistoTitle = "HitUCorrelationHisto_d" + to_string( ipl );
 
-    _hitUCorrelationMatrix[ ipl  ] = new TH2D(tempHistoName.c_str(),tempHistoTitle.c_str(),uBins, uMin, uMax, uBins, uMin, uMax);
+    _hitUCorrelationMatrix[ ipl  ] = new TH2D(tempHistoName.c_str(),tempHistoTitle.c_str(),uBinsRef, uMinRef, uMaxRef, uBins, uMin, uMax);
                
-    tempXAxis = "Tracklett U [mm]";
+    tempXAxis = "Detector " + to_string( _refPlane ) + " Hit U [mm]";
     tempYAxis = "Detector " + to_string( ipl ) + " Hit U [mm]";
     _hitUCorrelationMatrix[ ipl  ]->SetXTitle(tempXAxis.c_str()); 
     _hitUCorrelationMatrix[ ipl  ]->SetYTitle(tempYAxis.c_str());   
@@ -466,13 +477,20 @@ void Correlator::bookHistos() {
         
     // avoid too many bins 
     if (vBins > 2000 ) vBins = 2000;   
+
+    double  vMinRef = - 0.6 * refdet.GetSensitiveSizeV();               
+    double  vMaxRef = + 0.6 * refdet.GetSensitiveSizeV(); 
+    int     vBinsRef = static_cast<int>( (vMax - vMin)/(2*refdet.GetPitchV()) );     
+        
+    // avoid too many bins 
+    if (vBinsRef > 2000 ) vBinsRef = 2000;   
     
     tempHistoName =  "HitVCorrelationHisto_d" + to_string( ipl );
     tempHistoTitle = "HitVCorrelationHisto_d" + to_string( ipl );
-
-    _hitVCorrelationMatrix[ ipl  ] = new TH2D(tempHistoName.c_str(),tempHistoTitle.c_str(),vBins, vMin, vMax, vBins, vMin, vMax);
+    
+    _hitVCorrelationMatrix[ ipl  ] = new TH2D(tempHistoName.c_str(),tempHistoTitle.c_str(),vBinsRef, vMinRef, vMaxRef, vBins, vMin, vMax);
              
-    tempXAxis = "Tracklett V [mm]";
+    tempXAxis = "Detector " + to_string( _refPlane ) + " Hit V [mm]";
     tempYAxis = "Detector " + to_string( ipl ) + " Hit V [mm]";
     _hitVCorrelationMatrix[ ipl  ]->SetXTitle(tempXAxis.c_str()); 
     _hitVCorrelationMatrix[ ipl  ]->SetYTitle(tempYAxis.c_str());    
@@ -487,7 +505,7 @@ void Correlator::bookHistos() {
     tempHistoTitle =  "HitUResidualsHisto_d" + to_string( ipl );
                
                    
-    _hitUResidualHisto[ ipl ] = new TH1D(tempHistoName.c_str(), tempHistoTitle.c_str(), uBins, uMin, uMax);
+    _hitUResidualHisto[ ipl ] = new TH1D(tempHistoName.c_str(), tempHistoTitle.c_str(), uBinsRef, uMinRef, uMaxRef);
               
     tempXAxis = "Detector " + to_string( ipl ) + " Residual U [mm]";
     tempYAxis = "# Hits";
@@ -502,7 +520,7 @@ void Correlator::bookHistos() {
     tempHistoName = "HitVResidualsHisto_d" + to_string( ipl ) ;
     tempHistoTitle = "HitVResidualsHisto_d" + to_string( ipl ) ;
                           
-    _hitVResidualHisto[ ipl ] = new TH1D(tempHistoName.c_str(), tempHistoTitle.c_str(), vBins, vMin, vMax);
+    _hitVResidualHisto[ ipl ] = new TH1D(tempHistoName.c_str(), tempHistoTitle.c_str(), vBinsRef, vMinRef, vMaxRef);
              
     tempXAxis = "Detector " + to_string( ipl ) + " Residual V [mm]";
     tempYAxis = "# Hits";
