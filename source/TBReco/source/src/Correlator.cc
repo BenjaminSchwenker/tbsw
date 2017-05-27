@@ -21,6 +21,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <limits>
+#include <algorithm>
 
 // Include LCIO classes
 #include <lcio.h>
@@ -428,7 +429,7 @@ void Correlator::bookHistos() {
     // This is a alignable detector   
     Det & det = _detector.GetDet(ipl); 
     
-    double safetyFactor = 1.4;  // 2 should be enough because it
+    double safetyFactor = 2.0;  // 2 should be enough because it
                                 // means that the sensor is wrong
                                 // by all its size.
         
@@ -445,8 +446,8 @@ void Correlator::bookHistos() {
     // avoid too many bins 
     if (uBins > 2000 ) uBins = 2000;            
     
-    double  uMinRef = - 0.6 * refdet.GetSensitiveSizeU();               
-    double  uMaxRef = + 0.6 * refdet.GetSensitiveSizeU(); 
+    double  uMinRef = - safetyFactor * 0.5 * refdet.GetSensitiveSizeU();               
+    double  uMaxRef = + safetyFactor * 0.5 * refdet.GetSensitiveSizeU(); 
     int     uBinsRef = static_cast<int>( (uMax - uMin)/(2*refdet.GetPitchU()) );   
     
     // avoid too many bins 
@@ -478,8 +479,8 @@ void Correlator::bookHistos() {
     // avoid too many bins 
     if (vBins > 2000 ) vBins = 2000;   
 
-    double  vMinRef = - 0.6 * refdet.GetSensitiveSizeV();               
-    double  vMaxRef = + 0.6 * refdet.GetSensitiveSizeV(); 
+    double  vMinRef = - safetyFactor * 0.5 * refdet.GetSensitiveSizeV();               
+    double  vMaxRef = + safetyFactor * 0.5 * refdet.GetSensitiveSizeV(); 
     int     vBinsRef = static_cast<int>( (vMax - vMin)/(2*refdet.GetPitchV()) );     
         
     // avoid too many bins 
@@ -504,8 +505,7 @@ void Correlator::bookHistos() {
     tempHistoName =  "HitUResidualsHisto_d" + to_string( ipl );
     tempHistoTitle =  "HitUResidualsHisto_d" + to_string( ipl );
                
-                   
-    _hitUResidualHisto[ ipl ] = new TH1D(tempHistoName.c_str(), tempHistoTitle.c_str(), uBinsRef, uMinRef, uMaxRef);
+    _hitUResidualHisto[ ipl ] = new TH1D(tempHistoName.c_str(), tempHistoTitle.c_str(), std::max(uBinsRef,uBins), std::min(uMinRef,uMin), std::max(uMaxRef,uMax));
               
     tempXAxis = "Detector " + to_string( ipl ) + " Residual U [mm]";
     tempYAxis = "# Hits";
@@ -520,7 +520,7 @@ void Correlator::bookHistos() {
     tempHistoName = "HitVResidualsHisto_d" + to_string( ipl ) ;
     tempHistoTitle = "HitVResidualsHisto_d" + to_string( ipl ) ;
                           
-    _hitVResidualHisto[ ipl ] = new TH1D(tempHistoName.c_str(), tempHistoTitle.c_str(), vBinsRef, vMinRef, vMaxRef);
+    _hitVResidualHisto[ ipl ] = new TH1D(tempHistoName.c_str(), tempHistoTitle.c_str(), std::max(vBinsRef,vBins), std::min(vMinRef,vMin), std::max(vMaxRef,vMax));
              
     tempXAxis = "Detector " + to_string( ipl ) + " Residual V [mm]";
     tempYAxis = "# Hits";
