@@ -127,7 +127,7 @@
      <!--Second plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
      <parameter name="ForwardPass_SecondPlane" type="int" value="-1"/>
      <!--Seed tracks using hits from these planes-->
-     <parameter name="SingleHitSeeding" type="IntVec"> 5 6 </parameter>
+     <parameter name="SingleHitSeeding" type="IntVec" value="5 6"/> 
    </processor>   
 
    
@@ -147,9 +147,9 @@
      <!--Minimum value of variance for v position measurement [mm^2]-->
      <parameter name="MinVarianceV" type="float" value="2e-06"/>
      <!--Ignore clusters from this list of sensorIDs-->
-     <parameter name="IgnoreIDs" type="IntVec"> 11 </parameter>
+     <parameter name="IgnoreIDs" type="IntVec" value="11"/>    
      <!--List of steps for software ADC. An empty list gives a constant transfer curve (0bit limit)-->
-     <parameter name="SoftwareADC" type="IntVec"> </parameter>
+     <parameter name="SoftwareADC" type="IntVec"  value=""/> 
    </processor>
    
 </marlin>

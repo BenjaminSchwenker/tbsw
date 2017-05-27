@@ -60,7 +60,7 @@
      <!--Second plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
      <parameter name="ForwardPass_SecondPlane" type="int" value="-1"/>
      <!--Seed tracks using hits from these planes-->
-     <parameter name="SingleHitSeeding" type="IntVec"> 5 6 </parameter>
+     <parameter name="SingleHitSeeding" type="IntVec" value="5 6"/>
    </processor>
 
   

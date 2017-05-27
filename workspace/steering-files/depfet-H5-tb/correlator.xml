@@ -137,7 +137,7 @@
    <processor name="RawDQM" type="RawHitDQM">
      <!--RawHitDQM: Producing DQM histos from hits-->
      <!--Hit collection names-->
-     <parameter name="InputHitCollectionNameVec" type="string" lcioInType="TrackerHit"> hit_m26 hit_dep2</parameter>
+     <parameter name="InputHitCollectionNameVec" type="string" lcioInType="TrackerHit"> hit_m26 hit_dep </parameter>
      <!--Output root file name-->
      <parameter name="RootFileName" type="string" value="RawDQM.root"/>
    </processor>
@@ -145,7 +145,7 @@
    <processor name="TelCorrelator" type="Correlator">
      <!--Correlator: Pre- alignment in xy of tracking telescopes-->
      <!--Hit collection names-->
-     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> hit_m26 hit_dep2 </parameter>
+     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit"> hit_m26 hit_dep </parameter>
      <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
      <parameter name="AlignmentDBFileName" type="string" value="eudet-alignmentDB.slcio"/>
      <!--This is the name of the output root file-->

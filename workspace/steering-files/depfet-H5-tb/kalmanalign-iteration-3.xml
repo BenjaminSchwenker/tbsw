@@ -4,7 +4,7 @@
 <marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
 
    <execute>
-      <processor name="DEPHitMaker_2"/>
+      <processor name="DEPHitMaker"/>
       <processor name="TelTracker"/>
       <processor name="TelAligner"/>
    </execute>
@@ -18,14 +18,14 @@
       <parameter name="Verbosity" value="MESSAGE3 "/>
    </global>
    
-   <processor name="DEPHitMaker_2" type="GoeHitMaker">
+   <processor name="DEPHitMaker" type="GoeHitMaker">
      <!--GoeHitMaker:  Compute hits from pixel clusters using a clusterDB-->
      <!--Name of cluster collection-->
      <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse"> zscluster_dep </parameter>
      <!--Name of hit collection-->
      <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> goehit_dep </parameter>
      <!--This is the name of the ROOT file with the cluster constants (add .root)-->
-     <parameter name="ClusterDBFileName" type="string" value="clusterDB-DEP2.root"/>
+     <parameter name="ClusterDBFileName" type="string" value="clusterDB-DEP.root"/>
    </processor>
 
    <processor name="TelTracker" type="FastTracker">
@@ -71,7 +71,7 @@
      <!--Second plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
      <parameter name="ForwardPass_SecondPlane" type="int" value="-1"/>
      <!--Seed tracks using hits from these planes-->
-     <parameter name="SingleHitSeeding" type="IntVec"> 5 6 </parameter>
+     <parameter name="SingleHitSeeding" type="IntVec" value="5 6"/>
    </processor>
 
    
