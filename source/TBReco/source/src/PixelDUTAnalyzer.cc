@@ -433,6 +433,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
       HepSymMatrix C = trk.GetTE(_idut).GetState().GetCov();  
       
 
+      _rootHitLocalChi2 = TrackFitter.GetPredictedChi2(p, C, hit);
       _rootHitFitMomentum = trk.GetMomentum();   
            
       // Get predicted hit coordinates 
@@ -467,6 +468,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
 
       _rootHitHasTrack = -1; // no match
       // These are dummy values, always query hasTrack 
+      _rootHitLocalChi2 = -1;
       _rootHitFitMomentum = -1;            
       _rootHitFitU = -1;           
       _rootHitFitV = -1;           
@@ -508,7 +510,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     // Get readout channels  
     int fitcellu = dut.GetColumnFromCoord( pu, pv );     
     int fitcellv = dut.GetRowFromCoord( pu, pv );       
- 
+    
     _rootTrackFitMomentum = trk.GetMomentum();      
     _rootTrackFitdUdW = p[0][0];     
     _rootTrackFitdVdW = p[1][0];    
@@ -525,9 +527,11 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     if ( track2hit[itrk] >= 0  ) {
       TBHit& hit = HitStore[ track2hit[itrk] ];  
       PixelCluster Cluster = hit.GetCluster();
+      _rootTrackLocalChi2 = TrackFitter.GetPredictedChi2(p, C, hit);
       _rootTrackHasHit = 0;  // match
       _rootTrackSeedCharge = Cluster.getSeedCharge() ; 
     } else {
+      _rootTrackLocalChi2 = -1;
       _rootTrackHasHit = -1; // no match
       _rootTrackSeedCharge = -1;
     }
@@ -669,7 +673,10 @@ void PixelDUTAnalyzer::bookHistos()
    _rootHitTree->Branch("trackNdof"       ,&_rootHitTrackNDF       ,"trackNdof/I");
    _rootHitTree->Branch("trackNHits"      ,&_rootHitTrackNHits     ,"trackNHits/I");  
    _rootHitTree->Branch("momentum"        ,&_rootHitFitMomentum      ,"momentum/D");    
+   _rootHitTree->Branch("localChi2"       ,&_rootHitLocalChi2       ,"localChi2/D"); 
+  
     
+
    // 
    // Track Tree 
    _rootTrackTree = new TTree("Track","Track info");
@@ -694,7 +701,7 @@ void PixelDUTAnalyzer::bookHistos()
    _rootTrackTree->Branch("trackNdof"       ,&_rootTrackNDF            ,"trackNdof/I");
    _rootTrackTree->Branch("trackNHits"      ,&_rootTrackNHits          ,"trackNHits/I");  
    _rootTrackTree->Branch("seedCharge"      ,&_rootTrackSeedCharge     ,"seedCharge/D");  
-  
+   _rootTrackTree->Branch("localChi2"       ,&_rootTrackLocalChi2      ,"localChi2/D"); 
      
 
    // 

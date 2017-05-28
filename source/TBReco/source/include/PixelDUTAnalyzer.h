@@ -159,6 +159,7 @@ protected:
    double _rootHitFitCellUCenter;    // Central coordinate of cell 'FitCellU' in mm        
    double _rootHitFitCellVCenter;    // Central coordinate of cell 'FitCellV' in mm 
    double _rootHitTrackChi2 ;        // Chi2 value from fit of reference track
+   double _rootHitLocalChi2;         // Chi2 value from hit-track residual on device under test 
    int _rootHitTrackNDF;             // Number of degrees of freedom of track fit
    int _rootHitTrackNHits;           // Number of telescope hits used for track fitting 
    
@@ -168,6 +169,7 @@ protected:
    double _rootTrackFitMomentum;     // Estimated track momentum from fit    
    int _rootTrackNDF;                // Number of degrees of freedom of track fit
    double _rootTrackChi2;            // Chi2 value from fit of reference track
+   double _rootTrackLocalChi2;       // Chi2 value from hit-track residual on device under test 
    double _rootTrackFitU ;           // Estimated track intersection u coordimate in mm, in local DUT uvw coordinates 
    double _rootTrackFitV ;           // Estimated track intersection v coordimate in mm, in local DUT uvw coordinates 
    double _rootTrackFitdUdW;         // Estimated track slope du/dw in radians, in local DUT uvw coordinates     
@@ -175,8 +177,8 @@ protected:
    int _rootTrackFitCellU;           // Estimated track intersection u coordinate lies on this u cell  
    int _rootTrackFitCellV;           // Estimated track intersection v coordinate lies on this v cell   
    int _rootTrackNHits;              // Number of telescope hits used for track fitting 
-   double _rootTrackFitCellUCenter;  
-   double _rootTrackFitCellVCenter; 
+   double _rootTrackFitCellUCenter;  // Central coordinate of cell 'FitCellU' in mm 
+   double _rootTrackFitCellVCenter;  // Central coordinate of cell 'FitCellV' in mm 
    double _rootTrackSeedCharge;      // Highest charge in cluster, only filled if cluster matched
    
    
