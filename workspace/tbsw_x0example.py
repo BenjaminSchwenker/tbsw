@@ -53,11 +53,6 @@ calpath = [
            'telescope-dqm-iteration-2.xml',
          ]
 
-  
-
-
-
-
 # Simulate a rawfile from a test beam experiment
 # SimObj creates folder tmp-runs/name/ and populates it with 
 # copies of steering files. After processing, the folder contains
@@ -89,10 +84,10 @@ CalObj.calibrate(path=calpath,ifile=rawfile_air,caltag=caltag)
    
 # Reconsruct the alu rawfile using caltag. Resulting root files are 
 # written to folder root-files/
-RecObj = Reconstruction(steerfiles=steerfiles, name='mc_alu-reco' )
+RecObj = Reconstruction(steerfiles=steerfiles, name='mc-alu-reco' )
 RecObj.reconstruct(path=['reco.xml'],ifile=rawfile_alu,caltag=caltag) 
 
-imagefilename='root-files/X0-mc-alu-default-reco-Uncalibrated-X0image.root'
+imagefilename='root-files/X0-mc-alu-reco-Uncalibrated-X0image.root'
 imagecfgfilename='steering-files/x0-sim/image.cfg'
 calibrationcfgfilename='steering-files/x0-sim/x0calibration.cfg'
 deletetag=1
@@ -122,7 +117,7 @@ def x0calibration(filename,imagefilename,caltag):
 cwdir = os.getcwd()
 
 # Base filename of the X0 root file
-basefilename='X0-mc_alu-reco'
+basefilename='X0-mc-alu-reco'
 
 # Total path of X0 root file
 filename='root-files/'+basefilename+'.root'

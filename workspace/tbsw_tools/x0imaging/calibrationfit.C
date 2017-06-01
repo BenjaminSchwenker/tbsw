@@ -250,7 +250,6 @@ void shiftbins(TH1*, double);
 void calibrationfit();
 int** GetParameterMapping(int);
 
-
   // Highland model of a MSC angle distribution, the parameters are:
 
   /*
@@ -675,7 +674,6 @@ struct GlobalChi2 {
     double operator() (const double *par) const {
 
       double ret =0;
-
 	  
 	  for(int j=0;j<fChi2Vec.size();j++)
 	  {
@@ -1127,7 +1125,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	double *fitresults = new double[8];
 
 	// Fit and raw angle histograms
-	TH1 * fithistogramsum[num_fitfunctions];
+	std::vector<TH1 *> histo_vec;
 	TH1 * histogramsum;
 
 	// Copy raw histograms
@@ -1140,7 +1138,9 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		histogramsum=(TH1*)file->Get("grid/raw/sumhisto_"+histoname);
 
 		// Make a copy of the histogram
-		fithistogramsum[i]=(TH1*)histogramsum->Clone("sumhisto_"+histoname+"_fit");
+		TH1* fithistogramsum;
+		fithistogramsum=(TH1*)histogramsum->Clone("sumhisto_"+histoname+"_fit");
+		histo_vec.push_back(fithistogramsum);
 
 		file->cd("grid/fit/");
 	}
@@ -1148,11 +1148,12 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// Minvalue and fit range depend on the model: In Case of the moliere model the fitrange can be a little larger
 	double minvalue;
 	// Declaration of fit functions
-	TF1 *fitFcn[num_fitfunctions];
+	std::vector<TF1 *> fitFcn_vec;
+	TF1* fitFcn;
 	TString fctname;
 
 	ROOT::Fit::DataOptions opt; 
-	ROOT::Fit::DataRange range[num_fitfunctions];
+	std::vector<ROOT::Fit::DataRange> range_vec;
 
 	// loop for definition of the fit functions, the fitrange is determined for every one of them
 	for(int i=0;i<num_fitfunctions;i++)
@@ -1164,32 +1165,37 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		// And fit range is also smaller, when there is only air
 		if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0001) minvalue=1.0/(1.5*2.71);
 
-		fitrange=DetermineFitrange(fithistogramsum[i],minvalue);
+		fitrange=DetermineFitrange(histo_vec.at(i),minvalue);
 		fctname.Form("fitFcn%i",i);
 
 		if(model=="moliere")
 		{
 			// Use Gaussian function with width corresponding to the calibrated angle resolution, if material is only air or extremely thin
 			// Also in this case the fit range is set to be a little smaller
-			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0001) fitFcn[i] = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13],[7]*[8])",-fitrange,fitrange);
+			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0001) fitFcn = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13],[7]*[8])",-fitrange,fitrange);
 
 
 			// Use Moliere model in case the material is not just air
-			else fitFcn[i] = new TF1(fctname,molierefunction,-fitrange,fitrange,num_localparameters);
+			else fitFcn = new TF1(fctname,molierefunction,-fitrange,fitrange,num_localparameters);
 		}
 
 		else
 		{
 			// Use Gaussian function with width corresponding to the calibrated angle resolution, if material is only air or extremely thin
-			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0001) fitFcn[i] = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13],[7]*[8])",-fitrange,fitrange);
+			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0001) fitFcn = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13],[7]*[8])",-fitrange,fitrange);
 			// Use Highland model in case the material is not just air
-			else fitFcn[i] = new TF1(fctname,highlandfunction,-fitrange,fitrange,num_localparameters);
+			else fitFcn = new TF1(fctname,highlandfunction,-fitrange,fitrange,num_localparameters);
 		}
+
+		// Fill vector with pointers to fit functions
+		fitFcn_vec.push_back(fitFcn);
 
 		// set the data range	
 		cout<<"Fitrange at d="<<grid.GetMeasurementAreas().at(i).Get_thickness()<<" mm: "<<fitrange<<" rad"<<endl;
 		cout<<"Min value at d="<<grid.GetMeasurementAreas().at(i).Get_thickness()<<" mm: "<<minvalue<<endl;
-		range[i].SetRange(-fitrange,fitrange);
+		ROOT::Fit::DataRange range;
+		range.SetRange(-fitrange,fitrange);
+		range_vec.push_back(range);
 	}
 
     // Vector of wrapped multi tf1
@@ -1216,13 +1222,13 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
     for(int i=0;i<num_fitfunctions;i++) 
 	{
 		// Create wrapped multi function entry
-		ROOT::Math::WrappedMultiTF1 wf_entry(*fitFcn[i],1);
+		ROOT::Math::WrappedMultiTF1 wf_entry(*fitFcn_vec.at(i),1);
 		wf.push_back(wf_entry);
 		
 		// Create data entry and fill data store and increase data size variable
-		ROOT::Fit::BinData data_entry(opt,range[i]);
+		ROOT::Fit::BinData data_entry(opt,range_vec.at(i));
 		data.push_back(data_entry);
-		ROOT::Fit::FillData(data.at(i), fithistogramsum[i]);
+		ROOT::Fit::FillData(data.at(i), histo_vec.at(i));
 		datasize+=data.at(i).Size();
 	}
 
@@ -1334,16 +1340,16 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 			parameters[j]=parameter_mapping[i][j];
 		}
 
-		fitFcn[i]->SetFitResult( result, parameters);
+		fitFcn_vec.at(i)->SetFitResult( result, parameters);
 
-		fitrange=DetermineFitrange(fithistogramsum[i],minvalue);
-		fitFcn[i]->SetRange(-fitrange,fitrange);  
-		fitFcn[i]->SetLineColor(kRed);
-		fithistogramsum[i]->GetListOfFunctions()->Add(fitFcn[i]);
+		fitrange=DetermineFitrange(histo_vec.at(i),minvalue);
+		fitFcn_vec.at(i)->SetRange(-fitrange,fitrange);  
+		fitFcn_vec.at(i)->SetLineColor(kRed);
+		histo_vec.at(i)->GetListOfFunctions()->Add(fitFcn_vec.at(i));
 		histoname.Form("gridpoint%i",i+1);
 		// display mode
 		gStyle->SetOptFit(1111111);
-		fithistogramsum[i]->Write("thetasum_"+histoname+"_fit");
+		histo_vec.at(i)->Write("thetasum_"+histoname+"_fit");
 	}
 
 	// Plot the fit results, print them in terminal and save them to histogram
@@ -1374,13 +1380,13 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 		cout<<"--------------------------"<<endl;
 		cout<<"Fit function "<<i<<endl;
-		//cout<<"Chi2 value for this individual fit is: "<<fitFcn[i]->GetChisquare()<<endl;
-		cout<<"Chi2 value for this individual fit is: "<<fithistogramsum[i]->Chisquare(fitFcn[i],"R")<<endl;
-//		cout<<"Number of degrees of freedom is: "<<fitFcn[i]->GetNDF()<<endl;
-//		cout<<"Alternatively: Chi2 is: "<<chi2.at(i)(fitFcn[i]->GetParameters())<<endl;
+		//cout<<"Chi2 value for this individual fit is: "<<fitFcn_vec.at(i)->GetChisquare()<<endl;
+		cout<<"Chi2 value for this individual fit is: "<<histo_vec.at(i)->Chisquare(fitFcn_vec.at(i),"R")<<endl;
+//		cout<<"Number of degrees of freedom is: "<<fitFcn_vec.at(i)->GetNDF()<<endl;
+//		cout<<"Alternatively: Chi2 is: "<<chi2.at(i)(fitFcn_vec.at(i)->GetParameters())<<endl;
 		cout<<"--------------------------"<<endl;
 
-		chi2_summation+=pow(fithistogramsum[i]->Chisquare(fitFcn[i],"R"),2);
+		chi2_summation+=pow(histo_vec.at(i)->Chisquare(fitFcn_vec.at(i),"R"),2);
 	}
 	
 	cout<<"The quadratic sum of these chi2 values is: "<<sqrt(chi2_summation)<<endl;
@@ -1402,23 +1408,23 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 	   	pad1->cd();
 		Title.Form("Area %i: d=%fmm",0,grid.GetMeasurementAreas().at(0).Get_thickness());
-		fithistogramsum[0]->SetTitle(Title);
-		fithistogramsum[0]->Draw();
+		histo_vec.at(0)->SetTitle(Title);
+		histo_vec.at(0)->Draw();
 
 		pad2->cd();
 		Title.Form("Area %i: d=%fmm",aid,grid.GetMeasurementAreas().at(aid).Get_thickness());
-		fithistogramsum[aid]->SetTitle(Title);
-		fithistogramsum[aid]->Draw();
+		histo_vec.at(aid)->SetTitle(Title);
+		histo_vec.at(aid)->Draw();
 
 		pad3->cd();
 		Title.Form("Area %i: d=%fmm",num_fitfunctions-(aid+1),grid.GetMeasurementAreas().at(num_fitfunctions-(aid+1)).Get_thickness());
-		fithistogramsum[num_fitfunctions-(aid+1)]->SetTitle(Title);
-		fithistogramsum[num_fitfunctions-(aid+1)]->Draw();
+		histo_vec.at(num_fitfunctions-(aid+1))->SetTitle(Title);
+		histo_vec.at(num_fitfunctions-(aid+1))->Draw();
 
 		pad4->cd();
 		Title.Form("Area %i: d=%fmm",num_fitfunctions-1,grid.GetMeasurementAreas().at(num_fitfunctions-1).Get_thickness());
-		fithistogramsum[num_fitfunctions-1]->SetTitle(Title);
-		fithistogramsum[num_fitfunctions-1]->Draw();
+		histo_vec.at(num_fitfunctions-1)->SetTitle(Title);
+		histo_vec.at(num_fitfunctions-1)->Draw();
 
 		pdfname=model+"_results1.pdf";
 
@@ -1458,63 +1464,62 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 	   	pads1->cd();
 		Title.Form("Measurement area %i: d=%fmm",0,grid.GetMeasurementAreas().at(0).Get_thickness());
-		fithistogramsum[0]->SetTitle(Title);
-		fithistogramsum[0]->Draw();
+		histo_vec.at(0)->SetTitle(Title);
+		histo_vec.at(0)->Draw();
 
 		pads2->cd();
 		Title.Form("Measurement area %i: d=%fmm",aid,grid.GetMeasurementAreas().at(aid).Get_thickness());
-		fithistogramsum[aid]->SetTitle(Title);
-		fithistogramsum[aid]->Draw();
+		histo_vec.at(aid)->SetTitle(Title);
+		histo_vec.at(aid)->Draw();
 
 		pads3->cd();
 		Title.Form("Measurement area %i: d=%fmm",2*aid,grid.GetMeasurementAreas().at(2*aid).Get_thickness());
-		fithistogramsum[2*aid]->SetTitle(Title);
-		fithistogramsum[2*aid]->Draw();
+		histo_vec.at(2*aid)->SetTitle(Title);
+		histo_vec.at(2*aid)->Draw();
 
 		pads4->cd();
 		Title.Form("Measurement area %i: d=%fmm",3*aid,grid.GetMeasurementAreas().at(3*aid).Get_thickness());
-		fithistogramsum[3*aid]->SetTitle(Title);
-		fithistogramsum[3*aid]->Draw();
+		histo_vec.at(3*aid)->SetTitle(Title);
+		histo_vec.at(3*aid)->Draw();
 
 	   	pads5->cd();
 		Title.Form("Measurement area %i: d=%fmm",4*aid,grid.GetMeasurementAreas().at(4*aid).Get_thickness());
-		fithistogramsum[4*aid]->SetTitle(Title);
-		fithistogramsum[4*aid]->Draw();
+		histo_vec.at(4*aid)->SetTitle(Title);
+		histo_vec.at(4*aid)->Draw();
 
 		pads6->cd();
 		Title.Form("Measurement area %i: d=%fmm",5*aid,grid.GetMeasurementAreas().at(5*aid).Get_thickness());
-		fithistogramsum[5*aid]->SetTitle(Title);
-		fithistogramsum[5*aid]->Draw();
+		histo_vec.at(5*aid)->SetTitle(Title);
 
 		pads7->cd();
 		Title.Form("Measurement area %i: d=%fmm",num_fitfunctions-(5*aid+1),grid.GetMeasurementAreas().at(num_fitfunctions-(5*aid+1)).Get_thickness());
-		fithistogramsum[num_fitfunctions-(5*aid+1)]->SetTitle(Title);
-		fithistogramsum[num_fitfunctions-(5*aid+1)]->Draw();
+		histo_vec.at(num_fitfunctions-(5*aid+1))->SetTitle(Title);
+		histo_vec.at(num_fitfunctions-(5*aid+1))->Draw();
 
 		pads8->cd();
 		Title.Form("Measurement area %i: d=%fmm",num_fitfunctions-(4*aid+1),grid.GetMeasurementAreas().at(num_fitfunctions-(4*aid+1)).Get_thickness());
-		fithistogramsum[num_fitfunctions-(4*aid+1)]->SetTitle(Title);
-		fithistogramsum[num_fitfunctions-(4*aid+1)]->Draw();
+		histo_vec.at(num_fitfunctions-(4*aid+1))->SetTitle(Title);
+		histo_vec.at(num_fitfunctions-(4*aid+1))->Draw();
 
 	   	pads9->cd();
 		Title.Form("Measurement area %i: d=%fmm",num_fitfunctions-(3*aid+1),grid.GetMeasurementAreas().at(num_fitfunctions-(3*aid+1)).Get_thickness());
-		fithistogramsum[num_fitfunctions-(3*aid+1)]->SetTitle(Title);
-		fithistogramsum[num_fitfunctions-(3*aid+1)]->Draw();
+		histo_vec.at(num_fitfunctions-(3*aid+1))->SetTitle(Title);
+		histo_vec.at(num_fitfunctions-(3*aid+1))->Draw();
 
 		pads10->cd();
 		Title.Form("Measurement area %i: d=%fmm",num_fitfunctions-(2*aid+1),grid.GetMeasurementAreas().at(num_fitfunctions-(2*aid+1)).Get_thickness());
-		fithistogramsum[num_fitfunctions-(2*aid+1)]->SetTitle(Title);
-		fithistogramsum[num_fitfunctions-(2*aid+1)]->Draw();
+		histo_vec.at(num_fitfunctions-(2*aid+1))->SetTitle(Title);
+		histo_vec.at(num_fitfunctions-(2*aid+1))->Draw();
 
 		pads11->cd();
 		Title.Form("Measurement area %i: d=%fmm",num_fitfunctions-(aid+1),grid.GetMeasurementAreas().at(num_fitfunctions-(aid+1)).Get_thickness());
-		fithistogramsum[num_fitfunctions-(aid+1)]->SetTitle(Title);
-		fithistogramsum[num_fitfunctions-(aid+1)]->Draw();
+		histo_vec.at(num_fitfunctions-(aid+1))->SetTitle(Title);
+		histo_vec.at(num_fitfunctions-(aid+1))->Draw();
 
 		pads12->cd();
 		Title.Form("Measurement area %i: d=%fmm",num_fitfunctions-1,grid.GetMeasurementAreas().at(num_fitfunctions-1).Get_thickness());
-		fithistogramsum[num_fitfunctions-1]->SetTitle(Title);
-		fithistogramsum[num_fitfunctions-1]->Draw();
+		histo_vec.at(num_fitfunctions-1)->SetTitle(Title);
+		histo_vec.at(num_fitfunctions-1)->Draw();
 
 		pdfname=model+"_results2.pdf";
 		c2->SaveAs(pdfname); 	
@@ -1631,14 +1636,11 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// Definition of the measurement areas can be done in two ways. Either a fixed 3 x 3 alu grid with a regular thickness increase between grid points and fixed positions or 
     // 12 completely independent measurement areas with completely unreleated thicknesses and positions.
 
-    double u_MA_center[num_fitfunctions];
-	double v_MA_center[num_fitfunctions];
-
 	// u minimum and v maximum values (in mm)
-	double umin[num_fitfunctions];
-	double vmin[num_fitfunctions];
-	double umax[num_fitfunctions];
-	double vmax[num_fitfunctions];
+	double umin;
+	double vmin;
+	double umax;
+	double vmax;
 	
 	// Print out the measurement areas, which will be used for the fit
 	grid.PrintGridParameters();
@@ -1646,10 +1648,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// Readout max and min values of all measurement areas of the calibration grid
 	for(int i=0;i<num_fitfunctions;i++)
 	{
-		umin[i]=grid.GetMeasurementAreas().at(i).Get_u_min();
-		umax[i]=grid.GetMeasurementAreas().at(i).Get_u_max();
-		vmin[i]=grid.GetMeasurementAreas().at(i).Get_v_min();
-		vmax[i]=grid.GetMeasurementAreas().at(i).Get_v_max();
+
 	}
 
 	// TString for the input root file name
@@ -1694,9 +1693,14 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 			cout<<"save histogram of measurement area "<<i+1<<endl;
 
+		    umin=grid.GetMeasurementAreas().at(i).Get_u_min();
+		    umax=grid.GetMeasurementAreas().at(i).Get_u_max();
+		    vmin=grid.GetMeasurementAreas().at(i).Get_v_min();
+		    vmax=grid.GetMeasurementAreas().at(i).Get_v_max();
+
 			// Save the angle histograms of the current measurement area to the root file
-			correcthisto(X0file,rootfile, histoname, range, umin[i], umax[i], vmin[i], vmax[i]);
-			savehisto(X0file,rootfile, histoname, range, umin[i], umax[i], vmin[i], vmax[i], correctmean);
+			correcthisto(X0file,rootfile, histoname, range, umin, umax, vmin, vmax);
+			savehisto(X0file,rootfile, histoname, range, umin, umax, vmin, vmax, correctmean);
 
 	}// end of first loop over measurement areas
 
