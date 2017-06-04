@@ -1392,141 +1392,39 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	cout<<"The quadratic sum of these chi2 values is: "<<sqrt(chi2_summation)<<endl;
 	TString pdfname,Title;
 
-	if(num_fitfunctions>4)
+	for(int i=0;i<TMath::Ceil(double(num_fitfunctions)/4.0);i++)
 	{
-		TCanvas *c1 = new TCanvas("c1","multipads",900,1000);
+		TString canvasname;
+		canvasname.Form("c%i",i);
+		TCanvas *c = new TCanvas(canvasname,canvasname,900,1000);
+		std::vector<TPad*> pads;
 		TPad *pad1 = new TPad("pad1","pad1",0.01,0.51,0.49,0.99);
 		pad1->Draw();
+		pads.push_back(pad1);
 		TPad *pad2 = new TPad("pad2","pad2",0.51,0.51,0.99,0.99);
 		pad2->Draw();
+		pads.push_back(pad2);
 		TPad *pad3 = new TPad("pad3","pad3",0.01,0.01,0.49,0.49);
 		pad3->Draw();
+		pads.push_back(pad3);
 		TPad *pad4 = new TPad("pad4","pad4",0.51,0.01,0.99,0.49);
 		pad4->Draw();
+		pads.push_back(pad4);
 
-		int aid=num_fitfunctions/4;
+		for(int j=0;j<4;j++)
+		{
+		   	pads.at(j)->cd();
+			Title.Form("Area %i: d=%fmm",(4*i)+j,grid.GetMeasurementAreas().at((4*i)+j).Get_thickness());
+			histo_vec.at((4*i)+j)->SetTitle(Title);
+			histo_vec.at((4*i)+j)->Draw();
+		}
 
-	   	pad1->cd();
-		Title.Form("Area %i: d=%fmm",0,grid.GetMeasurementAreas().at(0).Get_thickness());
-		histo_vec.at(0)->SetTitle(Title);
-		histo_vec.at(0)->Draw();
+		pdfname=model+"_results_"+canvasname+".pdf";
 
-		pad2->cd();
-		Title.Form("Area %i: d=%fmm",aid,grid.GetMeasurementAreas().at(aid).Get_thickness());
-		histo_vec.at(aid)->SetTitle(Title);
-		histo_vec.at(aid)->Draw();
-
-		pad3->cd();
-		Title.Form("Area %i: d=%fmm",num_fitfunctions-(aid+1),grid.GetMeasurementAreas().at(num_fitfunctions-(aid+1)).Get_thickness());
-		histo_vec.at(num_fitfunctions-(aid+1))->SetTitle(Title);
-		histo_vec.at(num_fitfunctions-(aid+1))->Draw();
-
-		pad4->cd();
-		Title.Form("Area %i: d=%fmm",num_fitfunctions-1,grid.GetMeasurementAreas().at(num_fitfunctions-1).Get_thickness());
-		histo_vec.at(num_fitfunctions-1)->SetTitle(Title);
-		histo_vec.at(num_fitfunctions-1)->Draw();
-
-		pdfname=model+"_results1.pdf";
-
-		c1->SaveAs(pdfname); 
+		c->SaveAs(pdfname); 
 	}
 
-
-	if(num_fitfunctions>11)
-	{
-		TCanvas *c2 = new TCanvas("c2","multipads2",900,1000);
-		TPad *pads1 = new TPad("pads1","pad1",0.01,0.76,0.32,0.99);
-		pads1->Draw();
-		TPad *pads2 = new TPad("pads2","pad2",0.34,0.76,0.65,0.99);
-		pads2->Draw();
-		TPad *pads3 = new TPad("pads3","pad3",0.67,0.76,0.99,0.99);
-		pads3->Draw();
-		TPad *pads4 = new TPad("pads4","pad4",0.01,0.51,0.32,0.74);
-		pads4->Draw();
-		TPad *pads5 = new TPad("pads5","pad5",0.34,0.51,0.65,0.74);
-		pads5->Draw();
-		TPad *pads6 = new TPad("pads6","pad6",0.67,0.51,0.99,0.74);
-		pads6->Draw();
-		TPad *pads7 = new TPad("pads7","pad7",0.01,0.26,0.32,0.49);
-		pads7->Draw();
-		TPad *pads8 = new TPad("pads8","pad8",0.34,0.26,0.65,0.49);
-		pads8->Draw();
-		TPad *pads9 = new TPad("pads9","pad9",0.67,0.26,0.99,0.49);
-		pads9->Draw();
-		TPad *pads10 = new TPad("pads10","pad10",0.01,0.01,0.32,0.24);
-		pads10->Draw();
-		TPad *pads11 = new TPad("pads11","pad11",0.34,0.01,0.65,0.24);
-		pads11->Draw();
-		TPad *pads12 = new TPad("pads12","pad12",0.67,0.01,0.99,0.24);
-		pads12->Draw();
-
-		int aid=num_fitfunctions/12;
-
-	   	pads1->cd();
-		Title.Form("Measurement area %i: d=%fmm",0,grid.GetMeasurementAreas().at(0).Get_thickness());
-		histo_vec.at(0)->SetTitle(Title);
-		histo_vec.at(0)->Draw();
-
-		pads2->cd();
-		Title.Form("Measurement area %i: d=%fmm",aid,grid.GetMeasurementAreas().at(aid).Get_thickness());
-		histo_vec.at(aid)->SetTitle(Title);
-		histo_vec.at(aid)->Draw();
-
-		pads3->cd();
-		Title.Form("Measurement area %i: d=%fmm",2*aid,grid.GetMeasurementAreas().at(2*aid).Get_thickness());
-		histo_vec.at(2*aid)->SetTitle(Title);
-		histo_vec.at(2*aid)->Draw();
-
-		pads4->cd();
-		Title.Form("Measurement area %i: d=%fmm",3*aid,grid.GetMeasurementAreas().at(3*aid).Get_thickness());
-		histo_vec.at(3*aid)->SetTitle(Title);
-		histo_vec.at(3*aid)->Draw();
-
-	   	pads5->cd();
-		Title.Form("Measurement area %i: d=%fmm",4*aid,grid.GetMeasurementAreas().at(4*aid).Get_thickness());
-		histo_vec.at(4*aid)->SetTitle(Title);
-		histo_vec.at(4*aid)->Draw();
-
-		pads6->cd();
-		Title.Form("Measurement area %i: d=%fmm",5*aid,grid.GetMeasurementAreas().at(5*aid).Get_thickness());
-		histo_vec.at(5*aid)->SetTitle(Title);
-
-		pads7->cd();
-		Title.Form("Measurement area %i: d=%fmm",num_fitfunctions-(5*aid+1),grid.GetMeasurementAreas().at(num_fitfunctions-(5*aid+1)).Get_thickness());
-		histo_vec.at(num_fitfunctions-(5*aid+1))->SetTitle(Title);
-		histo_vec.at(num_fitfunctions-(5*aid+1))->Draw();
-
-		pads8->cd();
-		Title.Form("Measurement area %i: d=%fmm",num_fitfunctions-(4*aid+1),grid.GetMeasurementAreas().at(num_fitfunctions-(4*aid+1)).Get_thickness());
-		histo_vec.at(num_fitfunctions-(4*aid+1))->SetTitle(Title);
-		histo_vec.at(num_fitfunctions-(4*aid+1))->Draw();
-
-	   	pads9->cd();
-		Title.Form("Measurement area %i: d=%fmm",num_fitfunctions-(3*aid+1),grid.GetMeasurementAreas().at(num_fitfunctions-(3*aid+1)).Get_thickness());
-		histo_vec.at(num_fitfunctions-(3*aid+1))->SetTitle(Title);
-		histo_vec.at(num_fitfunctions-(3*aid+1))->Draw();
-
-		pads10->cd();
-		Title.Form("Measurement area %i: d=%fmm",num_fitfunctions-(2*aid+1),grid.GetMeasurementAreas().at(num_fitfunctions-(2*aid+1)).Get_thickness());
-		histo_vec.at(num_fitfunctions-(2*aid+1))->SetTitle(Title);
-		histo_vec.at(num_fitfunctions-(2*aid+1))->Draw();
-
-		pads11->cd();
-		Title.Form("Measurement area %i: d=%fmm",num_fitfunctions-(aid+1),grid.GetMeasurementAreas().at(num_fitfunctions-(aid+1)).Get_thickness());
-		histo_vec.at(num_fitfunctions-(aid+1))->SetTitle(Title);
-		histo_vec.at(num_fitfunctions-(aid+1))->Draw();
-
-		pads12->cd();
-		Title.Form("Measurement area %i: d=%fmm",num_fitfunctions-1,grid.GetMeasurementAreas().at(num_fitfunctions-1).Get_thickness());
-		histo_vec.at(num_fitfunctions-1)->SetTitle(Title);
-		histo_vec.at(num_fitfunctions-1)->Draw();
-
-		pdfname=model+"_results2.pdf";
-		c2->SaveAs(pdfname); 	
-	}
-
-
-	// Copy the X0 Analysis Root file and rename it
+	// Create a results root file and save the fit results in a histogram
 	TFile *resultsfile = new TFile("X0calibration_results.root", "RECREATE");
 
 	TH1F * resultshist=new TH1F("resultshist","results of calibration",4,1,4);
