@@ -10,6 +10,70 @@ import subprocess
 import glob
 import xml.etree.ElementTree
 
+
+class Path(object):
+  """
+  Class which implements an interface to create Marlin steer files. Templates for creating 
+  Marling processors taken from steerfiles/processors.xml. Path objects create ready to use
+  steerfiles. Template parameters can be locally modified on the fly.
+  
+  :author: benjamin.schwenker@phys.uni-goettinge.de  
+  """
+  def __init__(self, name='main', tmpdir=''):
+    self.name = name
+    self.tmpdir = tmpdir
+    
+    self.tree = xml.etree.ElementTree.parse(os.path.join(self.tmpdir,'processors.xml'))
+    root = self.tree.getroot() 
+    
+    # remove all processors from tree 
+    for processor in root.findall( 'processor' ):
+      root.remove(processor)
+    
+    # add an empty execute tag
+    root.append(xml.etree.ElementTree.Element("execute")) 
+    
+    # write new steer file 
+    self.tree.write(os.path.join(self.tmpdir,self.name+'.xml'))
+  
+  def set_globals(self, params={}):
+    global_tag = self.tree.getroot().find("./global") 
+    
+    # override attributes 
+    for key, value in params.items():   
+      parameter = global_tag.find("./parameter[@name='%s']" % str(key))
+      parameter.set('value', str(value))      
+      
+    # write new steer file 
+    self.tree.write(os.path.join(self.tmpdir,self.name+'.xml'))
+    
+  def add_processor(self,name='',params={}):
+    # try to find processor with name in processor.xml
+    basetree = xml.etree.ElementTree.parse(os.path.join(self.tmpdir,'processors.xml'))
+    xpath="./processor[@name='%s']" % str(name)
+    new_processor = basetree.getroot().find(xpath)
+    
+    # override attributes on the fly  
+    for key, value in params.items():   
+      parameter = new_processor.find("./parameter[@name='%s']" % str(key))
+      parameter.set('value', str(value)) 
+       
+    # add processor to xml tree
+    root = self.tree.getroot()
+    root.append(new_processor)
+    
+    # add processor to execute tag   
+    xml.etree.ElementTree.SubElement(root.find('execute'), tag='processor', attrib={'name' : str(name) })
+    
+    # write new steer file 
+    self.tree.write(os.path.join(self.tmpdir,self.name+'.xml'))
+    
+  def get_steerfile(self): 
+    return self.name+'.xml'
+  
+  def get_name(self): 
+    return self.name
+  
 class Environment(object):
   """
   Class which implements an environment for executing Marlin with all needed 
@@ -47,12 +111,26 @@ class Environment(object):
     else: 
       raise ValueError('Steerfiles ', steerfiles, ' cannot be found. ', os.getcwd() )
     
-  def run(self,path):
+    # create localDB folder 
+    os.mkdir(self.tmpdir+'/localDB')
+     
+  def create_path(self, name='main'):
+    return Path( name=name, tmpdir=self.tmpdir)
+  
+  def override(self, xpath='', value=''): 
+    xmlfile = self.get_filename('processors.xml') 
+    override_xml(xmlfile=xmlfile, xpath=xpath, value=value)
+  
+  def set_gearfile(self, name=''): 
+    self.override(xpath="./global/parameter[@name='GearXMLFile']", value=name)  
+    
+  def run(self,pathlist):
     # run Marlin in tmpdir  
     os.chdir(self.tmpdir)
     
-    for xmlfile in path:
-      logfile = os.path.splitext( os.path.basename(xmlfile))[0] + '.log'
+    for path in pathlist:
+      xmlfile = path.get_steerfile()
+      logfile = path.get_name() + '.log'
       action = '/$MARLIN/bin/Marlin ' + xmlfile + ' > ' + logfile + ' 2>&1'
       subprocess.call(action, shell=True)
       print ('[INFO] Marlin ' + xmlfile + ' is done')    
@@ -64,38 +142,32 @@ class Environment(object):
     # go back to workspace
     os.chdir(self.cwdir) 
     
-  def add_caltag(self, caltag):  
-    # check that calibration files exist
-    caldir = self.cwdir+'/cal-files/'+caltag   
-    if os.path.isdir(caldir):
-      # copy calibration files 
-      shutil.copytree(caldir,self.tmpdir+'/cal-files')  
+  def import_caltag(self, caltag):  
+    # check that caltag exists
+    caldir = self.cwdir+'/localDB/'+caltag   
+    if os.path.isdir(caldir):  
+      for dbfile in glob.glob(caldir+'/*'): 
+        shutil.copy(dbfile, os.path.join(self.tmpdir+'/localDB',os.path.basename(dbfile)))  
     else: 
       print ('[INFO] Caltag not found') 
+     
+  def export_caltag(self, caltag):
+    caldir = self.cwdir+'/localDB/'+caltag
     
-  def create_caltag(self, caltag):
-    caldir = self.cwdir+'/cal-files/'+caltag
-    
-    # create folder cal-files if not exist    
-    if not os.path.isdir(self.cwdir+'/cal-files'):
-      os.mkdir(self.cwdir+'/cal-files')
+    # create folder workspace/localDB if not exist    
+    if not os.path.isdir(self.cwdir+'/localDB'):
+      os.mkdir(self.cwdir+'/localDB')
     # overwrite caltag if exists     
     if os.path.isdir(caldir):
       shutil.rmtree(caldir)
     
     #create caltag and populate with DB files    
     os.mkdir(caldir)		 
-    for dbfile in glob.glob(self.tmpdir + '/*DB*'): 
+    for dbfile in glob.glob(self.tmpdir + '/localDB/*'): 
       shutil.copy(dbfile, os.path.join(caldir,os.path.basename(dbfile)))  
     
     print ('[INFO] Created new caltag ', caltag) 
      	                           
-  def link_input(self, inputfile):
-    if os.path.isfile(inputfile):
-      os.symlink( os.path.join(self.cwdir, inputfile), self.tmpdir+'/inputfilename') 
-    else: 
-      raise ValueError('No input file found')
-  
   def get_filename(self, filename):
     localname = os.path.join(self.tmpdir,filename)
     if os.path.isfile(localname):
@@ -121,10 +193,10 @@ class Simulation(Environment):
   def __init__(self, steerfiles, name='sim'): 
     Environment.__init__(self, name=name, steerfiles=steerfiles)
     
-  def simulate(self, path=['simulation.xml'], caltag=None, ofile='mc.slcio'):
+  def simulate(self, path=[], caltag='default', ofile='mc.slcio'):
     """
     Creates a lcio file called ofile containing simulated events. 
-    :@path:       list containing Marlin xml files that will be executed 
+    :@path:       list of path objects 
     :@caltag:     name of calibration tag (optional)
     :@ofile:      name of output lcio file
     
@@ -132,9 +204,8 @@ class Simulation(Environment):
     """  
     
     print ('[INFO] Starting to simulate ' + ofile + ' ...') 
-
-    if not caltag==None:
-      self.add_caltag(caltag)
+     
+    self.import_caltag(caltag)
     self.run(path)
     
     src =  os.path.join(self.tmpdir, 'outputfile.slcio')	
@@ -149,26 +220,19 @@ class Reconstruction(Environment):
   def __init__(self, steerfiles, name='reco'): 
     Environment.__init__(self, name=name, steerfiles=steerfiles)
   
-  def reconstruct(self, path=['reco.xml'], caltag=None, ifile=None):
+  def reconstruct(self, path=[], caltag='default', ifile=''):
     """
     Reconstructs an input file with raw data using a caltag for calibration. 
-    :@path:       list containing Marlin xml files that will be executed 
+    :@path:       list of path objects
     :@caltag:     name of calibration tag (optional)
     :@ifile:      name of input file with raw data
     
     :author: benjamin.schwenker@phys.uni-goettinge.de  
     """  
     
-    if ifile==None:
-      raise ValueError('Parameter ifile is missing') 
-
-    if caltag==None:
-      raise ValueError('Parameter caltag is missing') 
-    
     print ('[INFO] Starting to reconstruct file ' + ifile + ' ...')  
      
-    self.add_caltag(caltag)
-    self.link_input(ifile)
+    self.import_caltag(caltag)
     self.run(path)
     self.copy_rootfiles()
     
@@ -183,7 +247,7 @@ class Calibration(Environment):
   def __init__(self, steerfiles, name='cal'): 
     Environment.__init__(self, name=name, steerfiles=steerfiles)
   
-  def calibrate(self, path=[], caltag='default', ifile=None):
+  def calibrate(self, path=[], caltag='default', ifile=''):
     """
     Calibrate beam telescope using a calibration run  
     :@path: list containing Marlin xml files that will be executed 
@@ -192,20 +256,16 @@ class Calibration(Environment):
     
     :author: benjamin.schwenker@phys.uni-goettinge.de  
     """   
-
-    if ifile==None:
-      raise ValueError('Parameter ifile is missing') 
-    
+      
     print ('[INFO] Starting to calibrate file ' + ifile + ' ...')    
     
-    self.link_input(ifile)
     self.run(path)
-    self.create_caltag(caltag) 
+    self.export_caltag(caltag) 
     
     print ('[INFO] Done processing file ' + ifile)  
 
 
-def override_xml(xmlfile=None, xpath=None, value=None):
+def override_xml(xmlfile='', xpath='', value=None):
   """
   Overrides value field in all nodes specified by xpath found in xmlfile
     :@xmlfile:    XML steering file to be overwritten  
