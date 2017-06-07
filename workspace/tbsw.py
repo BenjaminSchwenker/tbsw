@@ -193,24 +193,19 @@ class Simulation(Environment):
   def __init__(self, steerfiles, name='sim'): 
     Environment.__init__(self, name=name, steerfiles=steerfiles)
     
-  def simulate(self, path=[], caltag='default', ofile='mc.slcio'):
+  def simulate(self, path=[], caltag='default'):
     """
-    Creates a lcio file called ofile containing simulated events. 
+    Creates a lcio file(s) with simulated events. 
     :@path:       list of path objects 
     :@caltag:     name of calibration tag (optional)
-    :@ofile:      name of output lcio file
     
     :author: benjamin.schwenker@phys.uni-goettinge.de  
     """  
     
-    print ('[INFO] Starting to simulate ' + ofile + ' ...') 
+    print ('[INFO] Starting to simulate a test beam run ...') 
      
     self.import_caltag(caltag)
     self.run(path)
-    
-    src =  os.path.join(self.tmpdir, 'outputfile.slcio')	
-    dest = os.path.join(self.cwdir, ofile)	
-    shutil.move(src, dest)
    
 class Reconstruction(Environment):
   """
