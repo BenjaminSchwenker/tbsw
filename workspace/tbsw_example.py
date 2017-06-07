@@ -4,11 +4,13 @@ data using Python scripts.
 
 The script below simulates a test beam experiment where charged tracks cross a misaligned
 pixel telescope containing six Mimosa 26 detector planes forming a reference  telescope.
-A seventh Mimosa16 sensor plane is installed between the telescope arms as device under tets. 
+The reference telescope has two arms with three sensors. A scattering target is installed
+between the telescope arms.
 
 The script goes create a lcio file containing simulated digits, performs a full calibration 
-of the telescope and reconstructs the data. Final results are prepared in form of root files 
-in the folder root-files/. 
+of the telescope and reconstructs the data. The data analysis uses the third Mimosa 26 sensor
+along the beam as device under test. Root files containing tracks and hits at the device 
+under test are prepared in the folder root-files. 
 
 Author: Benjamin Schwenker <benjamin.schwenker@phys.uni-goettingen.de>  
 """
@@ -97,6 +99,7 @@ def create_calibration_path(Env):
   
   # create sequence of calibration paths 
   calpath= [ hotpixelkiller , 
+             cluster_calibrator_mc,
              correlator, 
              kalman_aligner_1, 
              kalman_aligner_2, 
@@ -130,8 +133,8 @@ def create_reco_path(Env):
   reco.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents, 'LCIOInputFiles': rawfile }) 
   reco.add_processor(name="M26Clusterizer")
   reco.add_processor(name="M26GoeHitMaker")
-  reco.add_processor(name="RecoTF")
-  reco.add_processor(name="DUTAnalyzer")
+  reco.add_processor(name="RecoTF", params={'ExcludeDetector': '2 3'}) # exclude dut (plane 2) and scatter target (plane 3)
+  reco.add_processor(name="M26Analyzer", params={'DUTPlane': 2})
     
   return [ reco ]
 

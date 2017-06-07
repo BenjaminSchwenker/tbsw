@@ -1,6 +1,6 @@
 <gear>
 	<!--
-		GEAR file for the April 2012 Desy test beam. Last runs 
+		GEAR file for toy simulations of EUDET/AIDA telescope 
 	-->
 	<global detectorName="EUTelescope" />
 	<BField type="ConstantBField" x="0.0" y="0.0" z="0.0"/>

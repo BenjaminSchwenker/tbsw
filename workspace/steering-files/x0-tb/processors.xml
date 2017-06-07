@@ -121,7 +121,7 @@
      <!--Particle mass [GeV]-->
      <parameter name="ParticleMass" type="double" value="0.000511"/>
      <!--Particle momentum [GeV]-->
-     <parameter name="ParticleMomentum" type="double" value="4.0"/>
+     <parameter name="ParticleMomentum" type="double" value="2.0"/>
      <!--First plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
      <parameter name="BackwardPass_FirstPlane" type="int" value="-1"/>
      <!--Second plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
@@ -167,7 +167,53 @@
      <!--Particle mass [GeV]-->
      <parameter name="ParticleMass" type="double" value="0.000511"/>
      <!--Particle momentum [GeV]-->
-     <parameter name="ParticleMomentum" type="double" value="4.0"/>
+     <parameter name="ParticleMomentum" type="double" value="2.0"/>
+     <!--First plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="BackwardPass_FirstPlane" type="int" value="-1"/>
+     <!--Second plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="BackwardPass_SecondPlane" type="int" value="-1"/>
+     <!--First plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="ForwardPass_FirstPlane" type="int" value="-1"/>
+     <!--Second plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="ForwardPass_SecondPlane" type="int" value="-1"/>
+     <!--Seed tracks using hits from these planes-->
+     <parameter name="SingleHitSeeding" type="IntVec" value="0 1"/>
+   </processor>
+
+   <processor name="RecoTF" type="FastTracker">
+     <!--FastTracker: Performs track finding and fitting for beam tests-->
+     <!--Input hit collection names-->
+     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit" value="hit_m26"/>
+     <!--Name of not used hit collection-->
+     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit" value="unusedhits"/>
+     <!--Collection name for fitted tracks-->
+     <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track" value="tracks"/>
+     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+     <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+     <!--Enter plane numbers of bad detectors-->
+     <parameter name="ExcludeDetector" type="IntVec" value="2 3"/>
+     <!--To use only GoodQuality write 0 here-->
+     <parameter name="HitQualitySelection" type="int" value="0"/>
+     <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
+     <parameter name="MaxResidualU" type="FloatVec" value="0.4"/>
+     <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
+     <parameter name="MaxResidualV" type="FloatVec" value="0.4"/>
+     <!--Maximum track chisq in track fit-->
+     <parameter name="MaxTrackChi2" type="float" value="100"/>
+     <!--Maximum number of consecutive missing hits in track-->
+     <parameter name="MaximumGap" type="int" value="0"/>
+     <!--Maximum slope of candiate tracks in Z=0 plane (rad). Set cut to zero to deactivate.-->
+     <parameter name="MaximumSlope" type="float" value="0.1"/>
+     <!--Minimum number of hits in track-->
+     <parameter name="MinimumHits" type="int" value="5"/>
+     <!--Maximum chi2 increment for any hit added to a track candidate-->
+     <parameter name="OutlierChi2Cut" type="float" value="10"/>
+     <!--Particle charge [e]-->
+     <parameter name="ParticleCharge" type="double" value="-1"/>
+     <!--Particle mass [GeV]-->
+     <parameter name="ParticleMass" type="double" value="0.000511"/>
+     <!--Particle momentum [GeV]-->
+     <parameter name="ParticleMomentum" type="double" value="2.0"/>
      <!--First plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
      <parameter name="BackwardPass_FirstPlane" type="int" value="-1"/>
      <!--Second plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
@@ -243,7 +289,7 @@
     <!--Particle mass [GeV]-->
     <parameter name="ParticleMass" type="double" value="0.000511"/>
     <!--Particle momentum [GeV]-->
-    <parameter name="ParticleMomentum" type="double" value="4.0"/>
+    <parameter name="ParticleMomentum" type="double" value="2.0"/>
     <!--Update alignment DB using offset corrections (true/false)?-->
     <parameter name="UpdateAlignment" type="bool" value="true"/>
   </processor>
@@ -397,7 +443,7 @@
     <!--Maximum v residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
     <parameter name="MaxResidualV" type="double" value="0.1"/>
     <!--Minimum number of cluster ID occurances for clusterDB-->
-    <parameter name="MinClusters" type="int" value="1000"/>
+    <parameter name="MinClusters" type="int" value="500"/>
     <!--List of steps for software ADC. An empty list gives a constant transfer curve (0bit limit)-->
     <parameter name="SoftwareADC" type="IntVec" value=""/>
   </processor>
@@ -517,6 +563,24 @@
     <parameter name="uSideBorderLength" type="double" value="3"/>
     <!--Border length along v side, in um-->
     <parameter name="vSideBorderLength" type="double" value="3"/>
+  </processor>
+  
+  <processor name="M26Analyzer" type="PixelDUTAnalyzer">
+    <!--PixelDUTAnalyzer: DUT Analysis Processor-->
+    <!--Name of DUT hit collection-->
+    <parameter name="HitCollection" type="string" lcioInType="TrackerHit" value="hit_m26"/>
+    <!--Name of telescope track collection-->
+    <parameter name="TrackCollection" type="string" lcioInType="Track" value="tracks"/>
+    <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+    <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+    <!--Plane number of DUT along the beam line-->
+    <parameter name="DUTPlane" type="int" value="2"/>
+    <!--Maximum u residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.-->
+    <parameter name="MaxResidualU" type="double" value="0.2"/>
+    <!--Maximum v residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.-->
+    <parameter name="MaxResidualV" type="double" value="0.2"/>
+    <!--Output root file name-->
+    <parameter name="RootFileName" type="string" value="Histos-M26.root"/>
   </processor>
 
 </marlin>
