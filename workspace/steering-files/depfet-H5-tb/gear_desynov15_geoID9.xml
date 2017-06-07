@@ -226,7 +226,7 @@
 						positionZ="136"
 						sizeX="100"
 						sizeY="100"
-						thickness="3.0"
+						thickness="1.5"
 						radLength="93.660734"
 					/>
 					<sensitive ID="11"
@@ -236,7 +236,7 @@
 						positionZ="136"
 						sizeX="3.2"
 						sizeY="3.52"
-						thickness="3.0"
+						thickness="0.3"
 						npixelX="64"
 						npixelY="64"
 						pitchX="0.050"
