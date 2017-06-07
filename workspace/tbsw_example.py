@@ -7,10 +7,10 @@ pixel telescope containing six Mimosa 26 detector planes forming a reference  te
 The reference telescope has two arms with three sensors. A scattering target is installed
 between the telescope arms.
 
-The script goes create a lcio file containing simulated digits, performs a full calibration 
+The script creates a lcio file containing simulated digits, performs a full calibration 
 of the telescope and reconstructs the data. The data analysis uses the third Mimosa 26 sensor
 along the beam as device under test. Root files containing tracks and hits at the device 
-under test are prepared in the folder root-files. 
+under test are created in the folder root-files. 
 
 Author: Benjamin Schwenker <benjamin.schwenker@phys.uni-goettingen.de>  
 """
