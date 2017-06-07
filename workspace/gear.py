@@ -14,10 +14,10 @@ import random
 def override_gear(gearfile=None, sensorID=None, parametername=None, value=None):
   """
   Overrides value field in all sensors with a specific sensor ID in gearfile
-    :@gearfile:   gear file to be overwritten  
-    :@sensorID    Sensor ID with the parameter to be modified 
-    :@parameter   Parameter to be modified     
-    :@value:      insert string value in field value 
+    :@gearfile:       gear file to be overwritten  
+    :@sensorID        Sensor ID with the parameter to be modified 
+    :@parametername   Parameter to be modified     
+    :@value:          insert string value in field value 
     :author: ulf.stolzenberg@phys.uni-goettingen.de  
   """   
   tree = xml.etree.ElementTree.parse(gearfile)
@@ -62,5 +62,35 @@ def randomize_gearpars(gearfile=None, parameter_tuple=None):
     value=random.gauss(mean,sigma)
     print('Random value '+str(value))
     override_gear(gearfile=gearfile, sensorID=sensorID, parametername=parametername, value=value)
+
+def set_globaloffset(gearfile=None, parametername=None, value):
+  """
+  Overrides all parameters with a certain name on all planes
+    :@gearfile:          gear file to be overwritten  
+    :@parametername   Parameter to be modified     
+    :@value:          insert string value in field value 
+    :author: ulf.stolzenberg@phys.uni-goettingen.de  
+  """ 
+
+  tree = xml.etree.ElementTree.parse(gearfile)
+  root = tree.getroot() 
+  
+  for detectors in root.findall('detectors'): 
+    for detector in detectors.findall('detector'):
+      for layers in detector.findall('layers'):
+        for layer in layers.findall('layer'):
+
+          for ladder in layer.findall('ladder'):
+            ID=ladder.get('ID')
+            print('Changing ladder with ID '+ID)
+            ladder.set(parametername, str(value))
+
+          for sensitive in layer.findall('sensitive'):
+            ID=sensitive.get('ID')
+            print('Changing sensitive volume with ID '+ID)
+            sensitive.set(parametername, str(value))
+
+  tree.write(gearfile) 
+
 
      
