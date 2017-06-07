@@ -10,6 +10,8 @@ import subprocess
 import glob
 import xml.etree.ElementTree
 
+from gear import *
+
 class Environment(object):
   """
   Class which implements an environment for executing Marlin with all needed 
