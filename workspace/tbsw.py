@@ -9,7 +9,7 @@ import shutil
 import subprocess
 import glob
 import xml.etree.ElementTree
-from gear import *
+
 
 
 class Path(object):
