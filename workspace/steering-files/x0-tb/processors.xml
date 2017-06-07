@@ -1,0 +1,522 @@
+<marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">  
+   <global>
+      <parameter name="LCIOInputFiles" value=""/>
+      <parameter name="GearXMLFile" value=""/>
+      <parameter name="MaxRecordNumber" value="-1"/>
+      <parameter name="SkipNEvents" value="0"/>
+      <parameter name="SupressCheck" value="false"/>
+      <parameter name="Verbosity" value="MESSAGE3"/>
+   </global>
+   
+   <processor name="RawInputProcessor" type="EudaqInputProcessor">
+     <!--Reads a EUDAQ .raw file event by event and stores raw data into lcio::LCEvents.
+         Make sure to not specify any LCIOInputFiles.-->
+     <!--Set name of the detector-->
+     <parameter name="DetectorName" type="string" value="EUTelescope"/>
+     <!--Input file-->
+     <parameter name="FileName" type="string" value=""/>
+   </processor>
+   
+   <processor name="M26Unpacker" type="NIUnpacker">
+     <!--NIUnpacker: Unpacker for M26 sensors in EUDET/AIDA telescope raw data-->
+     <!--Name of collection containing raw data-->
+     <parameter name="InputCollectionName" type="string" lcioInType="TrackerRawData" value="NI"/>
+     <!--Name of the output digit collection-->
+     <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerData" value="zsdata_m26"/>
+   </processor>
+    
+   <processor name="M26Clusterizer" type="PixelClusterizer">
+     <!--PixelClusterizer: Looking for clusters in zs pixel data-->
+     <!--This is the name of the ROOT file with the status mask (add .root)-->
+     <parameter name="NoiseDBFileName" type="string" value="localDB/NoiseDB-M26.root"/>
+     <!--Name of input sparsified pixel data collection-->
+     <parameter name="SparseDataCollectionName" type="string" lcioInType="TrackerData" value="zsdata_m26"/>
+     <!--Name of the output cluster collection-->
+     <parameter name="ClusterCollectionName" type="string" lcioOutType="TrackerPulse" value="zscluster_m26"/>
+     <!--0: common side; 1: common corner; 3: max. one missing pixel-->
+     <parameter name="AcceptDiagonalCluster" type="int" value="1"/>
+     <!--Threshold for cluster signal-->
+     <parameter name="SparseClusterCut" type="float" value="0"/>
+     <!--Threshold for seed pixel signal-->
+     <parameter name="SparseSeedCut" type="float" value="0"/>
+     <!--Threshold for zero suppression-->
+     <parameter name="SparseZSCut" type="float" value="0"/>
+   </processor>
+   
+   <processor name="M26GoeHitMaker" type="GoeHitMaker">
+     <!--GoeHitMaker:  Compute hits from pixel clusters using a clusterDB-->
+     <!--Name of cluster collection-->
+     <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse" value="zscluster_m26"/>
+     <!--Name of hit collection-->
+     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit" value="hit_m26"/>
+     <!--This is the name of the ROOT file with the cluster constants (add .root)-->
+     <parameter name="ClusterDBFileName" type="string" value="localDB/clusterDB-M26.root"/>
+   </processor>
+
+   <processor name="M26CogHitMaker" type="CogHitMaker">
+     <!--CogHitMaker:  Compute hits from pixel clusters -->
+     <!--Name of cluster collection-->
+     <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse" value="zscluster_m26"/>
+     <!--Name of hit collection-->
+     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit" value="hit_m26"/>
+     <!--SigmaU for cluster with one uCell contributing [mm]-->
+     <parameter name="SigmaU1" type="double" value="0.0037"/>
+     <!--SigmaU for cluster with two uCells contributing [mm]-->
+     <parameter name="SigmaU2" type="double" value="0.0033"/>
+     <!--SigmaU for cluster with three or more uCells contributing [mm]-->
+     <parameter name="SigmaU3" type="double" value="0.0050"/>
+     <!--SigmaV for cluster with one vCell contributing [mm]-->
+     <parameter name="SigmaV1" type="double" value="0.0037"/>
+     <!--SigmaV for cluster with two vCells contributing [mm]-->
+     <parameter name="SigmaV2" type="double" value="0.0033"/>
+     <!--SigmaV for cluster with three or more vCells contributing [mm]-->
+     <parameter name="SigmaV3" type="double" value="0.0050"/>
+     <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
+     <parameter name="MaxSizeU" type="int" value="3"/>
+     <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
+     <parameter name="MaxSizeV" type="int" value="3"/>
+   </processor>
+   
+   <processor name="TelescopeDQM" type="TrackFitDQM">
+     <!--TrackFitDQM: DQM plots for monitor quality of track fitting-->
+     <!--Track input collection-->
+     <parameter name="InputTrackCollectionName" type="string" lcioInType="Track" value="tracks"/>
+     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+     <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+     <!--Output root file name-->
+     <parameter name="RootFileName" type="string" value="TelescopeDQM.root"/>
+   </processor>
+
+ 
+   <processor name="AlignTF_LC" type="FastTracker">
+     <!--FastTracker: Performs track finding and fitting for beam tests-->
+     <!--Input hit collection names-->
+     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit" value="hit_m26"/>
+     <!--Name of not used hit collection-->
+     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit" value="unusedhits"/>
+     <!--Collection name for fitted tracks-->
+     <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track" value="tracks"/>
+     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+     <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+     <!--Enter plane numbers of bad detectors-->
+     <parameter name="ExcludeDetector" type="IntVec" value="3"/>
+     <!--To use only GoodQuality write 0 here-->
+     <parameter name="HitQualitySelection" type="int" value="0"/>
+     <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
+     <parameter name="MaxResidualU" type="FloatVec" value="0.4"/>
+     <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
+     <parameter name="MaxResidualV" type="FloatVec" value="0.4"/>
+     <!--Maximum track chisq in track fit-->
+     <parameter name="MaxTrackChi2" type="float" value="10000000"/>
+     <!--Maximum number of consecutive missing hits in track-->
+     <parameter name="MaximumGap" type="int" value="0"/>
+     <!--Maximum slope of candiate tracks in Z=0 plane (rad). Set cut to zero to deactivate.-->
+     <parameter name="MaximumSlope" type="float" value="0.1"/>
+     <!--Minimum number of hits in track-->
+     <parameter name="MinimumHits" type="int" value="6"/>
+     <!--Maximum chi2 increment for any hit added to a track candidate-->
+     <parameter name="OutlierChi2Cut" type="float" value="100000000"/>
+     <!--Particle charge [e]-->
+     <parameter name="ParticleCharge" type="double" value="-1"/>
+     <!--Particle mass [GeV]-->
+     <parameter name="ParticleMass" type="double" value="0.000511"/>
+     <!--Particle momentum [GeV]-->
+     <parameter name="ParticleMomentum" type="double" value="4.0"/>
+     <!--First plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="BackwardPass_FirstPlane" type="int" value="-1"/>
+     <!--Second plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="BackwardPass_SecondPlane" type="int" value="-1"/>
+     <!--First plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="ForwardPass_FirstPlane" type="int" value="-1"/>
+     <!--Second plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="ForwardPass_SecondPlane" type="int" value="-1"/>
+     <!--Seed tracks using hits from these planes-->
+     <parameter name="SingleHitSeeding" type="IntVec" value="0 1"/>
+   </processor>
+   
+   <processor name="AlignTF_TC" type="FastTracker">
+     <!--FastTracker: Performs track finding and fitting for beam tests-->
+     <!--Input hit collection names-->
+     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit" value="hit_m26"/>
+     <!--Name of not used hit collection-->
+     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit" value="unusedhits"/>
+     <!--Collection name for fitted tracks-->
+     <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track" value="tracks"/>
+     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+     <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+     <!--Enter plane numbers of bad detectors-->
+     <parameter name="ExcludeDetector" type="IntVec" value="3"/>
+     <!--To use only GoodQuality write 0 here-->
+     <parameter name="HitQualitySelection" type="int" value="0"/>
+     <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
+     <parameter name="MaxResidualU" type="FloatVec" value="0.4"/>
+     <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
+     <parameter name="MaxResidualV" type="FloatVec" value="0.4"/>
+     <!--Maximum track chisq in track fit-->
+     <parameter name="MaxTrackChi2" type="float" value="100"/>
+     <!--Maximum number of consecutive missing hits in track-->
+     <parameter name="MaximumGap" type="int" value="0"/>
+     <!--Maximum slope of candiate tracks in Z=0 plane (rad). Set cut to zero to deactivate.-->
+     <parameter name="MaximumSlope" type="float" value="0.1"/>
+     <!--Minimum number of hits in track-->
+     <parameter name="MinimumHits" type="int" value="6"/>
+     <!--Maximum chi2 increment for any hit added to a track candidate-->
+     <parameter name="OutlierChi2Cut" type="float" value="10"/>
+     <!--Particle charge [e]-->
+     <parameter name="ParticleCharge" type="double" value="-1"/>
+     <!--Particle mass [GeV]-->
+     <parameter name="ParticleMass" type="double" value="0.000511"/>
+     <!--Particle momentum [GeV]-->
+     <parameter name="ParticleMomentum" type="double" value="4.0"/>
+     <!--First plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="BackwardPass_FirstPlane" type="int" value="-1"/>
+     <!--Second plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="BackwardPass_SecondPlane" type="int" value="-1"/>
+     <!--First plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="ForwardPass_FirstPlane" type="int" value="-1"/>
+     <!--Second plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="ForwardPass_SecondPlane" type="int" value="-1"/>
+     <!--Seed tracks using hits from these planes-->
+     <parameter name="SingleHitSeeding" type="IntVec" value="0 1"/>
+   </processor>
+
+   <processor name="PreAligner" type="KalmanAligner">
+     <!--KalmanAligner: Tracking telescope alignment using the Kalman Alignment Algorithm (KAA) with annealing-->
+     <!--Track collection for alignment-->
+     <parameter name="TrackCollectionName" type="string" lcioInType="Track" value="tracks"/>
+     <!--Name of the alignment config file-->
+     <parameter name="AlignConfigFileName" type="string" value="align-config-iteration-1.cfg"/>
+     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+     <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+     <!--Root file containing alignment validation plots-->
+     <parameter name="RootFileName" type="string" value="KalmanAlign-iteration-1.root"/>
+     <!--Update lcio alignmentDB using alignment results (true/false)?-->
+     <parameter name="UpdateAlignment" type="bool" value="true"/>
+   </processor>
+   
+   <processor name="TelAligner" type="KalmanAligner">
+     <!--KalmanAligner: Tracking telescope alignment using the Kalman Alignment Algorithm (KAA) with annealing-->
+     <!--Track collection for alignment-->
+     <parameter name="TrackCollectionName" type="string" lcioInType="Track" value="tracks"/>
+     <!--Name of the alignment config file-->
+     <parameter name="AlignConfigFileName" type="string" value="align-config-iteration-2.cfg"/>
+     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+     <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+     <!--Root file containing alignment validation plots-->
+     <parameter name="RootFileName" type="string" value="KalmanAlign-final.root"/>
+     <!--Update lcio alignmentDB using alignment results (true/false)?-->
+     <parameter name="UpdateAlignment" type="bool" value="true"/>
+   </processor>
+   
+   <processor name="M26HotPixelKiller" type="HotPixelKiller">
+     <!--HotPixelKiller: Masking of hot pixels-->
+     <!--Name of zero suppressed data collection-->
+     <parameter name="InputCollectionName" type="string" lcioInType="TrackerData" value="zsdata_m26"/>
+     <!--Maximum hit rate (hits/events) for normal pixels-->
+     <parameter name="MaxOccupancy" type="float" value="0.01"/>
+     <!--This is the name of the noiseDB file-->
+     <parameter name="NoiseDBFileName" type="string" value="localDB/NoiseDB-M26.root"/>
+     <!--Zero suppression threshold for digits [ADU]-->
+     <parameter name="OfflineZSThreshold" type="float" value="0"/>
+   </processor>
+   
+   <processor name="RawDQM" type="RawHitDQM">
+     <!--RawHitDQM: Producing DQM histos from hits-->
+     <!--Hit collection names-->
+     <parameter name="InputHitCollectionNameVec" type="string" lcioInType="TrackerHit" value="hit_m26"/>
+     <!--Output root file name-->
+     <parameter name="RootFileName" type="string" value="RawDQM.root"/>
+   </processor>
+   
+  <processor name="TelCorrelator" type="Correlator">
+    <!--Correlator: Pre- alignment in xy of tracking telescopes-->
+    <!--Hit collection names-->
+    <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit" value="hit_m26"/>
+    <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+    <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+    <!--This is the name of the output root file-->
+    <parameter name="OutputRootFileName" type="string" value="XCorrelator.root"/>
+    <!--Reference sensor plane number, counted along beam line-->
+    <parameter name="ReferencePlane" type="int" value="0"/>
+    <!--Particle charge [e]-->
+    <parameter name="ParticleCharge" type="double" value="-1"/>
+    <!--Particle mass [GeV]-->
+    <parameter name="ParticleMass" type="double" value="0.000511"/>
+    <!--Particle momentum [GeV]-->
+    <parameter name="ParticleMomentum" type="double" value="4.0"/>
+    <!--Update alignment DB using offset corrections (true/false)?-->
+    <parameter name="UpdateAlignment" type="bool" value="true"/>
+  </processor>
+   
+  <processor name="LCIOOutput" type="LCIOOutputProcessor">
+    <!--Writes the current event to the specified LCIO outputfile. Needs to be the last ActiveProcessor.-->
+    <!-- name of output file -->
+    <parameter name="LCIOOutputFile" type="string" value="tmp.slcio "/>
+    <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
+    <parameter name="LCIOWriteMode" type="string" value="None"/>
+  </processor>
+  
+  <processor name="M26ClusterCalibrator" type="GoeClusterCalibrator">
+    <!--GoeClusterCalibrator: Create clusterDB for clusters using reco tracks-->
+    <!--Track input collection-->
+    <parameter name="InputTrackCollectionName" type="string" lcioInType="Track" value="tracks"/>
+    <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+    <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+    <!--Output clusterDB file name-->
+    <parameter name="ClusterDBFileName" type="string" value="localDB/clusterDB-M26.root"/>
+    <!--Minimum number of cluster ID occurances for clusterDB-->
+    <parameter name="MinClusters" type="int" value="500"/>
+    <!--Minimum value of variance for u position measurement [mm^2]-->
+    <parameter name="MinVarianceU" type="float" value="2e-06"/>
+    <!--Minimum value of variance for v position measurement [mm^2]-->
+    <parameter name="MinVarianceV" type="float" value="2e-06"/>
+    <!--Ignore clusters from this list of sensorIDs-->
+    <parameter name="IgnoreIDs" type="IntVec"  value="11"/>  
+    <!--List of steps for software ADC. An empty list gives a constant transfer curve (0bit limit)-->
+    <parameter name="SoftwareADC" type="IntVec"  value=""/> 
+  </processor>
+
+  <processor name="DownstreamFinder" type="FastTracker">
+     <!--FastTracker: Performs track finding and fitting for beam tests-->
+     <!--Input hit collection names-->
+     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit" value="hit_m26"/>
+     <!--Name of not used hit collection-->
+     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit" value="unusedhits_down"/>
+     <!--Collection name for fitted tracks-->
+     <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track" value="down_tracks"/>
+     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+     <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+     <!--Enter plane numbers of bad detectors-->
+     <parameter name="ExcludeDetector" type="IntVec" value="0 1 2 3"/>
+     <!--To use only GoodQuality write 0 here-->
+     <parameter name="HitQualitySelection" type="int" value="0"/>
+     <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
+     <parameter name="MaxResidualU" type="FloatVec" value="0.4"/>
+     <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
+     <parameter name="MaxResidualV" type="FloatVec" value="0.4"/>
+     <!--Maximum track chisq in track fit-->
+     <parameter name="MaxTrackChi2" type="float" value="20"/>
+     <!--Maximum number of consecutive missing hits in track-->
+     <parameter name="MaximumGap" type="int" value="0"/>
+     <!--Maximum slope of candiate tracks in Z=0 plane (rad). Set cut to zero to deactivate.-->
+     <parameter name="MaximumSlope" type="float" value="0.1"/>
+     <!--Minimum number of hits in track-->
+     <parameter name="MinimumHits" type="int" value="3"/>
+     <!--Maximum chi2 increment for any hit added to a track candidate-->
+     <parameter name="OutlierChi2Cut" type="float" value="10"/>
+     <!--Particle charge [e]-->
+     <parameter name="ParticleCharge" type="double" value="-1"/>
+     <!--Particle mass [GeV]-->
+     <parameter name="ParticleMass" type="double" value="0.000511"/>
+     <!--Particle momentum [GeV]-->
+     <parameter name="ParticleMomentum" type="double" value="2.0"/>
+     <!--First plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="BackwardPass_FirstPlane" type="int" value="5"/>
+     <!--Second plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="BackwardPass_SecondPlane" type="int" value="6"/>
+     <!--First plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="ForwardPass_FirstPlane" type="int" value="-1"/>
+     <!--Second plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="ForwardPass_SecondPlane" type="int" value="-1"/>
+     <!--Seed tracks using hits from these planes-->
+     <parameter name="SingleHitSeeding" type="IntVec" value=""/>
+   </processor>
+
+   <processor name="UpstreamFinder" type="FastTracker">
+     <!--FastTracker: Performs track finding and fitting for beam tests-->
+     <!--Input hit collection names-->
+     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit" value="hit_m26"/>
+     <!--Name of not used hit collection-->
+     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit" value="unusedhits_up"/>
+     <!--Collection name for fitted tracks-->
+     <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track" value="up_tracks"/>
+     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+     <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+     <!--Enter plane numbers of bad detectors-->
+     <parameter name="ExcludeDetector" type="IntVec" value="3 4 5 6"/>
+     <!--To use only GoodQuality write 0 here-->
+     <parameter name="HitQualitySelection" type="int" value="0"/>
+     <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
+     <parameter name="MaxResidualU" type="FloatVec" value="0.4"/>
+     <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
+     <parameter name="MaxResidualV" type="FloatVec" value="0.4"/>
+     <!--Maximum track chisq in track fit-->
+     <parameter name="MaxTrackChi2" type="float" value="20"/>
+     <!--Maximum number of consecutive missing hits in track-->
+     <parameter name="MaximumGap" type="int" value="0"/>
+     <!--Maximum slope of candiate tracks in Z=0 plane (rad). Set cut to zero to deactivate.-->
+     <parameter name="MaximumSlope" type="float" value="0.1"/>
+     <!--Minimum number of hits in track-->
+     <parameter name="MinimumHits" type="int" value="3"/>
+     <!--Maximum chi2 increment for any hit added to a track candidate-->
+     <parameter name="OutlierChi2Cut" type="float" value="10"/>
+     <!--Particle charge [e]-->
+     <parameter name="ParticleCharge" type="double" value="-1"/>
+     <!--Particle mass [GeV]-->
+     <parameter name="ParticleMass" type="double" value="0.000511"/>
+     <!--Particle momentum [GeV]-->
+     <parameter name="ParticleMomentum" type="double" value="2.0"/>
+     <!--First plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="BackwardPass_FirstPlane" type="int" value="-1"/>
+     <!--Second plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="BackwardPass_SecondPlane" type="int" value="-1"/>
+     <!--First plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="ForwardPass_FirstPlane" type="int" value="0"/>
+     <!--Second plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
+     <parameter name="ForwardPass_SecondPlane" type="int" value="1"/>
+     <!--Seed tracks using hits from these planes-->
+     <parameter name="SingleHitSeeding" type="IntVec" value=""/>
+   </processor>
+   
+   <processor name="X0Imager" type="X0ImageProducer">
+     <!--X0ImageProducer: X/X0 measurement for EUDET/AIDA telescope data-->
+     <!--Name of upstream track collection-->
+     <parameter name="UpStreamTrackCollection" type="string" lcioInType="Track" value="up_tracks"/>
+     <!--Name of downstream track collection-->
+     <parameter name="DownStreamTrackCollection" type="string" lcioInType="Track" value="down_tracks"/>
+     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+     <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+     <!--Plane number of DUT along the beam line-->
+     <parameter name="DUTPlane" type="int" value="3"/>
+     <!--Output root file name-->
+     <parameter name="RootFileName" type="string" value="X0.root"/>
+   </processor>
+
+   <processor name="M26ClusterCalibrationFromMC" type="GoeClusterCalibratorForMC">
+    <!--GoeClusterCalibratorForMC: Create clusterDB for clusters using simhits-->
+    <!--Name of hit collection-->
+    <parameter name="HitCollection" type="string" lcioInType="TrackerHit" value="hit_m26"/>
+    <!--Name of collection with simulated hits-->
+    <parameter name="SimTrackerHitCollection" type="string" lcioInType="SimTrackerHit" value="SimTrackerHits"/>
+    <!--Output clusterDB file name-->
+    <parameter name="ClusterDBFileName" type="string" value="clusterDB-M26-MC.root"/>
+    <!--Ignore clusters from list of sensorIDs-->
+    <parameter name="IgnoreIDs" type="IntVec"> 11 </parameter>
+    <!--Maximum u residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
+    <parameter name="MaxResidualU" type="double" value="0.1"/>
+    <!--Maximum v residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
+    <parameter name="MaxResidualV" type="double" value="0.1"/>
+    <!--Minimum number of cluster ID occurances for clusterDB-->
+    <parameter name="MinClusters" type="int" value="1000"/>
+    <!--List of steps for software ADC. An empty list gives a constant transfer curve (0bit limit)-->
+    <parameter name="SoftwareADC" type="IntVec" value=""/>
+  </processor>
+  
+  <processor name="InfoSetter" type="EventInfoSetter">
+    <!--Creates a lcio file with run header and empty events
+         Make sure to not specify any LCIOInputFiles in the steering in order-->
+    <!--Set name of the detector-->
+    <parameter name="DetectorName" type="string" value="EUTelescope"/>
+    <!--Set run number for lcio file-->
+    <parameter name="RunNumber" type="int" value="0"/>
+  </processor>
+  
+  <processor name="ParticleGun" type="ParticleGunGenerator">
+    <!--Particle gun processor for simulation of a directed particle beam-->
+    <!--Collection name for MCParticles-->
+    <parameter name="MCParticleCollectionName" type="string" lcioOutType="MCParticle" value="MCParticles"/>
+    <!--Number of beam particles per second-->
+    <parameter name="BeamIntensity" type="double" value="20000"/>
+    <!--Beam momentum [GeV]-->
+    <parameter name="BeamMomentum" type="double" value="2.0"/>
+    <!--Beam momentum sigma [GeV]-->
+    <parameter name="BeamMomentumSigma" type="double" value="0.001"/>
+    <!--Beam slope sigma in XZ plane [rad]-->
+    <parameter name="BeamSlopeXSigma" type="double" value="0.001"/>
+    <!--Beam slope sigma in YZ plane [rad]-->
+    <parameter name="BeamSlopeYSigma" type="double" value="0.001"/>
+    <!--A simulated event contains one particle at t=0 and extends for given time window in seconds-->
+    <parameter name="BeamTimeWindow" type="double" value="0.0001"/>
+    <!--Beam vertex position in X direction [mm]-->
+    <parameter name="BeamVertexX" type="double" value="0"/>
+    <!--Beam vertex sigma in X direction [mm]-->
+    <parameter name="BeamVertexXSigma" type="double" value="7"/>
+    <!--Beam vertex position in Y direction [mm]-->
+    <parameter name="BeamVertexY" type="double" value="0"/>
+    <!--Beam vertex sigma in Y direction [mm]-->
+    <parameter name="BeamVertexYSigma" type="double" value="10"/>
+    <!--Beam vertex position in Z direction [mm]-->
+    <parameter name="BeamVertexZ" type="double" value="-10"/>
+    <!--Beam correlation factor between vertex position and momentum-->
+    <parameter name="CorrelationVertexXvsMomentum" type="double" value="0.005"/>
+    <!--Beam correlation factor between vertex position and slope-->
+    <parameter name="CorrelationVertexXvsSlopeX" type="double" value="0.1"/>
+    <!--Beam correlation factor between vertex position and momentum-->
+    <parameter name="CorrelationVertexYvsMomentum" type="double" value="0.005"/>
+    <!--Beam correlation factor between vertex position and slope-->
+    <parameter name="CorrelationVertexYvsSlopeY" type="double" value="0.1"/>
+    <!--PDG code-->
+    <parameter name="PDG" type="int" value="11"/>
+    <!--Particle charge [e]-->
+    <parameter name="ParticleCharge" type="double" value="-1"/>
+    <!--Particle mass [GeV]-->
+    <parameter name="ParticleMass" type="double" value="0.000511"/>
+  </processor>
+  
+  <processor name="FastSim" type="FastSimulation">
+    <!--Fast simulation processor for propagation of beam particels trough a test beam telescope-->
+    <!--Collection name for MCParticles-->
+    <parameter name="MCParticleCollectionName" type="string" lcioInType="MCParticle" value="MCParticles"/>
+    <!--Collection name for SimTrackerHits-->
+    <parameter name="SimTrackerHitCollectionName" type="string" lcioOutType="SimTrackerHit" value="SimTrackerHits"/>
+    <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+    <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+    <!--Choose model for multiple scattering: Highland(0)-->
+    <parameter name="ScatterModel" type="int" value="0"/>
+    <!--Flag (true/false) for simulating energy loss straggling-->
+    <parameter name="DoEnergyLossStraggling" type="bool" value="false"/>
+    <!--Flag (true/false) for simulating fractional Bethe Heitler energy loss-->
+    <parameter name="DoFractionalBetheHeitlerEnergyLoss" type="bool" value="false"/>
+  </processor>
+
+  <processor name="M26Digitizer" type="SiPixDigitizer">
+    <!--SiPixDigitizer: A rather generic silicon pixel detector digitizer-->
+    <!--Collection name for SimTrackerHits-->
+    <parameter name="SimTrackerHitCollectionName" type="string" lcioInType="SimTrackerHit" value="SimTrackerHits"/>
+    <!--Collection name for Digits-->
+    <parameter name="DigitCollectionName" type="string" lcioOutType="TrackerData" value="zsdata_m26"/>
+    <!--Choose front-end electronics: ADC(0) or Comparator(1) or None(2) -->
+    <parameter name="FrontEndType" type="int" value="1"/>
+    <!--Set threshold for comparator (in e)-->
+    <parameter name="ComparatorThrehold" type="float" value="1100"/>
+    <!--Set how many bits the ADC uses-->
+    <parameter name="ADCBits" type="int" value="8"/>
+    <!--Set analog-to-digital converter range 0 - ? (in e)-->
+    <parameter name="ADCRange" type="int" value="50000"/>
+    <!--Back contact voltage wrt. source, in Volts-->
+    <parameter name="BackPlaneVoltage" type="double" value="-30"/>
+    <!--Split Signalpoints in smaller groups of N electrons (in e)-->
+    <parameter name="ElectronGroupSize" type="double" value="100"/>
+    <!--Time step for tracking electron groups in readout plane (in ns)-->
+    <parameter name="ElectronStepTime" type="double" value="0.3"/>
+    <!--Apply electronic effects?-->
+    <parameter name="ElectronicEffects" type="bool" value="true"/>
+    <!--Noise added by the electronics, set in ENC (one value for each detector)-->
+    <parameter name="ElectronicNoise" type="double" value="300"/>
+    <!--Apply digitization only to SimTrackerHits for sensors having DAQ IDs in this list-->
+    <parameter name="FilterIDs" type="IntVec" value="0 1 2 3 4 5"/>
+    <!--Use integration window?-->
+    <parameter name="IntegrationWindow" type="bool" value="true"/>
+    <!--Maximum distance between ionization points (in mm)-->
+    <parameter name="MaxSegmentLength" type="double" value="0.005"/>
+    <!--Set fraction of noise hits per sensor per readout frame-->
+    <parameter name="NoiseFraction" type="float" value="0.00000"/>
+    <!--Effective bulk doping concentration, in um^-3-->
+    <parameter name="SiBulkDoping" type="double" value="10"/>
+    <!--Only Simulated hits after the StartIntegration time in ns will be digitized-->
+    <parameter name="StartIntegration" type="double" value="0"/>
+    <!--Only Simulated hits before the StopIntegration time in ns will be digitized-->
+    <parameter name="StopIntegration" type="double" value="100000"/>
+    <!--Tangent of Lorentz angle-->
+    <parameter name="TanLorentz" type="double" value="0"/>
+    <!--Top contact voltage wrt. source, in Volts-->
+    <parameter name="TopPlaneVoltage" type="double" value="-5"/>
+    <!--Keep only hits >= threshold in ADC units-->
+    <parameter name="ZSThreshold" type="float" value="0"/>
+    <!--Border length along u side, in um-->
+    <parameter name="uSideBorderLength" type="double" value="3"/>
+    <!--Border length along v side, in um-->
+    <parameter name="vSideBorderLength" type="double" value="3"/>
+  </processor>
+
+</marlin>
