@@ -10,6 +10,7 @@ import subprocess
 import glob
 import xml.etree.ElementTree
 import random
+import math
 
 def set_parameter(gearfile=None, sensorID=None, parametername=None, value=None):
   """
@@ -207,6 +208,86 @@ def add_weakmode(gearfile=None, parametername=None, value=None):
     set_parameter(gearfile=gearfile, sensorID=sensID, parametername=parametername, value=values[planenumber])
     planenumber=planenumber+1
     
+
+def rotate_telescope(gearfile=None, parametername=None, valueZ=None, valueAngle=None):
+  """
+  Rotates the center of the telescope planes in the x-z or y-z plane by an angle valueAngle
+  The plane is determined by the parametername, in case the parameter name isn't positionX or positionY
+  nothing happens. The axis is located on the z axis at valueZ. 
+  
+    :@gearfile:          gear file to be overwritten  
+    :@parametername      Parameter, which defines the rotation plane    
+    :@valueZ:            z position of rotation axis
+    :valueAngle          Rotation angle in degrees
+    :author: ulf.stolzenberg@phys.uni-goettingen.de  
+  """ 
+
+  tree = xml.etree.ElementTree.parse(gearfile)
+  root = tree.getroot() 
+
+  # Read out positions of telescope before rotation
+  xDistances=[]
+  yDistances=[]
+  zPositions=[]
+  IDs=[]
+
+  # angle in radians
+  valueAngle = math.radians(valueAngle)
+
+  # loop over ladders to find the z positions, IDs
+  for detectors in root.findall('detectors'): 
+    for detector in detectors.findall('detector'):
+      for layers in detector.findall('layers'):
+        for layer in layers.findall('layer'):
+          for ladder in layer.findall('ladder'):
+            xDistances.append(float(ladder.get('positionX')))
+            yDistances.append(float(ladder.get('positionY')))
+            zPositions.append(float(ladder.get('positionZ')))
+            IDs.append(ladder.get('ID'))
+
+  # Calculate the distance between the rotaion axis position valueZ and the z positions of the sensors
+  zDistances=[]
+  for zPosition in zPositions:
+     zDistances.append(zPosition-valueZ)
+
+  planenumber=0
+
+  # Calculate the positions of the  sensor center
+  if(parametername == 'positionX'):
+    set_globalparameter(gearfile=gearfile, parametername='alpha', value=valueAngle)
+    for zDistance in zDistances:
+
+      # Calculate position after rotation in XZ plane
+      z=math.cos(valueAngle)*zDistance-math.sin(valueAngle)*xDistances[planenumber]
+      x=math.sin(valueAngle)*zDistance+math.cos(valueAngle)*xDistances[planenumber]
+
+      # Set the calculated parameters in the gear file
+      set_parameter(gearfile=gearfile, sensorID=IDs[planenumber], parametername='positionX', value=x)
+      set_parameter(gearfile=gearfile, sensorID=IDs[planenumber], parametername='positionZ', value=z+valueZ)
+
+      planenumber=planenumber+1
+    
+    
+  # Calculate the positions of the  sensor center    
+  elif(parametername == 'positionY'):
+    set_globalparameter(gearfile=gearfile, parametername='beta', value=valueAngle)
+    for zDistance in zDistances:
+
+      # Calculate position after rotation in YZ plane
+      z=math.cos(valueAngle)*zDistance-math.sin(valueAngle)*xDistances[planenumber]
+      y=math.sin(valueAngle)*zDistance+math.cos(valueAngle)*xDistances[planenumber]
+
+      # Set the calculated parameters in the gear file
+      set_parameter(gearfile=gearfile, sensorID=IDs[planenumber], parametername='positionY', value=y)
+      set_parameter(gearfile=gearfile, sensorID=IDs[planenumber], parametername='positionZ', value=z+valueZ)
+
+      planenumber=planenumber+1
+  else:
+    print('Rotation plane not well defined!')
+
+
+    
+
 
   
 
