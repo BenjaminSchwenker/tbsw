@@ -60,27 +60,36 @@ def add_offset(gearfile=None, sensorID=None, parametername=None, value=None):
     for detector in detectors.findall('detector'):
       for layers in detector.findall('layers'):
         for layer in layers.findall('layer'):
-
           for ladder in layer.findall('ladder'):
             ID=ladder.get('ID')
             if ID==str(sensorID):
-              print('Changing ladder with ID '+ID)
-              laddervalue=float(value)+float(ladder.get(parametername))
-              ladder.set(parametername, str(laddervalue))
+              #print('Changing ladder with ID '+ID)
+              if ladder.get(parametername) is None:
+                print('Parameter with name '+parametername+' doesnt exist in ladder!')
+              else:
+                #print('Parameter with name '+parametername+' exists in ladder!')
+                laddervalue=float(value)+float(ladder.get(parametername))
+                ladder.set(parametername, str(laddervalue))
+
 
           for sensitive in layer.findall('sensitive'):
             ID=sensitive.get('ID')
             if ID==str(sensorID):
-              print('Changing sensitive volume with ID '+ID)
-              sensvalue=float(value)+float(sensitive.get(parametername))
-              sensitive.set(parametername, str(sensvalue))
+              #print('Changing sensitive volume with ID '+ID)
+              if sensitive.get(parametername) is None:
+                print('Parameter with name '+parametername+' doesnt exist in sensitive!')
+              else:
+                #print('Parameter with name '+parametername+' exists in sensitive!')
+                sensvalue=float(value)+float(sensitive.get(parametername))
+                sensitive.set(parametername, str(sensvalue))
+
 
   tree.write(gearfile) 
 
 
 def randomize_gearparameter(gearfile=None, sensorID=None, parametername=None, mean=None, sigma=None):
   """
-  Overrides position and orientation of multiple sensors in gearfile with gaussian random variables
+  Overrides position and orientation of a single sensor in gearfile with gaussian random variable
     :@gearfile:          gear file to be overwritten  
     :@sensorID           Sensor ID with the parameter to be modified
     :@parametername      Parameter to be modified     
@@ -91,8 +100,38 @@ def randomize_gearparameter(gearfile=None, sensorID=None, parametername=None, me
 
   # Calculate random shift for this parameter
   value=random.gauss(mean,sigma)
-  print('Random value '+str(value))
   add_offset(gearfile=gearfile, sensorID=sensorID, parametername=parametername, value=value)
+
+
+def randomize_telescope(gearfile=None, mean_pos=None, sigma_pos=None, mean_rot=None, sigma_rot=None):
+  """
+  Overrides position and orientation of multiple sensors in gearfile with gaussian random variables
+    :@gearfile:          gear file to be overwritten  
+	:@mean_pos		     Mean of the gaussian random distribution, which determine the plane positions
+    :@sigma_pos          Sigma of the gaussian random distribution, which determine the plane positions
+	:@mean_rot		     Mean of the gaussian random distribution, which determine the plane rotations
+    :@sigma_rot          Sigma of the gaussian random distribution, which determine the plane rotations
+    :author: ulf.stolzenberg@phys.uni-goettingen.de  
+  """  
+
+  tree = xml.etree.ElementTree.parse(gearfile)
+  root = tree.getroot()  
+
+  for detectors in root.findall('detectors'): 
+    for detector in detectors.findall('detector'):
+      for layers in detector.findall('layers'):
+        for layer in layers.findall('layer'):
+
+          for ladder in layer.findall('sensitive'):
+            ID=ladder.get('ID')
+            print('Randomizing ladder with ID '+ID)
+            randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='positionX', mean=mean_pos, sigma=sigma_pos)
+            randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='positionY', mean=mean_pos, sigma=sigma_pos)
+            randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='positionZ', mean=mean_pos, sigma=sigma_pos)
+
+            randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='alpha', mean=mean_rot, sigma=sigma_rot)
+            randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='beta', mean=mean_rot, sigma=sigma_rot)
+            randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='gamma', mean=mean_rot, sigma=sigma_rot)
 
 
 def set_globalparameter(gearfile=None, parametername=None, value=None):

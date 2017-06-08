@@ -132,7 +132,7 @@ if __name__ == '__main__':
 
   # Copy the results cfg file from previous calibrations, if it exists
   calicfgfilename="x0cal_result.cfg"
-  calicfgfile=fullpath+'/cal-files/'+caltag+'/'+calicfgfilename
+  calicfgfile=fullpath+'/localDB/'+caltag+'/'+calicfgfilename
   if os.path.isfile(calicfgfile):
     shutil.copy(calicfgfile, calicfgfilename)
 

@@ -100,7 +100,7 @@ if __name__ == '__main__':
 
   # Copy the results cfg file from previous calibrations, of it exists
   cfgfilename="x0cal_result.cfg"
-  cfgfile=fullpath+'/cal-files/'+caltag+'/'+cfgfilename
+  cfgfile=fullpath+'/localDB/'+caltag+'/'+cfgfilename
   if os.path.isfile(cfgfile):
     shutil.copy(cfgfile, cfgfilename)
    
@@ -113,7 +113,7 @@ if __name__ == '__main__':
   # remove cfg file
   os.remove(cfgname) 
 
-  caldir=fullpath+'/cal-files/'+caltag
+  caldir=fullpath+'/localDB/'+caltag
 
   if not os.path.isdir(caldir):
     os.mkdir(caldir)
