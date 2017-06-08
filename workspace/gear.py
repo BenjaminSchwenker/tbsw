@@ -30,13 +30,13 @@ def set_parameter(gearfile=None, sensorID=None, parametername=None, value=None):
 
           for ladder in layer.findall('ladder'):
             ID=ladder.get('ID')
-            if ID==sensorID:
+            if ID==str(sensorID):
               print('Changing ladder with ID '+ID)
               ladder.set(parametername, str(value))
 
           for sensitive in layer.findall('sensitive'):
             ID=sensitive.get('ID')
-            if ID==sensorID:
+            if ID==str(sensorID):
               print('Changing sensitive volume with ID '+ID)
               sensitive.set(parametername, str(value))
 
@@ -62,14 +62,14 @@ def add_offset(gearfile=None, sensorID=None, parametername=None, value=None):
 
           for ladder in layer.findall('ladder'):
             ID=ladder.get('ID')
-            if ID==sensorID:
+            if ID==str(sensorID):
               print('Changing ladder with ID '+ID)
               laddervalue=float(value)+float(ladder.get(parametername))
               ladder.set(parametername, str(laddervalue))
 
           for sensitive in layer.findall('sensitive'):
             ID=sensitive.get('ID')
-            if ID==sensorID:
+            if ID==str(sensorID):
               print('Changing sensitive volume with ID '+ID)
               sensvalue=float(value)+float(sensitive.get(parametername))
               sensitive.set(parametername, str(sensvalue))
@@ -77,26 +77,22 @@ def add_offset(gearfile=None, sensorID=None, parametername=None, value=None):
   tree.write(gearfile) 
 
 
-def randomize_gearpars(gearfile=None, parameter_tuple=None):
+def randomize_gearparameter(gearfile=None, sensorID=None, parametername=None, mean=None, sigma=None):
   """
   Overrides position and orientation of multiple sensors in gearfile with gaussian random variables
     :@gearfile:          gear file to be overwritten  
-    :@parameter_tuple    tuple of parameter names and its mean and sigma values, tuple should be of the form ([sensorID1(int),name1(string),mean1(float),sigma1(float)],[sensorID2,name2,mean2,sigma2]....)
+    :@sensorID           Sensor ID with the parameter to be modified
+    :@parametername      Parameter to be modified     
+	:@mean				 Mean of the gaussian random distribution
+    :@sigma              Sigma of the gaussian random distribution
     :author: ulf.stolzenberg@phys.uni-goettingen.de  
   """   
 
-  for par in parameter_tuple[:]: 
+  # Calculate random shift for this parameter
+  value=random.gauss(mean,sigma)
+  print('Random value '+str(value))
+  add_offset(gearfile=gearfile, sensorID=sensorID, parametername=parametername, value=value)
 
-    # Read out parameter name and mean and sigma
-    sensorID=par[0]
-    parametername=par[1]
-    mean=par[2]
-    sigma=par[3]
-
-    # Calculate random shift for this parameter
-    value=random.gauss(mean,sigma)
-    print('Random value '+str(value))
-    override_gear(gearfile=gearfile, sensorID=sensorID, parametername=parametername, value=value)
 
 def set_globalparameter(gearfile=None, parametername=None, value=None):
   """
@@ -124,12 +120,13 @@ def set_globalparameter(gearfile=None, parametername=None, value=None):
   tree.write(gearfile) 
 
 
-def add_globaloffset(gearfile=None, parametername=None, value=None):
+def shift_telescope(gearfile=None, valueX=None, valueY=None, valueZ=None):
   """
   Adds an offset to a certain parameter on all planes
-    :@gearfile:          gear file to be overwritten  
-    :@parametername      Parameter to be modified     
-    :@value:             insert string value in field value 
+    :@gearfile:          gear file to be overwritten     
+    :@valueX:            X shift
+    :@valueY:            Y shift
+    :@valueZ:            Z shift	
     :author: ulf.stolzenberg@phys.uni-goettingen.de  
   """ 
 
@@ -142,12 +139,24 @@ def add_globaloffset(gearfile=None, parametername=None, value=None):
         for layer in layers.findall('layer'):
 
           for ladder in layer.findall('ladder'):
-            laddervalue=float(value)+float(ladder.get(parametername))
-            ladder.set(parametername, str(laddervalue))
+            laddervalueX=float(valueX)+float(ladder.get('positionX'))
+            ladder.set('positionX', str(laddervalueX))
+
+            laddervalueY=float(valueY)+float(ladder.get('positionY'))
+            ladder.set('positionY', str(laddervalueY))
+
+            laddervalueZ=float(valueZ)+float(ladder.get('positionZ'))
+            ladder.set('positionZ', str(laddervalueZ))
 
           for sensitive in layer.findall('sensitive'):
-            sensvalue=float(value)+float(sensitive.get(parametername))
-            sensitive.set(parametername, str(sensvalue))
+            sensvalueX=float(valueX)+float(sensitive.get('positionX'))
+            sensitive.set('positionX', str(sensvalueX))
+
+            sensvalueY=float(valueY)+float(sensitive.get('positionY'))
+            sensitive.set('positionY', str(sensvalueY))
+
+            sensvalueZ=float(valueZ)+float(sensitive.get('positionZ'))
+            sensitive.set('positionZ', str(sensvalueZ))
 
   tree.write(gearfile) 
 
@@ -168,8 +177,8 @@ def add_weakmode(gearfile=None, parametername=None, value=None):
   maxvalue=value
 
   # List of z positions
-  zpos=[]
-  ID=[]
+  zPositions=[]
+  IDs=[]
   # loop over ladders to find the z positions
   for detectors in root.findall('detectors'): 
     for detector in detectors.findall('detector'):
@@ -178,11 +187,11 @@ def add_weakmode(gearfile=None, parametername=None, value=None):
 
           for ladder in layer.findall('ladder'):
             laddervalue=float(value)+float(ladder.get(parametername))
-            zpos.append(float(ladder.get('positionZ')))
-            ID.append(ladder.get('ID'))
+            zPositions.append(float(ladder.get('positionZ')))
+            IDs.append(ladder.get('ID'))
 
   # Get the max z value in the z position list
-  maxzpos=max(zpos)
+  maxzpos=max(zPositions)
 
   # Calculate the parameter change per mm in z direction
   slope=float(value)/maxzpos
@@ -190,13 +199,13 @@ def add_weakmode(gearfile=None, parametername=None, value=None):
   values=[]
 
   # Calculate the values for the other planes
-  for i in zpos:
-    values.append(float(i*slope))
+  for zPosition in zPositions:
+    values.append(float(zPosition*slope))
 
-  iteration=0
-  for i in ID:
-    set_parameter(gearfile=gearfile, sensorID=i, parametername=parametername, value=values[iteration])
-    iteration=iteration+1
+  planenumber=0
+  for sensID in IDs:
+    set_parameter(gearfile=gearfile, sensorID=sensID, parametername=parametername, value=values[planenumber])
+    planenumber=planenumber+1
     
 
   
