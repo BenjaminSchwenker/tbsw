@@ -11,6 +11,7 @@ import glob
 import xml.etree.ElementTree
 
 
+
 class Path(object):
   """
   Class which implements an interface to create Marlin steer files. Templates for creating 
@@ -74,6 +75,7 @@ class Path(object):
   def get_name(self): 
     return self.name
   
+
 class Environment(object):
   """
   Class which implements an environment for executing Marlin with all needed 
