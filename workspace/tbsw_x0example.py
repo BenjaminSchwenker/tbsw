@@ -28,8 +28,8 @@ air_caltag='mc-air-test'
 gearfile = 'gear.xml'
 gearfile_air = 'gear_air.xml'
 # File name for raw data 
-rawfile_air = '/home/ulf/workspace-feature-gearmanipulation-2/mc-air.slcio'
-rawfile_alu = '/home/ulf/workspace-feature-gearmanipulation-2/mc-alu.slcio'
+rawfile_air = 'mc-air.slcio'
+rawfile_alu = 'mc-alu.slcio'
 # Number of events to simulate 
 nevents_air = 700000
 nevents_alu = 5000000
@@ -269,6 +269,17 @@ def x0calibration(filename,imagefilename,caltag):
   
 if __name__ == '__main__':
 
+
+  # Get current directory
+  cwdir = os.getcwd()
+
+  # Get absolute path to input files
+  rawfile_air=cwdir+'/'+rawfile_air
+  rawfile_alu=cwdir+'/'+rawfile_alu
+
+#  print(rawfile_air)
+#  print(rawfile_alu)
+
   params_air_cali = ( rawfile_air, steerfiles, gearfile)
   params_alu_reco = ( rawfile_alu, steerfiles, gearfile, air_caltag)
   params_air_reco = ( rawfile_air, steerfiles, gearfile, air_caltag)
@@ -287,10 +298,6 @@ if __name__ == '__main__':
   imagecfgfilename='steering-files/x0-tb/image.cfg'
   calibrationcfgfilename='steering-files/x0-tb/x0calibration.cfg'
   deletetag=1
-
-  # Some strings which will be needed in file operations later
-  # current directory
-  cwdir = os.getcwd()
 
   # Base filename of the X0 root file
   basefilename='X0-mc-air-test-reco'
