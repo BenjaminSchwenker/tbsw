@@ -225,25 +225,23 @@ if __name__ == '__main__':
 
   # Calibrate the telescope and reconstruct the rawfile 
   calibrate_and_reconstruct( params )
-  
+
   # Make a list of root files containing reconstructed trees 
   # for tracks / hits / events
-  trackfiles =  glob.glob('root-files/Histos-H5*.root')  
+  trackfile = 'root-files/Histos-H5-simrun-test-reco2.root'  
   
-  # Loop over root files with reconstruction results and create 
-  # some basics analysis histograms in the workspace 
-  for trackfile in trackfiles:    
-
-    # Plot DUT residuals and cluster signal histograms from the 'Hit'
-    # tree in the workspace. 
-    ofile = 'Example-Residuals-' + os.path.basename(trackfile)
-    tbsw_tools.residuals.plot(inputfilename = trackfile, histofilename = ofile, basecut = "hasTrack==0")
+  # Plot DUT residuals and cluster signal histograms from the 'Hit'
+  # tree in the workspace. 
+  ofile = 'Example-Residuals.root'
+  tbsw_tools.residuals.plot(inputfilename = trackfile, histofilename = ofile, basecut = "hasTrack==0")
       
-    # Plot DUT hit efficiency histograms from the 'Track' tree 
-    # in the workspace. 
-    ofile = 'Example-Efficiency-' + os.path.basename(trackfile)  
-    selection = "nTelTracks == 1 && cellU_fit >= 0 && cellU_fit < 64 && cellV_fit >= 0 && cellV_fit < 64"
-    tbsw_tools.efficiency.plot(inputfilename = trackfile, histofilename = ofile, basecut = selection, ucells=64, vcells=64)
+  # Plot DUT hit efficiency histograms from the 'Track' tree 
+  # in the workspace. 
+  ofile = 'Example-Efficiency.root' 
+  selection = "nTelTracks == 1 && cellU_fit >= 0 && cellU_fit < 64 && cellV_fit >= 0 && cellV_fit < 64"
+  tbsw_tools.efficiency.plot(inputfilename = trackfile, histofilename = ofile, basecut = selection, ucells=64, vcells=64)
+  
+  
     
     
     
