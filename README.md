@@ -12,7 +12,7 @@ analysis right during the beam test (or shortly afterwards). Some effort was inv
 as possible. The installation of the framework is covered in INSTALL. 
 
 
-# For the impatient reader: The text below is a step by step instruction how to run the code on raw data.
+# For the impatient reader: The text below is a step by step instruction how to run the code on raw data
 
 
 After installation, the root directory of tbsw contains a 'workspace' folder. The first step to analyse data from a new beam test
