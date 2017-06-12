@@ -30,8 +30,8 @@ gearfile = 'gear.xml'
 rawfile_air = os.getcwd()+'/mc-air.slcio'
 rawfile_alu = os.getcwd()+'/mc-alu.slcio'
 # Number of events to simulate 
-nevents_air = 100000
-nevents_alu = 100000
+nevents_air = 700000
+nevents_alu = 5000000
 
 #Parameters for simulation of misalignment
 #Position parameters in mm
