@@ -16,9 +16,6 @@ Author: Ulf Stolzenberg <ulf.stolzenberg@phys.uni-goettingen.de>
 """
 
 from tbsw import *
-from gear import *
-
-import tbsw_tools
 import multiprocessing
 
 # Path to steering files 
@@ -191,7 +188,7 @@ def calibrate(params):
 # Function which starts the imaging script
 def x0imaging(filename,caltag,deletetag):
 
-  flags='./tbsw_tools/x0imaging/GenerateImage.py -i '+filename+' -f '+imagecfgfilename+' -c '+caltag+' -d '+`deletetag`
+  flags='./tbsw/x0imaging/GenerateImage.py -i '+filename+' -f '+imagecfgfilename+' -c '+caltag+' -d '+`deletetag`
   print('Starting X0 imaging')
   print(flags)
   subprocess.call(flags, shell=True)
@@ -201,7 +198,7 @@ def x0imaging(filename,caltag,deletetag):
 # Function which starts the x0 calibration script
 def x0calibration(filename,imagefilename,caltag):
 
-  flags='./tbsw_tools/x0imaging/X0Calibration.py -i '+filename+' -f '+calibrationcfgfilename+' -m '+imagefilename+' -c '+caltag
+  flags='./tbsw/x0imaging/X0Calibration.py -i '+filename+' -f '+calibrationcfgfilename+' -m '+imagefilename+' -c '+caltag
   print('Starting X0 calibration')
   print(flags)
   subprocess.call(flags, shell=True)

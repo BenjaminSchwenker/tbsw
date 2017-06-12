@@ -16,7 +16,6 @@ Author: Ulf Stolzenberg <ulf.stolzenberg@phys.uni-goettingen.de>
 """
 
 from tbsw import *
-from gear import *
 
 # Path to steering files 
 # Steeringfiles are xml files and define details of the simulation like how many events are produced
@@ -241,7 +240,7 @@ def reconstruct():
 # Function which starts the imaging script
 def x0imaging(filename,caltag,deletetag):
 
-  flags='./tbsw_tools/x0imaging/GenerateImage.py -i '+filename+' -f '+imagecfgfilename+' -c '+caltag+' -d '+`deletetag`
+  flags='./tbsw/x0imaging/GenerateImage.py -i '+filename+' -f '+imagecfgfilename+' -c '+caltag+' -d '+`deletetag`
   print('Starting X0 imaging')
   print(flags)
   subprocess.call(flags, shell=True)
@@ -250,7 +249,7 @@ def x0imaging(filename,caltag,deletetag):
 # Function which starts the x0 calibration script
 def x0calibration(filename,imagefilename,caltag):
 
-  flags='./tbsw_tools/x0imaging/X0Calibration.py -i '+filename+' -f '+calibrationcfgfilename+' -m '+imagefilename+' -c '+caltag
+  flags='./tbsw/x0imaging/X0Calibration.py -i '+filename+' -f '+calibrationcfgfilename+' -m '+imagefilename+' -c '+caltag
   print('Starting X0 calibration')
   print(flags)
   subprocess.call(flags, shell=True)

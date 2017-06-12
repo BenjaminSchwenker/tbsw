@@ -15,8 +15,6 @@ Author: Benjamin Schwenker <benjamin.schwenker@phys.uni-goettingen.de>
 """
 
 from tbsw import *
-from gear import *
-import tbsw_tools
 
 # Path to steering files 
 # The folder steerfiles contains one or more gear file describing the 
@@ -233,13 +231,13 @@ if __name__ == '__main__':
   # Plot DUT residuals and cluster signal histograms from the 'Hit'
   # tree in the workspace. 
   ofile = 'Example-Residuals.root'
-  tbsw_tools.residuals.plot(inputfilename = trackfile, histofilename = ofile, basecut = "hasTrack==0")
+  residuals.plot(inputfilename = trackfile, histofilename = ofile, basecut = "hasTrack==0")
       
   # Plot DUT hit efficiency histograms from the 'Track' tree 
   # in the workspace. 
   ofile = 'Example-Efficiency.root' 
   selection = "nTelTracks == 1 && cellU_fit >= 0 && cellU_fit < 64 && cellV_fit >= 0 && cellV_fit < 64"
-  tbsw_tools.efficiency.plot(inputfilename = trackfile, histofilename = ofile, basecut = selection, ucells=64, vcells=64)
+  efficiency.plot(inputfilename = trackfile, histofilename = ofile, basecut = selection, ucells=64, vcells=64)
   
   
     

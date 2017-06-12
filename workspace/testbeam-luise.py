@@ -9,7 +9,6 @@ Author: Benjamin Schwenker <benjamin.schwenker@phys.uni-goettingen.de>
 """
 
 from tbsw import *
-import tbsw_tools
 import multiprocessing
 
 # Path to steering files 
@@ -191,25 +190,25 @@ if __name__ == '__main__':
   for trackfile in trackfiles: 
         
     ofile = 'Residuals-' + os.path.basename(trackfile)
-    tbsw_tools.residuals.plot(inputfilename = trackfile, histofilename = ofile, basecut = "hasTrack==0")
+    residuals.plot(inputfilename = trackfile, histofilename = ofile, basecut = "hasTrack==0")
     
     ofile = 'Occupancy-' + os.path.basename(trackfile)
-    tbsw_tools.occupancy.plot(inputfilename = trackfile, histofilename = ofile, ucells=128, vcells=1)
+    occupancy.plot(inputfilename = trackfile, histofilename = ofile, ucells=128, vcells=1)
     
     ofile = 'Efficiency-' + os.path.basename(trackfile)  
-    tbsw_tools.efficiency.plot(inputfilename = trackfile, histofilename = ofile, ucells=128, vcells=1)
+    efficiency.plot(inputfilename = trackfile, histofilename = ofile, ucells=128, vcells=1)
     
     ofile = 'InpixEfficiency-' + os.path.basename(trackfile)  
-    tbsw_tools.efficiency.plot_unit_inpix(inputfilename = trackfile, histofilename = ofile, basecut = "nTelTracks == 1", matchcut="hasHit == 0", upitch=0.0745, vpitch=0.5, ubins=20, vbins=10)
+    efficiency.plot_unit_inpix(inputfilename = trackfile, histofilename = ofile, basecut = "nTelTracks == 1", matchcut="hasHit == 0", upitch=0.0745, vpitch=0.5, ubins=20, vbins=10)
     
     ofile = 'UnitInpixEfficiency-' + os.path.basename(trackfile)
-    tbsw_tools.efficiency.plot_inpix(inputfilename = trackfile, histofilename = ofile, basecut = "nTelTracks == 1", matchcut="hasHit == 0", usize=1.0, vsize=1.0, ubins=200, vbins=1)
+    efficiency.plot_inpix(inputfilename = trackfile, histofilename = ofile, basecut = "nTelTracks == 1", matchcut="hasHit == 0", usize=1.0, vsize=1.0, ubins=200, vbins=1)
     
     ofile = 'InpixSignal-' + os.path.basename(trackfile)
-    tbsw_tools.inpixel.plot(inputfilename = trackfile, histofilename = ofile, usize=1.0, vsize=1.0, ubins=100, vbins=10)
+    inpixel.plot(inputfilename = trackfile, histofilename = ofile, usize=1.0, vsize=1.0, ubins=100, vbins=10)
     
     ofile = 'UnitInpixSignal-' + os.path.basename(trackfile)
-    tbsw_tools.inpixel.plot_unit(inputfilename = trackfile, histofilename = ofile, upitch=0.0745, vpitch=0.5, ubins=20, vbins=10)
+    inpixel.plot_unit(inputfilename = trackfile, histofilename = ofile, upitch=0.0745, vpitch=0.5, ubins=20, vbins=10)
 
 
 

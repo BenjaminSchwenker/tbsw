@@ -6,7 +6,6 @@ Author: Benjamin Schwenker <benjamin.schwenker@phys.uni-goettingen.de>
 """
 
 from tbsw import *
-import tbsw_tools
 import multiprocessing
 
 # Path to steering files 
@@ -199,10 +198,10 @@ if __name__ == '__main__':
   for trackfile in trackfiles: 
         
     ofile = 'Residuals-' + os.path.basename(trackfile)
-    tbsw_tools.residuals.plot(inputfilename = trackfile, histofilename = ofile, basecut = "hasTrack==0")
+    residuals.plot(inputfilename = trackfile, histofilename = ofile, basecut = "hasTrack==0")
       
     ofile = 'Efficiency-' + os.path.basename(trackfile)  
-    tbsw_tools.efficiency.plot(inputfilename = trackfile, histofilename = ofile, basecut = "nTelTracks == 1 && nDutHits > 0 && cellU_fit >= 0 && cellU_fit < 64", matchcut="hasHit == 0", ucells=64, vcells=480)
+    efficiency.plot(inputfilename = trackfile, histofilename = ofile, basecut = "nTelTracks == 1 && nDutHits > 0 && cellU_fit >= 0 && cellU_fit < 64", matchcut="hasHit == 0", ucells=64, vcells=480)
 
 
 

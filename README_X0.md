@@ -143,7 +143,7 @@ In the example script, an aluminium plate with a material step is used as the DU
 several measurement areas and a line in order to fit the calibration parameters. The measurement areas are marked on the
 following image of the uncalibrated aluminium plate:
 
-[picture](workspace/tbsw_tools/validation/X0image_Boxes.png)
+[picture](workspace/tbsw/validation/X0image_Boxes.png)
 
 There is one measurement area in the 0.5mm thick aluminium (1), 6 measurement areas in the 1mm aluminium area (2,3 and 9-12)
 the remaining measurement areas lie in the air region.
@@ -157,14 +157,14 @@ in workspace/localDB/mc-air-test/x0cal_result.cfg.
 In the last step an calibrated X/X0 image is produced, which used the cfg file from the previous calibration step. The
 calibrated X/X0 image should look like this:
 
-[picture](workspace/tbsw_tools/validation/X0image.png)
+[picture](workspace/tbsw/validation/X0image.png)
 
 The area of the aluminium plate is 8x8mm^2 and has a thickness of 1mm. The central part has a reduced thickness of 0.5mm. The aluminium plate is freely 
 hanging in air. 
 
 A X/X0 profile cut can be used for X/X0 measurements. In this example case the steps between thick and thin aluminium, as well as air is clearly visible.
 
-[picture](workspace/tbsw_tools/validation/X0profile.png)
+[picture](workspace/tbsw/validation/X0profile.png)
 
 The complete results can be found in workspace/root-files/X0-mc-alu-default-reco-Calibrated-X0image.root
 
