@@ -32,13 +32,12 @@ def set_parameter(gearfile=None, sensorID=None, parametername=None, value=None):
           for ladder in layer.findall('ladder'):
             ID=ladder.get('ID')
             if ID==str(sensorID):
-              print('Changing ladder with ID '+ID)
+              print('[INFO] Changing plane with ID '+ID)
               ladder.set(parametername, str(value))
 
           for sensitive in layer.findall('sensitive'):
             ID=sensitive.get('ID')
             if ID==str(sensorID):
-              print('Changing sensitive volume with ID '+ID)
               sensitive.set(parametername, str(value))
 
   tree.write(gearfile) 
@@ -126,7 +125,7 @@ def randomize_telescope(gearfile=None, mean_pos=None, sigma_pos=None, mean_rot=N
 
           for ladder in layer.findall('sensitive'):
             ID=ladder.get('ID')
-            print('Randomizing ladder with ID '+ID)
+            print('[INFO] Misalign position of plane with ID '+ID)
             randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='positionX', mean=mean_pos, sigma=sigma_pos)
             randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='positionY', mean=mean_pos, sigma=sigma_pos)
             randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='positionZ', mean=mean_pos, sigma=sigma_pos)
