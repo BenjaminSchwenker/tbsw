@@ -106,6 +106,11 @@ namespace eudaqinput {
     registerOutputCollection (LCIO::TRACKERDATA, "OutputCollectionName",
                               "Name of the output digit collection",
                               _outputCollectionName, string("zsdata_dep"));
+    
+    registerProcessorParameter ("OverrideSensorID", "Override sensorID. Put -1 to keep sensorID from rawdata",
+                                _resetSensorID,  static_cast < int > (-1));
+    
+   
   
   }
   
@@ -226,7 +231,11 @@ namespace eudaqinput {
         TrackerDataImpl* zsFrame = new TrackerDataImpl;
         
         // Set description for zsFrame
-        outputEncoder["sensorID"] = data.getModuleNr();
+        if (_resetSensorID >= 0) {
+          outputEncoder["sensorID"] = _resetSensorID; 
+        } else {
+          outputEncoder["sensorID"] = data.getModuleNr();
+        }
         outputEncoder["sparsePixelType"] = 0;
         outputEncoder.setCellID( zsFrame );
         
