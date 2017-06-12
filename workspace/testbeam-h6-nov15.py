@@ -1,6 +1,6 @@
 """
 Script for processing DEPFET Hyrbid6 data from test beam at DESY in november 2015. Rawdata files 
-are kept by Florian Lütticke in Bonn. 
+are kept by Florian Luetticke in Bonn. 
 
 Author: Benjamin Schwenker <benjamin.schwenker@phys.uni-goettingen.de>  
 """
