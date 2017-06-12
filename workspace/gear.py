@@ -65,7 +65,8 @@ def add_offset(gearfile=None, sensorID=None, parametername=None, value=None):
             if ID==str(sensorID):
               #print('Changing ladder with ID '+ID)
               if ladder.get(parametername) is None:
-                print('Parameter with name '+parametername+' doesnt exist in ladder!')
+                #print('Parameter with name '+parametername+' doesnt exist in ladder!')
+                pass
               else:
                 #print('Parameter with name '+parametername+' exists in ladder!')
                 laddervalue=float(value)+float(ladder.get(parametername))
@@ -77,7 +78,8 @@ def add_offset(gearfile=None, sensorID=None, parametername=None, value=None):
             if ID==str(sensorID):
               #print('Changing sensitive volume with ID '+ID)
               if sensitive.get(parametername) is None:
-                print('Parameter with name '+parametername+' doesnt exist in sensitive!')
+                #print('Parameter with name '+parametername+' doesnt exist in sensitive!')
+                pass
               else:
                 #print('Parameter with name '+parametername+' exists in sensitive!')
                 sensvalue=float(value)+float(sensitive.get(parametername))

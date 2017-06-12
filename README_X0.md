@@ -33,9 +33,9 @@ material distribution will be generated.
 ##1. Telescope calibration:
 
 During the telescope calibration, noisy pixel masks is produced and cluster calibration and telescope alignment
-is carried out. The steering files, which are used during this process are described in README.md and can
-be found in workspace/steering-files/x0-sim/ .The calibration results can be found in the folder  
-workspace/cal-files/default/. 
+is carried out. The MARLIN Processors, which are used during this process are described in README.md and can
+be found in workspace/steering-files/x0-tb/processors.xml .The calibration results can be found in the folder  
+workspace/localDB/mc-air-test/. 
 
 It is preferred to use an air run for the telescope calibration. Afterwards, scattering objects must be installed 
 w/o moving the telescope arms. The reason for this approach is that unkown, or wrongly modelled, material inside
@@ -45,8 +45,8 @@ within tbsw.
 ##2. Scattering angle reconstruction:
 
 Using the calibration results from the previous step the scattering angles on the aluminium DUT are
-reconstructed. During the angle reconstruction step the workspace/steering-files/x0-sim/reco.xml
-steering file is employed. The reco.xml for the X0 analysis contains the following processors:
+reconstructed. During the angle reconstruction step the workspace/steering-files/x0-tb/processors.xml
+steering file is employed. The following processors are used in the X0 analysis:
 
    _1. M26Clusterizer:_			  Input: NoiseDB (must be present in cal-files/default) and M26 digit collectiion, Output: M26 clusters
    
@@ -58,7 +58,7 @@ steering file is employed. The reco.xml for the X0 analysis contains the followi
    
    _5. X0ImageProducer:_          Input: alignmentDB (must be present in cal-files/cal-tag), Get kink calculates angles from tracks, Output: X0 root file 
 
-The results of the angle reconstruction can be found at workspace/root-files/X0-mc-reco-cal-tag-default.root. The results file contains a root 
+The results of the angle reconstruction can be found at workspace/root-files/X0-mc-air-test-reco.root. The results file contains a root 
 tree named MSCTree. The following variables are stored in the tree:
 
    *  iRun            : Run number of the track
@@ -89,7 +89,7 @@ tree named MSCTree. The following variables are stored in the tree:
 
 The tree, which was generated in the last step will now be used to generate a uncalibrated
 radiation length image of the aluminium DUT. The imaging procedure employs a cfg file 
-(see "workspace/steering-files/x0-sim/image.cfg"). The parameters in the config file are
+(see "workspace/steering-files/x0-tb/image.cfg"). The parameters in the config file are
 
   * lambda			         : The calibration factor of the angle resolution sigma, during this first
                                uncalibrated imaging, lambda should be 1.0
@@ -104,7 +104,7 @@ radiation length image of the aluminium DUT. The imaging procedure employs a cfg
                                pass through the area of most pixels
 
 After the imaging process the uncalibrated radiation length image is located in 
-workspace/root-files/X0-mc-alu-default-reco-Uncalibrated-X0image.root . The file contains many 2D histograms, the
+workspace/root-files/X0-mc-air-test-reco-Uncalibrated-X0image.root . The file contains many 2D histograms, the
 most important ones are:
 
   * x0_image                         : Radiation length (X/X0) image 
@@ -149,8 +149,8 @@ There is one measurement area in the 0.5mm thick aluminium (1), 6 measurement ar
 the remaining measurement areas lie in the air region.
 
 The results of the calibration, including pictures of the fits of the individual measurement areas, can be found in 
-workspace/tmp-runs/X0-mc-alu-default-reco-X0Calibration/ . The results of the calibration are also stored as a cfg file
-in workspace/cal-files/default/x0cal_result.cfg.
+workspace/tmp-runs/X0-mc-air-test-reco-X0Calibration/ . The results of the calibration are also stored as a cfg file
+in workspace/localDB/mc-air-test/x0cal_result.cfg.
 
 ## X/X0 imaging (calibrated):
 

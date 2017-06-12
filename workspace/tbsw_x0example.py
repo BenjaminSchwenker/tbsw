@@ -26,21 +26,20 @@ steerfiles = 'steering-files/x0-tb/'
 air_caltag='mc-air-test'
 # Gearfile for runs 
 gearfile = 'gear.xml'
-gearfile_air = 'gear_air.xml'
 # File name for raw data 
-rawfile_air = 'mc-air.slcio'
-rawfile_alu = 'mc-alu.slcio'
+rawfile_air = os.getcwd()+'/mc-air.slcio'
+rawfile_alu = os.getcwd()+'/mc-alu.slcio'
 # Number of events to simulate 
 nevents_air = 700000
 nevents_alu = 5000000
 
-# means of gaussian random variables
-#position parameters in mm
+#Parameters for simulation of misalignment
+#Position parameters in mm
 mean_pos=0.0 
-sigma_pos=.3
-#rotation parameters in degrees
+sigma_pos=.1
+#Rotation parameters in degrees
 mean_rot=0.0 
-sigma_rot=0.001
+sigma_rot=0.1
 
 def create_sim_path_air(Env):
   """
@@ -48,7 +47,7 @@ def create_sim_path_air(Env):
   """
   
   sim_air = Env.create_path('sim')
-  sim_air.set_globals(params={'GearXMLFile': gearfile_air , 'MaxRecordNumber' : nevents_air})   
+  sim_air.set_globals(params={'GearXMLFile': 'gear_air.xml' , 'MaxRecordNumber' : nevents_air})   
   sim_air.add_processor(name="InfoSetter")
   sim_air.add_processor(name="ParticleGun")
   sim_air.add_processor(name="FastSim")
@@ -167,30 +166,28 @@ def create_reco_path(Env):
     
   return [ reco ]
 
-def simulate(params): 
+def simulate(): 
   """
   Simulates a rawfile from a simulated test beam experiment
   Creates a folder tmp-runs/name-sim/ and populates it with 
   Marlin steering and logfiles.  
   """ 
   
-  rawfile, steerfiles, gearfile, gearfile_air, mean_pos, sigma_pos, mean_rot, sigma_rot = params
-  
   # Create tmpdir to hold all steerfiles and log files 
-  SimObj = Simulation(steerfiles=steerfiles, name=os.path.splitext(os.path.basename(rawfile))[0] + '-sim' )
+  SimObj = Simulation(steerfiles=steerfiles, name=os.path.splitext(os.path.basename(rawfile_alu))[0] + '-sim' )
 
   # Create steerfiles for processing
   simpath = create_sim_path_air(SimObj)
 
   # Get gearfile
-  gearfile = SimObj.get_filename(gearfile)
+  localgearfile = SimObj.get_filename('gear.xml')
 
   # Misalign gear file
-  randomize_telescope(gearfile=gearfile, mean_pos=mean_pos, sigma_pos=sigma_pos, mean_rot=mean_rot, sigma_rot=sigma_rot)
+  randomize_telescope(gearfile=localgearfile, mean_pos=mean_pos, sigma_pos=sigma_pos, mean_rot=mean_rot, sigma_rot=sigma_rot)
 
   # Copy gearfile
-  gearfile_air=SimObj.tmpdir+'/'+gearfile_air
-  shutil.copy2(gearfile,gearfile_air)
+  gearfile_air=SimObj.tmpdir+'/'+'gear_air.xml'
+  shutil.copy2(localgearfile,gearfile_air)
 
   # Change DUT in copied gearfile
   set_parameter(gearfile=gearfile_air, sensorID=11, parametername='thickness', value=0.0001)
@@ -200,7 +197,7 @@ def simulate(params):
   SimObj.simulate(path=simpath)  
 
 
-def calibrate(params):
+def calibrate():
   """
   Calibrates an misaligned tracking telescope from run data. 
   Creates a folder localDB/caltag in workspace containing 
@@ -209,40 +206,35 @@ def calibrate(params):
   Marlin steering and logfiles.  
   """ 
   
-  rawfile, steerfiles, gearfile = params
-  
   # Tag for calibration data
-  caltag = os.path.splitext(os.path.basename(rawfile))[0] + '-test'
+  localcaltag = os.path.splitext(os.path.basename(rawfile_air))[0] + '-test'
   
   # Calibrate of the run using beam data. Creates a folder cal-files/caltag 
   # containing all calibration data. 
   CalObj = Calibration(steerfiles=steerfiles, name=caltag + '-cal') 
 
   # Get gearfile and set air as DUT material
-  gearfile = CalObj.get_filename(gearfile)
-  set_parameter(gearfile=gearfile, sensorID=11, parametername='thickness', value=0.0001)
-  set_parameter(gearfile=gearfile, sensorID=11, parametername='radLength', value=304.0)
+  localgearfile = CalObj.get_filename('gear.xml')
+  set_parameter(gearfile=localgearfile, sensorID=11, parametername='thickness', value=0.0001)
+  set_parameter(gearfile=localgearfile, sensorID=11, parametername='radLength', value=304.0)
   
   # Create list of calibration steps 
   calpath = create_calibration_path(CalObj)
   
   # Run the calibration steps 
-  CalObj.calibrate(path=calpath,ifile=rawfile,caltag=caltag)  
+  CalObj.calibrate(path=calpath,ifile=rawfile_air,caltag=localcaltag)  
 
-def reconstruct(params):
+def reconstruct():
 
-  
-  rawfile, steerfiles, gearfile, caltag = params
-  
   # Reconsruct the rawfile using the caltag. Resulting root files are 
   # written to folder root-files/
-  RecObj = Reconstruction(steerfiles=steerfiles, name=caltag + '-reco' )
+  RecObj = Reconstruction(steerfiles=steerfiles, name=air_caltag + '-reco' )
 
   # Create reconstuction path
   recopath = create_reco_path(RecObj)  
 
   # Run the reconstuction  
-  RecObj.reconstruct(path=recopath,ifile=rawfile,caltag=caltag) 
+  RecObj.reconstruct(path=recopath,ifile=rawfile_alu,caltag=air_caltag) 
   
 
 
@@ -254,7 +246,6 @@ def x0imaging(filename,caltag,deletetag):
   print(flags)
   subprocess.call(flags, shell=True)
 
-  return None
 
 # Function which starts the x0 calibration script
 def x0calibration(filename,imagefilename,caltag):
@@ -264,8 +255,6 @@ def x0calibration(filename,imagefilename,caltag):
   print(flags)
   subprocess.call(flags, shell=True)
 
-  return None
-
   
 if __name__ == '__main__':
 
@@ -273,26 +262,14 @@ if __name__ == '__main__':
   # Get current directory
   cwdir = os.getcwd()
 
-  # Get absolute path to input files
-  rawfile_air=cwdir+'/'+rawfile_air
-  rawfile_alu=cwdir+'/'+rawfile_alu
-
-#  print(rawfile_air)
-#  print(rawfile_alu)
-
-  params_air_cali = ( rawfile_air, steerfiles, gearfile)
-  params_alu_reco = ( rawfile_alu, steerfiles, gearfile, air_caltag)
-  params_air_reco = ( rawfile_air, steerfiles, gearfile, air_caltag)
-  params_simu = ( rawfile_alu, steerfiles, gearfile, gearfile_air, mean_pos, sigma_pos, mean_rot, sigma_rot )
-
   # Create a simulated rawfile with air data 
-  simulate( params_simu )
+  simulate( )
 
   # Calibrate the telescope 
-  calibrate( params_air_cali )
+  calibrate( )
 
   # Reconstruct the alu rawfile 
-  reconstruct( params_alu_reco )
+  reconstruct( )
 
   imagefilename='root-files/X0-mc-air-test-reco-Uncalibrated-X0image.root'
   imagecfgfilename='steering-files/x0-tb/image.cfg'
