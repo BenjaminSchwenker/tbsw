@@ -188,22 +188,26 @@ namespace eudaqinput {
         m_event.push_back(m_subevent);
       }
       
-      LCCollectionVec* depfet_info = new LCCollectionVec( LCIO::LCGENERICOBJECT )  ;
-      
-      //-----------------------------------------------
-      // Decode DEPFET event info to LCIO format      
-      for (size_t iframe=0;iframe<m_event.size();iframe++) {
+      // Create DEPFET_EVENT_INFO if it does not exist
+      try {
+        LCCollectionVec* eventinfo = dynamic_cast < LCCollectionVec * > (evt->getCollection( "DEPFET_EVENT_INFO" )) ;
+      } catch (lcio::DataNotAvailableException& e) {
+        LCCollectionVec* depfet_info = new LCCollectionVec( LCIO::LCGENERICOBJECT )  ;
         
-        // Get read fully decoded data  
-        const depfet::DEPFETADCValues& data = m_event[iframe];
+        // Decode DEPFET event info to LCIO format      
+        for (size_t iframe=0;iframe<m_event.size();iframe++) {
         
-        LCGenericObjectImpl* metaobj = new LCGenericObjectImpl(2,0,0);
-        metaobj->setIntVal(0,data.getGoodEvent());
-        metaobj->setIntVal(1,data.getStartGate());
+          // Get read fully decoded data  
+          const depfet::DEPFETADCValues& data = m_event[iframe];
+           
+          LCGenericObjectImpl* metaobj = new LCGenericObjectImpl(2,0,0);
+          metaobj->setIntVal(0,data.getGoodEvent());
+          metaobj->setIntVal(1,data.getStartGate());
         
-        depfet_info->addElement( metaobj) ;   
-      }
-      evt->addCollection( depfet_info , "DEPFET_EVENT_INFO" ) ;
+          depfet_info->addElement( metaobj) ;   
+        }
+        evt->addCollection( depfet_info , "DEPFET_EVENT_INFO" ) ;
+      }   
       
       // Prepare collection for unpacked digits 
       LCCollectionVec * result = new LCCollectionVec(LCIO::TRACKERDATA);
