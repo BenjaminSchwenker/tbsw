@@ -144,59 +144,7 @@
      <!--This is the name of the ROOT file with the cluster constants (add .root)-->
      <parameter name="ClusterDBFileName" type="string" value="localDB/clusterDB-DEP.root"/>
    </processor>
-
-   <processor name="DEPClusterizer_2" type="PixelClusterizer">
-     <!--PixelClusterizer: Looking for clusters in zs pixel data-->
-     <!--This is the name of the ROOT file with the status mask (add .root)-->
-     <parameter name="NoiseDBFileName" type="string" value="localDB/NoiseDB-DEP_2.root"/>
-     <!--Name of input sparsified pixel data collection-->
-     <parameter name="SparseDataCollectionName" type="string" lcioInType="TrackerData" value="zsdata_dep2"/>
-     <!--Name of the output cluster collection-->
-     <parameter name="ClusterCollectionName" type="string" lcioOutType="TrackerPulse" value="zscluster_dep2"/>
-     <!--0: common side; 1: common corner; 3: max. one missing pixel-->
-     <parameter name="AcceptDiagonalCluster" type="int" value="1"/>
-     <!--Threshold for cluster signal-->
-     <parameter name="SparseClusterCut" type="float" value="5"/>
-     <!--Threshold for seed pixel signal-->
-     <parameter name="SparseSeedCut" type="float" value="5"/>
-     <!--Threshold for zero suppression-->
-     <parameter name="SparseZSCut" type="float" value="5"/>
-   </processor>
-
-   <processor name="DEPCogHitMaker_2" type="CogHitMaker">
-     <!--CogHitMaker:  Compute  hits from pixel clusters -->
-     <!--Name of cluster collection-->
-     <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse" value="zscluster_dep2"/>
-     <!--Name of hit collection-->
-     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit" value="hit_dep2"/>
-     <!--SigmaU for cluster with one uCell contributing [mm]-->
-     <parameter name="SigmaU1" type="double" value="0.0134"/>
-     <!--SigmaU for cluster with two uCells contributing [mm]-->
-     <parameter name="SigmaU2" type="double" value="0.0077"/>
-     <!--SigmaU for cluster with three or more uCells contributing [mm]-->
-     <parameter name="SigmaU3" type="double" value="0.010"/>
-     <!--SigmaV for cluster with one vCell contributing [mm]-->
-     <parameter name="SigmaV1" type="double" value="0.027"/>
-     <!--SigmaV for cluster with two vCells contributing [mm]-->
-     <parameter name="SigmaV2" type="double" value="0.010"/>
-     <!--SigmaV for cluster with three or more vCells contributing [mm]-->
-     <parameter name="SigmaV3" type="double" value="0.010"/>
-     <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
-     <parameter name="MaxSizeU" type="int" value="6"/>
-     <!--Clusters having more v cells marked as bad [and can be filterd in track finder]-->
-     <parameter name="MaxSizeV" type="int" value="6"/>
-   </processor>
-
-   <processor name="DEPGoeHitMaker_2" type="GoeHitMaker">
-     <!--GoeHitMaker:  Compute hits from pixel clusters using a clusterDB-->
-     <!--Name of cluster collection-->
-     <parameter name="ClusterCollection" type="string" lcioInType="TrackerPulse" value="zscluster_dep2"/>
-     <!--Name of hit collection-->
-     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit" value="hit_dep2"/>
-     <!--This is the name of the ROOT file with the cluster constants (add .root)-->
-     <parameter name="ClusterDBFileName" type="string" value="localDB/clusterDB-DEP2.root"/>
-   </processor>
-  
+   
    <processor name="RecoTF" type="FastTracker">
      <!--FastTracker: Performs track finding and fitting for beam tests-->
      <!--Input hit collection names-->
@@ -268,26 +216,10 @@
      <!--Maximum v residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.-->
      <parameter name="MaxResidualV" type="double" value="0.2"/>
      <!--Output root file name-->
-     <parameter name="RootFileName" type="string" value="H5-Histos.root"/>
+     <parameter name="RootFileName" type="string" value="Histos-H5.root"/>
    </processor>
    
-   <processor name="DEPFETAnalyzer_2" type="PixelDUTAnalyzer">
-     <!--PixelDUTAnalyzer: DUT Analysis Processor-->
-     <!--Name of DUT hit collection-->
-     <parameter name="HitCollection" type="string" lcioInType="TrackerHit" value="hit_dep2"/>
-     <!--Name of telescope track collection-->
-     <parameter name="TrackCollection" type="string" lcioInType="Track" value="tracks"/>
-     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-     <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
-     <!--Plane number of DUT along the beam line-->
-     <parameter name="DUTPlane" type="int" value="3"/>
-     <!--Maximum u residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.-->
-     <parameter name="MaxResidualU" type="double" value="0.2"/>
-     <!--Maximum v residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.-->
-     <parameter name="MaxResidualV" type="double" value="0.2"/>
-     <!--Output root file name-->
-     <parameter name="RootFileName" type="string" value="H6-S2-Histos.root"/>
-   </processor>
+   
    
    <processor name="AlignTF_LC" type="FastTracker">
      <!--FastTracker: Performs track finding and fitting for beam tests-->
@@ -433,17 +365,7 @@
      <parameter name="OfflineZSThreshold" type="float" value="5"/>
    </processor>
    
-   <processor name="DEPHotPixelKiller_2" type="HotPixelKiller">
-     <!--HotPixelKiller: Masking of hot pixels-->
-     <!--Name of zero suppressed data collection-->
-     <parameter name="InputCollectionName" type="string" lcioInType="TrackerData" value="zsdata_dep2"/>
-     <!--Maximum hit rate (hits/events) for normal pixels-->
-     <parameter name="MaxOccupancy" type="float" value="0.01"/>
-     <!--This is the name of the noiseDB file-->
-     <parameter name="NoiseDBFileName" type="string" value="localDB/NoiseDB-DEP_2.root"/>
-     <!--Zero suppression threshold for digits [ADU]-->
-     <parameter name="OfflineZSThreshold" type="float" value="5"/>
-   </processor> 
+   
    
    <processor name="RawDQM" type="RawHitDQM">
      <!--RawHitDQM: Producing DQM histos from hits-->
@@ -519,5 +441,228 @@
     <parameter name="IgnoreIDs" type="IntVec"  value="11"/>  
     <!--List of steps for software ADC. An empty list gives a constant transfer curve (0bit limit)-->
     <parameter name="SoftwareADC" type="IntVec"  value=""/> 
+  </processor>
+
+  <processor name="M26ClusterCalibrationFromMC" type="GoeClusterCalibratorForMC">
+    <!--GoeClusterCalibratorForMC: Create clusterDB for clusters using simhits-->
+    <!--Name of hit collection-->
+    <parameter name="HitCollection" type="string" lcioInType="TrackerHit" value="hit_m26"/>
+    <!--Name of collection with simulated hits-->
+    <parameter name="SimTrackerHitCollection" type="string" lcioInType="SimTrackerHit" value="SimTrackerHits"/>
+    <!--Output clusterDB file name-->
+    <parameter name="ClusterDBFileName" type="string" value="localDB/clusterDB-M26-MC.root"/>
+    <!--Ignore clusters from list of sensorIDs-->
+    <parameter name="IgnoreIDs" type="IntVec"> 11 </parameter>
+    <!--Maximum u residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
+    <parameter name="MaxResidualU" type="double" value="0.1"/>
+    <!--Maximum v residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
+    <parameter name="MaxResidualV" type="double" value="0.1"/>
+    <!--Minimum number of cluster ID occurances for clusterDB-->
+    <parameter name="MinClusters" type="int" value="500"/>
+    <!--List of steps for software ADC. An empty list gives a constant transfer curve (0bit limit)-->
+    <parameter name="SoftwareADC" type="IntVec" value=""/>
+  </processor>
+  
+  <processor name="DEPClusterCalibrationFromMC" type="GoeClusterCalibratorForMC">
+    <!--GoeClusterCalibratorForMC: Create clusterDB for clusters using simhits-->
+    <!--Name of hit collection-->
+    <parameter name="HitCollection" type="string" lcioInType="TrackerHit" value="hit_dep"/>
+    <!--Name of collection with simulated hits-->
+    <parameter name="SimTrackerHitCollection" type="string" lcioInType="SimTrackerHit" value="SimTrackerHits"/>
+    <!--Output clusterDB file name-->
+    <parameter name="ClusterDBFileName" type="string" value="localDB/clusterDB-DEP-MC.root"/>
+    <!--Ignore clusters from list of sensorIDs-->
+    <parameter name="IgnoreIDs" type="IntVec"> 0 1 2 3 4 5 </parameter>
+    <!--Maximum u residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
+    <parameter name="MaxResidualU" type="double" value="0.1"/>
+    <!--Maximum v residual for matching simHits to hits [mm]. Put -1 to deactivate cut.-->
+    <parameter name="MaxResidualV" type="double" value="0.1"/>
+    <!--Minimum number of cluster ID occurances for clusterDB-->
+    <parameter name="MinClusters" type="int" value="500"/>
+    <!--List of steps for software ADC. An empty list gives a constant transfer curve (0bit limit)-->
+    <parameter name="SoftwareADC" type="IntVec" value=""/>
+  </processor>
+
+  <processor name="InfoSetter" type="EventInfoSetter">
+    <!--Creates a lcio file with run header and empty events
+         Make sure to not specify any LCIOInputFiles in the steering in order-->
+    <!--Set name of the detector-->
+    <parameter name="DetectorName" type="string" value="EUTelescope"/>
+    <!--Set run number for lcio file-->
+    <parameter name="RunNumber" type="int" value="0"/>
+  </processor>
+  
+  <processor name="ParticleGun" type="ParticleGunGenerator">
+    <!--Particle gun processor for simulation of a directed particle beam-->
+    <!--Collection name for MCParticles-->
+    <parameter name="MCParticleCollectionName" type="string" lcioOutType="MCParticle" value="MCParticles"/>
+    <!--Number of beam particles per second-->
+    <parameter name="BeamIntensity" type="double" value="200"/>
+    <!--Beam momentum [GeV]-->
+    <parameter name="BeamMomentum" type="double" value="4.0"/>
+    <!--Beam momentum sigma [GeV]-->
+    <parameter name="BeamMomentumSigma" type="double" value="0.001"/>
+    <!--Beam slope sigma in XZ plane [rad]-->
+    <parameter name="BeamSlopeXSigma" type="double" value="0.001"/>
+    <!--Beam slope sigma in YZ plane [rad]-->
+    <parameter name="BeamSlopeYSigma" type="double" value="0.001"/>
+    <!--A simulated event contains one particle at t=0 and extends for given time window in seconds-->
+    <parameter name="BeamTimeWindow" type="double" value="0.0001"/>
+    <!--Beam vertex position in X direction [mm]-->
+    <parameter name="BeamVertexX" type="double" value="0"/>
+    <!--Beam vertex sigma in X direction [mm]-->
+    <parameter name="BeamVertexXSigma" type="double" value="7"/>
+    <!--Beam vertex position in Y direction [mm]-->
+    <parameter name="BeamVertexY" type="double" value="0"/>
+    <!--Beam vertex sigma in Y direction [mm]-->
+    <parameter name="BeamVertexYSigma" type="double" value="10"/>
+    <!--Beam vertex position in Z direction [mm]-->
+    <parameter name="BeamVertexZ" type="double" value="-10"/>
+    <!--Beam correlation factor between vertex position and momentum-->
+    <parameter name="CorrelationVertexXvsMomentum" type="double" value="0.005"/>
+    <!--Beam correlation factor between vertex position and slope-->
+    <parameter name="CorrelationVertexXvsSlopeX" type="double" value="0.1"/>
+    <!--Beam correlation factor between vertex position and momentum-->
+    <parameter name="CorrelationVertexYvsMomentum" type="double" value="0.005"/>
+    <!--Beam correlation factor between vertex position and slope-->
+    <parameter name="CorrelationVertexYvsSlopeY" type="double" value="0.1"/>
+    <!--PDG code-->
+    <parameter name="PDG" type="int" value="11"/>
+    <!--Particle charge [e]-->
+    <parameter name="ParticleCharge" type="double" value="-1"/>
+    <!--Particle mass [GeV]-->
+    <parameter name="ParticleMass" type="double" value="0.000511"/>
+  </processor>
+  
+  <processor name="FastSim" type="FastSimulation">
+    <!--Fast simulation processor for propagation of beam particels trough a test beam telescope-->
+    <!--Collection name for MCParticles-->
+    <parameter name="MCParticleCollectionName" type="string" lcioInType="MCParticle" value="MCParticles"/>
+    <!--Collection name for SimTrackerHits-->
+    <parameter name="SimTrackerHitCollectionName" type="string" lcioOutType="SimTrackerHit" value="SimTrackerHits"/>
+    <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+    <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+    <!--Choose model for multiple scattering: Highland(0)-->
+    <parameter name="ScatterModel" type="int" value="0"/>
+    <!--Flag (true/false) for simulating energy loss straggling-->
+    <parameter name="DoEnergyLossStraggling" type="bool" value="true"/>
+    <!--Flag (true/false) for simulating fractional Bethe Heitler energy loss-->
+    <parameter name="DoFractionalBetheHeitlerEnergyLoss" type="bool" value="false"/>
+  </processor>
+  
+  <processor name="M26Digitizer" type="SiPixDigitizer">
+    <!--SiPixDigitizer: A rather generic silicon pixel detector digitizer-->
+    <!--Collection name for SimTrackerHits-->
+    <parameter name="SimTrackerHitCollectionName" type="string" lcioInType="SimTrackerHit" value="SimTrackerHits"/>
+    <!--Collection name for Digits-->
+    <parameter name="DigitCollectionName" type="string" lcioOutType="TrackerData" value="zsdata_m26"/>
+    <!--Choose front-end electronics: ADC(0) or Comparator(1) or None(2) -->
+    <parameter name="FrontEndType" type="int" value="1"/>
+    <!--Set threshold for comparator (in e)-->
+    <parameter name="ComparatorThrehold" type="float" value="1100"/>
+    <!--Set how many bits the ADC uses-->
+    <parameter name="ADCBits" type="int" value="8"/>
+    <!--Set analog-to-digital converter range 0 - ? (in e)-->
+    <parameter name="ADCRange" type="int" value="50000"/>
+    <!--Back contact voltage wrt. source, in Volts-->
+    <parameter name="BackPlaneVoltage" type="double" value="-30"/>
+    <!--Split Signalpoints in smaller groups of N electrons (in e)-->
+    <parameter name="ElectronGroupSize" type="double" value="100"/>
+    <!--Time step for tracking electron groups in readout plane (in ns)-->
+    <parameter name="ElectronStepTime" type="double" value="0.3"/>
+    <!--Apply electronic effects?-->
+    <parameter name="ElectronicEffects" type="bool" value="true"/>
+    <!--Noise added by the electronics, set in ENC (one value for each detector)-->
+    <parameter name="ElectronicNoise" type="double" value="300"/>
+    <!--Apply digitization only to SimTrackerHits for sensors having DAQ IDs in this list-->
+    <parameter name="FilterIDs" type="IntVec" value="0 1 2 3 4 5"/>
+    <!--Use integration window?-->
+    <parameter name="IntegrationWindow" type="bool" value="true"/>
+    <!--Maximum distance between ionization points (in mm)-->
+    <parameter name="MaxSegmentLength" type="double" value="0.005"/>
+    <!--Set fraction of noise hits per sensor per readout frame-->
+    <parameter name="NoiseFraction" type="float" value="0.00000"/>
+    <!--Effective bulk doping concentration, in um^-3-->
+    <parameter name="SiBulkDoping" type="double" value="10"/>
+    <!--Only Simulated hits after the StartIntegration time in ns will be digitized-->
+    <parameter name="StartIntegration" type="double" value="0"/>
+    <!--Only Simulated hits before the StopIntegration time in ns will be digitized-->
+    <parameter name="StopIntegration" type="double" value="100000"/>
+    <!--Tangent of Lorentz angle-->
+    <parameter name="TanLorentz" type="double" value="0"/>
+    <!--Top contact voltage wrt. source, in Volts-->
+    <parameter name="TopPlaneVoltage" type="double" value="-5"/>
+    <!--Keep only hits >= threshold in ADC units-->
+    <parameter name="ZSThreshold" type="float" value="0"/>
+    <!--Border length along u side, in um-->
+    <parameter name="uSideBorderLength" type="double" value="3"/>
+    <!--Border length along v side, in um-->
+    <parameter name="vSideBorderLength" type="double" value="3"/>
+  </processor>
+
+  <processor name="DEPFETDigitizer" type="SiPixDigitizer">
+    <!--SiPixDigitizer: A rather generic silicon pixel detector digitizer-->
+    <!--Collection name for SimTrackerHits-->
+    <parameter name="SimTrackerHitCollectionName" type="string" lcioInType="SimTrackerHit" value="SimTrackerHits"/>
+    <!--Collection name for Digits-->
+    <parameter name="DigitCollectionName" type="string" lcioOutType="TrackerData" value="zsdata_dep"/>
+    <!--Choose front-end electronics: ADC(0) or Comparator(1) or None(2) -->
+    <parameter name="FrontEndType" type="int" value="0"/>
+    <!--Set threshold for comparator (in e)-->
+    <parameter name="ComparatorThrehold" type="float" value="1100"/>
+    <!--Set how many bits the ADC uses-->
+    <parameter name="ADCBits" type="int" value="8"/>
+    <!--Set analog-to-digital converter range 0 - ? (in e)-->
+    <parameter name="ADCRange" type="int" value="300000"/>
+    <!--Back contact voltage wrt. source, in Volts-->
+    <parameter name="BackPlaneVoltage" type="double" value="-30"/>
+    <!--Split Signalpoints in smaller groups of N electrons (in e)-->
+    <parameter name="ElectronGroupSize" type="double" value="100"/>
+    <!--Time step for tracking electron groups in readout plane (in ns)-->
+    <parameter name="ElectronStepTime" type="double" value="0.3"/>
+    <!--Apply electronic effects?-->
+    <parameter name="ElectronicEffects" type="bool" value="true"/>
+    <!--Noise added by the electronics, set in ENC (one value for each detector)-->
+    <parameter name="ElectronicNoise" type="double" value="300"/>
+    <!--Apply digitization only to SimTrackerHits for sensors having DAQ IDs in this list-->
+    <parameter name="FilterIDs" type="IntVec" value="11"/>
+    <!--Use integration window?-->
+    <parameter name="IntegrationWindow" type="bool" value="true"/>
+    <!--Maximum distance between ionization points (in mm)-->
+    <parameter name="MaxSegmentLength" type="double" value="0.005"/>
+    <!--Set fraction of noise hits per sensor per readout frame-->
+    <parameter name="NoiseFraction" type="float" value="0.00000"/>
+    <!--Effective bulk doping concentration, in um^-3-->
+    <parameter name="SiBulkDoping" type="double" value="10"/>
+    <!--Only Simulated hits after the StartIntegration time in ns will be digitized-->
+    <parameter name="StartIntegration" type="double" value="0"/>
+    <!--Only Simulated hits before the StopIntegration time in ns will be digitized-->
+    <parameter name="StopIntegration" type="double" value="5000"/>
+    <!--Tangent of Lorentz angle-->
+    <parameter name="TanLorentz" type="double" value="0"/>
+    <!--Top contact voltage wrt. source, in Volts-->
+    <parameter name="TopPlaneVoltage" type="double" value="-5"/>
+    <!--Keep only hits >= threshold in ADC units-->
+    <parameter name="ZSThreshold" type="float" value="5"/>
+    <!--Border length along u side, in um-->
+    <parameter name="uSideBorderLength" type="double" value="6"/>
+    <!--Border length along v side, in um-->
+    <parameter name="vSideBorderLength" type="double" value="6"/>
+  </processor>
+  
+  <processor name="TriggerGenerator" type="TriggerGenerator">
+    <!--Simulates the trigger signal from scinti coincidence for test beam experiments-->
+    <!--Collection name for SimTrackerHits-->
+    <parameter name="SimTrackerHitCollectionName" type="string" lcioOutType="SimTrackerHit" value="SimTrackerHits"/>
+    <!--Every nth simulated event will be accepted regardless of trigger coincidence-->
+    <parameter name="FakeTriggerPeriod" type="int" value="0"/>
+    <!--Scinti parameters: DAQID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)-->
+    <parameter name="ScinitNo1" type="FloatVec" value="5 -1.8 -1.8 1.8 1.8"/>
+    <!--Scinti parameters: DAQID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)-->
+    <parameter name="ScinitNo2" type="FloatVec" value=""/>
+    <!--Scinti parameters: DAQID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)-->
+    <parameter name="ScinitNo3" type="FloatVec" value=""/>
+    <!--Scinti parameters: DAQID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)-->
+    <parameter name="ScinitNo4" type="FloatVec" value=""/>
   </processor>
 </marlin>
