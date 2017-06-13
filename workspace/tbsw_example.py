@@ -25,7 +25,7 @@ gearfile = 'gear_desynov15_geoID15.xml'
 # Select filename for the simulated test beam run  
 rawfile = os.getcwd() + '/simrun.slcio'
 # Number of events to simulate 
-nevents = 5000000
+nevents = 7000000
 
 def create_sim_path(Env):
   """
