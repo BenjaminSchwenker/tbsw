@@ -130,9 +130,8 @@ def create_reco_path(Env, rawfile, gearfile):
   reco.add_processor(name="DEPGoeHitMaker")
   reco.add_processor(name="DEPClusterizer_2")
   reco.add_processor(name="DEPGoeHitMaker_2")
-  reco.add_processor(name="RecoTF")
+  reco.add_processor(name="RecoTF", params={'OutlierChi2Cut': 20})
   reco.add_processor(name="DEPFETAnalyzer_2")
-    
   return [ reco ]
 
   
