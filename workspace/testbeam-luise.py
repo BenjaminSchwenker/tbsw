@@ -185,7 +185,7 @@ if __name__ == '__main__':
   
   # Create some efficiency and residual plots from root files after 
   # reconstruction. 
-  trackfiles =  glob.glob('root-files/Histos*.root')  
+  trackfiles =  glob.glob('root-files/Histos-ITK*.root')  
   
   for trackfile in trackfiles: 
         

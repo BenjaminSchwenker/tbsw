@@ -241,7 +241,7 @@
      <!--Maximum v residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.-->
      <parameter name="MaxResidualV" type="double" value="-1"/>
      <!--Output root file name-->
-     <parameter name="RootFileName" type="string" value="Histos-ID6.root"/>
+     <parameter name="RootFileName" type="string" value="Histos-ITK-ID6.root"/>
    </processor>
 
    <processor name="StripID7Analyzer" type="PixelDUTAnalyzer">
@@ -259,7 +259,7 @@
      <!--Maximum v residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.-->
      <parameter name="MaxResidualV" type="double" value="-1"/>
      <!--Output root file name-->
-     <parameter name="RootFileName" type="string" value="Histos-ID7.root"/>
+     <parameter name="RootFileName" type="string" value="Histos-ITK-ID7.root"/>
    </processor>
    
    
