@@ -358,6 +358,204 @@ script creates two root files with simple residual histograms ('Example-Residual
 to show what can be done using the hit and track trees.   
 
 
+# What is the output data format of tbsw?
+
+The tbsw framework uses Marlin (http://ilcsoft.desy.de/portal/software_packages/marlin/index_eng.html) to organize the calibration and reconstruction of 
+test beam data into a ```Path``` of small steps handled by so called ```Processors```. The reconstruction path from the example script can illustrate the
+situation:
+
+```
+#!python
+def create_reco_path(Env):
+  """
+  Returns a list of tbsw path objects to reconstruct a test beam run 
+  """
+  
+  reco = Env.create_path('reco')
+  # Tells Marlin to read input data from lcio file with name rawfile
+  reco.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents, 'LCIOInputFiles': rawfile }) 
+  # Adds cluster of Mimosa26 digits to the path 
+  reco.add_processor(name="M26Clusterizer")
+  # Adds hit position reconstruction for Mimosa26 clusters to the path 
+  reco.add_processor(name="M26GoeHitMaker")
+  # Like above, but for the small DEPFET senor used as device under test
+  reco.add_processor(name="DEPClusterizer")
+  reco.add_processor(name="DEPGoeHitMaker")
+  # Adds track finding and fitting to the path, track finder does not require hit on plane 3(DUT)
+  reco.add_processor(name="RecoTF", params={'ExcludeDetector'=3})
+  # Adds PixelDUTAnalyzer processor to path, this processor creats output root trees         
+  reco.add_processor(name="DEPFETAnalyzer") 
+  # Adds TrackFitDQM processor to path, creates histograms for track fit quality       
+  reco.add_processor(name="TelescopeDQM")                              
+    
+  return [ reco ] 
+```
+
+The last two processors in this reconstruction path create the output data useful for studying the performance of the device under test. The 
+default parameters for the DEPFETAnalyzer processor are taken from the file ```processors.xml``` living in the steerfiles folder: 
+
+```xml
+<processor name="DEPFETAnalyzer" type="PixelDUTAnalyzer">
+  <!--PixelDUTAnalyzer: DUT Analysis Processor-->
+  <!--Name of DUT hit collection-->
+  <parameter name="HitCollection" type="string" lcioInType="TrackerHit" value="hit_dep"/>
+  <!--Name of telescope track collection-->
+  <parameter name="TrackCollection" type="string" lcioInType="Track" value="tracks"/>
+  <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+  <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+  <!--Plane number of DUT along the beam line-->
+  <parameter name="DUTPlane" type="int" value="3"/>
+  <!--Maximum u residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.-->
+  <parameter name="MaxResidualU" type="double" value="0.2"/>
+  <!--Maximum v residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.-->
+  <parameter name="MaxResidualV" type="double" value="0.2"/>
+  <!--Output root file name-->
+  <parameter name="RootFileName" type="string" value="Histos-H5.root"/>
+</processor>
+```
+
+The root file ```Histos-H5.root``` will contain three TTree's called Hit, Track and Event. These trees will be filled with reference tracks 
+interpolated to the third plane along the beam line, i.e. the position of the DEPFET sensor in our example. The main advantage of this choice 
+is that we can always work in the local uvw coordinates of our device under test. 
+
+- Origin of local coordinate system is center of the sensitive volume
+- u,v,w positions are always in millimeters (mm)
+- u axis points in direction of increasing ucells
+- v axis points in direction of increasing vcells 
+- w axis completes a right handed cartesian coordinate system
+- The interpolated track state does not include information from the DUT hit
+
+The structure of the root trees is always the same: 
+
+```c
+int _rootEventNumber;             // Event number from lcio file
+int _rootRunNumber;               // Run number from lcio file 
+int _rootSensorID;                // SensorID from lcio file (this is typically NOT the plane number!!)
+int _rootNTelTracks;              // Number of tracks in reference telescope in same event as hit
+int _rootNDUTHits;                // Number of DUT hits in the same event as hit   
+int _rootHitQuality;              // GoodCluster == 0, BadCluster != 0
+double _rootHitU;                 // Hit coordinate u reconstructed from DUT cluster in mm, in local DUT uvw coordinates       
+double _rootHitV;                 // Hit coordinate v reconstructed from DUT cluster in mm, in local DUT uvw coordinates     
+double _rootHitClusterCharge;     // Sum over all charges in the cluster 
+double _rootHitSeedCharge;        // Highest charge in cluster
+int _rootHitSize;                 // Number of hit cells (pixels/strips) in cluster
+int _rootHitSizeU;                // Number of hit cells along u direction in cluster
+int _rootHitSizeV;                // Number of hit cells along v direction in cluster
+int _rootHitCellU;                // Hit u coordinate lies on this u cell
+int _rootHitCellV;                // Hit v coordinate lies on this v cell
+int _rootHitHasTrack;             // Hit can be matched to track (== 0)     
+double _rootHitFitMomentum;       // Estimated track momentum from fit, only filled in case HasTrack==0            
+double _rootHitFitU;              // Estimated track intersection u coordimate in mm, in local DUT uvw coordinates        
+double _rootHitFitV;              // Estimated track intersection v coordimate in mm, in local DUT uvw coordinates                  
+double _rootHitFitdUdW;           // Estimated track slope du/dw in radians, in local DUT uvw coordinates       
+double _rootHitFitdVdW;           // Estimated track slope dv/dw in radians, in local DUT uvw coordinates    
+double _rootHitFitErrorU;         // Estimated 1x sigma uncertainty for track intersection u coordinate
+double _rootHitFitErrorV;         // Estimated 1x sigma uncertainty for track intersection v coordinate
+double _rootHitPullResidualU;     // Standardized residual in u direction, should have mean = 0 and rms = 1
+double _rootHitPullResidualV;     // Standardized residual in v direction, should have mean = 0 and rms = 1        
+int _rootHitFitCellU;             // Estimated track intersection u coordinate lies on this u cell      
+int _rootHitFitCellV;             // Estimated track intersection v coordinate lies on this v cell         
+double _rootHitFitCellUCenter;    // Central coordinate of cell 'FitCellU' in mm        
+double _rootHitFitCellVCenter;    // Central coordinate of cell 'FitCellV' in mm 
+double _rootHitTrackChi2 ;        // Chi2 value from fit of reference track
+double _rootHitLocalChi2;         // Chi2 value from hit-track residual on device under test 
+int _rootHitTrackNDF;             // Number of degrees of freedom of track fit
+int _rootHitTrackNHits;           // Number of telescope hits used for track fitting 
+int _rootTrackHasHit;             // Track can be matched to a DUT hit (== 0) 
+double _rootTrackFitMomentum;     // Estimated track momentum from fit    
+int _rootTrackNDF;                // Number of degrees of freedom of track fit
+double _rootTrackChi2;            // Chi2 value from fit of reference track
+double _rootTrackLocalChi2;       // Chi2 value from hit-track residual on device under test 
+double _rootTrackFitU ;           // Estimated track intersection u coordimate in mm, in local DUT uvw coordinates 
+double _rootTrackFitV ;           // Estimated track intersection v coordimate in mm, in local DUT uvw coordinates 
+double _rootTrackFitdUdW;         // Estimated track slope du/dw in radians, in local DUT uvw coordinates     
+double _rootTrackFitdVdW;         // Estimated track slope dv/dw in radians, in local DUT uvw coordinates     
+int _rootTrackFitCellU;           // Estimated track intersection u coordinate lies on this u cell  
+int _rootTrackFitCellV;           // Estimated track intersection v coordinate lies on this v cell   
+int _rootTrackNHits;              // Number of telescope hits used for track fitting 
+double _rootTrackFitCellUCenter;  // Central coordinate of cell 'FitCellU' in mm 
+double _rootTrackFitCellVCenter;  // Central coordinate of cell 'FitCellV' in mm 
+double _rootTrackSeedCharge;      // Highest charge in cluster, only filled if cluster matched
+
+// Hit Tree, filled once per DUT hit
+_rootHitTree = new TTree("Hit","Hit info");
+_rootHitTree->Branch("iRun"            ,&_rootRunNumber           ,"iRun/I");
+_rootHitTree->Branch("iEvt"            ,&_rootEventNumber         ,"iEvt/I");
+_rootHitTree->Branch("sensorID"        ,&_rootSensorID            ,"sensorID/I");
+_rootHitTree->Branch("DEPFETGoodEvent" ,&_rootDEPFETGoodEvent     ,"DEPFETGoodEvent/I");
+_rootHitTree->Branch("DEPFETStartgate" ,&_rootDEPFETStartGate     ,"DEPFETStartgate/I");       
+_rootHitTree->Branch("nTelTracks"      ,&_rootNTelTracks          ,"nTelTracks/I"); 
+_rootHitTree->Branch("nDutHits"        ,&_rootNDUTHits            ,"nDutHits/I");
+_rootHitTree->Branch("clusterQuality"  ,&_rootHitQuality          ,"clusterQuality/I");
+_rootHitTree->Branch("u_hit"           ,&_rootHitU                ,"u_hit/D");
+_rootHitTree->Branch("v_hit"           ,&_rootHitV                ,"v_hit/D");     
+_rootHitTree->Branch("clusterCharge"   ,&_rootHitClusterCharge    ,"clusterCharge/D");
+_rootHitTree->Branch("seedCharge"      ,&_rootHitSeedCharge       ,"seedCharge/D");
+_rootHitTree->Branch("sizeU"           ,&_rootHitSizeU            ,"sizeU/I");
+_rootHitTree->Branch("sizeV"           ,&_rootHitSizeV            ,"sizeV/I");
+_rootHitTree->Branch("size"            ,&_rootHitSize             ,"size/I");
+_rootHitTree->Branch("hasTrack"        ,&_rootHitHasTrack         ,"hasTrack/I");   
+_rootHitTree->Branch("u_fit"           ,&_rootHitFitU             ,"u_fit/D");
+_rootHitTree->Branch("v_fit"           ,&_rootHitFitV             ,"v_fit/D"); 
+_rootHitTree->Branch("dudw_fit"        ,&_rootHitFitdUdW          ,"dudw_fit/D");
+_rootHitTree->Branch("dvdw_fit"        ,&_rootHitFitdVdW          ,"dvdw_fit/D");    
+_rootHitTree->Branch("u_fiterr"        ,&_rootHitFitErrorU        ,"u_fiterr/D");
+_rootHitTree->Branch("v_fiterr"        ,&_rootHitFitErrorV        ,"v_fiterr/D");   
+_rootHitTree->Branch("pull_resu"       ,&_rootHitPullResidualU    ,"pull_resu/D");
+_rootHitTree->Branch("pull_resv"       ,&_rootHitPullResidualV    ,"pull_resv/D");  
+_rootHitTree->Branch("cellU_fit"       ,&_rootHitFitCellU         ,"cellU_fit/I");
+_rootHitTree->Branch("cellV_fit"       ,&_rootHitFitCellV         ,"cellV_fit/I");
+_rootHitTree->Branch("cellU_hit"       ,&_rootHitCellU            ,"cellU_hit/I");
+_rootHitTree->Branch("cellV_hit"       ,&_rootHitCellV            ,"cellV_hit/I");
+_rootHitTree->Branch("cellUCenter_fit" ,&_rootHitFitCellUCenter   ,"cellUCenter_fit/D");
+_rootHitTree->Branch("cellVCenter_fit" ,&_rootHitFitCellVCenter   ,"cellVCenter_fit/D");                                      
+_rootHitTree->Branch("trackChi2"       ,&_rootHitTrackChi2        ,"trackChi2/D");
+_rootHitTree->Branch("trackNdof"       ,&_rootHitTrackNDF         ,"trackNdof/I");
+_rootHitTree->Branch("trackNHits"      ,&_rootHitTrackNHits       ,"trackNHits/I");  
+_rootHitTree->Branch("momentum"        ,&_rootHitFitMomentum      ,"momentum/D");    
+_rootHitTree->Branch("localChi2"       ,&_rootHitLocalChi2        ,"localChi2/D"); 
+   
+// Track tree, filled once per reference track 
+_rootTrackTree = new TTree("Track","Track info");
+_rootTrackTree->Branch("iRun"            ,&_rootRunNumber           ,"iRun/I");
+_rootTrackTree->Branch("iEvt"            ,&_rootEventNumber         ,"iEvt/I");
+_rootTrackTree->Branch("sensorID"        ,&_rootSensorID            ,"sensorID/I");
+_rootTrackTree->Branch("DEPFETGoodEvent" ,&_rootDEPFETGoodEvent     ,"DEPFETGoodEvent/I");
+_rootTrackTree->Branch("DEPFETStartgate" ,&_rootDEPFETStartGate     ,"DEPFETStartgate/I");    
+_rootTrackTree->Branch("nTelTracks"      ,&_rootNTelTracks          ,"nTelTracks/I"); 
+_rootTrackTree->Branch("nDutHits"        ,&_rootNDUTHits            ,"nDutHits/I");
+_rootTrackTree->Branch("hasHit"          ,&_rootTrackHasHit         ,"hasHit/I");
+_rootTrackTree->Branch("momentum"        ,&_rootTrackFitMomentum    ,"momentum/D");                                                           
+_rootTrackTree->Branch("u_fit"           ,&_rootTrackFitU           ,"u_fit/D");
+_rootTrackTree->Branch("v_fit"           ,&_rootTrackFitV           ,"v_fit/D");
+_rootTrackTree->Branch("dudw_fit"        ,&_rootTrackFitdUdW        ,"dudw_fit/D");
+_rootTrackTree->Branch("dvdw_fit"        ,&_rootTrackFitdVdW        ,"dvdw_fit/D");
+_rootTrackTree->Branch("cellU_fit"       ,&_rootTrackFitCellU       ,"cellU_fit/I");
+_rootTrackTree->Branch("cellV_fit"       ,&_rootTrackFitCellV       ,"cellV_fit/I");
+_rootTrackTree->Branch("cellUCenter_fit" ,&_rootTrackFitCellUCenter ,"cellUCenter_fit/D");
+_rootTrackTree->Branch("cellVCenter_fit" ,&_rootTrackFitCellVCenter ,"cellVCenter_fit/D");
+_rootTrackTree->Branch("trackChi2"       ,&_rootTrackChi2           ,"trackChi2/D");
+_rootTrackTree->Branch("trackNdof"       ,&_rootTrackNDF            ,"trackNdof/I");
+_rootTrackTree->Branch("trackNHits"      ,&_rootTrackNHits          ,"trackNHits/I");  
+_rootTrackTree->Branch("seedCharge"      ,&_rootTrackSeedCharge     ,"seedCharge/D");  
+_rootTrackTree->Branch("localChi2"       ,&_rootTrackLocalChi2      ,"localChi2/D"); 
+      
+// Event tree, filled once per event 
+_rootEventTree = new TTree("Event","Event info");
+_rootEventTree->Branch("iRun"            ,&_rootRunNumber       ,"iRun/I");
+_rootEventTree->Branch("iEvt"            ,&_rootEventNumber     ,"iEvt/I");
+_rootEventTree->Branch("sensorID"        ,&_rootSensorID        ,"sensorID/I");   
+_rootEventTree->Branch("DEPFETGoodEvent" ,&_rootDEPFETGoodEvent ,"DEPFETGoodEvent/I");
+_rootEventTree->Branch("DEPFETStartgate" ,&_rootDEPFETStartGate ,"DEPFETStartgate/I");     
+_rootEventTree->Branch("nTelTracks"      ,&_rootNTelTracks      ,"nTelTracks/I"); 
+_rootEventTree->Branch("nDutHits"        ,&_rootNDUTHits        ,"nDutHits/I");
+
+```
+
+The plotting of root trees is well known in the HEP community. The script tbsw_example.py contains some instructive examples
+based on PyRoot showing how to get residuals and efficiencies plots from the root trees. 
+ 
+
 Have fun with test beams ;)  
 
 benjamin.schwenker@phys.uni-goettingen.de
