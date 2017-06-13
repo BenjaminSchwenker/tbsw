@@ -63,7 +63,7 @@ if __name__ == '__main__':
   os.chdir(workdir)
   
   # Find directory with scripts
-  scriptsfolder = fullpath+'/tbsw_tools/x0imaging'
+  scriptsfolder = fullpath+'/tbsw/x0imaging'
 
   # Create X0 root file link in the current work dir
   os.symlink(fullpath+'/'+rootfile,'X0File')

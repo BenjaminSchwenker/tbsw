@@ -67,7 +67,7 @@ if __name__ == '__main__':
   os.mkdir(workdir) 
   os.chdir(workdir)
 
-  scriptsfolder = fullpath+'/tbsw_tools/x0imaging'
+  scriptsfolder = fullpath+'/tbsw/x0imaging'
 
   # copy cfg text file to current work directory
   shutil.copy(fullpath+'/'+cfgfile,'image.cfg')
