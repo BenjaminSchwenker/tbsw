@@ -189,8 +189,8 @@ testbeam_x0.py. The most important changes are the following:
      or move your object. Do it during the data taking, not weeks after you are home ;)
 
 
-The technique and algorithm behind radiation length imaging was shown VCI 2016. The link to the proceedings paper is https://doi.org/10.1016/j.nima.2016.06.086. Please you this 
-reference for citing the method. 
+The technique and algorithm behind radiation length imaging was shown VCI 2016. The link to the proceedings paper is http://www.sciencedirect.com/science/article/pii/S0168900216306519.
+Please you this reference for citing the method. 
 
 Ulf Stolzenberg
 Benjamin Schwenker
