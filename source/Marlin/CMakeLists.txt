@@ -1,8 +1,3 @@
-#################################
-# cmake file for building Marlin
-# @author Jan Engels, DESY
-#################################
-
 ########################################################
 # CMake compatibility issues: don't modify this, please!
 #CMAKE_MINIMUM_REQUIRED( VERSION 2.4.6 )
@@ -15,12 +10,6 @@ SET( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 # project name
 PROJECT( Marlin )
 
-# allow duplicate custom targets
-#SET_PROPERTY(GLOBAL PROPERTY ALLOW_DUPLICATE_CUSTOM_TARGETS TRUE)
-#IF(COMMAND CMAKE_POLICY)
-#    CMAKE_POLICY(SET CMP0002 OLD)
-#ENDIF()
-
 # project version
 SET( Marlin_MAJOR_VERSION 0 )
 SET( Marlin_MINOR_VERSION 11 )
@@ -30,8 +19,6 @@ SET( Marlin_PATCH_LEVEL 0 )
 OPTION( BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON )
 OPTION( BUILD_32BIT_COMPATIBLE "Set to ON to build in 32 bit compatibility mode" OFF )
 OPTION( MARLIN_NO_DLL "Set to ON to build Marlin without DLL support" OFF )
-OPTION( MARLIN_GUI "Set to ON to build Marlin GUI" OFF )
-OPTION( INSTALL_DOC "Set to OFF to skip build/install Documentation" OFF )
 
 # project dependencies
 SET( Marlin_DEPENDS "LCIO GEAR" )
@@ -156,9 +143,7 @@ IF( CMAKE_SIZEOF_VOID_P EQUAL 8 )
     MESSAGE( STATUS "BUILD_32BIT_COMPATIBLE = ${BUILD_32BIT_COMPATIBLE}" )
 ENDIF()
 MESSAGE( STATUS "MARLIN_NO_DLL = ${MARLIN_NO_DLL}" )
-MESSAGE( STATUS "MARLIN_GUI = ${MARLIN_GUI}" )
 MESSAGE( STATUS "BUILD_WITH = \"${BUILD_WITH}\"" )
-MESSAGE( STATUS "INSTALL_DOC = ${INSTALL_DOC}" )
 MESSAGE( STATUS "Change a value with: cmake -D<Variable>=<Value>" )
 MESSAGE( STATUS "-------------------------------------------------------------------------------" )
 MESSAGE( STATUS )
@@ -175,10 +160,6 @@ SET( CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" CACHE PATH
     "Path to custom CMake Modules" FORCE )
 SET( MARLIN_NO_DLL "${MARLIN_NO_DLL}" CACHE BOOL
     "Set to ON to build Marlin without DLL support" FORCE )
-SET( MARLIN_GUI "${MARLIN_GUI}" CACHE BOOL
-    "Set to ON to build Marlin GUI" FORCE )
-SET( INSTALL_DOC "${INSTALL_DOC}" CACHE BOOL
-    "Set to OFF to skip build/install Documentation" FORCE )
 
 # export build settings
 INCLUDE( CMakeExportBuildSettings )
