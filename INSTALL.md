@@ -96,12 +96,6 @@ $ root
 
 You should use your default system version of Python. This was also used for installing Root and is needed for working with PyRoot.
 
-# QT4 
-
-```
-$ sudo apt install libqt4-dev    
-```
-
 # TBSW   
  
 You can get the TBSW source code from a puplic git repository at bitbucket.
