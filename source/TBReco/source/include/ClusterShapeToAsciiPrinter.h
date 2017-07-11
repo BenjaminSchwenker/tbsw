@@ -81,7 +81,7 @@ namespace depfet {
     TBDetector  _detector;    
 
     // Handle to ascii file
-    ofstream _outfile;
+    std::ofstream _outfile;
      
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number
