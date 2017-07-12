@@ -149,9 +149,7 @@ namespace marlin{
 	       <<  "  <parameter name=\"MaxRecordNumber\" value=\"5001\" />  " << std::endl
 	       <<  "  <parameter name=\"SkipNEvents\" value=\"0\" />  " << std::endl
 	       <<  "  <parameter name=\"SupressCheck\" value=\"false\" />  " << std::endl
-#ifdef USE_GEAR
 	       <<  "  <parameter name=\"GearXMLFile\"> gear_ldc.xml </parameter>  " << std::endl
-#endif
 	       <<  "  <parameter name=\"Verbosity\" options=\"DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT\"> DEBUG  </parameter> " << std::endl
 	       <<  " </global>" << std::endl
 	       << std::endl ;
@@ -258,8 +256,6 @@ namespace marlin{
 
   void ProcessorMgr::processRunHeader( LCRunHeader* run){ 
 
-
-#ifdef USE_GEAR
     // check if gear file is consistent with detector model in lcio run header 
     std::string lcioDetName = run->getDetectorName() ;
 
@@ -303,9 +299,6 @@ namespace marlin{
       throw ProcMgrStopProcessing( sstr.str() ) ;
     }
       
-
-
-#endif
     
 //     for_each( _list.begin() , _list.end() ,  std::bind2nd(  std::mem_fun( &Processor::processRunHeader ) , run ) ) ;
     for( ProcessorList::iterator it = _list.begin() ; it != _list.end() ; ++it ) {

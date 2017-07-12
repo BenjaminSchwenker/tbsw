@@ -32,11 +32,10 @@
 #include <cstring>
 #include <algorithm>
 
-#ifdef USE_GEAR
 #include "gearimpl/Util.h"
 #include "gearxml/GearXML.h"
 #include "gearimpl/GearMgrImpl.h"
-#endif
+
 
 #include "marlin/ProcessorLoader.h"
 
@@ -263,8 +262,6 @@ int main(int argc, char** argv ){
 
   createProcessors( *parser ) ;
 
-#ifdef USE_GEAR
-
   std::string gearFile = Global::parameters->getStringVal("GearXMLFile" ) ;
   
   if( gearFile.size() > 0 ) {
@@ -282,7 +279,6 @@ int main(int argc, char** argv ){
     Global::GEAR = new gear::GearMgrImpl ;
   }
 
-#endif
 
   StringVec lcioInputFiles ; 
 
@@ -383,13 +379,9 @@ int main(int argc, char** argv ){
     } // end rewind
 
   }
-  
-#ifdef USE_GEAR  
 
   if(  Global::GEAR != 0 ) 
     delete Global::GEAR ; 
-
-#endif  
  
   return 0 ;
 }
