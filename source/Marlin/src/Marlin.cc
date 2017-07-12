@@ -4,10 +4,10 @@
 
 #ifdef LCIO_MAJOR_VERSION 
 #if LCIO_VERSION_GE( 1,2)  
-#include "LCIOSTLTypes.h"
+//#include "LCIOSTLTypes.h"
 #endif
 #else
-#include "MarlinLCIOSTLTypes.h"
+//#include "MarlinLCIOSTLTypes.h"
 #endif
 
 #include "marlin/ProcessorMgr.h"
