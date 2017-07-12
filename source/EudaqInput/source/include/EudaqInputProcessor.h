@@ -5,7 +5,7 @@
 
 // marlin includes ".h"
 #include <marlin/DataSourceProcessor.h>
-#include <marlin/Global.h>
+//#include <marlin/Global.h>
 #include <marlin/Exceptions.h>
 
 // lcio includes <.h>

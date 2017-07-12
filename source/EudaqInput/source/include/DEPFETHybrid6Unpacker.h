@@ -19,7 +19,7 @@
 #include <IMPL/LCGenericObjectImpl.h>
 
 // Include Marlin classes
-#include <marlin/Global.h>
+//#include <marlin/Global.h>
 #include <marlin/Processor.h>
 #include "marlin/Exceptions.h"
 
