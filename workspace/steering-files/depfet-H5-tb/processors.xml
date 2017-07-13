@@ -665,4 +665,16 @@
     <!--Scinti parameters: DAQID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)-->
     <parameter name="ScinitNo4" type="FloatVec" value=""/>
   </processor>
+
+  <processor name="DEPClusterShapePrinter" type="ClusterShapeToAsciiPrinter">
+    <!--ClusterShapeToAsciiPrinter: Print cluster shapes to ascii file-->
+    <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
+    <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+    <!--Ignore clusters from list of sensorIDs-->
+    <parameter name="IgnoreIDs" type="IntVec" value="0 1 2 3 4 5"/>
+    <!--Track input collection-->
+    <parameter name="InputTrackCollectionName" type="string" lcioInType="Track" value="tracks"/>
+    <!--File name containing cluster shapes-->
+    <parameter name="OuputFileName" type="string" value="DEPFETClusterShapes.txt"/>
+  </processor>
 </marlin>
