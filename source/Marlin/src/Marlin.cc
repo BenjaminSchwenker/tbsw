@@ -110,7 +110,7 @@ int main(int argc, char** argv ){
       listAvailableProcessorsXML() ;
       return(0) ;
     }
-    else ( std::string(argv[1]) == "-h"  || std::string(argv[1]) == "-?" ){
+    else if ( std::string(argv[1]) == "-h"  || std::string(argv[1]) == "-?" ){
       return printUsage() ;
     }
     
