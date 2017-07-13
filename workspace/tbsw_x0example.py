@@ -80,6 +80,7 @@ def create_calibration_path(Env):
   cluster_calibrator_mc = Env.create_path('cluster_calibrator_mc')
   cluster_calibrator_mc.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': rawfile_air })  
   cluster_calibrator_mc.add_processor(name="M26Clusterizer")
+  cluster_calibrator_mc.add_processor(name="M26CogHitMaker")
   cluster_calibrator_mc.add_processor(name="M26ClusterCalibrationFromMC")
   
   correlator = Env.create_path('correlator')
