@@ -330,20 +330,7 @@ ENDIF( BUILD_ROOTDICT )
 # create symbolic target for calling targets test_XXX
 ADD_CUSTOM_TARGET( tests )
 
-# ==== a macro for adding binaries from the TESTS directory =====
-MACRO( ADD_LCIO_CTEST file )
-  IF( BUILD_LCIO_TESTS )
-    ADD_EXECUTABLE( ${file} ./src/TESTS/${file}.cc )
-  ELSE()
-    ADD_EXECUTABLE( ${file} EXCLUDE_FROM_ALL ./src/TESTS/${file}.cc )
-  ENDIF()
-  ADD_DEPENDENCIES( tests ${file} )
-  TARGET_LINK_LIBRARIES( ${file} lib_LCIO )
-  ADD_TEST( t_${file} "${EXECUTABLE_OUTPUT_PATH}/${file}" )
-  SET_TESTS_PROPERTIES( t_${file} PROPERTIES
-      PASS_REGULAR_EXPRESSION "TEST_PASSED" )
-ENDMACRO()
-#===================================================================
+
 
 
 #------------- install the library and the (public) header files -------
@@ -366,52 +353,3 @@ INSTALL(DIRECTORY ${LCIO_SOURCE_DIR}/src/cpp/include/ DESTINATION include
   PATTERN "*CVS*" EXCLUDE)
 
 
-#------------- ctest stuff (call with ctest or 'make test') ------------
-
-ADD_TEST( t_simjob "${EXECUTABLE_OUTPUT_PATH}/simjob" )
-ADD_TEST( t_anajob_sim "${EXECUTABLE_OUTPUT_PATH}/anajob" simjob.slcio )
-ADD_TEST( t_recjob "${EXECUTABLE_OUTPUT_PATH}/recjob" simjob.slcio recjob.slcio )
-ADD_TEST( t_anajob_rec "${EXECUTABLE_OUTPUT_PATH}/anajob" recjob.slcio )
-
-SET_TESTS_PROPERTIES( t_simjob PROPERTIES PASS_REGULAR_EXPRESSION
-    "created  10 runs with  100 events" )
-SET_TESTS_PROPERTIES( t_anajob_sim PROPERTIES PASS_REGULAR_EXPRESSION
-    "100 events read from files:" )
-SET_TESTS_PROPERTIES( t_recjob PROPERTIES PASS_REGULAR_EXPRESSION
-    "added collection: 'SomeClusters' and 'SomeTracks' to   100 events and added one extra MCParticle to each event." )
-SET_TESTS_PROPERTIES( t_anajob_rec PROPERTIES PASS_REGULAR_EXPRESSION
-    "100 events read from files:" )
-
-IF( BUILD_F77_TESTJOBS )
-    ADD_TEST( t_simjob_F "${EXECUTABLE_OUTPUT_PATH}/simjob_F" )
-    ADD_TEST( t_anajob_F_sim "${EXECUTABLE_OUTPUT_PATH}/anajob_F" f_simjob.slcio )
-    ADD_TEST( t_recjob_F "${EXECUTABLE_OUTPUT_PATH}/recjob_F" f_simjob.slcio f_recjob.slcio )
-    ADD_TEST( t_anajob_F_rec "${EXECUTABLE_OUTPUT_PATH}/anajob_F" f_recjob.slcio )
-
-    SET_TESTS_PROPERTIES( t_simjob_F PROPERTIES PASS_REGULAR_EXPRESSION
-        "created  10 runs with  100 events" )
-    SET_TESTS_PROPERTIES( t_anajob_F_sim PROPERTIES PASS_REGULAR_EXPRESSION
-        "100 events read from files:" )
-    SET_TESTS_PROPERTIES( t_recjob_F PROPERTIES PASS_REGULAR_EXPRESSION
-        "added collection: 'SomeClusters' and 'SomeTracks'.*to    100 events.*and added one extra MCParticle to each event." )
-    SET_TESTS_PROPERTIES( t_anajob_F_rec PROPERTIES PASS_REGULAR_EXPRESSION
-        "100 events read from files:" )
-ENDIF()
-
-IF( BUILD_LCIO_TESTJOBS AND BUILD_F77_TESTJOBS )
- 
-    ADD_TEST( t_anajob_cross_sim "${EXECUTABLE_OUTPUT_PATH}/anajob" f_simjob.slcio )
-    ADD_TEST( t_anajob_cross_rec "${EXECUTABLE_OUTPUT_PATH}/anajob" f_recjob.slcio )
-    ADD_TEST( t_anajob_F_cross_sim "${EXECUTABLE_OUTPUT_PATH}/anajob_F" simjob.slcio )
-    ADD_TEST( t_anajob_F_cross_rec "${EXECUTABLE_OUTPUT_PATH}/anajob_F" recjob.slcio )
-
-    SET_TESTS_PROPERTIES( t_anajob_cross_sim PROPERTIES PASS_REGULAR_EXPRESSION
-        "100 events read from files:" )
-    SET_TESTS_PROPERTIES( t_anajob_cross_rec PROPERTIES PASS_REGULAR_EXPRESSION
-        "100 events read from files:" )
-    SET_TESTS_PROPERTIES( t_anajob_F_cross_sim PROPERTIES PASS_REGULAR_EXPRESSION
-        "100 events read from files:" )
-    SET_TESTS_PROPERTIES( t_anajob_F_cross_rec PROPERTIES PASS_REGULAR_EXPRESSION
-        "100 events read from files:" )
-   
-ENDIF()
