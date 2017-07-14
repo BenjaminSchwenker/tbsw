@@ -35,7 +35,6 @@ class ProcessorMgr : public LCRunListener, public LCEventListener {
 
 friend class  Processor ;   
 friend class  CMProcessor ;   
-friend class  MarlinSteerCheck ;   
 
 public:
   

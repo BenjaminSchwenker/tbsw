@@ -1,27 +1,15 @@
 #include "lcio.h"
-
-
-
-#ifdef LCIO_MAJOR_VERSION 
-#if LCIO_VERSION_GE( 1,2)  
-#include "LCIOSTLTypes.h"
-#endif
-#else
-#include "MarlinLCIOSTLTypes.h"
-#endif
+#include "IO/LCReader.h"
 
 #include "marlin/ProcessorMgr.h"
 #include "marlin/Processor.h"
 #include "marlin/Exceptions.h"
-#include "IO/LCReader.h"
-
-#include "marlin/Parser.h"
 #include "marlin/XMLParser.h"
-
 #include "marlin/Global.h"
-
-#include "marlin/MarlinSteerCheck.h"
 #include "marlin/XMLFixCollTypes.h"
+#include "marlin/ProcessorLoader.h"
+#include "marlin/VerbosityLevels.h"
+#include "streamlog/streamlog.h"
 
 #include <sstream>
 #include <fstream>
@@ -32,26 +20,17 @@
 #include <cstring>
 #include <algorithm>
 
-#ifdef USE_GEAR
 #include "gearimpl/Util.h"
 #include "gearxml/GearXML.h"
 #include "gearimpl/GearMgrImpl.h"
-#endif
 
-#include "marlin/ProcessorLoader.h"
-
-#include "marlin/VerbosityLevels.h"
-#include "streamlog/streamlog.h"
 
 using namespace lcio ;
 using namespace marlin ;
 
 
-void createProcessors( Parser&  parser ) ;
-// void createProcessors( XMLParser&  parser ) ;
 void  createProcessors( const IParser&  parser) ;
 
-void listAvailableProcessors() ;
 void listAvailableProcessorsXML() ;
 int printUsage() ;
 
@@ -109,97 +88,27 @@ int main(int argc, char** argv ){
   
 #endif
 
-
+  
   const char* steeringFileName = "none"  ;
   
   // read file name from command line
   if( argc > 1 ){
-
-    if( std::string(argv[1]) == "-l" ){
-      listAvailableProcessors() ;
-      return(0) ;
-    }
-    else if( std::string(argv[1]) == "-x" ){
+  
+    if( std::string(argv[1]) == "-x" ){
       listAvailableProcessorsXML() ;
       return(0) ;
     }
-    else if( std::string(argv[1]) == "-c" ){
-      if( argc == 3 ){
-	MarlinSteerCheck msc(argv[2]);
-	msc.dump_information();
-        return(0) ;
-      }
-      else{
-	std::cout << "  usage: Marlin -c steeringFile.xml" << std::endl << std::endl;
-	return(1);
-      }
-    }
-    else if( std::string(argv[1]) == "-o" ){
-      if( argc == 4 ){
-	MarlinSteerCheck msc(argv[2]);
-	msc.saveAsXMLFile(argv[3]) ;
-        return(0) ;
-      }
-      else{
-	std::cout << "  usage: Marlin -o old.steer new.xml" << std::endl << std::endl;
-	return(1);
-      }
-    }
-    else if( std::string(argv[1]) == "-f" ){
-      if( argc == 4 ){
-	XMLFixCollTypes fixColTypes(argv[2]);
-	fixColTypes.parse(argv[3] );
-        return(0) ;
-      }
-      else{
-	std::cout << "  usage: Marlin -f oldsteering.xml newsteering.xml" << std::endl << std::endl;
-	return(1);
-      }
-    }
-    else if( std::string(argv[1]) == "-d" ){
-      if( argc == 4 ){
-	MarlinSteerCheck msc(argv[2]);
-	msc.saveAsDOTFile(argv[3]);
-	return(0) ;
-      }
-      else{
-	std::cout << "  usage: Marlin -d steer.xml diagram.dot" << std::endl << std::endl;
-	return(1);
-      }
-    }
-    else if( std::string(argv[1]) == "-h"  || std::string(argv[1]) == "-?" ){
-
+    else if ( std::string(argv[1]) == "-h"  || std::string(argv[1]) == "-?" ){
       return printUsage() ;
     }
-
-
+    
     // one argument given: the steering file for normal running :
     steeringFileName = argv[1] ;
-
   } else {
-
     return printUsage() ;
   }
   
-
-
-
-
-  IParser* parser ;
-
-  // for now allow xml and old steering
-  std::string filen(  steeringFileName ) ;
-
-  if( filen.rfind(".xml") == std::string::npos ||  // .xml not found at all
-      !(  filen.rfind(".xml")
- 	  + strlen(".xml") == filen.length() ) ) {  
-    parser = new Parser( steeringFileName ) ;
-    
-  } else {
-    
-    parser = new XMLParser( steeringFileName ) ;
-  }
-  
+  IParser* parser = new XMLParser( steeringFileName ) ;  
   parser->parse() ;
 
   Global::parameters = parser->getParameters("Global")  ;
@@ -246,24 +155,8 @@ int main(int argc, char** argv ){
   streamlog::logscope scope( streamlog::out ) ;
 
   scope.setLevel( verbosity ) ;
-
-
-  //   std::map<std::string, int> verbosity_levels;
-  //   verbosity_levels[std::string("VERBOSE")]=Processor::VERBOSE;
-  //   verbosity_levels[std::string("DEBUG")]=Processor::DEBUG;
-  //   verbosity_levels[std::string("MESSAGE")]=Processor::MESSAGE;
-  //   verbosity_levels[std::string("WARNING")]=Processor::WARNING;
-  //   verbosity_levels[std::string("ERROR")]=Processor::ERROR;
-  //   verbosity_levels[std::string("SILENT")]=Processor::SILENT;
-
-  //   std::string verbosity = Global::parameters->getStringVal("Verbosity" ) ;
-  //   if( verbosity.size() > 0 ){
-  // 	  Processor::Verbosity=verbosity_levels[verbosity];
-  //   }
-
+  
   createProcessors( *parser ) ;
-
-#ifdef USE_GEAR
 
   std::string gearFile = Global::parameters->getStringVal("GearXMLFile" ) ;
   
@@ -282,7 +175,6 @@ int main(int argc, char** argv ){
     Global::GEAR = new gear::GearMgrImpl ;
   }
 
-#endif
 
   StringVec lcioInputFiles ; 
 
@@ -383,19 +275,14 @@ int main(int argc, char** argv ){
     } // end rewind
 
   }
-  
-#ifdef USE_GEAR  
 
   if(  Global::GEAR != 0 ) 
     delete Global::GEAR ; 
-
-#endif  
  
   return 0 ;
 }
 
   
-//   void  createProcessors(XMLParser&  parser) {
 void  createProcessors( const IParser&  parser) {
 
   StringVec activeProcessors ;
@@ -410,7 +297,11 @@ void  createProcessors( const IParser&  parser) {
   for(unsigned int i=0 ; i<  activeProcessors.size() ; i++ ) {
       
     StringParameters* p = parser.getParameters( activeProcessors[i] )  ;
-
+    
+    streamlog_out( MESSAGE3 ) << "Parameters for processor " << i 
+			     << std::endl 
+			     << *p ; 
+    
     if( p!=0 ){
       std::string type = p->getStringVal("ProcessorType") ;
 	
@@ -426,37 +317,7 @@ void  createProcessors( const IParser&  parser) {
   }
 }
 
-void  createProcessors(Parser&  parser) {
-    
-  StringVec activeProcessors ;
-  Global::parameters->getStringVals("ActiveProcessors" , activeProcessors ) ;
 
-  for( StringVec::iterator m = activeProcessors.begin() ; m != activeProcessors.end() ; m++){
-
-    StringParameters* p = parser.getParameters( *m )  ;
-    
-
-    streamlog_out( MESSAGE ) << " Parameters for processor " << *m 
-			     << std::endl 
-			     << *p ; 
-
-    if( p!=0 ){
-      std::string type = p->getStringVal("ProcessorType") ;
-      
-      if( ProcessorMgr::instance()->addActiveProcessor( type , *m , p )  ){
-
-	// 	Processor* processor =  ProcessorMgr::instance()->getActiveProcessor( *m ) ;
-	//	processor->setParameters( p ) ;
-      }
-    }
-
-  }
-}
-
-void listAvailableProcessors() {
-
-  ProcessorMgr::instance()->dumpRegisteredProcessors() ;
-}
 
 void listAvailableProcessorsXML() {
 
@@ -474,23 +335,15 @@ int printUsage() {
 	    << std::endl 
 	    << "   Marlin -h                  \t print this help information" << std::endl 
 	    << "   Marlin -?                  \t print this help information" << std::endl 
-	    << "   Marlin -x                  \t print an example steering file to stdout" << std::endl 
-	    << "   Marlin -c steer.xml        \t check the given steering file for consistency" << std::endl 
-	    << "   Marlin -f old.xml new.xml  \t convert old xml files to new xml files for consistency check" 
-	    << std::endl 
-	    << "   Marlin -o old.steer new.xml\t convert old steering file to xml steering file" << std::endl 
-	    << "   Marlin -l                  \t [deprecated: old format steering file example]" << std::endl 
-	    << "   Marlin -d steer.xml flow.dot\t create a program flow diagram (see: http://www.graphviz.org)" << std::endl 
-	    << std::endl 
+	    << "   Marlin -x                  \t print an example steering file to stdout" << std::endl  
 	    << " Example: " << std::endl 
 	    << " To create a new default steering file from any Marlin application, run" << std::endl 
 	    << "     Marlin -x > mysteer.xml" << std::endl 
-	    << " and then use either an editor or the MarlinGUI to modify the created steering file " << std::endl 
+	    << " and then use an editor to modify the created steering file " << std::endl 
 	    << " to configure your application and then run it. e.g. : " << std::endl 
 	    << "     Marlin mysteer.xml > marlin.out 2>&1 &" << std::endl
 	    << std::endl ;
-
+  
   return(0) ;
-
 }
 

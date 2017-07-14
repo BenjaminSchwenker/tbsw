@@ -1,6 +1,7 @@
 #################################
 # cmake file for building Marlin
 # @author Jan Engels, DESY
+# @author Benjamin Schwenker, Uni Goettingen, removed MarlinGUI because not needed in tbsw
 #################################
 
 ####################################################################################################
@@ -51,67 +52,6 @@ AUX_SOURCE_DIRECTORY( . lib_srcs )
 
 # ProcessorLoader and main application should not go into the library
 LIST( REMOVE_ITEM lib_srcs ./Marlin.cc ./ProcessorLoader.cc )
-
-# gui stuff
-IF( MARLIN_GUI )
-
-    # cmake 2.6 throws warning because QT_LIBRARIES contains -lpthread -ldl
-    # without the full path
-    IF(COMMAND CMAKE_POLICY)
-        CMAKE_POLICY(SET CMP0003 NEW)
-    ENDIF()
-
-    # FindQt4 looks for qmake in $PATH
-    SET( ENV{PATH} "${QT4_HOME}/bin:$ENV{PATH}" )
-    FIND_PACKAGE( Qt4 REQUIRED )
-    INCLUDE(${QT_USE_FILE})
-
-    IF( APPLE)
-       #fg:  needed when the QT framework was installed via dmg....
-      ADD_DEFINITIONS( "-DQT_EDITION=0x0003" )
-    ENDIF( APPLE )
-
-    SET( cpp_srcs
-        ../gui/addcondition.cpp
-        ../gui/addprocdialog.cpp
-        ../gui/aprocdelegate.cpp
-        ../gui/dialog.cpp
-        ../gui/editcondition.cpp
-        ../gui/flowlayout.cpp
-        ../gui/gparamdelegate.cpp
-        ../gui/guihelp.cpp
-        ../gui/icoldelegate.cpp
-        ../gui/icoltdelegate.cpp
-        ../gui/iprocdelegate.cpp
-        ../gui/mainwindow.cpp
-        ../gui/nparamvecset.cpp
-        ../gui/nparamvecsetd.cpp
-        ../gui/ocoldelegate.cpp
-        ../gui/paramdelegate.cpp
-    )
-    SET( moc_hdrs
-        ../gui/addcondition.h
-        ../gui/addprocdialog.h
-        ../gui/aprocdelegate.h
-        ../gui/dialog.h
-        ../gui/editcondition.h
-        ../gui/gparamdelegate.h
-        ../gui/guihelp.h
-        ../gui/icoldelegate.h
-        ../gui/icoltdelegate.h
-        ../gui/iprocdelegate.h
-        ../gui/mainwindow.h
-        ../gui/nparamvecset.h
-        ../gui/nparamvecsetd.h
-        ../gui/ocoldelegate.h
-        ../gui/paramdelegate.h
-    )
-
-    # generate moc files
-    QT4_WRAP_CPP( cpp_moc_srcs ${moc_hdrs} )
-    
-ENDIF()
-
 
 ####################################################################################################
 ### LIBRARY
@@ -203,27 +143,4 @@ ENDIF()
 INSTALL( TARGETS Marlin DESTINATION bin )
 # ----------------------------------------------------------------------------
 
-
-# ----- MarlinGUI ------------------------------------------------------------
-IF( MARLIN_GUI )
-    ADD_EXECUTABLE( MarlinGUI ../gui/main.cpp ${cpp_srcs} ${cpp_moc_srcs} ProcessorLoader.cc )
-    ADD_DEPENDENCIES( bin MarlinGUI )
-    
-    # link against library
-    IF( BUILD_SHARED_LIBS )
-        TARGET_LINK_LIBRARIES( MarlinGUI lib_Marlin ${QT_LIBRARIES} )
-    ELSE()
-        TARGET_LINK_LIBRARIES( MarlinGUI -Wl,--whole-archive lib_Marlin -Wl,--no-whole-archive ${QT_LIBRARIES} )
-    ENDIF()
-
-    # whole archive libraries
-    IF( DEFINED LINK_STATIC_WHOLE_LIBS )
-        FOREACH( lib ${LINK_STATIC_WHOLE_LIBS} )
-            TARGET_LINK_LIBRARIES( MarlinGUI -Wl,--whole-archive ${lib} -Wl,--no-whole-archive )
-        ENDFOREACH()
-    ENDIF()
-
-    INSTALL( TARGETS MarlinGUI DESTINATION bin )
-ENDIF()
-# ----------------------------------------------------------------------------
 
