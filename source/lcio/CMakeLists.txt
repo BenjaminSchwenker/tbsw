@@ -77,22 +77,9 @@ ENDIF()
 #-------------------------------------------------------------------------
 
 
-# include FindJAVA.cmake for finding Java
 
-INCLUDE( ${PROJECT_SOURCE_DIR}/FindJAVA.cmake )
-
-IF( JAVA_FOUND )
-    MESSAGE( STATUS "JAVA_HOME set to ${JAVA_HOME}" )
-ELSE()
-    MESSAGE( FATAL_ERROR "Please set JAVA_HOME correctly!!" )
-ENDIF()
-
-# set environment variables for
-# generating header files with ant aid.generate
-SET( ENV{JDK_HOME} "${JAVA_HOME}" )
-SET( ENV{JAVA_HOME} "${JAVA_HOME}" )
 SET( ENV{LCIO} "${PROJECT_SOURCE_DIR}" )
-SET( ENV{PATH} "${PROJECT_SOURCE_DIR}/tools:${JAVA_BIN_PATH}:$ENV{PATH}" )
+
 
 
 
