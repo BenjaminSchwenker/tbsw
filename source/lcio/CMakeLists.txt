@@ -76,13 +76,6 @@ ENDIF()
 
 #-------------------------------------------------------------------------
 
-
-
-SET( ENV{LCIO} "${PROJECT_SOURCE_DIR}" )
-
-
-
-
 # add custom target for building all documentation
 ADD_CUSTOM_TARGET( doc )
 
