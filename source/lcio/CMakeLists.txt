@@ -94,22 +94,7 @@ SET( ENV{JAVA_HOME} "${JAVA_HOME}" )
 SET( ENV{LCIO} "${PROJECT_SOURCE_DIR}" )
 SET( ENV{PATH} "${PROJECT_SOURCE_DIR}/tools:${JAVA_BIN_PATH}:$ENV{PATH}" )
 
-# generate header files with ant aid.generate
-IF( NOT EXISTS "${PROJECT_SOURCE_DIR}/src/cpp/include/EVENT/LCIO.h" )
 
-    MESSAGE( STATUS "Generating header files with ant aid.generate..." )
-    EXEC_PROGRAM( ant "${PROJECT_SOURCE_DIR}"
-        ARGS aid.generate
-        OUTPUT_VARIABLE out_tmp
-        RETURN_VALUE out_ret )
-    # check if everything went ok
-    IF( NOT out_ret )
-        MESSAGE( STATUS "Header files successfully generated..." )
-    ELSE()
-        MESSAGE( STATUS "Error generating header files!!" )
-        MESSAGE( FATAL_ERROR "${out_tmp}" )
-    ENDIF()
-ENDIF()
 
 # add custom target for building all documentation
 ADD_CUSTOM_TARGET( doc )
@@ -146,16 +131,6 @@ IF( UNIX )
             COMMENT "Generating header files with ant aid.generate..."
             VERBATIM )
         
-        #ADD_CUSTOM_COMMAND(
-        #    OUTPUT "${PROJECT_BINARY_DIR}/src/cpp/include/EVENT/LCIO.h"
-        #    COMMAND ${SH} ARGS "${PROJECT_BINARY_DIR}/script.sh" aid.generate
-        #    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-        #    COMMENT "Generating header files with ant aid.generate..."
-        #    VERBATIM )
-        #
-        #ADD_CUSTOM_TARGET( headers DEPENDS
-        #        "${PROJECT_BINARY_DIR}/src/cpp/include/EVENT/LCIO.h" )
-
         # LCIO - JAVA
         ADD_CUSTOM_COMMAND(
             OUTPUT "${PROJECT_SOURCE_DIR}/lib/lcio.jar"
