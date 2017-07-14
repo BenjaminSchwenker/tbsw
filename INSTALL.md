@@ -49,12 +49,6 @@ $ cmake --build . --target install
 The folder <clhep-builddir> may be deleted afterwards. In the end, the folder <clhep-installdir> should contain bin/ include/ and lib/ subfolders. 
 
 
-# JAVA 
-
-```
-$ sudo apt-get install default-jdk
-```
-
 # Root 
 
 The project home page can be found at this URL https://root.cern.ch/downloading-root. One approach to get the source code is to use the public GIT
