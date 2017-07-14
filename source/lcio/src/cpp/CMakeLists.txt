@@ -323,14 +323,6 @@ IF( BUILD_ROOTDICT )
      
   ENDIF( ROOT_FOUND )
 ENDIF( BUILD_ROOTDICT )
-#----------------------------------------------
-
-
-
-# create symbolic target for calling targets test_XXX
-ADD_CUSTOM_TARGET( tests )
-
-
 
 
 #------------- install the library and the (public) header files -------
