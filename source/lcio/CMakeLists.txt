@@ -2,11 +2,12 @@
 # cmake file for building LCIO
 # @author Frank Gaede, DESY
 # @author Jan Engels, DESY
+# @author Benjamin Schwenker, Uni Göttingen
 #################################
 
 ########################################################
 # CMake compatibility issues: don't modify this, please!
-CMAKE_MINIMUM_REQUIRED( VERSION 2.4.6 )
+#CMAKE_MINIMUM_REQUIRED( VERSION 2.4.6 )
 #SET( CMAKE_BACKWARDS_COMPATIBILITY 2.4.6 )
 MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 # allow more human readable "if then else" constructs
@@ -28,7 +29,6 @@ OPTION( BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON )
 OPTION( BUILD_32BIT_COMPATIBLE "Set to ON to build in 32 bit compatibility mode" OFF )
 OPTION( BUILD_LCIO_TESTS "Set to ON to build LCIO tests under src/cpp/src/TESTS" OFF )
 OPTION( BUILD_LCIO_EXAMPLES "Set to ON to build LCIO examples under src/cpp/src/EXAMPLES" OFF )
-OPTION( BUILD_F77_TESTJOBS "Set to ON to build LCIO F77 testjobs" OFF )
 OPTION( BUILD_WITH_DCAP "Set to ON to build LCIO with dcap (dCache) support" OFF )
 OPTION( INSTALL_DOC "Set to OFF to skip build/install Documentation" OFF )
 OPTION( INSTALL_JAR "Set to OFF to skip build/install lcio.jar" OFF )
@@ -73,242 +73,7 @@ IF( CMAKE_SIZEOF_VOID_P EQUAL 8 )
     ENDIF()
 ENDIF()
 
-#-------------------------------------------------------------------------
 
-
-# include FindJAVA.cmake for finding Java
-
-INCLUDE( ${PROJECT_SOURCE_DIR}/FindJAVA.cmake )
-
-IF( JAVA_FOUND )
-    MESSAGE( STATUS "JAVA_HOME set to ${JAVA_HOME}" )
-ELSE()
-    MESSAGE( FATAL_ERROR "Please set JAVA_HOME correctly!!" )
-ENDIF()
-
-# set environment variables for
-# generating header files with ant aid.generate
-SET( ENV{JDK_HOME} "${JAVA_HOME}" )
-SET( ENV{JAVA_HOME} "${JAVA_HOME}" )
-SET( ENV{LCIO} "${PROJECT_SOURCE_DIR}" )
-SET( ENV{PATH} "${PROJECT_SOURCE_DIR}/tools:${JAVA_BIN_PATH}:$ENV{PATH}" )
-
-# generate header files with ant aid.generate
-IF( NOT EXISTS "${PROJECT_SOURCE_DIR}/src/cpp/include/EVENT/LCIO.h" )
-
-    MESSAGE( STATUS "Generating header files with ant aid.generate..." )
-    EXEC_PROGRAM( ant "${PROJECT_SOURCE_DIR}"
-        ARGS aid.generate
-        OUTPUT_VARIABLE out_tmp
-        RETURN_VALUE out_ret )
-    # check if everything went ok
-    IF( NOT out_ret )
-        MESSAGE( STATUS "Header files successfully generated..." )
-    ELSE()
-        MESSAGE( STATUS "Error generating header files!!" )
-        MESSAGE( FATAL_ERROR "${out_tmp}" )
-    ENDIF()
-ENDIF()
-
-# add custom target for building all documentation
-ADD_CUSTOM_TARGET( doc )
-
-# code for *nix only!
-IF( UNIX )
-    # find shell
-    FIND_PROGRAM( SH
-      sh
-      ${CYGWIN_INSTALL_PATH}/bin
-      /bin
-      /usr/bin
-      /usr/local/bin
-      /sbin
-      # FIXME add path to MacOS here
-    )
-    MARK_AS_ADVANCED( SH )
-
-    IF( SH )
-        # generate shell script for setting environment
-        # and calling ant aid
-        MESSAGE( STATUS "Generating shell script for calling ant..." )
-        FILE( WRITE "${PROJECT_BINARY_DIR}/script.sh"
-            "export LCIO=${PROJECT_SOURCE_DIR}\n"
-            "export JDK_HOME=${JAVA_HOME}\n"
-            "export JAVA_HOME=${JAVA_HOME}\n"
-            "export PATH=${PROJECT_SOURCE_DIR}/tools:${JAVA_BIN_PATH}:$PATH\n"
-            "ant $1" )
-     
-        # create "always out-of-date" headers target
-        ADD_CUSTOM_TARGET( headers
-            COMMAND ${SH} "${PROJECT_BINARY_DIR}/script.sh" aid.generate
-            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-            COMMENT "Generating header files with ant aid.generate..."
-            VERBATIM )
-        
-        #ADD_CUSTOM_COMMAND(
-        #    OUTPUT "${PROJECT_BINARY_DIR}/src/cpp/include/EVENT/LCIO.h"
-        #    COMMAND ${SH} ARGS "${PROJECT_BINARY_DIR}/script.sh" aid.generate
-        #    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-        #    COMMENT "Generating header files with ant aid.generate..."
-        #    VERBATIM )
-        #
-        #ADD_CUSTOM_TARGET( headers DEPENDS
-        #        "${PROJECT_BINARY_DIR}/src/cpp/include/EVENT/LCIO.h" )
-
-        # LCIO - JAVA
-        ADD_CUSTOM_COMMAND(
-            OUTPUT "${PROJECT_SOURCE_DIR}/lib/lcio.jar"
-            COMMAND ${SH} ARGS "${PROJECT_BINARY_DIR}/script.sh" aid
-            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-            COMMENT "Building LCIO Java..."
-            VERBATIM )
-
-        # create java target
-        ADD_CUSTOM_TARGET( jar DEPENDS "${PROJECT_SOURCE_DIR}/lib/lcio.jar" )
-
-        # create custom target for cleaning class files
-        ADD_CUSTOM_TARGET( jar_clean
-            COMMAND ${SH} "${PROJECT_BINARY_DIR}/script.sh" clean
-            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-            COMMENT "Cleaning java classes with ant clean..."
-            VERBATIM )
-
-        # tell make clean to also erase lcio.jar
-        SET_DIRECTORY_PROPERTIES( PROPERTIES
-            ADDITIONAL_MAKE_CLEAN_FILES "${PROJECT_SOURCE_DIR}/lib/lcio.jar" )
-
-        #JAVADOC
-        IF( JAVA_DOC )
-            ADD_CUSTOM_COMMAND(
-                OUTPUT "${PROJECT_SOURCE_DIR}/doc/api/index.html"
-                COMMAND ${SH} ARGS "${PROJECT_BINARY_DIR}/script.sh" doc
-                WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-                COMMENT "Building Java API Documentation..."
-                VERBATIM )
-            
-            ADD_CUSTOM_TARGET( doc_java DEPENDS "${PROJECT_SOURCE_DIR}/doc/api/index.html" )
-            # tell doc target to call doc_java
-            ADD_DEPENDENCIES( doc doc_java )
-        ENDIF()
-    ELSE()
-        MESSAGE( STATUS "Unix Shell needed for calling ant not found!!" )
-        IF( INSTALL_DOC )
-            MESSAGE( STATUS "WARNING: INSTALL_DOC forced to OFF and doc_java disabled!" )
-            SET( INSTALL_DOC OFF )
-        ELSE()
-            MESSAGE( STATUS "WARNING: doc_java target disabled!" )
-        ENDIF()
-        IF( INSTALL_JAR )
-            MESSAGE( STATUS "WARNING: INSTALL_JAR forced to OFF and jar target disabled!" )
-            SET( INSTALL_JAR OFF )
-        ELSE()
-            MESSAGE( STATUS "WARNING: jar target disabled!" )
-        ENDIF()
-    ENDIF()
-ENDIF()
-
-IF( WIN32 )
-    MESSAGE( SEND_ERROR "Windows support not implemented yet!!!" )
-    #TODO generate script for calling ant.bat
-ENDIF()
-
-# doxygen and latex stuff
-FIND_PACKAGE( Doxygen )
-FIND_PACKAGE( LATEX )
-
-IF( LATEX_COMPILER AND MAKEINDEX_COMPILER AND PDFLATEX_COMPILER
-    AND DVIPS_CONVERTER AND LATEX2HTML_CONVERTER AND DOXYGEN_FOUND )
-    
-    # c++ documentation
-    ADD_CUSTOM_COMMAND(
-        OUTPUT  "${PROJECT_SOURCE_DIR}/doc/doxygen_api/html"
-        COMMAND "${DOXYGEN_EXECUTABLE}"
-        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/doc/doxygen_api"
-        COMMENT "Building C++ API Documentation..."
-        VERBATIM )
-    
-    ADD_CUSTOM_TARGET( doc_cpp DEPENDS "${PROJECT_SOURCE_DIR}/doc/doxygen_api/html" )
-
-    # user manual
-    ADD_CUSTOM_COMMAND(
-        OUTPUT  "${PROJECT_BINARY_DIR}/manual"
-        # first we copy directory from source tree to binary tree to
-        # keep the source tree unchanged
-        COMMAND "${CMAKE_COMMAND}" -E copy_directory
-            "${PROJECT_SOURCE_DIR}/src/latex/manual"
-            "${PROJECT_BINARY_DIR}/manual"
-        VERBATIM )
-
-    ADD_CUSTOM_COMMAND(
-        OUTPUT  "${PROJECT_SOURCE_DIR}/doc/manual.pdf"
-        COMMAND "${LATEX_COMPILER}" ARGS -interaction=batchmode manual.tex
-        COMMAND "${LATEX_COMPILER}" ARGS -interaction=batchmode manual.tex
-        COMMAND "${DVIPS_CONVERTER}" ARGS -q -o manual.ps manual.dvi
-        COMMAND "${PDFLATEX_COMPILER}" ARGS -interaction=batchmode manual.tex
-        COMMAND "${LATEX2HTML_CONVERTER}" ARGS
-            -mkdir -dir manual_html -verbosity 0 -info 0 -no_auto_link -split 0 -no_navigation manual.tex
-        # copy files to doc directory
-        COMMAND "${CMAKE_COMMAND}" -E copy "manual.pdf"
-            "${PROJECT_SOURCE_DIR}/doc"
-        COMMAND "${CMAKE_COMMAND}" -E copy "manual.ps"
-            "${PROJECT_SOURCE_DIR}/doc"
-        COMMAND "${CMAKE_COMMAND}" -E copy_directory "manual_html"
-            "${PROJECT_SOURCE_DIR}/doc/manual_html"
-        DEPENDS "${PROJECT_BINARY_DIR}/manual"
-        WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/manual"
-        COMMENT "Building Documentation - Users Manual..."
-        VERBATIM )
-
-    ADD_CUSTOM_TARGET( doc_manual DEPENDS "${PROJECT_SOURCE_DIR}/doc/manual.pdf" )
-
-    # reference manual
-    # FIXME this is not working correctly: latex returns error!
-    #ADD_CUSTOM_COMMAND(
-    #    OUTPUT  "${PROJECT_SOURCE_DIR}/doc/doxygen_api/latex/refman.dvi"
-    #    COMMAND "${LATEX_COMPILER}" ARGS -interaction=batchmode refman.tex
-    #    COMMAND "${LATEX_COMPILER}" ARGS -interaction=batchmode refman.tex
-    #    COMMAND "${DVIPS_CONVERTER}" ARGS -q -o refman.ps refman.dvi
-    #    # FIXME psnup should be detected
-    #    COMMAND "psnup" ARGS -q -2 refman.ps ${PROJECT_SOURCE_DIR}/doc/lciorefman.ps
-    #    COMMAND "${PDFLATEX_COMPILER}" ARGS -interaction=batchmode refman.tex
-    #    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/doc/doxygen_api/latex"
-    #    COMMENT "Building Documentation - Reference Manual..."
-    #    VERBATIM )
-
-    #ADD_CUSTOM_TARGET( doc_refman
-    #        DEPENDS
-    #            "${PROJECT_SOURCE_DIR}/doc/doxygen_api/html"
-    #            "${PROJECT_SOURCE_DIR}/doc/doxygen_api/latex/refman.dvi" )
-    
-    #ADD_DEPENDENCIES( doc doc_cpp doc_manual doc_refman )
-    ADD_DEPENDENCIES( doc doc_cpp doc_manual )
-
-ELSE()
-    IF( NOT DOXYGEN_FOUND )
-        MESSAGE( STATUS "Doxygen not found in your system!!" )
-    ELSE()
-        MESSAGE( STATUS "Latex or one of its tools (dvips, pdflatex, latex2html, makeindex) not found in your system!!" )
-    ENDIF()
-    IF( INSTALL_DOC )
-        MESSAGE( STATUS "WARNING: INSTALL_DOC forced to OFF" )
-        SET( INSTALL_DOC OFF )
-    ENDIF()
-ENDIF()
-
-# installation rules
-IF( INSTALL_JAR )
-    # make sure jar is built before calling make install
-    INSTALL( CODE "EXEC_PROGRAM(${CMAKE_BUILD_TOOL} ${PROJECT_BINARY_DIR} ARGS jar)" )
-    # install jar
-    INSTALL( FILES "${PROJECT_SOURCE_DIR}/lib/lcio.jar" DESTINATION lib )
-ENDIF()
-IF( INSTALL_DOC )
-    # make sure documentation is built before make install is called
-    INSTALL( CODE "EXEC_PROGRAM(${CMAKE_BUILD_TOOL} ${PROJECT_BINARY_DIR} ARGS doc)" )
-
-    # install documentation
-    INSTALL( DIRECTORY "${PROJECT_SOURCE_DIR}/doc" DESTINATION . PATTERN "*CVS*" EXCLUDE )
-ENDIF()
 
 ##########################################################################################
 
@@ -349,9 +114,7 @@ ENDIF()
 
 ADD_SUBDIRECTORY( sio sio )
 ADD_SUBDIRECTORY( src/cpp lcio )
-IF( BUILD_F77_TESTJOBS )
-    ADD_SUBDIRECTORY( src/f77 f77 )
-ENDIF()
+
 
 # create uninstall configuration file 
 CONFIGURE_FILE( "${PROJECT_SOURCE_DIR}/cmake_uninstall.cmake.in"
@@ -379,7 +142,6 @@ IF( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 ENDIF()
 MESSAGE( STATUS "BUILD_LCIO_TESTS = ${BUILD_LCIO_TESTS}" )
 MESSAGE( STATUS "BUILD_LCIO_EXAMPLES = ${BUILD_LCIO_EXAMPLES}" )
-MESSAGE( STATUS "BUILD_F77_TESTJOBS = ${BUILD_F77_TESTJOBS}" )
 MESSAGE( STATUS "BUILD_WITH_DCAP = ${BUILD_WITH_DCAP}" )
 MESSAGE( STATUS "INSTALL_DOC = ${INSTALL_DOC}" )
 MESSAGE( STATUS "INSTALL_JAR = ${INSTALL_JAR}" )
@@ -400,8 +162,6 @@ SET( BUILD_LCIO_TESTS "${BUILD_LCIO_TESTS}" CACHE BOOL
     "Set to ON to build LCIO tests under src/cpp/src/TESTS" FORCE )
 SET( BUILD_LCIO_EXAMPLES "${BUILD_LCIO_EXAMPLES}" CACHE BOOL
     "Set to ON to build LCIO examples under src/cpp/src/EXAMPLES" FORCE )
-SET( BUILD_F77_TESTJOBS "${BUILD_F77_TESTJOBS}" CACHE BOOL
-    "Set to ON to build LCIO F77 testbobs" FORCE )
 SET( BUILD_WITH_DCAP "${BUILD_WITH_DCAP}" CACHE BOOL
     "Set to ON to build LCIO with dcap support (dCache)" FORCE )
 SET( DCAP_HOME "${DCAP_HOME}" CACHE PATH
