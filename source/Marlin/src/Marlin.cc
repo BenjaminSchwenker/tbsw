@@ -335,7 +335,7 @@ void  createProcessors( const IParser&  parser) {
       
     StringParameters* p = parser.getParameters( activeProcessors[i] )  ;
 
-    streamlog_out( MESSAGE ) << " BNEW Parameters for processor " << *m 
+    streamlog_out( MESSAGE ) << " BNEW Parameters for processor " << i 
 			     << std::endl 
 			     << *p ; 
 
