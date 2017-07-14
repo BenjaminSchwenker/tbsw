@@ -113,7 +113,7 @@ IF( UNIX )
     )
     MARK_AS_ADVANCED( SH )
 
-    IF( SH )
+    IF( NOT SH )
         # generate shell script for setting environment
         # and calling ant aid
         MESSAGE( STATUS "Generating shell script for calling ant..." )
