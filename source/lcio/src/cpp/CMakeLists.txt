@@ -9,32 +9,7 @@ INCLUDE_DIRECTORIES (
     "${LCIO_SOURCE_DIR}/src/cpp/include"
 )
 
-SET( LCIO_CPPFORT_SRCS
-  ./src/CPPFORT/HEPEVT.cc
-  ./src/CPPFORT/lccah.cc
-  ./src/CPPFORT/lcclu.cc
-  ./src/CPPFORT/lccol.cc
-  ./src/CPPFORT/lcevt.cc
-  ./src/CPPFORT/lcgob.cc
-  ./src/CPPFORT/lciof77apiext.cc
-  ./src/CPPFORT/lcmcp.cc
-  ./src/CPPFORT/lcobv.cc
-  ./src/CPPFORT/lcpid.cc
-  ./src/CPPFORT/lcrcp.cc
-  ./src/CPPFORT/lcrdr.cc
-  ./src/CPPFORT/lcrdrrep.cc
-  ./src/CPPFORT/lcrel.cc
-  ./src/CPPFORT/lcrhd.cc
-  ./src/CPPFORT/lcrnv.cc
-  ./src/CPPFORT/lcsch.cc
-  ./src/CPPFORT/lcsth.cc
-  ./src/CPPFORT/lctph.cc
-  ./src/CPPFORT/lctrh.cc
-  ./src/CPPFORT/lctrk.cc
-  ./src/CPPFORT/lcvec.cc
-  ./src/CPPFORT/lcvtx.cc
-  ./src/CPPFORT/lcwrt.cc
-)
+
 
 SET( LCIO_IMPL_SRCS
   ./src/IMPL/AccessChecked.cc
@@ -121,27 +96,8 @@ ADD_DEFINITIONS( "-Wall -ansi -pedantic" )
 #----- need long long for int64 for now ------
 ADD_DEFINITIONS( "-Wno-long-long -fno-strict-aliasing" )
 
-#---- special flags for cfortran code : --------
-SET_SOURCE_FILES_PROPERTIES( 
-  ${LCIO_CPPFORT_SRCS} PROPERTIES 
-  COMPILE_FLAGS "-Df2cFortran -Wno-unused"
-)
 
-ADD_LIBRARY( lib_LCIOF77 STATIC
-  ${LCIO_CPPFORT_SRCS} 
-)
-
-SET_TARGET_PROPERTIES( lib_LCIOF77 PROPERTIES
-    # create *nix style library versions + symbolic links
-    #VERSION ${LCIO_VERSION}
-    #SOVERSION ${LCIO_SOVERSION}
-    # allow creating static and shared libs without conflicts
-    CLEAN_DIRECT_OUTPUT 1
-    # avoid conflicts between library and binary target names
-    OUTPUT_NAME lcioF77
-)
-
-ADD_CUSTOM_TARGET( lib DEPENDS lib_LCIO lib_LCIOF77 lib_SIO )
+ADD_CUSTOM_TARGET( lib DEPENDS lib_LCIO lib_SIO )
 
 ADD_LIBRARY( lib_LCIO 
   ${LCIO_IMPL_SRCS}
@@ -161,7 +117,6 @@ SET_TARGET_PROPERTIES( lib_LCIO PROPERTIES
 )
 
 TARGET_LINK_LIBRARIES( lib_LCIO lib_SIO )
-TARGET_LINK_LIBRARIES( lib_LCIOF77 lib_LCIO )
 
 
 # create symbolic target for calling targets bin_XXX
@@ -328,10 +283,7 @@ INSTALL( TARGETS lib_LCIO DESTINATION lib PERMISSIONS
         GROUP_READ GROUP_EXECUTE
         WORLD_READ WORLD_EXECUTE )
 
-INSTALL( TARGETS lib_LCIOF77 DESTINATION lib PERMISSIONS
-        OWNER_READ OWNER_WRITE OWNER_EXECUTE
-        GROUP_READ GROUP_EXECUTE
-        WORLD_READ WORLD_EXECUTE )
+
 
 INSTALL(DIRECTORY ${LCIO_SOURCE_DIR}/src/cpp/include/ DESTINATION include 
   PATTERN "*~" EXCLUDE
