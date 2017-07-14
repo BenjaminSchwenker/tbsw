@@ -29,7 +29,6 @@ OPTION( BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON )
 OPTION( BUILD_32BIT_COMPATIBLE "Set to ON to build in 32 bit compatibility mode" OFF )
 OPTION( BUILD_LCIO_TESTS "Set to ON to build LCIO tests under src/cpp/src/TESTS" OFF )
 OPTION( BUILD_LCIO_EXAMPLES "Set to ON to build LCIO examples under src/cpp/src/EXAMPLES" OFF )
-OPTION( BUILD_F77_TESTJOBS "Set to ON to build LCIO F77 testjobs" OFF )
 OPTION( BUILD_WITH_DCAP "Set to ON to build LCIO with dcap (dCache) support" OFF )
 OPTION( INSTALL_DOC "Set to OFF to skip build/install Documentation" OFF )
 OPTION( INSTALL_JAR "Set to OFF to skip build/install lcio.jar" OFF )
@@ -115,9 +114,7 @@ ENDIF()
 
 ADD_SUBDIRECTORY( sio sio )
 ADD_SUBDIRECTORY( src/cpp lcio )
-IF( BUILD_F77_TESTJOBS )
-    ADD_SUBDIRECTORY( src/f77 f77 )
-ENDIF()
+
 
 # create uninstall configuration file 
 CONFIGURE_FILE( "${PROJECT_SOURCE_DIR}/cmake_uninstall.cmake.in"
@@ -145,7 +142,6 @@ IF( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 ENDIF()
 MESSAGE( STATUS "BUILD_LCIO_TESTS = ${BUILD_LCIO_TESTS}" )
 MESSAGE( STATUS "BUILD_LCIO_EXAMPLES = ${BUILD_LCIO_EXAMPLES}" )
-MESSAGE( STATUS "BUILD_F77_TESTJOBS = ${BUILD_F77_TESTJOBS}" )
 MESSAGE( STATUS "BUILD_WITH_DCAP = ${BUILD_WITH_DCAP}" )
 MESSAGE( STATUS "INSTALL_DOC = ${INSTALL_DOC}" )
 MESSAGE( STATUS "INSTALL_JAR = ${INSTALL_JAR}" )
@@ -166,8 +162,6 @@ SET( BUILD_LCIO_TESTS "${BUILD_LCIO_TESTS}" CACHE BOOL
     "Set to ON to build LCIO tests under src/cpp/src/TESTS" FORCE )
 SET( BUILD_LCIO_EXAMPLES "${BUILD_LCIO_EXAMPLES}" CACHE BOOL
     "Set to ON to build LCIO examples under src/cpp/src/EXAMPLES" FORCE )
-SET( BUILD_F77_TESTJOBS "${BUILD_F77_TESTJOBS}" CACHE BOOL
-    "Set to ON to build LCIO F77 testbobs" FORCE )
 SET( BUILD_WITH_DCAP "${BUILD_WITH_DCAP}" CACHE BOOL
     "Set to ON to build LCIO with dcap support (dCache)" FORCE )
 SET( DCAP_HOME "${DCAP_HOME}" CACHE PATH

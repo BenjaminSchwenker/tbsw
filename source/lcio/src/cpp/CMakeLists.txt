@@ -181,10 +181,6 @@ ENDMACRO()
 ADD_LCIO_BIN( dumpevent ) 
 ADD_LCIO_BIN( stdhepjob ) 
 
-
-
-
-
 #------ create a root dictionary -----------------------------
 IF( BUILD_ROOTDICT )
 #-----------------------------------------------------------------
