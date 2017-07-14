@@ -178,11 +178,7 @@ MACRO( ADD_LCIO_BIN file )
 ENDMACRO()
 #===================================================================
 
-ADD_LCIO_BIN( simjob ) 
-ADD_LCIO_BIN( anajob ) 
-ADD_LCIO_BIN( recjob ) 
 ADD_LCIO_BIN( dumpevent ) 
-ADD_LCIO_BIN( copyfix ) 
 ADD_LCIO_BIN( stdhepjob ) 
 
 
