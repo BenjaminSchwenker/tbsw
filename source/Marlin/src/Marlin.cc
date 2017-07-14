@@ -1,15 +1,16 @@
 #include "lcio.h"
-
+#include "IO/LCReader.h"
 
 #include "marlin/ProcessorMgr.h"
 #include "marlin/Processor.h"
 #include "marlin/Exceptions.h"
-#include "IO/LCReader.h"
-
 #include "marlin/Parser.h"
 #include "marlin/XMLParser.h"
 #include "marlin/Global.h"
 #include "marlin/XMLFixCollTypes.h"
+#include "marlin/ProcessorLoader.h"
+#include "marlin/VerbosityLevels.h"
+#include "streamlog/streamlog.h"
 
 #include <sstream>
 #include <fstream>
@@ -25,17 +26,13 @@
 #include "gearimpl/GearMgrImpl.h"
 
 
-#include "marlin/ProcessorLoader.h"
 
-#include "marlin/VerbosityLevels.h"
-#include "streamlog/streamlog.h"
 
 using namespace lcio ;
 using namespace marlin ;
 
 
 void createProcessors( Parser&  parser ) ;
-// void createProcessors( XMLParser&  parser ) ;
 void  createProcessors( const IParser&  parser) ;
 
 void listAvailableProcessors() ;
@@ -323,7 +320,6 @@ int main(int argc, char** argv ){
 }
 
   
-//   void  createProcessors(XMLParser&  parser) {
 void  createProcessors( const IParser&  parser) {
 
   StringVec activeProcessors ;
@@ -338,6 +334,10 @@ void  createProcessors( const IParser&  parser) {
   for(unsigned int i=0 ; i<  activeProcessors.size() ; i++ ) {
       
     StringParameters* p = parser.getParameters( activeProcessors[i] )  ;
+
+    streamlog_out( MESSAGE ) << " BNEW Parameters for processor " << *m 
+			     << std::endl 
+			     << *p ; 
 
     if( p!=0 ){
       std::string type = p->getStringVal("ProcessorType") ;
@@ -364,7 +364,7 @@ void  createProcessors(Parser&  parser) {
     StringParameters* p = parser.getParameters( *m )  ;
     
 
-    streamlog_out( MESSAGE ) << " Parameters for processor " << *m 
+    streamlog_out( MESSAGE ) << " BOLD Parameters for processor " << *m 
 			     << std::endl 
 			     << *p ; 
 
