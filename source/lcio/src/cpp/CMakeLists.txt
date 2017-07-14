@@ -346,10 +346,6 @@ ENDMACRO()
 #===================================================================
 
 
-ADD_LCIO_CTEST( test_example ) 
-ADD_LCIO_CTEST( test_calohit )
-
-
 #------------- install the library and the (public) header files -------
 
 INSTALL( TARGETS lib_LCIO DESTINATION lib PERMISSIONS
