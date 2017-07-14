@@ -182,29 +182,7 @@ ADD_LCIO_BIN( dumpevent )
 ADD_LCIO_BIN( stdhepjob ) 
 
 
-IF( BUILD_LCIO_EXAMPLES )
-  ADD_LCIO_BIN( lcrtrelation )
-  ADD_LCIO_BIN( readcalibration )
 
-  # LCIO SHELL needs curses and readline libraries
-  FIND_PACKAGE( Curses )
-  FIND_LIBRARY( READLINE_LIBRARY
-    NAMES readline
-    PATHS
-      /usr/local/lib
-      /usr/local/lib64
-      /usr/lib
-      /usr/lib64
-      /lib
-      /lib64
-  )
-  IF( CURSES_LIBRARY AND READLINE_LIBRARY )
-    ADD_LCIO_BIN( lsh )
-    TARGET_LINK_LIBRARIES( bin_lsh ${CURSES_LIBRARY} ${READLINE_LIBRARY} )
-  ELSE()
-    MESSAGE( STATUS "Warning: didn't find curses and/or readline libraries. Cannot build lsh" )
-  ENDIF()
-ENDIF()
 
 
 #------ create a root dictionary -----------------------------
