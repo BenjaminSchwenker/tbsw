@@ -99,94 +99,6 @@ SET( ENV{PATH} "${PROJECT_SOURCE_DIR}/tools:${JAVA_BIN_PATH}:$ENV{PATH}" )
 # add custom target for building all documentation
 ADD_CUSTOM_TARGET( doc )
 
-# code for *nix only!
-IF( UNIX )
-    # find shell
-    FIND_PROGRAM( SH
-      sh
-      ${CYGWIN_INSTALL_PATH}/bin
-      /bin
-      /usr/bin
-      /usr/local/bin
-      /sbin
-      # FIXME add path to MacOS here
-    )
-    MARK_AS_ADVANCED( SH )
-
-    IF( NOT SH )
-        # generate shell script for setting environment
-        # and calling ant aid
-        MESSAGE( STATUS "Generating shell script for calling ant..." )
-        FILE( WRITE "${PROJECT_BINARY_DIR}/script.sh"
-            "export LCIO=${PROJECT_SOURCE_DIR}\n"
-            "export JDK_HOME=${JAVA_HOME}\n"
-            "export JAVA_HOME=${JAVA_HOME}\n"
-            "export PATH=${PROJECT_SOURCE_DIR}/tools:${JAVA_BIN_PATH}:$PATH\n"
-            "ant $1" )
-     
-        # create "always out-of-date" headers target
-        ADD_CUSTOM_TARGET( headers
-            COMMAND ${SH} "${PROJECT_BINARY_DIR}/script.sh" aid.generate
-            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-            COMMENT "Generating header files with ant aid.generate..."
-            VERBATIM )
-        
-        # LCIO - JAVA
-        ADD_CUSTOM_COMMAND(
-            OUTPUT "${PROJECT_SOURCE_DIR}/lib/lcio.jar"
-            COMMAND ${SH} ARGS "${PROJECT_BINARY_DIR}/script.sh" aid
-            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-            COMMENT "Building LCIO Java..."
-            VERBATIM )
-
-        # create java target
-        ADD_CUSTOM_TARGET( jar DEPENDS "${PROJECT_SOURCE_DIR}/lib/lcio.jar" )
-
-        # create custom target for cleaning class files
-        ADD_CUSTOM_TARGET( jar_clean
-            COMMAND ${SH} "${PROJECT_BINARY_DIR}/script.sh" clean
-            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-            COMMENT "Cleaning java classes with ant clean..."
-            VERBATIM )
-
-        # tell make clean to also erase lcio.jar
-        SET_DIRECTORY_PROPERTIES( PROPERTIES
-            ADDITIONAL_MAKE_CLEAN_FILES "${PROJECT_SOURCE_DIR}/lib/lcio.jar" )
-
-        #JAVADOC
-        IF( JAVA_DOC )
-            ADD_CUSTOM_COMMAND(
-                OUTPUT "${PROJECT_SOURCE_DIR}/doc/api/index.html"
-                COMMAND ${SH} ARGS "${PROJECT_BINARY_DIR}/script.sh" doc
-                WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-                COMMENT "Building Java API Documentation..."
-                VERBATIM )
-            
-            ADD_CUSTOM_TARGET( doc_java DEPENDS "${PROJECT_SOURCE_DIR}/doc/api/index.html" )
-            # tell doc target to call doc_java
-            ADD_DEPENDENCIES( doc doc_java )
-        ENDIF()
-    ELSE()
-        MESSAGE( STATUS "Unix Shell needed for calling ant not found!!" )
-        IF( INSTALL_DOC )
-            MESSAGE( STATUS "WARNING: INSTALL_DOC forced to OFF and doc_java disabled!" )
-            SET( INSTALL_DOC OFF )
-        ELSE()
-            MESSAGE( STATUS "WARNING: doc_java target disabled!" )
-        ENDIF()
-        IF( INSTALL_JAR )
-            MESSAGE( STATUS "WARNING: INSTALL_JAR forced to OFF and jar target disabled!" )
-            SET( INSTALL_JAR OFF )
-        ELSE()
-            MESSAGE( STATUS "WARNING: jar target disabled!" )
-        ENDIF()
-    ENDIF()
-ENDIF()
-
-IF( WIN32 )
-    MESSAGE( SEND_ERROR "Windows support not implemented yet!!!" )
-    #TODO generate script for calling ant.bat
-ENDIF()
 
 # doxygen and latex stuff
 FIND_PACKAGE( Doxygen )
@@ -271,20 +183,8 @@ ELSE()
     ENDIF()
 ENDIF()
 
-# installation rules
-IF( INSTALL_JAR )
-    # make sure jar is built before calling make install
-    INSTALL( CODE "EXEC_PROGRAM(${CMAKE_BUILD_TOOL} ${PROJECT_BINARY_DIR} ARGS jar)" )
-    # install jar
-    INSTALL( FILES "${PROJECT_SOURCE_DIR}/lib/lcio.jar" DESTINATION lib )
-ENDIF()
-IF( INSTALL_DOC )
-    # make sure documentation is built before make install is called
-    INSTALL( CODE "EXEC_PROGRAM(${CMAKE_BUILD_TOOL} ${PROJECT_BINARY_DIR} ARGS doc)" )
 
-    # install documentation
-    INSTALL( DIRECTORY "${PROJECT_SOURCE_DIR}/doc" DESTINATION . PATTERN "*CVS*" EXCLUDE )
-ENDIF()
+
 
 ##########################################################################################
 
