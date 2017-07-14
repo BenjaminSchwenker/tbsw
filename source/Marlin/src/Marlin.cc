@@ -4,7 +4,6 @@
 #include "marlin/ProcessorMgr.h"
 #include "marlin/Processor.h"
 #include "marlin/Exceptions.h"
-#include "marlin/Parser.h"
 #include "marlin/XMLParser.h"
 #include "marlin/Global.h"
 #include "marlin/XMLFixCollTypes.h"
@@ -26,16 +25,12 @@
 #include "gearimpl/GearMgrImpl.h"
 
 
-
-
 using namespace lcio ;
 using namespace marlin ;
 
 
-void createProcessors( Parser&  parser ) ;
 void  createProcessors( const IParser&  parser) ;
 
-void listAvailableProcessors() ;
 void listAvailableProcessorsXML() ;
 int printUsage() ;
 
@@ -99,11 +94,7 @@ int main(int argc, char** argv ){
   // read file name from command line
   if( argc > 1 ){
   
-    if( std::string(argv[1]) == "-l" ){
-      listAvailableProcessors() ;
-      return(0) ;
-    }
-    else if( std::string(argv[1]) == "-x" ){
+    if( std::string(argv[1]) == "-x" ){
       listAvailableProcessorsXML() ;
       return(0) ;
     }
@@ -117,21 +108,7 @@ int main(int argc, char** argv ){
     return printUsage() ;
   }
   
-  IParser* parser ;
-  
-  // for now allow xml and old steering
-  std::string filen(  steeringFileName ) ;
-
-  if( filen.rfind(".xml") == std::string::npos ||  // .xml not found at all
-      !(  filen.rfind(".xml")
- 	  + strlen(".xml") == filen.length() ) ) {  
-    parser = new Parser( steeringFileName ) ;
-    
-  } else {
-    
-    parser = new XMLParser( steeringFileName ) ;
-  }
-  
+  IParser* parser = new XMLParser( steeringFileName ) ;  
   parser->parse() ;
 
   Global::parameters = parser->getParameters("Global")  ;
@@ -178,21 +155,7 @@ int main(int argc, char** argv ){
   streamlog::logscope scope( streamlog::out ) ;
 
   scope.setLevel( verbosity ) ;
-
-
-  //   std::map<std::string, int> verbosity_levels;
-  //   verbosity_levels[std::string("VERBOSE")]=Processor::VERBOSE;
-  //   verbosity_levels[std::string("DEBUG")]=Processor::DEBUG;
-  //   verbosity_levels[std::string("MESSAGE")]=Processor::MESSAGE;
-  //   verbosity_levels[std::string("WARNING")]=Processor::WARNING;
-  //   verbosity_levels[std::string("ERROR")]=Processor::ERROR;
-  //   verbosity_levels[std::string("SILENT")]=Processor::SILENT;
-
-  //   std::string verbosity = Global::parameters->getStringVal("Verbosity" ) ;
-  //   if( verbosity.size() > 0 ){
-  // 	  Processor::Verbosity=verbosity_levels[verbosity];
-  //   }
-
+  
   createProcessors( *parser ) ;
 
   std::string gearFile = Global::parameters->getStringVal("GearXMLFile" ) ;
@@ -334,11 +297,11 @@ void  createProcessors( const IParser&  parser) {
   for(unsigned int i=0 ; i<  activeProcessors.size() ; i++ ) {
       
     StringParameters* p = parser.getParameters( activeProcessors[i] )  ;
-
-    streamlog_out( MESSAGE ) << " BNEW Parameters for processor " << i 
+    
+    streamlog_out( MESSAGE3 ) << "Parameters for processor " << i 
 			     << std::endl 
 			     << *p ; 
-
+    
     if( p!=0 ){
       std::string type = p->getStringVal("ProcessorType") ;
 	
@@ -354,37 +317,7 @@ void  createProcessors( const IParser&  parser) {
   }
 }
 
-void  createProcessors(Parser&  parser) {
-    
-  StringVec activeProcessors ;
-  Global::parameters->getStringVals("ActiveProcessors" , activeProcessors ) ;
 
-  for( StringVec::iterator m = activeProcessors.begin() ; m != activeProcessors.end() ; m++){
-
-    StringParameters* p = parser.getParameters( *m )  ;
-    
-
-    streamlog_out( MESSAGE ) << " BOLD Parameters for processor " << *m 
-			     << std::endl 
-			     << *p ; 
-
-    if( p!=0 ){
-      std::string type = p->getStringVal("ProcessorType") ;
-      
-      if( ProcessorMgr::instance()->addActiveProcessor( type , *m , p )  ){
-
-	// 	Processor* processor =  ProcessorMgr::instance()->getActiveProcessor( *m ) ;
-	//	processor->setParameters( p ) ;
-      }
-    }
-
-  }
-}
-
-void listAvailableProcessors() {
-
-  ProcessorMgr::instance()->dumpRegisteredProcessors() ;
-}
 
 void listAvailableProcessorsXML() {
 
