@@ -23,7 +23,7 @@ cd ../..
 cd lcio
 mkdir build
 cd build 
-cmake -C ../BuildSetup.cmake ..
+cmake 
 make install 
 cd ../..
 
