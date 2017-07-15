@@ -114,7 +114,6 @@ INCLUDE_DIRECTORIES( "src/cpp/include" )
 # input directories
 ADD_SUBDIRECTORY( src/cpp/gearxml )
 ADD_SUBDIRECTORY( src/cpp/gearimpl )
-ADD_SUBDIRECTORY( src/cpp/test )
 
 # create uninstall configuration file 
 CONFIGURE_FILE( "${PROJECT_SOURCE_DIR}/cmake_uninstall.cmake.in"
