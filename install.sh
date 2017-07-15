@@ -14,7 +14,7 @@ export LD_LIBRARY_PATH=$ROOTSYS/lib:$LD_LIBRARY_PATH
 cd source/gear
 mkdir build
 cd build
-cmake -C ../config/BuildSetup.cmake ..
+cmake ..
 make install
 cd ../..
 
@@ -23,7 +23,7 @@ cd ../..
 cd lcio
 mkdir build
 cd build 
-cmake -C ../BuildSetup.cmake ..
+cmake ..
 make install 
 cd ../..
 

@@ -132,11 +132,7 @@ public:
 
   public:
    static const char*  GEARPARAMETERS  ;
-   static const char*  TPCPARAMETERS  ;
-   static const char*  CALORIMETERPARAMETERS  ;
-   static const char*  VXDPARAMETERS  ;
    static const char*  SIPLANESPARAMETERS  ;
-   static const char*  TBSIPARAMETERS ;
 
 
 }; // class
