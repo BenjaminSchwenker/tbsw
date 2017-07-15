@@ -1,11 +1,6 @@
 #include "gearxml/XMLHandlerMgr.h"
-
 #include "gearxml/GearParametersXML.h"
-#include "gearxml/TPCParametersXML.h"
-#include "gearxml/CalorimeterParametersXML.h"
-#include "gearxml/VXDParametersXML.h"
 #include "gearxml/SiPlanesParametersXML.h"
-#include "gearxml/TBSiParametersXML.h"
 #include "gearxml/tinyxml.h"
 
 #include "gear/GEAR.h"
@@ -45,11 +40,7 @@ namespace gear{
   XMLHandlerMgr::XMLHandlerMgr() {
 
     _map[ GEAR::GEARPARAMETERS ] = new GearParametersXML ;
-    _map[ GEAR::TPCPARAMETERS ]  = new TPCParametersXML ;
-    _map[ GEAR::CALORIMETERPARAMETERS ]  = new CalorimeterParametersXML ;
-    _map[ GEAR::VXDPARAMETERS ] = new VXDParametersXML ;
     _map[ GEAR::SIPLANESPARAMETERS ] = new SiPlanesParametersXML ;
-    _map[ GEAR::TBSIPARAMETERS ] = new TBSiParametersXML ;
 
   }
 

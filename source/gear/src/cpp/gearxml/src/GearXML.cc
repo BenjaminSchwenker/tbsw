@@ -3,20 +3,14 @@
 #include "gearxml/tinyxml.h"
 #include "gearxml/XMLHandlerMgr.h"
 #include "gearxml/GearParametersXML.h"
-#include "gearxml/TPCParametersXML.h"
-#include "gearxml/CalorimeterParametersXML.h"
-#include "gearxml/VXDParametersXML.h"
 #include "gearxml/ConstantBFieldXML.h"
 #include "gearxml/SiPlanesParametersXML.h"
-#include "gearxml/TBSiParametersXML.h"
 
 #include "gearimpl/GearMgrImpl.h"
 
 #include "gear/GEAR.h"
-#include "gear/CalorimeterParameters.h"
-#include "gear/VXDParameters.h"
 #include "gear/SiPlanesParameters.h"
-#include "gear/TBSiParameters.h"
+
 
 //#include <algorithm>
 #include <sstream>
@@ -81,238 +75,6 @@ namespace gear{
     catch( UnknownParameterException& e){
     }
 
-
-
-    // --------- add TPC parameters -------------------
-
-    try{
-
-      TPCParametersXML handler ;
-
-      TiXmlElement detector = handler.toXML( mgr->getTPCParameters() )  ;
-
-      detector.SetAttribute( "name" , "TPC" ) ;
-      detector.SetAttribute( "geartype" , GEAR::TPCPARAMETERS ) ;
-
-      detectors.InsertEndChild( detector ) ;
-
-    }
-    catch( UnknownParameterException& e){
-    }
-
-
-	// --------- add EcalBarrel parameters -------------------
-    try{
-
-      CalorimeterParametersXML handler ;
-
-      TiXmlElement detector = handler.toXML( mgr->getEcalBarrelParameters() )  ;
-
-      detector.SetAttribute( "name" , "EcalBarrel" ) ;
-      detector.SetAttribute( "geartype" , GEAR::CALORIMETERPARAMETERS ) ;
-
-      detectors.InsertEndChild( detector ) ;
-
-    }
-    catch( UnknownParameterException& e){
-    }
-
-    // --------- add EcalEndcap parameters -------------------
-    try{
-
-      CalorimeterParametersXML handler ;
-
-      TiXmlElement detector = handler.toXML( mgr->getEcalEndcapParameters() )  ;
-
-      detector.SetAttribute( "name" , "EcalEndcap" ) ;
-      detector.SetAttribute( "geartype" , GEAR::CALORIMETERPARAMETERS ) ;
-
-      detectors.InsertEndChild( detector ) ;
-
-    }
-    catch( UnknownParameterException& e){
-    }
-
-    // --------- add EcalPlug parameters -------------------
-    try{
-
-      CalorimeterParametersXML handler ;
-
-      TiXmlElement detector = handler.toXML( mgr->getEcalPlugParameters() )  ;
-
-      detector.SetAttribute( "name" , "EcalPlug" ) ;
-      detector.SetAttribute( "geartype" , GEAR::CALORIMETERPARAMETERS ) ;
-
-      detectors.InsertEndChild( detector ) ;
-
-    }
-    catch( UnknownParameterException& e){
-    }
-
-   // --------- add YokeBarrel parameters -------------------
-    try{
-
-      CalorimeterParametersXML handler ;
-
-      TiXmlElement detector = handler.toXML( mgr->getYokeBarrelParameters() )  ;
-
-      detector.SetAttribute( "name" , "YokeBarrel" ) ;
-      detector.SetAttribute( "geartype" , GEAR::CALORIMETERPARAMETERS ) ;
-
-      detectors.InsertEndChild( detector ) ;
-
-    }
-    catch( UnknownParameterException& e){
-    }
-
-    // --------- add YokeEndcap parameters -------------------
-    try{
-
-      CalorimeterParametersXML handler ;
-
-      TiXmlElement detector = handler.toXML( mgr->getYokeEndcapParameters() )  ;
-
-      detector.SetAttribute( "name" , "YokeEndcap" ) ;
-      detector.SetAttribute( "geartype" , GEAR::CALORIMETERPARAMETERS ) ;
-
-      detectors.InsertEndChild( detector ) ;
-
-    }
-    catch( UnknownParameterException& e){
-    }
-
-    // --------- add YokePlug parameters -------------------
-    try{
-
-      CalorimeterParametersXML handler ;
-
-      TiXmlElement detector = handler.toXML( mgr->getYokePlugParameters() )  ;
-
-      detector.SetAttribute( "name" , "YokePlug" ) ;
-      detector.SetAttribute( "geartype" , GEAR::CALORIMETERPARAMETERS ) ;
-
-      detectors.InsertEndChild( detector ) ;
-
-    }
-    catch( UnknownParameterException& e){
-    }
-
-    // --------- add HcalBarrel parameters -------------------
-    try{
-
-      CalorimeterParametersXML handler ;
-
-      TiXmlElement detector = handler.toXML( mgr->getHcalBarrelParameters() )  ;
-
-      detector.SetAttribute( "name" , "HcalBarrel" ) ;
-      detector.SetAttribute( "geartype" , GEAR::CALORIMETERPARAMETERS ) ;
-
-      detectors.InsertEndChild( detector ) ;
-
-    }
-    catch( UnknownParameterException& e){
-    }
-
-    // --------- add HcalEndcap parameters -------------------
-    try{
-
-      CalorimeterParametersXML handler ;
-
-      TiXmlElement detector = handler.toXML( mgr->getHcalEndcapParameters() )  ;
-
-      detector.SetAttribute( "name" , "HcalEndcap" ) ;
-      detector.SetAttribute( "geartype" , GEAR::CALORIMETERPARAMETERS ) ;
-
-      detectors.InsertEndChild( detector ) ;
-
-    }
-    catch( UnknownParameterException& e){
-    }
-
-    // --------- add HcalRing parameters -------------------
-    try{
-
-      CalorimeterParametersXML handler ;
-
-      TiXmlElement detector = handler.toXML( mgr->getHcalRingParameters() )  ;
-
-      detector.SetAttribute( "name" , "HcalRing" ) ;
-      detector.SetAttribute( "geartype" , GEAR::CALORIMETERPARAMETERS ) ;
-
-      detectors.InsertEndChild( detector ) ;
-
-    }
-    catch( UnknownParameterException& e){
-    }
-
-    // --------- add Lcal parameters -------------------
-    try{
-
-      CalorimeterParametersXML handler ;
-
-      TiXmlElement detector = handler.toXML( mgr->getLcalParameters() )  ;
-
-      detector.SetAttribute( "name" , "Lcal" ) ;
-      detector.SetAttribute( "geartype" , GEAR::CALORIMETERPARAMETERS ) ;
-
-      detectors.InsertEndChild( detector ) ;
-
-    }
-    catch( UnknownParameterException& e){
-    }
-
-    // --------- add LHcal parameters -------------------
-    try{
-
-      CalorimeterParametersXML handler ;
-
-      TiXmlElement detector = handler.toXML( mgr->getLHcalParameters() )  ;
-
-      detector.SetAttribute( "name" , "LHcal" ) ;
-      detector.SetAttribute( "geartype" , GEAR::CALORIMETERPARAMETERS ) ;
-
-      detectors.InsertEndChild( detector ) ;
-
-    }
-    catch( UnknownParameterException& e){
-    }
-
-    // --------- add BeamCal parameters -------------------
-    try{
-
-      CalorimeterParametersXML handler ;
-
-      TiXmlElement detector = handler.toXML( mgr->getBeamCalParameters() )  ;
-
-      detector.SetAttribute( "name" , "BeamCal" ) ;
-      detector.SetAttribute( "geartype" , GEAR::CALORIMETERPARAMETERS ) ;
-
-      detectors.InsertEndChild( detector ) ;
-
-    }
-    catch( UnknownParameterException& e){
-    }
-
-
-
-    // ------- add VXD parameters ----------------------------
-    try{
-
-      VXDParametersXML handler ;
-
-      TiXmlElement detector = handler.toXML( mgr->getVXDParameters() ) ;
-
-      // debugging
-      //std::cout << "VXD called." << std::endl ;
-
-      detector.SetAttribute( "name" , "VXD" ) ;
-      detector.SetAttribute( "geartype" , GEAR::VXDPARAMETERS ) ;
-
-      detectors.InsertEndChild( detector ) ;
-    }
-    catch( UnknownParameterException& e) {
-    }
-
     // ------- add SiPlanes parameters ----------------------------
     try{
 
@@ -330,23 +92,7 @@ namespace gear{
     catch( UnknownParameterException& e) {
     }
 
-    // ------- add TBSi parameters ----------------------------
-    try{
-
-      TBSiParametersXML handler ;
-
-      TiXmlElement detector = handler.toXML( mgr->getTBSiParameters() ) ;
-
-      // debugging
-      //      std::cout << "TBSi called." << std::endl ;
-
-      detector.SetAttribute( "name" , "TBSiDet" ) ;
-      detector.SetAttribute( "geartype" , GEAR::TBSIPARAMETERS ) ;
-      detectors.InsertEndChild( detector ) ;
-    }
-    catch( UnknownParameterException& e) {
-    }
-
+    
     // ------- generic/user detector parameters -----------
 
     const std::vector<std::string>& keys = mgr->getGearParameterKeys() ;
