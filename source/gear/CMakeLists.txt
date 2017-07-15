@@ -1,11 +1,12 @@
 #################################
 # cmake file for building GEAR
 # @author Jan Engels, DESY
+# @author Benjamin Schwenker, Uni Göttingen
 #################################
 
 ########################################################
 # CMake compatibility issues: don't modify this, please!
-CMAKE_MINIMUM_REQUIRED( VERSION 2.4.6 )
+#CMAKE_MINIMUM_REQUIRED( VERSION 2.4.6 )
 #SET( CMAKE_BACKWARDS_COMPATIBILITY 2.4.6 )
 MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 # allow more human readable "if then else" constructs
