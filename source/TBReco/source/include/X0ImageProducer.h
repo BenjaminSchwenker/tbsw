@@ -149,6 +149,12 @@ protected:
    double _root_angle1_var;
    double _root_angle2_var;
    double _root_momentum;
+   double _root_vertex_u;
+   double _root_vertex_v;
+   double _root_vertex_z;
+   double _root_vertex_u_var;
+   double _root_vertex_v_var;
+   double _root_vertex_z_var;
    double _root_vertex_chi2;
    double _root_vertex_prob;
    

@@ -14,6 +14,7 @@
 #include "TBKalmanMSC.h"
 #include "TrackInputProvider.h"
 #include "Utilities.h"
+#include "TBVertex.h"
 
 // Include basic C
 #include <iostream>
@@ -325,14 +326,19 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 
     // comboChi2 is chi2 combination of track in upstream and downstream telescope arm
     double comboChi2 = uptrack.GetChiSqu()+downtrack.GetChiSqu(); 
-    
-    
+
+
     //MSC Analysis for the reconstructed angles
     //Here we use the In and Out State and the GetScatterKinks function of the TBKalmanMSC Class
      
     // In and OutStates of the reconstructed Track at the current detector
     TBTrackState& InState=uptrack.GetTE(_idut).GetState();
-    TBTrackState& OutState=downtrack.GetTE(_idut).GetState(); 
+    TBTrackState& OutState=downtrack.GetTE(_idut).GetState();
+
+    // Fit In and OutStates to scattering vertex
+    TBVertex Vertex = TrackFitterMSC.FitVertex(InState, OutState);
+    HepMatrix vertexpos = Vertex.GetPos();
+    HepMatrix vertexcov = Vertex.GetCov();
     
     //Angles and angle errors
     HepMatrix theta(2,1,0);
@@ -373,8 +379,17 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     _root_angle1_var = Cov[0][0];
     _root_angle2_var = Cov[1][1];
 
+    _root_vertex_u = vertexpos[0][0];
+    _root_vertex_v = vertexpos[1][0];
+    _root_vertex_z = vertexpos[2][0];
+    _root_vertex_u_var = vertexcov[0][0];
+    _root_vertex_v_var = vertexcov[1][1];
+    _root_vertex_z_var = vertexcov[2][2];
+    _root_vertex_chi2 = Vertex.GetChi2();
+    _root_vertex_prob = TMath::Prob(Vertex.GetChi2(),2);
 
-	// Construct the u and v residuals and calculate a chi2 value from them
+
+	/* Construct the u and v residuals and calculate a chi2 value from them
 	HepMatrix res=p_in-p_out;
 	HepSymMatrix res_covs=instate_covs+outstate_covs;
 
@@ -386,7 +401,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 	streamlog_out(MESSAGE1) << "Part of Covariance matrix used here: "<<res_covs.sub(3,4)<<endl;
 	
 	_root_vertex_chi2=jchisq[0][0];
-	_root_vertex_prob=TMath::Prob(jchisq[0][0], 2);
+	_root_vertex_prob=TMath::Prob(jchisq[0][0], 2);*/
     
     _rootMscTree->Fill();       
     
@@ -496,6 +511,12 @@ void X0ImageProducer::bookHistos() {
   _rootMscTree->Branch("v"               ,&_root_v              ,"v/D");
   _rootMscTree->Branch("u_var"           ,&_root_u_var          ,"u_var/D");
   _rootMscTree->Branch("v_var"           ,&_root_v_var          ,"v_var/D");
+  _rootMscTree->Branch("vertex_u"	 ,&_root_vertex_u	,"vertex_u/D");
+  _rootMscTree->Branch("vertex_v"	 ,&_root_vertex_v	,"vertex_v/D");
+  _rootMscTree->Branch("vertex_z"	 ,&_root_vertex_z	,"vertex_z/D");
+  _rootMscTree->Branch("vertex_u_var"	 ,&_root_vertex_u_var	,"vertex_u_var/D");
+  _rootMscTree->Branch("vertex_v_var"	 ,&_root_vertex_v_var	,"vertex_v_var/D");
+  _rootMscTree->Branch("vertex_z_var"	 ,&_root_vertex_z_var	,"vertex_z_var/D");
 
   _rootMscTree->Branch("theta1"          ,&_root_angle1         ,"theta1/D"); 
   _rootMscTree->Branch("theta2"          ,&_root_angle2         ,"theta2/D");

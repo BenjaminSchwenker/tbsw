@@ -1,7 +1,7 @@
 #!/bin/bash
 
-export CLHEP_HOME=/home/benjamin/work/CLHEP-2-3-4-3/lib/CLHEP-2.3.4.3
-export ROOTSYS=/home/benjamin/work/root-v6-08
+export CLHEP_HOME=/home/CLHEP_Install
+export ROOTSYS=/home/kirby/root
 
 ############################################################
 # Please do not edit stuff below here !!!!!!!!!!!!!!!!!!!!!!
