@@ -92,36 +92,53 @@ def create_calibration_path(Env):
   correlator.add_processor(name="LCIOOutput")
   
   kalman_aligner_1 = Env.create_path('kalman_aligner_1')
-  kalman_aligner_1.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
+  kalman_aligner_1.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp0.slcio" })  
   kalman_aligner_1.add_processor(name="AlignTF_LC")
   kalman_aligner_1.add_processor(name="PreAligner")
   
   kalman_aligner_2 = Env.create_path('kalman_aligner_2')
-  kalman_aligner_2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
+  kalman_aligner_2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp0.slcio" })  
   kalman_aligner_2.add_processor(name="AlignTF_TC")
   kalman_aligner_2.add_processor(name="TelAligner")
   
   telescope_dqm = Env.create_path('telescope_dqm')
-  telescope_dqm.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
+  telescope_dqm.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp0.slcio" })  
   telescope_dqm.add_processor(name="AlignTF_TC")
   telescope_dqm.add_processor(name="TelescopeDQM")
   
   cluster_calibration_1 = Env.create_path('cluster_calibration_1')
-  cluster_calibration_1.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_air, 'LCIOInputFiles': "tmp.slcio" })  
+  cluster_calibration_1.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_cali, 'LCIOInputFiles': "tmp0.slcio" })  
   cluster_calibration_1.add_processor(name="AlignTF_TC")
   cluster_calibration_1.add_processor(name="M26ClusterCalibrator")
-
-  kalman_aligner_3 = Env.create_path('kalman_aligner_3')
-  kalman_aligner_3.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
-  kalman_aligner_3.add_processor(name="M26GoeHitMaker", params={'HitCollectionName' : 'goehit_m26' })
-  kalman_aligner_3.add_processor(name="AlignTF_TC", params={'InputHitCollectionNameVec': 'goehit_m26'})
-  kalman_aligner_3.add_processor(name="TelAligner")
   
   cluster_calibration_2 = Env.create_path('cluster_calibration_2')
-  cluster_calibration_2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 4000000, 'LCIOInputFiles': "tmp.slcio" })  
+  cluster_calibration_2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_cali, 'LCIOInputFiles': "tmp0.slcio" })  
   cluster_calibration_2.add_processor(name="M26GoeHitMaker", params={'HitCollectionName' : 'goehit_m26' }) 
   cluster_calibration_2.add_processor(name="AlignTF_TC", params={'InputHitCollectionNameVec': 'goehit_m26'})
   cluster_calibration_2.add_processor(name="M26ClusterCalibrator")
+
+  correlator2 = Env.create_path('correlator2')
+  correlator2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_cali, 'LCIOInputFiles': rawfile }) 
+  correlator2.add_processor(name="M26Clusterizer")
+  correlator2.add_processor(name="M26GoeHitMaker")
+  correlator2.add_processor(name="RawDQM", params={'RootFileName': 'RawDQM2.root'})
+  correlator2.add_processor(name="TelCorrelator", params={'OutputRootFileName': 'XCorrelator2.root',  'NewAlignment': "true"})
+  correlator2.add_processor(name="LCIOOutput")
+  
+  kalman_aligner_3 = Env.create_path('kalman_aligner_3')
+  kalman_aligner_3.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
+  kalman_aligner_3.add_processor(name="AlignTF_LC")
+  kalman_aligner_3.add_processor(name="PreAligner", params={'RootFileName': 'KalmanAlign-iteration-3.root'})
+  
+  kalman_aligner_4 = Env.create_path('kalman_aligner_4')
+  kalman_aligner_4.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
+  kalman_aligner_4.add_processor(name="AlignTF_TC")
+  kalman_aligner_4.add_processor(name="TelAligner", params={'RootFileName': 'KalmanAlign-final2.root'}) 
+  
+  telescope_dqm2 = Env.create_path('telescope_dqm2')
+  telescope_dqm2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_cali, 'LCIOInputFiles': "tmp.slcio" })  
+  telescope_dqm2.add_processor(name="AlignTF_TC")
+  telescope_dqm2.add_processor(name="TelescopeDQM", params={'RootFileName' : 'TelescopeDQM2.root'})
   
   
   # create sequence of calibration paths 
@@ -133,19 +150,21 @@ def create_calibration_path(Env):
              kalman_aligner_2, 
              kalman_aligner_2, 
              telescope_dqm, 
-             cluster_calibration_1, 
+            cluster_calibration_1,  
+             cluster_calibration_2, 
+             cluster_calibration_2, 
+             cluster_calibration_2, 
+             cluster_calibration_2, 
+             cluster_calibration_2, 
+             cluster_calibration_2, 
+             cluster_calibration_2, 
+             cluster_calibration_2, 
+             correlator2, 
              kalman_aligner_3, 
-             kalman_aligner_3, 
-             kalman_aligner_3, 
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             kalman_aligner_3, 
-             kalman_aligner_3, 
-             kalman_aligner_3,  
+             kalman_aligner_4, 
+             kalman_aligner_4, 
+             kalman_aligner_4, 
+             telescope_dqm2,   
            ]
   
   return calpath
