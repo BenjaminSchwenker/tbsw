@@ -73,6 +73,10 @@ Correlator::Correlator() : Processor("Correlator")
    registerProcessorParameter ("UpdateAlignment",
                               "Update alignment DB using offset corrections (true/false)?",
                               _updateAlignment, static_cast <bool> (false) ); 
+
+   registerProcessorParameter ("NewAlignment",
+                              "Start alignment from scratch (true/false)?",
+                              _newAlignment, static_cast <bool> (false) ); 
    
    registerProcessorParameter ("OutputRootFileName",
                               "This is the name of the output root file",
@@ -106,7 +110,7 @@ void Correlator::init() {
   _detector.ReadGearConfiguration();    
   
   // Read alignment data base file 
-  _detector.ReadAlignmentDB( _alignmentDBFileName );      
+  if(!_newAlignment) _detector.ReadAlignmentDB( _alignmentDBFileName );      
   
   // Book correlation histograms   
   bookHistos();   

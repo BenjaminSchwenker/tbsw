@@ -60,15 +60,15 @@
      <!--Name of hit collection-->
      <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit" value="hit_m26"/>
      <!--SigmaU for cluster with one uCell contributing [mm]-->
-     <parameter name="SigmaU1" type="double" value="0.0037"/>
+     <parameter name="SigmaU1" type="double" value="0.0033"/>
      <!--SigmaU for cluster with two uCells contributing [mm]-->
-     <parameter name="SigmaU2" type="double" value="0.0033"/>
+     <parameter name="SigmaU2" type="double" value="0.0030"/>
      <!--SigmaU for cluster with three or more uCells contributing [mm]-->
      <parameter name="SigmaU3" type="double" value="0.0050"/>
      <!--SigmaV for cluster with one vCell contributing [mm]-->
-     <parameter name="SigmaV1" type="double" value="0.0037"/>
+     <parameter name="SigmaV1" type="double" value="0.0033"/>
      <!--SigmaV for cluster with two vCells contributing [mm]-->
-     <parameter name="SigmaV2" type="double" value="0.0033"/>
+     <parameter name="SigmaV2" type="double" value="0.0030"/>
      <!--SigmaV for cluster with three or more vCells contributing [mm]-->
      <parameter name="SigmaV3" type="double" value="0.0050"/>
      <!--Clusters having more u cells marked as bad [and can be filterd in track finder]-->
@@ -121,7 +121,7 @@
      <!--Particle mass [GeV]-->
      <parameter name="ParticleMass" type="double" value="0.000511"/>
      <!--Particle momentum [GeV]-->
-     <parameter name="ParticleMomentum" type="double" value="2.0"/>
+     <parameter name="ParticleMomentum" type="double" value="4.0"/>
      <!--First plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
      <parameter name="BackwardPass_FirstPlane" type="int" value="-1"/>
      <!--Second plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
@@ -167,7 +167,7 @@
      <!--Particle mass [GeV]-->
      <parameter name="ParticleMass" type="double" value="0.000511"/>
      <!--Particle momentum [GeV]-->
-     <parameter name="ParticleMomentum" type="double" value="2.0"/>
+     <parameter name="ParticleMomentum" type="double" value="4.0"/>
      <!--First plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
      <parameter name="BackwardPass_FirstPlane" type="int" value="-1"/>
      <!--Second plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
@@ -192,6 +192,8 @@
      <parameter name="RootFileName" type="string" value="KalmanAlign-iteration-1.root"/>
      <!--Update lcio alignmentDB using alignment results (true/false)?-->
      <parameter name="UpdateAlignment" type="bool" value="true"/>
+    <!--Start new alignment DB (true/false)?-->
+    <parameter name="NewAlignment" type="bool" value="false"/>
    </processor>
    
    <processor name="TelAligner" type="KalmanAligner">
@@ -206,6 +208,8 @@
      <parameter name="RootFileName" type="string" value="KalmanAlign-final.root"/>
      <!--Update lcio alignmentDB using alignment results (true/false)?-->
      <parameter name="UpdateAlignment" type="bool" value="true"/>
+    <!--Start new alignment DB (true/false)?-->
+    <parameter name="NewAlignment" type="bool" value="false"/>
    </processor>
    
    <processor name="M26HotPixelKiller" type="HotPixelKiller">
@@ -243,9 +247,11 @@
     <!--Particle mass [GeV]-->
     <parameter name="ParticleMass" type="double" value="0.000511"/>
     <!--Particle momentum [GeV]-->
-    <parameter name="ParticleMomentum" type="double" value="2.0"/>
+    <parameter name="ParticleMomentum" type="double" value="4.0"/>
     <!--Update alignment DB using offset corrections (true/false)?-->
     <parameter name="UpdateAlignment" type="bool" value="true"/>
+    <!--Start new alignment DB (true/false)?-->
+    <parameter name="NewAlignment" type="bool" value="false"/>
   </processor>
    
   <processor name="LCIOOutput" type="LCIOOutputProcessor">
@@ -309,7 +315,7 @@
      <!--Particle mass [GeV]-->
      <parameter name="ParticleMass" type="double" value="0.000511"/>
      <!--Particle momentum [GeV]-->
-     <parameter name="ParticleMomentum" type="double" value="2.0"/>
+     <parameter name="ParticleMomentum" type="double" value="4.0"/>
      <!--First plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
      <parameter name="BackwardPass_FirstPlane" type="int" value="5"/>
      <!--Second plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
@@ -355,7 +361,7 @@
      <!--Particle mass [GeV]-->
      <parameter name="ParticleMass" type="double" value="0.000511"/>
      <!--Particle momentum [GeV]-->
-     <parameter name="ParticleMomentum" type="double" value="2.0"/>
+     <parameter name="ParticleMomentum" type="double" value="4.0"/>
      <!--First plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
      <parameter name="BackwardPass_FirstPlane" type="int" value="-1"/>
      <!--Second plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
@@ -418,7 +424,7 @@
     <!--Number of beam particles per second-->
     <parameter name="BeamIntensity" type="double" value="20000"/>
     <!--Beam momentum [GeV]-->
-    <parameter name="BeamMomentum" type="double" value="2.0"/>
+    <parameter name="BeamMomentum" type="double" value="4.0"/>
     <!--Beam momentum sigma [GeV]-->
     <parameter name="BeamMomentumSigma" type="double" value="0.001"/>
     <!--Beam slope sigma in XZ plane [rad]-->

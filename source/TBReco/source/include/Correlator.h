@@ -114,6 +114,11 @@ protected:
  *  values.  
  */
    bool _updateAlignment;
+
+//! New alignment  
+/*! Don't use current alignment data base, but start from scratch   
+ */
+   bool _newAlignment;
     
 //! Reference Plane
 /*! Plane number of reference pixel module. Plane numbers are counted
