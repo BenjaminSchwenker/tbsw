@@ -135,7 +135,7 @@ def create_calibration_path(Env):
 
   correlator2 = Env.create_path('correlator2')
   correlator2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_air, 'LCIOInputFiles': rawfile_air }) 
-  correlator2.add_processor(name="TelCorrelator", params={'OutputRootFileName': 'XCorrelator2.root')
+  correlator2.add_processor(name="TelCorrelator", params={'OutputRootFileName': 'XCorrelator2.root'})
   
   kalman_aligner_4 = Env.create_path('kalman_aligner_4')
   kalman_aligner_4.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
