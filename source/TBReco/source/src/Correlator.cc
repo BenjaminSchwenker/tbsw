@@ -112,7 +112,7 @@ void Correlator::init() {
   // Read alignment data base file 
   if(!_newAlignment) _detector.ReadAlignmentDB( _alignmentDBFileName );
   // This is needed, because if the AlignmentDB is not read, the detector construct doesn't know the alignmentDB name
-  else  _detector.ReadAlignmentDBName( _alignmentDBFileName );
+  else  _detector.SetAlignmentDBName( _alignmentDBFileName );
   
   // Book correlation histograms   
   bookHistos();   

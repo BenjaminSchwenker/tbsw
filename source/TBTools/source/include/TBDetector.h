@@ -132,7 +132,7 @@ class TBDetector {
   void ReadAlignmentDB( std::string FileName );
 
   //! Read alignment data base file name 
-  void ReadAlignmentDBName( std::string FileName );
+  void SetAlignmentDBName( std::string FileName );
   
   //! Get number of pixel sensors 
   int GetNSensors() { return _numberOfSensors; };
