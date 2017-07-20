@@ -81,6 +81,12 @@ def create_calibration_path(Env):
 
   cluster_calibrator_mc = Env.create_path('cluster_calibrator_mc')
   cluster_calibrator_mc.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': rawfile_air })  
+  cluster_calibrator_mc.add_processor(name="M26Clusterizer")
+  cluster_calibrator_mc.add_processor(name="M26CogHitMaker")
+  cluster_calibrator_mc.add_processor(name="M26ClusterCalibrationFromMC")
+
+  clusterizer = Env.create_path('clusterizer')
+  clusterizer.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_air, 'LCIOInputFiles': rawfile_air }) 
   clusterizer.add_processor(name="M26Clusterizer")
   clusterizer.add_processor(name="LCIOOutput")
 
@@ -153,14 +159,15 @@ def create_calibration_path(Env):
   
   # create sequence of calibration paths 
   calpath= [ hotpixelkiller , 
-			 clusterizer, 
+             cluster_calibrator_mc,
+             clusterizer,
              correlator, 
              kalman_aligner_1, 
              kalman_aligner_2, 
              kalman_aligner_2, 
              kalman_aligner_2, 
              telescope_dqm, 
-             cluster_calibration_1,
+             cluster_calibration_1, 
              kalman_aligner_3, 
              kalman_aligner_3, 
              kalman_aligner_3,  
@@ -171,12 +178,12 @@ def create_calibration_path(Env):
              cluster_calibration_2, 
              cluster_calibration_2, 
              cluster_calibration_2, 
-             cluster_calibration_2, 
+             cluster_calibration_2,
              correlator2, 
-             kalman_aligner_3, 
              kalman_aligner_4, 
-             kalman_aligner_4, 
-             kalman_aligner_4, 
+             kalman_aligner_5, 
+             kalman_aligner_5, 
+             kalman_aligner_5, 
              telescope_dqm2,   
            ]
   

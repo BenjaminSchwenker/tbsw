@@ -54,7 +54,7 @@ def create_calibration_path(Env, rawfile, gearfile):
   hotpixelkiller.add_processor(name="M26Unpacker")
   hotpixelkiller.add_processor(name="M26HotPixelKiller")
   
-  clusterizer = Env.create_path('coghitmaker')
+  clusterizer = Env.create_path('clusterizer')
   clusterizer.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_cali}) 
   clusterizer.add_processor(name="RawInputProcessor",params={'FileName': rawfile})
   clusterizer.add_processor(name="M26Unpacker")
