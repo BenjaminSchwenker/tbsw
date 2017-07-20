@@ -103,7 +103,9 @@ void KalmanAligner::init() {
   _detector.ReadGearConfiguration();    
   
   // Read alignment data base file 
-    if(!_newAlignment) _detector.ReadAlignmentDB( _alignmentDBFileName );       
+  if(!_newAlignment) _detector.ReadAlignmentDB( _alignmentDBFileName );
+  // This is needed, because if the AlignmentDB is not read, the detector construct doesn't know the alignmentDB name
+  else  _detector.ReadAlignmentDBName( _alignmentDBFileName );     
     
   //////////////////////////////////////////////////////////////////////
   // Alignment Data I/O 

@@ -272,6 +272,16 @@ void TBDetector::ReadGearConfiguration( )
 }
 
 // 
+// Read name of alignment data base file 
+//   
+void TBDetector::ReadAlignmentDBName( std::string FileName )
+{
+     
+  // Store name of alignment data base
+  _alignmentDBFileName = FileName;
+}
+
+// 
 // Read alignment data base file 
 //   
 void TBDetector::ReadAlignmentDB( std::string FileName )

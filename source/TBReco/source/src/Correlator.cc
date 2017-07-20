@@ -106,11 +106,13 @@ void Correlator::init() {
   _iRun = 0 ;
   _iEvt = 0 ;
    
-  // Read detector constants from gear file
-  _detector.ReadGearConfiguration();    
+  // Read detector constants from gear file   
+    _detector.ReadGearConfiguration(); 
   
   // Read alignment data base file 
-  if(!_newAlignment) _detector.ReadAlignmentDB( _alignmentDBFileName );      
+  if(!_newAlignment) _detector.ReadAlignmentDB( _alignmentDBFileName );
+  // This is needed, because if the AlignmentDB is not read, the detector construct doesn't know the alignmentDB name
+  else  _detector.ReadAlignmentDBName( _alignmentDBFileName );
   
   // Book correlation histograms   
   bookHistos();   
