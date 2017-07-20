@@ -251,7 +251,7 @@
     <!--Update alignment DB using offset corrections (true/false)?-->
     <parameter name="UpdateAlignment" type="bool" value="true"/>
     <!--Start new alignment DB (true/false)?-->
-    <parameter name="NewAlignment" type="bool" value="false"/>
+    <parameter name="NewAlignment" type="bool" value="true"/>
   </processor>
    
   <processor name="LCIOOutput" type="LCIOOutputProcessor">
