@@ -1,7 +1,7 @@
 #!/bin/bash
 
-export CLHEP_HOME=/home/CLHEP_Install
-export ROOTSYS=/home/kirby/root
+export CLHEP_HOME=/home/benjamin/work/CLHEP-2-3-4-3/lib/CLHEP-2.3.4.3
+export ROOTSYS=/home/benjamin/work/root-v6-08
 
 ############################################################
 # Please do not edit stuff below here !!!!!!!!!!!!!!!!!!!!!!
@@ -77,7 +77,6 @@ echo "#-------------------------------------------------------------------------
 echo "export ROOTSYS="${ROOTSYS}"" >> init_tbsw.sh
 echo "export PATH="${ROOTSYS}/bin:${PATH}"" >> init_tbsw.sh
 echo "export LD_LIBRARY_PATH="${ROOTSYS}/lib:${LD_LIBRARY_PATH}"" >> init_tbsw.sh
-echo "export PYTHONPATH="${ROOTSYS}/lib"" >> init_tbsw.sh
 echo "" >> init_tbsw.sh
 
 echo "#--------------------------------------------------------------------------------" >> init_tbsw.sh
