@@ -137,18 +137,17 @@ class Environment(object):
     tree = xml.etree.ElementTree.parse(xmlfile)
     root = tree.getroot()
 
+    print(' Changed beam energy to:\n')
+    print momentum
+
     for processor in root.findall('processor'): 
       for parameter in processor.findall('parameter'):
         name = parameter.get('name')
         value = parameter.get('value')
         if name=='ParticleMomentum':
 		  parameter.set('value', str(momentum))
-          print(' Changed parameter:\n')
-          print name, value
         if name=='BeamMomentum':
 		  parameter.set('value', str(momentum))
-          print(' Changed parameter:\n')
-          print name, value
 
     tree.write(xmlfile) 
     
