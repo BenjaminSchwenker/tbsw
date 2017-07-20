@@ -129,7 +129,7 @@ class Environment(object):
   def set_beam_momentum(self, momentum):
     """
     Set momentum in processors.xml file  
-    :@ifile:      momentum to be set
+    :@momentum:      momentum to be set
     
     :author: benjamin.schwenker@phys.uni-goettinge.de  
     """    
