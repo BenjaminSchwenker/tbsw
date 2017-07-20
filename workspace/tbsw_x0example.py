@@ -39,6 +39,8 @@ sigma_pos=.1
 #Rotation parameters in degrees
 mean_rot=0.0 
 sigma_rot=0.1
+# Nominal Beam energy
+beamenergy=2.0
 
 def create_sim_path_air(Env):
   """
@@ -212,6 +214,9 @@ def simulate():
   # Create tmpdir to hold all steerfiles and log files 
   SimObj = Simulation(steerfiles=steerfiles, name=os.path.splitext(os.path.basename(rawfile_alu))[0] + '-sim' )
 
+  # Set Beam energy
+  SimObj.set_beam_momentum(beamenergy)
+
   # Create steerfiles for processing
   simpath = create_sim_path_air(SimObj)
 
@@ -249,6 +254,9 @@ def calibrate():
   # containing all calibration data. 
   CalObj = Calibration(steerfiles=steerfiles, name=localcaltag + '-cal') 
 
+  # Set Beam energy
+  CalObj.set_beam_momentum(beamenergy)
+
   # Get gearfile and set air as DUT material
   localgearfile = CalObj.get_filename('gear.xml')
   set_parameter(gearfile=localgearfile, sensorID=11, parametername='thickness', value=0.0001)
@@ -265,6 +273,9 @@ def reconstruct():
   # Reconsruct the rawfile using the caltag. Resulting root files are 
   # written to folder root-files/
   RecObj = Reconstruction(steerfiles=steerfiles, name=air_caltag + '-reco' )
+
+  # Set Beam energy
+  RecObj.set_beam_momentum(beamenergy)
 
   # Create reconstuction path
   recopath = create_reco_path(RecObj)  

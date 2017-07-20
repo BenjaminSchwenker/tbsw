@@ -125,6 +125,32 @@ class Environment(object):
   
   def set_gearfile(self, name=''): 
     self.override(xpath="./global/parameter[@name='GearXMLFile']", value=name)  
+
+  def set_beam_momentum(self, momentum):
+    """
+    Set momentum in processors.xml file  
+    :@ifile:      momentum to be set
+    
+    :author: benjamin.schwenker@phys.uni-goettinge.de  
+    """    
+    xmlfile = self.get_filename('processors.xml')
+    tree = xml.etree.ElementTree.parse(xmlfile)
+    root = tree.getroot()
+
+    for processor in root.findall('processor'): 
+      for parameter in processor.findall('parameter'):
+        name = parameter.get('name')
+        value = parameter.get('value')
+        if name=='ParticleMomentum':
+		  parameter.set('value', str(momentum))
+          print(' Changed parameter:\n')
+          print name, value
+        if name=='BeamMomentum':
+		  parameter.set('value', str(momentum))
+          print(' Changed parameter:\n')
+          print name, value
+
+    tree.write(xmlfile) 
     
   def run(self,pathlist):
     # run Marlin in tmpdir  

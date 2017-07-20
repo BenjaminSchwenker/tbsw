@@ -29,6 +29,8 @@ gearfile = 'gear.xml'
 caltag='air'
 # File name for raw data 
 rawfile_cali = '/work1/rawdata/DESY_Oktober16/2GeV_air/run006973.raw'
+# Nominal Beam energy
+beamenergy=2.0
 
 RunList_reco = [
 		    '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006958.raw',
@@ -187,6 +189,7 @@ def reconstruct(params):
   # Reconsruct the rawfile using the caltag. Resulting root files are 
   # written to folder root-files/
   RecObj = Reconstruction(steerfiles=steerfiles, name=name + '-reco' )
+  RecObj.set_beam_momentum(beamenergy)
 
   # Create reconstuction path
   recopath = create_reco_path(RecObj, rawfile, gearfile)  
@@ -209,6 +212,7 @@ def calibrate(params):
   # Calibrate of the run using beam data. Creates a folder cal-files/caltag 
   # containing all calibration data. 
   CalObj = Calibration(steerfiles=steerfiles, name=caltag + '-cal') 
+  CalObj.set_beam_momentum(beamenergy)
   
   # Create list of calibration steps 
   calpath = create_calibration_path(CalObj, rawfile, gearfile)
