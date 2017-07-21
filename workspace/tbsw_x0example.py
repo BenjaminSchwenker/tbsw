@@ -39,6 +39,8 @@ sigma_pos=.1
 #Rotation parameters in degrees
 mean_rot=0.0 
 sigma_rot=0.1
+# Nominal Beam energy
+beamenergy=2.0
 
 def create_sim_path_air(Env):
   """
@@ -80,52 +82,85 @@ def create_calibration_path(Env):
   cluster_calibrator_mc = Env.create_path('cluster_calibrator_mc')
   cluster_calibrator_mc.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': rawfile_air })  
   cluster_calibrator_mc.add_processor(name="M26Clusterizer")
+  cluster_calibrator_mc.add_processor(name="M26CogHitMaker")
   cluster_calibrator_mc.add_processor(name="M26ClusterCalibrationFromMC")
-  
+
+  clusterizer = Env.create_path('clusterizer')
+  clusterizer.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_air, 'LCIOInputFiles': rawfile_air }) 
+  clusterizer.add_processor(name="M26Clusterizer")
+  clusterizer.add_processor(name="LCIOOutput")
+
   correlator = Env.create_path('correlator')
-  correlator.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_air, 'LCIOInputFiles': rawfile_air }) 
-  correlator.add_processor(name="M26Clusterizer")
+  correlator.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" }) 
   correlator.add_processor(name="M26CogHitMaker")
-  correlator.add_processor(name="RawDQM")
+  correlator.add_processor(name="RawDQM") 
   correlator.add_processor(name="TelCorrelator")
-  correlator.add_processor(name="LCIOOutput")
   
   kalman_aligner_1 = Env.create_path('kalman_aligner_1')
   kalman_aligner_1.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
+  kalman_aligner_1.add_processor(name="M26CogHitMaker")
   kalman_aligner_1.add_processor(name="AlignTF_LC")
-  kalman_aligner_1.add_processor(name="PreAligner")
+  kalman_aligner_1.add_processor(name="PreAligner", params={'RootFileName': 'KalmanAlign-iteration-1.root'})
   
   kalman_aligner_2 = Env.create_path('kalman_aligner_2')
   kalman_aligner_2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
+  kalman_aligner_2.add_processor(name="M26CogHitMaker")
   kalman_aligner_2.add_processor(name="AlignTF_TC")
-  kalman_aligner_2.add_processor(name="TelAligner")
+  kalman_aligner_2.add_processor(name="TelAligner", params={'RootFileName': 'KalmanAlign-iteration-2.root'})
   
   telescope_dqm = Env.create_path('telescope_dqm')
   telescope_dqm.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
+  telescope_dqm.add_processor(name="M26CogHitMaker")
   telescope_dqm.add_processor(name="AlignTF_TC")
   telescope_dqm.add_processor(name="TelescopeDQM")
   
   cluster_calibration_1 = Env.create_path('cluster_calibration_1')
-  cluster_calibration_1.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_air, 'LCIOInputFiles': "tmp.slcio" })  
+  cluster_calibration_1.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_air, 'LCIOInputFiles': "tmp.slcio" }) 
+  cluster_calibration_1.add_processor(name="M26CogHitMaker") 
   cluster_calibration_1.add_processor(name="AlignTF_TC")
   cluster_calibration_1.add_processor(name="M26ClusterCalibrator")
-
+  
   kalman_aligner_3 = Env.create_path('kalman_aligner_3')
   kalman_aligner_3.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
-  kalman_aligner_3.add_processor(name="M26GoeHitMaker", params={'HitCollectionName' : 'goehit_m26' })
-  kalman_aligner_3.add_processor(name="AlignTF_TC", params={'InputHitCollectionNameVec': 'goehit_m26'})
-  kalman_aligner_3.add_processor(name="TelAligner")
+  kalman_aligner_3.add_processor(name="M26GoeHitMaker")
+  kalman_aligner_3.add_processor(name="AlignTF_TC")
+  kalman_aligner_3.add_processor(name="TelAligner", params={'RootFileName': 'KalmanAlign-iteration-3.root'})
   
   cluster_calibration_2 = Env.create_path('cluster_calibration_2')
-  cluster_calibration_2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 4000000, 'LCIOInputFiles': "tmp.slcio" })  
-  cluster_calibration_2.add_processor(name="M26GoeHitMaker", params={'HitCollectionName' : 'goehit_m26' }) 
-  cluster_calibration_2.add_processor(name="AlignTF_TC", params={'InputHitCollectionNameVec': 'goehit_m26'})
+  cluster_calibration_2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_air, 'LCIOInputFiles': "tmp.slcio" })  
+  cluster_calibration_2.add_processor(name="M26GoeHitMaker") 
+  cluster_calibration_2.add_processor(name="AlignTF_TC")
   cluster_calibration_2.add_processor(name="M26ClusterCalibrator")
+
+  correlator2 = Env.create_path('correlator2')
+  correlator2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })
+  correlator2.add_processor(name="M26GoeHitMaker")  
+  correlator2.add_processor(name="RawDQM", params={'RootFileName': 'RawDQM2.root'})
+  correlator2.add_processor(name="TelCorrelator", params={'OutputRootFileName': 'XCorrelator2.root'})
+  
+  kalman_aligner_4 = Env.create_path('kalman_aligner_4')
+  kalman_aligner_4.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" }) 
+  kalman_aligner_4.add_processor(name="M26GoeHitMaker")   
+  kalman_aligner_4.add_processor(name="AlignTF_LC")
+  kalman_aligner_4.add_processor(name="PreAligner", params={'RootFileName': 'KalmanAlign-iteration-4.root'})
+  
+  kalman_aligner_5 = Env.create_path('kalman_aligner_5')
+  kalman_aligner_5.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" }) 
+  kalman_aligner_5.add_processor(name="M26GoeHitMaker")  
+  kalman_aligner_5.add_processor(name="AlignTF_TC")
+  kalman_aligner_5.add_processor(name="TelAligner", params={'RootFileName': 'KalmanAlign-final.root'}) 
+  
+  telescope_dqm2 = Env.create_path('telescope_dqm2')
+  telescope_dqm2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_air, 'LCIOInputFiles': "tmp.slcio" }) 
+  telescope_dqm2.add_processor(name="M26GoeHitMaker")  
+  telescope_dqm2.add_processor(name="AlignTF_TC")
+  telescope_dqm2.add_processor(name="TelescopeDQM", params={'RootFileName' : 'TelescopeDQM2.root'})
   
   
   # create sequence of calibration paths 
   calpath= [ hotpixelkiller , 
              cluster_calibrator_mc,
+             clusterizer,
              correlator, 
              kalman_aligner_1, 
              kalman_aligner_2, 
@@ -135,16 +170,21 @@ def create_calibration_path(Env):
              cluster_calibration_1, 
              kalman_aligner_3, 
              kalman_aligner_3, 
-             kalman_aligner_3, 
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             kalman_aligner_3, 
-             kalman_aligner_3, 
              kalman_aligner_3,  
+             cluster_calibration_2, 
+             cluster_calibration_2, 
+             cluster_calibration_2, 
+             cluster_calibration_2, 
+             cluster_calibration_2, 
+             cluster_calibration_2, 
+             cluster_calibration_2, 
+             cluster_calibration_2,
+             correlator2, 
+             kalman_aligner_4, 
+             kalman_aligner_5, 
+             kalman_aligner_5, 
+             kalman_aligner_5, 
+             telescope_dqm2,   
            ]
   
   return calpath
@@ -174,6 +214,9 @@ def simulate():
   
   # Create tmpdir to hold all steerfiles and log files 
   SimObj = Simulation(steerfiles=steerfiles, name=os.path.splitext(os.path.basename(rawfile_alu))[0] + '-sim' )
+
+  # Set Beam energy
+  SimObj.set_beam_momentum(beamenergy)
 
   # Create steerfiles for processing
   simpath = create_sim_path_air(SimObj)
@@ -212,6 +255,9 @@ def calibrate():
   # containing all calibration data. 
   CalObj = Calibration(steerfiles=steerfiles, name=localcaltag + '-cal') 
 
+  # Set Beam energy
+  CalObj.set_beam_momentum(beamenergy)
+
   # Get gearfile and set air as DUT material
   localgearfile = CalObj.get_filename('gear.xml')
   set_parameter(gearfile=localgearfile, sensorID=11, parametername='thickness', value=0.0001)
@@ -228,6 +274,9 @@ def reconstruct():
   # Reconsruct the rawfile using the caltag. Resulting root files are 
   # written to folder root-files/
   RecObj = Reconstruction(steerfiles=steerfiles, name=air_caltag + '-reco' )
+
+  # Set Beam energy
+  RecObj.set_beam_momentum(beamenergy)
 
   # Create reconstuction path
   recopath = create_reco_path(RecObj)  

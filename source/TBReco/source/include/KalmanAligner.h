@@ -113,6 +113,11 @@ protected:
    
 //! Update alignmentDB   
    bool _updateAlignment;
+
+//! New alignment  
+/*! Don't use current alignment data base, but start from scratch   
+ */
+   bool _newAlignment;
       
       
  private:
