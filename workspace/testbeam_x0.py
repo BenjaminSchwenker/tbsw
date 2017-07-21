@@ -103,7 +103,7 @@ def create_calibration_path(Env, rawfile, gearfile):
   cluster_calibration_2.add_processor(name="AlignTF_TC")
   cluster_calibration_2.add_processor(name="M26ClusterCalibrator")
 
-  correlator2 = Env.create_path('correlator')
+  correlator2 = Env.create_path('correlator2')
   correlator2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })
   correlator2.add_processor(name="M26GoeHitMaker")  
   correlator2.add_processor(name="RawDQM", params={'RootFileName': 'RawDQM2.root'})
