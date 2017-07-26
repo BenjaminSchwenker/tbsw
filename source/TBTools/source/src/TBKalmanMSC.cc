@@ -223,63 +223,6 @@ bool TBKalmanMSC::ProcessTrack(TBTrack& trk, int dir, bool biased)
   return false;
 }
 
-TBVertex TBKalmanMSC::FitVertex(TBTrackState& InState, TBTrackState& OutState)
-{
-  //Take relevant matrices from trackstates
-  HepMatrix In_pars = InState.GetPars();
-  HepMatrix Out_pars = OutState.GetPars();
-  HepMatrix In_covs = InState.GetCov();
-  HepMatrix Out_covs = OutState.GetCov();
-  HepMatrix Pars[2] = {In_pars.sub(1,4,1,1), Out_pars.sub(1,4,1,1)};
-  HepMatrix Covs[2] = {In_covs.sub(1,4,1,4), Out_covs.sub(1,4,1,4)};
-
-  //Initial vertex guess at (0,0,0) and large covariance
-  HepMatrix r(3,1,0);
-  HepMatrix C(3,3,0);
-	C[0][0] = 100*100;
-	C[1][1] = 100*100;
-	C[2][2] = 100*100;
-  double chi2 = 0;
-
-  for (int i=0; i<2; i++) {
-
-    //Jacobian for slope states q
-    HepMatrix B(4,2,0);
-	B[0][0] = 1;
-	B[1][1] = 1;
-
-    //Calculate filter matrices
-    HepMatrix G = Covs[i].inverse();
-    HepMatrix W = (B.T()*G*B).inverse();
-    HepMatrix GB = G - G * B * W * B.T() * G;
-
-    //Jacobian for vertex state r
-    HepMatrix A(4,3,0);
-	A[2][0] = 1;
-	A[3][0] = 1;
-	A[2][1] = -Pars[i][0][0];
-	A[3][2] = -Pars[i][1][0]; 
-
-    //Update vertex, covariance
-    HepMatrix Ctemp = C;
-    C = (C.inverse() + A.T()*GB*A).inverse();
-
-    HepMatrix rtemp = r;
-    r = C * (Ctemp.inverse()*r + A.T()*GB*Pars[i]);
-
-    HepMatrix q = W * B.T() * G * (Pars[i] - A * r);
-
-    //compute residual and chi2 increment
-    HepMatrix zeta = Pars[i] - A * r - B * q;
-    chi2 += (zeta.T() * G * zeta + (r - rtemp).T() * Ctemp.inverse() * (r - rtemp))[0][0];
-
-  }
-
-  TBVertex vertex(r,C,chi2);
-  
-  return vertex;
-}
-
 CLHEP::HepMatrix TBKalmanMSC::GetScatterKinks(Det& DetUnit, TBTrackState& InState, TBTrackState& OutState)
 {
   double slopes[4];

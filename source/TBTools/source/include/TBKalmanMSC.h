@@ -5,7 +5,6 @@
 #include "TBTrack.h"
 #include "TBHit.h"
 #include "GenericTrackModel.h"
-#include "TBVertex.h"
 
 //other includes includes
 #include <TMath.h>
@@ -139,11 +138,7 @@ class TBKalmanMSC {
    */
   CLHEP::HepMatrix slopestotheta(double slopes[4]);
 
-  /** Performs vertex fitting. Returns Vertex class (Position, Covariance and chisq)
-   */
-  TBVertex FitVertex(TBTrackState& InState, TBTrackState& OutState);
 
- 
   CLHEP::HepMatrix& GetHMatrix()
     { return H;} 
   

@@ -134,10 +134,10 @@ protected:
    double _rootTrackProbDown;
    double _rootTrackProbCombo;
    
-   double _root_u; 
-   double _root_v; 
-   double _root_u_var; 
-   double _root_v_var; 
+   double _root_u_mean; 
+   double _root_v_mean; 
+   double _root_u_mean_var; 
+   double _root_v_mean_var; 
    double _root_u_in; 
    double _root_v_in; 
    double _root_u_out; 
@@ -151,10 +151,10 @@ protected:
    double _root_momentum;
    double _root_vertex_u;
    double _root_vertex_v;
-   double _root_vertex_z;
+   double _root_vertex_w;
    double _root_vertex_u_var;
    double _root_vertex_v_var;
-   double _root_vertex_z_var;
+   double _root_vertex_w_var;
    double _root_vertex_chi2;
    double _root_vertex_prob;
    
