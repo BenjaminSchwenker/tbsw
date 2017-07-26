@@ -124,35 +124,27 @@ namespace marlin{
 
     typedef ProcessorMap::iterator MI ;
     
-    std::cout  << "<!--##########################################" << std::endl
-	       << "    #                                        #" << std::endl
-	       << "    #     Example steering file for marlin   #" << std::endl
-	       << "    #                                        #" << std::endl
-	       << "    ##########################################-->" << std::endl
-	       <<  std::endl ;
+    
 
     std::cout  <<  std::endl 
 	       << "<marlin xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
            << "xsi:noNamespaceSchemaLocation=\"http://ilcsoft.desy.de/marlin/marlin.xsd\">"
 	       <<  std::endl ;
 
-    std::cout  <<  " <execute>" << std::endl 
-	       <<  "  <processor name=\"MyAIDAProcessor\"/>" << std::endl
+    std::cout  <<  " <execute>" << std::endl
 	       <<  "  <processor name=\"MyTestProcessor\"/>  " << std::endl
 	       <<  "  <processor name=\"MyLCIOOutputProcessor\"/>  " << std::endl
 	       <<  " </execute>" << std::endl
 	       << std::endl ;
 
     std::cout  <<  " <global>" << std::endl 
-	       <<  "  <parameter name=\"LCIOInputFiles\"> simjob.slcio </parameter>" << std::endl
+	       <<  "  <parameter name=\"LCIOInputFiles\" value=\"simjob.slcio\" />" << std::endl
 	       <<  "  <!-- limit the number of processed records (run+evt): -->  " << std::endl
 	       <<  "  <parameter name=\"MaxRecordNumber\" value=\"5001\" />  " << std::endl
 	       <<  "  <parameter name=\"SkipNEvents\" value=\"0\" />  " << std::endl
 	       <<  "  <parameter name=\"SupressCheck\" value=\"false\" />  " << std::endl
-#ifdef USE_GEAR
 	       <<  "  <parameter name=\"GearXMLFile\"> gear_ldc.xml </parameter>  " << std::endl
-#endif
-	       <<  "  <parameter name=\"Verbosity\" options=\"DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT\"> DEBUG  </parameter> " << std::endl
+	       <<  "  <parameter name=\"Verbosity\" options=\"DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT\" value=\"DEBUG\" /> " << std::endl
 	       <<  " </global>" << std::endl
 	       << std::endl ;
 
@@ -258,8 +250,6 @@ namespace marlin{
 
   void ProcessorMgr::processRunHeader( LCRunHeader* run){ 
 
-
-#ifdef USE_GEAR
     // check if gear file is consistent with detector model in lcio run header 
     std::string lcioDetName = run->getDetectorName() ;
 
@@ -303,9 +293,6 @@ namespace marlin{
       throw ProcMgrStopProcessing( sstr.str() ) ;
     }
       
-
-
-#endif
     
 //     for_each( _list.begin() , _list.end() ,  std::bind2nd(  std::mem_fun( &Processor::processRunHeader ) , run ) ) ;
     for( ProcessorList::iterator it = _list.begin() ; it != _list.end() ; ++it ) {

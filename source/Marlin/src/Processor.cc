@@ -8,8 +8,6 @@ using namespace lcio ;
 
 namespace marlin{
 
-// set default verbosity level to MESSAGE
-//int Processor::Verbosity=Processor::MESSAGE;
 
 Processor::Processor(const std::string& typeName) :
   _description(" description not set by author ") ,
@@ -123,18 +121,10 @@ void Processor::setParameters( StringParameters* parameters) {
   }
 
   void Processor::printDescriptionXML(std::ostream& stream) {
-
-    if(stream == std::cout){
+    
     stream << " <processor name=\"My" <<  type()  << "\"" 
-	      << " type=\"" <<  type() << "\">" 
-	      << std::endl ;
-    }
-    else{
-    stream << " <processor name=\"" <<  name()  << "\"" 
-	      << " type=\"" <<  type() << "\">" 
-	      << std::endl ;
-
-    }
+	       << " type=\"" <<  type() << "\">" 
+	       << std::endl ;
     
     stream << " <!--" << description() << "-->" << std::endl ;
     
@@ -143,38 +133,19 @@ void Processor::setParameters( StringParameters* parameters) {
     for( PMI i = _map.begin() ; i != _map.end() ; i ++ ) {
       
       ProcessorParameter* p = i->second ;
-
-      stream << "  <!--" << p->description() << "-->" << std::endl ;
-
-      if( p->isOptional() ) {
-	stream << "  <!--parameter name=\"" << p->name() << "\" " 
-		  << "type=\"" << p->type() ;
-
-	if ( isInputCollectionName( p->name() ) )
-	  stream << "\" lcioInType=\"" << _inTypeMap[ p->name() ]  ;
-
-	if ( isOutputCollectionName( p->name() ) )
-	  stream << "\" lcioOutType=\"" << _outTypeMap[ p->name() ]  ;
-
-	stream << "\">"
-		  << p->defaultValue() 
-		  << " </parameter-->"
-		  << std::endl ;
-      } else {
-	stream << "  <parameter name=\"" << p->name() << "\" " 
-		  << "type=\"" << p->type() ;
-
-	if ( isInputCollectionName( p->name() ) )
-	  stream << "\" lcioInType=\"" << _inTypeMap[ p->name() ]  ;
-
-	if ( isOutputCollectionName( p->name() ) )
-	  stream << "\" lcioOutType=\"" << _outTypeMap[ p->name() ]  ;
-
-	stream  << "\">"
-		   << p->defaultValue() 
-		  << " </parameter>"
-		  << std::endl ;
-      }
+      
+      stream << "  <!--" << p->description() << "-->" << std::endl ;  
+	  stream << "  <parameter name=\"" << p->name() << "\" " 
+		     << "type=\"" << p->type() ;
+         
+	  if ( isInputCollectionName( p->name() ) )
+	    stream << "\" lcioInType=\"" << _inTypeMap[ p->name() ]  ;
+          
+	  if ( isOutputCollectionName( p->name() ) )
+	    stream << "\" lcioOutType=\"" << _outTypeMap[ p->name() ]  ;
+        
+      stream  << "\" value=\"" << p->defaultValue() << "\" />"
+		      << std::endl ; 
     }
     
     stream << "</processor>" 

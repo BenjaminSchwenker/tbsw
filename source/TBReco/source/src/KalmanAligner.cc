@@ -74,7 +74,10 @@ KalmanAligner::KalmanAligner() : Processor("KalmanAligner")
   registerProcessorParameter ("UpdateAlignment",
                               "Update lcio alignmentDB using alignment results (true/false)?",
                               _updateAlignment, static_cast <bool> (false) ); 
-  
+
+   registerProcessorParameter ("NewAlignment",
+                              "Start alignment from scratch (true/false)?",
+                              _newAlignment, static_cast <bool> (false) ); 
   
   
  
@@ -100,7 +103,9 @@ void KalmanAligner::init() {
   _detector.ReadGearConfiguration();    
   
   // Read alignment data base file 
-  _detector.ReadAlignmentDB( _alignmentDBFileName );       
+  if(!_newAlignment) _detector.ReadAlignmentDB( _alignmentDBFileName );
+  // This is needed, because if the AlignmentDB is not read, the detector construct doesn't know the alignmentDB name
+  else  _detector.SetAlignmentDBName( _alignmentDBFileName );     
     
   //////////////////////////////////////////////////////////////////////
   // Alignment Data I/O 

@@ -1414,9 +1414,13 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		for(int j=0;j<4;j++)
 		{
 		   	pads.at(j)->cd();
-			Title.Form("Area %i: d=%fmm",(4*i)+j,grid.GetMeasurementAreas().at((4*i)+j).Get_thickness());
-			histo_vec.at((4*i)+j)->SetTitle(Title);
-			histo_vec.at((4*i)+j)->Draw();
+			if(((4*i)+j)<num_fitfunctions)
+			{
+				Title.Form("Area %i: d=%fmm",(4*i)+j,grid.GetMeasurementAreas().at((4*i)+j).Get_thickness());
+				histo_vec.at((4*i)+j)->SetTitle(Title);
+				histo_vec.at((4*i)+j)->Draw();
+                        	cout<<"fitfunction "<<(4*i)+j<<" of "<<num_fitfunctions<<endl;
+                        }
 		}
 
 		pdfname=model+"_results_"+canvasname+".pdf";

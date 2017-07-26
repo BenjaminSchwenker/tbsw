@@ -13,6 +13,8 @@ class TiXmlDocument ;
 
 namespace marlin{
 
+  class LCTokenizer ;
+
   typedef std::map< std::string ,  StringParameters* > StringParametersMap ;
 
   /** XML parser for Marlin steering files.
@@ -106,45 +108,6 @@ namespace marlin{
 
   public:
 
-
-    /** Helper class for XMLParser
-     */
-    class LCTokenizer{
-
-      std::vector< std::string >& _tokens ;
-      char _del ;
-      char _last ;
-    public:
-
-      LCTokenizer( std::vector< std::string >& tokens, char del ) : _tokens(tokens) , _del(del), _last(del) {
-      }
-
-
-      void operator()(const char& c) { 
-
-	if( c != _del  ) {
-
-	  if( _last == _del  ) {
-	    _tokens.push_back("") ; 
-	  }
-	  _tokens.back() += c ;
-	  result() ;
-	}
-	_last = c ;
-
-      } 
-
-      ~LCTokenizer(){
-      }
-  
-      std::vector<std::string> & result()  { 
-    
-	return _tokens ; 
-    
-      }
-    };
-  
-
     XMLParser( const std::string& fileName, bool forCCheck=false ) ;
     virtual ~XMLParser() ; 
 
@@ -191,6 +154,44 @@ namespace marlin{
     bool _forCCheck; //boolean variable set to true if parser is used for consistency checking
 
   };
+
+/** Helper class for Parser
+ */
+class LCTokenizer{
+
+  std::vector< std::string >& _tokens ;
+  char _del ;
+  char _last ;
+ public:
+
+  LCTokenizer( std::vector< std::string >& tokens, char del ) : _tokens(tokens) , _del(del), _last(del) {
+  }
+
+
+  void operator()(const char& c) { 
+
+    if( c != _del  ) {
+
+	if( _last == _del  ) {
+	  _tokens.push_back("") ; 
+	}
+      _tokens.back() += c ;
+      result() ;
+    }
+    _last = c ;
+
+  } 
+
+  ~LCTokenizer(){
+  }
+  
+  std::vector<std::string> & result()  { 
+    
+    return _tokens ; 
+    
+  }
+};
+
 
 } // end namespace marlin 
 #endif

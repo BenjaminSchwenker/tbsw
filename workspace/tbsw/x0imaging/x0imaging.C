@@ -949,7 +949,7 @@ int x0imaging()
 	// Scatter theta1 vs residual v
 	TH2F * hscatt_theta1_vs_resv = new TH2F("hscatt_theta1_vs_resv","hscatt_theta1_vs_resv",100,-0.1,0.1,150,means.at(0)-plotranges.at(0),means.at(0)+plotranges.at(0));
     hscatt_theta1_vs_resv->SetStats(kFALSE);
-    hscatt_theta1_vs_resv->GetXaxis()->SetTitle("u residual[mm]");
+    hscatt_theta1_vs_resv->GetXaxis()->SetTitle("v residual[mm]");
     hscatt_theta1_vs_resv->GetYaxis()->SetTitle("theta1[rad]");
     hscatt_theta1_vs_resv->GetZaxis()->SetTitle("Number of tracks");
     hscatt_theta1_vs_resv->GetZaxis()->SetTitleOffset(1.4);
@@ -959,7 +959,7 @@ int x0imaging()
 	// Scatter theta2 vs residual v
 	TH2F * hscatt_theta2_vs_resv = new TH2F("hscatt_theta2_vs_resv","hscatt_theta2_vs_resv",100,-0.1,0.1,150,means.at(1)-plotranges.at(1),means.at(1)+plotranges.at(1));
     hscatt_theta2_vs_resv->SetStats(kFALSE);
-    hscatt_theta2_vs_resv->GetXaxis()->SetTitle("u residual[mm]");
+    hscatt_theta2_vs_resv->GetXaxis()->SetTitle("v residual[mm]");
     hscatt_theta2_vs_resv->GetYaxis()->SetTitle("theta2[rad]");
     hscatt_theta2_vs_resv->GetZaxis()->SetTitle("Number of tracks");
     hscatt_theta2_vs_resv->GetZaxis()->SetTitleOffset(1.4);

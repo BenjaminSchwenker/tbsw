@@ -9,32 +9,7 @@ INCLUDE_DIRECTORIES (
     "${LCIO_SOURCE_DIR}/src/cpp/include"
 )
 
-SET( LCIO_CPPFORT_SRCS
-  ./src/CPPFORT/HEPEVT.cc
-  ./src/CPPFORT/lccah.cc
-  ./src/CPPFORT/lcclu.cc
-  ./src/CPPFORT/lccol.cc
-  ./src/CPPFORT/lcevt.cc
-  ./src/CPPFORT/lcgob.cc
-  ./src/CPPFORT/lciof77apiext.cc
-  ./src/CPPFORT/lcmcp.cc
-  ./src/CPPFORT/lcobv.cc
-  ./src/CPPFORT/lcpid.cc
-  ./src/CPPFORT/lcrcp.cc
-  ./src/CPPFORT/lcrdr.cc
-  ./src/CPPFORT/lcrdrrep.cc
-  ./src/CPPFORT/lcrel.cc
-  ./src/CPPFORT/lcrhd.cc
-  ./src/CPPFORT/lcrnv.cc
-  ./src/CPPFORT/lcsch.cc
-  ./src/CPPFORT/lcsth.cc
-  ./src/CPPFORT/lctph.cc
-  ./src/CPPFORT/lctrh.cc
-  ./src/CPPFORT/lctrk.cc
-  ./src/CPPFORT/lcvec.cc
-  ./src/CPPFORT/lcvtx.cc
-  ./src/CPPFORT/lcwrt.cc
-)
+
 
 SET( LCIO_IMPL_SRCS
   ./src/IMPL/AccessChecked.cc
@@ -121,27 +96,8 @@ ADD_DEFINITIONS( "-Wall -ansi -pedantic" )
 #----- need long long for int64 for now ------
 ADD_DEFINITIONS( "-Wno-long-long -fno-strict-aliasing" )
 
-#---- special flags for cfortran code : --------
-SET_SOURCE_FILES_PROPERTIES( 
-  ${LCIO_CPPFORT_SRCS} PROPERTIES 
-  COMPILE_FLAGS "-Df2cFortran -Wno-unused"
-)
 
-ADD_LIBRARY( lib_LCIOF77 STATIC
-  ${LCIO_CPPFORT_SRCS} 
-)
-
-SET_TARGET_PROPERTIES( lib_LCIOF77 PROPERTIES
-    # create *nix style library versions + symbolic links
-    #VERSION ${LCIO_VERSION}
-    #SOVERSION ${LCIO_SOVERSION}
-    # allow creating static and shared libs without conflicts
-    CLEAN_DIRECT_OUTPUT 1
-    # avoid conflicts between library and binary target names
-    OUTPUT_NAME lcioF77
-)
-
-ADD_CUSTOM_TARGET( lib DEPENDS lib_LCIO lib_LCIOF77 lib_SIO )
+ADD_CUSTOM_TARGET( lib DEPENDS lib_LCIO lib_SIO )
 
 ADD_LIBRARY( lib_LCIO 
   ${LCIO_IMPL_SRCS}
@@ -161,7 +117,6 @@ SET_TARGET_PROPERTIES( lib_LCIO PROPERTIES
 )
 
 TARGET_LINK_LIBRARIES( lib_LCIO lib_SIO )
-TARGET_LINK_LIBRARIES( lib_LCIOF77 lib_LCIO )
 
 
 # create symbolic target for calling targets bin_XXX
@@ -178,38 +133,8 @@ MACRO( ADD_LCIO_BIN file )
 ENDMACRO()
 #===================================================================
 
-ADD_LCIO_BIN( simjob ) 
-ADD_LCIO_BIN( anajob ) 
-ADD_LCIO_BIN( recjob ) 
 ADD_LCIO_BIN( dumpevent ) 
-ADD_LCIO_BIN( copyfix ) 
 ADD_LCIO_BIN( stdhepjob ) 
-
-
-IF( BUILD_LCIO_EXAMPLES )
-  ADD_LCIO_BIN( lcrtrelation )
-  ADD_LCIO_BIN( readcalibration )
-
-  # LCIO SHELL needs curses and readline libraries
-  FIND_PACKAGE( Curses )
-  FIND_LIBRARY( READLINE_LIBRARY
-    NAMES readline
-    PATHS
-      /usr/local/lib
-      /usr/local/lib64
-      /usr/lib
-      /usr/lib64
-      /lib
-      /lib64
-  )
-  IF( CURSES_LIBRARY AND READLINE_LIBRARY )
-    ADD_LCIO_BIN( lsh )
-    TARGET_LINK_LIBRARIES( bin_lsh ${CURSES_LIBRARY} ${READLINE_LIBRARY} )
-  ELSE()
-    MESSAGE( STATUS "Warning: didn't find curses and/or readline libraries. Cannot build lsh" )
-  ENDIF()
-ENDIF()
-
 
 #------ create a root dictionary -----------------------------
 IF( BUILD_ROOTDICT )
@@ -349,31 +274,6 @@ IF( BUILD_ROOTDICT )
      
   ENDIF( ROOT_FOUND )
 ENDIF( BUILD_ROOTDICT )
-#----------------------------------------------
-
-
-
-# create symbolic target for calling targets test_XXX
-ADD_CUSTOM_TARGET( tests )
-
-# ==== a macro for adding binaries from the TESTS directory =====
-MACRO( ADD_LCIO_CTEST file )
-  IF( BUILD_LCIO_TESTS )
-    ADD_EXECUTABLE( ${file} ./src/TESTS/${file}.cc )
-  ELSE()
-    ADD_EXECUTABLE( ${file} EXCLUDE_FROM_ALL ./src/TESTS/${file}.cc )
-  ENDIF()
-  ADD_DEPENDENCIES( tests ${file} )
-  TARGET_LINK_LIBRARIES( ${file} lib_LCIO )
-  ADD_TEST( t_${file} "${EXECUTABLE_OUTPUT_PATH}/${file}" )
-  SET_TESTS_PROPERTIES( t_${file} PROPERTIES
-      PASS_REGULAR_EXPRESSION "TEST_PASSED" )
-ENDMACRO()
-#===================================================================
-
-
-ADD_LCIO_CTEST( test_example ) 
-ADD_LCIO_CTEST( test_calohit )
 
 
 #------------- install the library and the (public) header files -------
@@ -383,10 +283,7 @@ INSTALL( TARGETS lib_LCIO DESTINATION lib PERMISSIONS
         GROUP_READ GROUP_EXECUTE
         WORLD_READ WORLD_EXECUTE )
 
-INSTALL( TARGETS lib_LCIOF77 DESTINATION lib PERMISSIONS
-        OWNER_READ OWNER_WRITE OWNER_EXECUTE
-        GROUP_READ GROUP_EXECUTE
-        WORLD_READ WORLD_EXECUTE )
+
 
 INSTALL(DIRECTORY ${LCIO_SOURCE_DIR}/src/cpp/include/ DESTINATION include 
   PATTERN "*~" EXCLUDE
@@ -396,52 +293,3 @@ INSTALL(DIRECTORY ${LCIO_SOURCE_DIR}/src/cpp/include/ DESTINATION include
   PATTERN "*CVS*" EXCLUDE)
 
 
-#------------- ctest stuff (call with ctest or 'make test') ------------
-
-ADD_TEST( t_simjob "${EXECUTABLE_OUTPUT_PATH}/simjob" )
-ADD_TEST( t_anajob_sim "${EXECUTABLE_OUTPUT_PATH}/anajob" simjob.slcio )
-ADD_TEST( t_recjob "${EXECUTABLE_OUTPUT_PATH}/recjob" simjob.slcio recjob.slcio )
-ADD_TEST( t_anajob_rec "${EXECUTABLE_OUTPUT_PATH}/anajob" recjob.slcio )
-
-SET_TESTS_PROPERTIES( t_simjob PROPERTIES PASS_REGULAR_EXPRESSION
-    "created  10 runs with  100 events" )
-SET_TESTS_PROPERTIES( t_anajob_sim PROPERTIES PASS_REGULAR_EXPRESSION
-    "100 events read from files:" )
-SET_TESTS_PROPERTIES( t_recjob PROPERTIES PASS_REGULAR_EXPRESSION
-    "added collection: 'SomeClusters' and 'SomeTracks' to   100 events and added one extra MCParticle to each event." )
-SET_TESTS_PROPERTIES( t_anajob_rec PROPERTIES PASS_REGULAR_EXPRESSION
-    "100 events read from files:" )
-
-IF( BUILD_F77_TESTJOBS )
-    ADD_TEST( t_simjob_F "${EXECUTABLE_OUTPUT_PATH}/simjob_F" )
-    ADD_TEST( t_anajob_F_sim "${EXECUTABLE_OUTPUT_PATH}/anajob_F" f_simjob.slcio )
-    ADD_TEST( t_recjob_F "${EXECUTABLE_OUTPUT_PATH}/recjob_F" f_simjob.slcio f_recjob.slcio )
-    ADD_TEST( t_anajob_F_rec "${EXECUTABLE_OUTPUT_PATH}/anajob_F" f_recjob.slcio )
-
-    SET_TESTS_PROPERTIES( t_simjob_F PROPERTIES PASS_REGULAR_EXPRESSION
-        "created  10 runs with  100 events" )
-    SET_TESTS_PROPERTIES( t_anajob_F_sim PROPERTIES PASS_REGULAR_EXPRESSION
-        "100 events read from files:" )
-    SET_TESTS_PROPERTIES( t_recjob_F PROPERTIES PASS_REGULAR_EXPRESSION
-        "added collection: 'SomeClusters' and 'SomeTracks'.*to    100 events.*and added one extra MCParticle to each event." )
-    SET_TESTS_PROPERTIES( t_anajob_F_rec PROPERTIES PASS_REGULAR_EXPRESSION
-        "100 events read from files:" )
-ENDIF()
-
-IF( BUILD_LCIO_TESTJOBS AND BUILD_F77_TESTJOBS )
- 
-    ADD_TEST( t_anajob_cross_sim "${EXECUTABLE_OUTPUT_PATH}/anajob" f_simjob.slcio )
-    ADD_TEST( t_anajob_cross_rec "${EXECUTABLE_OUTPUT_PATH}/anajob" f_recjob.slcio )
-    ADD_TEST( t_anajob_F_cross_sim "${EXECUTABLE_OUTPUT_PATH}/anajob_F" simjob.slcio )
-    ADD_TEST( t_anajob_F_cross_rec "${EXECUTABLE_OUTPUT_PATH}/anajob_F" recjob.slcio )
-
-    SET_TESTS_PROPERTIES( t_anajob_cross_sim PROPERTIES PASS_REGULAR_EXPRESSION
-        "100 events read from files:" )
-    SET_TESTS_PROPERTIES( t_anajob_cross_rec PROPERTIES PASS_REGULAR_EXPRESSION
-        "100 events read from files:" )
-    SET_TESTS_PROPERTIES( t_anajob_F_cross_sim PROPERTIES PASS_REGULAR_EXPRESSION
-        "100 events read from files:" )
-    SET_TESTS_PROPERTIES( t_anajob_F_cross_rec PROPERTIES PASS_REGULAR_EXPRESSION
-        "100 events read from files:" )
-   
-ENDIF()

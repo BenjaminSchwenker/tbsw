@@ -1,11 +1,12 @@
 #################################
 # cmake file for building GEAR
 # @author Jan Engels, DESY
+# @author Benjamin Schwenker, Uni Göttingen
 #################################
 
 ########################################################
 # CMake compatibility issues: don't modify this, please!
-CMAKE_MINIMUM_REQUIRED( VERSION 2.4.6 )
+#CMAKE_MINIMUM_REQUIRED( VERSION 2.4.6 )
 #SET( CMAKE_BACKWARDS_COMPATIBILITY 2.4.6 )
 MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 # allow more human readable "if then else" constructs
@@ -23,7 +24,6 @@ SET( ${PROJECT_NAME}_PATCH_LEVEL 1 )
 # project options
 OPTION( BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON )
 OPTION( BUILD_32BIT_COMPATIBLE "Set to ON to build in 32 bit compatibility mode" OFF )
-OPTION( INSTALL_DOC "Set to OFF to skip build/install Documentation" OFF )
 
 # set default cmake build type to RelWithDebInfo
 IF( NOT CMAKE_BUILD_TYPE )
@@ -79,90 +79,6 @@ IF( NOT EXISTS "${PROJECT_SOURCE_DIR}/src/cpp/include/gearimpl" )
         OUTPUT_VARIABLE out_tmp )
 ENDIF()
 
-# generate header files with ant aid.generate
-IF( NOT EXISTS "${PROJECT_SOURCE_DIR}/src/cpp/include/gear/GEAR.h" )
-    MESSAGE( STATUS "Generating GEAR header files with ant aid.generate..." )
-    MESSAGE( STATUS "Autodetecting java..." )
-    FIND_PACKAGE( Java )
-    IF( NOT JAVA_RUNTIME OR NOT JAVA_COMPILE )
-        MESSAGE( FATAL_ERROR "Java not found!! Please make sure that java is in your PATH." )
-    ENDIF()
-    # extract java bin path out of full path to java runtime
-    STRING( REGEX REPLACE "(.*)\\/java$" "\\1" JAVA_RUNTIME_PATH ${JAVA_RUNTIME} )
-    # parse the output of java -version
-    EXEC_PROGRAM( "${JAVA_RUNTIME}" ARGS "-version"
-            OUTPUT_VARIABLE out_tmp
-            RETURN_VALUE out_ret )
-    IF( out_ret )
-        MESSAGE( STATUS "Error executing java -version!!" )
-    ENDIF()
-    STRING( REGEX REPLACE ".* version \"([0-9]+\\.[0-9]+\\.[0-9]+).*"
-            "\\1" JAVA_VERSION "${out_tmp}" )
-
-    # display info
-    MESSAGE( STATUS "Detected Java version ${JAVA_VERSION}..." )
-
-    # set environment variables for
-    # generating header files with ant aid.generate
-    SET( ENV{GEAR} "${PROJECT_SOURCE_DIR}" )
-    SET( ENV{PATH} "${PROJECT_SOURCE_DIR}/tools:${JAVA_RUNTIME_PATH}:$ENV{PATH}" )
-
-    # generate header files with ant aid.generate
-    EXEC_PROGRAM( ant "${PROJECT_SOURCE_DIR}"
-        ARGS aid.generate
-        OUTPUT_VARIABLE out_tmp
-        RETURN_VALUE out_ret )
-    # check if everything went ok
-    IF( NOT out_ret )
-        MESSAGE( STATUS "Header files generated in ${PROJECT_SOURCE_DIR}/src/cpp/include/gear..." )
-    ELSE()
-        MESSAGE( STATUS "Error generating header files!!" )
-        MESSAGE( FATAL_ERROR "${out_tmp}" )
-    ENDIF()
-ENDIF()
-
-
-# code for *nix only!
-IF( UNIX )
-    # find shell
-    FIND_PROGRAM( SH
-      sh
-      ${CYGWIN_INSTALL_PATH}/bin
-      /bin
-      /usr/bin
-      /usr/local/bin
-      /sbin
-      # FIXME add path to MacOS here
-    )
-    MARK_AS_ADVANCED( SH )
-
-    IF( SH )
-        # generate shell script for setting environment before running a command
-        MESSAGE( STATUS "Generating shell environment script..." )
-        FILE( WRITE "${PROJECT_BINARY_DIR}/script.sh"
-                    "export GEAR=${PROJECT_SOURCE_DIR}\n"
-                    "export GEARVERSION=${GEAR_VERSION}\n"
-                    "export PATH=${JAVA_RUNTIME_PATH}/bin:${PROJECT_SOURCE_DIR}/tools:$PATH\n"
-                    "$1 $2" )
-
-        # create "always out-of-date" headers target
-        ADD_CUSTOM_TARGET( headers
-            COMMAND ${SH} "${PROJECT_BINARY_DIR}/script.sh" ant aid.generate
-            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-            COMMENT "Generating header files with ant aid.generate..."
-            VERBATIM )
-        
-    ELSE()
-        MESSAGE( STATUS "Unix Shell not found - cannot enable headers target!!" )
-        IF( INSTALL_DOC )
-            MESSAGE( STATUS "Unix Shell not found - INSTALL_DOC forced to OFF" )
-            SET( INSTALL_DOC OFF )
-        ENDIF()
-    ENDIF()
-ENDIF()
-
-
-
 ##########################################################################################
 
 # add install path to the rpath list
@@ -198,7 +114,6 @@ INCLUDE_DIRECTORIES( "src/cpp/include" )
 # input directories
 ADD_SUBDIRECTORY( src/cpp/gearxml )
 ADD_SUBDIRECTORY( src/cpp/gearimpl )
-ADD_SUBDIRECTORY( src/cpp/test )
 
 # create uninstall configuration file 
 CONFIGURE_FILE( "${PROJECT_SOURCE_DIR}/cmake_uninstall.cmake.in"
@@ -230,7 +145,6 @@ MESSAGE( STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}" )
 IF( CMAKE_SIZEOF_VOID_P EQUAL 8 )
     MESSAGE( STATUS "BUILD_32BIT_COMPATIBLE = ${BUILD_32BIT_COMPATIBLE}" )
 ENDIF()
-MESSAGE( STATUS "INSTALL_DOC = ${INSTALL_DOC}" )
 MESSAGE( STATUS "To change a value type: cmake -D<Variable>=<Value>" )
 MESSAGE( STATUS "-------------------------------------------------------------------------------" )
 MESSAGE( STATUS )
@@ -243,8 +157,6 @@ SET( CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE PATH
     "Where to install GEAR" FORCE )
 SET( CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING
     "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE )
-SET( INSTALL_DOC "${INSTALL_DOC}" CACHE BOOL
-    "Set to OFF to skip build/install Documentation" FORCE )
 
 # export build settings
 INCLUDE( CMakeExportBuildSettings )
