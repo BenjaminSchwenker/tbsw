@@ -150,10 +150,10 @@ def create_calibration_path(Env, rawfile, gearfile):
              cluster_calibration_2, 
              cluster_calibration_2, 
              correlator2, 
-             kalman_aligner_3, 
              kalman_aligner_4, 
-             kalman_aligner_4, 
-             kalman_aligner_4, 
+             kalman_aligner_5, 
+             kalman_aligner_5, 
+             kalman_aligner_5, 
              telescope_dqm2, 
            ]
   
