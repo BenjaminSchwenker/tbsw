@@ -233,7 +233,7 @@ def simulate():
 
   # Change DUT in copied gearfile
   set_parameter(gearfile=gearfile_air, sensorID=11, parametername='thickness', value=0.0001)
-  set_parameter(gearfile=gearfile_air, sensorID=11, parametername='radLength', value=304.0)
+  set_parameter(gearfile=gearfile_air, sensorID=11, parametername='radLength', value=304000.0)
 
   # Run simulation to create rawfile with simulated digits 
   SimObj.simulate(path=simpath)  
@@ -261,7 +261,7 @@ def calibrate():
   # Get gearfile and set air as DUT material
   localgearfile = CalObj.get_filename('gear.xml')
   set_parameter(gearfile=localgearfile, sensorID=11, parametername='thickness', value=0.0001)
-  set_parameter(gearfile=localgearfile, sensorID=11, parametername='radLength', value=304.0)
+  set_parameter(gearfile=localgearfile, sensorID=11, parametername='radLength', value=304000.0)
   
   # Create list of calibration steps 
   calpath = create_calibration_path(CalObj)
