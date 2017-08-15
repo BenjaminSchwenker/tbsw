@@ -26,8 +26,6 @@ namespace depfet {
  */
 TBVertexFitter::TBVertexFitter(int ipl)
 {                   
-  
-  ndim = 5; // dimension of measurement vector p = (du,dv,u,v)
 
   plnr = ipl; //plane number of DUT
 
@@ -57,7 +55,7 @@ bool TBVertexFitter::FitVertex(TBVertex& Vertex)
     HepMatrix V = Vertex.GetStates()[i].GetCov();
 
     //Jacobian B = dh/dq for slope states q = (a,b)
-    HepMatrix B(ndim,2,0);
+    HepMatrix B(5,2,0);
 	B[0][0] = 1;	//dh1/da
 	B[1][1] = 1;	//dh2/db
 
@@ -72,7 +70,7 @@ bool TBVertexFitter::FitVertex(TBVertex& Vertex)
     HepMatrix GB = G - G * B * W * B.T() * G;
 
     //Jacobian A = dh/dr for vertex state r = (x,y,z)
-    HepMatrix A(ndim,3,0);
+    HepMatrix A(5,3,0);
 	A[2][0] = 1;	//dh3/dx
 	A[3][1] = 1;	//dh4/dy
 	A[2][2] = -p[0][0];	//dh3/dz
