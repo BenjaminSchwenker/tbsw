@@ -120,7 +120,7 @@ protected:
    TFile * _rootFile;
    
    TTree * _rootMscTree;
-   TTree * _rootEventTree;  
+   TTree * _rootEventTree;
     
    // Event tree variables 
    int _rootEventNumber;
@@ -133,11 +133,11 @@ protected:
    double _rootTrackProbUp;
    double _rootTrackProbDown;
    double _rootTrackProbCombo;
-   
-   double _root_u_mean; 
-   double _root_v_mean; 
-   double _root_u_mean_var; 
-   double _root_v_mean_var; 
+ 
+   double _root_u; 
+   double _root_v; 
+   double _root_u_var; 
+   double _root_v_var; 
    double _root_u_in; 
    double _root_v_in; 
    double _root_u_out; 
@@ -149,6 +149,12 @@ protected:
    double _root_angle1_var;
    double _root_angle2_var;
    double _root_momentum;
+
+   double _root_vertex_mean_chi2;
+   double _root_vertex_mean_prob;
+
+   // Vertexing tree variables
+
    double _root_vertex_u;
    double _root_vertex_v;
    double _root_vertex_w;
@@ -157,7 +163,10 @@ protected:
    double _root_vertex_w_var;
    double _root_vertex_chi2;
    double _root_vertex_prob;
-   
+   double _root_vertex_u_res;
+   double _root_vertex_v_res;
+   double _root_up2downsize;
+  
  private:
    
    // Handle to detector data 

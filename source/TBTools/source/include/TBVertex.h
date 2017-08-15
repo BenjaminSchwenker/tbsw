@@ -1,6 +1,9 @@
 #ifndef TBVERTEX_H
 #define TBVERTEX_H 1
 
+// DEPFETTrackTools includes
+#include "TBTrack.h"
+
 // CLHEP includes
 #include <CLHEP/Matrix/Vector.h>
 #include <CLHEP/Matrix/Matrix.h>
@@ -32,7 +35,13 @@ class TBVertex {
   CLHEP::HepMatrix Cov;
   //Vertex fit chi²
   double chi2;
+  //Vertex fit number degrees of freedom
+  int ndf;
+  //filter residual
+  CLHEP::HepMatrix Res;
 
+  //Vector containing all states for given measurement
+  std::vector<TBTrackState> States;
 
  public: //Functions
 
@@ -51,6 +60,20 @@ class TBVertex {
   // Get/Set chi²-value
   void SetChi2(double achi2 ) { chi2 = achi2; }; 
   double GetChi2() { return chi2; };
+
+  // Get/Set filter residual
+  void SetRes(const CLHEP::HepMatrix& aRes ) { Res = aRes; }; 
+  CLHEP::HepMatrix& GetRes() { return Res; };
+
+  // Get/Set ndf-value
+  void SetNdf(int andf ) { ndf = andf; }; 
+  int GetNdf() { return ndf; };
+
+  // add state
+  void AddTrackState(TBTrackState& state) { States.push_back(state); };
+
+  // get States vector
+  std::vector<TBTrackState>& GetStates() { return States; };
 
 };
 

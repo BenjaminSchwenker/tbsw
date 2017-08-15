@@ -38,9 +38,9 @@ class TBVertexFitter {
    */
   TBVertexFitter(int ipl);
 
-  /** Performs vertex fitting. Returns Vertex class (Position, Covariance and chisq)
+  /** Performs vertex fitting. Returns boolean of success of fit
    */
-  TBVertex FitVertex(TBTrackState& InState, TBTrackState& OutState);
+  bool FitVertex(TBVertex& Vertex);
   
   
 

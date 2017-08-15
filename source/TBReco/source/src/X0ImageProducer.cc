@@ -258,7 +258,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     {
             
       // If matched, skip track 
-      if ( up2down[iup].size() > 0 ) continue;    
+      // if ( up2down[iup].size() > 0 ) continue;    
       
       for(int idown=0; idown< (int)downTrackStore.size() ; idown++)
       {
@@ -321,26 +321,35 @@ void X0ImageProducer::processEvent(LCEvent * evt)
   {
   
     // Check upstream track is matched 
-    if ( up2down[iup].size() != 1 ) continue; 
+    if ( up2down[iup].size() < 1 ) continue; 
     
     TBTrack& uptrack = upTrackStore[iup];
     TBTrack& downtrack = downTrackStore[ up2down[iup][0] ];
 
     // comboChi2 is chi2 combination of track in upstream and downstream telescope arm
     double comboChi2 = uptrack.GetChiSqu()+downtrack.GetChiSqu(); 
-
-
-    //MSC Analysis for the reconstructed angles
-    //Here we use the In and Out State and the GetScatterKinks function of the TBKalmanMSC Class
      
     // In and OutStates of the reconstructed Track at the current detector
     TBTrackState& InState=uptrack.GetTE(_idut).GetState();
     TBTrackState& OutState=downtrack.GetTE(_idut).GetState();
 
-    // Fit In and OutStates to scattering vertex
-    TBVertex Vertex = VertexFitter.FitVertex(InState, OutState);
+    // Scattering Vertex fitting
+    // The In and every Out State given for one vertex is added to a vertex class
+    TBVertex Vertex;
+    Vertex.AddTrackState(uptrack.GetTE(_idut).GetState());
+    for( int idown=0; idown < up2down[iup].size(); idown++)
+    {
+      Vertex.AddTrackState(downTrackStore[up2down[iup][idown]].GetTE(_idut).GetState());
+    }
+
+    //The TBVertexFitter Class performs a Kalman filter vertex fit on the states
+    bool vfiterr = VertexFitter.FitVertex(Vertex);
     HepMatrix vertexpos = Vertex.GetPos();
     HepMatrix vertexcov = Vertex.GetCov();
+    HepMatrix vertexres = Vertex.GetRes();
+
+    //MSC Analysis for the reconstructed angles
+    //Here we use the In and Out State and the GetScatterKinks function of the TBKalmanMSC Class
     
     //Angles and angle errors
     HepMatrix theta(2,1,0);
@@ -358,10 +367,11 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 	HepSymMatrix instate_covs=InState.GetCov();
 	HepSymMatrix outstate_covs=OutState.GetCov();
  
-	_root_u_mean_var=0.25*(instate_covs[2][2]+outstate_covs[2][2]);
-	_root_v_mean_var=0.25*(instate_covs[3][3]+outstate_covs[3][3]);
+	_root_u_var=0.25*(instate_covs[2][2]+outstate_covs[2][2]);
+	_root_v_var=0.25*(instate_covs[3][3]+outstate_covs[3][3]);
      	
-    // Fill root variables 
+    // Fill root variables
+    _root_up2downsize = up2down[iup].size(); 
     _root_momentum = uptrack.GetMomentum(); 
     _rootTrackProbUp = TMath::Prob(uptrack.GetChiSqu(),uptrack.GetNDF());
     _rootTrackProbDown = TMath::Prob(downtrack.GetChiSqu(),downtrack.GetNDF());
@@ -371,8 +381,8 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     _root_v_in = p_in[3][0];
     _root_u_out = p_out[2][0]; 
     _root_v_out = p_out[3][0];
-    _root_u_mean = 0.5*(p_in[2][0] + p_out[2][0]); 
-    _root_v_mean = 0.5*(p_in[3][0] + p_out[3][0]);  
+    _root_u = 0.5*(p_in[2][0] + p_out[2][0]); 
+    _root_v = 0.5*(p_in[3][0] + p_out[3][0]);  
     _root_dudw = 0.5*(p_in[0][0] + p_out[0][0]);    
     _root_dvdw = 0.5*(p_in[1][0] + p_out[1][0]);   
    
@@ -388,24 +398,26 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     _root_vertex_v_var = vertexcov[1][1];
     _root_vertex_w_var = vertexcov[2][2];
     _root_vertex_chi2 = Vertex.GetChi2();
-    _root_vertex_prob = TMath::Prob(Vertex.GetChi2(),2);
+    _root_vertex_prob = TMath::Prob(Vertex.GetChi2(),Vertex.GetNdf());
+    _root_vertex_u_res = vertexres[2][0];
+    _root_vertex_v_res = vertexres[3][0];
 
 
-	/* Construct the u and v residuals and calculate a chi2 value from them
-	HepMatrix res=p_in-p_out;
-	HepSymMatrix res_covs=instate_covs+outstate_covs;
+    // Construct the u and v residuals and calculate a chi2 value from them
+    HepMatrix res=p_in-p_out;
+    HepSymMatrix res_covs=instate_covs+outstate_covs;
 
     int ierr; 
-	// Use only the sub matrices, which describe the spatial coordinates of the trackstate
+    // Use only the sub matrices, which describe the spatial coordinates of the trackstate
     HepMatrix jchisq = res.sub(3,4,1,1).T()*res_covs.sub(3,4).inverse(ierr)*res.sub(3,4,1,1);
 
-	streamlog_out(MESSAGE1) << "Complete Covariance matrix: "<<res_covs.sub(1,4)<<endl;
-	streamlog_out(MESSAGE1) << "Part of Covariance matrix used here: "<<res_covs.sub(3,4)<<endl;
-	
-	_root_vertex_chi2=jchisq[0][0];
-	_root_vertex_prob=TMath::Prob(jchisq[0][0], 2);*/
+    streamlog_out(MESSAGE1) << "Complete Covariance matrix: "<<res_covs.sub(1,4)<<endl;
+    streamlog_out(MESSAGE1) << "Part of Covariance matrix used here: "<<res_covs.sub(3,4)<<endl;
+
+    _root_vertex_mean_chi2=jchisq[0][0];
+    _root_vertex_mean_prob=TMath::Prob(jchisq[0][0], 2);
     
-    _rootMscTree->Fill();       
+    _rootMscTree->Fill();     
     
   } // end track loop 		
      
@@ -509,16 +521,10 @@ void X0ImageProducer::bookHistos() {
   _rootMscTree->Branch("v_in"            ,&_root_v_in           ,"v_in/D");
   _rootMscTree->Branch("u_out"           ,&_root_u_out          ,"u_out/D");
   _rootMscTree->Branch("v_out"           ,&_root_v_out          ,"v_out/D");
-  _rootMscTree->Branch("u_mean"          ,&_root_u_mean         ,"u_mean/D");
-  _rootMscTree->Branch("v_mean"          ,&_root_v_mean         ,"v_mean/D");
-  _rootMscTree->Branch("u_mean_var"      ,&_root_u_mean_var     ,"u_mean_var/D");
-  _rootMscTree->Branch("v_mean_var"      ,&_root_v_mean_var     ,"v_mean_var/D");
-  _rootMscTree->Branch("vertex_u"	 ,&_root_vertex_u	,"vertex_u/D");
-  _rootMscTree->Branch("vertex_v"	 ,&_root_vertex_v	,"vertex_v/D");
-  _rootMscTree->Branch("vertex_w"	 ,&_root_vertex_w	,"vertex_z/D");
-  _rootMscTree->Branch("vertex_u_var"	 ,&_root_vertex_u_var	,"vertex_u_var/D");
-  _rootMscTree->Branch("vertex_v_var"	 ,&_root_vertex_v_var	,"vertex_w_var/D");
-  _rootMscTree->Branch("vertex_w_var"	 ,&_root_vertex_w_var	,"vertex_w_var/D");
+  _rootMscTree->Branch("u"		 ,&_root_u		,"u/D");
+  _rootMscTree->Branch("v"          	 ,&_root_v		,"v/D");
+  _rootMscTree->Branch("u_var"      	 ,&_root_u_var		,"u_var/D");
+  _rootMscTree->Branch("v_var"      	 ,&_root_v_var		,"v_var/D");
 
   _rootMscTree->Branch("theta1"          ,&_root_angle1         ,"theta1/D"); 
   _rootMscTree->Branch("theta2"          ,&_root_angle2         ,"theta2/D");
@@ -526,9 +532,23 @@ void X0ImageProducer::bookHistos() {
   _rootMscTree->Branch("theta2_var"      ,&_root_angle2_var     ,"theta2_var/D");
   _rootMscTree->Branch("momentum"        ,&_root_momentum       ,"momentum/D");
 
-  _rootMscTree->Branch("vertex_chi2"    ,&_root_vertex_chi2   ,"vertex_chi2/D");
-  _rootMscTree->Branch("vertex_prob"    ,&_root_vertex_prob   ,"vertex_prob/D");
-  
+  _rootMscTree->Branch("vertex_mean_chi2",&_root_vertex_mean_chi2,"vertex_mean_chi2/D");
+  _rootMscTree->Branch("vertex_mean_prob",&_root_vertex_mean_prob,"vertex_mean_prob/D");
+
+  //
+  // Vertexing Tree
+  _rootMscTree->Branch("vertex_u"	 ,&_root_vertex_u	,"vertex_u/D");
+  _rootMscTree->Branch("vertex_v"	 ,&_root_vertex_v	,"vertex_v/D");
+  _rootMscTree->Branch("vertex_w"	 ,&_root_vertex_w	,"vertex_w/D");
+  _rootMscTree->Branch("vertex_u_var"	 ,&_root_vertex_u_var	,"vertex_u_var/D");
+  _rootMscTree->Branch("vertex_v_var"	 ,&_root_vertex_v_var	,"vertex_v_var/D");
+  _rootMscTree->Branch("vertex_w_var"	 ,&_root_vertex_w_var	,"vertex_w_var/D"); 
+ 
+  _rootMscTree->Branch("vertex_chi2"     ,&_root_vertex_chi2	,"vertex_chi2/D");
+  _rootMscTree->Branch("vertex_prob"     ,&_root_vertex_prob	,"vertex_prob/D");
+  _rootMscTree->Branch("vertex_u_res"	 ,&_root_vertex_u_res	,"vertex_u_res/D");
+  _rootMscTree->Branch("vertex_v_res"	 ,&_root_vertex_v_res	,"vertex_v_res/D");  
+  _rootMscTree->Branch("up2downsize"	 ,&_root_up2downsize	,"up2downsize/D");
 
 }
 
