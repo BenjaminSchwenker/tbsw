@@ -20,16 +20,6 @@
 #include <gear/SiPlanesLayerLayout.h>
 #include "gear/BField.h"
 
-
-// Include LCIO header files 
-#include "lcio.h"
-#include <IMPL/LCCollectionVec.h>
-#include <UTIL/CellIDDecoder.h>
-#include <UTIL/LCTime.h>
-#include <IMPL/LCRunHeaderImpl.h>
-#include <IMPL/LCEventImpl.h>
-#include <IMPL/LCFlagImpl.h>
-
 // Include Marlin
 #include <marlin/Global.h>
 #include <streamlog/streamlog.h>
@@ -37,7 +27,7 @@
 // Namespaces
 using namespace CLHEP;
 using namespace marlin;
-using namespace lcio;
+
 
 namespace depfet {
 
@@ -290,67 +280,103 @@ void TBDetector::ReadAlignmentDB( std::string FileName )
   // Store name of alignment data base
   _alignmentDBFileName = FileName;
   
-  // Check iff external db file is available 
-  LCReader * lcReader = LCFactory::getInstance()->createLCReader();  
+  // Open alignment data base
+  TFile * rootFile = new TFile(_alignmentDBFileName.c_str(), "READ");
   
-  try {
+  std::map< std::string, TH1D *> histoMap;
+ 
+ 
+  if ( (TH1F *) rootFile->Get("hSensorID") != nullptr) {
+    histoMap["hSensorID"] = (TH1F *) rootFile->Get("hSensorID");  
+  } else { 
+    streamlog_out ( WARNING ) <<  "Alignment DB empty!!" << std::endl;
+    return; 
+  } 
+  
+  if ( (TH1F *) rootFile->Get("hPositionX") != nullptr) {
+    histoMap["hPositionX"] = (TH1F *) rootFile->Get("hPositionX");  
+  } else { 
+    streamlog_out ( WARNING ) <<  "Alignment DB empty!!" << std::endl;
+    return; 
+  } 
+
+  if ( (TH1F *) rootFile->Get("hPositionY") != nullptr) {
+    histoMap["hPositionY"] = (TH1F *) rootFile->Get("hPositionY");  
+  } else { 
+    streamlog_out ( WARNING ) <<  "Alignment DB empty!!" << std::endl;
+    return; 
+  } 
+
+  if ( (TH1F *) rootFile->Get("hPositionZ") != nullptr) {
+    histoMap["hPositionZ"] = (TH1F *) rootFile->Get("hPositionZ");  
+  } else {
+    streamlog_out ( WARNING ) <<  "Alignment DB empty!!" << std::endl; 
+    return; 
+  } 
+
+  if ( (TH1F *) rootFile->Get("hRotationAlpha") != nullptr) {
+    histoMap["hRotationAlpha"] = (TH1F *) rootFile->Get("hRotationAlpha");  
+  } else {
+    streamlog_out ( WARNING ) <<  "Alignment DB empty!!" << std::endl; 
+    return; 
+  } 
+
+  if ( (TH1F *) rootFile->Get("hRotationBeta") != nullptr) {
+    histoMap["hRotationBeta"] = (TH1F *) rootFile->Get("hRotationBeta");  
+  } else {
+    streamlog_out ( WARNING ) <<  "Alignment DB empty!!" << std::endl; 
+    return; 
+  } 
+
+  if ( (TH1F *) rootFile->Get("hRotationGamma") != nullptr) {
+    histoMap["hRotationGamma"] = (TH1F *) rootFile->Get("hRotationGamma");  
+  } else {
+    streamlog_out ( WARNING ) <<  "Alignment DB empty!!" << std::endl; 
+    return; 
+  } 
+
+  for ( int ipl = 0; ipl < _numberOfSensors; ipl++ ) {
     
-    lcReader->open( _alignmentDBFileName );
-    LCEvent* alignEvt = lcReader->readNextEvent();
-     
-    LCCollectionVec * alignVec = static_cast<  LCCollectionVec * >  ( alignEvt->getCollection( "alignDB" )); 
-          
-    for ( int ipl = 0; ipl < _numberOfSensors; ipl++ ) 
-    {
-      
-      // Load alignment constants from DB 
-      AlignmentConstant * align = static_cast< AlignmentConstant * > ( alignVec->getElementAt( ipl ) );
-      
-      // Load current pixel module    
-      Det & adet = GetDet(ipl);
-      
-      // Check consistency with gear file 
-      if ( align->getSensorID() != adet.GetDAQID() ) {
-        streamlog_out ( ERROR4 ) <<  "Alignment DB inconsistent to Gear file!!" << std::endl;
-        exit(-1);
-      }
-      
-      // Now, read nominal position from DB
-      ReferenceFrame nominal;
-      HepVector NominalPosition(3);
-      NominalPosition[0] = align->getXOffset() ;
-      NominalPosition[1] = align->getYOffset() ;
-      NominalPosition[2] = align->getZOffset() ;
-      nominal.SetPosition(NominalPosition);
-      
-      // AlignmentDB stores Euler angles in rad 
-      HepMatrix EulerRotation;
-      double alpha = align->getAlpha() ;
-      double beta  = align->getBeta() ;
-      double gamma = align->getGamma() ;
-      FillRotMatrixKarimaki(EulerRotation, alpha, beta, gamma);
-      
-      // Combine the two factors in proper order
-      HepMatrix DiscreteRotation = adet.GetDiscrete().GetRotation(); 
-      HepMatrix NominalRotation = EulerRotation*DiscreteRotation;
-      nominal.SetRotation(NominalRotation);  
-      
-      nominal.SetRotation(NominalRotation);
-      adet.SetNominalFrame(nominal); 
-     
+    Det & adet = GetDet(ipl);
+    
+    int bin = ipl + 1; 
+
+    // Check consistency with gear file 
+    if ( histoMap["hSensorID"]->GetBinContent(bin) != adet.GetDAQID() ) {
+      streamlog_out ( WARNING ) <<  "Alignment DB inconsistent to Gear file!!" << std::endl;   
     }
     
-    // Close GeoDB file 
-    lcReader->close();
-        
-  } catch (IOException& e) {
-    // Print error message 
-    std::cerr << e.what() << std::endl; 
+    // Now, read nominal position from DB
+    ReferenceFrame nominal;
+    HepVector NominalPosition(3);
+    NominalPosition[0] = histoMap["hPositionX"]->GetBinContent(bin);
+    NominalPosition[1] = histoMap["hPositionY"]->GetBinContent(bin);
+    NominalPosition[2] = histoMap["hPositionZ"]->GetBinContent(bin);
+    nominal.SetPosition(NominalPosition);
+      
+    // AlignmentDB stores Euler angles in rad 
+    HepMatrix EulerRotation;
+    double alpha = histoMap["hRotationAlpha"]->GetBinContent(bin);   
+    double beta  = histoMap["hRotationBeta"]->GetBinContent(bin);  
+    double gamma = histoMap["hRotationGamma"]->GetBinContent(bin);  
+    FillRotMatrixKarimaki(EulerRotation, alpha, beta, gamma);
+      
+    // Combine the two factors in proper order
+    HepMatrix DiscreteRotation = adet.GetDiscrete().GetRotation(); 
+    HepMatrix NominalRotation = EulerRotation*DiscreteRotation;
+    nominal.SetRotation(NominalRotation);  
+      
+    nominal.SetRotation(NominalRotation);
+    adet.SetNominalFrame(nominal); 
+    
   }
+   
+  // Close root  file
+  rootFile->Close();
+  delete rootFile;
   
   // Print detector data sheets  
-  Print();   
-   
+  Print();    
 }
 
 // 
@@ -360,76 +386,94 @@ void TBDetector::WriteAlignmentDB( )
 {
   
   streamlog_out(MESSAGE3) << std::endl << "Write alignment DB file " << _alignmentDBFileName << std::endl << std::endl;
+  
+  TFile * rootFile = new TFile( _alignmentDBFileName.c_str(),"recreate");
+  rootFile->cd("");
+  
+  std::map< std::string, TH1D *> _histoMap;
+   
+  _histoMap["hSensorID"] = new TH1D("hSensorID", "", _numberOfSensors,0,_numberOfSensors); 
+  _histoMap["hSensorID"]->SetStats( false );
+  _histoMap["hSensorID"]->SetYTitle("sensor id"); 
+  _histoMap["hSensorID"]->SetXTitle("plane");
+
+  _histoMap["hPositionX"] = new TH1D("hPositionX", "", _numberOfSensors,0,_numberOfSensors); 
+  _histoMap["hPositionX"]->SetStats( false );
+  _histoMap["hPositionX"]->SetYTitle("position x [mm]"); 
+  _histoMap["hPositionX"]->SetXTitle("plane"); 
+
+  _histoMap["hPositionY"] = new TH1D("hPositionY", "", _numberOfSensors,0,_numberOfSensors); 
+  _histoMap["hPositionY"]->SetStats( false );
+  _histoMap["hPositionY"]->SetYTitle("position y [mm]"); 
+  _histoMap["hPositionY"]->SetXTitle("plane"); 
+
+  _histoMap["hPositionZ"] = new TH1D("hPositionZ", "", _numberOfSensors,0,_numberOfSensors); 
+  _histoMap["hPositionZ"]->SetStats( false );
+  _histoMap["hPositionZ"]->SetYTitle("position z [mm]"); 
+  _histoMap["hPositionZ"]->SetXTitle("plane"); 
+
+  _histoMap["hRotationAlpha"] = new TH1D("hRotationAlpha", "", _numberOfSensors,0,_numberOfSensors); 
+  _histoMap["hRotationAlpha"]->SetStats( false );
+  _histoMap["hRotationAlpha"]->SetYTitle("rotation alpha [rad]"); 
+  _histoMap["hRotationAlpha"]->SetXTitle("plane"); 
+
+  _histoMap["hRotationBeta"] = new TH1D("hRotationBeta", "", _numberOfSensors,0,_numberOfSensors); 
+  _histoMap["hRotationBeta"]->SetStats( false );
+  _histoMap["hRotationBeta"]->SetYTitle("rotation beta [rad]"); 
+  _histoMap["hRotationBeta"]->SetXTitle("plane"); 
+
+  _histoMap["hRotationGamma"] = new TH1D("hRotationGamma", "", _numberOfSensors,0,_numberOfSensors); 
+  _histoMap["hRotationGamma"]->SetStats( false );
+  _histoMap["hRotationGamma"]->SetYTitle("rotation gamma [rad]"); 
+  _histoMap["hRotationGamma"]->SetXTitle("plane");
+
+  for ( int ipl = 0; ipl < _numberOfSensors; ipl++ ) {
     
-  try 
-  {
-    // Reopen the LCIO file this time in new mode
-    LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
+    // Load current pixel module 
+    Det & adet = GetDet(ipl);    
     
-    lcWriter->open( _alignmentDBFileName, LCIO::WRITE_NEW );
-    
-    // Write an almost empty run header
-    LCRunHeaderImpl * lcHeader  = new LCRunHeaderImpl;
-    lcHeader->setRunNumber( 0 );
-        
-    lcWriter->writeRunHeader(lcHeader);
-    delete lcHeader;
+    // Now, write nominal tracker geometry parameters  
+    HepVector Origin = adet.GetNominal().GetPosition(); 
+    HepMatrix NominalRotation = adet.GetNominal().GetRotation(); 
       
-    LCEventImpl * event = new LCEventImpl;
-    event->setRunNumber( 0 );
-    event->setEventNumber( 0 );
+    // Factor out the discrete rotation 
+    HepMatrix DiscreteRotation = adet.GetDiscrete().GetRotation(); 
+    HepMatrix EulerRotation = NominalRotation*DiscreteRotation.T();
        
-    LCTime * now = new LCTime;
-    event->setTimeStamp( now->timeStamp() );
-    delete now;
+    double alpha, beta, gamma; 
+    GetAnglesKarimaki(EulerRotation, alpha, beta, gamma);   
     
-    LCCollectionVec * constantsCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
+    int bin = ipl+1;
     
-    for ( int ipl = 0; ipl < _numberOfSensors; ipl++ ) 
-    {
-      
-      // Load current pixel module 
-      Det & adet = GetDet(ipl);      
-      
-      // Stores all alignment data for this module
-      AlignmentConstant * alignConst = new AlignmentConstant;
-      alignConst->setSensorID( adet.GetDAQID() );
-      
-      // Now, write nominal tracker geometry parameters  
-      HepVector Origin = adet.GetNominal().GetPosition(); 
-      HepMatrix NominalRotation = adet.GetNominal().GetRotation(); 
-      
-      // Factor out the discrete rotation 
-      HepMatrix DiscreteRotation = adet.GetDiscrete().GetRotation(); 
-      HepMatrix EulerRotation = NominalRotation*DiscreteRotation.T();
-       
-      double alpha, beta, gamma; 
-      GetAnglesKarimaki(EulerRotation, alpha, beta, gamma); 
-      
-      alignConst->setXOffset( Origin[0] );
-      alignConst->setYOffset( Origin[1] );
-      alignConst->setZOffset( Origin[2] );
-      alignConst->setAlpha( alpha );
-      alignConst->setBeta( beta );
-      alignConst->setGamma( gamma );
-       
-      constantsCollection->push_back( alignConst ); 
-    }                     
-    event->addCollection( constantsCollection,  "alignDB" );
-    lcWriter->writeEvent( event );
-    delete event;
-         
-    lcWriter->close(); 
-    streamlog_out(MESSAGE3) << std::endl << "Finish alignment DB file " << _alignmentDBFileName << std::endl << std::endl;
+    _histoMap["hSensorID"]->SetBinContent( bin, adet.GetDAQ() );
+    _histoMap["hSensorID"]->SetBinError( bin, 0 );
     
+    _histoMap["hPositionX"]->SetBinContent( bin, Origin[0] );
+    _histoMap["hPositionX"]->SetBinError( bin, 0 );
+     
+    _histoMap["hPositionY"]->SetBinContent( bin, Origin[1] );
+    _histoMap["hPositionY"]->SetBinError( bin, 0 ); 
+
+    _histoMap["hPositionZ"]->SetBinContent( bin, Origin[2] );
+    _histoMap["hPositionZ"]->SetBinError( bin, 0 ); 
+      
+    _histoMap["hRotationAlpha"]->SetBinContent( bin, alpha );
+    _histoMap["hRotationAlpha"]->SetBinError( bin, 0 );  
+
+    _histoMap["hRotationBeta"]->SetBinContent( bin, beta );
+    _histoMap["hRotationBeta"]->SetBinError( bin, 0 );   
+
+    _histoMap["hRotationGamma"]->SetBinContent( bin, gamma );
+    _histoMap["hRotationGamma"]->SetBinError( bin, 0 );    
+     
   }
-  catch ( IOException& e ) 
-  {
-    streamlog_out ( ERROR4 ) << e.what() << std::endl
-                             << "Problem creating alignmentDB. Sorry for quitting. " << std::endl;
-    exit(-1);
-  }
-          
+  
+  // Close root  file
+  rootFile->Write();
+  rootFile->Close();
+  delete rootFile;   
+
+  streamlog_out(MESSAGE3) << std::endl << "Finish alignment DB file " << _alignmentDBFileName << std::endl << std::endl;
 }
 
 /** Get data handle for pixel module at position ipl
