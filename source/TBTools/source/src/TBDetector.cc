@@ -449,7 +449,7 @@ void TBDetector::WriteAlignmentDB( )
     
     int bin = ipl+1;
     
-    _histoMap["hSensorID"]->SetBinContent( bin, adet.GetDAQ() );
+    _histoMap["hSensorID"]->SetBinContent( bin, adet.GetDAQID() );
     _histoMap["hSensorID"]->SetBinError( bin, 0 );
     
     _histoMap["hPositionX"]->SetBinContent( bin, Origin[0] );
