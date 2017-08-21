@@ -9,6 +9,10 @@
 #include <algorithm>
 #include <cassert> 
 
+// Include ROOT classes
+#include <TH1F.h>
+#include <TFile.h>
+
 // Include CLHEP header files
 #include <CLHEP/Matrix/DiagMatrix.h>
 
