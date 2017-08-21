@@ -7,7 +7,7 @@
 #ifndef TriplettCorrelator_H
 #define TriplettCorrelator_H 1
 
-// Include DEPFETTrackTools header files
+// Include TBTools header files
 #include "TBDetector.h"
 
 // Include Marlin classes
@@ -32,28 +32,27 @@ namespace depfet {
   /*! This processor provides a pre-alignment in XY for a tracking telescope in a 
    *  test beam setup. 
    *  
-   *  The input to this processor is a sample of trackletts from an aligned part 
-   *  of the tracking telescope. For example this can be the first arm of the
-   *  reference telescope. The other input is a set of collections with hits
+   *  The input to this processor is a sample of tracks from the upstream arm of the 
+   *  tracking telescope. The other input is a set of collections with hits
    *  from the other sensors. 
    * 
-   *  The goal of the pre- alignment process is to correlate the xy of hits with 
-   *  the extrapolations from the trackletts. Only the xy position of detectors 
-   *  which do not have hits in the trackletts are corrected.
-   *  
-   *  The use of trackletts (tripletts) for pre-alignment offers two main advantages 
-   *  over the standard correlator: 
-   *
-   *  1) We can cut on the chi2 value of trackletts to suppress combinatorial background. 
-   *     This makes it easier to see real correlation bands. 
-   *
-   *  2) Trackletts offer a much more accurate track extrapolation from one end of 
-   *     the telescope to the other.
-   *   
+   *  The TriplettCorrelator processor is a big brother of the Correlator processor. 
+   *  The main use case is a tracking telescope having large XY misalignment and 
+   *  and a substantial ampount of material in between the telescope arms.  
    * 
-   *  The two arguments apply especially for testbeams with multi GeV electrons when there 
-   *  is a large distance between the arms of the reference telescope. 
    *
+   *  1) The XY misalignment makes track finding in the whole telescop inefficient 
+   *     and track based alignment cannot be used yet. 
+   *
+   *  2) 3hit tracks from one arm are easier to find, give accurate extrapolation and 
+   *     suppress fake tracks from combinatorial bg. 
+   *   
+   *  For example, the processor was used for the pre alignment in the Belle II VXD testbeam
+   *  where a 6 layer octant of the Belle II vertex detector was operated in a 1T magnetic 
+   *  field. A reference telescope consisted of 3 Mimosa 26 planes installed upstream and another 
+   *  3 plane arm installed downstream.  
+   *  
+   *  
    *  Author: B.Schwenker, Universität Göttingen
    *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
    */
@@ -114,6 +113,11 @@ protected:
  *  values.  
  */
    bool _updateAlignment;
+
+//! New alignment  
+/*! Don't use current alignment data base, but start from scratch   
+ */
+   bool _newAlignment;
 
     
 //! Output root file name  
