@@ -396,37 +396,37 @@ void TBDetector::WriteAlignmentDB( )
   
   std::map< std::string, TH1F *> _histoMap;
    
-  _histoMap["hSensorID"] = new TH1D("hSensorID", "", _numberOfSensors,0,_numberOfSensors); 
+  _histoMap["hSensorID"] = new TH1F("hSensorID", "", _numberOfSensors,0,_numberOfSensors); 
   _histoMap["hSensorID"]->SetStats( false );
   _histoMap["hSensorID"]->SetYTitle("sensor id"); 
   _histoMap["hSensorID"]->SetXTitle("plane");
 
-  _histoMap["hPositionX"] = new TH1D("hPositionX", "", _numberOfSensors,0,_numberOfSensors); 
+  _histoMap["hPositionX"] = new TH1F("hPositionX", "", _numberOfSensors,0,_numberOfSensors); 
   _histoMap["hPositionX"]->SetStats( false );
   _histoMap["hPositionX"]->SetYTitle("position x [mm]"); 
   _histoMap["hPositionX"]->SetXTitle("plane"); 
 
-  _histoMap["hPositionY"] = new TH1D("hPositionY", "", _numberOfSensors,0,_numberOfSensors); 
+  _histoMap["hPositionY"] = new TH1F("hPositionY", "", _numberOfSensors,0,_numberOfSensors); 
   _histoMap["hPositionY"]->SetStats( false );
   _histoMap["hPositionY"]->SetYTitle("position y [mm]"); 
   _histoMap["hPositionY"]->SetXTitle("plane"); 
 
-  _histoMap["hPositionZ"] = new TH1D("hPositionZ", "", _numberOfSensors,0,_numberOfSensors); 
+  _histoMap["hPositionZ"] = new TH1F("hPositionZ", "", _numberOfSensors,0,_numberOfSensors); 
   _histoMap["hPositionZ"]->SetStats( false );
   _histoMap["hPositionZ"]->SetYTitle("position z [mm]"); 
   _histoMap["hPositionZ"]->SetXTitle("plane"); 
 
-  _histoMap["hRotationAlpha"] = new TH1D("hRotationAlpha", "", _numberOfSensors,0,_numberOfSensors); 
+  _histoMap["hRotationAlpha"] = new TH1F("hRotationAlpha", "", _numberOfSensors,0,_numberOfSensors); 
   _histoMap["hRotationAlpha"]->SetStats( false );
   _histoMap["hRotationAlpha"]->SetYTitle("rotation alpha [rad]"); 
   _histoMap["hRotationAlpha"]->SetXTitle("plane"); 
 
-  _histoMap["hRotationBeta"] = new TH1D("hRotationBeta", "", _numberOfSensors,0,_numberOfSensors); 
+  _histoMap["hRotationBeta"] = new TH1F("hRotationBeta", "", _numberOfSensors,0,_numberOfSensors); 
   _histoMap["hRotationBeta"]->SetStats( false );
   _histoMap["hRotationBeta"]->SetYTitle("rotation beta [rad]"); 
   _histoMap["hRotationBeta"]->SetXTitle("plane"); 
 
-  _histoMap["hRotationGamma"] = new TH1D("hRotationGamma", "", _numberOfSensors,0,_numberOfSensors); 
+  _histoMap["hRotationGamma"] = new TH1F("hRotationGamma", "", _numberOfSensors,0,_numberOfSensors); 
   _histoMap["hRotationGamma"]->SetStats( false );
   _histoMap["hRotationGamma"]->SetYTitle("rotation gamma [rad]"); 
   _histoMap["hRotationGamma"]->SetXTitle("plane");
