@@ -287,7 +287,7 @@ void TBDetector::ReadAlignmentDB( std::string FileName )
   // Open alignment data base
   TFile * rootFile = new TFile(_alignmentDBFileName.c_str(), "READ");
   
-  std::map< std::string, TH1D *> histoMap;
+  std::map< std::string, TH1F *> histoMap;
  
  
   if ( (TH1F *) rootFile->Get("hSensorID") != nullptr) {
@@ -394,7 +394,7 @@ void TBDetector::WriteAlignmentDB( )
   TFile * rootFile = new TFile( _alignmentDBFileName.c_str(),"recreate");
   rootFile->cd("");
   
-  std::map< std::string, TH1D *> _histoMap;
+  std::map< std::string, TH1F *> _histoMap;
    
   _histoMap["hSensorID"] = new TH1D("hSensorID", "", _numberOfSensors,0,_numberOfSensors); 
   _histoMap["hSensorID"]->SetStats( false );
