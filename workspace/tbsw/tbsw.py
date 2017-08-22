@@ -137,8 +137,8 @@ class Environment(object):
     tree = xml.etree.ElementTree.parse(xmlfile)
     root = tree.getroot()
 
-    print(' Changed beam energy to:\n')
-    print momentum
+    print(' Changed beam energy to: ', momentum)
+    
 
     for processor in root.findall('processor'): 
       for parameter in processor.findall('parameter'):

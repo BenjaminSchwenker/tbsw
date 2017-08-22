@@ -3,7 +3,6 @@
 
 // Local includes
 #include "Det.h"
-#include "AlignmentConstant.h" 
 
 // Include basic C
 #include <vector>

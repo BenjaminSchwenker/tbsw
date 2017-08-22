@@ -28,9 +28,11 @@
 #include <string>
 #include <algorithm>
 
-// Include LCIO classes
+// lcio includes <.h>
+#include <lcio.h>
 #include <UTIL/CellIDDecoder.h>
 #include <IMPL/LCFlagImpl.h>
+#include <IMPL/LCGenericObjectImpl.h>
 
 // Include CLHEP classes
 #include <CLHEP/Matrix/Vector.h>
@@ -78,8 +80,8 @@ PixelDUTAnalyzer::PixelDUTAnalyzer() : Processor("PixelDUTAnalyzer")
   // Processor parameters:
   
   registerProcessorParameter ("AlignmentDBFileName",
-                             "This is the name of the LCIO file with the alignment constants (add .slcio)",
-                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.slcio" ) );     
+                             "This is the name of the file with the alignment constants (add .root)",
+                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) );     
   
   registerProcessorParameter ("DUTPlane",
                               "Plane number of DUT along the beam line",
