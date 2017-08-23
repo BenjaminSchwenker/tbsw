@@ -24,10 +24,19 @@ namespace depfet {
 
 /** Constructor 
  */
-TBVertexFitter::TBVertexFitter(int ipl)
+TBVertexFitter::TBVertexFitter(int ipl) : A(5,3,0), B(5,2,0)
 {                   
 
   plnr = ipl; //plane number of DUT
+
+  //Define Matrices used for vertex fit
+  //Jacobian B = dh/dq for slope states q = (a,b)
+	B[0][0] = 1;	//dh1/da
+	B[1][1] = 1;	//dh2/db
+
+  //Jacobian A = dh/dr for vertex state r = (x,y,z)
+	A[2][0] = 1;	//dh3/dx
+	A[3][1] = 1;	//dh4/dy
 
 }
 
@@ -54,11 +63,6 @@ bool TBVertexFitter::FitVertex(TBVertex& Vertex)
     HepMatrix p = Vertex.GetStates()[i].GetPars();
     HepMatrix V = Vertex.GetStates()[i].GetCov();
 
-    //Jacobian B = dh/dq for slope states q = (a,b)
-    HepMatrix B(5,2,0);
-	B[0][0] = 1;	//dh1/da
-	B[1][1] = 1;	//dh2/db
-
     //Calculate filter matrices
     HepMatrix G = V.inverse(ierr);
     if (ierr != 0) {
@@ -69,12 +73,9 @@ bool TBVertexFitter::FitVertex(TBVertex& Vertex)
     HepMatrix W = (B.T()*G*B).inverse();
     HepMatrix GB = G - G * B * W * B.T() * G;
 
-    //Jacobian A = dh/dr for vertex state r = (x,y,z)
-    HepMatrix A(5,3,0);
-	A[2][0] = 1;	//dh3/dx
-	A[3][1] = 1;	//dh4/dy
-	A[2][2] = -p[0][0];	//dh3/dz
-	A[3][2] = -p[1][0]; 	//dh4/dz
+    //Modify Jacobian A to represent current trackstate
+    A[2][2] = -p[0][0];
+    A[3][2] = -p[1][0];
 
     //Update vertex, covariance
     HepMatrix Ctemp = C;

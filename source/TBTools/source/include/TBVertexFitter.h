@@ -42,16 +42,17 @@ class TBVertexFitter {
    */
   bool FitVertex(TBVertex& Vertex);
   
-  
+ // Public Members -----------------
 
- // Private Methods -----------------
+  CLHEP::HepMatrix B; //Jacobian B = dh/dq for slope states q = (a,b)
+
+  CLHEP::HepMatrix A; //Jacobian A = dh/dr for vertex state r = (x,y,z)  
 
  // Private Members -----------------
  private:
-
-  int ndim; // dimension of state
   
   int plnr; //plane number of dut
+
 };
  
 
