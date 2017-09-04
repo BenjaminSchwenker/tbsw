@@ -229,7 +229,7 @@ def simulate():
 
   # Convert gear file to alignmentDB root file, which will be stored in the sim folder
   dbfilename=SimObj.tmpdir+'/localDB/alignmentDB_simulation.root'
-  Create_AlignmentDBFile_From_Gear(gearfile=localgearfile, dbfilename=dbfilename)
+  Create_AlignmentDBFile_From_Gear(gearfile=SimObj.get_filename('gear.xml'), dbfilename=dbfilename)
 
   # Copy gearfile
   gearfile_air=SimObj.tmpdir+'/'+'gear_air.xml'
@@ -239,8 +239,10 @@ def simulate():
   set_parameter(gearfile=gearfile_air, sensorID=11, parametername='thickness', value=0.0001)
   set_parameter(gearfile=gearfile_air, sensorID=11, parametername='radLength', value=304000.0)
 
+  simcaltag='truthdb'
+
   # Run simulation to create rawfile with simulated digits 
-  SimObj.simulate(path=simpath)  
+  SimObj.simulate(path=simpath,caltag=simcaltag)  
 
 
 def calibrate():

@@ -13,12 +13,11 @@ import random
 import math
 
 from ROOT import TFile, TH1F
-from ROOT import gROOT, Double
 
 
 def Create_AlignmentDBFile_From_Gear(gearfile=None, dbfilename="alignmentDB_simulation.root"):
   """
-  Converts the input gear file into a alignmentDB root file
+  Overrides value field in all sensors with a specific sensor ID in gearfile
     :@gearfile:       gear file to be copied into alignment root file  
     :@dbfilename      Name of the output root file 
     :author: ulf.stolzenberg@phys.uni-goettingen.de  
@@ -28,10 +27,7 @@ def Create_AlignmentDBFile_From_Gear(gearfile=None, dbfilename="alignmentDB_simu
     return None
 
   # Open db file
-  histofile = gROOT.FindObject( dbfilename )
-  if histofile:
-    histofile.Close()
-  histofile = TFile( dbfilename, 'RECREATE', 'alignment parameters from ' + gearfile )
+  dbfile = TFile( dbfilename, 'RECREATE', 'alignment parameters from ' + gearfile )
 
   # Define lists of alignment parameters
   id_list = []
@@ -103,10 +99,10 @@ def Create_AlignmentDBFile_From_Gear(gearfile=None, dbfilename="alignmentDB_simu
   hRotationGamma.GetYaxis().SetTitle("rotation gamma [rad]")
 
   # starting value of bin counter
-  bin=1
+  #bin=1
 
   # Loop over sensor ids
-  for sensid in id_list2:
+  for bin,sensid in enumerate(id_list2):
 
     # Find list index for this sensor id
     index = id_list.index(sensid)
@@ -122,8 +118,8 @@ def Create_AlignmentDBFile_From_Gear(gearfile=None, dbfilename="alignmentDB_simu
     # update bin counter
     bin=bin+1
   
-  histofile.Write()
-  histofile.Close()
+  dbfile.Write()
+  dbfile.Close()
 
 
 def set_parameter(gearfile=None, sensorID=None, parametername=None, value=None):
