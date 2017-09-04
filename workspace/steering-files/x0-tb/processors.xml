@@ -418,7 +418,7 @@
     <!--Collection name for MCParticles-->
     <parameter name="MCParticleCollectionName" type="string" lcioOutType="MCParticle" value="MCParticles"/>
     <!--Number of beam particles per second-->
-    <parameter name="BeamIntensity" type="double" value="20000"/>
+    <parameter name="BeamIntensity" type="double" value="60000"/>
     <!--Beam momentum [GeV]-->
     <parameter name="BeamMomentum" type="double" value="4.0"/>
     <!--Beam momentum sigma [GeV]-->
