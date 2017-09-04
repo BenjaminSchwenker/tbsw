@@ -12,6 +12,120 @@ import xml.etree.ElementTree
 import random
 import math
 
+from ROOT import TFile, TH1F
+from ROOT import gROOT, Double
+
+
+def Create_AlignmentDBFile_From_Gear(gearfile=None, dbfilename="alignmentDB_simulation.root"):
+  """
+  Converts the input gear file into a alignmentDB root file
+    :@gearfile:       gear file to be copied into alignment root file  
+    :@dbfilename      Name of the output root file 
+    :author: ulf.stolzenberg@phys.uni-goettingen.de  
+  """   
+
+  if gearfile == None:
+    return None
+
+  # Open db file
+  histofile = gROOT.FindObject( dbfilename )
+  if histofile:
+    histofile.Close()
+  histofile = TFile( dbfilename, 'RECREATE', 'alignment parameters from ' + gearfile )
+
+  # Define lists of alignment parameters
+  id_list = []
+  xpos_list = []
+  ypos_list = []
+  zpos_list = []
+  xrot_list = []
+  yrot_list = []
+  zrot_list = []
+
+  tree = xml.etree.ElementTree.parse(gearfile)
+  root = tree.getroot()
+
+  # Read out the alignment parameters
+  for detectors in root.findall('detectors'): 
+    for detector in detectors.findall('detector'):
+      for layers in detector.findall('layers'):
+        for layer in layers.findall('layer'):
+
+          for sensitive in layer.findall('sensitive'):
+            xpos_list.append(float(sensitive.get('positionX')))
+            ypos_list.append(float(sensitive.get('positionY')))
+            zpos_list.append(float(sensitive.get('positionZ')))
+            xrot_list.append(float(sensitive.get('alpha')))
+            yrot_list.append(float(sensitive.get('beta')))
+            zrot_list.append(float(sensitive.get('gamma')))
+            id_list.append(int(sensitive.get('ID')))
+
+  # Sort z position list and the corresponding sensor id list
+  zpos_list2, id_list2 = (list(t) for t in zip(*sorted(zip(zpos_list, id_list))))
+
+  # get number of planes
+  nentries=len(id_list2)
+
+  # X position histogram
+  hPositionX = TH1F("hPositionX","",nentries,0,nentries)
+  hPositionX.SetTitle("")
+  hPositionX.GetXaxis().SetTitle("plane")
+  hPositionX.GetYaxis().SetTitle("position x [mm]") 
+
+  # X position histogram
+  hPositionY = TH1F("hPositionY","",nentries,0,nentries)
+  hPositionY.SetTitle("")
+  hPositionY.GetXaxis().SetTitle("plane")
+  hPositionY.GetYaxis().SetTitle("position y [mm]")
+
+  # Z position histogram
+  hPositionZ = TH1F("hPositionZ","",nentries,0,nentries)
+  hPositionZ.SetTitle("")
+  hPositionZ.GetXaxis().SetTitle("plane")
+  hPositionZ.GetYaxis().SetTitle("position z [mm]")
+
+  # alpha rotation histogram
+  hRotationAlpha = TH1F("hRotationAlpha","",nentries,0,nentries)
+  hRotationAlpha.SetTitle("")
+  hRotationAlpha.GetXaxis().SetTitle("plane")
+  hRotationAlpha.GetYaxis().SetTitle("rotation alpha [rad]") 
+
+  # beta rotation histogram
+  hRotationBeta = TH1F("hRotationBeta","",nentries,0,nentries)
+  hRotationBeta.SetTitle("")
+  hRotationBeta.GetXaxis().SetTitle("plane")
+  hRotationBeta.GetYaxis().SetTitle("rotation beta [rad]")
+
+  # gamma rotation histogram
+  hRotationGamma = TH1F("hRotationGamma","",nentries,0,nentries)
+  hRotationGamma.SetTitle("")
+  hRotationGamma.GetXaxis().SetTitle("plane")
+  hRotationGamma.GetYaxis().SetTitle("rotation gamma [rad]")
+
+  # starting value of bin counter
+  bin=1
+
+  # Loop over sensor ids
+  for sensid in id_list2:
+
+    # Find list index for this sensor id
+    index = id_list.index(sensid)
+  
+    # Fill histograms
+    hPositionX.SetBinContent(bin,xpos_list[index])
+    hPositionY.SetBinContent(bin,ypos_list[index])
+    hPositionZ.SetBinContent(bin,zpos_list[index])
+    hRotationAlpha.SetBinContent(bin,xrot_list[index])
+    hRotationBeta.SetBinContent(bin,yrot_list[index])
+    hRotationGamma.SetBinContent(bin,zrot_list[index])
+    
+    # update bin counter
+    bin=bin+1
+  
+  histofile.Write()
+  histofile.Close()
+
+
 def set_parameter(gearfile=None, sensorID=None, parametername=None, value=None):
   """
   Overrides value field in all sensors with a specific sensor ID in gearfile
@@ -64,7 +178,7 @@ def add_offset(gearfile=None, sensorID=None, parametername=None, value=None):
             if ID==str(sensorID):
               #print('Changing ladder with ID '+ID)
               if ladder.get(parametername) is None:
-                print('Parameter with name '+parametername+' doesnt exist in ladder!')
+                #print('Parameter with name '+parametername+' doesnt exist in ladder!')
                 pass
               else:
                 laddervalue=float(value)+float(ladder.get(parametername))
@@ -76,7 +190,7 @@ def add_offset(gearfile=None, sensorID=None, parametername=None, value=None):
             if ID==str(sensorID):
               #print('Changing sensitive volume with ID '+ID)
               if sensitive.get(parametername) is None:
-                print('Parameter with name '+parametername+' doesnt exist in sensitive!')
+                #print('Parameter with name '+parametername+' doesnt exist in sensitive!')
                 pass
               else:
                 sensvalue=float(value)+float(sensitive.get(parametername))

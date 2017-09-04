@@ -227,6 +227,10 @@ def simulate():
   # Misalign gear file
   randomize_telescope(gearfile=localgearfile, mean_pos=mean_pos, sigma_pos=sigma_pos, mean_rot=mean_rot, sigma_rot=sigma_rot)
 
+  # Convert gear file to alignmentDB root file, which will be stored in the sim folder
+  dbfilename=SimObj.tmpdir+'/localDB/alignmentDB_simulation.root'
+  Create_AlignmentDBFile_From_Gear(gearfile=localgearfile, dbfilename=dbfilename)
+
   # Copy gearfile
   gearfile_air=SimObj.tmpdir+'/'+'gear_air.xml'
   shutil.copy2(localgearfile,gearfile_air)
