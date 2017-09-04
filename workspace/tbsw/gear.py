@@ -98,9 +98,6 @@ def Create_AlignmentDBFile_From_Gear(gearfile=None, dbfilename="alignmentDB_simu
   hRotationGamma.GetXaxis().SetTitle("plane")
   hRotationGamma.GetYaxis().SetTitle("rotation gamma [rad]")
 
-  # starting value of bin counter
-  #bin=1
-
   # Loop over sensor ids
   for bin,sensid in enumerate(id_list2):
 
@@ -108,15 +105,12 @@ def Create_AlignmentDBFile_From_Gear(gearfile=None, dbfilename="alignmentDB_simu
     index = id_list.index(sensid)
   
     # Fill histograms
-    hPositionX.SetBinContent(bin,xpos_list[index])
-    hPositionY.SetBinContent(bin,ypos_list[index])
-    hPositionZ.SetBinContent(bin,zpos_list[index])
-    hRotationAlpha.SetBinContent(bin,xrot_list[index])
-    hRotationBeta.SetBinContent(bin,yrot_list[index])
-    hRotationGamma.SetBinContent(bin,zrot_list[index])
-    
-    # update bin counter
-    bin=bin+1
+    hPositionX.SetBinContent(bin+1,xpos_list[index])
+    hPositionY.SetBinContent(bin+1,ypos_list[index])
+    hPositionZ.SetBinContent(bin+1,zpos_list[index])
+    hRotationAlpha.SetBinContent(bin+1,xrot_list[index]/180*3.1415)   # angles in gear file are given in degree -> change to rad
+    hRotationBeta.SetBinContent(bin+1,yrot_list[index]/180*3.1415)    # angles in gear file are given in degree -> change to rad
+    hRotationGamma.SetBinContent(bin+1,zrot_list[index]/180*3.1415)   # angles in gear file are given in degree -> change to rad
   
   dbfile.Write()
   dbfile.Close()
