@@ -64,10 +64,9 @@ def add_offset(gearfile=None, sensorID=None, parametername=None, value=None):
             if ID==str(sensorID):
               #print('Changing ladder with ID '+ID)
               if ladder.get(parametername) is None:
-                #print('Parameter with name '+parametername+' doesnt exist in ladder!')
+                print('Parameter with name '+parametername+' doesnt exist in ladder!')
                 pass
               else:
-                #print('Parameter with name '+parametername+' exists in ladder!')
                 laddervalue=float(value)+float(ladder.get(parametername))
                 ladder.set(parametername, str(laddervalue))
 
@@ -77,10 +76,9 @@ def add_offset(gearfile=None, sensorID=None, parametername=None, value=None):
             if ID==str(sensorID):
               #print('Changing sensitive volume with ID '+ID)
               if sensitive.get(parametername) is None:
-                #print('Parameter with name '+parametername+' doesnt exist in sensitive!')
+                print('Parameter with name '+parametername+' doesnt exist in sensitive!')
                 pass
               else:
-                #print('Parameter with name '+parametername+' exists in sensitive!')
                 sensvalue=float(value)+float(sensitive.get(parametername))
                 sensitive.set(parametername, str(sensvalue))
 
@@ -106,7 +104,7 @@ def randomize_gearparameter(gearfile=None, sensorID=None, parametername=None, me
 
 def randomize_telescope(gearfile=None, mean_pos=None, sigma_pos=None, mean_rot=None, sigma_rot=None):
   """
-  Overrides position and orientation of multiple sensors in gearfile with gaussian random variables
+  Overrides position and orientation of all sensors in gearfile with gaussian random variables
     :@gearfile:          gear file to be overwritten  
 	:@mean_pos		     Mean of the gaussian random distribution, which determine the plane positions
     :@sigma_pos          Sigma of the gaussian random distribution, which determine the plane positions
@@ -133,6 +131,95 @@ def randomize_telescope(gearfile=None, mean_pos=None, sigma_pos=None, mean_rot=N
             randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='alpha', mean=mean_rot, sigma=sigma_rot)
             randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='beta', mean=mean_rot, sigma=sigma_rot)
             randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='gamma', mean=mean_rot, sigma=sigma_rot)
+
+
+def randomize_singleparameter_telescope(gearfile=None, mean=None, sigma=None, parametername=None):
+  """
+  Overrides parameter of all sensors in gearfile with gaussian random variables
+    :@gearfile:          gear file to be overwritten  
+	:@mean		         Mean of the gaussian random distribution
+    :@sigma              Sigma of the gaussian random distribution
+    :@parametername      Name of the parameter, which will be changes
+    :author: ulf.stolzenberg@phys.uni-goettingen.de  
+  """  
+
+  tree = xml.etree.ElementTree.parse(gearfile)
+  root = tree.getroot()  
+
+  for detectors in root.findall('detectors'): 
+    for detector in detectors.findall('detector'):
+      for layers in detector.findall('layers'):
+        for layer in layers.findall('layer'):
+
+          for ladder in layer.findall('sensitive'):
+            ID=ladder.get('ID')
+            print('[INFO] Misalign parameter: '+parametername+' of plane with ID '+ID)
+            randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername=parametername, mean=mean, sigma=sigma)
+
+
+def randomize_innertelescope(gearfile=None, mean_pos=None, sigma_pos=None, mean_rot=None, sigma_rot=None):
+  """
+  Overrides position and orientation of all sensors, except the sensors with ID 0 and 5 in gearfile with gaussian random variables
+    :@gearfile:          gear file to be overwritten  
+	:@mean_pos		     Mean of the gaussian random distribution, which determine the plane positions
+    :@sigma_pos          Sigma of the gaussian random distribution, which determine the plane positions
+	:@mean_rot		     Mean of the gaussian random distribution, which determine the plane rotations
+    :@sigma_rot          Sigma of the gaussian random distribution, which determine the plane rotations
+    :author: ulf.stolzenberg@phys.uni-goettingen.de  
+  """  
+
+  tree = xml.etree.ElementTree.parse(gearfile)
+  root = tree.getroot()  
+
+  for detectors in root.findall('detectors'): 
+    for detector in detectors.findall('detector'):
+      for layers in detector.findall('layers'):
+        for layer in layers.findall('layer'):
+
+          for ladder in layer.findall('sensitive'):
+            ID=ladder.get('ID')
+            if ID != '0' and ID != '5':
+            	print('[INFO] Misalign position of plane with ID '+ID)
+            	randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='positionX', mean=mean_pos, sigma=sigma_pos)
+            	randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='positionY', mean=mean_pos, sigma=sigma_pos)
+            	randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='positionZ', mean=mean_pos, sigma=sigma_pos)
+
+            	randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='alpha', mean=mean_rot, sigma=sigma_rot)
+            	randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='beta', mean=mean_rot, sigma=sigma_rot)
+            	randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='gamma', mean=mean_rot, sigma=sigma_rot)
+
+
+def randomize_telescope_withsensorexception(gearfile=None, mean_pos=None, sigma_pos=None, mean_rot=None, sigma_rot=None, exception_ID=None):
+  """
+  Overrides position and orientation of all sensors, except the sensor with ID 'exception_ID' in gearfile with gaussian random variables
+    :@gearfile:          gear file to be overwritten  
+	:@mean_pos		     Mean of the gaussian random distribution, which determine the plane positions
+    :@sigma_pos          Sigma of the gaussian random distribution, which determine the plane positions
+	:@mean_rot		     Mean of the gaussian random distribution, which determine the plane rotations
+    :@sigma_rot          Sigma of the gaussian random distribution, which determine the plane rotations
+    :@exception_ID       ID of sensor that will not be misaligned
+    :author: ulf.stolzenberg@phys.uni-goettingen.de  
+  """  
+
+  tree = xml.etree.ElementTree.parse(gearfile)
+  root = tree.getroot()  
+
+  for detectors in root.findall('detectors'): 
+    for detector in detectors.findall('detector'):
+      for layers in detector.findall('layers'):
+        for layer in layers.findall('layer'):
+
+          for ladder in layer.findall('sensitive'):
+            ID=ladder.get('ID')
+            if ID != str(exception_ID):
+            	print('[INFO] Misalign position of plane with ID '+ID)
+            	randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='positionX', mean=mean_pos, sigma=sigma_pos)
+            	randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='positionY', mean=mean_pos, sigma=sigma_pos)
+            	randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='positionZ', mean=mean_pos, sigma=sigma_pos)
+
+            	randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='alpha', mean=mean_rot, sigma=sigma_rot)
+            	randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='beta', mean=mean_rot, sigma=sigma_rot)
+            	randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='gamma', mean=mean_rot, sigma=sigma_rot)
 
 
 def set_globalparameter(gearfile=None, parametername=None, value=None):
