@@ -239,20 +239,20 @@ def randomize_telescope(gearfile=None, mean_list=None, sigma_list=None, sensorex
   # Fill up mean and sigma lists in case they have less than 6 entries
   while len(mean_list) < 6:
     mean_list.append(0.0)
-    print('Warning: mean_list has to few entries (6 required)! Adding 0.0 element')
+    print('Warning: mean_list has too few entries (6 required)! Adding 0.0 element')
 
   while len(sigma_list) < 6:
     sigma_list.append(0.0)
-    print('Warning: sigma_list has to few entries (6 required)! Adding 0.0 element')
+    print('Warning: sigma_list has too few entries (6 required)! Adding 0.0 element')
 
-  # Remove entries from sigma and mean list in case  they have to many entries
+  # Remove entries from sigma and mean list in case  they have too many entries
   while len(mean_list) > 6:
     mean_list.pop()
-    print('Warning: mean_list has to many entries (6 required)! Removing last element')
+    print('Warning: mean_list has too many entries (6 required)! Removing last element')
 
   while len(sigma_list) > 6:
     sigma_list.pop()
-    print('Warning: sigma_list has to many entries (6 required)! Removing last element')
+    print('Warning: sigma_list has too many entries (6 required)! Removing last element')
 
   # This is the default mode list: Containing all the positions and angles
   default_mode_list=['positionX','positionY','positionZ','alpha','beta','gamma']
