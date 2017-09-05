@@ -195,23 +195,6 @@ class Environment(object):
     
     print ('[INFO] Created new caltag ', caltag) 
 
-  def export_truthdb(self, caltag):
-    caltagdir = self.cwdir+'/localDB/'+caltag
-    
-    # create folder workspace/localDB if not exist    
-    if not os.path.isdir(self.cwdir+'/localDB'):
-      os.mkdir(self.cwdir+'/localDB')
-    # overwrite caltag if exists     
-    if os.path.isdir(caltagdir):
-      shutil.rmtree(caltagdir)
-    
-    #create caltag and populate with DB files    
-    os.mkdir(caltagdir)		 
-    for dbfile in glob.glob(self.tmpdir + '/localDB/*'): 
-      shutil.copy(dbfile, os.path.join(caltagdir,os.path.basename(dbfile)))  
-    
-    print ('[INFO] Created new caltag ', caltag) 
-
      	                           
   def get_filename(self, filename):
     localname = os.path.join(self.tmpdir,filename)
@@ -251,7 +234,7 @@ class Simulation(Environment):
      
     self.import_caltag(caltag)
     self.run(path)
-    self.export_truthdb(caltag)
+    self.export_caltag(caltag)
    
 class Reconstruction(Environment):
   """

@@ -21,24 +21,28 @@ from tbsw import *
 # Steeringfiles are xml files and define details of the simulation like how many events are produced
 # or how M26 sensors are digitized. XML parameters can be adjusted using any test editor
 steerfiles = 'steering-files/x0-tb/'
-#cal tag
-air_caltag='mc-air-test'
+
+
 # Gearfile for runs 
 gearfile = 'gear.xml'
+
 # File name for raw data 
 rawfile_air = os.getcwd()+'/mc-air.slcio'
 rawfile_alu = os.getcwd()+'/mc-alu.slcio'
+
 # Number of events to simulate 
 nevents_air = 700000
 nevents_alu = 5000000
 
 #Parameters for simulation of misalignment
 #Position parameters in mm
-mean_pos=0.0 
-sigma_pos=.1
-#Rotation parameters in degrees
-mean_rot=0.0 
-sigma_rot=0.1
+mean_list=[0.0,0.0,0.0,0.0,0.0,0.0] 
+sigma_list=[0.1,0.1,0.1,0.1,0.1,0.1]
+
+# List of sensor ids and modes, which are excluded during misalignment
+sensorexception_list=[11,5,0] 
+modeexception_list=['positionZ']
+
 # Nominal Beam energy
 beamenergy=2.0
 
@@ -225,7 +229,7 @@ def simulate():
   localgearfile = SimObj.get_filename('gear.xml')
 
   # Misalign gear file
-  randomize_telescope(gearfile=localgearfile, mean_pos=mean_pos, sigma_pos=sigma_pos, mean_rot=mean_rot, sigma_rot=sigma_rot)
+  randomize_telescope(gearfile=localgearfile, mean_list=mean_list, sigma_list=sigma_list, sensorexception_list=sensorexception_list, modeexception_list=modeexception_list)
 
   # Convert gear file to alignmentDB root file, which will be stored in the sim folder
   dbfilename=SimObj.tmpdir+'/localDB/alignmentDB_simulation.root'
@@ -277,9 +281,12 @@ def calibrate():
 
 def reconstruct():
 
+  # Tag for calibration data
+  localcaltag = os.path.splitext(os.path.basename(rawfile_air))[0] + '-test'
+
   # Reconsruct the rawfile using the caltag. Resulting root files are 
   # written to folder root-files/
-  RecObj = Reconstruction(steerfiles=steerfiles, name=air_caltag + '-reco' )
+  RecObj = Reconstruction(steerfiles=steerfiles, name=localcaltag + '-reco' )
 
   # Set Beam energy
   RecObj.set_beam_momentum(beamenergy)
@@ -288,7 +295,7 @@ def reconstruct():
   recopath = create_reco_path(RecObj)  
 
   # Run the reconstuction  
-  RecObj.reconstruct(path=recopath,ifile=rawfile_alu,caltag=air_caltag) 
+  RecObj.reconstruct(path=recopath,ifile=rawfile_alu,caltag=localcaltag) 
   
 
 
@@ -324,6 +331,9 @@ if __name__ == '__main__':
 
   # Reconstruct the alu rawfile 
   reconstruct( )
+
+  # Tag for calibration data
+  localcaltag = os.path.splitext(os.path.basename(rawfile_air))[0] + '-test'
 
   imagefilename='root-files/X0-mc-air-test-reco-Uncalibrated-X0image.root'
   imagecfgfilename='steering-files/x0-tb/image.cfg'
@@ -363,10 +373,10 @@ if __name__ == '__main__':
      shutil.copytree(tmpdir, uncaltmpdir)
 
   # Do a calibration of the angle resolution
-  x0calibration(filename,imagefilename,air_caltag)
+  x0calibration(filename,imagefilename,localcaltag)
 
   # Generate a calibrated X/X0 image
-  x0imaging(filename,air_caltag,deletetag)
+  x0imaging(filename,localcaltag,deletetag)
 
   # Rename the image file
   if os.path.isfile(calibratedimagefile):
