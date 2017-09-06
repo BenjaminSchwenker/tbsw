@@ -15,7 +15,7 @@ import math
 from ROOT import TFile, TH1F
 
 
-def Create_AlignmentDBFile_From_Gear(gearfile=None, dbfilename="alignmentDB_simulation.root"):
+def Create_AlignmentDBFile_From_Gear(gearfile=None, truthdbfilename=None):
   """
   Overrides value field in all sensors with a specific sensor ID in gearfile
     :@gearfile:       gear file to be copied into alignment root file  
@@ -26,8 +26,11 @@ def Create_AlignmentDBFile_From_Gear(gearfile=None, dbfilename="alignmentDB_simu
   if gearfile == None:
     return None
 
+  if truthdbfilename == None:
+    return None
+
   # Open db file
-  dbfile = TFile( dbfilename, 'RECREATE', 'alignment parameters from ' + gearfile )
+  dbfile = TFile( truthdbfilename, 'RECREATE', 'alignment parameters from ' + gearfile )
 
   # Define lists of alignment parameters
   id_list = []

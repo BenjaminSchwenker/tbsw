@@ -26,6 +26,9 @@ steerfiles = 'steering-files/x0-tb/'
 # Gearfile for runs 
 gearfile = 'gear.xml'
 
+# Name of the truth db file
+truthdb_filename='alignmentDB_truth.root'
+
 # File name for raw data 
 rawfile_air = os.getcwd()+'/mc-air.slcio'
 rawfile_alu = os.getcwd()+'/mc-alu.slcio'
@@ -231,19 +234,25 @@ def simulate():
   # Misalign gear file
   randomize_telescope(gearfile=localgearfile, mean_list=mean_list, sigma_list=sigma_list, sensorexception_list=sensorexception_list, modeexception_list=modeexception_list)
 
+  localtruthdb_filename=SimObj.create_dbfilename(truthdb_filename)
+
   # Convert gear file to alignmentDB root file, which will be stored in the sim folder
-  dbfilename=SimObj.tmpdir+'/localDB/alignmentDB_simulation.root'
-  Create_AlignmentDBFile_From_Gear(gearfile=SimObj.get_filename('gear.xml'), dbfilename=dbfilename)
+  Create_AlignmentDBFile_From_Gear(gearfile=SimObj.get_filename('gear.xml'), truthdbfilename=localtruthdb_filename)
 
   # Copy gearfile
-  gearfile_air=SimObj.tmpdir+'/'+'gear_air.xml'
-  shutil.copy2(localgearfile,gearfile_air)
+  SimObj.copy_file('gear.xml','gear_air.xml')
+
+  # Get air gearfile
+  gearfile_air = SimObj.get_filename('gear_air.xml')
 
   # Change DUT in copied gearfile
   set_parameter(gearfile=gearfile_air, sensorID=11, parametername='thickness', value=0.0001)
   set_parameter(gearfile=gearfile_air, sensorID=11, parametername='radLength', value=304000.0)
 
-  simcaltag='truthdb'
+
+  # Create caltag for the truthdb
+  localcaltag = os.path.splitext(os.path.basename(rawfile_air))[0] + '-test'
+  simcaltag=localcaltag+ '-truthdb'
 
   # Run simulation to create rawfile with simulated digits 
   SimObj.simulate(path=simpath,caltag=simcaltag)  
