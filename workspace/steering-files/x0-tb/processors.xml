@@ -480,7 +480,7 @@
     <!--Choose front-end electronics: ADC(0) or Comparator(1) or None(2) -->
     <parameter name="FrontEndType" type="int" value="1"/>
     <!--Set threshold for comparator (in e)-->
-    <parameter name="ComparatorThrehold" type="float" value="1100"/>
+    <parameter name="ComparatorThrehold" type="float" value="800"/>
     <!--Set how many bits the ADC uses-->
     <parameter name="ADCBits" type="int" value="8"/>
     <!--Set analog-to-digital converter range 0 - ? (in e)-->
@@ -494,7 +494,7 @@
     <!--Apply electronic effects?-->
     <parameter name="ElectronicEffects" type="bool" value="true"/>
     <!--Noise added by the electronics, set in ENC (one value for each detector)-->
-    <parameter name="ElectronicNoise" type="double" value="300"/>
+    <parameter name="ElectronicNoise" type="double" value="400"/>
     <!--Apply digitization only to SimTrackerHits for sensors having DAQ IDs in this list-->
     <parameter name="FilterIDs" type="IntVec" value="0 1 2 3 4 5"/>
     <!--Use integration window?-->
