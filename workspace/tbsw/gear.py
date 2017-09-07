@@ -14,6 +14,11 @@ import math
 
 from ROOT import TFile, TH1F
 
+try:
+    from itertools import zip_longest as zip_longest
+except:
+    from itertools import izip_longest as zip_longest
+
 
 def Create_AlignmentDBFile_From_Gear(gearfile=None, truthdbfilename=None):
   """
@@ -209,7 +214,7 @@ def randomize_gearparameter(gearfile=None, sensorID=None, parametername=None, me
   add_offset(gearfile=gearfile, sensorID=sensorID, parametername=parametername, value=value)
 
 
-def randomize_telescope(gearfile=None, mean_list=None, sigma_list=None, sensorexception_list=None, modeexception_list=None):
+def randomize_telescope(gearfile=None, mean_list=[0.0,0.0,0.0,0.0,0.0,0.0], sigma_list=[0.0,0.0,0.0,0.0,0.0,0.0], sensorexception_list=[], modeexception_list=[]):
   """
   Overrides position and orientation of all sensors in gearfile with gaussian random variables
     :@gearfile:               gear file to be overwritten  
@@ -222,46 +227,12 @@ def randomize_telescope(gearfile=None, mean_list=None, sigma_list=None, sensorex
 
   tree = xml.etree.ElementTree.parse(gearfile)
   root = tree.getroot()  
-  
-  # Default: sensor exception list is empty
-  if sensorexception_list==None:
-    sensorexception_list=[]
-
-  # Default: mode exception list is empty
-  if modeexception_list==None:
-    modeexception_list=[]
-
-  # Default: empty list, will be filled later
-  if mean_list==None:
-    mean_list=[]
-
-  # Default: empty list, will be filled later
-  if sigma_list==None:
-    sigma_list=[]
-
-  # Fill up mean and sigma lists in case they have less than 6 entries
-  while len(mean_list) < 6:
-    mean_list.append(0.0)
-    print('Warning: mean_list has too few entries (6 required)! Adding 0.0 element')
-
-  while len(sigma_list) < 6:
-    sigma_list.append(0.0)
-    print('Warning: sigma_list has too few entries (6 required)! Adding 0.0 element')
-
-  # Remove entries from sigma and mean list in case  they have too many entries
-  while len(mean_list) > 6:
-    mean_list.pop()
-    print('Warning: mean_list has too many entries (6 required)! Removing last element')
-
-  while len(sigma_list) > 6:
-    sigma_list.pop()
-    print('Warning: sigma_list has too many entries (6 required)! Removing last element')
 
   # This is the default mode list: Containing all the positions and angles
   default_mode_list=['positionX','positionY','positionZ','alpha','beta','gamma']
 
   # Combine the default_mode_list and the mean and sigma lists to tuples
-  parameter_tuple_list=zip(default_mode_list, mean_list, sigma_list)
+  parameter_tuple_list=zip_longest(default_mode_list, mean_list, sigma_list, fillvalue=0.0)
 
   # Run over the tuple list and remove tuples, that have a first element that is also present in the modeexception_list
   for modeexception in modeexception_list:
