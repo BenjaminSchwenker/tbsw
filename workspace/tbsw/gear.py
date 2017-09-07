@@ -262,13 +262,10 @@ def randomize_telescope(gearfile=None, mean_list=None, sigma_list=None, sensorex
 
   # Combine the default_mode_list and the mean and sigma lists to tuples
   parameter_tuple_list=zip(default_mode_list, mean_list, sigma_list)
-  print(parameter_tuple_list)
 
   # Run over the tuple list and remove tuples, that have a first element that is also present in the modeexception_list
   for modeexception in modeexception_list:
       parameter_tuple_list = filter(lambda x: x[0] != modeexception,parameter_tuple_list)
-
-  print(parameter_tuple_list)
 
   for detectors in root.findall('detectors'): 
     for detector in detectors.findall('detector'):
