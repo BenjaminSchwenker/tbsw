@@ -319,19 +319,8 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     
     TBTrack& uptrack = upTrackStore[iup];
 
-    // In case of multiple possible track matchings set the number of ambiguous track accordingly
-    if(up2down[iup].size()>1) 
-	{
-		_rootNumAmbiguousUpTrack=1;
-		_rootNumAmbiguousDownTrack=up2down[iup].size();
-	}
-
-    // In this case the track match is unambiguous and the number of ambiguous tracks should be 0
-    else 
-	{
-		_rootNumAmbiguousUpTrack=0;
-		_rootNumAmbiguousDownTrack=0;
-	}
+    // Get vertex multiplicity
+    _rootVertexMultiplicity=up2down[iup].size();
   
     // Fill upstream track tree
     _rootUpTrackTree->Fill();
@@ -499,10 +488,9 @@ void X0ImageProducer::bookHistos() {
   //
   // Upstream Track Tree
   _rootUpTrackTree = new TTree("UpTrackTree","Upstream track tree");
-  _rootUpTrackTree->Branch("iRun"            		  ,&_rootRunNumber              ,"iRun/I");
-  _rootUpTrackTree->Branch("iEvt"            		  ,&_rootEventNumber            ,"iEvt/I"); 
-  _rootUpTrackTree->Branch("NumAmbiguousUpTracks"     ,&_rootNumAmbiguousUpTrack       ,"NumAmbiguousUpTracks/I");
-  _rootUpTrackTree->Branch("NumAmbiguousDownTracks"   ,&_rootNumAmbiguousDownTrack     ,"NumAmbiguousDownTracks/I"); 
+  _rootUpTrackTree->Branch("iRun"            		  ,&_rootRunNumber                 ,"iRun/I");
+  _rootUpTrackTree->Branch("iEvt"            		  ,&_rootEventNumber               ,"iEvt/I"); 
+  _rootUpTrackTree->Branch("VertexMultiplicity"       ,&_rootVertexMultiplicity           ,"VertexMultiplicity/I"); 
   
     
   // 

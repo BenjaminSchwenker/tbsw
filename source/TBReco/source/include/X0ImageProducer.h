@@ -131,8 +131,7 @@ protected:
    int _rootNMatched;
 
    // Upstream track tree variables
-   int _rootNumAmbiguousUpTrack;
-   int _rootNumAmbiguousDownTrack;
+   int _rootVertexMultiplicity;
 
    // Msc tree variables    
    double _rootTrackProbUp;
