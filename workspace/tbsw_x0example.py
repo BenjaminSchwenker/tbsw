@@ -317,13 +317,13 @@ if __name__ == '__main__':
   cwdir = os.getcwd()
 
   # Create a simulated rawfile with air data 
-  #simulate( )
+  simulate( )
 
   # Calibrate the telescope 
-  #calibrate( )
+  calibrate( )
 
   # Reconstruct the alu rawfile 
-  #reconstruct( )
+  reconstruct( )
 
   # Base filename of the X0 root file
   basefilename='X0-'+localcaltag+'-reco'
