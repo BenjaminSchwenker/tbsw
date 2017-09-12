@@ -379,8 +379,8 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		_root_angle2_var = Cov[1][1];
 
         // Flag to indicate whether this upstream track match is ambiguous
-		_root_track_multiplicity_flag = 0;
-		if(up2down[iup].size()>0) _root_track_multiplicity_flag = 1;
+		_root_vertex_multiplicity_flag = 0;
+		if(up2down[iup].size()>0) _root_vertex_multiplicity_flag = 1;
 
 		// Construct the u and v residuals and calculate a chi2 value from them
 		HepMatrix res=p_in-p_out;
@@ -523,7 +523,7 @@ void X0ImageProducer::bookHistos() {
   _rootMscTree->Branch("vertex_chi2"    ,&_root_vertex_chi2   ,"vertex_chi2/D");
   _rootMscTree->Branch("vertex_prob"    ,&_root_vertex_prob   ,"vertex_prob/D");
 
-  _rootMscTree->Branch("track_multiplicity_flag"    ,&_root_track_multiplicity_flag   ,"_root_track_multiplicity_flag/I");
+  _rootMscTree->Branch("vertex_multiplicity_flag"    ,&_root_vertex_multiplicity_flag   ,"_root_vertex_multiplicity_flag/I");
   
 
 }
