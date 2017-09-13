@@ -427,12 +427,8 @@ def Modify_AlignmentDBFile(dbfilename=None, planenumber=None, mode=None, value=N
 
   if value == None:
     return None
-
-  print(1)
     
   dbfile = TFile( dbfilename, 'UPDATE' )
-
-  print(2)
 
   # Get access to histogram  
 
@@ -462,11 +458,6 @@ def Modify_AlignmentDBFile(dbfilename=None, planenumber=None, mode=None, value=N
 
   else:
     return None
-
-  print(histo)
-  print(3)
-
-  print(4)
 
   histo.SetBinContent(planenumber+1,value)
   
