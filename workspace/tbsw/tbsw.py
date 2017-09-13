@@ -195,13 +195,25 @@ class Environment(object):
     
     print ('[INFO] Created new caltag ', caltag) 
      	                           
+
+  def copy_file(self, filename, copy_filename):
+    localname = os.path.join(self.tmpdir,filename)
+    if os.path.isfile(localname):
+      shutil.copy(localname, self.tmpdir + '/' + copy_filename ) 
+    else: 
+      raise ValueError('No file found')  
+
+  def create_dbfilename(self, filename):
+    localdbfilename = os.path.join(self.tmpdir + '/localDB/',filename)
+    return localdbfilename
+
   def get_filename(self, filename):
     localname = os.path.join(self.tmpdir,filename)
     if os.path.isfile(localname):
       return localname  
     else: 
-      raise ValueError('No file found')   
-    
+      raise ValueError('No file found') 
+
   def copy_rootfiles(self):
     # create root-files if not exist 
     if not os.path.isdir(self.cwdir+'/root-files'):
@@ -233,6 +245,7 @@ class Simulation(Environment):
      
     self.import_caltag(caltag)
     self.run(path)
+    self.export_caltag(caltag)
    
 class Reconstruction(Environment):
   """
@@ -301,5 +314,8 @@ def override_xml(xmlfile='', xpath='', value=None):
   for node in root.findall(xpath): 
     node.set('value', str(value))   
   tree.write(xmlfile)
+
+
+
 
      

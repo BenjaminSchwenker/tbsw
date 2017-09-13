@@ -491,7 +491,7 @@ void TrackFitDQM::bookHistos()
   //
   // Top level histograms 
    
-  _histoMap["hntracks"] = new TH1D("hntracks", "", 14, 0, 14); 
+  _histoMap["hntracks"] = new TH1D("hntracks", "", 30, 0, 30); 
   _histoMap["hntracks"]->SetYTitle("events"); 
   _histoMap["hntracks"]->SetXTitle("number of tracks per event"); 
 

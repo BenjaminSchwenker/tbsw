@@ -129,11 +129,13 @@ protected:
    int _rootnUpTracks;    
    int _rootNMatched;
 
+   // Upstream track tree variables
+   int _rootVertexMultiplicity;
+
    // Msc tree variables    
    double _rootTrackProbUp;
    double _rootTrackProbDown;
    double _rootTrackProbCombo;
-   
    double _root_u; 
    double _root_v; 
    double _root_u_var; 
@@ -151,6 +153,9 @@ protected:
    double _root_momentum;
    double _root_vertex_chi2;
    double _root_vertex_prob;
+
+   int _root_vertex_multiplicity;
+   int _root_vertex_id;
    
  private:
    

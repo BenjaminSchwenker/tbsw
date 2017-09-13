@@ -255,8 +255,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     for(int iup=0;iup<(int)upTrackStore.size(); iup++)
     {
             
-      // If matched, skip track 
-      if ( up2down[iup].size() > 0 ) continue;    
+      // if ( up2down[iup].size() > 0 ) continue;    
       
       for(int idown=0; idown< (int)downTrackStore.size() ; idown++)
       {
@@ -310,87 +309,92 @@ void X0ImageProducer::processEvent(LCEvent * evt)
   _rootnDownTracks = downTrackStore.size(); 
   _rootNMatched = nMatch; 
   _rootFile->cd("");
-  _rootEventTree->Fill();    
-
- 
+  _rootEventTree->Fill();  
 
   for(int iup=0;iup<(int)upTrackStore.size(); iup++)
   {
   
-    // Check upstream track is matched 
-    if ( up2down[iup].size() != 1 ) continue; 
+    // Check upstream track is matched with at least one downstream track 
+    if ( up2down[iup].size() < 1 ) continue; 
     
     TBTrack& uptrack = upTrackStore[iup];
-    TBTrack& downtrack = downTrackStore[ up2down[iup][0] ];
 
-    // comboChi2 is chi2 combination of track in upstream and downstream telescope arm
-    double comboChi2 = uptrack.GetChiSqu()+downtrack.GetChiSqu(); 
-    
-    
-    //MSC Analysis for the reconstructed angles
-    //Here we use the In and Out State and the GetScatterKinks function of the TBKalmanMSC Class
-     
-    // In and OutStates of the reconstructed Track at the current detector
-    TBTrackState& InState=uptrack.GetTE(_idut).GetState();
-    TBTrackState& OutState=downtrack.GetTE(_idut).GetState(); 
-    
-    //Angles and angle errors
-    HepMatrix theta(2,1,0);
-    HepSymMatrix Cov(2,0);
-    theta = TrackFitterMSC.GetScatterKinks(dut, InState, OutState); 
-    Cov = TrackFitterMSC.GetScatterKinkCov(dut, InState, OutState);
-    
-    // Get the track parameters of the fitted track on the current sensor
-    // The u and v positions are needed for a position-resolved measurement
-    HepMatrix p_in = InState.GetPars();
-    HepMatrix p_out = OutState.GetPars();
+    for(int idown=0;idown<up2down[iup].size();idown++)
+	{
+		TBTrack& downtrack = downTrackStore[ up2down[iup][idown] ];
 
-
-	// Get the covariance entries of the intersection coordinates
-	HepSymMatrix instate_covs=InState.GetCov();
-	HepSymMatrix outstate_covs=OutState.GetCov();
- 
-	_root_u_var=0.25*(instate_covs[2][2]+outstate_covs[2][2]);
-	_root_v_var=0.25*(instate_covs[3][3]+outstate_covs[3][3]);
-     	
-    // Fill root variables 
-    _root_momentum = uptrack.GetMomentum(); 
-    _rootTrackProbUp = TMath::Prob(uptrack.GetChiSqu(),uptrack.GetNDF());
-    _rootTrackProbDown = TMath::Prob(downtrack.GetChiSqu(),downtrack.GetNDF());
-    _rootTrackProbCombo = TMath::Prob( comboChi2 ,uptrack.GetNDF()+downtrack.GetNDF());
-    
-    _root_u_in = p_in[2][0]; 
-    _root_v_in = p_in[3][0];
-    _root_u_out = p_out[2][0]; 
-    _root_v_out = p_out[3][0];
-    _root_u = 0.5*(p_in[2][0] + p_out[2][0]); 
-    _root_v = 0.5*(p_in[3][0] + p_out[3][0]);  
-    _root_dudw = 0.5*(p_in[0][0] + p_out[0][0]);    
-    _root_dvdw = 0.5*(p_in[1][0] + p_out[1][0]);   
-   
-    _root_angle1 = theta[0][0];
-    _root_angle2 = theta[1][0];
-    _root_angle1_var = Cov[0][0];
-    _root_angle2_var = Cov[1][1];
+		// comboChi2 is chi2 combination of track in upstream and downstream telescope arm
+		double comboChi2 = uptrack.GetChiSqu()+downtrack.GetChiSqu();    
+		
+		//MSC Analysis for the reconstructed angles
+		//Here we use the In and Out State and the GetScatterKinks function of the TBKalmanMSC Class
+		 
+		// In and OutStates of the reconstructed Track at the current detector
+		TBTrackState& InState=uptrack.GetTE(_idut).GetState();
+		TBTrackState& OutState=downtrack.GetTE(_idut).GetState(); 
+		
+		//Angles and angle errors
+		HepMatrix theta(2,1,0);
+		HepSymMatrix Cov(2,0);
+		theta = TrackFitterMSC.GetScatterKinks(dut, InState, OutState); 
+		Cov = TrackFitterMSC.GetScatterKinkCov(dut, InState, OutState);
+		
+		// Get the track parameters of the fitted track on the current sensor
+		// The u and v positions are needed for a position-resolved measurement
+		HepMatrix p_in = InState.GetPars();
+		HepMatrix p_out = OutState.GetPars();
 
 
-	// Construct the u and v residuals and calculate a chi2 value from them
-	HepMatrix res=p_in-p_out;
-	HepSymMatrix res_covs=instate_covs+outstate_covs;
+		// Get the covariance entries of the intersection coordinates
+		HepSymMatrix instate_covs=InState.GetCov();
+		HepSymMatrix outstate_covs=OutState.GetCov();
+	 
+		_root_u_var=0.25*(instate_covs[2][2]+outstate_covs[2][2]);
+		_root_v_var=0.25*(instate_covs[3][3]+outstate_covs[3][3]);
+		 	
+		// Fill root variables 
+		_root_momentum = uptrack.GetMomentum(); 
+		_rootTrackProbUp = TMath::Prob(uptrack.GetChiSqu(),uptrack.GetNDF());
+		_rootTrackProbDown = TMath::Prob(downtrack.GetChiSqu(),downtrack.GetNDF());
+		_rootTrackProbCombo = TMath::Prob( comboChi2 ,uptrack.GetNDF()+downtrack.GetNDF());
+		
+		_root_u_in = p_in[2][0]; 
+		_root_v_in = p_in[3][0];
+		_root_u_out = p_out[2][0]; 
+		_root_v_out = p_out[3][0];
+		_root_u = 0.5*(p_in[2][0] + p_out[2][0]); 
+		_root_v = 0.5*(p_in[3][0] + p_out[3][0]);  
+		_root_dudw = 0.5*(p_in[0][0] + p_out[0][0]);    
+		_root_dvdw = 0.5*(p_in[1][0] + p_out[1][0]);   
+	   
+		_root_angle1 = theta[0][0];
+		_root_angle2 = theta[1][0];
+		_root_angle1_var = Cov[0][0];
+		_root_angle2_var = Cov[1][1];
 
-    int ierr; 
-	// Use only the sub matrices, which describe the spatial coordinates of the trackstate
-    HepMatrix jchisq = res.sub(3,4,1,1).T()*res_covs.sub(3,4).inverse(ierr)*res.sub(3,4,1,1);
+        // Flag to indicate whether this upstream track match is ambiguous
+		_root_vertex_multiplicity = up2down[iup].size();
+		_root_vertex_id=iup;
 
-	streamlog_out(MESSAGE1) << "Complete Covariance matrix: "<<res_covs.sub(1,4)<<endl;
-	streamlog_out(MESSAGE1) << "Part of Covariance matrix used here: "<<res_covs.sub(3,4)<<endl;
+		// Construct the u and v residuals and calculate a chi2 value from them
+		HepMatrix res=p_in-p_out;
+		HepSymMatrix res_covs=instate_covs+outstate_covs;
+
+		int ierr; 
+		// Use only the sub matrices, which describe the spatial coordinates of the trackstate
+		HepMatrix jchisq = res.sub(3,4,1,1).T()*res_covs.sub(3,4).inverse(ierr)*res.sub(3,4,1,1);
+
+		streamlog_out(MESSAGE1) << "Complete Covariance matrix: "<<res_covs.sub(1,4)<<endl;
+		streamlog_out(MESSAGE1) << "Part of Covariance matrix used here: "<<res_covs.sub(3,4)<<endl;
 	
-	_root_vertex_chi2=jchisq[0][0];
-	_root_vertex_prob=TMath::Prob(jchisq[0][0], 2);
+		_root_vertex_chi2=jchisq[0][0];
+		_root_vertex_prob=TMath::Prob(jchisq[0][0], 2);
+		
+		_rootMscTree->Fill();   
+  
+	} //  end down track loop
     
-    _rootMscTree->Fill();       
-    
-  } // end track loop 		
+  } // end up track loop 		
      
    
   
@@ -473,11 +477,10 @@ void X0ImageProducer::bookHistos() {
   _rootEventTree->Branch("nDownTracks"      ,&_rootnDownTracks     ,"nDownTracks/I");
   _rootEventTree->Branch("nUpTracks"        ,&_rootnUpTracks       ,"nUpTracks/I"); 
   _rootEventTree->Branch("nMatched"         ,&_rootNMatched        ,"nMatched/I");
-
   
     
   // 
-  // Track Tree of the whole track 
+  // Scattering angle Tree
   _rootMscTree = new TTree("MSCTree","Multiple scattering data");
   _rootMscTree->Branch("iRun"            ,&_rootRunNumber       ,"iRun/I");
   _rootMscTree->Branch("iEvt"            ,&_rootEventNumber     ,"iEvt/I"); 
@@ -505,6 +508,9 @@ void X0ImageProducer::bookHistos() {
 
   _rootMscTree->Branch("vertex_chi2"    ,&_root_vertex_chi2   ,"vertex_chi2/D");
   _rootMscTree->Branch("vertex_prob"    ,&_root_vertex_prob   ,"vertex_prob/D");
+
+  _rootMscTree->Branch("vertex_multiplicity"    ,&_root_vertex_multiplicity   ,"_root_vertex_multiplicity/I");
+  _rootMscTree->Branch("vertex_id"              ,&_root_vertex_id             ,"_root_vertex_id/I");
   
 
 }
