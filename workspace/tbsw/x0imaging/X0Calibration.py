@@ -8,6 +8,81 @@ import glob
 import math
 import fileinput
 
+def x0imaging(filename=None,caltag='',deletetag='0',steerfiles=None,nametag=''):
+  """
+  Performs radiation length imaging of the angle data provided by the file
+    :@filename:    Input root file with TTree of scattering angles
+    :@caltag:      Use x0 calibration parameters from cfg files in the caltag subdirectory    
+    :@deletetag:   Delete partial images afterwards
+    :@steerfiles:  Directory, where the image cfg file lies
+    :@nametag:     Name tag, that is used to modify the output filename 
+    :author: ulf.stolzenberg@phys.uni-goettinge.de  
+  """   
+
+  cfgfilename=steerfiles+'/image.cfg'
+
+  if filename == None:
+    return None
+
+  if steerfiles == None:
+    return None
+
+  flags='./tbsw/x0imaging/GenerateImage.py -i '+filename+' -f '+cfgfilename+' -c '+caltag+' -d '+`deletetag`+' -t '+`nametag`
+  print('Starting X0 imaging')
+  print(flags)
+  subprocess.call(flags, shell=True)
+
+  return None
+
+# Function which starts the x0 calibration script
+def x0calibration(filename,imagefilename,caltag,steerfiles):
+  """
+  Performs radiation length calibration on well known material target
+    :@filename:    Input root file with calibration data 
+    :@caltag:      Use x0 calibration parameters from cfg files in the caltag subdirectory and save results there    
+    :@steerfiles:  Directory, where the image cfg file lies
+    :author: ulf.stolzenberg@phys.uni-goettinge.de  
+  """   
+
+  if filename == None:
+    return None
+
+  if steerfiles == None:
+    return None
+
+  cfgfilename=steerfiles+'/x0calibration.cfg'
+
+  flags='./tbsw/x0imaging/X0Calibration.py -i '+filename+' -f '+cfgfilename+' -m '+imagefilename+' -c '+caltag
+  print('Starting X0 calibration')
+  print(flags)
+  subprocess.call(flags, shell=True)
+
+  return None
+
+# Function which merges the result root files
+def merge_rootfile(filename=None,RunList=''):
+  """
+  Merges all root files from a list
+    :@filename:    Name of merged output rootfile 
+    :@RunList:     List of filenames , which will be merged   
+    :author: ulf.stolzenberg@phys.uni-goettinge.de  
+  """ 
+
+  if filename == None:
+    return None
+
+  flags='hadd '+filename+' '
+  for run in RunList_reco:
+    name=os.path.splitext(os.path.basename(run))[0]
+    flags=flags+'root-files/X0-'+name+'-'+caltag+'-reco.root '
+
+  if os.path.isfile(filename):
+    os.remove(filename)
+  subprocess.call(flags, shell=True)
+
+  return None
+
+
 if __name__ == '__main__':
   
   rootfile = ''

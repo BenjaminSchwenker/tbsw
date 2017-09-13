@@ -17,6 +17,8 @@ Author: Ulf Stolzenberg <ulf.stolzenberg@phys.uni-goettingen.de>
 
 from tbsw import *
 
+import tbsw.x0imaging.X0Calibration
+
 # Path to steering files 
 # Steeringfiles are xml files and define details of the simulation like how many events are produced
 # or how M26 sensors are digitized. XML parameters can be adjusted using any test editor
@@ -332,14 +334,14 @@ if __name__ == '__main__':
   filename='root-files/'+basefilename+'.root'
 
   # Generate a uncalibrated X/X0 image
-  x0imaging(filename=filename,caltag='',deletetag=deletetag,steerfiles=steerfiles,nametag='Uncalibrated')
+  tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag='',deletetag=deletetag,steerfiles=steerfiles,nametag='Uncalibrated')
 
   # Path to uncalibrated X0 image file
   imagefilename='/root-files/'+basefilename+'-UncalibratedX0image.root'
 
   # Do a calibration of the angle resolution
-  x0calibration(filename=filename,imagefilename=imagefilename,caltag=x0tag,steerfiles=steerfiles)
+  tbsw.x0imaging.X0Calibration.x0calibration(filename=filename,imagefilename=imagefilename,caltag=x0tag,steerfiles=steerfiles)
 
   # Generate a calibrated X/X0 image
-  x0imaging(filename=filename,caltag=x0tag,deletetag=deletetag,steerfiles=steerfiles,nametag='Calibrated')
+  tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag=x0tag,deletetag=deletetag,steerfiles=steerfiles,nametag='Calibrated')
 
