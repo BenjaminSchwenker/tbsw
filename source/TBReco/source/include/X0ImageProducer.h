@@ -120,7 +120,6 @@ protected:
    TFile * _rootFile;
    
    TTree * _rootMscTree;
-   TTree * _rootUpTrackTree;  
    TTree * _rootEventTree;  
     
    // Event tree variables 
