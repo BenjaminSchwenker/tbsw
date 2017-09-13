@@ -155,7 +155,8 @@ protected:
    double _root_vertex_chi2;
    double _root_vertex_prob;
 
-   int _root_vertex_multiplicity_flag;
+   int _root_vertex_multiplicity;
+   int _root_vertex_id;
    
  private:
    

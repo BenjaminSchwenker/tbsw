@@ -319,12 +319,6 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     
     TBTrack& uptrack = upTrackStore[iup];
 
-    // Get vertex multiplicity
-    _rootVertexMultiplicity=up2down[iup].size();
-  
-    // Fill upstream track tree
-    _rootUpTrackTree->Fill();
-
     for(int idown=0;idown<up2down[iup].size();idown++)
 	{
 		TBTrack& downtrack = downTrackStore[ up2down[iup][idown] ];
@@ -379,8 +373,8 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		_root_angle2_var = Cov[1][1];
 
         // Flag to indicate whether this upstream track match is ambiguous
-		_root_vertex_multiplicity_flag = 0;
-		if(up2down[iup].size()>0) _root_vertex_multiplicity_flag = 1;
+		_root_vertex_multiplicity = up2down[iup].size();
+		_root_vertex_id=iup;
 
 		// Construct the u and v residuals and calculate a chi2 value from them
 		HepMatrix res=p_in-p_out;
@@ -483,14 +477,6 @@ void X0ImageProducer::bookHistos() {
   _rootEventTree->Branch("nDownTracks"      ,&_rootnDownTracks     ,"nDownTracks/I");
   _rootEventTree->Branch("nUpTracks"        ,&_rootnUpTracks       ,"nUpTracks/I"); 
   _rootEventTree->Branch("nMatched"         ,&_rootNMatched        ,"nMatched/I");
-
-
-  //
-  // Upstream Track Tree
-  _rootUpTrackTree = new TTree("UpTrackTree","Upstream track tree");
-  _rootUpTrackTree->Branch("iRun"            		  ,&_rootRunNumber                 ,"iRun/I");
-  _rootUpTrackTree->Branch("iEvt"            		  ,&_rootEventNumber               ,"iEvt/I"); 
-  _rootUpTrackTree->Branch("VertexMultiplicity"       ,&_rootVertexMultiplicity           ,"VertexMultiplicity/I"); 
   
     
   // 
@@ -523,7 +509,8 @@ void X0ImageProducer::bookHistos() {
   _rootMscTree->Branch("vertex_chi2"    ,&_root_vertex_chi2   ,"vertex_chi2/D");
   _rootMscTree->Branch("vertex_prob"    ,&_root_vertex_prob   ,"vertex_prob/D");
 
-  _rootMscTree->Branch("vertex_multiplicity_flag"    ,&_root_vertex_multiplicity_flag   ,"_root_vertex_multiplicity_flag/I");
+  _rootMscTree->Branch("vertex_multiplicity"    ,&_root_vertex_multiplicity   ,"_root_vertex_multiplicity/I");
+  _rootMscTree->Branch("vertex_id"              ,&_root_vertex_id             ,"_root_vertex_id/I");
   
 
 }
