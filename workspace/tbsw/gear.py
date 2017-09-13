@@ -12,7 +12,7 @@ import xml.etree.ElementTree
 import random
 import math
 
-from ROOT import TFile, TH1F
+from ROOT import TFile, TH1F, gROOT
 
 try:
     from itertools import zip_longest as zip_longest
@@ -22,9 +22,9 @@ except:
 
 def Create_AlignmentDBFile_From_Gear(gearfile=None, truthdbfilename=None):
   """
-  Overrides value field in all sensors with a specific sensor ID in gearfile
+  Writes sensor position and angles from gear file into truthdb root file 
     :@gearfile:       gear file to be copied into alignment root file  
-    :@dbfilename      Name of the output root file 
+    :@truthdbfilename      Name of the output root file 
     :author: ulf.stolzenberg@phys.uni-goettingen.de  
   """   
 
@@ -406,12 +406,72 @@ def rotate_telescope(gearfile=None, parametername=None, valueZ=None, valueAngle=
     print('Rotation plane not well defined!')
 
 
+def Modify_AlignmentDBFile(dbfilename=None, planenumber=None, mode=None, value=None):
+  """
+  Change single position or angle in alignment DB file
+    :@dbfilename      Name of the output root file 
+    :@planenumber     Planenumber to be modified (starting with 0)
+    :@mode            Mode to be modified ['x','y','z','alpha','beta','gamma']
+    :@value           New value in mm or rad
+    :author: ulf.stolzenberg@phys.uni-goettingen.de  
+  """
+
+  if dbfilename == None:
+    return None
+
+  if planenumber == None:
+    return None
+
+  if mode == None:
+    return None
+
+  if value == None:
+    return None
+
+  print(1)
     
+  dbfile = TFile( dbfilename, 'UPDATE' )
 
+  print(2)
 
+  # Get access to histogram  
+
+  if mode=='x':
+    histo = dbfile.Get("hPositionX")
+    dbfile.Delete("hPositionX;1")
+
+  elif mode=='y':
+    histo = dbfile.Get("hPositionY")
+    dbfile.Delete("hPositionY;1")
+
+  elif mode=='z':
+    histo = dbfile.Get("hPositionZ")
+    dbfile.Delete("hPositionZ;1")
+
+  elif mode=='alpha':
+    histo = dbfile.Get("hRotationAlpha")
+    dbfile.Delete("hRotationAlpha:1")
+
+  elif mode=='beta':
+    histo = dbfile.Get("hRotationBeta")
+    dbfile.Delete("hRotationBeta;1")
+
+  elif mode=='gamma':
+    histo = dbfile.Get("hRotationGamma")
+    dbfile.Delete("hRotationGamma;1")
+
+  else:
+    return None
+
+  print(histo)
+  print(3)
+
+  print(4)
+
+  histo.SetBinContent(planenumber+1,value)
   
-
-  
+  dbfile.Write()
+  dbfile.Close()
 
 
      
