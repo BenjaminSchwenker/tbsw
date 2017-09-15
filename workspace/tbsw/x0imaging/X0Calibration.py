@@ -19,7 +19,7 @@ def x0imaging(filename=None,caltag='',deletetag='0',steerfiles=None,nametag=''):
     :author: ulf.stolzenberg@phys.uni-goettinge.de  
   """   
 
-  cfgfilename=steerfiles+'/image.cfg'
+  cfgfilename=steerfiles+'image.cfg'
 
   if filename == None:
     return None
@@ -27,15 +27,16 @@ def x0imaging(filename=None,caltag='',deletetag='0',steerfiles=None,nametag=''):
   if steerfiles == None:
     return None
 
-  flags='./tbsw/x0imaging/GenerateImage.py -i '+filename+' -f '+cfgfilename+' -c '+caltag+' -d '+`deletetag`+' -t '+`nametag`
+  imageflags='./tbsw/x0imaging/GenerateImage.py -i '+filename+' -f '+cfgfilename+' -c '+caltag+' -d '+deletetag+' -t '+nametag
   print('Starting X0 imaging')
-  print(flags)
-  subprocess.call(flags, shell=True)
+  print(imageflags)
+  subprocess.call(imageflags, shell=True)
 
   return None
 
+
 # Function which starts the x0 calibration script
-def x0calibration(filename,imagefilename,caltag,steerfiles):
+def x0calibration(filename=None,imagefilename='',caltag='default',steerfiles=None):
   """
   Performs radiation length calibration on well known material target
     :@filename:    Input root file with calibration data 
@@ -50,17 +51,18 @@ def x0calibration(filename,imagefilename,caltag,steerfiles):
   if steerfiles == None:
     return None
 
-  cfgfilename=steerfiles+'/x0calibration.cfg'
+  cfgfilename=steerfiles+'x0calibration.cfg'
 
-  flags='./tbsw/x0imaging/X0Calibration.py -i '+filename+' -f '+cfgfilename+' -m '+imagefilename+' -c '+caltag
+  califlags='./tbsw/x0imaging/X0Calibration.py -i '+filename+' -f '+cfgfilename+' -m '+imagefilename+' -c '+caltag
   print('Starting X0 calibration')
-  print(flags)
-  subprocess.call(flags, shell=True)
+  print(califlags)
+  subprocess.call(califlags, shell=True)
 
   return None
 
+
 # Function which merges the result root files
-def merge_rootfile(filename=None,RunList=''):
+def merge_rootfile(filename=None,RunList='',caltag=None):
   """
   Merges all root files from a list
     :@filename:    Name of merged output rootfile 
@@ -71,8 +73,11 @@ def merge_rootfile(filename=None,RunList=''):
   if filename == None:
     return None
 
+  if caltag == None:
+    return None
+
   flags='hadd '+filename+' '
-  for run in RunList_reco:
+  for run in RunList:
     name=os.path.splitext(os.path.basename(run))[0]
     flags=flags+'root-files/X0-'+name+'-'+caltag+'-reco.root '
 

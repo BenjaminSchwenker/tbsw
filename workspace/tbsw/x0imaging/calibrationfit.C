@@ -57,12 +57,14 @@ class MeasurementArea
 	double density;				// Density of the target material in the area (in g/cm³)
 	double Z;					// Atomic number of the target material in the area
 	double A; 					// Atomic mass of the target material in the area
+	int run_min; 				// Minimal run number of data, which contains the specified material parameters
+	int run_max;				// Maximal run number of data, which contains the specified material parameters
 
 	public:
 
 	// Constructors
 
-	MeasurementArea(double, double, double, double, double, double, double, double);	// Constructor
+	MeasurementArea(double, double, double, double, double, double, double, double, int, int);	// Constructor
 
 	// Reading parameters of the measurement area
 
@@ -79,6 +81,9 @@ class MeasurementArea
 	double Get_Z() { return Z; }							// Return atomic number Z
 	double Get_A() { return A; }							// Return atomic mass A
 
+	int Get_run_min() { return run_min; }					// Return run_min
+	int Get_run_max() { return run_max; }					// Return run_max
+
 	
 
 	void PrintParameters() 		// Print all parameters
@@ -94,10 +99,13 @@ class MeasurementArea
 		std::cout<<"density: "<<density<<" g/cm³"<<std::endl;
 		std::cout<<"atomic number Z: "<<Z<<std::endl;
 		std::cout<<"atomic mass A: "<<A<<std::endl;
+
+		std::cout<<"Min. run number: "<<run_min<<std::endl;
+		std::cout<<"Max run number: "<<run_max<<std::endl;
 	}
 };	
 // Constructor definition
-MeasurementArea::MeasurementArea(double ucenter, double vcenter, double ulength, double vlength, double thick, double dens, double atom_num, double atom_mass )
+MeasurementArea::MeasurementArea(double ucenter, double vcenter, double ulength, double vlength, double thick, double dens, double atom_num, double atom_mass, int run_minimum, int run_maximum)
 {
 	center_u=ucenter;	// mm
 	center_v=vcenter;	// mm
@@ -107,6 +115,8 @@ MeasurementArea::MeasurementArea(double ucenter, double vcenter, double ulength,
 	density=dens;		// g/cm³
 	Z=atom_num;
 	A=atom_mass;
+	run_min=run_minimum;
+	run_max=run_maximum;
 }
 
 // Class describing the complete calibration grid. The grid consists of a set of holes with a specific radiation length.
@@ -171,9 +181,11 @@ Grid::Grid(TEnv* mEnv)
 		double Z=mEnv->GetValue(MAname+".atomicnumber", 13.0);
 		double A=mEnv->GetValue(MAname+".atomicmassnumber", 27.0);
 		double density=mEnv->GetValue(MAname+".density", 2.7);
+		int run_min=mEnv->GetValue(MAname+".minrunnumber", -1);
+		int run_max=mEnv->GetValue(MAname+".maxrunnumber", -1);
 
 		// Define measurement area based on these parameters
-		MeasurementArea MA(ucenter,vcenter,ulength,vlength,thickness,density,Z,A);
+		MeasurementArea MA(ucenter,vcenter,ulength,vlength,thickness,density,Z,A,run_min,run_max);
   
 		// Add measurement area to predefined grid
 		m_MeasurementAreas.push_back(MA);
@@ -197,9 +209,11 @@ Grid::Grid(TEnv* mEnv)
 				double Z=mEnv->GetValue(linename+".atomicnumber", 13.0);
 				double A=mEnv->GetValue(linename+".atomicmassnumber", 27.0);
 				double density=mEnv->GetValue(linename+".density", 2.7);
+				int run_min=mEnv->GetValue(linename+".minrunnumber", -1);
+				int run_max=mEnv->GetValue(linename+".maxrunnumber", -1);
 
 				// Define measurement area based on these parameters
-				MeasurementArea MA(ucenter,vcenter,ulength,vlength,thickness,density,Z,A);
+				MeasurementArea MA(ucenter,vcenter,ulength,vlength,thickness,density,Z,A,run_min,run_max);
 			  
 				// Add measurement area to predefined grid
 				m_MeasurementAreas.push_back(MA);
@@ -221,9 +235,11 @@ Grid::Grid(TEnv* mEnv)
 				double Z=mEnv->GetValue(linename+".atomicnumber", 13.0);
 				double A=mEnv->GetValue(linename+".atomicmassnumber", 27.0);
 				double density=mEnv->GetValue(linename+".density", 2.7);
+				int run_min=mEnv->GetValue(linename+".minrunnumber", -1);
+				int run_max=mEnv->GetValue(linename+".maxrunnumber", -1);
 
 				// Define measurement area based on these parameters
-				MeasurementArea MA(ucenter,vcenter,ulength,vlength,thickness,density,Z,A);
+				MeasurementArea MA(ucenter,vcenter,ulength,vlength,thickness,density,Z,A,run_min,run_max);
 		  
 				// Add measurement area to predefined grid
 				m_MeasurementAreas.push_back(MA);
@@ -859,7 +875,7 @@ void shiftbins(TH1* histogram, double mean1)
 }
 
 // This function fills histograms corresponding to certain u v values with msc angle distributions 
-void correcthisto(TFile* file,TFile* file2, TString histoname, TString range, double umin, double umax, double vmin, double vmax )
+void correcthisto(TFile* file,TFile* file2, TString histoname, TString range, std::vector <double> cutparameters_position,std::vector <int> cutparameters_run )
 {
 	//TTree in input root file, that contains the MSC projected angle distributions
 	file->cd("");
@@ -868,18 +884,32 @@ void correcthisto(TFile* file,TFile* file2, TString histoname, TString range, do
 	// Definition of the four cuts used to define the measurement region
 	TString cutcondition;
 
-	cutcondition.Form("u>%f",umin);
+	cutcondition.Form("u>%f",cutparameters_position.at(0));
 	TString cutall=cutcondition;
 
-	cutcondition.Form("u<%f",umax);
+	cutcondition.Form("u<%f",cutparameters_position.at(1));
 	cutall=cutall+"&&"+cutcondition;
 
-	cutcondition.Form("v>%f",vmin);
+	cutcondition.Form("v>%f",cutparameters_position.at(2));
 	cutall=cutall+"&&"+cutcondition;
 
-	cutcondition.Form("v<%f",vmax);
+	cutcondition.Form("v<%f",cutparameters_position.at(3));
 	cutall=cutall+"&&"+cutcondition;
 
+
+	// Run number conditions
+    if((cutparameters_run.at(0))>-1)
+	{
+		cutcondition.Form("iRun>%i",cutparameters_run.at(0)-1);
+		cutall=cutall+"&&"+cutcondition;
+	}
+
+
+    if((cutparameters_run.at(1)>-1))
+	{
+		cutcondition.Form("iRun<%i",cutparameters_run.at(1)+1);
+		cutall=cutall+"&&"+cutcondition;
+	}
 
 	// Draw histogram of the first scattering angle in the given u and v range and save it
 	msc_tree->Draw("theta1>>histo1("+range+")",cutall,"");
@@ -960,7 +990,7 @@ void correcthisto(TFile* file,TFile* file2, TString histoname, TString range, do
 
 // Function to save the projected angle histograms of different regions in the u-v plane, the region lies within the given 
 // u and v min and max values.
-void savehisto(TFile* file, TFile* file2, TString histoname, TString range, double umin, double umax, double vmin, double vmax, int correctmean)
+void savehisto(TFile* file, TFile* file2, TString histoname, TString range, std::vector <double> cutparameters_position, std::vector <int> cutparameters_run, int correctmean)
 {
 	//TTree in input root file, that contains the MSC projected angle distributions
 	file->cd("");
@@ -973,17 +1003,31 @@ void savehisto(TFile* file, TFile* file2, TString histoname, TString range, doub
 	// Definition of the four cuts used to define the measurement region
 	TString cutcondition;
 
-	cutcondition.Form("u>%f",umin);
+	cutcondition.Form("u>%f",cutparameters_position.at(0));
 	TString cutall=cutcondition;
 
-	cutcondition.Form("u<%f",umax);
+	cutcondition.Form("u<%f",cutparameters_position.at(1));
 	cutall=cutall+"&&"+cutcondition;
 
-	cutcondition.Form("v>%f",vmin);
+	cutcondition.Form("v>%f",cutparameters_position.at(2));
 	cutall=cutall+"&&"+cutcondition;
 
-	cutcondition.Form("v<%f",vmax);
+	cutcondition.Form("v<%f",cutparameters_position.at(3));
 	cutall=cutall+"&&"+cutcondition;
+
+	// Run number conditions
+    if((cutparameters_run.at(0))>-1)
+	{
+		cutcondition.Form("iRun>%i",cutparameters_run.at(0)-1);
+		cutall=cutall+"&&"+cutcondition;
+	}
+
+
+    if((cutparameters_run.at(1)>-1))
+	{
+		cutcondition.Form("iRun<%i",cutparameters_run.at(1)+1);
+		cutall=cutall+"&&"+cutcondition;
+	}
 
 	if(correctmean==1)
 	{
@@ -1547,12 +1591,6 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// Print out the measurement areas, which will be used for the fit
 	grid.PrintGridParameters();
 
-	// Readout max and min values of all measurement areas of the calibration grid
-	for(int i=0;i<num_fitfunctions;i++)
-	{
-
-	}
-
 	// TString for the input root file name
 	TString filename,histoname,range;
 	filename.Form("X0File");
@@ -1595,14 +1633,22 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 			cout<<"save histogram of measurement area "<<i+1<<endl;
 
-		    umin=grid.GetMeasurementAreas().at(i).Get_u_min();
-		    umax=grid.GetMeasurementAreas().at(i).Get_u_max();
-		    vmin=grid.GetMeasurementAreas().at(i).Get_v_min();
-		    vmax=grid.GetMeasurementAreas().at(i).Get_v_max();
+
+			std::vector <double> cutparameters_position;
+			std::vector <int> cutparameters_run;
+
+		    cutparameters_position.push_back(grid.GetMeasurementAreas().at(i).Get_u_min());
+		    cutparameters_position.push_back(grid.GetMeasurementAreas().at(i).Get_u_max());
+		    cutparameters_position.push_back(grid.GetMeasurementAreas().at(i).Get_v_min());
+		    cutparameters_position.push_back(grid.GetMeasurementAreas().at(i).Get_v_max());
+
+			cutparameters_run.push_back(grid.GetMeasurementAreas().at(i).Get_run_min());
+			cutparameters_run.push_back(grid.GetMeasurementAreas().at(i).Get_run_max());
+
 
 			// Save the angle histograms of the current measurement area to the root file
-			correcthisto(X0file,rootfile, histoname, range, umin, umax, vmin, vmax);
-			savehisto(X0file,rootfile, histoname, range, umin, umax, vmin, vmax, correctmean);
+			correcthisto(X0file,rootfile, histoname, range, cutparameters_position, cutparameters_run);
+			savehisto(X0file,rootfile, histoname, range, cutparameters_position, cutparameters_run, correctmean);
 
 	}// end of first loop over measurement areas
 
