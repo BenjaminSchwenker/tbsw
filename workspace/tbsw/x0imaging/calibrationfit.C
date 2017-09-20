@@ -875,7 +875,7 @@ void shiftbins(TH1* histogram, double mean1)
 }
 
 // This function fills histograms corresponding to certain u v values with msc angle distributions 
-void correcthisto(TFile* file,TFile* file2, TString histoname, TString range, std::vector <double> cutparameters_position,std::vector <int> cutparameters_run )
+void correcthisto(TFile* file,TFile* file2, TString histoname, TString range, std::vector <double> cutparameters_position,std::vector <int> cutparameters_run, std::vector <int> cutparameters_vertex_multiplicity )
 {
 	//TTree in input root file, that contains the MSC projected angle distributions
 	file->cd("");
@@ -894,7 +894,22 @@ void correcthisto(TFile* file,TFile* file2, TString histoname, TString range, st
 	cutall=cutall+"&&"+cutcondition;
 
 	cutcondition.Form("v<%f",cutparameters_position.at(3));
+
 	cutall=cutall+"&&"+cutcondition;
+
+    if(msc_tree->GetBranchStatus("vertex_multiplicity"))
+	{
+		cutcondition.Form("vertex_multiplicity>=%i",cutparameters_vertex_multiplicity.at(0));
+		cutall=cutall+"&&"+cutcondition;
+
+		cutcondition.Form("vertex_multiplicity<=%i",cutparameters_vertex_multiplicity.at(1));
+		cutall=cutall+"&&"+cutcondition;
+	}
+
+	else
+	{
+		cout<<"vertex multiplicity branch wasn't found! Skip vertex multiplicity cuts!"<<endl;
+	}
 
 
 	// Run number conditions
@@ -990,7 +1005,7 @@ void correcthisto(TFile* file,TFile* file2, TString histoname, TString range, st
 
 // Function to save the projected angle histograms of different regions in the u-v plane, the region lies within the given 
 // u and v min and max values.
-void savehisto(TFile* file, TFile* file2, TString histoname, TString range, std::vector <double> cutparameters_position, std::vector <int> cutparameters_run, int correctmean)
+void savehisto(TFile* file, TFile* file2, TString histoname, TString range, std::vector <double> cutparameters_position, std::vector <int> cutparameters_run, std::vector <int> cutparameters_vertex_multiplicity, int correctmean)
 {
 	//TTree in input root file, that contains the MSC projected angle distributions
 	file->cd("");
@@ -1014,6 +1029,20 @@ void savehisto(TFile* file, TFile* file2, TString histoname, TString range, std:
 
 	cutcondition.Form("v<%f",cutparameters_position.at(3));
 	cutall=cutall+"&&"+cutcondition;
+
+    if(msc_tree->GetBranchStatus("vertex_multiplicity"))
+	{
+		cutcondition.Form("vertex_multiplicity>=%i",cutparameters_vertex_multiplicity.at(0));
+		cutall=cutall+"&&"+cutcondition;
+
+		cutcondition.Form("vertex_multiplicity<=%i",cutparameters_vertex_multiplicity.at(1));
+		cutall=cutall+"&&"+cutcondition;
+	}
+
+	else
+	{
+		cout<<"vertex multiplicity branch wasn't found! Skip vertex multiplicity cuts!"<<endl;
+	}
 
 	// Run number conditions
     if((cutparameters_run.at(0))>-1)
@@ -1560,6 +1589,9 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	double BE_ugrad_default=mEnv->GetValue("momentumugradient", 99.0);			// energy slope in GeV/mm in u direction
 	double BE_vgrad_default=mEnv->GetValue("momentumvgradient", 99.0);			// energy slope in GeV/mm in u direction
 
+	int vertexmultiplicitymin=mEnv->GetValue("vertexmultiplicitymin", 1);			// energy slope in GeV/mm in u direction
+	int vertexmultiplicitymax=mEnv->GetValue("vertexmultiplicitymax", 1);			// energy slope in GeV/mm in u direction
+
 	// Set beam particle charge (e)	
 	z= mEnv->GetValue("particle.charge", 1);
 
@@ -1636,6 +1668,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 			std::vector <double> cutparameters_position;
 			std::vector <int> cutparameters_run;
+			std::vector <int> cutparameters_vertex_multiplicity;
 
 		    cutparameters_position.push_back(grid.GetMeasurementAreas().at(i).Get_u_min());
 		    cutparameters_position.push_back(grid.GetMeasurementAreas().at(i).Get_u_max());
@@ -1645,10 +1678,14 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 			cutparameters_run.push_back(grid.GetMeasurementAreas().at(i).Get_run_min());
 			cutparameters_run.push_back(grid.GetMeasurementAreas().at(i).Get_run_max());
 
+			cutparameters_vertex_multiplicity.push_back(vertexmultiplicitymin);
+			cutparameters_vertex_multiplicity.push_back(vertexmultiplicitymax);
+
 
 			// Save the angle histograms of the current measurement area to the root file
-			correcthisto(X0file,rootfile, histoname, range, cutparameters_position, cutparameters_run);
-			savehisto(X0file,rootfile, histoname, range, cutparameters_position, cutparameters_run, correctmean);
+			correcthisto(X0file,rootfile, histoname, range, cutparameters_position, cutparameters_run, cutparameters_vertex_multiplicity);
+			savehisto(X0file,rootfile, histoname, range, cutparameters_position, cutparameters_run, cutparameters_vertex_multiplicity, correctmean);
+
 
 	}// end of first loop over measurement areas
 

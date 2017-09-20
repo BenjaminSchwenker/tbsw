@@ -82,13 +82,14 @@ using namespace std ;
 
 
   // This function fills histograms corresponding to certain u v values with msc angle distributions 
-  void getcorrection(TFile* file1, TFile* file2, std::vector<double> means, std::vector<double> plotranges, int numberofbins, const int numcol, const int numrow, double umin, double vmin, double umax, double vmax)
+  void getcorrection(TFile* file1, TFile* file2, std::vector<double> means, std::vector<double> plotranges, int numberofbins, const int numcol, const int numrow, double umin, double vmin, double umax, double vmax, int vertex_multiplicity_min, int vertex_multiplicity_max)
   {
 	// parameters which are read out from the root file
 	Double_t theta1;
 	Double_t theta2;
 	Double_t u;
 	Double_t v;
+	Int_t vertex_multiplicity=1;
 	
 	//TTree in input root file, that contains the MSC projected angle distributions and reconstruction error distribution
 	file1->cd("");
@@ -99,6 +100,8 @@ using namespace std ;
 	msc_tree->SetBranchAddress("theta2",&theta2);
 	msc_tree->SetBranchAddress("u",&u);
 	msc_tree->SetBranchAddress("v",&v);
+
+	int test=msc_tree->SetBranchAddress("vertex_multiplicity",&vertex_multiplicity);
 
 	file2->cd("");
 	file2->cd("mapping/raw");
@@ -136,10 +139,13 @@ using namespace std ;
 		double v_length=vmax-vmin;
 
 		// skip this entry, when u or v is outside of the mapping area
-	        if (u_pos<0) continue;
-	        if (u_pos>=u_length) continue;
-	        if (v_pos<0) continue;
-	        if (v_pos>=v_length) continue;
+	    if (u_pos<0) continue;
+	    if (u_pos>=u_length) continue;
+	    if (v_pos<0) continue;
+	    if (v_pos>=v_length) continue;
+        
+		// Apply cut on vertex multiplicity
+        if (vertex_multiplicity>vertex_multiplicity_max&&vertex_multiplicity<vertex_multiplicity_min) continue;
 
 		// Determine column and row number from the position within the map area and the number of rows and columns
 		int col=floor(u_pos*numcol/u_length);
@@ -169,7 +175,7 @@ using namespace std ;
 
 
   // This function fills histograms corresponding to certain u v values with msc angle distributions 
-  void savehistos(TFile* file1, TFile* file2, int numberofbins, const int numcol, const int numrow, double umin, double vmin, double umax, double vmax)
+  void savehistos(TFile* file1, TFile* file2, int numberofbins, const int numcol, const int numrow, double umin, double vmin, double umax, double vmax, int vertex_multiplicity_min, int vertex_multiplicity_max)
   {
 	// parameters which are read out from the root file
 	Double_t theta1;
@@ -180,6 +186,7 @@ using namespace std ;
 	Double_t v_in;
 	Double_t u_out;
 	Double_t v_out;
+	Int_t vertex_multiplicity=1;
 
 	// Array of mean theta1 and theta2 values in each map pixel
 	double mean1[numcol][numrow];
@@ -198,6 +205,8 @@ using namespace std ;
 	msc_tree->SetBranchAddress("v_in",&v_in);
 	msc_tree->SetBranchAddress("u_out",&u_out);
 	msc_tree->SetBranchAddress("v_out",&v_out);
+
+	int test=msc_tree->SetBranchAddress("vertex_multiplicity",&vertex_multiplicity);
 
 	file2->cd("");
 	file2->cd("mapping/raw");
@@ -267,6 +276,9 @@ using namespace std ;
 	    if (u_pos>=u_length) continue;
 	    if (v_pos<0) continue;
 	    if (v_pos>=v_length) continue;
+
+		// Apply cut on vertex multiplicity
+        if (vertex_multiplicity>vertex_multiplicity_max&&vertex_multiplicity<vertex_multiplicity_min) continue;
 
 		// Determine column and row number from the position within the map area and the number of rows and columns
 		int col=floor(u_pos*numcol/u_length);
@@ -858,6 +870,13 @@ int x0imaging()
 	cout<<"Minimal v value:"<<vmin<<" mm"<<endl;
 	cout<<"Max. v value:"<<vmax<<" mm"<<endl;
 
+    // Vertex multiplicity cu (should be 1 for default X0 analysis)
+	int vertex_multiplicity_min=mEnv.GetValue("vertexmultiplicitymin", 1);
+	int vertex_multiplicity_max=mEnv.GetValue("vertexmultiplicitymax", 1);
+
+	cout<<"Minimal vertex multiplicity:"<<vertex_multiplicity_min<<endl;
+	cout<<"Maximal vertex multiplicity:"<<vertex_multiplicity_max<<endl;
+
 	// Choose the type of fit
 	// 0: gaussian fit function with cuts on the tails, both kink distributions are used seperately
 	// 1: gaussian fit function with cuts on the tails, use only 1 fit on the merged histogram consisting of both distributions
@@ -982,8 +1001,8 @@ int x0imaging()
 
 	rootfile->cd("");
 	
-	getcorrection(X0file, rootfile, means, plotranges, numberofbins, numcol, numrow, umin, vmin, umax, vmax);
-	savehistos(X0file, rootfile, numberofbins, numcol, numrow, umin, vmin, umax, vmax);
+	getcorrection(X0file, rootfile, means, plotranges, numberofbins, numcol, numrow, umin, vmin, umax, vmax, vertex_multiplicity_min, vertex_multiplicity_max);
+	savehistos(X0file, rootfile, numberofbins, numcol, numrow, umin, vmin, umax, vmax, vertex_multiplicity_min, vertex_multiplicity_max);
 
 	X0file->Close();
 
