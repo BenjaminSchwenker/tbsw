@@ -97,6 +97,10 @@ if __name__ == '__main__':
   # Name of the results file
   this_resultsfilename = config.get('x0image', 'resultsfilename')
 
+  # Vertex multiplicity cut parameters
+  this_vertex_multiplicity_min = config.get('x0image', 'vertex_multiplicity_min')
+  this_vertex_multiplicity_max = config.get('x0image', 'vertex_multiplicity_max')
+
   # u and v length of complete X0 image 
   u_length = config.getfloat('x0image', 'u_length')
   v_length = config.getfloat('x0image', 'v_length')
@@ -191,6 +195,8 @@ if __name__ == '__main__':
       config.set('image', 'momentumoffset', this_momentumoffset)
       config.set('image', 'momentumugradient', this_momentumugradient)
       config.set('image', 'momentumvgradient', this_momentumvgradient)
+      config.set('image', 'vertexmultiplicitymin', this_vertex_multiplicity_min)
+      config.set('image', 'vertexmultiplicitymax', this_vertex_multiplicity_max)
 
       # Writing the configuration file
       with open('x0image-partial.cfg', 'w') as configfile:
