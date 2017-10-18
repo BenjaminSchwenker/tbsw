@@ -8,7 +8,7 @@
 
 #include "Correlator.h"
 
-// Include DEPFETTrackTools header files
+// Include TBTools header files
 #include "TBHit.h"
 #include "TBTrack.h"
 #include "Det.h"
@@ -67,8 +67,8 @@ Correlator::Correlator() : Processor("Correlator")
 // Define processor parameters 
    
    registerProcessorParameter ("AlignmentDBFileName",
-                             "This is the name of the LCIO file with the alignment constants (add .slcio)",
-                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.slcio" ) );   
+                             "This is the name of the file with the alignment constants (add .root)",
+                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) );   
                    
    registerProcessorParameter ("UpdateAlignment",
                               "Update alignment DB using offset corrections (true/false)?",
@@ -80,7 +80,7 @@ Correlator::Correlator() : Processor("Correlator")
    
    registerProcessorParameter ("OutputRootFileName",
                               "This is the name of the output root file",
-                              _rootFileName, string("histo/Correlations_RunXXX.root"));
+                              _rootFileName, string("XCorrelator.root"));
    
    registerProcessorParameter ("ReferencePlane",
                               "Reference sensor plane number, counted along beam line",
@@ -383,7 +383,7 @@ void Correlator::end()
     
   } else {
     streamlog_out ( MESSAGE3 ) << endl;
-    streamlog_out ( MESSAGE3 ) << "NO UPDATE OF ALIGNMENT DB LCIO FILE" << endl; 
+    streamlog_out ( MESSAGE3 ) << "NO UPDATE OF ALIGNMENT DB" << endl; 
   }
   
   // Print message

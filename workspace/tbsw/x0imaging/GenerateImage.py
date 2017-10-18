@@ -14,20 +14,22 @@ if __name__ == '__main__':
   rootfile = ''
   cfgfile = ''
   caltag=''
-  deletetag=0
+  tag='Uncalibrated'
+  deletetag='0'
 
   try:
-    opts, args = getopt.getopt(sys.argv[1:],"hi:f:c:d:",["ifile=","cfgfile=","caltag=","deletetag="])
+    opts, args = getopt.getopt(sys.argv[1:],"hi:f:c:d:t:",["ifile=","cfgfile=","caltag=","deletetag=","tag="])
   except getopt.GetoptError:
     print ('GenerateImage.py -i <inputfile> -f <cfgfile> -c <cal-tag> -d <deletetag>')
     print ('-d is optional and defaults to: ' + deletetag )
     print (' 1: delete partial rootfiles' )
     print (' 0: dont delete partial rootfiles' )
+    print ('-t is optional and defaults to: ' + tag )
     sys.exit(2)
 
   for opt, arg in opts:
     if opt == '-h':
-      print ('GenerateImage.py -i <inputfile> -f <cfgfile> -c <cal-tag> -d <deletetag>')
+      print ('GenerateImage.py -i <inputfile> -f <cfgfile> -c <cal-tag> -d <deletetag> -t <tag>')
       print ('-d is optional and defaults to: ' + deletetag )
       sys.exit()
     elif opt in ("-i", "--ifile"):
@@ -38,6 +40,8 @@ if __name__ == '__main__':
       caltag = arg
     elif opt in ("-d", "--deletetag"):
       deletetag = arg
+    elif opt in ("-t", "--tag"):
+      tag = arg
 
   if rootfile == '':
     print ('missing option: -i path/to/inputfilename.root')
@@ -57,7 +61,7 @@ if __name__ == '__main__':
   this_x0filepath = os.path.splitext(os.path.dirname(rootfile))[0]
 
   # Change to work directory
-  workdir = 'tmp-runs/'+this_x0filename+'-X0image'
+  workdir = 'tmp-runs/'+this_x0filename+'-'+ tag +'-X0image'
 
   # remove old workdir if exists 
   if os.path.isdir(workdir):
@@ -92,6 +96,10 @@ if __name__ == '__main__':
 
   # Name of the results file
   this_resultsfilename = config.get('x0image', 'resultsfilename')
+
+  # Vertex multiplicity cut parameters
+  this_vertex_multiplicity_min = config.get('x0image', 'vertex_multiplicity_min')
+  this_vertex_multiplicity_max = config.get('x0image', 'vertex_multiplicity_max')
 
   # u and v length of complete X0 image 
   u_length = config.getfloat('x0image', 'u_length')
@@ -187,6 +195,8 @@ if __name__ == '__main__':
       config.set('image', 'momentumoffset', this_momentumoffset)
       config.set('image', 'momentumugradient', this_momentumugradient)
       config.set('image', 'momentumvgradient', this_momentumvgradient)
+      config.set('image', 'vertexmultiplicitymin', this_vertex_multiplicity_min)
+      config.set('image', 'vertexmultiplicitymax', this_vertex_multiplicity_max)
 
       # Writing the configuration file
       with open('x0image-partial.cfg', 'w') as configfile:
@@ -249,7 +259,7 @@ if __name__ == '__main__':
   for tmpfile in glob.glob('*part_*.C'):
     os.remove(tmpfile) 
 
-  if deletetag == 1:
+  if deletetag == '1':
     # clean up root files
     for tmpfile in glob.glob('*part*.root'):
       os.remove(tmpfile) 
@@ -263,7 +273,7 @@ if __name__ == '__main__':
     os.remove(file) 
 
   # Copy complete image file to root-files directory
-  shutil.copy(this_resultsfilename+'.root', fullpath+'/root-files/'+this_x0filename+'-X0image.root')
+  shutil.copy(this_resultsfilename+'.root', fullpath+'/root-files/'+this_x0filename+'-'+ tag +'X0image.root')
   		           
                 
 

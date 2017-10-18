@@ -60,16 +60,12 @@ KalmanAligner::KalmanAligner() : Processor("KalmanAligner")
 // Processor parameters
   
   registerProcessorParameter ("AlignmentDBFileName",
-                             "This is the name of the LCIO file with the alignment constants (add .slcio)",
-                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.slcio" ) ); 
+                             "This is the name of the file with the alignment constants (add .root)",
+                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) ); 
   
   registerProcessorParameter ("AlignConfigFileName",
                              "Name of the alignment config file",
                              _alignConfigFileName, std::string("cfg/align.cfg"));
-  
-  registerProcessorParameter( "RootFileName",
-                             "Root file containing alignment validation plots",
-                             _rootFileName, std::string("KalmanAlign-TB2011.root"));
   
   registerProcessorParameter ("UpdateAlignment",
                               "Update lcio alignmentDB using alignment results (true/false)?",
@@ -113,7 +109,7 @@ void KalmanAligner::init() {
   _nKAATracks = 0;
       
   // Open buffer file for storing alignment data 
-  alignment_data = new TFile(_rootFileName.c_str(), "RECREATE");
+  alignment_data = new TFile("tmpAlignTracks.root", "RECREATE");
   if (alignment_data == 0 || alignment_data->IsOpen() != kTRUE) {
     streamlog_out ( ERROR4) << "Could not open alignment data file!!" << endl;
     exit(-1);
@@ -218,9 +214,8 @@ void KalmanAligner::end()
   // Try to fit alignment corrections from track residuals  
   
   TBDetector tmp_detector = _detector;
-
-  cout << " Total of " << _nKAATracks << " tracks found" << endl;
   
+  streamlog_out ( MESSAGE3 ) << " Total of " << _nKAATracks << " tracks found" << endl;
   streamlog_out ( MESSAGE3 ) << endl;
   streamlog_out ( MESSAGE3 ) << "Starting alignment ..." << endl;
   
@@ -231,46 +226,19 @@ void KalmanAligner::end()
   if ( error_fim ) {
     streamlog_out ( MESSAGE3 ) << "Alignment failed!" << endl;
   } 
+
+  // Close alignment_data file
+  alignment_data->Close();
+  delete alignment_data;
     
   ////////////////////////////////////////////////////////////
-  // Print detector geometrie after alignment   
+  // Print alignment results     
   
-  streamlog_out ( MESSAGE3 ) << "Detector geometry after alignment procedure: " << endl;   
-  tmp_detector.Print();    
-  
-  ////////////////////////////////////////////////////////////
-  // Visualize alignment corrections 
-  int nsensor = _detector.GetNSensors();   
-  
-  TH1D * hxshift = new TH1D("hxshift", "X Shift", nsensor, 0, nsensor); 
-  hxshift->SetXTitle("plane number");
-  hxshift->SetYTitle("x shift [mm]");
-  
-  TH1D * hyshift = new TH1D("hyshift", "Y Shift", nsensor, 0, nsensor); 
-  hyshift->SetXTitle("plane number");
-  hyshift->SetYTitle("y shift [mm]");
-  
-  TH1D * hzshift = new TH1D("hzshift", "Z Shift", nsensor, 0, nsensor);  
-  hzshift->SetXTitle("plane number");
-  hzshift->SetYTitle("z shift [mm]");
-  
-  TH1D * hxrot = new TH1D("hxrot", "X Rotation", nsensor, 0, nsensor); 
-  hxrot->SetXTitle("plane number");
-  hxrot->SetYTitle("x rot [rad]");
-  
-  TH1D * hyrot = new TH1D("hyrot", "Y Rotation", nsensor, 0, nsensor); 
-  hyrot->SetXTitle("plane number");
-  hyrot->SetYTitle("y rot [rad]");
-  
-  TH1D * hzrot = new TH1D("hzrot", "Z Rotation", nsensor, 0, nsensor);  
-  hzrot->SetXTitle("plane number");
-  hzrot->SetYTitle("z rot [rad]");         
-
-  streamlog_out ( MESSAGE3 )  << endl << "Final geometry constants:" << endl << endl; 
+  streamlog_out ( MESSAGE3 )  << endl << "Alignment constants:" << endl << endl; 
     
   HepSymMatrix reco_cov = reco_const.alignmentCovariance;
   
-  for ( int ipl = 0; ipl < nsensor; ipl++ ) {
+  for ( int ipl = 0; ipl < _detector.GetNSensors(); ipl++ ) {
     
     // Print final geometry constants 
     // ------------------------------  
@@ -292,14 +260,6 @@ void KalmanAligner::end()
     double alpha_f, beta_f, gamma_f; 
     GetAnglesKarimaki(CRot_f, alpha_f, beta_f, gamma_f); 
     
-    // Fill root histos
-    hxshift->SetBinContent(ipl+1,pos_f[0]);
-    hyshift->SetBinContent(ipl+1,pos_f[1]);
-    hzshift->SetBinContent(ipl+1,pos_f[2]);
-    hxrot->SetBinContent(ipl+1,alpha_f);
-    hyrot->SetBinContent(ipl+1,beta_f);
-    hzrot->SetBinContent(ipl+1,gamma_f);
-     
     // Print 
     streamlog_out ( MESSAGE3 ) << endl << "Sensor plane " << ipl << endl << endl;  
     streamlog_out ( MESSAGE3 ) << endl << "  final x [mm] " << pos_f[0] << " +/- " << std::sqrt(reco_cov[ipl*6+0][ipl*6+0]) << endl; 
@@ -334,12 +294,7 @@ void KalmanAligner::end()
     streamlog_out ( MESSAGE3 ) << endl << "  correction dgamma [rad] " << dgamma << " +/- " << std::sqrt(reco_cov[ipl*6+5][ipl*6+5]) << endl; 
       
   }
-    
-  // Write validation histos 
-  alignment_data->Write();
-  alignment_data->Close();
-  delete alignment_data;
-     
+       
   //////////////////////////////////////////////////////////////////////  
   // Create aligned detector 
       
@@ -349,7 +304,7 @@ void KalmanAligner::end()
     _detector.WriteAlignmentDB( ); 
   } else {
     streamlog_out ( MESSAGE3 ) << endl;
-    streamlog_out ( MESSAGE3 ) << "NO UPDATE OF ALIGNMENT DB LCIO FILE" << endl; 
+    streamlog_out ( MESSAGE3 ) << "NO UPDATE OF ALIGNMENT DB" << endl; 
   }
          
   streamlog_out ( MESSAGE3 ) << endl;

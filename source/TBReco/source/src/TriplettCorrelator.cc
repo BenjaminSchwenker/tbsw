@@ -53,7 +53,7 @@ TriplettCorrelator::TriplettCorrelator() : Processor("TriplettCorrelator")
    _description = "TriplettCorrelator: Pre- alignment in xy of tracking telescopes with trackletts";
      
 //   
-// First of all, we need to register the input/output collections
+// Define processor parameters 
     
    vector< string > inputHitCollectionNameVecExample;
    inputHitCollectionNameVecExample.push_back( "hit" );
@@ -65,17 +65,18 @@ TriplettCorrelator::TriplettCorrelator() : Processor("TriplettCorrelator")
    registerInputCollection(LCIO::TRACK,"TrackCollectionName",
                           "Tracklett collection for alignment",
                           _trackCollectionName,std::string("aligntracks"));
-   
-//   
-// Define processor parameters 
-   
+      
    registerProcessorParameter ("AlignmentDBFileName",
-                             "This is the name of the LCIO file with the alignment constants (add .slcio)",
-                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.slcio" ) );   
+                             "This is the name of the file with the alignment constants (add .root)",
+                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) );   
                    
    registerProcessorParameter ("UpdateAlignment",
                               "Update alignment DB using offset corrections (true/false)?",
                               _updateAlignment, static_cast <bool> (false) ); 
+ 
+   registerProcessorParameter ("NewAlignment",
+                              "Start alignment from scratch (true/false)?",
+                              _newAlignment, static_cast <bool> (false) ); 
    
    registerProcessorParameter ("OutputRootFileName",
                               "This is the name of the output root file",
@@ -100,8 +101,10 @@ void TriplettCorrelator::init() {
   _detector.ReadGearConfiguration();    
   
   // Read alignment data base file 
-  _detector.ReadAlignmentDB( _alignmentDBFileName );   
-
+  if(!_newAlignment) _detector.ReadAlignmentDB( _alignmentDBFileName );
+  // This is needed, because if the AlignmentDB is not read, the detector construct doesn't know the alignmentDB name
+  else  _detector.SetAlignmentDBName( _alignmentDBFileName );
+  
   // Apply pre-alignment only to active sensors
   _isActive.resize(_detector.GetNSensors(), true);   
    
@@ -370,7 +373,7 @@ void TriplettCorrelator::end()
     
   } else {
     streamlog_out ( MESSAGE3 ) << endl;
-    streamlog_out ( MESSAGE3 ) << "NO UPDATE OF ALIGNMENT DB LCIO FILE" << endl; 
+    streamlog_out ( MESSAGE3 ) << "NO UPDATE OF ALIGNMENT DB" << endl; 
   }
   
   // Print message

@@ -257,7 +257,6 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     for(int iup=0;iup<(int)upTrackStore.size(); iup++)
     {
             
-      // If matched, skip track 
       // if ( up2down[iup].size() > 0 ) continue;    
       
       for(int idown=0; idown< (int)downTrackStore.size() ; idown++)
@@ -316,6 +315,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 
   //Initialize Vertex Fitter
   TBVertexFitter VertexFitter(_idut);
+
 
   for(int iup=0;iup<(int)upTrackStore.size(); iup++)
   {
@@ -419,8 +419,10 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     _root_vertex_mean_prob=TMath::Prob(jchisq[0][0], 2);
     
     _rootMscTree->Fill();     
+  
+	} //  end down track loop
     
-  } // end track loop 		
+  } // end up track loop 		
      
    
   
@@ -503,11 +505,10 @@ void X0ImageProducer::bookHistos() {
   _rootEventTree->Branch("nDownTracks"      ,&_rootnDownTracks     ,"nDownTracks/I");
   _rootEventTree->Branch("nUpTracks"        ,&_rootnUpTracks       ,"nUpTracks/I"); 
   _rootEventTree->Branch("nMatched"         ,&_rootNMatched        ,"nMatched/I");
-
   
     
   // 
-  // Track Tree of the whole track 
+  // Scattering angle Tree
   _rootMscTree = new TTree("MSCTree","Multiple scattering data");
   _rootMscTree->Branch("iRun"            ,&_rootRunNumber       ,"iRun/I");
   _rootMscTree->Branch("iEvt"            ,&_rootEventNumber     ,"iEvt/I"); 
@@ -552,6 +553,7 @@ void X0ImageProducer::bookHistos() {
 
   _rootMscTree->Branch("vertex_multiplicity"    ,&_root_vertex_multiplicity   ,"_root_vertex_multiplicity/I");
   _rootMscTree->Branch("vertex_id"              ,&_root_vertex_id             ,"_root_vertex_id/I");
+
 
 }
 
