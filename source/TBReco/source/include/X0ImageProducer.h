@@ -165,7 +165,8 @@ protected:
    double _root_vertex_prob;
    double _root_vertex_u_res;
    double _root_vertex_v_res;
-   double _root_up2downsize;
+   int _root_vertex_multiplicity;
+   int _root_vertex_id;
   
  private:
    

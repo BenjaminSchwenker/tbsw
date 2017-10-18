@@ -371,7 +371,8 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 	_root_v_var=0.25*(instate_covs[3][3]+outstate_covs[3][3]);
      	
     // Fill root variables
-    _root_up2downsize = up2down[iup].size(); 
+    _root_vertex_multiplicity = up2down[iup].size(); 
+    _root_vertex_id = iup;
     _root_momentum = uptrack.GetMomentum(); 
     _rootTrackProbUp = TMath::Prob(uptrack.GetChiSqu(),uptrack.GetNDF());
     _rootTrackProbDown = TMath::Prob(downtrack.GetChiSqu(),downtrack.GetNDF());
@@ -548,7 +549,9 @@ void X0ImageProducer::bookHistos() {
   _rootMscTree->Branch("vertex_prob"     ,&_root_vertex_prob	,"vertex_prob/D");
   _rootMscTree->Branch("vertex_u_res"	 ,&_root_vertex_u_res	,"vertex_u_res/D");
   _rootMscTree->Branch("vertex_v_res"	 ,&_root_vertex_v_res	,"vertex_v_res/D");  
-  _rootMscTree->Branch("up2downsize"	 ,&_root_up2downsize	,"up2downsize/D");
+
+  _rootMscTree->Branch("vertex_multiplicity"    ,&_root_vertex_multiplicity   ,"_root_vertex_multiplicity/I");
+  _rootMscTree->Branch("vertex_id"              ,&_root_vertex_id             ,"_root_vertex_id/I");
 
 }
 
