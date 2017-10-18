@@ -136,10 +136,7 @@ protected:
    double _rootTrackProbUp;
    double _rootTrackProbDown;
    double _rootTrackProbCombo;
-<<<<<<< HEAD
- 
-=======
->>>>>>> origin/develop
+
    double _root_u; 
    double _root_v; 
    double _root_u_var; 

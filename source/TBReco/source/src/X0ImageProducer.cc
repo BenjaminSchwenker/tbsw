@@ -256,7 +256,6 @@ void X0ImageProducer::processEvent(LCEvent * evt)
       
     for(int iup=0;iup<(int)upTrackStore.size(); iup++)
     {
-            
       // if ( up2down[iup].size() > 0 ) continue;    
       
       for(int idown=0; idown< (int)downTrackStore.size() ; idown++)
@@ -419,8 +418,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     _root_vertex_mean_prob=TMath::Prob(jchisq[0][0], 2);
     
     _rootMscTree->Fill();     
-  
-	} //  end down track loop
+
     
   } // end up track loop 		
      
