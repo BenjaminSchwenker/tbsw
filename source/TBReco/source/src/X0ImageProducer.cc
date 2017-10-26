@@ -321,8 +321,38 @@ void X0ImageProducer::processEvent(LCEvent * evt)
   
     // Check upstream track is matched 
     if ( up2down[iup].size() < 1 ) continue; 
-    
+
     TBTrack& uptrack = upTrackStore[iup];
+
+	// Scattering Vertex fitting
+	// The In and every Out State given for one vertex is added to a vertex class
+	TBVertex Vertex;
+	Vertex.AddTrackState(uptrack.GetTE(_idut).GetState());
+
+ 	// Add downstream trackstates to vertex
+    for(int idown=0;idown<up2down[iup].size();idown++)
+	{
+		Vertex.AddTrackState(downTrackStore[up2down[iup][idown]].GetTE(_idut).GetState());
+	}
+
+	// Calculate vertex parameters
+	// In case the vertex multiplicity is larger than 1, these values will be set for every upstream downstream track combination 
+	bool vfiterr = VertexFitter.FitVertex(Vertex);
+	HepMatrix vertexpos = Vertex.GetPos();
+	HepMatrix vertexcov = Vertex.GetCov();
+	HepMatrix vertexres = Vertex.GetRes();
+
+	_root_vertex_u = vertexpos[0][0];
+	_root_vertex_v = vertexpos[1][0];
+	_root_vertex_w = vertexpos[2][0];
+	_root_vertex_u_var = vertexcov[0][0];
+	_root_vertex_v_var = vertexcov[1][1];
+	_root_vertex_w_var = vertexcov[2][2];
+	_root_vertex_chi2 = Vertex.GetChi2();
+	_root_vertex_prob = TMath::Prob(Vertex.GetChi2(),Vertex.GetNdf());
+	_root_vertex_u_res = vertexres[2][0];
+	_root_vertex_v_res = vertexres[3][0];
+    
     for(int idown=0;idown<up2down[iup].size();idown++)
 	{
 		TBTrack& downtrack = downTrackStore[ up2down[iup][idown] ];
@@ -333,21 +363,6 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		// In and OutStates of the reconstructed Track at the current detector
 		TBTrackState& InState=uptrack.GetTE(_idut).GetState();
 		TBTrackState& OutState=downtrack.GetTE(_idut).GetState();
-
-		// Scattering Vertex fitting
-		// The In and every Out State given for one vertex is added to a vertex class
-		TBVertex Vertex;
-		Vertex.AddTrackState(uptrack.GetTE(_idut).GetState());
-		for( int idown=0; idown < up2down[iup].size(); idown++)
-		{
-		  Vertex.AddTrackState(downTrackStore[up2down[iup][idown]].GetTE(_idut).GetState());
-		}
-
-		//The TBVertexFitter Class performs a Kalman filter vertex fit on the states
-		bool vfiterr = VertexFitter.FitVertex(Vertex);
-		HepMatrix vertexpos = Vertex.GetPos();
-		HepMatrix vertexcov = Vertex.GetCov();
-		HepMatrix vertexres = Vertex.GetRes();
 
 		//MSC Analysis for the reconstructed angles
 		//Here we use the In and Out State and the GetScatterKinks function of the TBKalmanMSC Class
@@ -362,7 +377,6 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		// The u and v positions are needed for a position-resolved measurement
 		HepMatrix p_in = InState.GetPars();
 		HepMatrix p_out = OutState.GetPars();
-
 
 		// Get the covariance entries of the intersection coordinates
 		HepSymMatrix instate_covs=InState.GetCov();
@@ -392,18 +406,6 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		_root_angle2 = theta[1][0];
 		_root_angle1_var = Cov[0][0];
 		_root_angle2_var = Cov[1][1];
-
-		_root_vertex_u = vertexpos[0][0];
-		_root_vertex_v = vertexpos[1][0];
-		_root_vertex_w = vertexpos[2][0];
-		_root_vertex_u_var = vertexcov[0][0];
-		_root_vertex_v_var = vertexcov[1][1];
-		_root_vertex_w_var = vertexcov[2][2];
-		_root_vertex_chi2 = Vertex.GetChi2();
-		_root_vertex_prob = TMath::Prob(Vertex.GetChi2(),Vertex.GetNdf());
-		_root_vertex_u_res = vertexres[2][0];
-		_root_vertex_v_res = vertexres[3][0];
-
 
 		// Construct the u and v residuals and calculate a chi2 value from them
 		HepMatrix res=p_in-p_out;

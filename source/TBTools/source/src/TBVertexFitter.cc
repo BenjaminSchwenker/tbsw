@@ -24,15 +24,16 @@ namespace depfet {
 
 /** Constructor 
  */
-TBVertexFitter::TBVertexFitter(int ipl) : A(5,3,0), B(5,2,0)
+TBVertexFitter::TBVertexFitter(int ipl) : A(5,3,0), B(5,3,0)
 {                   
 
   plnr = ipl; //plane number of DUT
 
   //Define Matrices used for vertex fit
-  //Jacobian B = dh/dq for slope states q = (a,b)
+  //Jacobian B = dh/dq for slope states q = (a,b,(q/p))
 	B[0][0] = 1;	//dh1/da
 	B[1][1] = 1;	//dh2/db
+	B[4][2] = 1;	//dh5/d(q/p)
 
   //Jacobian A = dh/dr for vertex state r = (x,y,z)
 	A[2][0] = 1;	//dh3/dx
@@ -47,9 +48,10 @@ bool TBVertexFitter::FitVertex(TBVertex& Vertex)
   //Initial vertex guess at (0,0,0) and large covariance
   HepMatrix r(3,1,0);
   HepMatrix C(3,3,0);
-	C[0][0] = 100*100;
-	C[1][1] = 100*100;
-	C[2][2] = 100*100;
+  C[0][0] = 10000*10000;
+  C[1][1] = 10000*10000;
+  C[2][2] = 10000*10000;
+
   //Initial chi2 and degrees of freedom
   double chi2 = 0;
   int ndf = -3;
