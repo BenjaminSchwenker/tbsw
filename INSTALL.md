@@ -59,7 +59,7 @@ The release specific tag can be obtained using for example:
 
 ```
 $ cd root
-$ git checkout -b v6-08-06 v6-08-06  
+$ git checkout -b v6-10-08 v6-10-08  
 $ cd ..
 ```
 
