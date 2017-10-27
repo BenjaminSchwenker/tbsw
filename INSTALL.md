@@ -18,7 +18,6 @@ In case you are working with Ubuntu, the following recipe may work for you as we
 $ sudo apt install cmake
 ```
 
-taken from http://askubuntu.com/questions/610291/how-to-install-cmake-3-2-on-ubuntu-14-04
 
 # CLHEP 
 
