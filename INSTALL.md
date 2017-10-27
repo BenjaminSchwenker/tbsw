@@ -15,10 +15,7 @@ You need version of Cmake greater 3. You can find more information about Cmake a
 In case you are working with Ubuntu, the following recipe may work for you as well: 
 
 ```
-$ sudo apt-get install software-properties-common
-$ sudo add-apt-repository ppa:george-edison55/cmake-3.x
-$ sudo apt-get update
-$ sudo apt-get install cmake
+$ sudo apt install cmake
 ```
 
 taken from http://askubuntu.com/questions/610291/how-to-install-cmake-3-2-on-ubuntu-14-04
