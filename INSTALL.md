@@ -52,6 +52,13 @@ You should use your default system version of Python. Check that library python-
 sudo apt-get install python-dev
 ```
 
+A few more python modules are needed to run the example scripts: 
+
+```
+sudo apt-get install python-numpy
+sudo apt-get install python-scipy
+```
+
 # Root 
 
 The project home page can be found at this URL https://root.cern.ch/downloading-root. One approach to get the source code is to use the public GIT
