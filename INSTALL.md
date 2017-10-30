@@ -44,6 +44,13 @@ $ cmake --build . --target install
 
 The folder <clhep-builddir> may be deleted afterwards. In the end, the folder <clhep-installdir> should contain bin/ include/ and lib/ subfolders. 
 
+# Python 
+
+You should use your default system version of Python. Check that library python-dev is installed on your system to work with PyRoot. You can install by typing: 
+
+```
+sudo apt-get install python-dev
+```
 
 # Root 
 
@@ -81,10 +88,6 @@ $ cd <absolute-path-to-root-installdir>
 $ . bin/thisroot.sh
 $ root 
 ```
-
-# Python 
-
-You should use your default system version of Python. This was also used for installing Root and is needed for working with PyRoot.
 
 # TBSW   
  
