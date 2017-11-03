@@ -2,7 +2,7 @@
 // 
 // See X0ImageProducer.h for full documentation of processor. 
 // 
-// Author: Benjamin Schwenker, GÃ¶ttingen University 
+// Author: Benjamin Schwenker, Göttingen University 
 // <mailto:benjamin.schwenker@phys.uni-goettingen.de>
 
 
@@ -256,12 +256,12 @@ void X0ImageProducer::processEvent(LCEvent * evt)
       
     for(int iup=0;iup<(int)upTrackStore.size(); iup++)
     {
-      // if ( up2down[iup].size() > 0 ) continue;    
-      
+          
       for(int idown=0; idown< (int)downTrackStore.size() ; idown++)
       {
 
-        // If matched, skip track 
+        // If downtrack matched to some uptrack, skip downtrack
+        // Downtracks should only be used once.
         if (down2up[idown].size() > 0) continue; 
         
         TBTrack& uptrack = upTrackStore[iup];
