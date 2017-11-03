@@ -4,6 +4,7 @@
 // DEPFETTrackTools includes
 #include "TBTrack.h"
 #include "TBVertex.h"
+#include "TBDetector.h"
 
 //other includes includes
 #include <TMath.h>
@@ -36,7 +37,7 @@ class TBVertexFitter {
   
   /** Default Constructor  
    */
-  TBVertexFitter(int ipl);
+  TBVertexFitter(int ipl, TBDetector det);
 
   /** Performs vertex fitting. Returns boolean of success of fit
    */
@@ -52,6 +53,7 @@ class TBVertexFitter {
  private:
   
   int plnr; //plane number of dut
+  TBDetector detector; // Detector object
 
 };
  

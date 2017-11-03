@@ -29,10 +29,12 @@ class TBVertex {
 
  public: //Members
 
-  //Vertex Position vector
+  //Vertex Position vector (in local and global coordinates)
   CLHEP::HepMatrix Pos;
-  //Corresponding covariance
+  CLHEP::HepMatrix GlobalPos;
+  //Corresponding covariance (in local and global coordinates)
   CLHEP::HepMatrix Cov;
+  CLHEP::HepMatrix GlobalCov;
   //Vertex fit chi²
   double chi2;
   //Vertex fit number degrees of freedom
@@ -47,15 +49,23 @@ class TBVertex {
 
   // Constructors
   TBVertex(); 
-  TBVertex(CLHEP::HepMatrix aPos, CLHEP::HepMatrix aCov, double achi2);  
+  TBVertex(CLHEP::HepMatrix aPos, CLHEP::HepMatrix aGlobalPos, CLHEP::HepMatrix aCov, CLHEP::HepMatrix aGlobalCov, double achi2);  
   
-  // Get/Set vertex position  
+  // Get/Set local vertex position  
   void SetPos(const CLHEP::HepMatrix& aPos) { Pos= aPos; }; 
   CLHEP::HepMatrix&  GetPos() { return Pos; };
+
+  // Get/Set global vertex position  
+  void SetGlobalPos(const CLHEP::HepMatrix& aPos) { GlobalPos= aPos; }; 
+  CLHEP::HepMatrix&  GetGlobalPos() { return GlobalPos; };
    
-  // Get/Set position covariance 
+  // Get/Set local position covariance 
   void SetCov(const CLHEP::HepMatrix& aCov ) { Cov = aCov; }; 
   CLHEP::HepMatrix&  GetCov() { return Cov; };
+
+  // Get/Set global position covariance 
+  void SetGlobalCov(const CLHEP::HepMatrix& aCov ) { GlobalCov = aCov; }; 
+  CLHEP::HepMatrix&  GetGlobalCov() { return GlobalCov; };
 
   // Get/Set chi²-value
   void SetChi2(double achi2 ) { chi2 = achi2; }; 

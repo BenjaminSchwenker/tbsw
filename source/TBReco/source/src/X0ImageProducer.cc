@@ -313,7 +313,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
   _rootEventTree->Fill();    
 
   //Initialize Vertex Fitter
-  TBVertexFitter VertexFitter(_idut);
+  TBVertexFitter VertexFitter(_idut, _detector);
 
 
   for(int iup=0;iup<(int)upTrackStore.size(); iup++)
@@ -340,14 +340,24 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 	bool vfiterr = VertexFitter.FitVertex(Vertex);
 	HepMatrix vertexpos = Vertex.GetPos();
 	HepMatrix vertexcov = Vertex.GetCov();
+	HepMatrix vertexglobalpos = Vertex.GetGlobalPos();
+	HepMatrix vertexglobalcov = Vertex.GetGlobalCov();
 	HepMatrix vertexres = Vertex.GetRes();
 
 	_root_vertex_u = vertexpos[0][0];
 	_root_vertex_v = vertexpos[1][0];
 	_root_vertex_w = vertexpos[2][0];
+	_root_vertex_x = vertexglobalpos[0][0];
+	_root_vertex_y = vertexglobalpos[1][0];
+	_root_vertex_z = vertexglobalpos[2][0];
+
 	_root_vertex_u_var = vertexcov[0][0];
 	_root_vertex_v_var = vertexcov[1][1];
 	_root_vertex_w_var = vertexcov[2][2];
+	_root_vertex_x_var = vertexglobalcov[0][0];
+	_root_vertex_y_var = vertexglobalcov[1][1];
+	_root_vertex_z_var = vertexglobalcov[2][2];
+
 	_root_vertex_chi2 = Vertex.GetChi2();
 	_root_vertex_prob = TMath::Prob(Vertex.GetChi2(),Vertex.GetNdf());
 	_root_vertex_u_res = vertexres[2][0];
@@ -549,6 +559,13 @@ void X0ImageProducer::bookHistos() {
   _rootMscTree->Branch("vertex_u_var"	 ,&_root_vertex_u_var	,"vertex_u_var/D");
   _rootMscTree->Branch("vertex_v_var"	 ,&_root_vertex_v_var	,"vertex_v_var/D");
   _rootMscTree->Branch("vertex_w_var"	 ,&_root_vertex_w_var	,"vertex_w_var/D"); 
+
+  _rootMscTree->Branch("vertex_x"	 ,&_root_vertex_x	,"vertex_x/D");
+  _rootMscTree->Branch("vertex_y"	 ,&_root_vertex_y	,"vertex_y/D");
+  _rootMscTree->Branch("vertex_z"	 ,&_root_vertex_z	,"vertex_z/D");
+  _rootMscTree->Branch("vertex_x_var"	 ,&_root_vertex_x_var	,"vertex_x_var/D");
+  _rootMscTree->Branch("vertex_y_var"	 ,&_root_vertex_y_var	,"vertex_y_var/D");
+  _rootMscTree->Branch("vertex_z_var"	 ,&_root_vertex_z_var	,"vertex_z_var/D"); 
  
   _rootMscTree->Branch("vertex_chi2"     ,&_root_vertex_chi2	,"vertex_chi2/D");
   _rootMscTree->Branch("vertex_prob"     ,&_root_vertex_prob	,"vertex_prob/D");

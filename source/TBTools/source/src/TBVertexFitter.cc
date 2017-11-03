@@ -24,10 +24,11 @@ namespace depfet {
 
 /** Constructor 
  */
-TBVertexFitter::TBVertexFitter(int ipl) : A(5,3,0), B(5,3,0)
+TBVertexFitter::TBVertexFitter(int ipl, TBDetector det) : A(5,3,0), B(5,3,0)
 {                   
 
   plnr = ipl; //plane number of DUT
+  detector = det; // TBDetector object
 
   //Define Matrices used for vertex fit
   //Jacobian B = dh/dq for slope states q = (a,b,(q/p))
@@ -95,12 +96,47 @@ bool TBVertexFitter::FitVertex(TBVertex& Vertex)
 
     //increase Number degrees of freedom
     ndf += 2;
-
   }
+
+  // Transform vertex position and vertex position covariance into global coordinates
+
+  // First get the reference frame of the DUT
+  ReferenceFrame localframe = detector.GetDet(plnr).GetNominal();
+
+  // Get rotation matrix and position offset of local coordinate system of DUT plane
+  HepMatrix Rotation = localframe.GetRotRef().T();
+  HepVector Offset = localframe.GetPosRef();
+
+  /*cout<<"Rotation Matrix"<<endl;
+  cout<<Rotation<<endl;
+
+  cout<<"Offset"<<endl;
+  cout<<Offset<<endl;
+
+  cout<<"position"<<endl;
+  cout<<r<<endl;*/
+
+  // Now transform the local vertex position and its covariance
+  HepVector r_global=Rotation*r+Offset;
+  HepMatrix C_global=Rotation.T()*C*Rotation;
+
+  /*cout<<"Vertex position in local coords:"<<endl;
+  cout<<r<<endl;
+
+  cout<<"Vertex position in global coords"<<endl;
+  cout<<r_global<<endl;
+
+  cout<<"Vertex position cov in local coords:"<<endl;
+  cout<<C<<endl;
+
+  cout<<"Vertex position cov in global coords"<<endl;
+  cout<<C_global<<endl;*/
 
   Vertex.SetRes(zeta);
   Vertex.SetPos(r);
+  Vertex.SetGlobalPos(r_global);
   Vertex.SetCov(C);
+  Vertex.SetGlobalCov(C_global);
   Vertex.SetChi2(chi2);
   Vertex.SetNdf(ndf);
   

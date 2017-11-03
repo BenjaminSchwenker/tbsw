@@ -164,6 +164,14 @@ protected:
    double _root_vertex_u_var;
    double _root_vertex_v_var;
    double _root_vertex_w_var;
+
+   double _root_vertex_x;
+   double _root_vertex_y;
+   double _root_vertex_z;
+   double _root_vertex_x_var;
+   double _root_vertex_y_var;
+   double _root_vertex_z_var;
+
    double _root_vertex_chi2;
    double _root_vertex_prob;
    double _root_vertex_u_res;
