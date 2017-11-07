@@ -85,9 +85,9 @@ X0ImageProducer::X0ImageProducer() : Processor("X0ImageProducer")
                                "Output root file name",
                                _rootFileName, std::string("X0.root"));
 
-  registerProcessorParameter ("MaxDist",
-                              "Maximum distance between up and downstream tracks at dut plane [mm]",
-                              _maxDist,  static_cast < double > (0.1));
+  registerProcessorParameter ("MaxVertexChi2",
+                              "Maximal Chi2 value for vertex fit of matched up and downstream tracks",
+                              _maxVertexChi2,  static_cast < double > (10.0));
 
 }
 
@@ -244,7 +244,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
    
   // Continue matching tracks and hits until all tracks are matched 
   // or no hit is close enough to a track!! 
-  double distmin=numeric_limits<double >::max();
+  double chi2min=numeric_limits<double >::max();
    
   Det dut = _detector.GetDet(_idut);
 
@@ -252,10 +252,13 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     int bestup=-1;
     int bestdown=-1;
     
-    distmin=numeric_limits<double >::max();
+    chi2min=numeric_limits<double >::max();
+
       
     for(int iup=0;iup<(int)upTrackStore.size(); iup++)
     {
+	  // Get upstream track
+      TBTrack& uptrack = upTrackStore[iup];
           
       for(int idown=0; idown< (int)downTrackStore.size() ; idown++)
       {
@@ -263,24 +266,33 @@ void X0ImageProducer::processEvent(LCEvent * evt)
         // If downtrack matched to some uptrack, skip downtrack
         // Downtracks should only be used once.
         if (down2up[idown].size() > 0) continue; 
-        
-        TBTrack& uptrack = upTrackStore[iup];
+
+	    // Get upstream track
         TBTrack& downtrack = downTrackStore[idown];
+    
+        //Initialize Vertex and Vertex Fitter
+        TBVertexFitter VertexFitter_aid(_idut, _detector);
+	    TBVertex Vertex_aid;
+
+	    // Add upstream track state to vertex
+	    Vertex_aid.AddTrackState(uptrack.GetTE(_idut).GetState());
+
+		// Additionally add any downstream tracks, which have already been sucessfully matched with this upstream track
+		// This ensures that all matched downstream tracks really come from the same vertex
+		for(int n=0;n<up2down[iup].size();n++) Vertex_aid.AddTrackState(downTrackStore[up2down[iup][n]].GetTE(_idut).GetState());
+
+	    // Add current downstream track state to vertex
+	    Vertex_aid.AddTrackState(downtrack.GetTE(_idut).GetState());
         
-        // In and OutStates of the reconstructed Track at the current detector
-        TBTrackState& InState=uptrack.GetTE(_idut).GetState();
-        TBTrackState& OutState=downtrack.GetTE(_idut).GetState(); 
-        
-        double u_in = InState.GetPars()[2][0];
-        double v_in = InState.GetPars()[3][0];
-        double u_out = OutState.GetPars()[2][0];
-        double v_out = OutState.GetPars()[3][0];
-        
-        double hitdist = std::sqrt(pow(u_in-u_out,2)+pow(v_in-v_out,2));
+        // Perform vertex fit
+        // Check whether the combination of all
+	    bool vfiterr = VertexFitter_aid.FitVertex(Vertex_aid);
+		if (vfiterr) continue;
+		double vertex_aid_chi2=Vertex_aid.GetChi2Ndof();
                       
-        if( hitdist<distmin )
+        if( vertex_aid_chi2<chi2min )
         {
-          distmin=hitdist;
+          chi2min=vertex_aid_chi2;
           bestup=iup;
           bestdown=idown;
         }
@@ -288,10 +300,10 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     }
     
     streamlog_out(MESSAGE2) << "In matching loop: best up " << bestup << " to best down " << bestdown << endl; 
-    streamlog_out(MESSAGE2) << "  distmin: " <<  distmin  << endl; 
+    streamlog_out(MESSAGE2) << "  chi2min: " <<  chi2min  << endl; 
     
     // Check if best match is good enough
-    if( distmin < _maxDist  )
+    if( chi2min < _maxVertexChi2  )
     {   
 
       streamlog_out(MESSAGE2) << "  match found!!!"   << endl;
@@ -301,7 +313,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     } 
   
   } // End matching loop
-  while( distmin < _maxDist );
+  while( chi2min < _maxVertexChi2 );
   
   // Fill event tree
   _rootRunNumber = evt->getRunNumber();  
@@ -392,8 +404,8 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		HepSymMatrix instate_covs=InState.GetCov();
 		HepSymMatrix outstate_covs=OutState.GetCov();
 	 
-		_root_u_var=0.25*(instate_covs[2][2]+outstate_covs[2][2]);
-		_root_v_var=0.25*(instate_covs[3][3]+outstate_covs[3][3]);
+		_root_u_var=1.0/(1.0/instate_covs[2][2]+1.0/outstate_covs[2][2]);  // weighted mean
+		_root_v_var=1.0/(1.0/instate_covs[3][3]+1.0/outstate_covs[3][3]);  // weighted mean
 		 	
 		// Fill root variables
 		_root_vertex_multiplicity = up2down[iup].size(); 
@@ -407,10 +419,8 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		_root_v_in = p_in[3][0];
 		_root_u_out = p_out[2][0]; 
 		_root_v_out = p_out[3][0];
-		_root_u = 0.5*(p_in[2][0] + p_out[2][0]); 
-		_root_v = 0.5*(p_in[3][0] + p_out[3][0]);  
-		_root_dudw = 0.5*(p_in[0][0] + p_out[0][0]);    
-		_root_dvdw = 0.5*(p_in[1][0] + p_out[1][0]);   
+		_root_u = (instate_covs[2][2]*p_in[2][0] + outstate_covs[2][2]*p_out[2][0])/(instate_covs[2][2]+outstate_covs[2][2]); // weighted mean
+		_root_v = (instate_covs[3][3]*p_in[3][0] + outstate_covs[3][3]*p_out[3][0])/(instate_covs[3][3]+outstate_covs[3][3]); // weightes mean 
 	   
 		_root_angle1 = theta[0][0];
 		_root_angle2 = theta[1][0];
@@ -428,8 +438,8 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		streamlog_out(MESSAGE1) << "Complete Covariance matrix: "<<res_covs.sub(1,4)<<endl;
 		streamlog_out(MESSAGE1) << "Part of Covariance matrix used here: "<<res_covs.sub(3,4)<<endl;
 
-		_root_vertex_mean_chi2=jchisq[0][0];
-		_root_vertex_mean_prob=TMath::Prob(jchisq[0][0], 2);
+		_root_chi2=jchisq[0][0];
+		_root_prob=TMath::Prob(jchisq[0][0], 2);
 		
 		_rootMscTree->Fill(); 
 
@@ -530,9 +540,6 @@ void X0ImageProducer::bookHistos() {
   _rootMscTree->Branch("prob_down"       ,&_rootTrackProbDown   ,"prob_down/D"); 
   _rootMscTree->Branch("prob_combo"      ,&_rootTrackProbCombo  ,"prob_combo/D"); 
 
-  _rootMscTree->Branch("dudw"       	 ,&_root_dudw           ,"dudw/D");
-  _rootMscTree->Branch("dvdw"            ,&_root_dvdw           ,"dvdw/D"); 
-
   _rootMscTree->Branch("u_in"            ,&_root_u_in           ,"u_in/D");
   _rootMscTree->Branch("v_in"            ,&_root_v_in           ,"v_in/D");
   _rootMscTree->Branch("u_out"           ,&_root_u_out          ,"u_out/D");
@@ -548,8 +555,8 @@ void X0ImageProducer::bookHistos() {
   _rootMscTree->Branch("theta2_var"      ,&_root_angle2_var     ,"theta2_var/D");
   _rootMscTree->Branch("momentum"        ,&_root_momentum       ,"momentum/D");
 
-  _rootMscTree->Branch("vertex_mean_chi2",&_root_vertex_mean_chi2,"vertex_mean_chi2/D");
-  _rootMscTree->Branch("vertex_mean_prob",&_root_vertex_mean_prob,"vertex_mean_prob/D");
+  _rootMscTree->Branch("chi2",&_root_chi2,"chi2/D");
+  _rootMscTree->Branch("prob",&_root_prob,"prob/D");
 
   //
   // Vertexing Tree

@@ -380,6 +380,8 @@
      <parameter name="AlignmentDBFileName" type="string" value="localDB/alignmentDB.root"/>
      <!--Plane number of DUT along the beam line-->
      <parameter name="DUTPlane" type="int" value="3"/>
+     <!--Maximal Chi2 value for vertex fit of matched up and downstream tracks-->
+     <parameter name="MaxVertexChi2" type="double" value="5.0"/>
      <!--Output root file name-->
      <parameter name="RootFileName" type="string" value="X0.root"/>
    </processor>

@@ -70,6 +70,7 @@ class TBVertex {
   // Get/Set chi²-value
   void SetChi2(double achi2 ) { chi2 = achi2; }; 
   double GetChi2() { return chi2; };
+  double GetChi2Ndof() { return chi2/double(ndf); };
 
   // Get/Set filter residual
   void SetRes(const CLHEP::HepMatrix& aRes ) { Res = aRes; }; 
@@ -81,6 +82,9 @@ class TBVertex {
 
   // add state
   void AddTrackState(TBTrackState& state) { States.push_back(state); };
+
+  // remove last state
+  void RemoveLastTrackState() { States.pop_back(); };
 
   // get States vector
   std::vector<TBTrackState>& GetStates() { return States; };
