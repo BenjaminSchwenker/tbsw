@@ -15,13 +15,9 @@ You need version of Cmake greater 3. You can find more information about Cmake a
 In case you are working with Ubuntu, the following recipe may work for you as well: 
 
 ```
-$ sudo apt-get install software-properties-common
-$ sudo add-apt-repository ppa:george-edison55/cmake-3.x
-$ sudo apt-get update
-$ sudo apt-get install cmake
+$ sudo apt install cmake
 ```
 
-taken from http://askubuntu.com/questions/610291/how-to-install-cmake-3-2-on-ubuntu-14-04
 
 # CLHEP 
 
@@ -48,6 +44,20 @@ $ cmake --build . --target install
 
 The folder <clhep-builddir> may be deleted afterwards. In the end, the folder <clhep-installdir> should contain bin/ include/ and lib/ subfolders. 
 
+# Python 
+
+You should use your default system version of Python. Check that library python-dev is installed on your system to work with PyRoot. You can install by typing: 
+
+```
+sudo apt-get install python-dev
+```
+
+A few more python modules are needed to run the example scripts: 
+
+```
+sudo apt-get install python-numpy
+sudo apt-get install python-scipy
+```
 
 # Root 
 
@@ -62,7 +72,7 @@ The release specific tag can be obtained using for example:
 
 ```
 $ cd root
-$ git checkout -b v6-08-06 v6-08-06  
+$ git checkout -b v6-10-08 v6-10-08  
 $ cd ..
 ```
 
@@ -85,10 +95,6 @@ $ cd <absolute-path-to-root-installdir>
 $ . bin/thisroot.sh
 $ root 
 ```
-
-# Python 
-
-You should use your default system version of Python. This was also used for installing Root and is needed for working with PyRoot.
 
 # TBSW   
  
