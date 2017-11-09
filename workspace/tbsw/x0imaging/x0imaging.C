@@ -451,7 +451,7 @@ using namespace std ;
 	// vertex parameters
 	double vertex_chi2,vertex_w_mean,vertex_w_rms;
 	double vertex_multiplicity;
-	double vtx_trk_res_u_mean,vtx_trk_res_v_mean;
+	double vtx_trk_res_u_mean,vtx_trk_res_v_mean,vtx_trk_res_u_rms,vtx_trk_res_v_rms;
 
 
 	// Variables used to calculate the fit range of the histograms
@@ -477,6 +477,8 @@ using namespace std ;
 	vertex_multiplicity=histogram_vertex_multiplicity->GetMean();
 	vtx_trk_res_u_mean=histogram_resu_vtx_trk->GetMean();
 	vtx_trk_res_v_mean=histogram_resv_vtx_trk->GetMean();
+	vtx_trk_res_u_rms=histogram_resu_vtx_trk->GetRMS();
+	vtx_trk_res_v_rms=histogram_resv_vtx_trk->GetRMS();
 
 	if(NumberOfTracks>400)
 	{
@@ -694,6 +696,12 @@ using namespace std ;
 	// Get the mean u residual (vertex  vs track) histogram
 	TH2* v_res_mean_vtx_trk_map=(TH2*)file->Get("mapping/result/v_res_mean_vtx_trk_image");
 
+	// Get the u residual rms (vertex  vs track) histogram
+	TH2* u_res_rms_vtx_trk_map=(TH2*)file->Get("mapping/result/u_res_rms_vtx_trk_image");
+
+	// Get the u residual rms (vertex  vs track) histogram
+	TH2* v_res_rms_vtx_trk_map=(TH2*)file->Get("mapping/result/v_res_rms_vtx_trk_image");
+
 	// Fill both maps containing the theta means
 	meanmap1->SetBinContent(col+1,row+1,uncorrected_mean1);
 	meanmap2->SetBinContent(col+1,row+1,uncorrected_mean2);
@@ -718,9 +726,11 @@ using namespace std ;
 	vertex_w_rms_map->SetBinContent(col+1,row+1,vertex_w_rms);
 	vertex_chi2_map->SetBinContent(col+1,row+1,vertex_chi2);
 	vertex_multiplicity_map->SetBinContent(col+1,row+1,vertex_multiplicity);
-	// Fill both maps containing the residual means
+	// Fill both maps containing the residual means and rms
 	u_res_mean_vtx_trk_map->SetBinContent(col+1,row+1,vtx_trk_res_u_mean);
 	v_res_mean_vtx_trk_map->SetBinContent(col+1,row+1,vtx_trk_res_v_mean);
+	u_res_rms_vtx_trk_map->SetBinContent(col+1,row+1,vtx_trk_res_u_rms);
+	v_res_rms_vtx_trk_map->SetBinContent(col+1,row+1,vtx_trk_res_v_rms);
 
 	double X0;
 	double X0err;
@@ -845,6 +855,8 @@ using namespace std ;
 		vertex_multiplicity_map->Write();
 		u_res_mean_vtx_trk_map->Write();
 		v_res_mean_vtx_trk_map->Write();
+		u_res_rms_vtx_trk_map->Write();
+		v_res_rms_vtx_trk_map->Write();
 
 	}
 
@@ -1343,7 +1355,7 @@ int x0imaging()
     vertex_chi2_image->GetZaxis()->SetTitleSize(0.02);
     vertex_chi2_image->GetZaxis()->SetLabelSize(0.02);
 
-	// Residual of Vertex position u and weighted means intersection from down and upstream track
+	// Residual mean of Vertex position u and weighted means intersection from down and upstream track
 	TH2F * u_res_mean_vtx_trk_image = new TH2F("u_res_mean_vtx_trk_image","u_res_mean_vtx_trk_image",numcol,umin,umax,numrow,vmin,vmax);
     u_res_mean_vtx_trk_image->SetStats(kFALSE);
     u_res_mean_vtx_trk_image->GetXaxis()->SetTitle("u [mm]");
@@ -1353,7 +1365,7 @@ int x0imaging()
     u_res_mean_vtx_trk_image->GetZaxis()->SetTitleSize(0.02);
     u_res_mean_vtx_trk_image->GetZaxis()->SetLabelSize(0.02);
 
-	// Residual of Vertex position v and weighted means intersection from down and upstream track
+	// Residual mean of Vertex position v and weighted means intersection from down and upstream track
 	TH2F * v_res_mean_vtx_trk_image = new TH2F("v_res_mean_vtx_trk_image","v_res_mean_vtx_trk_image",numcol,umin,umax,numrow,vmin,vmax);
     v_res_mean_vtx_trk_image->SetStats(kFALSE);
     v_res_mean_vtx_trk_image->GetXaxis()->SetTitle("u [mm]");
@@ -1362,6 +1374,26 @@ int x0imaging()
     v_res_mean_vtx_trk_image->GetZaxis()->SetTitleOffset(1.4);
     v_res_mean_vtx_trk_image->GetZaxis()->SetTitleSize(0.02);
     v_res_mean_vtx_trk_image->GetZaxis()->SetLabelSize(0.02);
+
+	// Residual rms of Vertex position u and weighted means intersection from down and upstream track
+	TH2F * u_res_rms_vtx_trk_image = new TH2F("u_res_rms_vtx_trk_image","u_res_rms_vtx_trk_image",numcol,umin,umax,numrow,vmin,vmax);
+    u_res_rms_vtx_trk_image->SetStats(kFALSE);
+    u_res_rms_vtx_trk_image->GetXaxis()->SetTitle("u [mm]");
+    u_res_rms_vtx_trk_image->GetYaxis()->SetTitle("v [mm]");
+    u_res_rms_vtx_trk_image->GetZaxis()->SetTitle("u residual rms vtx-trk [mm]");
+    u_res_rms_vtx_trk_image->GetZaxis()->SetTitleOffset(1.4);
+    u_res_rms_vtx_trk_image->GetZaxis()->SetTitleSize(0.02);
+    u_res_rms_vtx_trk_image->GetZaxis()->SetLabelSize(0.02);
+
+	// Residual rms of Vertex position v and weighted means intersection from down and upstream track
+	TH2F * v_res_rms_vtx_trk_image = new TH2F("v_res_rms_vtx_trk_image","v_res_rms_vtx_trk_image",numcol,umin,umax,numrow,vmin,vmax);
+    v_res_rms_vtx_trk_image->SetStats(kFALSE);
+    v_res_rms_vtx_trk_image->GetXaxis()->SetTitle("u [mm]");
+    v_res_rms_vtx_trk_image->GetYaxis()->SetTitle("v [mm]");
+    v_res_rms_vtx_trk_image->GetZaxis()->SetTitle("v residual rms vtx-trk [mm]");
+    v_res_rms_vtx_trk_image->GetZaxis()->SetTitleOffset(1.4);
+    v_res_rms_vtx_trk_image->GetZaxis()->SetTitleSize(0.02);
+    v_res_rms_vtx_trk_image->GetZaxis()->SetLabelSize(0.02);
 
 
 	for(int col=0; col<numcol; col++)

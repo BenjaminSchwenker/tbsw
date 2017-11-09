@@ -66,6 +66,8 @@ int MergeImages()
 
 	TH2F * res_u_vtx_trk_image_aid;					// Vertex trk u mean residual images
 	TH2F * res_v_vtx_trk_image_aid;					// Vertex trk v mean residual images
+	TH2F * res_u_rms_vtx_trk_image_aid;					// Vertex trk u residual rms images
+	TH2F * res_v_rms_vtx_trk_image_aid;					// Vertex trk v residual rms images
 
 	TH1F * fit1prob_histo_aid;	    	            // fit prob histo of first scattering angle
 	TH1F * fit2prob_histo_aid;			            // fit prob histo of second scattering angle
@@ -432,6 +434,25 @@ int MergeImages()
     res_v_vtx_trk_image->GetZaxis()->SetTitleSize(0.02);
     res_v_vtx_trk_image->GetZaxis()->SetLabelSize(0.02);
 
+	// vertex track u residual rms map
+	TH2F * res_u_rms_vtx_trk_image = new TH2F("res_u_rms_vtx_trk_image","res_u_rms_vtx_trk_image",numcol,umin,umax,numrow,vmin,vmax);
+    res_u_rms_vtx_trk_image->SetStats(kFALSE);
+    res_u_rms_vtx_trk_image->GetXaxis()->SetTitle("u [mm]");
+    res_u_rms_vtx_trk_image->GetYaxis()->SetTitle("v [mm]");
+    res_u_rms_vtx_trk_image->GetZaxis()->SetTitle("vtx trk u residual rms [mm]");
+    res_u_rms_vtx_trk_image->GetZaxis()->SetTitleOffset(1.4);
+    res_u_rms_vtx_trk_image->GetZaxis()->SetTitleSize(0.02);
+    res_u_rms_vtx_trk_image->GetZaxis()->SetLabelSize(0.02);
+
+	// vertex track v residual rms map
+	TH2F * res_v_rms_vtx_trk_image = new TH2F("res_v_rms_vtx_trk_image","res_v_rms_vtx_trk_image",numcol,umin,umax,numrow,vmin,vmax);
+    res_v_rms_vtx_trk_image->SetStats(kFALSE);
+    res_v_rms_vtx_trk_image->GetXaxis()->SetTitle("u [mm]");
+    res_v_rms_vtx_trk_image->GetYaxis()->SetTitle("v [mm]");
+    res_v_rms_vtx_trk_image->GetZaxis()->SetTitle("vtx trk v residual rms [mm]");
+    res_v_rms_vtx_trk_image->GetZaxis()->SetTitleOffset(1.4);
+    res_v_rms_vtx_trk_image->GetZaxis()->SetTitleSize(0.02);
+    res_v_rms_vtx_trk_image->GetZaxis()->SetLabelSize(0.02);
 
 	for(int col=0; col<numcol; col++)
 	{
@@ -469,6 +490,8 @@ int MergeImages()
 
 			res_u_vtx_trk_image_aid=(TH2F*)X0file->Get("mapping/result/u_res_mean_vtx_trk_image");
 			res_v_vtx_trk_image_aid=(TH2F*)X0file->Get("mapping/result/v_res_mean_vtx_trk_image");
+			res_u_rms_vtx_trk_image_aid=(TH2F*)X0file->Get("mapping/result/u_res_rms_vtx_trk_image");
+			res_v_rms_vtx_trk_image_aid=(TH2F*)X0file->Get("mapping/result/v_res_rms_vtx_trk_image");
 
 			fit1prob_histo_aid=(TH1F*)X0file->Get("mapping/result/fit1prob_histo");
 			fit2prob_histo_aid=(TH1F*)X0file->Get("mapping/result/fit2prob_histo");
@@ -504,6 +527,8 @@ int MergeImages()
 			vertex_multiplicity_image->SetBinContent(col+1,row+1,vertex_multiplicity_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
     		res_u_vtx_trk_image->SetBinContent(col+1,row+1,res_u_vtx_trk_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 			res_v_vtx_trk_image->SetBinContent(col+1,row+1,res_v_vtx_trk_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+    		res_u_rms_vtx_trk_image->SetBinContent(col+1,row+1,res_u_rms_vtx_trk_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			res_v_rms_vtx_trk_image->SetBinContent(col+1,row+1,res_v_rms_vtx_trk_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 
 			delete X0file;
 			X0file = ((TFile *)0);
@@ -548,7 +573,9 @@ int MergeImages()
 	vertex_multiplicity_image->Write();
 
 	res_u_vtx_trk_image->Write();
-	res_u_vtx_trk_image->Write();
+	res_v_vtx_trk_image->Write();
+	res_u_rms_vtx_trk_image->Write();
+	res_v_rms_vtx_trk_image->Write();
 
 	Resultsfile->Close();
 
