@@ -41,7 +41,7 @@ rawfile_alu = os.getcwd()+'/mc-alu.slcio'
 localcaltag = os.path.splitext(os.path.basename(rawfile_air))[0] + '-test'
 
 # Number of events to simulate 
-nevents_air = 700000
+nevents_air = 100000
 nevents_alu = 5000000
 
 #Parameters for simulation of misalignment
