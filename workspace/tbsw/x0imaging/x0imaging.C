@@ -186,7 +186,12 @@ using namespace std ;
 	Double_t v_in;
 	Double_t u_out;
 	Double_t v_out;
+
 	Int_t vertex_multiplicity=1;
+	Double_t vertex_w;
+	Double_t vertex_chi2;
+	Double_t vertex_u;
+	Double_t vertex_v;
 
 	// Array of mean theta1 and theta2 values in each map pixel
 	double mean1[numcol][numrow];
@@ -197,6 +202,7 @@ using namespace std ;
 
 	TTree * msc_tree = (TTree*) file1->Get("MSCTree");
 
+	// Set branch adresses for parameters connected to the scattering angles
 	msc_tree->SetBranchAddress("theta1",&theta1);
 	msc_tree->SetBranchAddress("theta2",&theta2);
 	msc_tree->SetBranchAddress("u",&u);
@@ -206,7 +212,12 @@ using namespace std ;
 	msc_tree->SetBranchAddress("u_out",&u_out);
 	msc_tree->SetBranchAddress("v_out",&v_out);
 
+	// Set branch adresses for parameters connected to the vertex fit
+	msc_tree->SetBranchAddress("vertex_w",&vertex_w);
+	msc_tree->SetBranchAddress("vertex_chi2",&vertex_chi2);
 	int test=msc_tree->SetBranchAddress("vertex_multiplicity",&vertex_multiplicity);
+	msc_tree->SetBranchAddress("vertex_u",&vertex_u);
+	msc_tree->SetBranchAddress("vertex_v",&vertex_v);
 
 	file2->cd("");
 	file2->cd("mapping/raw");
@@ -218,6 +229,13 @@ using namespace std ;
 	TH1F *histo_vresidual[numcol][numrow];
 	TH1F *histo_thetasum[numcol][numrow];
 	TH2F *histo_2d[numcol][numrow];
+
+	// arrays of vertex parameter histograms
+	TH1F *histo_vertex_w[numcol][numrow];
+	TH1F *histo_vertex_multiplicity[numcol][numrow];
+	TH1F *histo_vertex_chi2[numcol][numrow];
+	TH1F *histo_vtx_trk_u_res[numcol][numrow];
+	TH1F *histo_vtx_trk_v_res[numcol][numrow];
 
 	for (int i=0; i<numcol; i++)
 	{
@@ -243,6 +261,13 @@ using namespace std ;
 		 	histo_thetasum[i][j] = new TH1F("","",numberofbins,-plotrange,plotrange);
 			histo_2d[i][j] = new TH2F("","",numberofbins,-plotrange,plotrange,numberofbins,-plotrange,plotrange);
 
+			// Set range and title of vertex histograms
+		 	histo_vertex_w[i][j] = new TH1F("","",900,-15.0,15.0);
+		 	histo_vertex_chi2[i][j] = new TH1F("","",200,0.0,11.0);
+		 	histo_vertex_multiplicity[i][j] = new TH1F("","",10,0.0,10);
+		 	histo_vtx_trk_u_res[i][j] = new TH1F("","",1000,-5.0,5.0);
+		 	histo_vtx_trk_v_res[i][j] = new TH1F("","",1000,-5.0,5.0);
+
 			// Save mean of both distributions in arrays
 			mean1[i][j]=histogram1->GetMean();
 			mean2[i][j]=histogram2->GetMean();
@@ -256,7 +281,7 @@ using namespace std ;
 	file2->cd("");
 	file2->cd("mapping/raw");
 
-	// Loop over all events
+	// Loop over all events, find the corresponding image pixel from the u,v values and fill the histograms
 	for(int i=0; i< msc_tree->GetEntries(); i++)
 	{
 
@@ -271,7 +296,7 @@ using namespace std ;
 		double u_length=umax-umin;
 		double v_length=vmax-vmin;
 
-		// skip this entry, when u or v is outside of the mapping area
+		// skip this entry, when u or v is outside of the image area
 	    if (u_pos<0) continue;
 	    if (u_pos>=u_length) continue;
 	    if (v_pos<0) continue;
@@ -291,14 +316,19 @@ using namespace std ;
 		// Fill histograms
 		histo_theta1[col][row]->Fill(theta1);
 		histo_theta2[col][row]->Fill(theta2);
+		histo_thetasum[col][row]->Fill(theta1);
+		histo_thetasum[col][row]->Fill(theta2);
+		histo_2d[col][row]->Fill(theta1,theta2);
 
 		histo_uresidual[col][row]->Fill(u_in-u_out);
 		histo_vresidual[col][row]->Fill(v_in-v_out);
 
-		histo_thetasum[col][row]->Fill(theta1);
-		histo_thetasum[col][row]->Fill(theta2);
+		histo_vertex_w[col][row]->Fill(vertex_w);
+		histo_vertex_chi2[col][row]->Fill(vertex_chi2);
+		histo_vertex_multiplicity[col][row]->Fill(vertex_multiplicity);
 
-		histo_2d[col][row]->Fill(theta1,theta2);
+		histo_vtx_trk_u_res[col][row]->Fill(vertex_u-u);
+		histo_vtx_trk_v_res[col][row]->Fill(vertex_v-v);
 	}
 
 	cout<<"Write histograms "<<endl;
@@ -323,6 +353,18 @@ using namespace std ;
 			histo_thetasum[i][j]->Delete();
 			histo_2d[i][j]->Write("2Dhisto_"+histoname);
 			histo_2d[i][j]->Delete();
+
+			histo_vertex_w[i][j]->Write("vertex_w_"+histoname);
+			histo_vertex_w[i][j]->Delete();
+			histo_vertex_chi2[i][j]->Write("vertex_chi2_"+histoname);
+			histo_vertex_chi2[i][j]->Delete();
+			histo_vertex_multiplicity[i][j]->Write("vertex_multiplicity_"+histoname);
+			histo_vertex_multiplicity[i][j]->Delete();
+
+			histo_vtx_trk_u_res[i][j]->Write("res_u_vtx_trk_"+histoname);
+			histo_vtx_trk_u_res[i][j]->Delete();
+			histo_vtx_trk_v_res[i][j]->Write("res_v_vtx_trk_"+histoname);
+			histo_vtx_trk_v_res[i][j]->Delete();
 
 		}
 		
@@ -350,6 +392,14 @@ using namespace std ;
 	TH1* histogramv=(TH1*)file->Get("mapping/raw/vresidual_"+histoname);
 	TH1* histogramsum=(TH1*)file->Get("mapping/raw/sumhisto_"+histoname);
 
+	// Get vertex histos
+	TH1* histogram_vertex_w=(TH1*)file->Get("mapping/raw/vertex_w_"+histoname);
+	TH1* histogram_vertex_chi2=(TH1*)file->Get("mapping/raw/vertex_chi2_"+histoname);
+	TH1* histogram_vertex_multiplicity=(TH1*)file->Get("mapping/raw/vertex_multiplicity_"+histoname);
+
+	TH1* histogram_resu_vtx_trk=(TH1*)file->Get("mapping/raw/res_u_vtx_trk_"+histoname);
+	TH1* histogram_resv_vtx_trk=(TH1*)file->Get("mapping/raw/res_v_vtx_trk_"+histoname);
+
 
 	double uncorrected_mean1=histogram1->GetMean();
 	double uncorrected_mean2=histogram1->GetMean();
@@ -376,7 +426,6 @@ using namespace std ;
 		
 	}
 
-
 	file->cd("");
 	file->cd("mapping/fit");
 
@@ -399,6 +448,11 @@ using namespace std ;
 	double XX01,XX02,XX0sum;
 	double XX0err1,XX0err2,XX0errsum;
 
+	// vertex parameters
+	double vertex_chi2,vertex_w_mean,vertex_w_rms;
+	double vertex_multiplicity;
+	double vtx_trk_res_u_mean,vtx_trk_res_v_mean;
+
 
 	// Variables used to calculate the fit range of the histograms
 	int bin1;
@@ -412,8 +466,17 @@ using namespace std ;
 
 	int NumberOfTracks=fithistogram1->GetEntries();
 
+	// Get residual values for this image bin from histogram
 	uresidual_mean=histogramu->GetMean();
 	vresidual_mean=histogramv->GetMean();
+
+	// Get vertex values for this image bin from histogram
+	vertex_w_mean=histogram_vertex_w->GetMean();
+	vertex_w_rms=histogram_vertex_w->GetRMS();
+	vertex_chi2=histogram_vertex_chi2->GetMean();
+	vertex_multiplicity=histogram_vertex_multiplicity->GetMean();
+	vtx_trk_res_u_mean=histogram_resu_vtx_trk->GetMean();
+	vtx_trk_res_v_mean=histogram_resv_vtx_trk->GetMean();
 
 	if(NumberOfTracks>400)
 	{
@@ -613,6 +676,24 @@ using namespace std ;
     // Get the momentum 2D histogram
 	TH2* mommap=(TH2*)file->Get("mapping/result/BE_image");
 
+    // Get the vertex w mean 2D histogram
+	TH2* vertex_w_mean_map=(TH2*)file->Get("mapping/result/vertex_w_image");
+
+    // Get the vertex w rms 2D histogram
+	TH2* vertex_w_rms_map=(TH2*)file->Get("mapping/result/vertex_w_rms_image");
+
+    // Get the vertex chi2 2D histogram
+	TH2* vertex_chi2_map=(TH2*)file->Get("mapping/result/vertex_chi2_image");
+
+    // Get the vertex multiplicity 2D histogram
+	TH2* vertex_multiplicity_map=(TH2*)file->Get("mapping/result/vertex_multiplicity_image");
+
+	// Get the mean u residual (vertex  vs track) histogram
+	TH2* u_res_mean_vtx_trk_map=(TH2*)file->Get("mapping/result/u_res_mean_vtx_trk_image");
+
+	// Get the mean u residual (vertex  vs track) histogram
+	TH2* v_res_mean_vtx_trk_map=(TH2*)file->Get("mapping/result/v_res_mean_vtx_trk_image");
+
 	// Fill both maps containing the theta means
 	meanmap1->SetBinContent(col+1,row+1,uncorrected_mean1);
 	meanmap2->SetBinContent(col+1,row+1,uncorrected_mean2);
@@ -629,8 +710,17 @@ using namespace std ;
 	chi2ndof2map->SetBinContent(col+1,row+1,chi2ndof2);
 	chi2ndofsummap->SetBinContent(col+1,row+1,chi2ndofsum);
 
-        // Fill the momentum image
+    // Fill the momentum image
 	mommap->SetBinContent(col+1,row+1,parameters[0]);
+
+    // Fill the vertex images
+	vertex_w_mean_map->SetBinContent(col+1,row+1,vertex_w_mean);
+	vertex_w_rms_map->SetBinContent(col+1,row+1,vertex_w_rms);
+	vertex_chi2_map->SetBinContent(col+1,row+1,vertex_chi2);
+	vertex_multiplicity_map->SetBinContent(col+1,row+1,vertex_multiplicity);
+	// Fill both maps containing the residual means
+	u_res_mean_vtx_trk_map->SetBinContent(col+1,row+1,vtx_trk_res_u_mean);
+	v_res_mean_vtx_trk_map->SetBinContent(col+1,row+1,vtx_trk_res_v_mean);
 
 	double X0;
 	double X0err;
@@ -748,6 +838,14 @@ using namespace std ;
 
 		nummap->Write();
 		mommap->Write();
+
+		vertex_w_mean_map->Write();
+		vertex_w_rms_map->Write();
+		vertex_chi2_map->Write();
+		vertex_multiplicity_map->Write();
+		u_res_mean_vtx_trk_map->Write();
+		v_res_mean_vtx_trk_map->Write();
+
 	}
 
 	//delete all histograms from memory
@@ -776,6 +874,18 @@ using namespace std ;
 
 	histogramsum->SetDirectory(gROOT);
 	delete histogramsum;
+
+    histogram_vertex_w->SetDirectory(gROOT);
+    delete histogram_vertex_w;
+
+    histogram_vertex_chi2->SetDirectory(gROOT);
+    delete histogram_vertex_chi2;
+
+    histogram_resu_vtx_trk->SetDirectory(gROOT);
+    delete histogram_resu_vtx_trk;
+
+    histogram_resv_vtx_trk->SetDirectory(gROOT);
+    delete histogram_resv_vtx_trk;
 
   }
 
@@ -1117,7 +1227,7 @@ int x0imaging()
     fitsumprob_image->GetZaxis()->SetLabelSize(0.02);
 
 
-	// Fit mean value of first distribution
+	// Fit mean value of first scattering angle distribution
 	TH2F * theta1mean_image = new TH2F("theta1mean_image","theta1mean_image",numcol,umin,umax,numrow,vmin,vmax);
 	theta1mean_image->SetStats(kFALSE);
     theta1mean_image->GetXaxis()->SetTitle("u [mm]");
@@ -1127,7 +1237,7 @@ int x0imaging()
     theta1mean_image->GetZaxis()->SetLabelSize(0.02);
 
 
-    // Fit mean value of second distribution
+    // Fit mean value of second scattering angle distribution
 	TH2F * theta2mean_image = new TH2F("theta2mean_image","theta2mean_image",numcol,umin,umax,numrow,vmin,vmax);
 	theta2mean_image->SetStats(kFALSE);
     theta2mean_image->GetXaxis()->SetTitle("u [mm]");
@@ -1136,7 +1246,7 @@ int x0imaging()
     theta2mean_image->GetZaxis()->SetTitleSize(0.02);
     theta2mean_image->GetZaxis()->SetLabelSize(0.02);
 
-	// Fit mean value of first distribution
+	// Fit mean value of centered first scattering angle distribution
 	TH2F * correctedtheta1mean_image = new TH2F("correctedtheta1mean_image","correctedtheta1mean_image",numcol,umin,umax,numrow,vmin,vmax);
 	correctedtheta1mean_image->SetStats(kFALSE);
     correctedtheta1mean_image->GetXaxis()->SetTitle("u [mm]");
@@ -1145,7 +1255,7 @@ int x0imaging()
     correctedtheta1mean_image->GetZaxis()->SetTitleSize(0.02);
     correctedtheta1mean_image->GetZaxis()->SetLabelSize(0.02);
 
-	// Fit mean value of second distribution
+	// Fit mean value of centered second scattering angle distribution
 	TH2F * correctedtheta2mean_image = new TH2F("correctedtheta2mean_image","correctedtheta2mean_image",numcol,umin,umax,numrow,vmin,vmax);
 	correctedtheta2mean_image->SetStats(kFALSE);
     correctedtheta2mean_image->GetXaxis()->SetTitle("u [mm]");
@@ -1155,7 +1265,7 @@ int x0imaging()
     correctedtheta2mean_image->GetZaxis()->SetLabelSize(0.02);
 
 
-	// Fit mean value of u residuals
+	// u residuals of downstream and upstream estimation
 	TH2F * uresidualmean_image = new TH2F("uresidualmean_image","uresidualmean_image",numcol,umin,umax,numrow,vmin,vmax);
 	uresidualmean_image->SetStats(kFALSE);
     uresidualmean_image->GetXaxis()->SetTitle("u [mm]");
@@ -1164,7 +1274,7 @@ int x0imaging()
     uresidualmean_image->GetZaxis()->SetTitleSize(0.02);
     uresidualmean_image->GetZaxis()->SetLabelSize(0.02);
 
-	// Fit mean value of v residuals
+	// v residuals of downstream and upstream estimation
 	TH2F * vresidualmean_image = new TH2F("vresidualmean_image","vresidualmean_image",numcol,umin,umax,numrow,vmin,vmax);
 	vresidualmean_image->SetStats(kFALSE);
     vresidualmean_image->GetXaxis()->SetTitle("u [mm]");
@@ -1173,7 +1283,7 @@ int x0imaging()
     vresidualmean_image->GetZaxis()->SetTitleSize(0.02);
     vresidualmean_image->GetZaxis()->SetLabelSize(0.02);
 	
-	// #Tracks map
+	// Beam spot image from track intersections
 	TH2F * beamspot = new TH2F("beamspot","beamspot",numcol,umin,umax,numrow,vmin,vmax);
     beamspot->SetStats(kFALSE);
     beamspot->GetXaxis()->SetTitle("u [mm]");
@@ -1183,7 +1293,7 @@ int x0imaging()
     beamspot->GetZaxis()->SetTitleSize(0.02);
     beamspot->GetZaxis()->SetLabelSize(0.02);
 
-	// Momentum map
+	// Momentum image
 	TH2F * BE_image = new TH2F("BE_image","BE_image",numcol,umin,umax,numrow,vmin,vmax);
     BE_image->SetStats(kFALSE);
     BE_image->GetXaxis()->SetTitle("u [mm]");
@@ -1192,6 +1302,67 @@ int x0imaging()
     BE_image->GetZaxis()->SetTitleOffset(1.4);
     BE_image->GetZaxis()->SetTitleSize(0.02);
     BE_image->GetZaxis()->SetLabelSize(0.02);
+
+	// Mean Vertex w position image
+	TH2F * vertex_w_image = new TH2F("vertex_w_image","vertex_w_image",numcol,umin,umax,numrow,vmin,vmax);
+    vertex_w_image->SetStats(kFALSE);
+    vertex_w_image->GetXaxis()->SetTitle("u [mm]");
+    vertex_w_image->GetYaxis()->SetTitle("v [mm]");
+    vertex_w_image->GetZaxis()->SetTitle("vertex w [mm]");
+    vertex_w_image->GetZaxis()->SetTitleOffset(1.4);
+    vertex_w_image->GetZaxis()->SetTitleSize(0.02);
+    vertex_w_image->GetZaxis()->SetLabelSize(0.02);
+
+	// Vertex w position RMS image
+	TH2F * vertex_w_rms_image = new TH2F("vertex_w_rms_image","vertex_w_rms_image",numcol,umin,umax,numrow,vmin,vmax);
+    vertex_w_rms_image->SetStats(kFALSE);
+    vertex_w_rms_image->GetXaxis()->SetTitle("u [mm]");
+    vertex_w_rms_image->GetYaxis()->SetTitle("v [mm]");
+    vertex_w_rms_image->GetZaxis()->SetTitle("vertex w RMS [mm]");
+    vertex_w_rms_image->GetZaxis()->SetTitleOffset(1.4);
+    vertex_w_rms_image->GetZaxis()->SetTitleSize(0.02);
+    vertex_w_rms_image->GetZaxis()->SetLabelSize(0.02);
+
+	// Mean Vertex multiplicity image
+	TH2F * vertex_multiplicity_image = new TH2F("vertex_multiplicity_image","vertex_multiplicity_image",numcol,umin,umax,numrow,vmin,vmax);
+    vertex_multiplicity_image->SetStats(kFALSE);
+    vertex_multiplicity_image->GetXaxis()->SetTitle("u [mm]");
+    vertex_multiplicity_image->GetYaxis()->SetTitle("v [mm]");
+    vertex_multiplicity_image->GetZaxis()->SetTitle("mean vertex multiplicity");
+    vertex_multiplicity_image->GetZaxis()->SetTitleOffset(1.4);
+    vertex_multiplicity_image->GetZaxis()->SetTitleSize(0.02);
+    vertex_multiplicity_image->GetZaxis()->SetLabelSize(0.02);
+
+	// Mean Vertex chi2 image
+	TH2F * vertex_chi2_image = new TH2F("vertex_chi2_image","vertex_chi2_image",numcol,umin,umax,numrow,vmin,vmax);
+    vertex_chi2_image->SetStats(kFALSE);
+    vertex_chi2_image->GetXaxis()->SetTitle("u [mm]");
+    vertex_chi2_image->GetYaxis()->SetTitle("v [mm]");
+    vertex_chi2_image->GetZaxis()->SetTitle("mean vertex chi2");
+    vertex_chi2_image->GetZaxis()->SetTitleOffset(1.4);
+    vertex_chi2_image->GetZaxis()->SetTitleSize(0.02);
+    vertex_chi2_image->GetZaxis()->SetLabelSize(0.02);
+
+	// Residual of Vertex position u and weighted means intersection from down and upstream track
+	TH2F * u_res_mean_vtx_trk_image = new TH2F("u_res_mean_vtx_trk_image","u_res_mean_vtx_trk_image",numcol,umin,umax,numrow,vmin,vmax);
+    u_res_mean_vtx_trk_image->SetStats(kFALSE);
+    u_res_mean_vtx_trk_image->GetXaxis()->SetTitle("u [mm]");
+    u_res_mean_vtx_trk_image->GetYaxis()->SetTitle("v [mm]");
+    u_res_mean_vtx_trk_image->GetZaxis()->SetTitle("mean u residual vtx-trk [mm]");
+    u_res_mean_vtx_trk_image->GetZaxis()->SetTitleOffset(1.4);
+    u_res_mean_vtx_trk_image->GetZaxis()->SetTitleSize(0.02);
+    u_res_mean_vtx_trk_image->GetZaxis()->SetLabelSize(0.02);
+
+	// Residual of Vertex position v and weighted means intersection from down and upstream track
+	TH2F * v_res_mean_vtx_trk_image = new TH2F("v_res_mean_vtx_trk_image","v_res_mean_vtx_trk_image",numcol,umin,umax,numrow,vmin,vmax);
+    v_res_mean_vtx_trk_image->SetStats(kFALSE);
+    v_res_mean_vtx_trk_image->GetXaxis()->SetTitle("u [mm]");
+    v_res_mean_vtx_trk_image->GetYaxis()->SetTitle("v [mm]");
+    v_res_mean_vtx_trk_image->GetZaxis()->SetTitle("mean v residual vtx-trk [mm]");
+    v_res_mean_vtx_trk_image->GetZaxis()->SetTitleOffset(1.4);
+    v_res_mean_vtx_trk_image->GetZaxis()->SetTitleSize(0.02);
+    v_res_mean_vtx_trk_image->GetZaxis()->SetLabelSize(0.02);
+
 
 	for(int col=0; col<numcol; col++)
 	{

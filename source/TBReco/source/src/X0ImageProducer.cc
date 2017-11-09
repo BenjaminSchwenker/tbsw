@@ -271,28 +271,28 @@ void X0ImageProducer::processEvent(LCEvent * evt)
         TBTrack& downtrack = downTrackStore[idown];
     
         //Initialize Vertex and Vertex Fitter
-        TBVertexFitter VertexFitter_aid(_idut, _detector);
-	    TBVertex Vertex_aid;
+        TBVertexFitter VertexFitter(_idut, _detector);
+	    TBVertex Vertex;
 
 	    // Add upstream track state to vertex
-	    Vertex_aid.AddTrackState(uptrack.GetTE(_idut).GetState());
+	    Vertex.AddTrackState(uptrack.GetTE(_idut).GetState());
 
 		// Additionally add any downstream tracks, which have already been sucessfully matched with this upstream track
 		// This ensures that all matched downstream tracks really come from the same vertex
-		for(int n=0;n<up2down[iup].size();n++) Vertex_aid.AddTrackState(downTrackStore[up2down[iup][n]].GetTE(_idut).GetState());
+		for(int n=0;n<up2down[iup].size();n++) Vertex.AddTrackState(downTrackStore[up2down[iup][n]].GetTE(_idut).GetState());
 
 	    // Add current downstream track state to vertex
-	    Vertex_aid.AddTrackState(downtrack.GetTE(_idut).GetState());
+	    Vertex.AddTrackState(downtrack.GetTE(_idut).GetState());
         
         // Perform vertex fit
         // Check whether the combination of all
-	    bool vfiterr = VertexFitter_aid.FitVertex(Vertex_aid);
+	    bool vfiterr = VertexFitter.FitVertex(Vertex);
 		if (vfiterr) continue;
-		double vertex_aid_chi2=Vertex_aid.GetChi2Ndof();
+		double vertex_chi2=Vertex.GetChi2Ndof();
                       
-        if( vertex_aid_chi2<chi2min )
+        if( vertex_chi2<chi2min )
         {
-          chi2min=vertex_aid_chi2;
+          chi2min=vertex_chi2;
           bestup=iup;
           bestdown=idown;
         }
