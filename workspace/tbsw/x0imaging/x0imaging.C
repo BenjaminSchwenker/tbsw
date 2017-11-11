@@ -214,7 +214,7 @@ using namespace std ;
 
 	// Set branch adresses for parameters connected to the vertex fit
 	msc_tree->SetBranchAddress("vertex_w",&vertex_w);
-	msc_tree->SetBranchAddress("vertex_chi2",&vertex_chi2);
+	msc_tree->SetBranchAddress("vertex_chi2ndf",&vertex_chi2);
 	int test=msc_tree->SetBranchAddress("vertex_multiplicity",&vertex_multiplicity);
 	msc_tree->SetBranchAddress("vertex_u",&vertex_u);
 	msc_tree->SetBranchAddress("vertex_v",&vertex_v);

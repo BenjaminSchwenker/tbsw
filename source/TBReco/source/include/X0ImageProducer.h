@@ -171,7 +171,7 @@ protected:
    double _root_vertex_y_var;						// Vertex y position variance in the global coordinate system (mm^2)
    double _root_vertex_z_var;						// Vertex z position variance in the global coordinate system (mm^2)
 
-   double _root_vertex_chi2;						// chi2 value of the vertex fit
+   double _root_vertex_chi2ndf;						// chi2 value per degree of freedom of the vertex fit
    double _root_vertex_prob;						// p value of the vertex fit
    double _root_vertex_u_res;						// u residual of the vertex fit (mm)
    double _root_vertex_v_res;						// v residual of the vertex fit (mm)

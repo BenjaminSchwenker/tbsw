@@ -370,7 +370,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 	_root_vertex_y_var = vertexglobalcov[1][1];
 	_root_vertex_z_var = vertexglobalcov[2][2];
 
-	_root_vertex_chi2 = Vertex.GetChi2();
+	_root_vertex_chi2ndf = Vertex.GetChi2Ndof();
 	_root_vertex_prob = TMath::Prob(Vertex.GetChi2(),Vertex.GetNdf());
 	_root_vertex_u_res = vertexres[2][0];
 	_root_vertex_v_res = vertexres[3][0];
@@ -574,7 +574,7 @@ void X0ImageProducer::bookHistos() {
   _rootMscTree->Branch("vertex_y_var"	 ,&_root_vertex_y_var	,"vertex_y_var/D");
   _rootMscTree->Branch("vertex_z_var"	 ,&_root_vertex_z_var	,"vertex_z_var/D"); 
  
-  _rootMscTree->Branch("vertex_chi2"     ,&_root_vertex_chi2	,"vertex_chi2/D");
+  _rootMscTree->Branch("vertex_chi2ndf"     ,&_root_vertex_chi2ndf	,"vertex_chi2ndf/D");
   _rootMscTree->Branch("vertex_prob"     ,&_root_vertex_prob	,"vertex_prob/D");
   _rootMscTree->Branch("vertex_u_res"	 ,&_root_vertex_u_res	,"vertex_u_res/D");
   _rootMscTree->Branch("vertex_v_res"	 ,&_root_vertex_v_res	,"vertex_v_res/D");  
