@@ -145,7 +145,7 @@ using namespace std ;
 	    if (v_pos>=v_length) continue;
         
 		// Apply cut on vertex multiplicity
-        if (vertex_multiplicity>vertex_multiplicity_max&&vertex_multiplicity<vertex_multiplicity_min) continue;
+        if (vertex_multiplicity>vertex_multiplicity_max||vertex_multiplicity<vertex_multiplicity_min) continue;
 
 		// Determine column and row number from the position within the map area and the number of rows and columns
 		int col=floor(u_pos*numcol/u_length);
@@ -303,7 +303,7 @@ using namespace std ;
 	    if (v_pos>=v_length) continue;
 
 		// Apply cut on vertex multiplicity
-        if (vertex_multiplicity>vertex_multiplicity_max&&vertex_multiplicity<vertex_multiplicity_min) continue;
+        if (vertex_multiplicity>vertex_multiplicity_max||vertex_multiplicity<vertex_multiplicity_min) continue;
 
 		// Determine column and row number from the position within the map area and the number of rows and columns
 		int col=floor(u_pos*numcol/u_length);
