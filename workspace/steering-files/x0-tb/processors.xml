@@ -267,7 +267,7 @@
     <!--Output clusterDB file name-->
     <parameter name="ClusterDBFileName" type="string" value="localDB/clusterDB-M26.root"/>
     <!--Minimum number of cluster ID occurances for clusterDB-->
-    <parameter name="MinClusters" type="int" value="500"/>
+    <parameter name="MinClusters" type="int" value="2000"/>
     <!--Minimum value of variance for u position measurement [mm^2]-->
     <parameter name="MinVarianceU" type="float" value="2e-06"/>
     <!--Minimum value of variance for v position measurement [mm^2]-->
@@ -380,8 +380,12 @@
      <parameter name="AlignmentDBFileName" type="string" value="localDB/alignmentDB.root"/>
      <!--Plane number of DUT along the beam line-->
      <parameter name="DUTPlane" type="int" value="3"/>
-     <!--Maximal Chi2 value for vertex fit of matched up and downstream tracks-->
+     <!--Choose upstream-downstream track matching approach. true: vertexfit, false: distance cut-->
+     <parameter name="VertexFitSwitch" type="bool" value="false"/>
+     <!--Maximal Chi2 value for vertex fit of matched up and downstream tracks, only used when VertexFitSwitch is true-->
      <parameter name="MaxVertexChi2" type="double" value="5.0"/>
+     <!--Maximum distance between up and downstream tracks at dut plane [mm], only used when VertexFitSwitch is false-->
+     <parameter name="MaxDist" type="double" value="0.50"/>
      <!--Output root file name-->
      <parameter name="RootFileName" type="string" value="X0.root"/>
    </processor>

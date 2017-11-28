@@ -112,8 +112,14 @@ protected:
 //! DUT plane number 
    int _idut; 
 
+//! DUT plane number 
+   bool _vertexfitswitch; 
+
 //! Max vertex chi2
-   double _maxVertexChi2; 
+   double _maxVertexChi2;
+
+//! Max distance
+   double _maxDist;  
      
      
 // ROOT_OUTPUT 

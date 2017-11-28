@@ -80,14 +80,22 @@ X0ImageProducer::X0ImageProducer() : Processor("X0ImageProducer")
   registerProcessorParameter ("DUTPlane",
                               "Plane number of DUT along the beam line",
                               _idut,  static_cast < int > (3));
+
+  registerProcessorParameter ("VertexFitSwitch",
+                              "Choose upstream-downstream track matching approach. true: vertexfit, false: distance cut",
+                              _vertexfitswitch,  static_cast < bool > (true));
                                
   registerProcessorParameter( "RootFileName",
                                "Output root file name",
                                _rootFileName, std::string("X0.root"));
 
   registerProcessorParameter ("MaxVertexChi2",
-                              "Maximal Chi2 value for vertex fit of matched up and downstream tracks",
+                              "Maximal Chi2 value for vertex fit of matched up and downstream tracks, only used when VertexFitSwitch is true",
                               _maxVertexChi2,  static_cast < double > (10.0));
+
+  registerProcessorParameter ("MaxDist",
+                              "Maximum distance between up and downstream tracks at dut plane [mm], only used when VertexFitSwitch is false",
+                              _maxDist,  static_cast < double > (0.1));
 
 }
 
@@ -242,9 +250,90 @@ void X0ImageProducer::processEvent(LCEvent * evt)
   vector< vector<int> > up2down(upTrackStore.size() );
   vector< vector<int> > down2up(downTrackStore.size() );
    
+
+   
+  Det dut = _detector.GetDet(_idut);
+
+  // Vertex fit track matching
+  if(_vertexfitswitch)
+  {
+	  // Continue matching tracks and hits until all tracks are matched 
+	  // or no hit is close enough to a track!! 
+	  double chi2min=numeric_limits<double >::max();
+
+
+	  do{
+		int bestup=-1;
+		int bestdown=-1;
+		
+		chi2min=numeric_limits<double >::max();
+
+		  
+		for(int iup=0;iup<(int)upTrackStore.size(); iup++)
+		{
+		  // Get upstream track
+		  TBTrack& uptrack = upTrackStore[iup];
+		      
+		  for(int idown=0; idown< (int)downTrackStore.size() ; idown++)
+		  {
+
+		    // If downtrack matched to some uptrack, skip downtrack
+		    // Downtracks should only be used once.
+		    if (down2up[idown].size() > 0) continue; 
+
+			// Get upstream track
+		    TBTrack& downtrack = downTrackStore[idown];
+		
+		    //Initialize Vertex and Vertex Fitter
+		    TBVertexFitter VertexFitter(_idut, _detector);
+			TBVertex Vertex;
+
+			// Add upstream track state to vertex
+			Vertex.AddTrackState(uptrack.GetTE(_idut).GetState());
+
+			// Additionally add any downstream tracks, which have already been sucessfully matched with this upstream track
+			// This ensures that all matched downstream tracks really come from the same vertex
+			for(int n=0;n<up2down[iup].size();n++) Vertex.AddTrackState(downTrackStore[up2down[iup][n]].GetTE(_idut).GetState());
+
+			// Add current downstream track state to vertex
+			Vertex.AddTrackState(downtrack.GetTE(_idut).GetState());
+		    
+		    // Perform vertex fit
+		    // Check whether the combination of all
+			bool vfiterr = VertexFitter.FitVertex(Vertex);
+			if (vfiterr) continue;
+			double vertex_chi2=Vertex.GetChi2Ndof();
+		                  
+		    if( vertex_chi2<chi2min )
+		    {
+		      chi2min=vertex_chi2;
+		      bestup=iup;
+		      bestdown=idown;
+		    }
+		  }
+		}
+		
+		streamlog_out(MESSAGE2) << "In matching loop: best up " << bestup << " to best down " << bestdown << endl; 
+		streamlog_out(MESSAGE2) << "  chi2min: " <<  chi2min  << endl; 
+		
+		// Check if best match is good enough
+		if( chi2min < _maxVertexChi2  )
+		{   
+
+		  streamlog_out(MESSAGE2) << "  match found!!!"   << endl;
+		  nMatch++;
+		  up2down[bestup].push_back( bestdown );
+		  down2up[bestdown].push_back( bestup );     
+		} 
+	  
+	  } // End matching loop
+	  while( chi2min < _maxVertexChi2 );
+  }
+  else
+  {
   // Continue matching tracks and hits until all tracks are matched 
   // or no hit is close enough to a track!! 
-  double chi2min=numeric_limits<double >::max();
+  double distmin=numeric_limits<double >::max();
    
   Det dut = _detector.GetDet(_idut);
 
@@ -252,47 +341,36 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     int bestup=-1;
     int bestdown=-1;
     
-    chi2min=numeric_limits<double >::max();
-
+    distmin=numeric_limits<double >::max();
       
     for(int iup=0;iup<(int)upTrackStore.size(); iup++)
     {
-	  // Get upstream track
-      TBTrack& uptrack = upTrackStore[iup];
-          
+            
+      // if ( up2down[iup].size() > 0 ) continue;    
+      
       for(int idown=0; idown< (int)downTrackStore.size() ; idown++)
       {
 
-        // If downtrack matched to some uptrack, skip downtrack
-        // Downtracks should only be used once.
+        // If matched, skip track 
         if (down2up[idown].size() > 0) continue; 
-
-	    // Get upstream track
-        TBTrack& downtrack = downTrackStore[idown];
-    
-        //Initialize Vertex and Vertex Fitter
-        TBVertexFitter VertexFitter(_idut, _detector);
-	    TBVertex Vertex;
-
-	    // Add upstream track state to vertex
-	    Vertex.AddTrackState(uptrack.GetTE(_idut).GetState());
-
-		// Additionally add any downstream tracks, which have already been sucessfully matched with this upstream track
-		// This ensures that all matched downstream tracks really come from the same vertex
-		for(int n=0;n<up2down[iup].size();n++) Vertex.AddTrackState(downTrackStore[up2down[iup][n]].GetTE(_idut).GetState());
-
-	    // Add current downstream track state to vertex
-	    Vertex.AddTrackState(downtrack.GetTE(_idut).GetState());
         
-        // Perform vertex fit
-        // Check whether the combination of all
-	    bool vfiterr = VertexFitter.FitVertex(Vertex);
-		if (vfiterr) continue;
-		double vertex_chi2=Vertex.GetChi2Ndof();
+        TBTrack& uptrack = upTrackStore[iup];
+        TBTrack& downtrack = downTrackStore[idown];
+        
+        // In and OutStates of the reconstructed Track at the current detector
+        TBTrackState& InState=uptrack.GetTE(_idut).GetState();
+        TBTrackState& OutState=downtrack.GetTE(_idut).GetState(); 
+        
+        double u_in = InState.GetPars()[2][0];
+        double v_in = InState.GetPars()[3][0];
+        double u_out = OutState.GetPars()[2][0];
+        double v_out = OutState.GetPars()[3][0];
+        
+        double hitdist = std::abs(u_in-u_out) + std::abs(v_in-v_out);
                       
-        if( vertex_chi2<chi2min )
+        if( hitdist<distmin )
         {
-          chi2min=vertex_chi2;
+          distmin=hitdist;
           bestup=iup;
           bestdown=idown;
         }
@@ -300,10 +378,10 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     }
     
     streamlog_out(MESSAGE2) << "In matching loop: best up " << bestup << " to best down " << bestdown << endl; 
-    streamlog_out(MESSAGE2) << "  chi2min: " <<  chi2min  << endl; 
+    streamlog_out(MESSAGE2) << "  distmin: " <<  distmin  << endl; 
     
     // Check if best match is good enough
-    if( chi2min < _maxVertexChi2  )
+    if( distmin < _maxDist  )
     {   
 
       streamlog_out(MESSAGE2) << "  match found!!!"   << endl;
@@ -313,7 +391,9 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     } 
   
   } // End matching loop
-  while( chi2min < _maxVertexChi2 );
+  while( distmin < _maxDist );
+
+  }
   
   // Fill event tree
   _rootRunNumber = evt->getRunNumber();  
