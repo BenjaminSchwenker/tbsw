@@ -34,16 +34,23 @@ namespace depfet {
  *  beam spot. The idea of this alignment step is to let the z axis 
  *  coincide with the beam axis. 
  *    
- *  One of the problem with telescope alignment is the shearing mode in the 
+ *  One of the problem with telescope alignment is the weak shearing mode in the 
  *  X and Y direction. The information that all tracks originate from a 
  *  highly collimated particle beam allows to set a constraint on shearing
  *  modes. On possibility is to estimate the position of the beam axis 
  *  relative to the center of two sensors in the telescope.  
  *  
  *  The method is not applicable in all cases. It is needed that the beam 
- *  axis is really crossing at least two sensors. It is also needed to 
+ *  axis is really crossing at least one sensor. It is also needed to 
  *  have an approximately Gaussian hit density where the position of the 
- *  beam axis can be estimated as a maximum of the hit map.   
+ *  beam axis can be estimated as a maximum of the hit map. This can be 
+ *  obscured when the trigger is computed from the coincidence of scintilators 
+ *  at both ends of the telescope. 
+ * 
+ *  The proposed alignment schema is to align the telescope from an air run 
+ *  where nothing is in between the telesocpe arms. The beam collimators should 
+ *  be tuned to give a narrow spot. Only one big scintillator behind the last 
+ *  plane of the telescope should be used for triggering.    
  *   
  *  Author: B.Schwenker, Universität Göttingen
  *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
@@ -99,6 +106,11 @@ protected:
  *  values.  
  */
    bool _updateAlignment;
+
+//! New alignment  
+/*! Don't use current alignment data base, but start from scratch   
+ */
+   bool _newAlignment;
         
 //! Output root file name  
 /*!

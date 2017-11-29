@@ -12,6 +12,125 @@ import xml.etree.ElementTree
 import random
 import math
 
+from ROOT import TFile, TH1F, gROOT
+
+try:
+    from itertools import zip_longest as zip_longest
+except:
+    from itertools import izip_longest as zip_longest
+
+
+def Create_AlignmentDBFile_From_Gear(gearfile=None, truthdbfilename=None):
+  """
+  Writes sensor position and angles from gear file into truthdb root file 
+    :@gearfile:       gear file to be copied into alignment root file  
+    :@truthdbfilename      Name of the output root file 
+    :author: ulf.stolzenberg@phys.uni-goettingen.de  
+  """   
+
+  if gearfile == None:
+    return None
+
+  if truthdbfilename == None:
+    return None
+
+  # Open db file
+  dbfile = TFile( truthdbfilename, 'RECREATE', 'alignment parameters from ' + gearfile )
+
+  # Define lists of alignment parameters
+  id_list = []
+  xpos_list = []
+  ypos_list = []
+  zpos_list = []
+  xrot_list = []
+  yrot_list = []
+  zrot_list = []
+
+  tree = xml.etree.ElementTree.parse(gearfile)
+  root = tree.getroot()
+
+  # Read out the alignment parameters
+  for detectors in root.findall('detectors'): 
+    for detector in detectors.findall('detector'):
+      for layers in detector.findall('layers'):
+        for layer in layers.findall('layer'):
+
+          for sensitive in layer.findall('sensitive'):
+            xpos_list.append(float(sensitive.get('positionX')))
+            ypos_list.append(float(sensitive.get('positionY')))
+            zpos_list.append(float(sensitive.get('positionZ')))
+            xrot_list.append(float(sensitive.get('alpha')))
+            yrot_list.append(float(sensitive.get('beta')))
+            zrot_list.append(float(sensitive.get('gamma')))
+            id_list.append(int(sensitive.get('ID')))
+
+  # Sort z position list and the corresponding sensor id list
+  zpos_list2, id_list2 = (list(t) for t in zip(*sorted(zip(zpos_list, id_list))))
+
+  # get number of planes
+  nentries=len(id_list2)
+
+  # ID histogram
+  hSensorID = TH1F("hSensorID","",nentries,0,nentries)
+  hSensorID.SetTitle("")
+  hSensorID.GetXaxis().SetTitle("plane")
+  hSensorID.GetYaxis().SetTitle("Sebsor ID") 
+
+  # X position histogram
+  hPositionX = TH1F("hPositionX","",nentries,0,nentries)
+  hPositionX.SetTitle("")
+  hPositionX.GetXaxis().SetTitle("plane")
+  hPositionX.GetYaxis().SetTitle("position x [mm]") 
+
+  # X position histogram
+  hPositionY = TH1F("hPositionY","",nentries,0,nentries)
+  hPositionY.SetTitle("")
+  hPositionY.GetXaxis().SetTitle("plane")
+  hPositionY.GetYaxis().SetTitle("position y [mm]")
+
+  # Z position histogram
+  hPositionZ = TH1F("hPositionZ","",nentries,0,nentries)
+  hPositionZ.SetTitle("")
+  hPositionZ.GetXaxis().SetTitle("plane")
+  hPositionZ.GetYaxis().SetTitle("position z [mm]")
+
+  # alpha rotation histogram
+  hRotationAlpha = TH1F("hRotationAlpha","",nentries,0,nentries)
+  hRotationAlpha.SetTitle("")
+  hRotationAlpha.GetXaxis().SetTitle("plane")
+  hRotationAlpha.GetYaxis().SetTitle("rotation alpha [rad]") 
+
+  # beta rotation histogram
+  hRotationBeta = TH1F("hRotationBeta","",nentries,0,nentries)
+  hRotationBeta.SetTitle("")
+  hRotationBeta.GetXaxis().SetTitle("plane")
+  hRotationBeta.GetYaxis().SetTitle("rotation beta [rad]")
+
+  # gamma rotation histogram
+  hRotationGamma = TH1F("hRotationGamma","",nentries,0,nentries)
+  hRotationGamma.SetTitle("")
+  hRotationGamma.GetXaxis().SetTitle("plane")
+  hRotationGamma.GetYaxis().SetTitle("rotation gamma [rad]")
+
+  # Loop over sensor ids
+  for bin,sensid in enumerate(id_list2):
+
+    # Find list index for this sensor id
+    index = id_list.index(sensid)
+  
+    # Fill histograms
+    hSensorID.SetBinContent(bin+1,id_list[index])
+    hPositionX.SetBinContent(bin+1,xpos_list[index])
+    hPositionY.SetBinContent(bin+1,ypos_list[index])
+    hPositionZ.SetBinContent(bin+1,zpos_list[index])
+    hRotationAlpha.SetBinContent(bin+1,xrot_list[index]/180*3.1415)   # angles in gear file are given in degree -> change to rad
+    hRotationBeta.SetBinContent(bin+1,yrot_list[index]/180*3.1415)    # angles in gear file are given in degree -> change to rad
+    hRotationGamma.SetBinContent(bin+1,zrot_list[index]/180*3.1415)   # angles in gear file are given in degree -> change to rad
+  
+  dbfile.Write()
+  dbfile.Close()
+
+
 def set_parameter(gearfile=None, sensorID=None, parametername=None, value=None):
   """
   Overrides value field in all sensors with a specific sensor ID in gearfile
@@ -67,7 +186,6 @@ def add_offset(gearfile=None, sensorID=None, parametername=None, value=None):
                 #print('Parameter with name '+parametername+' doesnt exist in ladder!')
                 pass
               else:
-                #print('Parameter with name '+parametername+' exists in ladder!')
                 laddervalue=float(value)+float(ladder.get(parametername))
                 ladder.set(parametername, str(laddervalue))
 
@@ -80,7 +198,6 @@ def add_offset(gearfile=None, sensorID=None, parametername=None, value=None):
                 #print('Parameter with name '+parametername+' doesnt exist in sensitive!')
                 pass
               else:
-                #print('Parameter with name '+parametername+' exists in sensitive!')
                 sensvalue=float(value)+float(sensitive.get(parametername))
                 sensitive.set(parametername, str(sensvalue))
 
@@ -104,19 +221,29 @@ def randomize_gearparameter(gearfile=None, sensorID=None, parametername=None, me
   add_offset(gearfile=gearfile, sensorID=sensorID, parametername=parametername, value=value)
 
 
-def randomize_telescope(gearfile=None, mean_pos=None, sigma_pos=None, mean_rot=None, sigma_rot=None):
+def randomize_telescope(gearfile=None, mean_list=[0.0,0.0,0.0,0.0,0.0,0.0], sigma_list=[0.0,0.0,0.0,0.0,0.0,0.0], sensorexception_list=[], modeexception_list=[]):
   """
-  Overrides position and orientation of multiple sensors in gearfile with gaussian random variables
-    :@gearfile:          gear file to be overwritten  
-	:@mean_pos		     Mean of the gaussian random distribution, which determine the plane positions
-    :@sigma_pos          Sigma of the gaussian random distribution, which determine the plane positions
-	:@mean_rot		     Mean of the gaussian random distribution, which determine the plane rotations
-    :@sigma_rot          Sigma of the gaussian random distribution, which determine the plane rotations
+  Overrides position and orientation of all sensors in gearfile with gaussian random variables
+    :@gearfile:               gear file to be overwritten  
+	:@mean_list               List of mean values, should contain 6 entries: 1 for each alignment paramter [mean_x,mean_y,mean_z,mean_alpha,mean_beta,mean_gamma]
+    :@sigma_list              List of sigma values, should contain 6 entries: 1 for each alignment parameter [sigma_x,sigma_y,sigma_z,sigma_alpha,sigma_beta,sigma_gamma]
+    :@sensorexception_list    List of sensor ids, which will not be misaligned
+    :@modeexception_list      List of misalignment modes, which are not used
     :author: ulf.stolzenberg@phys.uni-goettingen.de  
   """  
 
   tree = xml.etree.ElementTree.parse(gearfile)
   root = tree.getroot()  
+
+  # This is the default mode list: Containing all the positions and angles
+  default_mode_list=['positionX','positionY','positionZ','alpha','beta','gamma']
+
+  # Combine the default_mode_list and the mean and sigma lists to tuples
+  parameter_tuple_list=zip_longest(default_mode_list, mean_list, sigma_list, fillvalue=0.0)
+
+  # Run over the tuple list and remove tuples, that have a first element that is also present in the modeexception_list
+  for modeexception in modeexception_list:
+      parameter_tuple_list = filter(lambda x: x[0] != modeexception,parameter_tuple_list)
 
   for detectors in root.findall('detectors'): 
     for detector in detectors.findall('detector'):
@@ -125,14 +252,14 @@ def randomize_telescope(gearfile=None, mean_pos=None, sigma_pos=None, mean_rot=N
 
           for ladder in layer.findall('sensitive'):
             ID=ladder.get('ID')
-            print('[INFO] Misalign position of plane with ID '+ID)
-            randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='positionX', mean=mean_pos, sigma=sigma_pos)
-            randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='positionY', mean=mean_pos, sigma=sigma_pos)
-            randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='positionZ', mean=mean_pos, sigma=sigma_pos)
 
-            randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='alpha', mean=mean_rot, sigma=sigma_rot)
-            randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='beta', mean=mean_rot, sigma=sigma_rot)
-            randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername='gamma', mean=mean_rot, sigma=sigma_rot)
+            # Check whether the sensor exception list contains this id
+            if sensorexception_list.count(int(ID)) < 1:
+              print('[INFO] Misalign position of plane with ID '+ID)
+              # Loop over the alignment parameters in the default mode list
+              for parameter_tuple in parameter_tuple_list:
+                #Randomize the mode for this specific mode and sensor ID
+                randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername=parameter_tuple[0], mean=parameter_tuple[1], sigma=parameter_tuple[2])
 
 
 def set_globalparameter(gearfile=None, parametername=None, value=None):
@@ -160,46 +287,6 @@ def set_globalparameter(gearfile=None, parametername=None, value=None):
 
   tree.write(gearfile) 
 
-
-def shift_telescope(gearfile=None, valueX=None, valueY=None, valueZ=None):
-  """
-  Adds an offset to a certain parameter on all planes
-    :@gearfile:          gear file to be overwritten     
-    :@valueX:            X shift
-    :@valueY:            Y shift
-    :@valueZ:            Z shift	
-    :author: ulf.stolzenberg@phys.uni-goettingen.de  
-  """ 
-
-  tree = xml.etree.ElementTree.parse(gearfile)
-  root = tree.getroot() 
-  
-  for detectors in root.findall('detectors'): 
-    for detector in detectors.findall('detector'):
-      for layers in detector.findall('layers'):
-        for layer in layers.findall('layer'):
-
-          for ladder in layer.findall('ladder'):
-            laddervalueX=float(valueX)+float(ladder.get('positionX'))
-            ladder.set('positionX', str(laddervalueX))
-
-            laddervalueY=float(valueY)+float(ladder.get('positionY'))
-            ladder.set('positionY', str(laddervalueY))
-
-            laddervalueZ=float(valueZ)+float(ladder.get('positionZ'))
-            ladder.set('positionZ', str(laddervalueZ))
-
-          for sensitive in layer.findall('sensitive'):
-            sensvalueX=float(valueX)+float(sensitive.get('positionX'))
-            sensitive.set('positionX', str(sensvalueX))
-
-            sensvalueY=float(valueY)+float(sensitive.get('positionY'))
-            sensitive.set('positionY', str(sensvalueY))
-
-            sensvalueZ=float(valueZ)+float(sensitive.get('positionZ'))
-            sensitive.set('positionZ', str(sensvalueZ))
-
-  tree.write(gearfile) 
 
 def add_weakmode(gearfile=None, parametername=None, value=None):
   """
@@ -326,12 +413,63 @@ def rotate_telescope(gearfile=None, parametername=None, valueZ=None, valueAngle=
     print('Rotation plane not well defined!')
 
 
+def Modify_AlignmentDBFile(dbfilename=None, planenumber=None, mode=None, value=None):
+  """
+  Change single position or angle in alignment DB file
+    :@dbfilename      Name of the output root file 
+    :@planenumber     Planenumber to be modified (starting with 0)
+    :@mode            Mode to be modified ['x','y','z','alpha','beta','gamma']
+    :@value           New value in mm or rad
+    :author: ulf.stolzenberg@phys.uni-goettingen.de  
+  """
+
+  if dbfilename == None:
+    return None
+
+  if planenumber == None:
+    return None
+
+  if mode == None:
+    return None
+
+  if value == None:
+    return None
     
+  dbfile = TFile( dbfilename, 'UPDATE' )
 
+  # Get access to histogram  
 
+  if mode=='x':
+    histo = dbfile.Get("hPositionX")
+    dbfile.Delete("hPositionX;1")
+
+  elif mode=='y':
+    histo = dbfile.Get("hPositionY")
+    dbfile.Delete("hPositionY;1")
+
+  elif mode=='z':
+    histo = dbfile.Get("hPositionZ")
+    dbfile.Delete("hPositionZ;1")
+
+  elif mode=='alpha':
+    histo = dbfile.Get("hRotationAlpha")
+    dbfile.Delete("hRotationAlpha:1")
+
+  elif mode=='beta':
+    histo = dbfile.Get("hRotationBeta")
+    dbfile.Delete("hRotationBeta;1")
+
+  elif mode=='gamma':
+    histo = dbfile.Get("hRotationGamma")
+    dbfile.Delete("hRotationGamma;1")
+
+  else:
+    return None
+
+  histo.SetBinContent(planenumber+1,value)
   
-
-  
+  dbfile.Write()
+  dbfile.Close()
 
 
      

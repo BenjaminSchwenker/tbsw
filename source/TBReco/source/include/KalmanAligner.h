@@ -50,7 +50,7 @@ namespace depfet {
  *  
  *  The processor has three major inputs: 
  *  
- *  1) A lcio file containing the current nominal alignment DB  
+ *  1) A root file containing the current nominal alignment DB  
  *  2) A text based config file for setting initial errors and outlier rejection 
  *  3) A lcio file containing a collection of tracks for detector alignment.  
  *   
@@ -107,10 +107,7 @@ protected:
    
 //! AlignConfig file name 
    std::string _alignConfigFileName;
-   
-//! ROOT file name 
-   std::string _rootFileName;  
-   
+      
 //! Update alignmentDB   
    bool _updateAlignment;
 

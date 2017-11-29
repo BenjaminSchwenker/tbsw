@@ -178,8 +178,8 @@
      <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit" value="unusedhits"/>
      <!--Collection name for fitted tracks-->
      <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track" value="tracks"/>
-     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-     <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+     <!--This is the name of the alignment constants file-->
+     <parameter name="AlignmentDBFileName" type="string" value="localDB/alignmentDB.root"/>
      <!--Enter plane numbers of bad detectors-->
      <parameter name="ExcludeDetector" type="IntVec" value="3 4"/>
      <!--To use only GoodQuality write 0 here-->
@@ -220,8 +220,8 @@
      <!--TrackFitDQM: DQM plots for monitor quality of track fitting-->
      <!--Track input collection-->
      <parameter name="InputTrackCollectionName" type="string" lcioInType="Track" value="tracks"/>
-     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-     <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+     <!--This is the name of the alignment constants file-->
+     <parameter name="AlignmentDBFileName" type="string" value="localDB/alignmentDB.root"/>
      <!--Output root file name-->
      <parameter name="RootFileName" type="string" value="TelescopeDQM.root"/>
    </processor>
@@ -232,8 +232,8 @@
      <parameter name="HitCollection" type="string" lcioInType="TrackerHit" value="hit_strip"/>
      <!--Name of telescope track collection-->
      <parameter name="TrackCollection" type="string" lcioInType="Track" value="tracks"/>
-     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-     <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+     <!--This is the name of the alignment constants file-->
+     <parameter name="AlignmentDBFileName" type="string" value="localDB/alignmentDB.root"/>
      <!--Plane number of DUT along the beam line-->
      <parameter name="DUTPlane" type="int" value="3"/>
      <!--Maximum u residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.-->
@@ -250,8 +250,8 @@
      <parameter name="HitCollection" type="string" lcioInType="TrackerHit" value="hit_strip"/>
      <!--Name of telescope track collection-->
      <parameter name="TrackCollection" type="string" lcioInType="Track" value="tracks"/>
-     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-     <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+     <!--This is the name of the alignment constants file-->
+     <parameter name="AlignmentDBFileName" type="string" value="localDB/alignmentDB.root"/>
      <!--Plane number of DUT along the beam line-->
      <parameter name="DUTPlane" type="int" value="4"/>
      <!--Maximum u residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.-->
@@ -272,8 +272,8 @@
      <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit" value="unusedhits"/>
      <!--Collection name for fitted tracks-->
      <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track" value="tracks"/>
-     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-     <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+     <!--This is the name of the alignment constants file-->
+     <parameter name="AlignmentDBFileName" type="string" value="localDB/alignmentDB.root"/>
      <!--Enter plane numbers of bad detectors-->
      <parameter name="ExcludeDetector" type="IntVec" value=""/>
      <!--To use only GoodQuality write 0 here-->
@@ -318,8 +318,8 @@
      <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit" value="unusedhits"/>
      <!--Collection name for fitted tracks-->
      <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track" value="tracks"/>
-     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-     <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+     <!--This is the name of the alignment constants file-->
+     <parameter name="AlignmentDBFileName" type="string" value="localDB/alignmentDB.root"/>
      <!--Enter plane numbers of bad detectors-->
      <parameter name="ExcludeDetector" type="IntVec" value=""/>
      <!--To use only GoodQuality write 0 here-->
@@ -362,12 +362,12 @@
      <parameter name="TrackCollectionName" type="string" lcioInType="Track" value="tracks"/>
      <!--Name of the alignment config file-->
      <parameter name="AlignConfigFileName" type="string" value="align-config-iteration-1.cfg"/>
-     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-     <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
-     <!--Root file containing alignment validation plots-->
-     <parameter name="RootFileName" type="string" value="KalmanAlign-iteration-1.root"/>
+     <!--This is the name of the alignment constants file-->
+     <parameter name="AlignmentDBFileName" type="string" value="localDB/alignmentDB.root"/>
      <!--Update lcio alignmentDB using alignment results (true/false)?-->
      <parameter name="UpdateAlignment" type="bool" value="true"/>
+     <!--Start new alignment DB (true/false)?-->
+     <parameter name="NewAlignment" type="bool" value="false"/>
    </processor>
    
    <processor name="TelAligner" type="KalmanAligner">
@@ -376,12 +376,12 @@
      <parameter name="TrackCollectionName" type="string" lcioInType="Track" value="tracks"/>
      <!--Name of the alignment config file-->
      <parameter name="AlignConfigFileName" type="string" value="align-config-iteration-2.cfg"/>
-     <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-     <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
-     <!--Root file containing alignment validation plots-->
-     <parameter name="RootFileName" type="string" value="KalmanAlign-final.root"/>
+     <!--This is the name of the alignment constants file-->
+     <parameter name="AlignmentDBFileName" type="string" value="localDB/alignmentDB.root"/>
      <!--Update lcio alignmentDB using alignment results (true/false)?-->
      <parameter name="UpdateAlignment" type="bool" value="true"/>
+     <!--Start new alignment DB (true/false)?-->
+     <parameter name="NewAlignment" type="bool" value="false"/>
    </processor>
    
    <processor name="RawDQM" type="RawHitDQM">
@@ -396,8 +396,8 @@
     <!--Correlator: Pre- alignment in xy of tracking telescopes-->
     <!--Hit collection names-->
     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit" value="hit_m26 hit_strip"/>
-    <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-    <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+    <!--This is the name of the alignment constants file-->
+    <parameter name="AlignmentDBFileName" type="string" value="localDB/alignmentDB.root"/>
     <!--This is the name of the output root file-->
     <parameter name="OutputRootFileName" type="string" value="XCorrelator.root"/>
     <!--Reference sensor plane number, counted along beam line-->
@@ -424,8 +424,8 @@
     <!--GoeClusterCalibrator: Create clusterDB for clusters using reco tracks-->
     <!--Track input collection-->
     <parameter name="InputTrackCollectionName" type="string" lcioInType="Track" value="tracks"/>
-    <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-    <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+    <!--This is the name of the alignment constants file-->
+    <parameter name="AlignmentDBFileName" type="string" value="localDB/alignmentDB.root"/>
     <!--Output clusterDB file name-->
     <parameter name="ClusterDBFileName" type="string" value="localDB/clusterDB-StripID6.root"/>
     <!--Minimum number of cluster ID occurances for clusterDB-->
@@ -444,8 +444,8 @@
     <!--GoeClusterCalibrator: Create clusterDB for clusters using reco tracks-->
     <!--Track input collection-->
     <parameter name="InputTrackCollectionName" type="string" lcioInType="Track" value="tracks"/>
-    <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-    <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+    <!--This is the name of the alignment constants file-->
+    <parameter name="AlignmentDBFileName" type="string" value="localDB/alignmentDB.root"/>
     <!--Output clusterDB file name-->
     <parameter name="ClusterDBFileName" type="string" value="localDB/clusterDB-StripID7.root"/>
     <!--Minimum number of cluster ID occurances for clusterDB-->
@@ -464,8 +464,8 @@
     <!--GoeClusterCalibrator: Create clusterDB for clusters using reco tracks-->
     <!--Track input collection-->
     <parameter name="InputTrackCollectionName" type="string" lcioInType="Track" value="tracks"/>
-    <!--This is the name of the LCIO file with the alignment constants (add .slcio)-->
-    <parameter name="AlignmentDBFileName" type="string" value="localDB/eudet-alignmentDB.slcio"/>
+    <!--This is the name of the alignment constants file-->
+    <parameter name="AlignmentDBFileName" type="string" value="localDB/alignmentDB.root"/>
     <!--Output clusterDB file name-->
     <parameter name="ClusterDBFileName" type="string" value="localDB/clusterDB-M26.root"/>
     <!--Minimum number of cluster ID occurances for clusterDB-->

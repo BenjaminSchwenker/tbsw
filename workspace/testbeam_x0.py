@@ -18,6 +18,8 @@ Author: Ulf Stolzenberg <ulf.stolzenberg@phys.uni-goettingen.de>
 from tbsw import *
 import multiprocessing
 
+import tbsw.x0imaging.X0Calibration
+
 # Path to steering files 
 # Steeringfiles are xml files and define details of the simulation like how many events are produced
 # or how M26 sensors are digitized. XML parameters can be adjusted using any test editor
@@ -27,6 +29,7 @@ steerfiles_reco = 'steering-files/x0-tboct16-2GeV-air/'
 gearfile = 'gear.xml'
 #cal tag
 caltag='air'
+x0tag='05mmalu'
 # File name for raw data 
 rawfile_cali = '/work1/rawdata/DESY_Oktober16/2GeV_air/run006973.raw'
 # Nominal Beam energy
@@ -71,13 +74,13 @@ def create_calibration_path(Env, rawfile, gearfile):
   kalman_aligner_1.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
   kalman_aligner_1.add_processor(name="M26CogHitMaker")
   kalman_aligner_1.add_processor(name="AlignTF_LC")
-  kalman_aligner_1.add_processor(name="PreAligner", params={'RootFileName': 'KalmanAlign-iteration-1.root'})
+  kalman_aligner_1.add_processor(name="PreAligner")
   
   kalman_aligner_2 = Env.create_path('kalman_aligner_2')
   kalman_aligner_2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
   kalman_aligner_2.add_processor(name="M26CogHitMaker")
   kalman_aligner_2.add_processor(name="AlignTF_TC")
-  kalman_aligner_2.add_processor(name="TelAligner", params={'RootFileName': 'KalmanAlign-iteration-2.root'})
+  kalman_aligner_2.add_processor(name="TelAligner")
   
   telescope_dqm = Env.create_path('telescope_dqm')
   telescope_dqm.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
@@ -95,7 +98,7 @@ def create_calibration_path(Env, rawfile, gearfile):
   kalman_aligner_3.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
   kalman_aligner_3.add_processor(name="M26GoeHitMaker")
   kalman_aligner_3.add_processor(name="AlignTF_TC")
-  kalman_aligner_3.add_processor(name="TelAligner", params={'RootFileName': 'KalmanAlign-iteration-3.root'})
+  kalman_aligner_3.add_processor(name="TelAligner")
   
   cluster_calibration_2 = Env.create_path('cluster_calibration_2')
   cluster_calibration_2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_cali, 'LCIOInputFiles': "tmp.slcio" })  
@@ -113,13 +116,13 @@ def create_calibration_path(Env, rawfile, gearfile):
   kalman_aligner_4.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" }) 
   kalman_aligner_4.add_processor(name="M26GoeHitMaker")   
   kalman_aligner_4.add_processor(name="AlignTF_LC")
-  kalman_aligner_4.add_processor(name="PreAligner", params={'RootFileName': 'KalmanAlign-iteration-4.root'})
+  kalman_aligner_4.add_processor(name="PreAligner")
   
   kalman_aligner_5 = Env.create_path('kalman_aligner_5')
   kalman_aligner_5.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" }) 
   kalman_aligner_5.add_processor(name="M26GoeHitMaker")  
   kalman_aligner_5.add_processor(name="AlignTF_TC")
-  kalman_aligner_5.add_processor(name="TelAligner", params={'RootFileName': 'KalmanAlign-final.root'}) 
+  kalman_aligner_5.add_processor(name="TelAligner") 
   
   telescope_dqm2 = Env.create_path('telescope_dqm2')
   telescope_dqm2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_cali, 'LCIOInputFiles': "tmp.slcio" }) 
@@ -150,10 +153,10 @@ def create_calibration_path(Env, rawfile, gearfile):
              cluster_calibration_2, 
              cluster_calibration_2, 
              correlator2, 
-             kalman_aligner_3, 
              kalman_aligner_4, 
-             kalman_aligner_4, 
-             kalman_aligner_4, 
+             kalman_aligner_5, 
+             kalman_aligner_5, 
+             kalman_aligner_5, 
              telescope_dqm2, 
            ]
   
@@ -219,42 +222,7 @@ def calibrate(params):
   
   # Run the calibration steps 
   CalObj.calibrate(path=calpath,ifile=rawfile,caltag=caltag)
-  
 
-
-# Function which starts the imaging script
-def x0imaging(filename,caltag,deletetag):
-
-  flags='./tbsw/x0imaging/GenerateImage.py -i '+filename+' -f '+imagecfgfilename+' -c '+caltag+' -d '+`deletetag`
-  print('Starting X0 imaging')
-  print(flags)
-  subprocess.call(flags, shell=True)
-
-  return None
-
-# Function which starts the x0 calibration script
-def x0calibration(filename,imagefilename,caltag):
-
-  flags='./tbsw/x0imaging/X0Calibration.py -i '+filename+' -f '+calibrationcfgfilename+' -m '+imagefilename+' -c '+caltag
-  print('Starting X0 calibration')
-  print(flags)
-  subprocess.call(flags, shell=True)
-
-  return None
-
-# Function which merges the result root files
-def merge_rootfile(filename,RunList_reco):
-
-  flags='hadd '+filename+' '
-  for run in RunList_reco:
-    name=os.path.splitext(os.path.basename(run))[0]
-    flags=flags+'root-files/X0-'+name+'-air-reco.root '
-
-  if os.path.isfile(filename):
-    os.remove(filename)
-  subprocess.call(flags, shell=True)
-
-  return None
 
   
 if __name__ == '__main__':
@@ -277,57 +245,26 @@ if __name__ == '__main__':
   pool = multiprocessing.Pool(processes=count)
   pool.map(reconstruct, params_reco)
 
-  imagecfgfilename='steering-files/x0-tb/image.cfg'
-  calibrationcfgfilename='steering-files/x0-tb/x0calibration.cfg'
-  deletetag=1
+  deletetag='1'
 
   # Base filename of the X0 root file
-  basefilename='X0-merge-05mmalu'
+  basefilename='X0-merge-'+x0tag
 
   # Total path of X0 root file
   filename='root-files/'+basefilename+'.root'
 
-  # Total path if the different kinds of X0 image files
-  imagefile=cwdir+'/root-files/'+basefilename+'-X0image.root'
-  uncalibratedimagefile=cwdir+'/root-files/'+basefilename+'-Uncalibrated-X0image.root'
-  calibratedimagefile=cwdir+'/root-files/'+basefilename+'-Calibrated-X0image.root'
-
   # Merge the root trees in the root files directory
-  merge_rootfile(filename,RunList_reco)
-
-  # Total path if the different kinds of X0 image files
-  imagefile=cwdir+'/root-files/'+basefilename+'-X0image.root'
+  tbsw.x0imaging.X0Calibration.merge_rootfile(filename=filename,RunList=RunList_reco,caltag=caltag)
 
   # Generate a uncalibrated X/X0 image
-  x0imaging(filename,'',deletetag)
+  tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag='',deletetag=deletetag,steerfiles=steerfiles_reco,nametag='Uncalibrated')
 
-  # Rename the image file
-  if os.path.isfile(uncalibratedimagefile):
-     os.remove(uncalibratedimagefile) 
-  if os.path.isfile(imagefile):
-     shutil.move(imagefile,uncalibratedimagefile)
-
-  # Rename the directory in tmp-runs, in which the image was generated
-  if os.path.isdir(uncaltmpdir):
-     shutil.rmtree(uncaltmpdir) 
-  if os.path.isdir(tmpdir):
-     shutil.copytree(tmpdir, uncaltmpdir)
+  # Path to uncalibrated X0 image file
+  imagefilename='/root-files/'+basefilename+'-UncalibratedX0image.root'
 
   # Do a calibration of the angle resolution
-  x0calibration(filename,imagefile,air_caltag)
+  tbsw.x0imaging.X0Calibration.x0calibration(filename=filename,imagefilename=imagefilename,caltag=x0tag,steerfiles=steerfiles_reco)
 
   # Generate a calibrated X/X0 image
-  x0imaging(filename,air_caltag,deletetag)
-
-  # Rename the image file
-  if os.path.isfile(calibratedimagefile):
-     os.remove(calibratedimagefile) 
-  if os.path.isfile(imagefile):
-     shutil.move(imagefile,calibratedimagefile)
-
-  # Rename the directory in tmp-runs, in which the image was generated
-  if os.path.isdir(caltmpdir):
-     shutil.rmtree(caltmpdir) 
-  if os.path.isdir(tmpdir):
-     shutil.copytree(tmpdir, caltmpdir)
+  tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag=x0tag,deletetag=deletetag,steerfiles=steerfiles_reco,nametag='Calibrated')
 

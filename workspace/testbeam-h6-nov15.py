@@ -135,7 +135,7 @@ def create_reco_path(Env, rawfile, gearfile):
   return [ reco ]
 
   
-def calibrate_and_reconstruct(params):
+def calibrate(params):
   
   rawfile, gearfile = params
   
@@ -152,6 +152,14 @@ def calibrate_and_reconstruct(params):
   # Run the calibration steps 
   CalObj.calibrate(path=calpath,ifile=rawfile,caltag=caltag)  
   
+
+def reconstruct(params):
+  
+  rawfile, gearfile = params
+  
+  # Tag for calibration data
+  caltag = os.path.splitext(os.path.basename(rawfile))[0] + '-test'
+  
   # Reconsruct the rawfile using caltag. Resulting root files are 
   # written to folder root-files/
   RecObj = Reconstruction(steerfiles=steerfiles, name=caltag + '-reco2' )
@@ -164,7 +172,7 @@ def calibrate_and_reconstruct(params):
   
   
 if __name__ == '__main__':
-  count = 1 # multiprocessing.cpu_count()
+  count = multiprocessing.cpu_count()
   pool = multiprocessing.Pool(processes=count)
    
   try:
@@ -179,16 +187,23 @@ if __name__ == '__main__':
     pass
   
   
-  
-  
   # Runs from first part must be processed  with gearfile geoid 2
   params = [ (rawfile, 'gear_geoid2.xml' ) for rawfile in runlist_partone ]
-  pool.map(calibrate_and_reconstruct, params)
+  pool.map(calibrate, params)
+
+  # Runs from first part must be processed  with gearfile geoid 2
+  params = [ (rawfile, 'gear_geoid2.xml' ) for rawfile in runlist_partone ]
+  pool.map(reconstruct, params)
+
 
   # Runs from second part must be processed with gearfile geoid 16
   params = [ (rawfile, 'gear_geoid16.xml') for rawfile in runlist_parttwo ]
-  pool.map(calibrate_and_reconstruct, params)
+  pool.map(calibrate, params)
   
+  # Runs from second part must be processed with gearfile geoid 16
+  params = [ (rawfile, 'gear_geoid16.xml') for rawfile in runlist_parttwo ]
+  pool.map(reconstruct, params)
+
   
   # Create some efficiency and residual plots from root files after 
   # reconstruction. 

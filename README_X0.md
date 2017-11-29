@@ -61,28 +61,44 @@ steering file is employed. The following processors are used in the X0 analysis:
 The results of the angle reconstruction can be found at workspace/root-files/X0-mc-air-test-reco.root. The results file contains a root 
 tree named MSCTree. The following variables are stored in the tree:
 
-   *  iRun            : Run number of the track
-   *  iEvt            : Event number of the track
-   *  prob_up         : p value of the upstream track
-   *  prob_down       : p value of the downstream track
-   *  prob_combo      : p value of the combined track
-   *  du/dw           : mean of the two track slopes in u-w plane (rad)
-   *  dv/dw           : mean of the two track slopes in v-w plane (rad)
-   *  u_in            : u intersection of upstream track on the target (in local coordinates (mm))
-   *  v_in            : v intersection of upstream track on the target (in local coordinates (mm))
-   *  u_out           : u intersection of downstream track on the target (in local coordinates (mm))
-   *  v_out           : v intersection of downstream track on the target (in local coordinates (mm))
-   *  u               : mean of u_in and u_out (in local coordinates (mm))
-   *  v               : mean of v_in and v_out (in local coordinates (mm))
-   *  u_var           : variance of u (mm^2)
-   *  v_var           : variance of v (mm^2)
-   *  theta1          : Projected kink angle in u-w plane (rad)
-   *  theta2          : Projected kink angle inv-w plane (rad)
-   *  theta1_var      : Theta1 variance calculated via error propagation from Kalman filter (rad^2)
-   *  theta2_var      : Theta2 variance calculated via error propagation from Kalman filter (rad^2)
-   *  momentum        : Track momentum in GeV
-   *  vertex_chi2     : Chi2 of the determined vertex of the up- and downstream track
-   *  momentum        : p value of the determined vertex of the up- and downstream track
+   *  iRun            			: Run number of the track
+   *  iEvt            			: Event number of the track
+   *  prob_up         			: p value of the upstream track
+   *  prob_down       			: p value of the downstream track
+   *  prob_combo      			: p value of the combined track
+   *  u_in            			: u intersection of upstream track on the target (in local coordinates (mm))
+   *  v_in            			: v intersection of upstream track on the target (in local coordinates (mm))
+   *  u_out           			: u intersection of downstream track on the target (in local coordinates (mm))
+   *  v_out           			: v intersection of downstream track on the target (in local coordinates (mm))
+   *  u               			: mean of u_in and u_out (in local coordinates (mm))
+   *  v               			: mean of v_in and v_out (in local coordinates (mm))
+   *  u_var           			: variance of u (mm^2)
+   *  v_var           			: variance of v (mm^2)
+   *  theta1          			: Projected kink angle in u-w plane (rad)
+   *  theta2          			: Projected kink angle inv-w plane (rad)
+   *  theta1_var      			: Theta1 variance calculated via error propagation from Kalman filter (rad^2)
+   *  theta2_var      			: Theta2 variance calculated via error propagation from Kalman filter (rad^2)
+   *  momentum        			: Track momentum in GeV
+   *  chi2            			: Chi2 calculated from the up- and downstream track residuals on the central plane
+   *  prob            			: p value calculated from the up- and downstream track residuals on the central plane
+   *  vertex_u        			: Vertex u position in local coordinates of the target plane (mm)
+   *  vertex_v        			: Vertex v position in local coordinates of the target plane (mm)
+   *  vertex_w        			: Vertex w position in local coordinates of the target plane (mm)
+   *  vertex_u_var    			: Vertex u position variance in local coordinates of the target plane (mm^2)
+   *  vertex_v_var    			: Vertex v position variance in local coordinates of the target plane (mm^2)
+   *  vertex_w_var    			: Vertex w position variance in local coordinates of the target plane (mm^2)
+   *  vertex_x        			: Vertex x position in global coordinates (mm)
+   *  vertex_y        			: Vertex y position in global coordinates (mm)
+   *  vertex_z        			: Vertex z position in global coordinates (mm)
+   *  vertex_x_var    			: Vertex x position variance in global coordinates (mm^2)
+   *  vertex_y_var    			: Vertex y position variance in global coordinates (mm^2)
+   *  vertex_z_var    			: Vertex z position variance in global coordinates (mm^2)
+   *  vertex_chi2     			: Chi2 value of the vertex fit
+   *  vertex_prob     			: p value of the vertex fit
+   *  vertex_u_res    			: Vertex u residual (mm)
+   *  vertex_v_res    			: Vertex v residual (mm)
+   *  vertex_multiplicity	    : Vertex multiplicity (= number of downstream track propagating from this vertex)
+   *  vertex_id	   				: Vertex ID (determined by the upstream track)
    
 
 ##3. X/X0 imaging (uncalibrated):
@@ -117,6 +133,10 @@ most important ones are:
   * (u/v)residualmean_image    		: Image of the u and v residuals of down and upstream track
   * beamspot                         : Image of number of tracks 
   * BE_image                         : Image of the particle momentum/beam energy
+  * vertex_w_mean_image              : Image of the mean vertex w position , this might be useful, when trying to align the target plane
+  * vertex_w_rms_image              : Image of the vertex w position RMS, this parameter can be used as a complementary thickness measurement
+  * vertex_chi2_image              : Image of the vertex fit chi2 value
+  * vertex_multiplicity_image              : Image of the vertex multiplicity, this parameter also has a thickness/X/X0 dependency
 
 ## Calibration of beam energy and telescope angle resolution:
 

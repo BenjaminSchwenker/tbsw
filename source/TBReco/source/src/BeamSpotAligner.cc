@@ -61,12 +61,16 @@ BeamSpotAligner::BeamSpotAligner() : Processor("BeamSpotAligner")
 // Define processor parameters 
    
    registerProcessorParameter ("AlignmentDBFileName",
-                             "This is the name of the LCIO file with the alignment constants (add .slcio)",
-                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.slcio" ) );   
+                             "This is the name of the file with the alignment constants (add .root)",
+                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) );   
                    
    registerProcessorParameter ("UpdateAlignment",
                               "Update alignment DB using offset corrections (true/false)?",
                               _updateAlignment, static_cast <bool> (false) ); 
+   
+   registerProcessorParameter ("NewAlignment",
+                              "Start alignment from scratch (true/false)?",
+                              _newAlignment, static_cast <bool> (false) ); 
    
    registerProcessorParameter ("OutputRootFileName",
                               "This is the name of the output root file",
@@ -87,7 +91,9 @@ void BeamSpotAligner::init() {
   _detector.ReadGearConfiguration();    
   
   // Read alignment data base file 
-  _detector.ReadAlignmentDB( _alignmentDBFileName );      
+  if(!_newAlignment) _detector.ReadAlignmentDB( _alignmentDBFileName );
+  // This is needed, because if the AlignmentDB is not read, the detector construct doesn't know the alignmentDB name
+  else  _detector.SetAlignmentDBName( _alignmentDBFileName );   
   
   // Book all needed histograms 
   bookHistos();

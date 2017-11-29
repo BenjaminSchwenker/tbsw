@@ -55,10 +55,10 @@ namespace depfet {
  *  high-resolution telescopes" by U. Stolzenberg, B. Schwenker et. al. 
  *  (Printed in the proceedings of VCI 2016). 
  * 
- *  Author: U.Stolzenberg, UniversitÃ¤t GÃ¶ttingen
+ *  Author: U.Stolzenberg, Universität Göttingen
  *  <mailto:ulf.stolzenberg@stud.uni-goettingen.de>
  *  
- *  Author: B.Schwenker, UniversitÃ¤t GÃ¶ttingen
+ *  Author: B.Schwenker, Universität Göttingen
  *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
  */
    
@@ -112,46 +112,78 @@ protected:
 //! DUT plane number 
    int _idut; 
 
+//! DUT plane number 
+   bool _vertexfitswitch; 
+
+//! Max vertex chi2/ndof
+   double _maxVertexChi2;
+
 //! Max distance
-   double _maxDist; 
+   double _maxDist;  
      
      
 // ROOT_OUTPUT 
    TFile * _rootFile;
    
    TTree * _rootMscTree;
-   TTree * _rootEventTree;  
+   TTree * _rootEventTree;
     
    // Event tree variables 
-   int _rootEventNumber;
-   int _rootRunNumber;   
-   int _rootnDownTracks;    
-   int _rootnUpTracks;    
-   int _rootNMatched;
+   // Each entry corresponds to a new event
+   int _rootEventNumber;							// Event number of the track
+   int _rootRunNumber;   							// Run number of the track
+   int _rootnDownTracks;    						// Number of downstream tracks in this event
+   int _rootnUpTracks;    							// Number of upstream tracks in this event
+   int _rootNMatched;								// Number of matched upstream and downstream tracks in this event
+													// If there are multiple downstream tracks that have been matched to a upstream track, it still only counts as 1 matched track 
 
-   // Msc tree variables    
-   double _rootTrackProbUp;
-   double _rootTrackProbDown;
-   double _rootTrackProbCombo;
-   
-   double _root_u; 
-   double _root_v; 
-   double _root_u_var; 
-   double _root_v_var; 
-   double _root_u_in; 
-   double _root_v_in; 
-   double _root_u_out; 
-   double _root_v_out; 
-   double _root_dudw;
-   double _root_dvdw;
-   double _root_angle1;
-   double _root_angle2;
-   double _root_angle1_var;
-   double _root_angle2_var;
-   double _root_momentum;
-   double _root_vertex_chi2;
-   double _root_vertex_prob;
-   
+   // Upstream track tree variables
+   // Each entry corresponds to a upstream-downstream track combination that passed the chi2 criterium of the vertex fit  
+   // This means that the root tree may contain multiple entries with the same upstream but different downstream tracks (see _rootVertexMultiplicity)
+
+   double _rootTrackProbUp;							// p value of upstream track
+   double _rootTrackProbDown;						// p value of downstream track
+   double _rootTrackProbCombo;						// p value of combination of down and upstream track
+
+   double _root_u; 									// u intersection coordinate on central plane, weighted mean of up- and downstream track intersection (mm)
+   double _root_v; 									// v intersection coordinate on central plane, weighted mean of up- and downstream track intersection (mm)
+   double _root_u_var; 								// u intersection variance on central plane, determined via weighted mean of up- and downstream track u intersection variance (mm^2)
+   double _root_v_var; 								// v intersection variance on central plane, determined via weighted mean of up- and downstream track v intersection variance (mm^2)
+   double _root_u_in; 								// u intersection coordinate on central plane, estimated from the upstream track (in-state) (mm)
+   double _root_v_in;  								// v intersection coordinate on central plane, estimated from the upstream track (in-state) (mm)
+   double _root_u_out; 								// u intersection coordinate on central plane, estimated from the downstream track (out-state) (mm)
+   double _root_v_out; 								// v intersection coordinate on central plane, estimated from the downstream track (out-state) (mm)
+   double _root_angle1;								// Projected scattering angle on target in u-w plane (rad)
+   double _root_angle2;								// Projected scattering angle on target in v-w plane (rad)
+   double _root_angle1_var;							// Variance of the projected scattering angle on target in u-w plane (rad^2)
+   double _root_angle2_var;							// Variance of the projected scattering angle on target in u-w plane (rad^2)
+   double _root_momentum;							// Nominal momentum of beam particle
+
+   double _root_chi2;								// Chi2 value calculated from the up-downstream track residuals
+   double _root_prob;								// p value value calculated from the up-downstream track residuals			
+
+   int _rootVertexMultiplicity;						// Number of downstream tracks, which passed the vertexfit for this upstream track
+   double _root_vertex_u;							// Vertex u position in the local coordinate system of the target plane (mm)
+   double _root_vertex_v;							// Vertex v position in the local coordinate system of the target plane (mm)
+   double _root_vertex_w;							// Vertex w position in the local coordinate system of the target plane (mm)
+   double _root_vertex_u_var;						// Vertex u position variance in the local coordinate system of the target plane (mm^2)
+   double _root_vertex_v_var;						// Vertex v position variance in the local coordinate system of the target plane (mm^2)
+   double _root_vertex_w_var;						// Vertex w position variance in the local coordinate system of the target plane (mm^2)
+
+   double _root_vertex_x;							// Vertex x position in the global coordinate system (mm)
+   double _root_vertex_y;							// Vertex y position in the global coordinate system (mm)
+   double _root_vertex_z;							// Vertex z position in the global coordinate system (mm)
+   double _root_vertex_x_var;						// Vertex x position variance in the global coordinate system (mm^2)
+   double _root_vertex_y_var;						// Vertex y position variance in the global coordinate system (mm^2)
+   double _root_vertex_z_var;						// Vertex z position variance in the global coordinate system (mm^2)
+
+   double _root_vertex_chi2ndf;						// chi2 value per degree of freedom of the vertex fit
+   double _root_vertex_prob;						// p value of the vertex fit
+   double _root_vertex_u_res;						// u residual of the vertex fit (mm)
+   double _root_vertex_v_res;						// v residual of the vertex fit (mm)
+   int _root_vertex_multiplicity;					// Number of downstream tracks, which passed the vertex fit for this upstream track
+   int _root_vertex_id;								// Vertex ID, corresponds to the upstream track number 
+
  private:
    
    // Handle to detector data 

@@ -46,17 +46,17 @@ namespace depfet {
    *     limited due to high beam energies and/or small material budget.  
    *  
    *  A global coordinate system can be introduced by indentifying the z axis 
-   *  with the beam axis. The misalinment of sensors in XY is by for the largest
+   *  with the beam axis. The misalinment of sensors in XY is the largest
    *  source of misalignment. Misalgnment in sensor tilts from the nominal values 
    *  will be neglected at this point. 
    *  
-   *  The correlator algorithm seeds seed track candidates from a single hit on 
+   *  The correlator algorithm creates seed track candidates from a single hit on 
    *  a user defined reference sensor. The seed track is extrapolated from sensor 
-   *  to sensor using straight line model parallel to the z axis. The algorithms 
+   *  to sensor using straight lines parallel to the z axis. The algorithms 
    *  now fills histograms with u and v residual seperately for all sensors. 
    * 
    *  After processing many events, the residuals histograms should show a peak 
-   *  a flat combinatorial background. Alignment corrections are computed by 
+   *  over a flat combinatorial background. Alignment corrections are computed by 
    *  centering the position of the residual peak to zero. 
    *
    *   
