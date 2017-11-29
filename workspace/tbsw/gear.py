@@ -70,6 +70,12 @@ def Create_AlignmentDBFile_From_Gear(gearfile=None, truthdbfilename=None):
   # get number of planes
   nentries=len(id_list2)
 
+  # ID histogram
+  hSensorID = TH1F("hSensorID","",nentries,0,nentries)
+  hSensorID.SetTitle("")
+  hSensorID.GetXaxis().SetTitle("plane")
+  hSensorID.GetYaxis().SetTitle("Sebsor ID") 
+
   # X position histogram
   hPositionX = TH1F("hPositionX","",nentries,0,nentries)
   hPositionX.SetTitle("")
@@ -113,6 +119,7 @@ def Create_AlignmentDBFile_From_Gear(gearfile=None, truthdbfilename=None):
     index = id_list.index(sensid)
   
     # Fill histograms
+    hSensorID.SetBinContent(bin+1,id_list[index])
     hPositionX.SetBinContent(bin+1,xpos_list[index])
     hPositionY.SetBinContent(bin+1,ypos_list[index])
     hPositionZ.SetBinContent(bin+1,zpos_list[index])

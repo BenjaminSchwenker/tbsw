@@ -223,7 +223,6 @@ bool TBKalmanMSC::ProcessTrack(TBTrack& trk, int dir, bool biased)
   return false;
 }
 
-
 CLHEP::HepMatrix TBKalmanMSC::GetScatterKinks(Det& DetUnit, TBTrackState& InState, TBTrackState& OutState)
 {
   double slopes[4];

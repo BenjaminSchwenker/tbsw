@@ -138,7 +138,7 @@ class TBKalmanMSC {
    */
   CLHEP::HepMatrix slopestotheta(double slopes[4]);
 
- 
+
   CLHEP::HepMatrix& GetHMatrix()
     { return H;} 
   

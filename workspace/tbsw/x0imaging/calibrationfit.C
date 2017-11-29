@@ -869,7 +869,7 @@ void shiftbins(TH1* histogram, double mean1)
 		}
 		for (Int_t j=1;j<=1-binx;j++) 
 		{
-		   	 histogram->SetBinContent(j, histogram->GetBinContent(0));
+		   	 histogram->SetBinContent(j,0);
 		}
 	}
 }
@@ -1067,6 +1067,10 @@ void savehisto(TFile* file, TFile* file2, TString histoname, TString range, std:
 		// Save mean of both distributions in arrays
 		mean1=histogram1->GetMean();
 		mean2=histogram2->GetMean();
+
+		double limits=2.5*(histogram1->GetRMS()+histogram2->GetRMS());
+		int nbins=500;
+		range.Form("%i,%f,%f",nbins,-limits,limits);
 	}
 
 	// Draw histogram of the first scattering angle in the given u and v range and save it
@@ -1286,8 +1290,6 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// data size definition 
 	// needed during the fit
 	int datasize;
-
-	cout<<"1"<<endl;
 	
     // Create globalChi2 object, which will be used during the fitting to return fit chi2 values and update the global parameters
 	GlobalChi2 globalChi2;
@@ -1316,9 +1318,6 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 	// Set parameter mapping array in the global chi2 object
 	globalChi2.SetArray();
-
-
-	cout<<"2"<<endl;
     
 	ROOT::Fit::Fitter fitter;
 
@@ -1681,6 +1680,8 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 			cutparameters_vertex_multiplicity.push_back(vertexmultiplicitymin);
 			cutparameters_vertex_multiplicity.push_back(vertexmultiplicitymax);
 
+			// Set the range and number of bins of the histogram
+			range.Form("%i,%f,%f",nbins,range1,range2);
 
 			// Save the angle histograms of the current measurement area to the root file
 			correcthisto(X0file,rootfile, histoname, range, cutparameters_position, cutparameters_run, cutparameters_vertex_multiplicity);
