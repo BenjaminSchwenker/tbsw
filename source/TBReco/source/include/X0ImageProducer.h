@@ -55,10 +55,10 @@ namespace depfet {
  *  high-resolution telescopes" by U. Stolzenberg, B. Schwenker et. al. 
  *  (Printed in the proceedings of VCI 2016). 
  * 
- *  Author: U.Stolzenberg, UniversitÃ¤t GÃ¶ttingen
+ *  Author: U.Stolzenberg, Universität Göttingen
  *  <mailto:ulf.stolzenberg@stud.uni-goettingen.de>
  *  
- *  Author: B.Schwenker, UniversitÃ¤t GÃ¶ttingen
+ *  Author: B.Schwenker, Universität Göttingen
  *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
  */
    
@@ -115,7 +115,7 @@ protected:
 //! DUT plane number 
    bool _vertexfitswitch; 
 
-//! Max vertex chi2
+//! Max vertex chi2/ndof
    double _maxVertexChi2;
 
 //! Max distance
