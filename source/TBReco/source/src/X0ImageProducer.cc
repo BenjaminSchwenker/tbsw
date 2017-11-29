@@ -90,7 +90,7 @@ X0ImageProducer::X0ImageProducer() : Processor("X0ImageProducer")
                                _rootFileName, std::string("X0.root"));
 
   registerProcessorParameter ("MaxVertexChi2",
-                              "Maximal Chi2 value for vertex fit of matched up and downstream tracks, only used when VertexFitSwitch is true",
+                              "Maximal Chi2/Ndof value for vertex fit of matched up and downstream tracks, only used when VertexFitSwitch is true",
                               _maxVertexChi2,  static_cast < double > (10.0));
 
   registerProcessorParameter ("MaxDist",
