@@ -50,7 +50,7 @@ mean_list=[0.0,0.0,0.0,0.0,0.0,0.0]
 sigma_list=[0.1,0.1,0.1,0.1,0.1,0.1]
 
 # List of sensor ids and modes, which are excluded during misalignment
-sensorexception_list=[11,5,0] 
+sensorexception_list=[5,0] 
 modeexception_list=['positionZ']
 
 # Nominal Beam energy
