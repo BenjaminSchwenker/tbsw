@@ -824,11 +824,24 @@ double getanglerecovar(TFile* file)
 	// Draw reconstruction error 1 histogram
 	msc_tree->Draw("theta1_var", "", "P*");
 
-	// Get mean value
-	double recovar = msc_tree->GetHistogram()->GetMean();
+	// Get mean value 1
+	double recovar1 = msc_tree->GetHistogram()->GetMean();
 
-	// Get maximum value
-	double recovar_error = msc_tree->GetHistogram()->GetMeanError();	//max methode
+	// Get error 1
+	double recovar1_error = msc_tree->GetHistogram()->GetMeanError();
+
+	// Draw reconstruction error 1 histogram
+	msc_tree->Draw("theta2_var", "", "P*");
+
+	// Get mean value 2
+	double recovar2 = msc_tree->GetHistogram()->GetMean();
+
+	// Get error 2
+	double recovar2_error = msc_tree->GetHistogram()->GetMeanError();
+
+	// Calculate mean value
+	double recovar=(recovar1+recovar2)/2.0;
+	double recovar_error=sqrt(recovar1_error*recovar1_error+recovar2_error*recovar2_error)/2.0;
 
 	// The recovar error shouldn't be too large! 
 	cout<<"Angle Reconstruction Variance: 	"<<recovar<<" +/- "<<recovar_error<<"rad^2"<<endl; 
@@ -1264,6 +1277,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 			else fitFcn = new TF1(fctname,highlandfunction,-fitrange,fitrange,num_localparameters);
 		}
 
+
 		// Fill vector with pointers to fit functions
 		fitFcn_vec.push_back(fitFcn);
 
@@ -1403,6 +1417,24 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 	int ** parameter_mapping=GetParameterMapping(num_fitfunctions);
 
+
+	// Names of the 14 local parameters
+	TString name[num_localparameters];
+	name[0]="E[GeV]";
+	name[1]="z[e]";
+	name[2]="m[GeV/c^2]";
+	name[3]="#rho[g/cm^3]";
+	name[4]="Z";
+	name[5]="A";
+	name[6]="X[mm]";
+	name[7]="#sigma_{err}[rad]";
+	name[8]="#lambda";
+	name[9]="norm";
+	name[10]="u[mm]";
+	name[11]="v[mm]";
+	name[12]="#nablaE_{u}[GeV/mm]";
+	name[13]="#nablaE_{v}[GeV/mm]";
+
 	for(int i=0;i<num_fitfunctions;i++)
 	{	
 
@@ -1413,15 +1445,19 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		}
 
 		fitFcn_vec.at(i)->SetFitResult( result, parameters);
-
+	
 		fitrange=DetermineFitrange(histo_vec.at(i),minvalue);
-		fitFcn_vec.at(i)->SetRange(-fitrange,fitrange);  
-		fitFcn_vec.at(i)->SetLineColor(kRed);
+		TF1 * fitfunc=fitFcn_vec.at(i);
+		fitfunc->SetRange(-fitrange,fitrange);  
+		fitfunc->SetLineColor(kRed);
+
 		histo_vec.at(i)->GetListOfFunctions()->Add(fitFcn_vec.at(i));
 		histoname.Form("gridpoint%i",i+1);
 		// display mode
 		gStyle->SetOptFit(1111111);
 		histo_vec.at(i)->Write("thetasum_"+histoname+"_fit");
+
+		for(int iname=0;iname<num_localparameters;iname++) fitfunc->SetParName(iname,name[iname]);
 	}
 
 	// Plot the fit results, print them in terminal and save them to histogram
@@ -1454,14 +1490,14 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		cout<<"Fit function "<<i<<endl;
 		//cout<<"Chi2 value for this individual fit is: "<<fitFcn_vec.at(i)->GetChisquare()<<endl;
 		cout<<"Chi2 value for this individual fit is: "<<histo_vec.at(i)->Chisquare(fitFcn_vec.at(i),"R")<<endl;
-//		cout<<"Number of degrees of freedom is: "<<fitFcn_vec.at(i)->GetNDF()<<endl;
-//		cout<<"Alternatively: Chi2 is: "<<chi2.at(i)(fitFcn_vec.at(i)->GetParameters())<<endl;
+		cout<<"Number of degrees of freedom is: "<<fitFcn_vec.at(i)->GetNDF()<<endl;
+		cout<<"Alternatively: Chi2 is: "<<chi2.at(i)(fitFcn_vec.at(i)->GetParameters())<<endl;
 		cout<<"--------------------------"<<endl;
 
-		chi2_summation+=pow(histo_vec.at(i)->Chisquare(fitFcn_vec.at(i),"R"),2);
+		chi2_summation+=chi2.at(i)(fitFcn_vec.at(i)->GetParameters());
 	}
 	
-	cout<<"The quadratic sum of these chi2 values is: "<<sqrt(chi2_summation)<<endl;
+	cout<<"The sum of these chi2 values is: "<<chi2_summation<<endl;
 	TString pdfname,Title;
 
 	for(int i=0;i<TMath::Ceil(double(num_fitfunctions)/4.0);i++)
@@ -1491,8 +1527,8 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 				Title.Form("Area %i: d=%fmm",(4*i)+j,grid.GetMeasurementAreas().at((4*i)+j).Get_thickness());
 				histo_vec.at((4*i)+j)->SetTitle(Title);
 				histo_vec.at((4*i)+j)->Draw();
-                        	cout<<"fitfunction "<<(4*i)+j<<" of "<<num_fitfunctions<<endl;
-                        }
+                cout<<"fitfunction "<<(4*i)+j<<" of "<<num_fitfunctions<<endl;
+            }
 		}
 
 		pdfname=model+"_results_"+canvasname+".pdf";
@@ -1505,10 +1541,10 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 	TH1F * resultshist=new TH1F("resultshist","results of calibration",4,1,4);
 
-    resultshist->GetXaxis()->SetBinLabel( 1, "lambda" );
-    resultshist->GetXaxis()->SetBinLabel( 2, "BE_mean[GeV]" );
-    resultshist->GetXaxis()->SetBinLabel( 3, "BE_u_grad[GeV/mm]" );
-    resultshist->GetXaxis()->SetBinLabel( 3, "BE_u_grad[GeV/mm]" );
+    resultshist->GetXaxis()->SetBinLabel( 1, "#lambda" );
+    resultshist->GetXaxis()->SetBinLabel( 2, "E_{mean}[GeV]" );
+    resultshist->GetXaxis()->SetBinLabel( 3, "#nablaE_{u}[GeV/mm]" );
+    resultshist->GetXaxis()->SetBinLabel( 4, "#nablaE_{v}[GeV/mm]" );
 
 	// Save the results to histogram
 	resultshist->SetBinContent(1,fitresults[0]);
@@ -1729,6 +1765,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 	cout<<" The lambda calibration factor is: "<<iresults[0]<<" +/- "<<iresults[1]<<endl;
 	cout<<" The mean beam energy at (0,0) is: "<<iresults[2]<<" +/- "<<iresults[3]<<"GeV"<<endl;
+	cout<<" The kappa calibration factor is: "<<BE_mean/iresults[2]<<" +/- "<<iresults[3]*BE_mean/(iresults[2]*iresults[2])<<endl;
 	cout<<" The BE gradient in u direction is: "<<iresults[4]<<" +/- "<<iresults[5]<<"GeV/mm"<<endl;
 	cout<<" The BE gradient in v direction is: "<<iresults[6]<<" +/- "<<iresults[7]<<"GeV/mm"<<endl;
 

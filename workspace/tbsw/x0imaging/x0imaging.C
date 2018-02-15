@@ -372,9 +372,8 @@ using namespace std ;
 
   }
 
-
   // Function to fit the MSC angle histograms and fill the map histograms
-  void fithisto( TFile* file, int fittype, int col, int numcol, int row,int numrow, double* parameters)
+  void fithisto( TFile* file, int fittype, double maxchi2ndof_fit, int col, int numcol, int row,int numrow, double* parameters)
   { 
 	// Calculate number of parameters
 	int num_parameters = 7;
@@ -538,7 +537,7 @@ using namespace std ;
 		chi2ndofsum=fitsum->GetChisquare()/(fitsum->GetNDF()*1.0);	
 
 		// define chi2 cut
-		double chi2_cut=20.0;
+		double chi2_cut=maxchi2ndof_fit;
 
 		// Use the chi2 values for quality cuts
 		if((fittype==0)&&((chi2ndof1+chi2ndof2)>chi2_cut*2.0))
@@ -992,12 +991,15 @@ int x0imaging()
 	cout<<"Minimal v value:"<<vmin<<" mm"<<endl;
 	cout<<"Max. v value:"<<vmax<<" mm"<<endl;
 
-    // Vertex multiplicity cu (should be 1 for default X0 analysis)
+    // Vertex multiplicity cut (should be 1 for default X0 analysis)
 	int vertex_multiplicity_min=mEnv.GetValue("vertexmultiplicitymin", 1);
 	int vertex_multiplicity_max=mEnv.GetValue("vertexmultiplicitymax", 1);
 
 	cout<<"Minimal vertex multiplicity:"<<vertex_multiplicity_min<<endl;
 	cout<<"Maximal vertex multiplicity:"<<vertex_multiplicity_max<<endl;
+
+    // Vertex multiplicity cut (should be 1 for default X0 analysis)
+	double maxchi2ndof_fit=mEnv.GetValue("maxchi2ndof", 10.0);
 
 	// Choose the type of fit
 	// 0: gaussian fit function with cuts on the tails, both kink distributions are used seperately
@@ -1420,7 +1422,7 @@ int x0imaging()
 			double parameters[7]={mom,charge,mass,0.01,recoerror,300,0.0};
 
 			// fit the histograms
-			fithisto(rootfile, fittype,col,numcol,row,numrow,parameters);
+			fithisto(rootfile, fittype, maxchi2ndof_fit, col,numcol,row,numrow,parameters);
 		}
 	}
 

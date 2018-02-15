@@ -16,7 +16,7 @@ def x0imaging(filename=None,caltag='',deletetag='0',steerfiles=None,nametag=''):
     :@deletetag:   Delete partial images afterwards
     :@steerfiles:  Directory, where the image cfg file lies
     :@nametag:     Name tag, that is used to modify the output filename 
-    :author: ulf.stolzenberg@phys.uni-goettinge.de  
+    :author: ulf.stolzenberg@phys.uni-goettingen.de  
   """   
 
   cfgfilename=steerfiles+'image.cfg'
@@ -42,7 +42,7 @@ def x0calibration(filename=None,imagefilename='',caltag='default',steerfiles=Non
     :@filename:    Input root file with calibration data 
     :@caltag:      Use x0 calibration parameters from cfg files in the caltag subdirectory and save results there    
     :@steerfiles:  Directory, where the image cfg file lies
-    :author: ulf.stolzenberg@phys.uni-goettinge.de  
+    :author: ulf.stolzenberg@phys.uni-goettingen.de  
   """   
 
   if filename == None:
@@ -67,7 +67,7 @@ def merge_rootfile(filename=None,RunList='',caltag=None):
   Merges all root files from a list
     :@filename:    Name of merged output rootfile 
     :@RunList:     List of filenames , which will be merged   
-    :author: ulf.stolzenberg@phys.uni-goettinge.de  
+    :author: ulf.stolzenberg@phys.uni-goettingen.de  
   """ 
 
   if filename == None:
