@@ -291,14 +291,14 @@ if __name__ == '__main__':
   print(params_cali)
 
   # Calibrate the telescope 
-  #calibrate( params_cali )
+  calibrate( params_cali )
 
   for it in range(0,targetalignment_iterations):
     params_TA = (rawfile_TA, steerfiles_reco, gearfile, caltag, it)
     print "The parameters for the target alignment are: " 
     print params_TA
 
-    #targetalignment(params_TA)
+    targetalignment(params_TA)
 
   params_reco=[(x, steerfiles_reco, gearfile, caltag) for x in RunList_reco]
   print "The parameters for the reconstruction are: " 
@@ -306,7 +306,7 @@ if __name__ == '__main__':
 
   count = multiprocessing.cpu_count()
   pool = multiprocessing.Pool(processes=count)
-  #pool.map(reconstruct, params_reco)
+  pool.map(reconstruct, params_reco)
 
   deletetag='1'
 
