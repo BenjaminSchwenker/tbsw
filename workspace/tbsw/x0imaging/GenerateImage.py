@@ -100,6 +100,9 @@ if __name__ == '__main__':
   # Max fit chi2ndof value
   this_maxchi2ndof = config.get('x0image', 'maxchi2ndof')
 
+  # fit range parameter value
+  this_fitrangeparameter = config.get('x0image', 'fitrange_parameter')
+
   # Vertex multiplicity cut parameters
   this_vertex_multiplicity_min = config.get('x0image', 'vertex_multiplicity_min')
   this_vertex_multiplicity_max = config.get('x0image', 'vertex_multiplicity_max')
@@ -189,6 +192,7 @@ if __name__ == '__main__':
       config.set('image', 'x0filename', this_x0filename)
       config.set('image', 'x0fileidentifier', this_x0fileidentifier)
       config.set('image', 'maxchi2ndof', this_maxchi2ndof)
+      config.set('image', 'fitrange_parameter', this_fitrangeparameter)
       config.set('image', 'umin', this_umin)
       config.set('image', 'vmax', this_vmax)
       config.set('image', 'maxupixels', this_maxupixels)

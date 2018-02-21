@@ -38,20 +38,23 @@ rawfile_air = os.getcwd()+'/mc-air.slcio'
 rawfile_alu = os.getcwd()+'/mc-alu.slcio'
 
 # Tag for calibration data
-localcaltag = os.path.splitext(os.path.basename(rawfile_air))[0] + '-test'
+caltag = os.path.splitext(os.path.basename(rawfile_air))[0] + '-test'
 
 # Number of events to simulate 
 nevents_air = 600000
-nevents_alu = 5000000
+nevents_TA = 1000000
+nevents_alu = 6000000
 
 #Parameters for simulation of misalignment
 #Position parameters in mm
 mean_list=[0.0,0.0,0.0,0.0,0.0,0.0] 
-sigma_list=[0.1,0.1,0.1,0.1,0.1,0.1]
+sigma_list=[1.0,1.0,1.0,0.1,0.1,0.1]
 
 # List of sensor ids and modes, which are excluded during misalignment
 sensorexception_list=[5,0] 
-modeexception_list=['positionZ']
+modeexception_list=['']
+
+targetalignment_iterations=3
 
 # Nominal Beam energy
 beamenergy=2.0
@@ -207,13 +210,13 @@ def create_calibration_path(Env):
   return calpath
 
 
-def create_reco_path(Env):
+def create_reco_path(Env, numberoftracks):
   """
   Returns a list of tbsw path objects to reconstruct a test beam run 
   """
   
   reco = Env.create_path('reco')
-  reco.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_alu, 'LCIOInputFiles': rawfile_alu }) 
+  reco.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : numberoftracks, 'LCIOInputFiles': rawfile_alu }) 
   reco.add_processor(name="M26Clusterizer")
   reco.add_processor(name="M26GoeHitMaker")
   reco.add_processor(name="DownstreamFinder")
@@ -261,8 +264,8 @@ def simulate():
 
 
   # Create caltag for the truthdb
-  localcaltag = os.path.splitext(os.path.basename(rawfile_air))[0] + '-test'
-  simcaltag=localcaltag+ '-truthdb'
+  caltag = os.path.splitext(os.path.basename(rawfile_air))[0] + '-test'
+  simcaltag=caltag+ '-truthdb'
 
   # Run simulation to create rawfile with simulated digits 
   SimObj.simulate(path=simpath,caltag=simcaltag)  
@@ -279,7 +282,7 @@ def calibrate():
   
   # Calibrate of the run using beam data. Creates a folder cal-files/caltag 
   # containing all calibration data. 
-  CalObj = Calibration(steerfiles=steerfiles, name=localcaltag + '-cal') 
+  CalObj = Calibration(steerfiles=steerfiles, name=caltag + '-cal') 
 
   # Set Beam energy
   CalObj.set_beam_momentum(beamenergy)
@@ -293,22 +296,64 @@ def calibrate():
   calpath = create_calibration_path(CalObj)
   
   # Run the calibration steps 
-  CalObj.calibrate(path=calpath,ifile=rawfile_air,caltag=localcaltag)  
+  CalObj.calibrate(path=calpath,ifile=rawfile_air,caltag=caltag)  
 
 def reconstruct():
 
   # Reconsruct the rawfile using the caltag. Resulting root files are 
   # written to folder root-files/
-  RecObj = Reconstruction(steerfiles=steerfiles, name=localcaltag + '-reco' )
+  RecObj = Reconstruction(steerfiles=steerfiles, name=caltag + '-reco' )
 
   # Set Beam energy
   RecObj.set_beam_momentum(beamenergy)
 
   # Create reconstuction path
-  recopath = create_reco_path(RecObj)  
+  recopath = create_reco_path(RecObj,nevents_alu)  
+
+  # Use caltag of the last target alignment iteration
+  iteration_string='-target-alignment-it'+str(targetalignment_iterations-1)
+  localcaltag=caltag+iteration_string 
 
   # Run the reconstuction  
   RecObj.reconstruct(path=recopath,ifile=rawfile_alu,caltag=localcaltag) 
+
+def targetalignment(iteration=None):
+
+  if iteration == None:
+    return None
+
+  prev_iteration_string='-target-alignment-it'+str(iteration-1)
+  curr_iteration_string='-target-alignment-it'+str(iteration)
+
+  localcaltag=caltag+prev_iteration_string
+
+  if iteration == 0:
+    localcaltag=caltag
+
+
+  newcaltag=caltag+curr_iteration_string
+
+  # Reconsruct the rawfile using the caltag. Resulting root files are 
+  # written to folder root-files/
+  RecObj = Reconstruction(steerfiles=steerfiles, name=newcaltag )
+
+  # Set Beam energy
+  RecObj.set_beam_momentum(beamenergy)
+
+  # Create reconstuction path
+  recopath = create_reco_path(RecObj,nevents_TA)  
+
+  # Run the reconstuction  
+  RecObj.reconstruct(path=recopath,ifile=rawfile_alu,caltag=localcaltag) 
+
+  # Read the vertex position and save it in the alignmentDB
+  dbname=RecObj.create_dbfilename(alignmentdb_filename)
+  treename=RecObj.get_rootfilename('X0')
+  print treename
+  print dbname
+  save_targetpos(treename,dbname)
+  RecObj.export_caltag(newcaltag)
+  
   
 
   
@@ -323,6 +368,9 @@ if __name__ == '__main__':
 
   # Calibrate the telescope 
   calibrate( )
+
+  for it in range(0,targetalignment_iterations):
+    targetalignment(it)
 
   # Reconstruct the alu rawfile 
   reconstruct( )

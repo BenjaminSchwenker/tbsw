@@ -483,7 +483,10 @@ def Modify_AlignmentDBFile(dbfilename=None, planenumber=None, mode=None, value=N
   if value == None:
     return None
     
-  dbfile = TFile( dbfilename, 'UPDATE' )
+  if os.path.isfile(dbfilename):
+    dbfile = TFile( dbfilename, 'UPDATE' )
+  else: 
+    raise ValueError('alignment DB ('+dbfilename+') file not found') 
 
   # Get access to histogram  
 

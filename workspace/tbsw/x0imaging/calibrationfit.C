@@ -1177,7 +1177,7 @@ void savehisto(TFile* file, TFile* file2, TString histoname, TString range, std:
 }
 
 // Function to fit the MSC angle histograms simultaneously, it returns a pointer to the fit results
-double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double recoerr, TString model, std::vector<bool> fitoptions)
+double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double recoerr, TString model, std::vector<bool> fitoptions, double rangevalue)
 { 
 
 	// Read out the parameters from the beamoptions vector
@@ -1248,12 +1248,8 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// loop for definition of the fit functions, the fitrange is determined for every one of them
 	for(int i=0;i<num_fitfunctions;i++)
 	{
-		// Fitrange depends on model
-		if(model=="moliere") minvalue=1.0/(10*2.71);
-		else minvalue=1.0/(1.0*2.71);
-
-		// And fit range is also smaller, when there is only air
-		if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0001) minvalue=1.0/(1.5*2.71);
+		// Fitrange depends is given via rangevalue, which is adjustable in the steer files
+		minvalue=1.0/(rangevalue*2.71);
 
 		fitrange=DetermineFitrange(histo_vec.at(i),minvalue);
 		fctname.Form("fitFcn%i",i);
@@ -1454,7 +1450,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		histo_vec.at(i)->GetListOfFunctions()->Add(fitFcn_vec.at(i));
 		histoname.Form("gridpoint%i",i+1);
 		// display mode
-		gStyle->SetOptFit(1111111);
+		gStyle->SetOptFit(1111);
 		histo_vec.at(i)->Write("thetasum_"+histoname+"_fit");
 
 		for(int iname=0;iname<num_localparameters;iname++) fitfunc->SetParName(iname,name[iname]);
@@ -1602,6 +1598,9 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
     bool fix_offset=mEnv->GetValue("fix_momentumoffset", 0);
 	bool fix_u_gradient=mEnv->GetValue("fix_momentumugradient", 0);
 	bool fix_v_gradient=mEnv->GetValue("fix_momentumvgradient", 0);
+
+	// Read out the parameter that determines the range of the fit
+	double rangevalue=mEnv->GetValue("fitrange_parameter", 2.0);
 
 	// Integer determining, whether a offset correction is applied to the angular distributions
 	// 1: correction
@@ -1761,7 +1760,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	cout<<"Beam particle energy v gradient start value is				"<<BE_vgrad<<" GeV/mm"<<endl;
 	cout<<"Beam particle lambda		 start value is				"<<lambda_start<<endl;
 
-	double* iresults=fit(rootfile, grid, beamoptions, recoerr, model, fitoptions);
+	double* iresults=fit(rootfile, grid, beamoptions, recoerr, model, fitoptions, rangevalue);
 
 	cout<<" The lambda calibration factor is: "<<iresults[0]<<" +/- "<<iresults[1]<<endl;
 	cout<<" The mean beam energy at (0,0) is: "<<iresults[2]<<" +/- "<<iresults[3]<<"GeV"<<endl;

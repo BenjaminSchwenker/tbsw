@@ -31,18 +31,30 @@ gearfile = 'gear.xml'
 caltag='air'
 x0tag='05mmalu'
 # File name for raw data 
-rawfile_cali = '/work1/rawdata/DESY_Oktober16/2GeV_air/run006973.raw'
+rawfile_cali = '/work1/rawdata/tboct16/run006973.raw'
+rawfile_TA = '/work1/rawdata/tboct16/run006958.raw'
 # Nominal Beam energy
 beamenergy=2.0
 
+# Alignment DB file name
+alignmentdb_filename='alignmentDB.root'
+
+# Number of iterations during target alignment
+targetalignment_iterations=3
+
 RunList_reco = [
-		    '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006958.raw',
-		    '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006959.raw',
-		    '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006960.raw',
-		    '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006961.raw',
+		    '/work1/rawdata/tboct16/run006958.raw',
+		    '/work1/rawdata/tboct16/run006959.raw',
+		    '/work1/rawdata/tboct16/run006960.raw',
+		    '/work1/rawdata/tboct16/run006961.raw',
           ]
-# Number of events to simulate 
+
+# Number of events ...
+# for telescope calibration
 nevents_cali = 700000
+# for target alignment
+nevents_TA = 1000000
+# for angle reconstruction
 nevents_reco = -1
 
 
@@ -163,13 +175,13 @@ def create_calibration_path(Env, rawfile, gearfile):
   return calpath
 
 
-def create_reco_path(Env, rawfile, gearfile):
+def create_reco_path(Env, rawfile, gearfile, numberofevents):
   """
   Returns a list of tbsw path objects to reconstruct a test beam run 
   """
   
   reco = Env.create_path('reco')
-  reco.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_reco}) 
+  reco.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : numberofevents}) 
   reco.add_processor(name="RawInputProcessor", params={'FileName': rawfile})
   reco.add_processor(name="M26Unpacker")
   reco.add_processor(name="M26Clusterizer")
@@ -183,7 +195,6 @@ def create_reco_path(Env, rawfile, gearfile):
 
 def reconstruct(params):
 
-  
   rawfile, steerfiles, gearfile, caltag = params
 
   # Set cal tag that includes run name
@@ -195,10 +206,55 @@ def reconstruct(params):
   RecObj.set_beam_momentum(beamenergy)
 
   # Create reconstuction path
-  recopath = create_reco_path(RecObj, rawfile, gearfile)  
+  recopath = create_reco_path(RecObj, rawfile, gearfile, nevents_reco)  
+
+  # Use caltag of the last target alignment iteration
+  iteration_string='-target-alignment-it'+str(targetalignment_iterations-1)
+  localcaltag=caltag+iteration_string
 
   # Run the reconstuction  
   RecObj.reconstruct(path=recopath,ifile=rawfile,caltag=caltag) 
+
+
+def targetalignment(params):
+
+  rawfile, steerfiles, gearfile, caltag, iteration = params
+
+  if iteration == None:
+    return None
+
+  prev_iteration_string='-target-alignment-it'+str(iteration-1)
+  curr_iteration_string='-target-alignment-it'+str(iteration)
+
+  localcaltag=caltag+prev_iteration_string
+
+  if iteration == 0:
+    localcaltag=caltag
+
+
+  newcaltag=caltag+curr_iteration_string
+
+  # Reconsruct the rawfile using the caltag. Resulting root files are 
+  # written to folder root-files/
+  RecObj = Reconstruction(steerfiles=steerfiles, name=newcaltag )
+
+  # Set Beam energy
+  RecObj.set_beam_momentum(beamenergy)
+
+  # Create reconstuction path
+  # Create reconstuction path
+  recopath = create_reco_path(RecObj, rawfile, gearfile, nevents_TA)  
+
+  # Run the reconstuction  
+  RecObj.reconstruct(path=recopath,ifile=rawfile,caltag=localcaltag) 
+
+  # Read the vertex position and save it in the alignmentDB
+  dbname=RecObj.create_dbfilename(alignmentdb_filename)
+  treename=RecObj.get_rootfilename('X0')
+  print treename
+  print dbname
+  save_targetpos(treename,dbname)
+  RecObj.export_caltag(newcaltag)
 
 def calibrate(params):
   """
@@ -235,7 +291,14 @@ if __name__ == '__main__':
   print(params_cali)
 
   # Calibrate the telescope 
-  calibrate( params_cali )
+  #calibrate( params_cali )
+
+  for it in range(0,targetalignment_iterations):
+    params_TA = (rawfile_TA, steerfiles_reco, gearfile, caltag, it)
+    print "The parameters for the target alignment are: " 
+    print params_TA
+
+    #targetalignment(params_TA)
 
   params_reco=[(x, steerfiles_reco, gearfile, caltag) for x in RunList_reco]
   print "The parameters for the reconstruction are: " 
@@ -243,7 +306,7 @@ if __name__ == '__main__':
 
   count = multiprocessing.cpu_count()
   pool = multiprocessing.Pool(processes=count)
-  pool.map(reconstruct, params_reco)
+  #pool.map(reconstruct, params_reco)
 
   deletetag='1'
 

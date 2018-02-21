@@ -373,7 +373,7 @@ using namespace std ;
   }
 
   // Function to fit the MSC angle histograms and fill the map histograms
-  void fithisto( TFile* file, int fittype, double maxchi2ndof_fit, int col, int numcol, int row,int numrow, double* parameters)
+  void fithisto( TFile* file, int fittype, double maxchi2ndof_fit, double rangevalue, int col, int numcol, int row,int numrow, double* parameters)
   { 
 	// Calculate number of parameters
 	int num_parameters = 7;
@@ -461,7 +461,7 @@ using namespace std ;
 	double uresidual_mean;
 	double vresidual_mean;
 
-	double minvalue=1.0/(2.0*2.7);
+	double minvalue=1.0/(rangevalue*2.7);
 
 	int NumberOfTracks=fithistogram1->GetEntries();
 
@@ -509,7 +509,7 @@ using namespace std ;
 
 		for(int i=0; i<num_parameters;i++)
 		{
-			if(i!=3&&i!=5&&i!=6)
+			if(i!=3&&i!=5/*&&i!=6*/)
 			{
    				fit1->FixParameter(i,parameters[i]);
    				fit2->FixParameter(i,parameters[i]);
@@ -518,9 +518,10 @@ using namespace std ;
 		}	
 
 		// The mean value of the distribution should not be shifted more than 100 µrad -> limit parameter 6
-   		fit1->SetParLimits(6,-0.0001,0.0001);
-   		fit2->SetParLimits(6,-0.0001,0.0001);
-   		fitsum->SetParLimits(6,-0.0001,0.0001);
+		// --> Just don't fit the mean, just fix it at 0.0
+   		//fit1->SetParLimits(6,-0.0001,0.0001);
+   		//fit2->SetParLimits(6,-0.0001,0.0001);
+   		//fitsum->SetParLimits(6,-0.0001,0.0001);
 
    		fit1->SetParLimits(3,0.00001,200.0);
    		fit2->SetParLimits(3,0.00001,200.0);
@@ -530,6 +531,25 @@ using namespace std ;
 		fithistogram2->Fit("theta2_fit","R");
 		fithistogramsum->Fit("thetasum_fit","R");
 
+		// Names of the 14 local parameters
+		const int num_localparameters=7;
+		TString name[num_localparameters];
+		name[0]="E";
+		name[1]="z[e]";
+		name[2]="m";
+		name[3]="X/X0";
+		name[4]="reco err";
+		name[5]="norm";
+		name[6]="mean";
+
+		gStyle->SetOptFit(1111);
+
+		for(int iname=0;iname<num_localparameters;iname++) 
+		{
+			fit1->SetParName(iname,name[iname]);			
+			fit2->SetParName(iname,name[iname]);
+			fitsum->SetParName(iname,name[iname]);
+		}
 
 		// Chi2ndof of the fit
 		chi2ndof1=fit1->GetChisquare()/(fit1->GetNDF()*1.0);
@@ -1001,6 +1021,9 @@ int x0imaging()
     // Vertex multiplicity cut (should be 1 for default X0 analysis)
 	double maxchi2ndof_fit=mEnv.GetValue("maxchi2ndof", 10.0);
 
+    // Fit range parameter
+	double rangevalue=mEnv.GetValue("fitrange_paramter", 2.0);
+
 	// Choose the type of fit
 	// 0: gaussian fit function with cuts on the tails, both kink distributions are used seperately
 	// 1: gaussian fit function with cuts on the tails, use only 1 fit on the merged histogram consisting of both distributions
@@ -1136,7 +1159,6 @@ int x0imaging()
 	// X0 map
 	TH2F * x0_image = new TH2F("x0_image","x0_image",numcol,umin,umax,numrow,vmin,vmax);
     x0_image->SetStats(kFALSE);
-    x0_image->SetMaximum(10);
     x0_image->SetMinimum(0);
     x0_image->GetXaxis()->SetTitle("u [mm]");
     x0_image->GetYaxis()->SetTitle("v [mm]");
@@ -1147,7 +1169,6 @@ int x0imaging()
 	// X0 statistical error map (absolute value)
 	TH2F * x0err_image = new TH2F("x0err_image","x0err_image",numcol,umin,umax,numrow,vmin,vmax);
     x0err_image->SetStats(kFALSE);
-    x0err_image->SetMaximum(10);
     x0err_image->SetMinimum(0);
     x0err_image->GetXaxis()->SetTitle("u [mm]");
     x0err_image->GetYaxis()->SetTitle("v [mm]");
@@ -1158,7 +1179,6 @@ int x0imaging()
 	// X0 statistical error map (relative value)
 	TH2F * x0relerr_image = new TH2F("x0relerr_image","x0relerr_image",numcol,umin,umax,numrow,vmin,vmax);
     x0relerr_image->SetStats(kFALSE);
-    x0relerr_image->SetMaximum(100);
     x0relerr_image->SetMinimum(0);
     x0relerr_image->GetXaxis()->SetTitle("u [mm]");
     x0relerr_image->GetYaxis()->SetTitle("v [mm]");
@@ -1205,6 +1225,7 @@ int x0imaging()
 	fit1prob_image->SetStats(kFALSE);
     fit1prob_image->GetXaxis()->SetTitle("u [mm]");
     fit1prob_image->GetYaxis()->SetTitle("v [mm]");
+    fit1prob_image->SetMinimum(-0.1);
     fit1prob_image->GetZaxis()->SetTitle("fit1 p value");
     fit1prob_image->GetZaxis()->SetTitleSize(0.02);
     fit1prob_image->GetZaxis()->SetLabelSize(0.02);
@@ -1221,6 +1242,7 @@ int x0imaging()
 	fit2prob_image->SetStats(kFALSE);
     fit2prob_image->GetXaxis()->SetTitle("u [mm]");
     fit2prob_image->GetYaxis()->SetTitle("v [mm]");
+    fit2prob_image->SetMinimum(-0.1);
     fit2prob_image->GetZaxis()->SetTitle("fit2 p value");
     fit2prob_image->GetZaxis()->SetTitleSize(0.02);
     fit2prob_image->GetZaxis()->SetLabelSize(0.02);
@@ -1236,6 +1258,7 @@ int x0imaging()
 	fitsumprob_image->SetStats(kFALSE);
     fitsumprob_image->GetXaxis()->SetTitle("u [mm]");
     fitsumprob_image->GetYaxis()->SetTitle("v [mm]");
+    fitsumprob_image->SetMinimum(-0.1);
     fitsumprob_image->GetZaxis()->SetTitle("fitsum p value");
     fitsumprob_image->GetZaxis()->SetTitleSize(0.02);
     fitsumprob_image->GetZaxis()->SetLabelSize(0.02);
@@ -1422,7 +1445,7 @@ int x0imaging()
 			double parameters[7]={mom,charge,mass,0.01,recoerror,300,0.0};
 
 			// fit the histograms
-			fithisto(rootfile, fittype, maxchi2ndof_fit, col,numcol,row,numrow,parameters);
+			fithisto(rootfile, fittype, maxchi2ndof_fit, rangevalue, col,numcol,row,numrow,parameters);
 		}
 	}
 
