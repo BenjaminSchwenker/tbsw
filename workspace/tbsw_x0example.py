@@ -32,6 +32,7 @@ x0tag='alutarget'
 
 # Name of the truth db file
 truthdb_filename='alignmentDB_truth.root'
+alignmentdb_filename='alignmentDB.root'
 
 # File name for raw data 
 rawfile_air = os.getcwd()+'/mc-air.slcio'
@@ -376,7 +377,7 @@ if __name__ == '__main__':
   reconstruct( )
 
   # Base filename of the X0 root file
-  basefilename='X0-'+localcaltag+'-reco'
+  basefilename='X0-mc-air-test-reco'
 
   # Total path of X0 root file
   filename='root-files/'+basefilename+'.root'

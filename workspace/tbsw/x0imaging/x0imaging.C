@@ -509,7 +509,7 @@ using namespace std ;
 
 		for(int i=0; i<num_parameters;i++)
 		{
-			if(i!=3&&i!=5/*&&i!=6*/)
+			if(i!=3&&i!=5)
 			{
    				fit1->FixParameter(i,parameters[i]);
    				fit2->FixParameter(i,parameters[i]);
@@ -527,9 +527,27 @@ using namespace std ;
    		fit2->SetParLimits(3,0.00001,200.0);
    		fitsum->SetParLimits(3,0.00001,200.0);
 
-		fithistogram1->Fit("theta1_fit","R");
-		fithistogram2->Fit("theta2_fit","R");
-		fithistogramsum->Fit("thetasum_fit","R");
+		TFitResultPtr fitr=fithistogram1->Fit("theta1_fit","RS");
+		if(fitr!=0)
+		{
+			cout<<"Fit of first angle distribution failed with status: "<<fitr<<endl;
+			cout<<"Repeat fit "<<endl;
+			fithistogram1->Fit("theta1_fit","RM");
+		}
+		fitr=fithistogram2->Fit("theta2_fit","RS");
+		if(fitr!=0)
+		{
+			cout<<"Fit of second angle distribution failed with status: "<<fitr<<endl;
+			cout<<"Repeat fit "<<endl;
+			fithistogram2->Fit("theta2_fit","RM");
+		}
+		fitr=fithistogramsum->Fit("thetasum_fit","RS");
+		if(fitr!=0)
+		{
+			cout<<"Fit of combined angle distribution failed with status: "<<fitr<<endl;
+			cout<<"Repeat fit "<<endl;
+			fithistogramsum->Fit("thetasum_fit","RM");
+		}
 
 		// Names of the 14 local parameters
 		const int num_localparameters=7;
