@@ -193,68 +193,6 @@ def create_reco_path(Env, rawfile, gearfile, numberofevents):
   return [ reco ]
 
 
-def reconstruct(params):
-
-  rawfile, steerfiles, gearfile, caltag = params
-
-  # Set cal tag that includes run name
-  name = os.path.splitext(os.path.basename(rawfile))[0] + '-' + caltag
-  
-  # Reconsruct the rawfile using the caltag. Resulting root files are 
-  # written to folder root-files/
-  RecObj = Reconstruction(steerfiles=steerfiles, name=name + '-reco' )
-  RecObj.set_beam_momentum(beamenergy)
-
-  # Create reconstuction path
-  recopath = create_reco_path(RecObj, rawfile, gearfile, nevents_reco)  
-
-  # Use caltag of the last target alignment iteration
-  iteration_string='-target-alignment-it'+str(targetalignment_iterations-1)
-  localcaltag=caltag+iteration_string
-
-  # Run the reconstuction  
-  RecObj.reconstruct(path=recopath,ifile=rawfile,caltag=caltag) 
-
-
-def targetalignment(params):
-
-  rawfile, steerfiles, gearfile, caltag, iteration = params
-
-  if iteration == None:
-    return None
-
-  prev_iteration_string='-target-alignment-it'+str(iteration-1)
-  curr_iteration_string='-target-alignment-it'+str(iteration)
-
-  localcaltag=caltag+prev_iteration_string
-
-  if iteration == 0:
-    localcaltag=caltag
-
-
-  newcaltag=caltag+curr_iteration_string
-
-  # Reconsruct the rawfile using the caltag. Resulting root files are 
-  # written to folder root-files/
-  RecObj = Reconstruction(steerfiles=steerfiles, name=newcaltag )
-
-  # Set Beam energy
-  RecObj.set_beam_momentum(beamenergy)
-
-  # Create reconstuction path
-  # Create reconstuction path
-  recopath = create_reco_path(RecObj, rawfile, gearfile, nevents_TA)  
-
-  # Run the reconstuction  
-  RecObj.reconstruct(path=recopath,ifile=rawfile,caltag=localcaltag) 
-
-  # Read the vertex position and save it in the alignmentDB
-  dbname=RecObj.create_dbfilename(alignmentdb_filename)
-  treename=RecObj.get_rootfilename('X0')
-  print treename
-  print dbname
-  save_targetpos(treename,dbname)
-  RecObj.export_caltag(newcaltag)
 
 def calibrate(params):
   """
@@ -280,6 +218,82 @@ def calibrate(params):
   CalObj.calibrate(path=calpath,ifile=rawfile,caltag=caltag)
 
 
+
+
+def reconstruct(params):
+
+  rawfile, steerfiles, gearfile, caltag = params
+
+  # Set cal tag that includes run name
+  name = os.path.splitext(os.path.basename(rawfile))[0] + '-' + caltag
+  
+  # Reconsruct the rawfile using the caltag. Resulting root files are 
+  # written to folder root-files/
+  RecObj = Reconstruction(steerfiles=steerfiles, name=name + '-reco' )
+  RecObj.set_beam_momentum(beamenergy)
+
+  # Create reconstuction path
+  recopath = create_reco_path(RecObj, rawfile, gearfile, nevents_reco)  
+
+  # Use caltag of the last target alignment iteration
+  iteration_string='-target-alignment-it'+str(targetalignment_iterations-1)
+  localcaltag=caltag+iteration_string
+
+  # Run the reconstuction  
+  RecObj.reconstruct(path=recopath,ifile=rawfile,caltag=localcaltag) 
+
+def targetalignment(params):
+  """
+  Starts the scattering angle reconstruction and vertex fit on the central target
+  plane. Afterwards the mean vertex z position is set as the new target z position in
+  the aligment DB file and the calibration tag is exported
+    :@params:       consists of rawfile, steerfiles, gearfile, caltag, iteration
+    :@rawfile:      Input file for the reconstruction 
+    :@BE            Nominal beam energy of the run
+    :@nevents       Number of events
+    :@steerfiles:   Directory with the steering files for the reconstruction
+    :@gearfile:     Name of the gear file
+    :@caltag:       calibration tag for the reconstruction
+    :@iteration:    Target alignment iteration counter  
+    :author: benjamin.schwenker@phys.uni-goettinge.de  
+  """ 
+
+  rawfile, steerfiles, calibrationtag, iteration = params
+
+  if rawfile == None:
+    return None
+
+  if iteration == None:
+    return None
+
+  prev_iteration_string='-target-alignment-it'+str(iteration-1)
+  curr_iteration_string='-target-alignment-it'+str(iteration)
+
+  localcaltag=caltag+prev_iteration_string
+
+  if iteration == 0:
+    localcaltag=calibrationtag
+
+  newcaltag=calibrationtag+curr_iteration_string
+
+  # Reconsruct the rawfile using the caltag. Resulting root files are 
+  # written to folder root-files/
+  RecObj = Reconstruction(steerfiles=steerfiles, name=newcaltag )
+
+  # Set Beam energy
+  RecObj.set_beam_momentum(beamenergy)
+  
+  recopath = create_reco_path(RecObj, rawfile, gearfile, nevents_TA)
+
+  # Run the reconstuction  
+  RecObj.reconstruct(path=reco,ifile=rawfile,caltag=localcaltag) 
+
+  # Read the vertex position and save it in the alignmentDB
+  dbname=RecObj.create_dbfilename("alignmentDB.root")
+  treename=RecObj.get_rootfilename('X0')
+  save_targetpos(treename,dbname)
+  RecObj.export_caltag(newcaltag)
+
   
 if __name__ == '__main__':
 
@@ -294,7 +308,7 @@ if __name__ == '__main__':
   calibrate( params_cali )
 
   for it in range(0,targetalignment_iterations):
-    params_TA = (rawfile_TA, steerfiles_reco, gearfile, caltag, it)
+    params_TA = (rawfile_TA, steerfiles_reco, caltag, it)
     print "The parameters for the target alignment are: " 
     print params_TA
 

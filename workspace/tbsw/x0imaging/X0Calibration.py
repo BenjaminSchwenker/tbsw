@@ -51,7 +51,7 @@ def x0calibration(filename=None,imagefilename='',caltag='default',steerfiles=Non
   if steerfiles == None:
     return None
 
-  cfgfilename=steerfiles+'x0calibration.cfg'
+  cfgfilename=steerfiles+'x0.cfg'
 
   califlags='./tbsw/x0imaging/X0Calibration.py -i '+filename+' -f '+cfgfilename+' -m '+imagefilename+' -c '+caltag
   print('Starting X0 calibration')
@@ -149,7 +149,7 @@ if __name__ == '__main__':
   os.symlink(fullpath+'/'+rootfile,'X0File')
 
   # Copy cfg file to current work dir
-  cfgname="x0calibration.cfg"
+  cfgname="x0.cfg"
   shutil.copy(fullpath+'/'+cfgfile, cfgname)
     
   if os.path.isfile(fullpath+'/'+imagefile):

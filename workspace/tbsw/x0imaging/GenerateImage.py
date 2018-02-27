@@ -74,7 +74,7 @@ if __name__ == '__main__':
   scriptsfolder = fullpath+'/tbsw/x0imaging'
 
   # copy cfg text file to current work directory
-  shutil.copy(fullpath+'/'+cfgfile,'image.cfg')
+  shutil.copy(fullpath+'/'+cfgfile,'x0.cfg')
 
   # Read config txt file
   config = ConfigParser(delimiters=(':'))
@@ -83,16 +83,16 @@ if __name__ == '__main__':
 
   # Read out all the relevant parameters
   # calibration factor
-  calibrationfactor = config.getfloat('x0image', 'lambda')
+  calibrationfactor = config.getfloat('general', 'lambda')
 
   # Mean value of the momentum of the beam particles
-  momentumoffset = config.getfloat('x0image', 'momentumoffset')
+  momentumoffset = config.getfloat('general', 'momentumoffset')
 
   # u momentum slope of the beam particles
-  momentumugradient = config.getfloat('x0image', 'momentumugradient')
+  momentumugradient = config.getfloat('general', 'momentumugradient')
 
   # u momentum slope of the beam particles
-  momentumvgradient = config.getfloat('x0image', 'momentumvgradient')
+  momentumvgradient = config.getfloat('general', 'momentumvgradient')
 
   # Name of the results file
   this_resultsfilename = config.get('x0image', 'resultsfilename')
@@ -101,11 +101,11 @@ if __name__ == '__main__':
   this_maxchi2ndof = config.get('x0image', 'maxchi2ndof')
 
   # fit range parameter value
-  this_fitrangeparameter = config.get('x0image', 'fitrange_parameter')
+  this_fitrangeparameter = config.get('general', 'fitrange_parameter')
 
   # Vertex multiplicity cut parameters
-  this_vertex_multiplicity_min = config.get('x0image', 'vertex_multiplicity_min')
-  this_vertex_multiplicity_max = config.get('x0image', 'vertex_multiplicity_max')
+  this_vertex_multiplicity_min = config.get('general', 'vertex_multiplicity_min')
+  this_vertex_multiplicity_max = config.get('general', 'vertex_multiplicity_max')
 
   # u and v length of complete X0 image 
   u_length = config.getfloat('x0image', 'u_length')
