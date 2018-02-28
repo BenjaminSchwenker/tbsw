@@ -1733,7 +1733,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// Check whether there are entries, of this is the case use these entries as starting values
 
 	double lambda_start=mEnv_res->GetValue("lambda_start", lambda_start_default);
-	double BE_mean=mEnv_res->GetValue("momentumumoffset", BE_mean_default);
+	double BE_mean=mEnv_res->GetValue("momentumoffset", BE_mean_default);
 	double BE_ugrad=mEnv_res->GetValue("momentumugradient", BE_ugrad_default);	
 	double BE_vgrad=mEnv_res->GetValue("momentumvgradient", BE_ugrad_default);
 

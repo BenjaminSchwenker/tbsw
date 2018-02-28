@@ -74,11 +74,12 @@ if __name__ == '__main__':
   scriptsfolder = fullpath+'/tbsw/x0imaging'
 
   # copy cfg text file to current work directory
-  shutil.copy(fullpath+'/'+cfgfile,'x0.cfg')
+  default_cfg_file_name='x0.cfg'
+  shutil.copy(fullpath+'/'+cfgfile,default_cfg_file_name)
 
   # Read config txt file
   config = ConfigParser(delimiters=(':'))
-  fp = open('image.cfg')
+  fp = open(default_cfg_file_name)
   config.readfp(fp)
 
   # Read out all the relevant parameters
