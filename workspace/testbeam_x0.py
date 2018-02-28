@@ -40,6 +40,7 @@ beamenergy=2.0
 alignmentdb_filename='alignmentDB.root'
 
 # Number of iterations during target alignment
+# Set to 0 or negative integer to disable target alignment
 targetalignment_iterations=3
 
 RunList_reco = [
@@ -238,6 +239,9 @@ def reconstruct(params):
   # Use caltag of the last target alignment iteration
   iteration_string='-target-alignment-it'+str(targetalignment_iterations-1)
   localcaltag=caltag+iteration_string
+
+  if targetalignment_iterations < 1:
+    localcaltag=caltag
 
   # Run the reconstuction  
   RecObj.reconstruct(path=recopath,ifile=rawfile,caltag=localcaltag) 

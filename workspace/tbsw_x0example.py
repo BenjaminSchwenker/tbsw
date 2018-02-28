@@ -55,6 +55,8 @@ sigma_list=[1.0,1.0,1.0,0.1,0.1,0.1]
 sensorexception_list=[5,0] 
 modeexception_list=['']
 
+# Number of iterations during target alignment
+# Set to 0 or negative integer to disable target alignment
 targetalignment_iterations=3
 
 # Nominal Beam energy
@@ -314,6 +316,9 @@ def reconstruct():
   # Use caltag of the last target alignment iteration
   iteration_string='-target-alignment-it'+str(targetalignment_iterations-1)
   localcaltag=caltag+iteration_string 
+
+  if targetalignment_iterations < 1:
+    localcaltag=caltag
 
   # Run the reconstuction  
   RecObj.reconstruct(path=recopath,ifile=rawfile_alu,caltag=localcaltag)   
