@@ -42,7 +42,7 @@ rawfile_alu = os.getcwd()+'/mc-alu.slcio'
 caltag = os.path.splitext(os.path.basename(rawfile_air))[0] + '-test'
 
 # Number of events to simulate 
-nevents_air = 600000
+nevents_air = 1000000
 nevents_TA = 1000000
 nevents_alu = 6000000
 
@@ -211,13 +211,13 @@ def create_calibration_path(Env):
   return calpath
 
 
-def create_reco_path(Env, numberoftracks):
+def create_reco_path(Env, rawfile, numberoftracks):
   """
   Returns a list of tbsw path objects to reconstruct a test beam run 
   """
   
   reco = Env.create_path('reco')
-  reco.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : numberoftracks, 'LCIOInputFiles': rawfile_alu }) 
+  reco.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : numberoftracks, 'LCIOInputFiles': rawfile }) 
   reco.add_processor(name="M26Clusterizer")
   reco.add_processor(name="M26GoeHitMaker")
   reco.add_processor(name="DownstreamFinder")
@@ -360,7 +360,7 @@ def targetalignment(params):
   # Set Beam energy
   RecObj.set_beam_momentum(beamenergy)
   
-  recopath = create_reco_path(RecObj, rawfile, gearfile, nevents_TA)
+  recopath = create_reco_path(RecObj, rawfile, nevents_TA)
 
   # Run the reconstuction  
   RecObj.reconstruct(path=reco,ifile=rawfile,caltag=localcaltag)  

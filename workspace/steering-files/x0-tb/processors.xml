@@ -430,15 +430,15 @@
     <!--Beam momentum sigma [GeV]-->
     <parameter name="BeamMomentumSigma" type="double" value="0.001"/>
     <!--Beam slope sigma in XZ plane [rad]-->
-    <parameter name="BeamSlopeXSigma" type="double" value="0.002"/>
+    <parameter name="BeamSlopeXSigma" type="double" value="0.0035"/>
     <!--Beam slope sigma in YZ plane [rad]-->
-    <parameter name="BeamSlopeYSigma" type="double" value="0.002"/>
+    <parameter name="BeamSlopeYSigma" type="double" value="0.0035"/>
     <!--A simulated event contains one particle at t=0 and extends for given time window in seconds-->
     <parameter name="BeamTimeWindow" type="double" value="0.0001"/>
     <!--Beam vertex position in X direction [mm]-->
     <parameter name="BeamVertexX" type="double" value="0"/>
     <!--Beam vertex sigma in X direction [mm]-->
-    <parameter name="BeamVertexXSigma" type="double" value="7"/>
+    <parameter name="BeamVertexXSigma" type="double" value="20"/>
     <!--Beam vertex position in Y direction [mm]-->
     <parameter name="BeamVertexY" type="double" value="0"/>
     <!--Beam vertex sigma in Y direction [mm]-->
