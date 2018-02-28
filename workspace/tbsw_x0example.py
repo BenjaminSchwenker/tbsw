@@ -309,7 +309,7 @@ def reconstruct():
   RecObj.set_beam_momentum(beamenergy)
 
   # Create reconstuction path
-  recopath = create_reco_path(RecObj,nevents_alu)  
+  recopath = create_reco_path(RecObj, rawfile_alu, nevents_alu)  
 
   # Use caltag of the last target alignment iteration
   iteration_string='-target-alignment-it'+str(targetalignment_iterations-1)
