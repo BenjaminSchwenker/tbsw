@@ -19,7 +19,7 @@ def x0imaging(filename=None,caltag='',deletetag='0',steerfiles=None,nametag=''):
     :author: ulf.stolzenberg@phys.uni-goettingen.de  
   """   
 
-  cfgfilename=steerfiles+'image.cfg'
+  cfgfilename=steerfiles+'x0.cfg'
 
   if filename == None:
     return None
