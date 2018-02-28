@@ -363,7 +363,7 @@ def targetalignment(params):
   recopath = create_reco_path(RecObj, rawfile, nevents_TA)
 
   # Run the reconstuction  
-  RecObj.reconstruct(path=reco,ifile=rawfile,caltag=localcaltag)  
+  RecObj.reconstruct(path=recopath,ifile=rawfile,caltag=localcaltag)  
 
   # Read the vertex position and save it in the alignmentDB
   dbname=RecObj.create_dbfilename("alignmentDB.root")
