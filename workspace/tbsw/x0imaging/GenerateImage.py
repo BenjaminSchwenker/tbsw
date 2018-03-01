@@ -273,7 +273,7 @@ if __name__ == '__main__':
     for tmpfile in glob.glob('*part*.root'):
       os.remove(tmpfile) 
     # also remove the input cfg file
-    os.remove('image.cfg') 
+    os.remove(default_cfg_file_name) 
 
   # remove MergeImage.C and config file script
   os.remove('x0merge.cfg') 
