@@ -1586,7 +1586,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
     // Read config file
     //------------------
-    TEnv *mEnv=new TEnv("x0calibration.cfg");
+    TEnv *mEnv=new TEnv("x0.cfg");
 
 	// Choose the multiple scattering model
 	// "moliere": Moliere model
