@@ -1040,7 +1040,7 @@ int x0imaging()
 	double maxchi2ndof_fit=mEnv.GetValue("maxchi2ndof", 10.0);
 
     // Fit range parameter
-	double rangevalue=mEnv.GetValue("fitrange_paramter", 2.0);
+	double rangevalue=mEnv.GetValue("fitrange_parameter", 2.0);
 
 	// Choose the type of fit
 	// 0: gaussian fit function with cuts on the tails, both kink distributions are used seperately
