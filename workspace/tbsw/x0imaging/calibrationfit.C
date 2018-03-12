@@ -1608,7 +1608,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	int correctmean=mEnv->GetValue("correctmean", 1 );
 
 	// Get the lambda starting value
-	double 	lambda_start_default=mEnv->GetValue("lambda_start", 99.0);
+	double 	lambda_start_default=mEnv->GetValue("lambda", 99.0);
 
 	// Define and set the parameters used in the Moliere fit
 	// BE: beam energy (GeV), z: charge of beam particle (e), mass: mass of beam particle (GeV),
