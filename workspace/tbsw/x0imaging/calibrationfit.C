@@ -803,12 +803,33 @@ double calculateB(double log_omega_b)
 // Determine fit range for a kink angle histogram
 // This is done by finding the first and last bin above a certain threshold.
 // The fit range is half of the distance between these two bins in rad
-double DetermineFitrange(TH1* histo,double minvalue)
+double DetermineFitrange(TH1* histo,double rangevalue)
 {
 
-	int bin1 = histo->FindFirstBinAbove(histo->GetMaximum()*minvalue);
-	int bin2 = histo->FindLastBinAbove(histo->GetMaximum()*minvalue);
-	double fitrange = (histo->GetBinCenter(bin2) - histo->GetBinCenter(bin1))/2.0;
+    // Clone histo
+	TH1F *h2 = (TH1F*) histo->Clone();
+
+	cout<<"RMS value of distribution: "<<histo->GetRMS()<<endl;
+	cout<<"Selected range parameter: "<<rangevalue<<" -> Fit range up to y=1/("<<rangevalue<<"*e)"<<endl;
+	double fitrange = sqrt(2.0*rangevalue)*histo->GetRMS();
+
+	// Use RMS value as a rough measure of the fit range for a gaussian fit
+	TF1 *f1 = new TF1("f1","gaus(x)",-fitrange,fitrange);
+	f1->SetLineStyle(2);
+	TFitResultPtr fitr=h2->Fit("f1","RS");
+
+	// Repeat fit in case it failed
+	if(fitr!=0)
+	{
+		cout<<"Fit of angle distribution failed with status: "<<fitr<<endl;
+		cout<<"Repeat fit "<<endl;
+		h2->Fit("f1","RM");
+	}
+
+	// Use the determined sigma value to calculate the fit range
+	double sigma = f1->GetParameter(2);
+	fitrange=sqrt(2.0*rangevalue)*sigma;
+	cout<<"Determined fit range: " << fitrange<<endl<<endl;
 
 	return fitrange;
 }
@@ -1235,8 +1256,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		file->cd("grid/fit/");
 	}
 	
-	// Minvalue and fit range depend on the model: In Case of the moliere model the fitrange can be a little larger
-	double minvalue;
+	// The fit range depend on the model: In Case of the moliere model the fitrange can be a little larger
 	// Declaration of fit functions
 	std::vector<TF1 *> fitFcn_vec;
 	TF1* fitFcn;
@@ -1248,10 +1268,8 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// loop for definition of the fit functions, the fitrange is determined for every one of them
 	for(int i=0;i<num_fitfunctions;i++)
 	{
-		// Fitrange depends is given via rangevalue, which is adjustable in the steer files
-		minvalue=1.0/(rangevalue*2.71);
 
-		fitrange=DetermineFitrange(histo_vec.at(i),minvalue);
+		fitrange=DetermineFitrange(histo_vec.at(i),rangevalue);
 		fctname.Form("fitFcn%i",i);
 
 		if(model=="moliere")
@@ -1277,9 +1295,9 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		// Fill vector with pointers to fit functions
 		fitFcn_vec.push_back(fitFcn);
 
-		// set the data range	
-		cout<<"Fitrange at d="<<grid.GetMeasurementAreas().at(i).Get_thickness()<<" mm: "<<fitrange<<" rad"<<endl;
-		cout<<"Min value at d="<<grid.GetMeasurementAreas().at(i).Get_thickness()<<" mm: "<<minvalue<<endl;
+		// set the data range
+		cout<<"The range value from the cfg file is "<<rangevalue<<endl;	
+		cout<<"Fitrange at d="<<grid.GetMeasurementAreas().at(i).Get_thickness()<<" mm: "<<fitrange<<" rad"<<endl<<endl;
 		ROOT::Fit::DataRange range;
 		range.SetRange(-fitrange,fitrange);
 		range_vec.push_back(range);
@@ -1442,7 +1460,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 		fitFcn_vec.at(i)->SetFitResult( result, parameters);
 	
-		fitrange=DetermineFitrange(histo_vec.at(i),minvalue);
+		fitrange=DetermineFitrange(histo_vec.at(i),rangevalue);
 		TF1 * fitfunc=fitFcn_vec.at(i);
 		fitfunc->SetRange(-fitrange,fitrange);  
 		fitfunc->SetLineColor(kRed);
@@ -1756,8 +1774,8 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	fitoptions.push_back(fix_v_gradient);
 
 	cout<<"Beam particle mean energy start value is				"<<BE_mean<<" GeV"<<endl;
-	cout<<"Beam particle energy u gradient start value is				"<<BE_ugrad<<" GeV/mm"<<endl;
-	cout<<"Beam particle energy v gradient start value is				"<<BE_vgrad<<" GeV/mm"<<endl;
+	cout<<"Beam particle energy u gradient start value is		"<<BE_ugrad<<" GeV/mm"<<endl;
+	cout<<"Beam particle energy v gradient start value is		"<<BE_vgrad<<" GeV/mm"<<endl;
 	cout<<"Beam particle lambda		 start value is				"<<lambda_start<<endl;
 
 	double* iresults=fit(rootfile, grid, beamoptions, recoerr, model, fitoptions, rangevalue);

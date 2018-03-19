@@ -79,7 +79,11 @@ def merge_rootfile(filename=None,RunList='',caltag=None):
   flags='hadd '+filename+' '
   for run in RunList:
     name=os.path.splitext(os.path.basename(run))[0]
-    flags=flags+'root-files/X0-'+name+'-'+caltag+'-reco.root '
+    if caltag == '':
+      flags=flags+'root-files/X0-'+name+'-reco.root '
+    else:
+      flags=flags+'root-files/X0-'+name+'-'+caltag+'-reco.root '
+
 
   if os.path.isfile(filename):
     os.remove(filename)

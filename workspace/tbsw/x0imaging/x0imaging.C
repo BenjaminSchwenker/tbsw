@@ -252,14 +252,14 @@ using namespace std ;
 			TH1* histogram2=(TH1*)file2->Get("mapping/raw/theta2_uncorrected_"+aidhistoname);
 			
 			// Determine plot range from uncorrected histograms
-			double plotrange=(histogram1->GetRMS()+histogram2->GetRMS())*2;
+			double limits=2.5*(histogram1->GetRMS()+histogram2->GetRMS());
 
-		 	histo_theta1[i][j] = new TH1F("","",numberofbins,-plotrange,plotrange);
-		 	histo_theta2[i][j] = new TH1F("","",numberofbins,-plotrange,plotrange);
+		 	histo_theta1[i][j] = new TH1F("","",numberofbins,-limits,limits);
+		 	histo_theta2[i][j] = new TH1F("","",numberofbins,-limits,limits);
 		 	histo_uresidual[i][j] = new TH1F("","",1000,-1.0,1.0);
 		 	histo_vresidual[i][j] = new TH1F("","",1000,-1.0,1.0);
-		 	histo_thetasum[i][j] = new TH1F("","",numberofbins,-plotrange,plotrange);
-			histo_2d[i][j] = new TH2F("","",numberofbins,-plotrange,plotrange,numberofbins,-plotrange,plotrange);
+		 	histo_thetasum[i][j] = new TH1F("","",numberofbins,-limits,limits);
+			histo_2d[i][j] = new TH2F("","",numberofbins,-limits,limits,numberofbins,-limits,limits);
 
 			// Set range and title of vertex histograms
 		 	histo_vertex_w[i][j] = new TH1F("","",900,-15.0,15.0);
@@ -372,6 +372,41 @@ using namespace std ;
 
   }
 
+
+// Determine fit range for a kink angle histogram
+// This is done by finding the first and last bin above a certain threshold.
+// The fit range is half of the distance between these two bins in rad
+double DetermineFitrange(TH1* histo,double rangevalue)
+{
+
+    // Clone histo
+	TH1F *h2 = (TH1F*) histo->Clone();
+
+	cout<<"RMS value of distribution: "<<histo->GetRMS()<<endl;
+	cout<<"Selected range parameter: "<<rangevalue<<" -> Fit range up to y=1/("<<rangevalue<<"*e)"<<endl;
+	double fitrange = sqrt(2.0*rangevalue)*histo->GetRMS();
+
+	// Use RMS value as a rough measure of the fit range for a gaussian fit
+	TF1 *f1 = new TF1("f1","gaus(x)",-fitrange,fitrange);
+	f1->SetLineStyle(2);
+	TFitResultPtr fitr=h2->Fit("f1","RS");
+
+	// Repeat fit in case it failed
+	if(fitr!=0)
+	{
+		cout<<"Fit of angle distribution failed with status: "<<fitr<<endl;
+		cout<<"Repeat fit "<<endl;
+		h2->Fit("f1","RM");
+	}
+
+	// Use the determined sigma value to calculate the fit range
+	double sigma = f1->GetParameter(2);
+	fitrange=sqrt(2.0*rangevalue)*sigma;
+	cout<<"Determined fit range: " << fitrange<<endl<<endl;
+
+	return fitrange;
+}
+
   // Function to fit the MSC angle histograms and fill the map histograms
   void fithisto( TFile* file, int fittype, double maxchi2ndof_fit, double rangevalue, int col, int numcol, int row,int numrow, double* parameters)
   { 
@@ -483,24 +518,21 @@ using namespace std ;
 	{
 		//Fit histogram with Highland model
 
-		// Fit histograms
-		bin1 = fithistogram1->FindFirstBinAbove(fithistogram1->GetMaximum()*minvalue);
-		bin2 = fithistogram1->FindLastBinAbove(fithistogram1->GetMaximum()*minvalue);
-		fitrange = (fithistogram1->GetBinCenter(bin2) - fithistogram1->GetBinCenter(bin1))/2.0;
-
-		bin1 = fithistogram2->FindFirstBinAbove(fithistogram2->GetMaximum()*minvalue);
-		bin2 = fithistogram2->FindLastBinAbove(fithistogram2->GetMaximum()*minvalue);
-		fitrange = (fithistogram2->GetBinCenter(bin2) - fithistogram2->GetBinCenter(bin1))/2.0;
-
-	
-		bin1 = fithistogramsum->FindFirstBinAbove(fithistogramsum->GetMaximum()*minvalue);
-		bin2 = fithistogramsum->FindLastBinAbove(fithistogramsum->GetMaximum()*minvalue);
-		fitrange = (fithistogramsum->GetBinCenter(bin2) - fithistogramsum->GetBinCenter(bin1))/2.0;
-
-		// Fit functions	
+		// Fit functions definition
+		// The fit range is determined from the RMS value of the histogram
+		// The Highland model is validated up to the width sigma_1/e, where the 
+		// distribution reaches the values max/e. The fit range should be therefore limited to 
+		// The intervall [-sqrt(2)*RMS,+sqrt(2)*RMS]
+		fitrange =DetermineFitrange(fithistogram1,rangevalue);
 		TF1 *fit1 = new TF1("theta1_fit",highlandfunction,-fitrange,fitrange,num_parameters);
+
+		fitrange =DetermineFitrange(fithistogram2,rangevalue);
 		TF1 *fit2 = new TF1("theta2_fit",highlandfunction,-fitrange,fitrange,num_parameters);
+
+		fitrange =DetermineFitrange(fithistogramsum,rangevalue);
 		TF1 *fitsum = new TF1("thetasum_fit",highlandfunction,-fitrange,fitrange,num_parameters);
+
+
 
 		// Set starting values
    		fit1->SetParameters(parameters);
@@ -1445,6 +1477,7 @@ int x0imaging()
 		{
 
 			cout<<"fit histogram in (col,row): ("<<col<<","<<row<<")"<<endl;
+			cout<<"Fit range value: "<<rangevalue<<endl;
 
             // Calculate the u position of this bin
             double u=umin+col*upitch;
