@@ -30,6 +30,15 @@ namespace materialeffect {
   */ 
   double GetScatterTheta2(CLHEP::HepMatrix& State, double x, double x0, double mass, double charge);  
   
+  /** Calculate variance of the projected angular deflection due to multiple
+   *  scattering of a particle for x/x0 a la Highland.
+   *
+   *  Projected means that the angle is not the angle in space, but rather a
+   *  one-dimensional projection on one axis of a plane that is perpendicular
+   *  to the particle direction before scattering. 
+   */ 
+  double GetScatterTheta2(double mom, double x, double x0, double mass, double charge);  
+  
   /** Scatter track at thin scatterer 
    *
    * The track is locally scattered by two scatter kink angles. The kink angles 
