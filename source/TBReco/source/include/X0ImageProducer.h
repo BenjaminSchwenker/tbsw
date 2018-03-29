@@ -112,8 +112,14 @@ protected:
 //! DUT plane number 
    int _idut; 
 
-//! DUT plane number 
+//! track matching switch 
    bool _vertexfitswitch; 
+
+//! toy study switch
+   bool _m_toy;
+
+//! toy study switch
+   double _m_reco_error;
 
 //! Max vertex chi2/ndof
    double _maxVertexChi2;
