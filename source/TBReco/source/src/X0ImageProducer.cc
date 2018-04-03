@@ -141,7 +141,16 @@ void X0ImageProducer::init() {
    streamlog_out ( MESSAGE3 )  << "Scatter DUT plane  ID = " << dut.GetDAQID()
                                << "  at position = " << _idut 
                                << endl << endl;
-    
+
+   // Initialize new random generator with unique seed 
+   gRandom = new TRandom3();
+   gRandom->SetSeed(0);
+
+   // Print random generator info
+   streamlog_out(MESSAGE3) << "Random Generator setup with seed: "
+                           << (gRandom->GetSeed())
+                           << std::endl << std::endl;
+   
       
    bookHistos();
    
