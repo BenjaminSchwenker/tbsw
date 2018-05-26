@@ -116,15 +116,18 @@ if __name__ == '__main__':
   umin = config.getfloat('x0image', 'umin')
   vmax = config.getfloat('x0image', 'vmax')
 
-  fp.close()
-
   # Pixel sizes of the image
   u_pixel_size = config.getfloat('x0image', 'u_pixel_size')
   v_pixel_size = config.getfloat('x0image', 'v_pixel_size')
 
+  # histosettings
+  num_bins = config.getfloat('x0image', 'num_bins')
+  histo_range = config.getfloat('x0image', 'histo_range')
+
+  fp.close()
+
   # Create X0 root file link in the current work dir
   os.symlink(fullpath+'/'+rootfile,this_x0filename)
-
 
   # number of pixels needed
   num_u_pixels = u_length * 1000.0 / u_pixel_size
@@ -176,6 +179,12 @@ if __name__ == '__main__':
       this_momentumugradient=str(momentumugradient)
       # momentum v gradient
       this_momentumvgradient=str(momentumvgradient)
+
+      # Angle histo range
+      this_histo_range=str(histo_range)
+
+      # Number of angle histo bins
+      this_num_bins=str(num_bins)
       
       # Copy placeholder x0image and change it
       shutil.copy(scriptsfolder+'/x0imaging.C', scriptname)
@@ -206,6 +215,8 @@ if __name__ == '__main__':
       config.set('image', 'momentumvgradient', this_momentumvgradient)
       config.set('image', 'vertexmultiplicitymin', this_vertex_multiplicity_min)
       config.set('image', 'vertexmultiplicitymax', this_vertex_multiplicity_max)
+      config.set('image', 'num_bins', this_num_bins)
+      config.set('image', 'histo_range', this_histo_range)
 
       # Writing the configuration file
       with open('x0image-partial.cfg', 'w') as configfile:

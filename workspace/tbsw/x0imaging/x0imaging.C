@@ -175,7 +175,7 @@ using namespace std ;
 
 
   // This function fills histograms corresponding to certain u v values with msc angle distributions 
-  void savehistos(TFile* file1, TFile* file2, int numberofbins, const int numcol, const int numrow, double umin, double vmin, double umax, double vmax, int vertex_multiplicity_min, int vertex_multiplicity_max)
+  void savehistos(TFile* file1, TFile* file2, int numberofbins, double histo_range, const int numcol, const int numrow, double umin, double vmin, double umax, double vmax, int vertex_multiplicity_min, int vertex_multiplicity_max)
   {
 	// parameters which are read out from the root file
 	Double_t theta1;
@@ -252,7 +252,7 @@ using namespace std ;
 			TH1* histogram2=(TH1*)file2->Get("mapping/raw/theta2_uncorrected_"+aidhistoname);
 			
 			// Determine plot range from uncorrected histograms
-			double limits=2.5*(histogram1->GetRMS()+histogram2->GetRMS());
+			double limits=histo_range/2.0*(histogram1->GetRMS()+histogram2->GetRMS());
 
 		 	histo_theta1[i][j] = new TH1F("","",numberofbins,-limits,limits);
 		 	histo_theta2[i][j] = new TH1F("","",numberofbins,-limits,limits);
@@ -1097,8 +1097,11 @@ int x0imaging()
 	plotranges.push_back(4*tree->GetHistogram()->GetRMS());
 	means.push_back(tree->GetHistogram()->GetMean());
 	
-	// The number of bins is constant
-	int numberofbins=100;
+	// The number of bins of angle histograms
+	int numberofbins=mEnv.GetValue("num_bins", 50);
+
+	// Range parameter of angle histograms
+	double histo_range=mEnv.GetValue("histo_range", 5.0);
 
 	cout<<"The first Scattering angle distributions will be plotted with range "<<plotranges.at(0)<<" rad and "<<numberofbins<<" bins!"<<endl;
 	cout<<"The mean value of the histogram is "<<means.at(0)<<" rad !"<<endl;
@@ -1199,7 +1202,7 @@ int x0imaging()
 	rootfile->cd("");
 	
 	getcorrection(X0file, rootfile, means, plotranges, numberofbins, numcol, numrow, umin, vmin, umax, vmax, vertex_multiplicity_min, vertex_multiplicity_max);
-	savehistos(X0file, rootfile, numberofbins, numcol, numrow, umin, vmin, umax, vmax, vertex_multiplicity_min, vertex_multiplicity_max);
+	savehistos(X0file, rootfile, numberofbins, histo_range, numcol, numrow, umin, vmin, umax, vmax, vertex_multiplicity_min, vertex_multiplicity_max);
 
 	X0file->Close();
 

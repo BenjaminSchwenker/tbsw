@@ -909,11 +909,13 @@ void shiftbins(TH1* histogram, double mean1)
 }
 
 // This function fills histograms corresponding to certain u v values with msc angle distributions 
-void correcthisto(TFile* file,TFile* file2, TString histoname, TString range, std::vector <double> cutparameters_position,std::vector <int> cutparameters_run, std::vector <int> cutparameters_vertex_multiplicity )
+void correcthisto(TFile* file,TFile* file2, TString histoname, int numbins, double histo_range, std::vector <double> cutparameters_position,std::vector <int> cutparameters_run, std::vector <int> cutparameters_vertex_multiplicity )
 {
 	//TTree in input root file, that contains the MSC projected angle distributions
 	file->cd("");
 	TTree *msc_tree = (TTree*)file->Get("MSCTree");
+
+	TString range;
 
 	// Definition of the four cuts used to define the measurement region
 	TString cutcondition;
@@ -959,6 +961,16 @@ void correcthisto(TFile* file,TFile* file2, TString histoname, TString range, st
 		cutcondition.Form("iRun<%i",cutparameters_run.at(1)+1);
 		cutall=cutall+"&&"+cutcondition;
 	}
+
+	// Draw histogram of the first scattering angle in the given u and v range and save it
+	msc_tree->Draw("theta1>>h_help("+range+")",cutall,"");
+
+	// Get the histogram and save it in the raw folder
+	TH1 * h_help=msc_tree->GetHistogram();
+
+
+	double limits=histo_range*(h_help->GetRMS());
+	range.Form("%i,%f,%f",numbins,-limits,limits);
 
 	// Draw histogram of the first scattering angle in the given u and v range and save it
 	msc_tree->Draw("theta1>>histo1("+range+")",cutall,"");
@@ -1039,11 +1051,13 @@ void correcthisto(TFile* file,TFile* file2, TString histoname, TString range, st
 
 // Function to save the projected angle histograms of different regions in the u-v plane, the region lies within the given 
 // u and v min and max values.
-void savehisto(TFile* file, TFile* file2, TString histoname, TString range, std::vector <double> cutparameters_position, std::vector <int> cutparameters_run, std::vector <int> cutparameters_vertex_multiplicity, int correctmean)
+void savehisto(TFile* file, TFile* file2, TString histoname, int numbins, double histo_range, std::vector <double> cutparameters_position, std::vector <int> cutparameters_run, std::vector <int> cutparameters_vertex_multiplicity, int correctmean)
 {
 	//TTree in input root file, that contains the MSC projected angle distributions
 	file->cd("");
 	TTree *msc_tree = (TTree*)file->Get("MSCTree");
+
+	TString range;
 
 	// Array of mean theta1 and theta2 values in each map pixel
 	double mean1=0.0;
@@ -1102,9 +1116,8 @@ void savehisto(TFile* file, TFile* file2, TString histoname, TString range, std:
 		mean1=histogram1->GetMean();
 		mean2=histogram2->GetMean();
 
-		double limits=2.5*(histogram1->GetRMS()+histogram2->GetRMS());
-		int nbins=500;
-		range.Form("%i,%f,%f",nbins,-limits,limits);
+		double limits=histo_range/2.0*(histogram1->GetRMS()+histogram2->GetRMS());
+		range.Form("%i,%f,%f",numbins,-limits,limits);
 	}
 
 	// Draw histogram of the first scattering angle in the given u and v range and save it
@@ -1617,6 +1630,12 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	bool fix_u_gradient=mEnv->GetValue("fix_momentumugradient", 0);
 	bool fix_v_gradient=mEnv->GetValue("fix_momentumvgradient", 0);
 
+	// The number of bins of angle histograms
+	int numbins=mEnv->GetValue("cali_num_bins", 50);
+
+	// Range parameter of angle histograms
+	double histo_range=mEnv->GetValue("cali_histo_range", 5.0);
+
 	// Read out the parameter that determines the range of the fit
 	double rangevalue=mEnv->GetValue("fitrange_parameter", 2.0);
 
@@ -1699,12 +1718,9 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 	// Binning and range of the histograms
 
-	int nbins=500;
-	double range1=-0.005;
-	double range2=0.005;
+	cout<<"histo_range: "<<histo_range<<endl;
+	cout<<"numbins: "<<numbins<<endl;
 
-	// Set the range and number of bins of the histogram
-	range.Form("%i,%f,%f",nbins,range1,range2);
 
 	rootfile->mkdir("grid/raw/");
 	rootfile->mkdir("grid/fit/");
@@ -1733,12 +1749,9 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 			cutparameters_vertex_multiplicity.push_back(vertexmultiplicitymin);
 			cutparameters_vertex_multiplicity.push_back(vertexmultiplicitymax);
 
-			// Set the range and number of bins of the histogram
-			range.Form("%i,%f,%f",nbins,range1,range2);
-
 			// Save the angle histograms of the current measurement area to the root file
-			correcthisto(X0file,rootfile, histoname, range, cutparameters_position, cutparameters_run, cutparameters_vertex_multiplicity);
-			savehisto(X0file,rootfile, histoname, range, cutparameters_position, cutparameters_run, cutparameters_vertex_multiplicity, correctmean);
+			correcthisto(X0file,rootfile, histoname, numbins, histo_range, cutparameters_position, cutparameters_run, cutparameters_vertex_multiplicity);
+			savehisto(X0file,rootfile, histoname, numbins, histo_range, cutparameters_position, cutparameters_run, cutparameters_vertex_multiplicity, correctmean);
 
 
 	}// end of first loop over measurement areas
