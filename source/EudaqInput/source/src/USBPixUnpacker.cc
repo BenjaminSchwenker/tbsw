@@ -8,6 +8,8 @@
 #include "Utils.hh"
 
 
+#define GET(d, i) getlittleendian<unsigned>(&(d)[(i)*4])
+
 // Used namespaces
 using namespace std; 
 using namespace lcio;
@@ -139,8 +141,26 @@ namespace eudaqinput {
       data1.push_back( static_cast<unsigned char> (short_data1[j]) ); 
     }
     
+    datait it0 = data0.begin() + 8;
+    datait it1 = data1.begin() + 8;
+    unsigned board = 0;
+
     while (it0 < data0.end() && it1 < data1.end()) {
     
+      unsigned id = board;
+      if (it0 + 2 >= data0.end()) {
+        std::cout << "Trailing rubbish in first frame" << std::endl;
+        break;
+      }
+      if (it1 + 2 >= data1.end()) {
+        std::cout << "Trailing rubbish in second frame" << std::endl;
+        break;
+      }
+
+      unsigned len0 = GET(it0, 1);
+      unsigned len1 = GET(it1, 1);
+      unsigned pivotpixel = 9216-1;
+
       // Prepare a new lcio::TrackerData for the ZS data
       lcio::TrackerDataImpl* zsFrame =  new lcio::TrackerDataImpl;
       outputEncoder["sensorID"] = id;
