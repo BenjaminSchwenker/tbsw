@@ -22,6 +22,9 @@
 #include <vector>
 #include <string>
 
+#include <bitset>
+#include <algorithm>
+
 namespace eudaqinput {
   
   
@@ -53,6 +56,13 @@ namespace eudaqinput {
     virtual void end();
     
    protected:
+    
+    template<typename T>
+    T selectBits(T val, int offset, int length) {
+	  return (val >> offset) & ((1ull << length) - 1);
+    }
+    
+    std::vector<int> getChannels(std::vector<unsigned char> const & data);
     
     //! Method to unpack source (raw data) -> result (digits)
     bool UnpackRawCollection(lcio::LCCollectionVec * result, lcio::LCCollectionVec * source);

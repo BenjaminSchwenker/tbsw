@@ -118,7 +118,7 @@ namespace eudaqinput {
     CellIDEncoder<TrackerDataImpl> outputEncoder( "sensorID:6,sparsePixelType:5", result  );
     
     // Check number of frames 
-    if ( source->size() != 2 ) {
+    if ( source->size() != 1 ) {
       streamlog_out(MESSAGE3) << "Ignoring bad event " << _nEvt << " having size " << source->size() << std::endl;
       return false;
     }
@@ -132,35 +132,31 @@ namespace eudaqinput {
       data0.push_back( static_cast<unsigned char> (short_data0[j]) ); 
     }
     
-    // Read second data block 
-    datavect data1;
-    ShortVec& short_data1 = dynamic_cast<TrackerRawDataImpl* > ( source->getElementAt(1) )->adcValues();
+	//getChannels will determine all the channels from a board, making the assumption that every channel (i.e. FrontEnd)
+	//wrote date into the data block. This holds true if the FE is responding. Then for every trigger there will be
+	//data headers (DHs) in the data stream
+	auto channels = getChannels(data0);
     
-    for (size_t j = 0; j < short_data1.size(); j++) 
-    {   
-      data1.push_back( static_cast<unsigned char> (short_data1[j]) ); 
+    for (auto channel : channels) {
+      std::cout << "found channel  " << channel << std::endl;
     }
+    	
     
+    unsigned header0 = GET(data0, 0);
     datait it0 = data0.begin() + 8;
-    datait it1 = data1.begin() + 8;
     unsigned board = 0;
-
-    while (it0 < data0.end() && it1 < data1.end()) {
     
+    while (it0 < data0.end() ) {
+      
       unsigned id = board;
       if (it0 + 2 >= data0.end()) {
         std::cout << "Trailing rubbish in first frame" << std::endl;
         break;
       }
-      if (it1 + 2 >= data1.end()) {
-        std::cout << "Trailing rubbish in second frame" << std::endl;
-        break;
-      }
-
+      
       unsigned len0 = GET(it0, 1);
-      unsigned len1 = GET(it1, 1);
       unsigned pivotpixel = 9216-1;
-
+      
       // Prepare a new lcio::TrackerData for the ZS data
       lcio::TrackerDataImpl* zsFrame =  new lcio::TrackerDataImpl;
       outputEncoder["sensorID"] = id;
@@ -169,18 +165,34 @@ namespace eudaqinput {
       
       // Fill ZS data into new lcio::TrackerData object
       DecodeFrame(zsFrame, len0, it0+8, 0, pivotpixel);
-      DecodeFrame(zsFrame, len1, it1+8, 1, pivotpixel);
+      
       
       // Now add the TrackerData to the collection
       result->push_back( zsFrame );  
       
     } 
-    
-     
-    
-   
-     
+       
     return true;
+  }
+  
+  std::vector<int> USBPixUnpacker::getChannels(std::vector<unsigned char> const & data) 
+  {
+    std::vector<int> channels;
+    for(size_t index = 0;  index < data.size(); index+=4) {
+      uint32_t i =( static_cast<uint32_t>(data[index+3]) << 24 ) | 
+                  ( static_cast<uint32_t>(data[index+2]) << 16 ) | 
+				  ( static_cast<uint32_t>(data[index+1]) << 8 ) | 
+				  ( static_cast<uint32_t>(data[index+0]) );
+        
+	  uint8_t channel = selectBits(i, 24, 8);
+        
+      if(!(channel >> 7)) { //Trigger
+	    if(std::find(channels.begin(), channels.end(), static_cast<int>(channel)) == channels.end()) {
+	      channels.emplace_back(static_cast<int>(channel));
+		}
+	  } 
+	}
+	return channels;
   }
   
   void USBPixUnpacker::DecodeFrame(TrackerDataImpl* zsFrame, size_t len, datait it, int frame, unsigned pivotpixel) 
