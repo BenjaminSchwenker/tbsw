@@ -111,9 +111,6 @@ namespace eudaqinput {
   
   bool USBPixUnpacker::UnpackRawCollection(LCCollectionVec * result, LCCollectionVec * source){
      
-    // Helper class for decoding raw data 
-    CellIDDecoder<TrackerRawDataImpl> inputDecoder( source );  
-    
     // Helper class for encoding digit data 
     CellIDEncoder<TrackerDataImpl> outputEncoder( "sensorID:6,sparsePixelType:5", result  );
     
@@ -132,18 +129,22 @@ namespace eudaqinput {
       data0.push_back( static_cast<unsigned char> (short_data0[j]) ); 
     }
     
-	//getChannels will determine all the channels from a board, making the assumption that every channel (i.e. FrontEnd)
-	//wrote date into the data block. This holds true if the FE is responding. Then for every trigger there will be
-	//data headers (DHs) in the data stream
+	// getChannels will determine all the channels making the assumption that every channel (i.e. FrontEnd)
+	// wrote date into the data block. 
 	auto channels = getChannels(data0);
     
+    // Buffer for decoded hits
+    std::map<int, lcio::TrackerDataImpl*> frameMap;
+    
     for (auto channel : channels) {
-      std::cout << "found channel  " << channel << std::endl;
+      // Prepare a new lcio::TrackerData for the ZS data
+      lcio::TrackerDataImpl* zsFrame =  new lcio::TrackerDataImpl;
+      outputEncoder["sensorID"] = 20 + channel;
+      outputEncoder["sparsePixelType"] = 0;
+      outputEncoder.setCellID( zsFrame );
+      frameMap[channel] = std::move(zsFrame);
     }
-     
-    std::map<int, std::unique_ptr<lcio::TrackerDataImpl>> frameMap;
-	std::map<int, std::unique_ptr<eutelescope::EUTelTrackerDataInterfacerImpl<eutelescope::EUTelGenericSparsePixel>>> frameInterfaceMap;
-	 
+    
     /*
     for(auto channel: boardChannels.at(boardID)){
 		auto frame = std::unique_ptr<lcio::TrackerDataImpl>(new lcio::TrackerDataImpl);
@@ -157,36 +158,28 @@ namespace eudaqinput {
 		frameMap[channel] = std::move(frame);
 	}
     */
-
-	
-    auto pixelVec = decodeFEI4Data(data0);    
-    for(auto& hitPixel: pixelVec) {
-		frameInterfaceMap[hitPixel.channel]->emplace_back(hitPixel.x, hitPixel.y, hitPixel.tot+1+hitDiscConf, hitPixel.lv1);
-	}
-
-	for(auto& framePair: frameMap){
-		dataCollection->push_back( framePair.second.release() );
-	}    
     
-
-    // Prepare a new lcio::TrackerData for the ZS data
-    lcio::TrackerDataImpl* zsFrame =  new lcio::TrackerDataImpl;
-    outputEncoder["sensorID"] = id;
-    outputEncoder["sparsePixelType"] = 0;
-    outputEncoder.setCellID( zsFrame );
-      
-    // Fill ZS data into new lcio::TrackerData object
-    /*  
-    for (unsigned j = 0; j < num+1; ++j) {
-      zsFrame->chargeValues().push_back( column+j );
-      zsFrame->chargeValues().push_back( row );
-      zsFrame->chargeValues().push_back( 1 );       
-    }
-    */
-      
-    // Now add the TrackerData to the collection
-    result->push_back( zsFrame );  
+    // Obviously some dummy value
+	int hitDiscConf = 0;
+    
+    // Decode data
+    auto pixelVec = decodeFEI4Data(data0);   
+    
+    // Fill ZS data into new lcio::TrackerData object 
+    for(auto& hitPixel: pixelVec) {
+      //frameInterfaceMap[hitPixel.channel]->emplace_back(hitPixel.x, hitPixel.y, hitPixel.tot+1+hitDiscConf, hitPixel.lv1);
+      frameMap[hitPixel.channel]->chargeValues().push_back( hitPixel.x );
+      frameMap[hitPixel.channel]->chargeValues().push_back( hitPixel.y );
+      frameMap[hitPixel.channel]->chargeValues().push_back( hitPixel.tot+1+hitDiscConf );       
+	}
      
+    // Add output digits to output collection
+    for ( auto& cached :  frameMap ) 
+    { 
+      // Now add the TrackerData to the collection
+      result->push_back( cached.second );
+    }
+       
     return true;
   }
   
