@@ -94,11 +94,7 @@ namespace eudaqinput {
     int    _nRun ;   //!< Run number
     int    _nEvt ;   //!< Event number
     
-    const uint8_t header = 0xE8; 					//0b11101 000
-    const uint8_t data_header = header | 0x1;		//0b11101 001
-    const uint8_t address_record = header | 0x2;	//0b11101 010
-    const uint8_t value_record = header | 0x4;		//0b11101 100
-    const uint8_t service_record = header | 0x7;	//0b11101 111
+    
    
   }; // Class
 

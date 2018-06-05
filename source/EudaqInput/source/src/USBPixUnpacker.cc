@@ -207,6 +207,12 @@ namespace eudaqinput {
 	std::vector<USBPixUnpacker::APIXPix> result;
 	std::array<size_t,8> no_data_headers;
     
+    static const uint8_t header = 0xE8; 					//0b11101 000
+    static const uint8_t data_header = header | 0x1;		//0b11101 001
+    static const uint8_t address_record = header | 0x2;	//0b11101 010
+    static const uint8_t value_record = header | 0x4;		//0b11101 100
+    static const uint8_t service_record = header | 0x7;	//0b11101 111
+
 	for(size_t index = 0;  index < data.size(); index+=4) {
         uint32_t i =( static_cast<uint32_t>(data[index+3]) << 24 ) | 
                 	( static_cast<uint32_t>(data[index+2]) << 16 ) | 
@@ -216,9 +222,7 @@ namespace eudaqinput {
 		uint8_t channel = selectBits(i, 24, 8);
 
 		if(channel >> 7) { //Trigger
-		
 			no_data_headers.fill(0);
-			uint32_t trigger_number = selectBits(i, 0, 31); //testme
 		} else {
 			uint8_t type = selectBits(i, 16, 8);
 			switch(type) {
