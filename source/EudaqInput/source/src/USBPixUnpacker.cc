@@ -168,7 +168,7 @@ namespace eudaqinput {
     for(auto& hitPixel: pixelVec) {
       //frameInterfaceMap[hitPixel.channel]->emplace_back(hitPixel.x, hitPixel.y, hitPixel.tot+1+hitDiscConf, hitPixel.lv1);
 
-      std::cout << "found hit on channel " <<  hitPixel.channel << " at x=" << hitPixel.x << " y="  << hitPixel.y << std::endl;     
+      std::cout << "found hit on channel " <<  hitPixel.channel << " at x=" << hitPixel.x << " y="  << hitPixel.y << " tot=" << hitPixel.tot+1+hitDiscConf << std::endl;     
       frameMap[hitPixel.channel]->chargeValues().push_back( hitPixel.x );
       frameMap[hitPixel.channel]->chargeValues().push_back( hitPixel.y );
       frameMap[hitPixel.channel]->chargeValues().push_back( hitPixel.tot+1+hitDiscConf );       
