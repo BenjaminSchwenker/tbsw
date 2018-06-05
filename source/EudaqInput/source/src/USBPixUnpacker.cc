@@ -8,8 +8,6 @@
 #include "Utils.hh"
 
 
-#define GET(d, i) getlittleendian<unsigned>(&(d)[(i)*4])
-
 // Used namespaces
 using namespace std; 
 using namespace lcio;
@@ -42,7 +40,10 @@ namespace eudaqinput {
     registerOutputCollection (LCIO::TRACKERDATA, "OutputCollectionName",
                               "Name of the output digit collection",
                               _outputCollectionName, string("zsdata_usbpix"));
-  
+
+    registerProcessorParameter( "FilterChannel","Only unpack data from this channel",
+                               _filterChannel, static_cast<int > (1));
+     
   }
   
   //
@@ -121,9 +122,9 @@ namespace eudaqinput {
     }
     
     // Read first data block 
-    datavect  data0;
     ShortVec& short_data0 = dynamic_cast<TrackerRawDataImpl* > ( source->getElementAt(0) )->adcValues();
     
+    datavect  data0; 
     for (size_t j = 0; j < short_data0.size(); j++) 
     {   
       data0.push_back( static_cast<unsigned char> (short_data0[j]) ); 
@@ -132,34 +133,15 @@ namespace eudaqinput {
 	// getChannels will determine all the channels making the assumption that every channel (i.e. FrontEnd)
 	// wrote date into the data block. 
 	auto channels = getChannels(data0);
-    
-    // Buffer for decoded hits
-    std::map<int, lcio::TrackerDataImpl*> frameMap;
-    
     for (auto channel : channels) {
-      // Prepare a new lcio::TrackerData for the ZS data
-      frameMap[channel] =  new lcio::TrackerDataImpl;
-      outputEncoder["sensorID"] = 20 + channel;
-      outputEncoder["sparsePixelType"] = 0;
-      outputEncoder.setCellID( frameMap[channel] );
+      streamlog_out(MESSAGE1) << "Found channel " << channel << " unpacking USBPix_Gen3." << std::endl;
     }
     
-    /*
-    for(auto channel: boardChannels.at(boardID)){
-		auto frame = std::unique_ptr<lcio::TrackerDataImpl>(new lcio::TrackerDataImpl);
-		auto sensorID = 20 + channel;
-		cellIDEncoder["sensorID"] = sensorID;
-		cellIDEncoder.setCellID(frame.get());
-		auto frameInterface = 	std::unique_ptr<eutelescope::EUTelTrackerDataInterfacerImpl<eutelescope::EUTelGenericSparsePixel>>( 
-						new eutelescope::EUTelTrackerDataInterfacerImpl<eutelescope::EUTelGenericSparsePixel>(frame.get())
-					);
-		frameInterfaceMap[channel] = std::move(frameInterface);
-		frameMap[channel] = std::move(frame);
-	}
-    */
-    
-    // Obviously some dummy value
-	int hitDiscConf = 0;
+    // Prepare a new lcio::TrackerData for the ZS data
+    lcio::TrackerDataImpl* frame =  new lcio::TrackerDataImpl;
+    outputEncoder["sensorID"] = 20 + _filterChannel;
+    outputEncoder["sparsePixelType"] = 0;
+    outputEncoder.setCellID( frame );
     
     // Decode data
     auto pixelVec = decodeFEI4Data(data0);   
@@ -167,19 +149,15 @@ namespace eudaqinput {
     // Fill ZS data into new lcio::TrackerData object 
     for(auto& hitPixel: pixelVec) {
       //frameInterfaceMap[hitPixel.channel]->emplace_back(hitPixel.x, hitPixel.y, hitPixel.tot+1+hitDiscConf, hitPixel.lv1);
-
-      std::cout << "found hit on channel " <<  hitPixel.channel << " at x=" << hitPixel.x << " y="  << hitPixel.y << " tot=" << hitPixel.tot+1+hitDiscConf << std::endl;     
-      frameMap[hitPixel.channel]->chargeValues().push_back( hitPixel.x );
-      frameMap[hitPixel.channel]->chargeValues().push_back( hitPixel.y );
-      frameMap[hitPixel.channel]->chargeValues().push_back( hitPixel.tot+1+hitDiscConf );       
+      if (hitPixel.channel ==  _filterChannel) {
+        frame->chargeValues().push_back( hitPixel.x );
+        frame->chargeValues().push_back( hitPixel.y );
+        frame->chargeValues().push_back( hitPixel.tot+1);    
+      }   
 	}
-     
-    // Add output digits to output collection
-    for ( auto& cached :  frameMap ) 
-    { 
-      // Now add the TrackerData to the collection
-      result->push_back( cached.second );
-    }
+      
+    // Now add the TrackerData to the collection
+    result->push_back( frame );
        
     return true;
   }

@@ -87,6 +87,9 @@ namespace eudaqinput {
     
     //! Input data collection name  
     std::string _inputCollectionName;
+    
+    //! Unpack data from this channel
+    int  _filterChannel;
     	        
    private: 
      
