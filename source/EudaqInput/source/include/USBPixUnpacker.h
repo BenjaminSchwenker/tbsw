@@ -32,14 +32,14 @@ namespace eudaqinput {
     typedef std::vector<unsigned char> datavect;
     typedef std::vector<unsigned char>::const_iterator datait;
     
+   public:
+    
     struct APIXPix {
 	  int x, y, tot, channel, lv1;
 	  APIXPix(int x, int y, int tot, int lv1, int channel): 
         x(x), y(y), tot(tot), lv1(lv1), channel(channel) {};
     };
     
-   public:
-   
     //!Method that returns a new instance of this processor
     virtual Processor*  newProcessor() { return new USBPixUnpacker ; }
     
