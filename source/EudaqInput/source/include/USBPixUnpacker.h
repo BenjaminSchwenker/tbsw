@@ -35,7 +35,7 @@ namespace eudaqinput {
    public:
     
     struct APIXPix {
-	  int x, y, tot, channel, lv1;
+	  int x, y, tot, lv1, channel;
 	  APIXPix(int x, int y, int tot, int lv1, int channel): 
         x(x), y(y), tot(tot), lv1(lv1), channel(channel) {};
     };
