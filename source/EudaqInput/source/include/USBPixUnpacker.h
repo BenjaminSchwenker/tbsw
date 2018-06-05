@@ -32,6 +32,12 @@ namespace eudaqinput {
     typedef std::vector<unsigned char> datavect;
     typedef std::vector<unsigned char>::const_iterator datait;
     
+    struct APIXPix {
+	  int x, y, tot, channel, lv1;
+	  APIXPix(int x, int y, int tot, int lv1, int channel): 
+        x(x), y(y), tot(tot), lv1(lv1), channel(channel) {};
+    };
+    
    public:
    
     //!Method that returns a new instance of this processor
@@ -62,13 +68,14 @@ namespace eudaqinput {
 	  return (val >> offset) & ((1ull << length) - 1);
     }
     
+    //! Get a vector with all channels (sensors) which are contained in data 
     std::vector<int> getChannels(std::vector<unsigned char> const & data);
     
     //! Method to unpack source (raw data) -> result (digits)
     bool UnpackRawCollection(lcio::LCCollectionVec * result, lcio::LCCollectionVec * source);
-
+    
     //! Method to decode raw frame 
-    void DecodeFrame(lcio::TrackerDataImpl* zsFrame, size_t len, datait it, int frame, unsigned pivotpixel);
+    std::vector<APIXPix> decodeFEI4Data(std::vector<unsigned char> const & data);
          
     //!Method printing processor parameters
     void printProcessorParams() const;
@@ -86,6 +93,12 @@ namespace eudaqinput {
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number
     int    _nEvt ;   //!< Event number
+    
+    const uint8_t header = 0xE8; 					//0b11101 000
+    const uint8_t data_header = header | 0x1;		//0b11101 001
+    const uint8_t address_record = header | 0x2;	//0b11101 010
+    const uint8_t value_record = header | 0x4;		//0b11101 100
+    const uint8_t service_record = header | 0x7;	//0b11101 111
    
   }; // Class
 
