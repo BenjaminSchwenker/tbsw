@@ -138,11 +138,10 @@ namespace eudaqinput {
     
     for (auto channel : channels) {
       // Prepare a new lcio::TrackerData for the ZS data
-      lcio::TrackerDataImpl* zsFrame =  new lcio::TrackerDataImpl;
+      frameMap[channel] =  new lcio::TrackerDataImpl;
       outputEncoder["sensorID"] = 20 + channel;
       outputEncoder["sparsePixelType"] = 0;
-      outputEncoder.setCellID( zsFrame );
-      frameMap[channel] = std::move(zsFrame);
+      outputEncoder.setCellID( frameMap[channel] );
     }
     
     /*
@@ -168,6 +167,8 @@ namespace eudaqinput {
     // Fill ZS data into new lcio::TrackerData object 
     for(auto& hitPixel: pixelVec) {
       //frameInterfaceMap[hitPixel.channel]->emplace_back(hitPixel.x, hitPixel.y, hitPixel.tot+1+hitDiscConf, hitPixel.lv1);
+
+      std::cout << "found hit on channel " <<  hitPixel.channel << " at x=" << hitPixel.x << " y="  << hitPixel.y << std::endl;     
       frameMap[hitPixel.channel]->chargeValues().push_back( hitPixel.x );
       frameMap[hitPixel.channel]->chargeValues().push_back( hitPixel.y );
       frameMap[hitPixel.channel]->chargeValues().push_back( hitPixel.tot+1+hitDiscConf );       
@@ -212,7 +213,7 @@ namespace eudaqinput {
     static const uint8_t address_record = header | 0x2;	//0b11101 010
     static const uint8_t value_record = header | 0x4;		//0b11101 100
     static const uint8_t service_record = header | 0x7;	//0b11101 111
-
+    
 	for(size_t index = 0;  index < data.size(); index+=4) {
         uint32_t i =( static_cast<uint32_t>(data[index+3]) << 24 ) | 
                 	( static_cast<uint32_t>(data[index+2]) << 16 ) | 
