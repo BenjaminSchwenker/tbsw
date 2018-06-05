@@ -203,8 +203,8 @@ namespace eudaqinput {
 	return channels;
   }
   
-  std::vector<APIXPix> USBPixUnpacker::decodeFEI4Data(std::vector<unsigned char> const & data) {
-	std::vector<APIXPix> result;
+  std::vector<USBPixUnpacker::APIXPix> USBPixUnpacker::decodeFEI4Data(std::vector<unsigned char> const & data) {
+	std::vector<USBPixUnpacker::APIXPix> result;
 	std::array<size_t,8> no_data_headers;
     
 	for(size_t index = 0;  index < data.size(); index+=4) {
