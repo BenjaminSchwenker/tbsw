@@ -124,6 +124,9 @@ if __name__ == '__main__':
   num_bins = config.getfloat('x0image', 'num_bins')
   histo_range = config.getfloat('x0image', 'histo_range')
 
+  # Fit options (log likelihood or chi2 fit?)
+  fit_options = config.getfloat('x0image', 'fit_options')
+
   fp.close()
 
   # Create X0 root file link in the current work dir
@@ -183,11 +186,14 @@ if __name__ == '__main__':
       # Angle histo range
       this_histo_range=str(histo_range)
 
+      # fit options
+      this_fit_options=str(fit_options)
+
       # Number of angle histo bins
       this_num_bins=str(num_bins)
       
       # Copy placeholder x0image and change it
-      shutil.copy(scriptsfolder+'/x0imaging.C', scriptname)
+      shutil.copy(scriptsfolder+'/'+scriptname, scriptname)
 
       # Open new cfg txt file
       open('x0image-partial.cfg', 'a').close()
@@ -217,6 +223,7 @@ if __name__ == '__main__':
       config.set('image', 'vertexmultiplicitymax', this_vertex_multiplicity_max)
       config.set('image', 'num_bins', this_num_bins)
       config.set('image', 'histo_range', this_histo_range)
+      config.set('image', 'fit_options', this_fit_options)
 
       # Writing the configuration file
       with open('x0image-partial.cfg', 'w') as configfile:

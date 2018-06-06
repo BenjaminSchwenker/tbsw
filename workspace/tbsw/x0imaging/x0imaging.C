@@ -408,7 +408,7 @@ double DetermineFitrange(TH1* histo,double rangevalue)
 }
 
   // Function to fit the MSC angle histograms and fill the map histograms
-  void fithisto( TFile* file, int fittype, double maxchi2ndof_fit, double rangevalue, int col, int numcol, int row,int numrow, double* parameters)
+  void fithisto( TFile* file, int fittype, double maxchi2ndof_fit, double rangevalue, int col, int numcol, int row,int numrow, double* parameters, TString fitoptions)
   { 
 	// Calculate number of parameters
 	int num_parameters = 7;
@@ -559,26 +559,26 @@ double DetermineFitrange(TH1* histo,double rangevalue)
    		fit2->SetParLimits(3,0.00001,200.0);
    		fitsum->SetParLimits(3,0.00001,200.0);
 
-		TFitResultPtr fitr=fithistogram1->Fit("theta1_fit","RS");
+		TFitResultPtr fitr=fithistogram1->Fit("theta1_fit",fitoptions);
 		if(fitr!=0)
 		{
 			cout<<"Fit of first angle distribution failed with status: "<<fitr<<endl;
 			cout<<"Repeat fit "<<endl;
-			fithistogram1->Fit("theta1_fit","RM");
+			fithistogram1->Fit("theta1_fit",fitoptions);
 		}
-		fitr=fithistogram2->Fit("theta2_fit","RS");
+		fitr=fithistogram2->Fit("theta2_fit",fitoptions);
 		if(fitr!=0)
 		{
 			cout<<"Fit of second angle distribution failed with status: "<<fitr<<endl;
 			cout<<"Repeat fit "<<endl;
-			fithistogram2->Fit("theta2_fit","RM");
+			fithistogram2->Fit("theta2_fit",fitoptions);
 		}
-		fitr=fithistogramsum->Fit("thetasum_fit","RS");
+		fitr=fithistogramsum->Fit("thetasum_fit",fitoptions);
 		if(fitr!=0)
 		{
 			cout<<"Fit of combined angle distribution failed with status: "<<fitr<<endl;
 			cout<<"Repeat fit "<<endl;
-			fithistogramsum->Fit("thetasum_fit","RM");
+			fithistogramsum->Fit("thetasum_fit",fitoptions);
 		}
 
 		// Names of the 14 local parameters
@@ -1074,6 +1074,9 @@ int x0imaging()
     // Fit range parameter
 	double rangevalue=mEnv.GetValue("fitrange_parameter", 2.0);
 
+    // Fit options
+	TString fitoptions=mEnv.GetValue("fit_options", "RMELS");
+
 	// Choose the type of fit
 	// 0: gaussian fit function with cuts on the tails, both kink distributions are used seperately
 	// 1: gaussian fit function with cuts on the tails, use only 1 fit on the merged histogram consisting of both distributions
@@ -1499,7 +1502,7 @@ int x0imaging()
 			double parameters[7]={mom,charge,mass,0.01,recoerror,300,0.0};
 
 			// fit the histograms
-			fithisto(rootfile, fittype, maxchi2ndof_fit, rangevalue, col,numcol,row,numrow,parameters);
+			fithisto(rootfile, fittype, maxchi2ndof_fit, rangevalue, col,numcol,row,numrow,parameters,fitoptions);
 		}
 	}
 
