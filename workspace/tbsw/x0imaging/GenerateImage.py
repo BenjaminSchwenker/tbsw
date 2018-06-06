@@ -125,7 +125,7 @@ if __name__ == '__main__':
   histo_range = config.getfloat('x0image', 'histo_range')
 
   # Fit options (log likelihood or chi2 fit?)
-  fit_options = config.getfloat('x0image', 'fit_options')
+  fit_options = config.get('x0image', 'fit_options')
 
   fp.close()
 
