@@ -59,10 +59,7 @@ void DiamondRawHitSorter::init() {
    // Initialize variables
    _nRun = 0 ;
    _nEvt = 0 ;
-   
-   // Read detector constants from gear file
-   _detector.ReadGearConfiguration();    
-               
+                 
    // Print set parameters
    printProcessorParams();
    
@@ -139,9 +136,9 @@ void DiamondRawHitSorter::processEvent(LCEvent * evt)
          float charge =  rawData[iDigit * m_modulus + 2];     
          
          // Print detailed pixel summary, for testing/debugging only !!! 
-         streamlog_out(MESSAGE1) << "Digit Nr. " << iDigit << " on sensor " << sensorID  
+         streamlog_out(MESSAGE1) << "Digit Nr. " << iDigit << " on sensor " << inputDecoder( frame ) ["sensorID"]; 
                                  << std::endl;  
-         streamlog_out(MESSAGE1) << "   column:" << col << ", row:" << row
+         streamlog_out(MESSAGE1) << "   column:" << x << ", row:" << y
                                  << ", charge:" << charge
                                  << std::endl;
 
@@ -156,7 +153,7 @@ void DiamondRawHitSorter::processEvent(LCEvent * evt)
          
        }  
        
-       outputEncoder["sensorID"] = inputDecoder( cluster ) ["sensorID"];
+       outputEncoder["sensorID"] = inputDecoder( frame ) ["sensorID"];
        outputEncoder["sparsePixelType"] = 0;
        outputEncoder.setCellID( mapped_frame );
        outputCollection->push_back( mapped_frame );
@@ -347,7 +344,7 @@ vector<int> DiamondRawHitSorter::getRectCoord(int x, int y){
 }
 
 
-svector<int> DiamondRawHitSorter::getHexCoord(int x, int y){
+vector<int> DiamondRawHitSorter::getHexCoord(int x, int y){
   int c = 0, r  = 0;
   vector<int> coord;
   
