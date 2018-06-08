@@ -124,6 +124,8 @@ void DiamondRawHitSorter::processEvent(LCEvent * evt)
        // Get the unmapped data 
        TrackerDataImpl * frame = dynamic_cast<TrackerDataImpl* > ( inputCollection->getElementAt(iBlock) );
         
+       int sensorID = inputDecoder( frame ) ["sensorID"];
+       
        // Loop over digits and filter digits
        FloatVec rawData = frame->getChargeValues();
        int nDigits = rawData.size()/m_modulus; 
@@ -136,7 +138,7 @@ void DiamondRawHitSorter::processEvent(LCEvent * evt)
          float charge =  rawData[iDigit * m_modulus + 2];     
          
          // Print detailed pixel summary, for testing/debugging only !!! 
-         streamlog_out(MESSAGE1) << "Digit Nr. " << iDigit << " on sensor " << inputDecoder( frame ) ["sensorID"]; 
+         streamlog_out(MESSAGE1) << "Digit Nr. " << iDigit << " on sensor " << sensorID
                                  << std::endl;  
          streamlog_out(MESSAGE1) << "   column:" << x << ", row:" << y
                                  << ", charge:" << charge
@@ -153,7 +155,7 @@ void DiamondRawHitSorter::processEvent(LCEvent * evt)
          
        }  
        
-       outputEncoder["sensorID"] = inputDecoder( frame ) ["sensorID"];
+       outputEncoder["sensorID"] = sensorID;
        outputEncoder["sparsePixelType"] = 0;
        outputEncoder.setCellID( mapped_frame );
        outputCollection->push_back( mapped_frame );
