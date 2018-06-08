@@ -40,16 +40,14 @@ DiamondRawHitSorter::DiamondRawHitSorter() : Processor("DiamondRawHitSorter")
    
    
    registerOutputCollection (LCIO::TRACKERDATA, "OutputCollectionName",
-                            "Name of the output cluster collection",
+                            "Name of the output data collection",
                             _outputCollectionName, string("zsdata_dia"));
 
-   registerProcessorParameter( "Modulus","How many floats are used to encode a digit",
-                               m_modulus, static_cast<int > (4));
+   registerProcessorParameter( "PixelType","Select type of diamond pixel: 0 not on diamond, 1 FE only, 2 rectangular, 3 hexagonal",
+                                m_type, static_cast<int > (2));
 
-   std::vector<int> initFilterIDs;
-   registerProcessorParameter ("FilterIDs",
-                              "Unpack digits from detectors having DAQ IDs in this list",
-                              _filterIDs, initFilterIDs);
+   registerProcessorParameter( "Modulus","How many floats are used to encode a digit",
+                               m_modulus, static_cast<int > (3));
 
 }
 
@@ -112,63 +110,58 @@ void DiamondRawHitSorter::processEvent(LCEvent * evt)
      // Helper class for decoding pixel data 
      CellIDDecoder<TrackerDataImpl> inputDecoder( inputCollection );  
      
-     // The original data collection contains the sparse pixel data for 
-     // each accpeted cluster.
+     // The output collection with filtered and mapped pixels 
      LCCollectionVec * outputCollection = new LCCollectionVec(LCIO::TRACKERDATA);
-     
-     // Prepare a TrackerData to store reformatted raw data 
-     std::map<int, TrackerDataImpl*> outputDigitsMap;
-     for (auto id :  _filterIDs)  outputDigitsMap[id] = new TrackerDataImpl ; 
-           
-     // Cluster loop
-     for (size_t iClu = 0; iClu < inputCollection->size(); iClu++) { 
-     
-       TrackerDataImpl * cluster = dynamic_cast<TrackerDataImpl* > ( inputCollection->getElementAt(iClu) );
-        
-       // DAQ ID for pixel detector
-       int sensorID = inputDecoder( cluster ) ["sensorID"];
 
-       // Ignore digits from this sensor. 
-       if ( outputDigitsMap.find(sensorID) == outputDigitsMap.end() ) continue;
-             
-       // Loop over digits
-       FloatVec rawData = cluster->getChargeValues();
+      // CellID encoding string  
+     CellIDEncoder<TrackerDataImpl> outputEncoder( "sensorID:6,sparsePixelType:5" , outputCollection ); 
+     
+      
+           
+     // Loop over data blocks
+     for (size_t iBlock = 0; iBlock < inputCollection->size(); iBlock++) { 
+     
+       // Prepare a TrackerData to store the mapped zs data frame 
+       TrackerDataImpl* mapped_frame = new TrackerDataImpl ;
+  
+       // Get the unmapped data 
+       TrackerDataImpl * frame = dynamic_cast<TrackerDataImpl* > ( inputCollection->getElementAt(iBlock) );
+        
+       // Loop over digits and filter digits
+       FloatVec rawData = frame->getChargeValues();
        int nDigits = rawData.size()/m_modulus; 
          
        for (int iDigit = 0; iDigit < nDigits; iDigit++) 
        {   
         
-        int col = static_cast<int> (rawData[iDigit * m_modulus]);
-        int row = static_cast<int> (rawData[iDigit * m_modulus + 1]);
-        float charge =  rawData[iDigit * m_modulus + 2];     
+         int x = static_cast<int> (rawData[iDigit * m_modulus]);
+         int y = static_cast<int> (rawData[iDigit * m_modulus + 1]);
+         float charge =  rawData[iDigit * m_modulus + 2];     
          
-        // Print detailed pixel summary, for testing/debugging only !!! 
-        streamlog_out(MESSAGE1) << "Digit Nr. " << iDigit << " on sensor " << sensorID  
-                                << std::endl;  
-        streamlog_out(MESSAGE1) << "   column:" << col << ", row:" << row
-                                << ", charge:" << charge
-                                << std::endl;
-        
-        // Store raw digits in tbsw format 
-        outputDigitsMap[sensorID]->chargeValues().push_back( col );
-        outputDigitsMap[sensorID]->chargeValues().push_back( row );
-        outputDigitsMap[sensorID]->chargeValues().push_back( charge );   
+         // Print detailed pixel summary, for testing/debugging only !!! 
+         streamlog_out(MESSAGE1) << "Digit Nr. " << iDigit << " on sensor " << sensorID  
+                                 << std::endl;  
+         streamlog_out(MESSAGE1) << "   column:" << col << ", row:" << row
+                                 << ", charge:" << charge
+                                 << std::endl;
+
+         if ( getPixelType(x, y) == m_type) {
+           vector<int> newcoord = getPixelCoordinates(x, y);
+           streamlog_out(MESSAGE1) << "FE coord (" << x << ", " << y << "), new coord: (" << newcoord[0] << ", " << newcoord[1] << ")" << std::endl;
+           // Store raw digits in tbsw format 
+           mapped_frame->chargeValues().push_back( newcoord[0] );
+           mapped_frame->chargeValues().push_back( newcoord[1] );
+           mapped_frame->chargeValues().push_back( charge );   
+         }
          
        }  
-
-     } // End cluster loop 
-     
-     // CellID encoding string  
-     CellIDEncoder<TrackerDataImpl> outputEncoder( "sensorID:6,sparsePixelType:5" , outputCollection ); 
-     
-     // Add output digits to output collection
-     for ( auto& cached :  outputDigitsMap ) 
-     { 
-       outputEncoder["sensorID"] = cached.first;
+       
+       outputEncoder["sensorID"] = inputDecoder( cluster ) ["sensorID"];
        outputEncoder["sparsePixelType"] = 0;
-       outputEncoder.setCellID( cached.second );
-       outputCollection->push_back( cached.second );
-     }
+       outputEncoder.setCellID( mapped_frame );
+       outputCollection->push_back( mapped_frame );
+       
+     }  
      
      // Add output collection to event
      evt->addCollection( outputCollection, _outputCollectionName );

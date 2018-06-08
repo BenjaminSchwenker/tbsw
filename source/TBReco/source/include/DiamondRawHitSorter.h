@@ -73,7 +73,11 @@ protected:
    
    //! Select type of diamond pixel 
    int m_type;
-          
+ 
+   //! Number of floats per digit 
+   int m_modulus;
+   
+           
  private: 
     
    double _timeCPU; //!< CPU time
