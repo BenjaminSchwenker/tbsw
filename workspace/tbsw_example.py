@@ -197,9 +197,6 @@ def simulate(params):
   # Create steerfiles for processing
   simpath = create_sim_path(SimObj)
 
-  # Randomize sensor positions in gear file to create misalignment
-  #randomize_telescope(gearfile=SimObj.get_filename(gearfile), mean_pos=0, sigma_pos=0.1, mean_rot=0, sigma_rot=0.1)
-
   # Misalign gear file
   randomize_telescope(gearfile=SimObj.get_filename(gearfile), mean_list=mean_list, sigma_list=sigma_list, sensorexception_list=sensorexception_list, modeexception_list=modeexception_list)
    
