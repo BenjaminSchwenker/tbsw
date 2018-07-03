@@ -138,7 +138,7 @@ most important ones are:
   * vertex_chi2_image              : Image of the vertex fit chi2 value
   * vertex_multiplicity_image              : Image of the vertex multiplicity, this parameter also has a thickness/X/X0 dependency
 
-## Calibration of beam energy and telescope angle resolution:
+##4. Calibration of beam energy and telescope angle resolution:
 
 The relevant calibration constants ares: 
 
@@ -172,7 +172,7 @@ The results of the calibration, including pictures of the fits of the individual
 workspace/tmp-runs/X0-mc-air-test-reco-X0Calibration/ . The results of the calibration are also stored as a cfg file
 in workspace/localDB/mc-air-test/x0cal_result.cfg.
 
-## X/X0 imaging (calibrated):
+##5. X/X0 imaging (calibrated):
 
 In the last step an calibrated X/X0 image is produced, which used the cfg file from the previous calibration step. The
 calibrated X/X0 image should look like this:
@@ -196,17 +196,159 @@ testbeam_x0.py. The most important changes are the following:
    * You do not simulate the air and aluminium runs. You have to actually record the runs in a mono-energetic particle beam using a high resolution tracking 
      telescope. 
    * For test beams at DESY using the EUDET/AIDA telescope: We recommend to use 40mm as a spacing between telescope sensors and a beam energy of 2GeV. The air run can 
-     be short (~30min) while the aluminium run should last around two hours. 
+     be short (~30min) while the aluminium runs should last around two hours. 
    * The raw data format from EUDAQ will be .raw files. The reading of .raw and .slcio files is slightly different. The required changes are already done in 
      the steering files 'x0-tb' instead of 'x0-sim' used for simulations. 
    * The file gear.xml in 'x0-tb' needs to be adjusted to your telescope geometry. In particular, the z positions of Mimosa 26 sensors along the beam axis must be carefully 
      measured. 
-   * The track fitting w/o magnetic field needs a mean beam momentum as input. Change the momentum in the XML steering files to the beam momentum value 
+   * The track fitting w/o magnetic field needs a mean beam momentum as input. Change the momentum in the testbeam_x0.py to the beam momentum value 
      selected for your runs. 
-   * Some changes in the x0 cfg files might be necessary as well. In particular, the measurement areas with known thicknessess for the X0 calibration will be different. 
+   * Some changes in the x0 cfg files will be necessary as well. In particular, the measurement areas with known thicknessess for the X0 calibration will be different. 
      The selection of the measurement areas can be done by looking at the uncalibrated X0 image.
    * The uncalibrated X0 image is also useful to check that your scattering object is actually inside the beam. It is highly recommended to check this whenever you switch 
      or move your object. Do it during the data taking, not weeks after you are home ;)
+
+In the following paragraph a guideline of how you have to change the testbeam_x0.py script and the x0.cfg file in order to be able to analyse your test beam data.
+
+#0. First steps
+
+Change the beam energy to the correct value, which was used during your beam test experiment
+
+```
+$ # Nominal Beam energy
+$ beamenergy=2.0
+``` 
+
+The next step is to copy the default x0 steering files (workspace/steering-files/x0-tb) to workspace/steering-files/x0-mytb. Then the gear file (workspace/steering-files/x0-mytb/gear.xml) has to be edited to
+match the telescope setup you used during you beam test experiment. Especially the M26 spacings, target position and mean thickness will have to be modified.
+
+#1. Telescope calibration 
+
+The telescope calibration works with a single run raw file 
+```
+$ rawfile_cali = '/work1/rawdata/DESY_Oktober16/2GeV_air/run006973.raw'
+```
+The path to the run raw file has to be modified to match your data. The calibration run should have 500k to 1mio tracks without any additional material in the telescope. The calibration procedure 
+
+```
+$ # Calibrate the telescope
+$ params_cali = ( rawfile_cali, steerfiles_cali, gearfile, caltag)
+$ calibrate( params_cali )
+```
+
+produces a calibration tag directory, that is written to workspace/local-DB/caltag. Choose an appropriate name for the caltag,
+
+```
+# telescope calibration cal tag (typically named after telescope setup, beam energy etc.)
+caltag='40mm-spacing-2GeV'
+```
+
+so that you always know, which telescope setup, beam energy etc is covered by this tag. The telescope calibration has to be done only once for each beam energy, telescope setup and M26 threshold setting. Once you have the caltag directory you can comment out/remove the telescope calibration procedure from the testbeam_x0.py script.
+
+
+#2. Angle reconstruction
+
+The angle reconstruction is performed for a list of runs. The list should contain all runs, which were recorded with the same beam energy and telescope settings and which are needed either for the x0 calibration or the x0 imaging. 
+The target position, material and thickness can be different for the individual runs in the list, because for each run a seperate root file with the reconstructed scattering angles is created.
+
+
+```
+$ RunList_reco = [
+$             '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006958.raw',
+$             '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006959.raw',
+$             '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006960.raw',
+$             '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006961.raw',
+$           ]
+```
+
+Of course, this list also has to be modified to match the your data. The angle reconstruction is started by the following code snippet
+
+```
+$  # Angle reconstruction
+  params_reco=[(x, steerfiles_reco, gearfile, caltag) for x in RunList_reco]
+  print "The parameters for the reconstruction are: " 
+  print params_reco
+
+  count = multiprocessing.cpu_count()
+  pool = multiprocessing.Pool(processes=count)
+  pool.map(reconstruct, params_reco)
+```
+
+As you can see the angle reconstruction uses multiprocessing. In case you don't want to use all system ressources feel free to set the variable count to some number smaller than the number of processor cores of your maschine.
+
+#3. X/X0 calibration
+
+Now the x0 calibration is performed. Once again a list of runs has to be modified:
+
+```
+$ RunList_x0cali = [
+$             '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006958.raw',
+$             '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006961.raw',
+$           ]
+```
+
+The list should contain runs with many different well known calibration targets. Typically different aluminium layers with various thicknesses and an air measurement without a scattering target. 
+
+Before starting the x0 calibration, the workspace/steering-files/x0-mytb/x0.cfg file will have to be modified. You have to define several measurement areas with different X/X0 values and positions on the target plane.
+For each measurement area a range of runnumbers and u and v position limits must be specified. The angle distribution found for these specifications, will then be used in the x0 calibration measurements. It is important
+to use different X/X0 values during the calibration and a run without a scattering target should always be included, as the calibration of the angle reconstruction error depends on it. 
+
+The x0 calibration process is started via:
+
+```
+$  # start x0 calibration
+$  params_x0cali = ( x0caltag, RunList_x0cali, steerfiles_x0, caltag, deletetag)
+$  xx0calibration(params_x0cali)
+```
+
+The xx0calibration() functions performs the following steps:
+
+The root files with reconstructed angle information, that were reconstructed in the previous step are merged
+
+```
+$   # Merge the root trees in the root files directory
+$   tbsw.x0imaging.X0Calibration.merge_rootfile(filename=filename,RunList=RunList_x0cali,caltag=caltag)
+```
+A uncalibrated image is generated from the merged root file. This image will be used to visualize the position of the measurement areas, which are employed during the x0 calibration.
+
+```
+$   # Generate a uncalibrated X/X0 image
+$   tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag='',deletetag=deletetag,steerfiles=steerfiles_reco,nametag='Uncalibrated')
+```
+
+Afterwards the x0 calibration itself is performed
+
+```
+$   # Do a calibration of the angle resolution
+$   tbsw.x0imaging.X0Calibration.x0calibration(filename=filename,imagefilename=imagefilename,caltag=x0tag,steerfiles=steerfiles_reco)
+```
+
+The x0 calibration creates a new caltag at localDB/x0tag. Just like the telescope calibration the x0 calibration step has to be done only once. Before proceeding with the x0imaging step one should check the quality of the calibration measurement. The fitted distributions can be found in workspace/tmp-runs/...-X0Calibration/X0calibration_results.root.
+
+#5. X/X0 Images 
+
+Now calibrated images can be generated. The imaging process is started via:
+
+```
+$  # Generate a calibrated X/X0 image
+$  nametag='x0image-list'
+$  params_x0image = ( x0caltag, RunList_x0image, steerfiles_x0, caltag, deletetag)
+$  xx0image(params_x0image)
+```
+
+The runs used for the generation of the image are defined in a list:
+
+```
+$ RunList_image1 = [
+$             '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006958.raw',
+$             '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006959.raw',
+$             '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006960.raw',
+$             '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006961.raw',
+$           ]
+```
+
+In this step it is important that exactly the same target material and target position are used. The Imaging process can now be repeated for every image you want to create. The image settings can be changed in the
+config file workspace/steering-files/x0-mytb/x0.cfg.
 
 
 The technique and algorithm behind radiation length imaging was shown VCI 2016. The link to the proceedings paper is http://www.sciencedirect.com/science/article/pii/S0168900216306519.
@@ -215,7 +357,7 @@ Please you this reference for citing the method.
 Ulf Stolzenberg
 Benjamin Schwenker
 
-Goettingen 2017
+Goettingen 2018
 
 ulf.stolzenberg@phys.uni-goettingen.de 
 benjamin.schwenker@phys.uni-goettingen.de

@@ -23,26 +23,47 @@ import tbsw.x0imaging.X0Calibration
 # Path to steering files 
 # Steeringfiles are xml files and define details of the simulation like how many events are produced
 # or how M26 sensors are digitized. XML parameters can be adjusted using any test editor
+
+# Steerfiles for the telescope calibration
 steerfiles_cali = 'steering-files/x0-tboct16-2GeV-air/'
+
+# Steerfiles for the angle reconstruction (can be the same directory as telescope calibration steerfiles)
 steerfiles_reco = 'steering-files/x0-tboct16-2GeV-air/'
-# Gearfile for runs 
+
+# Steerfiles for the x0calibration/x0imaging (can be the same directory as telescope calibration steerfiles)
+steerfiles_x0 = 'steering-files/x0-tboct16-2GeV-air/'
+
+# Name of the gearfile, which describes the telescope setup 
 gearfile = 'gear.xml'
-#cal tag
-caltag='air'
-x0tag='05mmalu'
-# File name for raw data 
-rawfile_cali = '/work1/rawdata/tboct16/run006973.raw'
-rawfile_TA = '/work1/rawdata/tboct16/run006958.raw'
-# Nominal Beam energy
-beamenergy=2.0
 
 # Alignment DB file name
 alignmentdb_filename='alignmentDB.root'
 
+# Nominal Beam energy
+beamenergy=2.0
+
 # Number of iterations during target alignment
 # Set to 0 or negative integer to disable target alignment
-targetalignment_iterations=3
+targetalignment_iterations=0
 
+# cal tags
+# telescope calibration cal tag (typically named after telescope setup, beam energy etc.)
+caltag='40mm-spacing-2GeV'
+
+# x0 calibration cal tag
+x0tag='05mmalu'
+
+# File names and lists of filenames for the different steps 
+
+# raw file used during telescope calibration (best use data with scattering target)
+# The calibration has to be done for every telescope setup, beam energy and m26 threshold settings
+rawfile_cali = '/work1/rawdata/tboct16/run006973.raw'
+
+# raw file used for target alignment (only useful with a thick (X/X0 > 5 %) scattering target)
+rawfile_TA = '/work1/rawdata/tboct16/run006958.raw'
+
+# List of runs, which are input for the scattering angle reconstruction
+# This step is essential for every run, that will be used later during the x0 calibration or x0 imaging steps
 RunList_reco = [
 		    '/work1/rawdata/tboct16/run006958.raw',
 		    '/work1/rawdata/tboct16/run006959.raw',
@@ -50,15 +71,32 @@ RunList_reco = [
 		    '/work1/rawdata/tboct16/run006961.raw',
           ]
 
+# List of runs, which are input for the x0 calibration
+# Typically runs with various different materials and thicknesses have to be used to achieve a sensible calibration
+# The different measurement regions and other options have to be set in the x0.cfg file in the steer files directory
+RunList_x0cali = [
+		    '/work1/rawdata/tboct16/run006958.raw',
+		    '/work1/rawdata/tboct16/run006961.raw',
+          ]
+
+# List of runs, which are input for the first x0 image
+# Use only runs, with exactly the same target material and positioning
+RunList_x0image = [
+		    '/work1/rawdata/tboct16/run006958.raw',
+		    '/work1/rawdata/tboct16/run006961.raw',
+          ]
+
 # Number of events ...
 # for telescope calibration
 nevents_cali = 700000
+
 # for target alignment
 nevents_TA = 1000000
-# for angle reconstruction
+
+# for angle reconstruction (-1 use all available events)
 nevents_reco = -1
 
-
+# Processor settings and sequence during telescope calibration
 def create_calibration_path(Env, rawfile, gearfile):
   """
   Returns a list of tbsw path objects to calibrate the tracking telescope
@@ -175,7 +213,7 @@ def create_calibration_path(Env, rawfile, gearfile):
   
   return calpath
 
-
+# Processor settings and sequence during angle reconstruction
 def create_reco_path(Env, rawfile, gearfile, numberofevents):
   """
   Returns a list of tbsw path objects to reconstruct a test beam run 
@@ -194,7 +232,7 @@ def create_reco_path(Env, rawfile, gearfile, numberofevents):
   return [ reco ]
 
 
-
+# Perform the telescope calibration
 def calibrate(params):
   """
   Calibrates an misaligned tracking telescope from run data. 
@@ -220,7 +258,7 @@ def calibrate(params):
 
 
 
-
+# Perform the angle reconstruction of a single run
 def reconstruct(params):
 
   rawfile, steerfiles, gearfile, caltag = params
@@ -246,6 +284,7 @@ def reconstruct(params):
   # Run the reconstuction  
   RecObj.reconstruct(path=recopath,ifile=rawfile,caltag=localcaltag) 
 
+# Perform target alignment
 def targetalignment(params):
   """
   Starts the scattering angle reconstruction and vertex fit on the central target
@@ -298,19 +337,57 @@ def targetalignment(params):
   save_targetpos(treename,dbname)
   RecObj.export_caltag(newcaltag)
 
+# Perform x0 calibration
+def xx0calibration(params):
+
+  x0caltag, RunList, steerfiles, calibrationtag, delete = params
+
+  # Base filename of the X0 root file
+  basefilename='X0-x0cal-list-merge-'+x0tag
+
+  # Total path of X0 root file
+  filename='root-files/'+basefilename+'.root'
+
+  # Merge the root trees in the root files directory
+  tbsw.x0imaging.X0Calibration.merge_rootfile(filename=filename,RunList=RunList,caltag=caltag)
+
+  # Generate a uncalibrated X/X0 image
+  tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag='',deletetag=delete,steerfiles=steerfiles,nametag='Uncalibrated')
+
+  # Path to uncalibrated X0 image file
+  imagefilename='/root-files/'+basefilename+'-UncalibratedX0image.root'
+
+  # Do a calibration of the angle resolution
+  tbsw.x0imaging.X0Calibration.x0calibration(filename=filename,imagefilename=imagefilename,caltag=x0tag,steerfiles=steerfiles)
+
+# Generate x0 image
+def xx0calibration(params):
+
+  x0caltag, RunList, steerfiles, calibrationtag, delete, listnametag = params
+
+  # Base filename of the X0 root file
+  basefilename='X0-'+listnametag+'-merge-'+x0tag
+
+  # Total path of X0 root file
+  filename='root-files/'+basefilename+'.root'
+
+  # Merge the root trees in the root files directory
+  tbsw.x0imaging.X0Calibration.merge_rootfile(filename=filename,RunList=RunList,caltag=caltag)
+
+  # Do a calibration of the angle resolution
+  tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag=x0tag,deletetag=deletetag,steerfiles=steerfiles_reco,nametag='Calibrated')
+
   
 if __name__ == '__main__':
 
-  # Get current directory
-  cwdir = os.getcwd()
-
-  params_cali = ( rawfile_cali, steerfiles_cali, gearfile, caltag)
-
-  print(params_cali)
 
   # Calibrate the telescope 
+  params_cali = ( rawfile_cali, steerfiles_cali, gearfile, caltag)
+  print(params_cali)
   calibrate( params_cali )
 
+
+  # Target alignment
   for it in range(0,targetalignment_iterations):
     params_TA = (rawfile_TA, steerfiles_reco, caltag, it)
     print "The parameters for the target alignment are: " 
@@ -318,6 +395,8 @@ if __name__ == '__main__':
 
     targetalignment(params_TA)
 
+
+  # Angle reconstruction
   params_reco=[(x, steerfiles_reco, gearfile, caltag) for x in RunList_reco]
   print "The parameters for the reconstruction are: " 
   print params_reco
@@ -326,26 +405,15 @@ if __name__ == '__main__':
   pool = multiprocessing.Pool(processes=count)
   pool.map(reconstruct, params_reco)
 
+
+  # start x0 calibration
   deletetag='1'
+  params_x0cali = ( x0caltag, RunList_x0cali, steerfiles_x0, caltag, deletetag)
+  xx0calibration(params_x0cali)
 
-  # Base filename of the X0 root file
-  basefilename='X0-merge-'+x0tag
-
-  # Total path of X0 root file
-  filename='root-files/'+basefilename+'.root'
-
-  # Merge the root trees in the root files directory
-  tbsw.x0imaging.X0Calibration.merge_rootfile(filename=filename,RunList=RunList_reco,caltag=caltag)
-
-  # Generate a uncalibrated X/X0 image
-  tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag='',deletetag=deletetag,steerfiles=steerfiles_reco,nametag='Uncalibrated')
-
-  # Path to uncalibrated X0 image file
-  imagefilename='/root-files/'+basefilename+'-UncalibratedX0image.root'
-
-  # Do a calibration of the angle resolution
-  tbsw.x0imaging.X0Calibration.x0calibration(filename=filename,imagefilename=imagefilename,caltag=x0tag,steerfiles=steerfiles_reco)
 
   # Generate a calibrated X/X0 image
-  tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag=x0tag,deletetag=deletetag,steerfiles=steerfiles_reco,nametag='Calibrated')
+  nametag='x0image-list'
+  params_x0image = ( x0caltag, RunList_x0image, steerfiles_x0, caltag, deletetag)
+  xx0image(params_x0image)
 
