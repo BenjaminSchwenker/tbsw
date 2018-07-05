@@ -171,7 +171,7 @@ if __name__ == '__main__':
     subprocess.call('root -q -b '+scriptname, shell=True)
     print ('[Print] Marking of measurement areas done... ')
 
-    # remove DrawBoxes.C script and image file
+    # remove DrawBoxes.C script
     os.remove(scriptname) 
 
   else:
@@ -182,7 +182,7 @@ if __name__ == '__main__':
   scriptname="calibrationfit.C"
   shutil.copy(scriptsfolder+'/'+scriptname, scriptname)
 
-  # Copy the results cfg file from previous calibrations, of it exists
+  # Copy the results cfg file from previous calibrations, if it exists
   cfgfilename="x0cal_result.cfg"
   cfgfile=fullpath+'/localDB/'+caltag+'/'+cfgfilename
   if os.path.isfile(cfgfile):
@@ -193,9 +193,6 @@ if __name__ == '__main__':
 
   # remove calibrationfit.C script
   os.remove(scriptname) 
-
-  # remove cfg file
-  os.remove(cfgname) 
 
   caldir=fullpath+'/localDB/'+caltag
 

@@ -49,7 +49,7 @@ nevents_alu = 6000000
 #Parameters for simulation of misalignment
 #Position parameters in mm
 mean_list=[0.0,0.0,0.0,0.0,0.0,0.0] 
-sigma_list=[1.0,1.0,1.0,0.1,0.1,0.1]
+sigma_list=[0.1,0.1,1.0,0.1,0.1,0.1]
 
 # List of sensor ids and modes, which are excluded during misalignment
 sensorexception_list=[5,0] 
@@ -57,7 +57,7 @@ modeexception_list=['']
 
 # Number of iterations during target alignment
 # Set to 0 or negative integer to disable target alignment
-targetalignment_iterations=3
+targetalignment_iterations=0
 
 # Nominal Beam energy
 beamenergy=2.0
