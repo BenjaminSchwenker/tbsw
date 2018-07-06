@@ -997,9 +997,9 @@ void savehisto(TFile* file, TFile* file2, TString histoname, int numbins, double
 		u_condition=(u>cutparameters_position.at(0))&&(u<cutparameters_position.at(1));
 		v_condition=(v>cutparameters_position.at(2))&&(v<cutparameters_position.at(3));
 
-		if(cutparameters_run.at(0)>-1 && cutparameters_run.at(1)>-1 ) run_condition=(RunNo>cutparameters_run.at(0))&&(RunNo<cutparameters_run.at(1));
-		else if (cutparameters_run.at(0)>-1) run_condition=(RunNo>cutparameters_run.at(0));
-		else if (cutparameters_run.at(1)>-1) run_condition=(RunNo<cutparameters_run.at(1));
+		if(cutparameters_run.at(0)>-1 && cutparameters_run.at(1)>-1 ) run_condition=(RunNo>=cutparameters_run.at(0))&&(RunNo<=cutparameters_run.at(1));
+		else if (cutparameters_run.at(0)>-1) run_condition=(RunNo>=cutparameters_run.at(0));
+		else if (cutparameters_run.at(1)>-1) run_condition=(RunNo<=cutparameters_run.at(1));
 
 		if(msc_tree->GetBranchStatus("vertex_multiplicity")) vertex_multiplicity_condition=(vertex_multiplicity>=cutparameters_vertex_multiplicity.at(0))&&(vertex_multiplicity<=cutparameters_vertex_multiplicity.at(1));
 

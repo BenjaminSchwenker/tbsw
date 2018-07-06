@@ -226,9 +226,15 @@ match the telescope setup you used during you beam test experiment. Especially t
 
 The telescope calibration works with a single run raw file 
 ```
-$ rawfile_cali = '/work1/rawdata/DESY_Oktober16/2GeV_air/run006973.raw'
+# global path to raw files
+rawfile_path='/work1/rawdata/tboct16/'
+
+# raw file used during telescope calibration (best use data with scattering target)
+# The calibration has to be done for every telescope setup, beam energy and m26 threshold settings
+cali_run='run006973.raw'
+rawfile_cali = rawfile_path + cali_run
 ```
-The path to the run raw file has to be modified to match your data. The calibration run should have 500k to 1mio tracks without any additional material in the telescope. The calibration procedure 
+The path to the run raw files and the nume of the run raw file has to be modified to match your data. The calibration run should have 500k to 1mio tracks without any additional material in the telescope. The calibration procedure 
 
 ```
 $ # Calibrate the telescope
@@ -254,18 +260,18 @@ The target position, material and thickness can be different for the individual 
 
 ```
 $ RunList_reco = [
-$             '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006958.raw',
-$             '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006959.raw',
-$             '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006960.raw',
-$             '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006961.raw',
+$             'run006958.raw',
+$             'run006959.raw',
+$             'run006960.raw',
+$             'run006961.raw',
 $           ]
 ```
 
-Of course, this list also has to be modified to match the your data. The angle reconstruction is started by the following code snippet
+Of course, this list also has to be modified to match the runs you want to analyse. The angle reconstruction is started by the following code snippet
 
 ```
 $  # Angle reconstruction
-  params_reco=[(x, steerfiles_reco, gearfile, caltag) for x in RunList_reco]
+  params_reco=[(x, steerfiles_reco, gearfile, caltag) for x in RawfileList_reco]
   print "The parameters for the reconstruction are: " 
   print params_reco
 
@@ -282,8 +288,8 @@ Now the x0 calibration is performed. Once again a list of runs has to be modifie
 
 ```
 $ RunList_x0cali = [
-$             '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006958.raw',
-$             '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006961.raw',
+$             'run006958.raw',
+$             'run006961.raw',
 $           ]
 ```
 
@@ -297,7 +303,7 @@ The x0 calibration process is started via:
 
 ```
 $  # start x0 calibration
-$  params_x0cali = ( x0caltag, RunList_x0cali, steerfiles_x0, caltag, deletetag)
+$  params_x0cali = ( x0caltag, RawfileList_x0cali, steerfiles_x0, caltag, deletetag)
 $  xx0calibration(params_x0cali)
 ```
 
@@ -307,20 +313,20 @@ The root files with reconstructed angle information, that were reconstructed in 
 
 ```
 $   # Merge the root trees in the root files directory
-$   tbsw.x0imaging.X0Calibration.merge_rootfile(filename=filename,RunList=RunList_x0cali,caltag=caltag)
+$   tbsw.x0imaging.X0Calibration.merge_rootfile(filename=filename,RunList=RunList,caltag=caltag)
 ```
 A uncalibrated image is generated from the merged root file. This image will be used to visualize the position of the measurement areas, which are employed during the x0 calibration.
 
 ```
 $   # Generate a uncalibrated X/X0 image
-$   tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag='',deletetag=deletetag,steerfiles=steerfiles_reco,nametag='Uncalibrated')
+$   tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag='',deletetag=deletetag,steerfiles=steerfiles,nametag='Uncalibrated')
 ```
 
 Afterwards the x0 calibration itself is performed
 
 ```
 $   # Do a calibration of the angle resolution
-$   tbsw.x0imaging.X0Calibration.x0calibration(filename=filename,imagefilename=imagefilename,caltag=x0tag,steerfiles=steerfiles_reco)
+$   tbsw.x0imaging.X0Calibration.x0calibration(filename=filename,imagefilename=imagefilename,caltag=x0tag,steerfiles=steerfiles)
 ```
 
 The x0 calibration creates a new caltag at localDB/x0tag. Just like the telescope calibration the x0 calibration step has to be done only once. Before proceeding with the x0imaging step one should check the quality of the calibration measurement. The fitted distributions can be found in workspace/tmp-runs/...-X0Calibration/X0calibration_results.root.
@@ -332,7 +338,7 @@ Now calibrated images can be generated. The imaging process is started via:
 ```
 $  # Generate a calibrated X/X0 image
 $  nametag='x0image-list'
-$  params_x0image = ( x0caltag, RunList_x0image, steerfiles_x0, caltag, deletetag)
+$  params_x0image = ( x0caltag, RawfileList_x0image, steerfiles_x0, caltag, deletetag,nametag)
 $  xx0image(params_x0image)
 ```
 
@@ -340,10 +346,9 @@ The runs used for the generation of the image are defined in a list:
 
 ```
 $ RunList_image1 = [
-$             '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006958.raw',
-$             '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006959.raw',
-$             '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006960.raw',
-$             '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006961.raw',
+$             'run006958.raw',
+$             'run006959.raw',
+$             'run006960.raw',
 $           ]
 ```
 
