@@ -559,56 +559,51 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		
         if (_m_toy) 
 		{
-		      double dudw = p_in[0][0];
-		      double dvdw = p_in[1][0];
-		      double u = p_in[2][0]; 
-		      double v = p_in[3][0]; 
-		      double mom = uptrack.GetMomentum();  
-		      double l0 = dut.GetThickness(u,v)*std::sqrt(1 + dudw*dudw + dvdw*dvdw);  
-		      
-		      // Highland model scattering
-		      double theta2 = materialeffect::GetScatterTheta2(p_in, l0, dut.GetRadLength(u,v),uptrack.GetMass(), uptrack.GetCharge() );      
-		      double kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
-		      double kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 ));    
+		  double dudw = p_in[0][0];
+		  double dvdw = p_in[1][0];
+		  double u = p_in[2][0]; 
+		  double v = p_in[3][0]; 
+		  double mom = uptrack.GetMomentum();  
+		  double l0 = dut.GetThickness(u,v)*std::sqrt(1 + dudw*dudw + dvdw*dvdw); 
+		  
+		  // Highland model scattering
+		  double theta2 = materialeffect::GetScatterTheta2(p_in, l0, dut.GetRadLength(u,v),uptrack.GetMass(), uptrack.GetCharge() );  
+		  double kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
+		  double kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 ));    
 	  
-		      // Scatter track ('in' state -> 'out' state)
-			  HepMatrix toystate=p_in;
-		      materialeffect::ScatterTrack(toystate, kink_u, kink_v); 
+		  // Scatter track ('in' state -> 'out' state)
+		  HepMatrix toystate=p_in;
+		  materialeffect::ScatterTrack(toystate, kink_u, kink_v); 
 
-			  TBTrackState outstate_toy;
-			  outstate_toy.Pars=toystate;
+		  TBTrackState outstate_toy;
+		  outstate_toy.Pars=toystate;
 
-			  // Calculate scattering angles from
-			  theta = TrackFitterMSC.GetScatterKinks(dut, InState, outstate_toy); 
+		  // Calculate scattering angles from
+		  theta = TrackFitterMSC.GetScatterKinks(dut, InState, outstate_toy); 
 
-			  //streamlog_out(MESSAGE3) << endl << "Difference between kink_u and theta1: " << kink_u-theta[0][0] << "rad" << endl;	
-			  //streamlog_out(MESSAGE3) << endl << "Difference between kink_v and theta2: " << kink_v-theta[1][0] << "rad" << endl;	
+		  double reco_error1;
+		  double reco_error2;
 
-			  double reco_error1;
-			  double reco_error2;
+		  //  In case of a selected angle reco error smaller than 0,
+		  //  use the real reco error
+		  if(_m_reco_error<0)
+		  {
+			reco_error1=TMath::Sqrt( Cov[0][0] );
+			reco_error2=TMath::Sqrt( Cov[1][1] );
+		  }
 
-			  //  In case of a selected angle reco error smaller than 0,
-			  //  use the real reco error
-			  if(_m_reco_error<0)
-			  {
-					reco_error1=TMath::Sqrt( Cov[0][0] );
-					reco_error2=TMath::Sqrt( Cov[1][1] );
-			  }
+		  // Else use the selected reco error
+		  else
+		  {
+			reco_error1=_m_reco_error;
+			reco_error2=_m_reco_error;
+		  }
 
-			  // Else use the selected reco error
-			  else
-			  {
-					reco_error1=_m_reco_error;
-					reco_error2=_m_reco_error;
-			  }
+		  _root_angle1 = theta[0][0]+gRandom->Gaus(0, reco_error1);
+		  _root_angle2 = theta[1][0]+gRandom->Gaus(0, reco_error2);
 
-			  _root_angle1 = theta[0][0]+gRandom->Gaus(0, reco_error1);
-			  _root_angle2 = theta[1][0]+gRandom->Gaus(0, reco_error2);
-
-			  _root_angle1_var = reco_error1*reco_error1;
-			  _root_angle2_var = reco_error2*reco_error2;
-
-		      // difference between states for angles 
+		  _root_angle1_var = reco_error1*reco_error1;
+		  _root_angle2_var = reco_error2*reco_error2; 
         } 
 		
 		_rootMscTree->Fill(); 
