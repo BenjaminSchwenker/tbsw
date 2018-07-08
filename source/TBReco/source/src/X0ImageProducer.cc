@@ -92,11 +92,11 @@ X0ImageProducer::X0ImageProducer() : Processor("X0ImageProducer")
                               _vertexfitswitch,  static_cast < bool > (true));
 
   registerProcessorParameter ("ToyScatteringSwitch",
-                              "Use toy scattering angles instead of reconstructed ones",
+                              "Switch to fast toy simulation mode: Replace reconstructed scatter angles from track fitting by angles sampled from a Gauss distribution",
                               _m_toy,  static_cast < bool > (false));
 
   registerProcessorParameter ("ToyRecoError",
-                              "Angle reconstruction error used in toy simulations, if its smaller than 0, use real angle reco error instead",
+                              "Angle reconstruction error used in toy simulations, if its smaller than 0, use real angle reco error instead (only used in toy simulation mode)",
                               _m_reco_error,  static_cast < double > (-1.0));
                                
   registerProcessorParameter( "RootFileName",
