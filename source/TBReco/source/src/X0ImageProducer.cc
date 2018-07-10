@@ -563,7 +563,6 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		_root_chi2=jchisq[0][0];
 		_root_prob=TMath::Prob(jchisq[0][0], 2);
 
-		
         if (_m_toy) 
 		{
 		  double dudw = p_in[0][0];
@@ -622,7 +621,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		  _root_angle1_var = reco_error1*reco_error1;
 		  _root_angle2_var = reco_error2*reco_error2; 
 
-		  _root_momentum = average_mom(); 
+		  _root_momentum = average_mom; 
         } 
 		
 		_rootMscTree->Fill(); 
