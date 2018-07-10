@@ -121,6 +121,9 @@ protected:
 //! toy study switch
    double _m_reco_error;
 
+//! toy Bethe Heitler switch
+   bool _m_ToyBetheHeitler;
+
 //! Max vertex chi2/ndof
    double _maxVertexChi2;
 

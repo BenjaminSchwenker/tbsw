@@ -98,6 +98,10 @@ X0ImageProducer::X0ImageProducer() : Processor("X0ImageProducer")
   registerProcessorParameter ("ToyRecoError",
                               "Angle reconstruction error used in toy simulations, if its smaller than 0, use real angle reco error instead (only used in toy simulation mode)",
                               _m_reco_error,  static_cast < double > (-1.0));
+
+  registerProcessorParameter ("ToyBetheHeitlerSwitch",
+                              "Flag (true/false) for simulating fractional Bethe Heitler energy loss (only used in toy simulation mode)",
+                              _m_ToyBetheHeitler,  static_cast < bool > (true));
                                
   registerProcessorParameter( "RootFileName",
                                "Output root file name",
@@ -430,6 +434,9 @@ void X0ImageProducer::processEvent(LCEvent * evt)
   //Initialize Vertex Fitter
   TBVertexFitter VertexFitter(_idut, _detector);
 
+  // Average mometum before and after energy loss. 
+  double average_mom = 0;
+
 
   for(int iup=0;iup<(int)upTrackStore.size(); iup++)
   {
@@ -565,9 +572,19 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		  double v = p_in[3][0]; 
 		  double mom = uptrack.GetMomentum();  
 		  double l0 = dut.GetThickness(u,v)*std::sqrt(1 + dudw*dudw + dvdw*dvdw); 
+
+          // Simulate energy loss by bremsstrahlung (Bethe Heitler theory)
+          average_mom = 0.5*uptrack.GetCharge()/p_in[4][0];
+          if (_m_ToyBetheHeitler) {
+            double t = l0/dut.GetRadLength(u,v);
+            double rndm = gRandom->Rndm(1);
+            materialeffect::SimulateBetherHeitlerEnergyLoss(p_in, t, uptrack.GetMass(), uptrack.GetCharge(), rndm); 
+          } 
+          // Take average of momentum before and after scattering
+          average_mom += 0.5*uptrack.GetCharge()/p_in[4][0];
 		  
 		  // Highland model scattering
-		  double theta2 = materialeffect::GetScatterTheta2(p_in, l0, dut.GetRadLength(u,v),uptrack.GetMass(), uptrack.GetCharge() );  
+		  double theta2 = materialeffect::GetScatterTheta2(average_mom, l0, dut.GetRadLength(u,v),uptrack.GetMass(), uptrack.GetCharge() );  
 		  double kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
 		  double kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 ));    
 	  
