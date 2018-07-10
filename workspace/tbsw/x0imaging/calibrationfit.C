@@ -59,12 +59,13 @@ class MeasurementArea
 	double A; 					// Atomic mass of the target material in the area
 	int run_min; 				// Minimal run number of data, which contains the specified material parameters
 	int run_max;				// Maximal run number of data, which contains the specified material parameters
+	int max_angles;				// Maximal number of scattering angles in the scattering angle distribution
 
 	public:
 
 	// Constructors
 
-	MeasurementArea(double, double, double, double, double, double, double, double, int, int);	// Constructor
+	MeasurementArea(double, double, double, double, double, double, double, double, int, int, int);	// Constructor
 
 	// Reading parameters of the measurement area
 
@@ -84,6 +85,8 @@ class MeasurementArea
 	int Get_run_min() { return run_min; }					// Return run_min
 	int Get_run_max() { return run_max; }					// Return run_max
 
+	int Get_max_angles() { return max_angles; }			    // Return max_angles
+
 	
 
 	void PrintParameters() 		// Print all parameters
@@ -102,10 +105,12 @@ class MeasurementArea
 
 		std::cout<<"Min. run number: "<<run_min<<std::endl;
 		std::cout<<"Max run number: "<<run_max<<std::endl;
+
+		std::cout<<"Max number of angles: "<<max_angles<<std::endl;
 	}
 };	
 // Constructor definition
-MeasurementArea::MeasurementArea(double ucenter, double vcenter, double ulength, double vlength, double thick, double dens, double atom_num, double atom_mass, int run_minimum, int run_maximum)
+MeasurementArea::MeasurementArea(double ucenter, double vcenter, double ulength, double vlength, double thick, double dens, double atom_num, double atom_mass, int run_minimum, int run_maximum, int angle_maximum)
 {
 	center_u=ucenter;	// mm
 	center_v=vcenter;	// mm
@@ -117,6 +122,7 @@ MeasurementArea::MeasurementArea(double ucenter, double vcenter, double ulength,
 	A=atom_mass;
 	run_min=run_minimum;
 	run_max=run_maximum;
+	max_angles=angle_maximum;
 }
 
 // Class describing the complete calibration grid. The grid consists of a set of holes with a specific radiation length.
@@ -142,10 +148,12 @@ class Grid
 	{
 		for(int i=0;i<m_MeasurementAreas.size();i++) 
 		{
-			cout<<"-----------------------"<<endl;
+			cout<<endl<<"-----------------------"<<endl;
 			cout<<"Measurement Area "<<i<<endl;
 			cout<<"-----------------------"<<endl;			
 			m_MeasurementAreas.at(i).PrintParameters();
+			if(i==m_MeasurementAreas.size()-1) cout<<endl;
+
 		}
 	}
 
@@ -183,9 +191,10 @@ Grid::Grid(TEnv* mEnv)
 		double density=mEnv->GetValue(MAname+".density", 2.7);
 		int run_min=mEnv->GetValue(MAname+".minrunnumber", -1);
 		int run_max=mEnv->GetValue(MAname+".maxrunnumber", -1);
+		int max_angle=mEnv->GetValue(MAname+".maxanglenumber", -1);
 
 		// Define measurement area based on these parameters
-		MeasurementArea MA(ucenter,vcenter,ulength,vlength,thickness,density,Z,A,run_min,run_max);
+		MeasurementArea MA(ucenter,vcenter,ulength,vlength,thickness,density,Z,A,run_min,run_max,max_angle);
   
 		// Add measurement area to predefined grid
 		m_MeasurementAreas.push_back(MA);
@@ -211,9 +220,10 @@ Grid::Grid(TEnv* mEnv)
 				double density=mEnv->GetValue(linename+".density", 2.7);
 				int run_min=mEnv->GetValue(linename+".minrunnumber", -1);
 				int run_max=mEnv->GetValue(linename+".maxrunnumber", -1);
+				int max_angle=mEnv->GetValue(linename+".maxanglenumber", -1);
 
 				// Define measurement area based on these parameters
-				MeasurementArea MA(ucenter,vcenter,ulength,vlength,thickness,density,Z,A,run_min,run_max);
+				MeasurementArea MA(ucenter,vcenter,ulength,vlength,thickness,density,Z,A,run_min,run_max,max_angle);
 			  
 				// Add measurement area to predefined grid
 				m_MeasurementAreas.push_back(MA);
@@ -237,9 +247,10 @@ Grid::Grid(TEnv* mEnv)
 				double density=mEnv->GetValue(linename+".density", 2.7);
 				int run_min=mEnv->GetValue(linename+".minrunnumber", -1);
 				int run_max=mEnv->GetValue(linename+".maxrunnumber", -1);
+				int max_angle=mEnv->GetValue(linename+".maxanglenumber", -1);
 
 				// Define measurement area based on these parameters
-				MeasurementArea MA(ucenter,vcenter,ulength,vlength,thickness,density,Z,A,run_min,run_max);
+				MeasurementArea MA(ucenter,vcenter,ulength,vlength,thickness,density,Z,A,run_min,run_max,max_angle);
 		  
 				// Add measurement area to predefined grid
 				m_MeasurementAreas.push_back(MA);
@@ -677,21 +688,21 @@ Double_t molierefunction(Double_t *x, Double_t *par)
 
 
 // definition of shared parameters like the parameter numbers of each fit function and 
-// a globalChi2 structure
+// a globalEstimator structure
 
 // Number of parameters per fit function
 const int num_localparameters=14;
 
-// Global chi2 object, will be used in fit
-struct GlobalChi2 { 
-    std::vector< ROOT::Math::IMultiGenFunction * >& getChi2Vec() {return fChi2Vec;}
-	void SetArray() {ipar=GetParameterMapping(fChi2Vec.size());}
+// Global estimator object, will be used in fit
+struct GlobalEstimator { 
+    std::vector< ROOT::Math::IMultiGenFunction * >& getEstimatorVec() {return fEstimatorVec;}
+	void SetArray() {ipar=GetParameterMapping(fEstimatorVec.size());}
 
     double operator() (const double *par) const {
 
       double ret =0;
 	  
-	  for(int j=0;j<fChi2Vec.size();j++)
+	  for(int j=0;j<fEstimatorVec.size();j++)
 	  {
         // read function args
         double p1[num_localparameters];
@@ -700,19 +711,19 @@ struct GlobalChi2 {
 				p1[i] = par[ipar[j][i] ];
 		}
         // evaluate function and sum up
-        ROOT::Math::IMultiGenFunction * func  =  fChi2Vec.at(j);
+        ROOT::Math::IMultiGenFunction * func  =  fEstimatorVec.at(j);
 
-		// Add up all local chi2 values of the single fit functions
+		// Add up all local estimator values of the single fit functions
 		ret += (*func)(p1);
        
       }
-	  // return global chi2 value
+	  // return global estimator value
 	  return ret;
 }
 
 
  
-    std::vector< ROOT::Math::IMultiGenFunction * > fChi2Vec;
+    std::vector< ROOT::Math::IMultiGenFunction * > fEstimatorVec;
 	int ** ipar;
   };
 
@@ -803,12 +814,33 @@ double calculateB(double log_omega_b)
 // Determine fit range for a kink angle histogram
 // This is done by finding the first and last bin above a certain threshold.
 // The fit range is half of the distance between these two bins in rad
-double DetermineFitrange(TH1* histo,double minvalue)
+double DetermineFitrange(TH1* histo,double rangevalue)
 {
 
-	int bin1 = histo->FindFirstBinAbove(histo->GetMaximum()*minvalue);
-	int bin2 = histo->FindLastBinAbove(histo->GetMaximum()*minvalue);
-	double fitrange = (histo->GetBinCenter(bin2) - histo->GetBinCenter(bin1))/2.0;
+    // Clone histo
+	TH1F *h2 = (TH1F*) histo->Clone();
+
+	cout<<"RMS value of distribution: "<<histo->GetRMS()<<endl;
+	cout<<"Selected range parameter: "<<rangevalue<<" -> Fit range up to y=1/("<<rangevalue<<"*e)"<<endl;
+	double fitrange = sqrt(2.0*rangevalue)*histo->GetRMS();
+
+	// Use RMS value as a rough measure of the fit range for a gaussian fit
+	TF1 *f1 = new TF1("f1","gaus(x)",-fitrange,fitrange);
+	f1->SetLineStyle(2);
+	TFitResultPtr fitr=h2->Fit("f1","RS");
+
+	// Repeat fit in case it failed
+	if(fitr!=0)
+	{
+		cout<<"Fit of angle distribution failed with status: "<<fitr<<endl;
+		cout<<"Repeat fit "<<endl;
+		h2->Fit("f1","RM");
+	}
+
+	// Use the determined sigma value to calculate the fit range
+	double sigma = f1->GetParameter(2);
+	fitrange=sqrt(2.0*rangevalue)*sigma;
+	cout<<"Determined fit range: " << fitrange<<endl<<endl;
 
 	return fitrange;
 }
@@ -824,14 +856,27 @@ double getanglerecovar(TFile* file)
 	// Draw reconstruction error 1 histogram
 	msc_tree->Draw("theta1_var", "", "P*");
 
-	// Get mean value
-	double recovar = msc_tree->GetHistogram()->GetMean();
+	// Get mean value 1
+	double recovar1 = msc_tree->GetHistogram()->GetMean();
 
-	// Get maximum value
-	double recovar_error = msc_tree->GetHistogram()->GetMeanError();	//max methode
+	// Get error 1
+	double recovar1_error = msc_tree->GetHistogram()->GetMeanError();
+
+	// Draw reconstruction error 1 histogram
+	msc_tree->Draw("theta2_var", "", "P*");
+
+	// Get mean value 2
+	double recovar2 = msc_tree->GetHistogram()->GetMean();
+
+	// Get error 2
+	double recovar2_error = msc_tree->GetHistogram()->GetMeanError();
+
+	// Calculate mean value
+	double recovar=(recovar1+recovar2)/2.0;
+	double recovar_error=sqrt(recovar1_error*recovar1_error+recovar2_error*recovar2_error)/2.0;
 
 	// The recovar error shouldn't be too large! 
-	cout<<"Angle Reconstruction Variance: 	"<<recovar<<" +/- "<<recovar_error<<"rad^2"<<endl; 
+	cout<<endl<<"Angle Reconstruction Variance: 	"<<recovar<<" +/- "<<recovar_error<<"rad^2"<<endl; 
 
 	return recovar;
 }
@@ -847,6 +892,10 @@ void shiftbins(TH1* histogram, double mean1)
 
 	Double_t stats[5]={0,0,0,0,0};
 	histogram->PutStats(stats); // reset mean value, etc
+
+	// Get correct number of histogram entries
+	int n_entries=histogram->GetEntries();
+
 	Int_t nbins=histogram->GetNbinsX();
 
 	//Now the histogram has to be shifted accordingly
@@ -872,191 +921,49 @@ void shiftbins(TH1* histogram, double mean1)
 		   	 histogram->SetBinContent(j,0);
 		}
 	}
+
+	histogram->SetEntries(n_entries);
 }
-
-// This function fills histograms corresponding to certain u v values with msc angle distributions 
-void correcthisto(TFile* file,TFile* file2, TString histoname, TString range, std::vector <double> cutparameters_position,std::vector <int> cutparameters_run, std::vector <int> cutparameters_vertex_multiplicity )
-{
-	//TTree in input root file, that contains the MSC projected angle distributions
-	file->cd("");
-	TTree *msc_tree = (TTree*)file->Get("MSCTree");
-
-	// Definition of the four cuts used to define the measurement region
-	TString cutcondition;
-
-	cutcondition.Form("u>%f",cutparameters_position.at(0));
-	TString cutall=cutcondition;
-
-	cutcondition.Form("u<%f",cutparameters_position.at(1));
-	cutall=cutall+"&&"+cutcondition;
-
-	cutcondition.Form("v>%f",cutparameters_position.at(2));
-	cutall=cutall+"&&"+cutcondition;
-
-	cutcondition.Form("v<%f",cutparameters_position.at(3));
-
-	cutall=cutall+"&&"+cutcondition;
-
-    if(msc_tree->GetBranchStatus("vertex_multiplicity"))
-	{
-		cutcondition.Form("vertex_multiplicity>=%i",cutparameters_vertex_multiplicity.at(0));
-		cutall=cutall+"&&"+cutcondition;
-
-		cutcondition.Form("vertex_multiplicity<=%i",cutparameters_vertex_multiplicity.at(1));
-		cutall=cutall+"&&"+cutcondition;
-	}
-
-	else
-	{
-		cout<<"vertex multiplicity branch wasn't found! Skip vertex multiplicity cuts!"<<endl;
-	}
-
-
-	// Run number conditions
-    if((cutparameters_run.at(0))>-1)
-	{
-		cutcondition.Form("iRun>%i",cutparameters_run.at(0)-1);
-		cutall=cutall+"&&"+cutcondition;
-	}
-
-
-    if((cutparameters_run.at(1)>-1))
-	{
-		cutcondition.Form("iRun<%i",cutparameters_run.at(1)+1);
-		cutall=cutall+"&&"+cutcondition;
-	}
-
-	// Draw histogram of the first scattering angle in the given u and v range and save it
-	msc_tree->Draw("theta1>>histo1("+range+")",cutall,"");
-
-	// Get the histogram and save it in the raw folder
-	TH1 * aidhistogram=msc_tree->GetHistogram();
-	aidhistogram->SetTitle("#theta_{1} distribution");
-	aidhistogram->GetXaxis()->SetTitle("#theta_{1} [rad]");
-
-	// Go to raw directory
-	file2->cd("");
-	file2->cd("grid/raw/");
-
-	aidhistogram->Write("theta1_uncorrected_"+histoname);
-
-	// Delete histogram1 from memory
-	aidhistogram->SetDirectory(gROOT);
-	delete aidhistogram;
-
-	// Draw histogram of second scattering angle in the given u and v range and save it
-	msc_tree->Draw("theta2>>histo2("+range+")",cutall,"");
-
-	// Get the histogram and save it in the raw folder
-	TH1 * aidhistogram2=msc_tree->GetHistogram();
-	aidhistogram2->SetTitle("#theta_{2} distribution");
-	aidhistogram2->GetXaxis()->SetTitle("#theta_{2} [rad]");
-
-	// Go to raw directory
-	file2->cd("");
-	file2->cd("grid/raw/");
-
-	aidhistogram2->Write("theta2_uncorrected_"+histoname);
-
-	// Delete histogram2 from memory
-	aidhistogram2->SetDirectory(gROOT);
-	delete aidhistogram2;
-
-	// Draw sum histogram of the scattering angles in the given u and v range and save it
-	TH1 * hsum1;
-	msc_tree->Draw("theta1>>hsum1("+range+")",cutall,"");
-	hsum1=msc_tree->GetHistogram();
-
-	TH1 * hsum2;
-	msc_tree->Draw("theta2>>hsum2("+range+")",cutall,"");
-	hsum2=msc_tree->GetHistogram();
-
-	// Give the two histograms to a listOperator
-	TList *list = new TList;
-        list->Add(hsum1);
-        list->Add(hsum2);
-
-	// Merge all histograms in the list
-        TH1 *h = (TH1*)hsum1->Clone("h");
-        h->Reset();
-        h->Merge(list);
-	h->SetTitle("merged projected angle distribution");
-	h->GetXaxis()->SetTitle("#theta_{proj.} [rad]");
-
-	// Go to raw directory
-	file2->cd("");
-	file2->cd("grid/raw/");
-
-	h->Write("sumhisto_uncorrected_"+histoname);
-
-	// Delete sum histogram from memory
-	h->SetDirectory(gROOT);
-	delete h;
-
-	// Delete histogram 1 from memory
-	hsum1->SetDirectory(gROOT);
-	delete hsum1;
-
-	// Delete histogram 2 from memory
-	hsum2->SetDirectory(gROOT);
-	delete hsum2;
-}
-
 
 // Function to save the projected angle histograms of different regions in the u-v plane, the region lies within the given 
 // u and v min and max values.
-void savehisto(TFile* file, TFile* file2, TString histoname, TString range, std::vector <double> cutparameters_position, std::vector <int> cutparameters_run, std::vector <int> cutparameters_vertex_multiplicity, int correctmean)
+void savehisto(TFile* file, TFile* file2, TString histoname, int numbins, double histo_range, std::vector <double> cutparameters_position, std::vector <int> cutparameters_run, std::vector <int> cutparameters_vertex_multiplicity, int max_angles, int correctmean, TString nametag)
 {
 	//TTree in input root file, that contains the MSC projected angle distributions
 	file->cd("");
 	TTree *msc_tree = (TTree*)file->Get("MSCTree");
+
+	TString range;
 
 	// Array of mean theta1 and theta2 values in each map pixel
 	double mean1=0.0;
 	double mean2=0.0;
 
-	// Definition of the four cuts used to define the measurement region
-	TString cutcondition;
+	// parameters which are read out from the root file
+	Double_t theta1;
+	Double_t theta2;
+	Double_t u;
+	Double_t v;
 
-	cutcondition.Form("u>%f",cutparameters_position.at(0));
-	TString cutall=cutcondition;
+	Int_t RunNo;
+	Int_t vertex_multiplicity=1;
 
-	cutcondition.Form("u<%f",cutparameters_position.at(1));
-	cutall=cutall+"&&"+cutcondition;
+	// Draw histogram of the first scattering angle in the given u and v range and save it
+	msc_tree->Draw("theta1>>h_help("+range+")","","");
 
-	cutcondition.Form("v>%f",cutparameters_position.at(2));
-	cutall=cutall+"&&"+cutcondition;
+	// Get the histogram and save it in the raw folder
+	TH1 * h_help=msc_tree->GetHistogram();
 
-	cutcondition.Form("v<%f",cutparameters_position.at(3));
-	cutall=cutall+"&&"+cutcondition;
+	double limits=histo_range*(h_help->GetRMS());
 
-    if(msc_tree->GetBranchStatus("vertex_multiplicity"))
-	{
-		cutcondition.Form("vertex_multiplicity>=%i",cutparameters_vertex_multiplicity.at(0));
-		cutall=cutall+"&&"+cutcondition;
+	// Set branch adresses for parameters connected to the scattering angles
+	msc_tree->SetBranchAddress("theta1",&theta1);
+	msc_tree->SetBranchAddress("theta2",&theta2);
+	msc_tree->SetBranchAddress("u",&u);
+	msc_tree->SetBranchAddress("v",&v);
 
-		cutcondition.Form("vertex_multiplicity<=%i",cutparameters_vertex_multiplicity.at(1));
-		cutall=cutall+"&&"+cutcondition;
-	}
-
-	else
-	{
-		cout<<"vertex multiplicity branch wasn't found! Skip vertex multiplicity cuts!"<<endl;
-	}
-
-	// Run number conditions
-    if((cutparameters_run.at(0))>-1)
-	{
-		cutcondition.Form("iRun>%i",cutparameters_run.at(0)-1);
-		cutall=cutall+"&&"+cutcondition;
-	}
-
-
-    if((cutparameters_run.at(1)>-1))
-	{
-		cutcondition.Form("iRun<%i",cutparameters_run.at(1)+1);
-		cutall=cutall+"&&"+cutcondition;
-	}
+	msc_tree->SetBranchAddress("iRun",&RunNo);
+	msc_tree->SetBranchAddress("vertex_multiplicity",&vertex_multiplicity);
 
 	if(correctmean==1)
 	{
@@ -1068,103 +975,125 @@ void savehisto(TFile* file, TFile* file2, TString histoname, TString range, std:
 		mean1=histogram1->GetMean();
 		mean2=histogram2->GetMean();
 
-		double limits=2.5*(histogram1->GetRMS()+histogram2->GetRMS());
-		int nbins=500;
-		range.Form("%i,%f,%f",nbins,-limits,limits);
+		limits=histo_range/2.0*(histogram1->GetRMS()+histogram2->GetRMS());
 	}
 
-	// Draw histogram of the first scattering angle in the given u and v range and save it
-	msc_tree->Draw("theta1>>h("+range+")",cutall,"");
+	// Temporary histos with angle distributions fulfilling the cut conditions
+	TH1F * tmp_anglehisto[2];
 
-	// Get the histogram and save it in the raw folder
-	TH1 * aidhistogram=msc_tree->GetHistogram();
-	
-	// Shift the bins of the histogram to reduce the offset
-	if(correctmean==1) shiftbins(aidhistogram,mean1);
+	tmp_anglehisto[0]=new TH1F("theta1_histo","theta1_histo",numbins,-limits,limits);
+	tmp_anglehisto[1]=new TH1F("theta2_histo","theta2_histo",numbins,-limits,limits);
 
-	aidhistogram->SetTitle("#theta_{1} distribution");
-	aidhistogram->GetXaxis()->SetTitle("#theta_{1} [rad]");
+	for(int ientry=0;ientry<msc_tree->GetEntries();ientry++)
+	{
 
-	// Go to raw directory
-	file2->cd("");
-	file2->cd("grid/raw/");
+		if(ientry%100000==0) cout<<"Tree entry "<<ientry<<endl;
+		msc_tree->GetEntry(ientry);
 
-	aidhistogram->Write("theta1_"+histoname);
+		bool u_condition,v_condition;	
+		bool run_condition=true;
+		bool vertex_multiplicity_condition=true;
 
-	// Delete histogram1 from memory
-	aidhistogram->SetDirectory(gROOT);
-	delete aidhistogram;
+		u_condition=(u>cutparameters_position.at(0))&&(u<cutparameters_position.at(1));
+		v_condition=(v>cutparameters_position.at(2))&&(v<cutparameters_position.at(3));
 
-	// Draw histogram of second scattering angle in the given u and v range and save it
-	msc_tree->Draw("theta2>>h("+range+")",cutall,"");
+		if(cutparameters_run.at(0)>-1 && cutparameters_run.at(1)>-1 ) run_condition=(RunNo>=cutparameters_run.at(0))&&(RunNo<=cutparameters_run.at(1));
+		else if (cutparameters_run.at(0)>-1) run_condition=(RunNo>=cutparameters_run.at(0));
+		else if (cutparameters_run.at(1)>-1) run_condition=(RunNo<=cutparameters_run.at(1));
 
-	// Get the histogram and save it in the raw folder
-	TH1 * aidhistogram2=msc_tree->GetHistogram();
+		if(msc_tree->GetBranchStatus("vertex_multiplicity")) vertex_multiplicity_condition=(vertex_multiplicity>=cutparameters_vertex_multiplicity.at(0))&&(vertex_multiplicity<=cutparameters_vertex_multiplicity.at(1));
 
-	// Shift the bins of the histogram to reduce the offset
-	if(correctmean==1) shiftbins(aidhistogram2,mean2);
+		if(u_condition&&v_condition&&run_condition&&vertex_multiplicity_condition)
+		{
+			tmp_anglehisto[0]->Fill(theta1);
+			tmp_anglehisto[1]->Fill(theta2);
+		}
 
-	aidhistogram2->SetTitle("#theta_{2} distribution");
-	aidhistogram2->GetXaxis()->SetTitle("#theta_{2} [rad]");
-
-	// Go to raw directory
-	file2->cd("");
-	file2->cd("grid/raw/");
-
-	aidhistogram2->Write("theta2_"+histoname);
-
-	// Delete histogram2 from memory
-	aidhistogram2->SetDirectory(gROOT);
-	delete aidhistogram2;
-
-	// Draw sum histogram of the scattering angles in the given u and v range and save it
-	TH1 * hsum1;
-	msc_tree->Draw("theta1>>hsum1("+range+")",cutall,"");
-	hsum1=msc_tree->GetHistogram();
-
-	// Shift the bins of the histogram to reduce the offset
-	if(correctmean==1) shiftbins(hsum1,mean1);
-
-	TH1 * hsum2;
-	msc_tree->Draw("theta2>>hsum2("+range+")",cutall,"");
-	hsum2=msc_tree->GetHistogram();
-
-	// Shift the bins of the histogram to reduce the offset
-	if(correctmean==1) shiftbins(hsum2,mean2);
+		if((tmp_anglehisto[0]->GetEntries()>=max_angles)&&(max_angles>-1)) break;
+	}
 
 	// Give the two histograms to a list Operator
 	TList *list = new TList;
-        list->Add(hsum1);
-        list->Add(hsum2);
+	TH1F* hsum1=(TH1F*)tmp_anglehisto[0]->Clone("hsum1");
+	TH1F* hsum2=(TH1F*)tmp_anglehisto[1]->Clone("hsum2");
+    list->Add(hsum1);
+    list->Add(hsum2);
 
 	// Merge all histograms in the list
-        TH1 *h = (TH1*)hsum1->Clone("h");
-        h->Reset();
-        h->Merge(list);
+    TH1F *h = (TH1F*)hsum1->Clone("h");
+    h->Reset();
+    h->Merge(list);
 	h->SetTitle("merged projected angle distribution");
 	h->GetXaxis()->SetTitle("#theta_{proj.} [rad]");
+
+	// Set histo axis titels etc
+	tmp_anglehisto[0]->SetTitle("#theta_{1} distribution");
+	tmp_anglehisto[0]->GetXaxis()->SetTitle("#theta_{1} [rad]");
+
+	tmp_anglehisto[1]->SetTitle("#theta_{2} distribution");
+	tmp_anglehisto[1]->GetXaxis()->SetTitle("#theta_{2} [rad]");
+
+	// Shift the bins of the histogram to reduce the offset, but only in case the offset is larger than the histogram bin size
+	if((correctmean==1)&&(abs(mean1)>(2*limits/numbins))) 
+	{
+		cout<<endl<<"Correct histogram 1 offset"<<endl;
+		shiftbins(tmp_anglehisto[0],mean1);
+	}
+
+	// Shift the bins of the histogram to reduce the offset, but only in case the offset is larger than the histogram bin size
+	if((correctmean==1)&&(abs(mean2)>(2*limits/numbins))) 
+	{
+		cout<<endl<<"Correct histogram 2 offset"<<endl;
+		shiftbins(tmp_anglehisto[1],mean2);
+	}
+
+	// Shift the bins of the histogram to reduce the offset, but only in case the offset is larger than the histogram bin size
+	if((correctmean==1)&&(abs(mean1+mean2)>(2*limits/numbins))) 
+	{
+		cout<<endl<<"Correct histogram sum offset"<<endl;
+		shiftbins(h,mean1+mean2);
+	}
 
 	// Go to raw directory
 	file2->cd("");
 	file2->cd("grid/raw/");
-	h->Write("sumhisto_"+histoname);
+
+	// Write histogram to disk
+	if(correctmean==1) tmp_anglehisto[0]->Write("theta1_"+nametag+histoname);
+	else tmp_anglehisto[0]->Write("theta1_"+nametag+histoname);
+
+	// Write histogram to disk
+	if(correctmean==1) tmp_anglehisto[1]->Write("theta2_"+nametag+histoname);
+	else tmp_anglehisto[1]->Write("theta2_"+nametag+histoname);
+
+	// Write histogram to disk
+	if(correctmean==1) h->Write("sumhisto_"+nametag+histoname);
+	else h->Write("sumhisto_"+nametag+histoname);
 
 	// Delete sum histogram from memory
 	h->SetDirectory(gROOT);
 	delete h;
 
-	// Delete histogram 1 from memory
+	// Delete sum histogram from memory
 	hsum1->SetDirectory(gROOT);
 	delete hsum1;
 
-	// Delete histogram 2 from memory
+	// Delete sum histogram from memory
 	hsum2->SetDirectory(gROOT);
 	delete hsum2;
+
+	// Delete histogram1 from memory
+	tmp_anglehisto[0]->SetDirectory(gROOT);
+	delete tmp_anglehisto[0];
+
+	// Delete histogram1 from memory
+	tmp_anglehisto[1]->SetDirectory(gROOT);
+	delete tmp_anglehisto[1];		
 
 }
 
 // Function to fit the MSC angle histograms simultaneously, it returns a pointer to the fit results
-double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double recoerr, TString model, std::vector<bool> fitoptions)
+double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double recoerr, TString model, std::vector<bool> fitoptions, double rangevalue)
 { 
 
 	// Read out the parameters from the beamoptions vector
@@ -1181,6 +1110,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	bool fixmomentumoffset=fitoptions.at(1);
 	bool fixmomentumugradient=fitoptions.at(2);
 	bool fixmomentumvgradient=fitoptions.at(3);
+	bool Use_LogLikelihoodfit=fitoptions.at(4);
 
 
 	// Some parameter definitions
@@ -1222,8 +1152,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		file->cd("grid/fit/");
 	}
 	
-	// Minvalue and fit range depend on the model: In Case of the moliere model the fitrange can be a little larger
-	double minvalue;
+	// The fit range depend on the model: In Case of the moliere model the fitrange can be a little larger
 	// Declaration of fit functions
 	std::vector<TF1 *> fitFcn_vec;
 	TF1* fitFcn;
@@ -1235,14 +1164,8 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// loop for definition of the fit functions, the fitrange is determined for every one of them
 	for(int i=0;i<num_fitfunctions;i++)
 	{
-		// Fitrange depends on model
-		if(model=="moliere") minvalue=1.0/(10*2.71);
-		else minvalue=1.0/(1.0*2.71);
 
-		// And fit range is also smaller, when there is only air
-		if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0001) minvalue=1.0/(1.5*2.71);
-
-		fitrange=DetermineFitrange(histo_vec.at(i),minvalue);
+		fitrange=DetermineFitrange(histo_vec.at(i),rangevalue);
 		fctname.Form("fitFcn%i",i);
 
 		if(model=="moliere")
@@ -1264,12 +1187,13 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 			else fitFcn = new TF1(fctname,highlandfunction,-fitrange,fitrange,num_localparameters);
 		}
 
+
 		// Fill vector with pointers to fit functions
 		fitFcn_vec.push_back(fitFcn);
 
-		// set the data range	
-		cout<<"Fitrange at d="<<grid.GetMeasurementAreas().at(i).Get_thickness()<<" mm: "<<fitrange<<" rad"<<endl;
-		cout<<"Min value at d="<<grid.GetMeasurementAreas().at(i).Get_thickness()<<" mm: "<<minvalue<<endl;
+		// set the data range
+		cout<<"The range value from the cfg file is "<<rangevalue<<endl;	
+		cout<<"Fitrange at d="<<grid.GetMeasurementAreas().at(i).Get_thickness()<<" mm: "<<fitrange<<" rad"<<endl<<endl;
 		ROOT::Fit::DataRange range;
 		range.SetRange(-fitrange,fitrange);
 		range_vec.push_back(range);
@@ -1281,18 +1205,20 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// Vector of bin data
 	std::vector<ROOT::Fit::BinData> data;
 
-	// Vector of chi2 functions
+	// Vector of chi2/loglikelihood functions
+    std::vector<ROOT::Fit::PoissonLLFunction> loglikelihood;
     std::vector<ROOT::Fit::Chi2Function> chi2;
-	// The stored chi2 functions mustn't be reallocated, else there will be a crash.
+	// The stored chi2/log likelihood functions mustn't be reallocated, else there will be a crash.
 	// Therefore reserve enough space for the vector
-	chi2.reserve(3*num_fitfunctions);
+	if(Use_LogLikelihoodfit) loglikelihood.reserve(3*num_fitfunctions);
+	else chi2.reserve(3*num_fitfunctions);
 
 	// data size definition 
 	// needed during the fit
 	int datasize;
 	
     // Create globalChi2 object, which will be used during the fitting to return fit chi2 values and update the global parameters
-	GlobalChi2 globalChi2;
+	GlobalEstimator globalestimator;
 
     for(int i=0;i<num_fitfunctions;i++) 
 	{
@@ -1310,14 +1236,22 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 	for(int i=0;i<num_fitfunctions;i++)
 	{
-		// Create chi2 function entry and fill global chi2
-		chi2.push_back(ROOT::Fit::Chi2Function(data[i], wf[i]));
+		// Create estimator function entry and fill global estimator 
+		if(Use_LogLikelihoodfit) 
+		{
+			loglikelihood.push_back(ROOT::Fit::PoissonLLFunction(data[i], wf[i]));
+			globalestimator.getEstimatorVec().push_back(&(loglikelihood.at(i))); 
+		}
+		else 
+		{
+			chi2.push_back(ROOT::Fit::Chi2Function(data[i], wf[i]));
+			globalestimator.getEstimatorVec().push_back(&(chi2.at(i))); 
+		}
 
-		globalChi2.getChi2Vec().push_back(&(chi2.at(i))); 
 	}
 
 	// Set parameter mapping array in the global chi2 object
-	globalChi2.SetArray();
+	globalestimator.SetArray();
     
 	ROOT::Fit::Fitter fitter;
 
@@ -1392,16 +1326,35 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	fitter.Config().ParSettings(9).SetLimits(10.0,200000.0);
 	for(int i=1;i<num_fitfunctions;i++) fitter.Config().ParSettings(18+(i-1)*newparsperfunction).SetLimits(10.0,200000.0);
 
-	fitter.Config().MinimizerOptions().SetPrintLevel(10);
+	fitter.Config().MinimizerOptions().SetPrintLevel(1);
 	fitter.Config().SetMinimizer("Minuit2","Migrad"); 
 
 	// fit FCN function directly 
 	// (specify optionally data size and flag to indicate that is a chi2 fit)
-	fitter.FitFCN(num_globalparameters,globalChi2,0,datasize,true);
+	fitter.FitFCN(num_globalparameters,globalestimator,0,datasize,!Use_LogLikelihoodfit);
+
 	ROOT::Fit::FitResult result = fitter.Result();
 	result.Print(std::cout);
 
 	int ** parameter_mapping=GetParameterMapping(num_fitfunctions);
+
+
+	// Names of the 14 local parameters
+	TString name[num_localparameters];
+	name[0]="E[GeV]";
+	name[1]="z[e]";
+	name[2]="m[GeV/c^2]";
+	name[3]="#rho[g/cm^3]";
+	name[4]="Z";
+	name[5]="A";
+	name[6]="X[mm]";
+	name[7]="#sigma_{err}[rad]";
+	name[8]="#lambda";
+	name[9]="norm";
+	name[10]="u[mm]";
+	name[11]="v[mm]";
+	name[12]="#nablaE_{u}[GeV/mm]";
+	name[13]="#nablaE_{v}[GeV/mm]";
 
 	for(int i=0;i<num_fitfunctions;i++)
 	{	
@@ -1413,15 +1366,19 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		}
 
 		fitFcn_vec.at(i)->SetFitResult( result, parameters);
+	
+		fitrange=DetermineFitrange(histo_vec.at(i),rangevalue);
+		TF1 * fitfunc=fitFcn_vec.at(i);
+		fitfunc->SetRange(-fitrange,fitrange);  
+		fitfunc->SetLineColor(kRed);
 
-		fitrange=DetermineFitrange(histo_vec.at(i),minvalue);
-		fitFcn_vec.at(i)->SetRange(-fitrange,fitrange);  
-		fitFcn_vec.at(i)->SetLineColor(kRed);
 		histo_vec.at(i)->GetListOfFunctions()->Add(fitFcn_vec.at(i));
 		histoname.Form("gridpoint%i",i+1);
 		// display mode
-		gStyle->SetOptFit(1111111);
+		gStyle->SetOptFit(1111);
 		histo_vec.at(i)->Write("thetasum_"+histoname+"_fit");
+
+		for(int iname=0;iname<num_localparameters;iname++) fitfunc->SetParName(iname,name[iname]);
 	}
 
 	// Plot the fit results, print them in terminal and save them to histogram
@@ -1452,16 +1409,11 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 		cout<<"--------------------------"<<endl;
 		cout<<"Fit function "<<i<<endl;
-		//cout<<"Chi2 value for this individual fit is: "<<fitFcn_vec.at(i)->GetChisquare()<<endl;
 		cout<<"Chi2 value for this individual fit is: "<<histo_vec.at(i)->Chisquare(fitFcn_vec.at(i),"R")<<endl;
-//		cout<<"Number of degrees of freedom is: "<<fitFcn_vec.at(i)->GetNDF()<<endl;
-//		cout<<"Alternatively: Chi2 is: "<<chi2.at(i)(fitFcn_vec.at(i)->GetParameters())<<endl;
+		cout<<"Number of degrees of freedom is: "<<fitFcn_vec.at(i)->GetNDF()<<endl;
 		cout<<"--------------------------"<<endl;
-
-		chi2_summation+=pow(histo_vec.at(i)->Chisquare(fitFcn_vec.at(i),"R"),2);
 	}
 	
-	cout<<"The quadratic sum of these chi2 values is: "<<sqrt(chi2_summation)<<endl;
 	TString pdfname,Title;
 
 	for(int i=0;i<TMath::Ceil(double(num_fitfunctions)/4.0);i++)
@@ -1491,8 +1443,8 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 				Title.Form("Area %i: d=%fmm",(4*i)+j,grid.GetMeasurementAreas().at((4*i)+j).Get_thickness());
 				histo_vec.at((4*i)+j)->SetTitle(Title);
 				histo_vec.at((4*i)+j)->Draw();
-                        	cout<<"fitfunction "<<(4*i)+j<<" of "<<num_fitfunctions<<endl;
-                        }
+                cout<<"fitfunction "<<(4*i)+j<<" of "<<num_fitfunctions<<endl;
+            }
 		}
 
 		pdfname=model+"_results_"+canvasname+".pdf";
@@ -1505,10 +1457,10 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 	TH1F * resultshist=new TH1F("resultshist","results of calibration",4,1,4);
 
-    resultshist->GetXaxis()->SetBinLabel( 1, "lambda" );
-    resultshist->GetXaxis()->SetBinLabel( 2, "BE_mean[GeV]" );
-    resultshist->GetXaxis()->SetBinLabel( 3, "BE_u_grad[GeV/mm]" );
-    resultshist->GetXaxis()->SetBinLabel( 3, "BE_u_grad[GeV/mm]" );
+    resultshist->GetXaxis()->SetBinLabel( 1, "#lambda" );
+    resultshist->GetXaxis()->SetBinLabel( 2, "E_{mean}[GeV]" );
+    resultshist->GetXaxis()->SetBinLabel( 3, "#nablaE_{u}[GeV/mm]" );
+    resultshist->GetXaxis()->SetBinLabel( 4, "#nablaE_{v}[GeV/mm]" );
 
 	// Save the results to histogram
 	resultshist->SetBinContent(1,fitresults[0]);
@@ -1554,7 +1506,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
     // Read config file
     //------------------
-    TEnv *mEnv=new TEnv("x0calibration.cfg");
+    TEnv *mEnv=new TEnv("x0.cfg");
 
 	// Choose the multiple scattering model
 	// "moliere": Moliere model
@@ -1567,13 +1519,27 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	bool fix_u_gradient=mEnv->GetValue("fix_momentumugradient", 0);
 	bool fix_v_gradient=mEnv->GetValue("fix_momentumvgradient", 0);
 
+	// Use log likelihood estimator?
+	// True: Use log likelihood estimator
+	// False: Use Chi2 estimator
+	bool Use_loglikelihood_estimator=mEnv->GetValue("use_loglikelihood", 1);
+
+	// The number of bins of angle histograms
+	int numbins=mEnv->GetValue("cali_num_bins", 50);
+
+	// Range parameter of angle histograms
+	double histo_range=mEnv->GetValue("cali_histo_range", 5.0);
+
+	// Read out the parameter that determines the range of the fit
+	double rangevalue=mEnv->GetValue("fitrange_parameter", 2.0);
+
 	// Integer determining, whether a offset correction is applied to the angular distributions
 	// 1: correction
 	// everything else, no correction
 	int correctmean=mEnv->GetValue("correctmean", 1 );
 
 	// Get the lambda starting value
-	double 	lambda_start_default=mEnv->GetValue("lambda_start", 99.0);
+	double 	lambda_start_default=mEnv->GetValue("lambda", 99.0);
 
 	// Define and set the parameters used in the Moliere fit
 	// BE: beam energy (GeV), z: charge of beam particle (e), mass: mass of beam particle (GeV),
@@ -1645,13 +1611,9 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	rootfile->cd("");
 
 	// Binning and range of the histograms
+	cout<<"histo_range: "<<histo_range<<endl;
+	cout<<"numbins: "<<numbins<<endl<<endl;
 
-	int nbins=500;
-	double range1=-0.005;
-	double range2=0.005;
-
-	// Set the range and number of bins of the histogram
-	range.Form("%i,%f,%f",nbins,range1,range2);
 
 	rootfile->mkdir("grid/raw/");
 	rootfile->mkdir("grid/fit/");
@@ -1662,12 +1624,12 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 			// Set the histogram name as a string
 			histoname.Form("measurementarea%i",i+1);
 
-			cout<<"save histogram of measurement area "<<i+1<<endl;
-
+			cout<<endl<<endl<<"Measurement area "<<i+1<<endl;
 
 			std::vector <double> cutparameters_position;
 			std::vector <int> cutparameters_run;
 			std::vector <int> cutparameters_vertex_multiplicity;
+			int maxangles;
 
 		    cutparameters_position.push_back(grid.GetMeasurementAreas().at(i).Get_u_min());
 		    cutparameters_position.push_back(grid.GetMeasurementAreas().at(i).Get_u_max());
@@ -1677,15 +1639,18 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 			cutparameters_run.push_back(grid.GetMeasurementAreas().at(i).Get_run_min());
 			cutparameters_run.push_back(grid.GetMeasurementAreas().at(i).Get_run_max());
 
+			maxangles=grid.GetMeasurementAreas().at(i).Get_max_angles();
+
 			cutparameters_vertex_multiplicity.push_back(vertexmultiplicitymin);
 			cutparameters_vertex_multiplicity.push_back(vertexmultiplicitymax);
 
-			// Set the range and number of bins of the histogram
-			range.Form("%i,%f,%f",nbins,range1,range2);
-
 			// Save the angle histograms of the current measurement area to the root file
-			correcthisto(X0file,rootfile, histoname, range, cutparameters_position, cutparameters_run, cutparameters_vertex_multiplicity);
-			savehisto(X0file,rootfile, histoname, range, cutparameters_position, cutparameters_run, cutparameters_vertex_multiplicity, correctmean);
+			cout<<endl<<"Correct angle distribution offsets..."<<endl;
+			TString nametag="uncorrected_";
+			savehisto(X0file,rootfile, histoname, numbins, histo_range, cutparameters_position, cutparameters_run, cutparameters_vertex_multiplicity, maxangles, 0, nametag);
+			cout<<endl<<"Write histos..."<<endl;
+			nametag="";
+			savehisto(X0file,rootfile, histoname, numbins, histo_range, cutparameters_position, cutparameters_run, cutparameters_vertex_multiplicity, maxangles, correctmean, nametag);
 
 
 	}// end of first loop over measurement areas
@@ -1698,7 +1663,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// Check whether there are entries, of this is the case use these entries as starting values
 
 	double lambda_start=mEnv_res->GetValue("lambda_start", lambda_start_default);
-	double BE_mean=mEnv_res->GetValue("momentumumoffset", BE_mean_default);
+	double BE_mean=mEnv_res->GetValue("momentumoffset", BE_mean_default);
 	double BE_ugrad=mEnv_res->GetValue("momentumugradient", BE_ugrad_default);	
 	double BE_vgrad=mEnv_res->GetValue("momentumvgradient", BE_ugrad_default);
 
@@ -1719,16 +1684,28 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	fitoptions.push_back(fix_offset);
 	fitoptions.push_back(fix_u_gradient);
 	fitoptions.push_back(fix_v_gradient);
+	fitoptions.push_back(Use_loglikelihood_estimator);
 
-	cout<<"Beam particle mean energy start value is				"<<BE_mean<<" GeV"<<endl;
-	cout<<"Beam particle energy u gradient start value is				"<<BE_ugrad<<" GeV/mm"<<endl;
-	cout<<"Beam particle energy v gradient start value is				"<<BE_vgrad<<" GeV/mm"<<endl;
-	cout<<"Beam particle lambda		 start value is				"<<lambda_start<<endl;
+	cout<<endl<<"Beam particle mean energy start value is				"<<BE_mean<<" GeV"<<endl;
+	cout<<"Beam particle energy u gradient start value is		"<<BE_ugrad<<" GeV/mm"<<endl;
+	cout<<"Beam particle energy v gradient start value is		"<<BE_vgrad<<" GeV/mm"<<endl;
+	cout<<"Beam particle lambda		 start value is				"<<lambda_start<<endl<<endl;
 
-	double* iresults=fit(rootfile, grid, beamoptions, recoerr, model, fitoptions);
+	if(fixlambda) 	cout<<"Calibration factor Lambda will not be calibrated"<<endl;
+	else cout<<endl<<"Beam particle mean energy will be calibrated"<<endl;
 
-	cout<<" The lambda calibration factor is: "<<iresults[0]<<" +/- "<<iresults[1]<<endl;
+	if(fix_offset) cout<<endl<<"Beam particle mean energy will not be calibrated"<<endl;
+	else cout<<endl<<"Beam particle mean energy will be calibrated"<<endl;
+
+	cout<<"Beam particle energy u gradient start value is		"<<BE_ugrad<<" GeV/mm"<<endl;
+	cout<<"Beam particle energy v gradient start value is		"<<BE_vgrad<<" GeV/mm"<<endl;
+
+
+	double* iresults=fit(rootfile, grid, beamoptions, recoerr, model, fitoptions, rangevalue);
+
+	cout<<endl<<" The lambda calibration factor is: "<<iresults[0]<<" +/- "<<iresults[1]<<endl;
 	cout<<" The mean beam energy at (0,0) is: "<<iresults[2]<<" +/- "<<iresults[3]<<"GeV"<<endl;
+	cout<<" The kappa calibration factor is: "<<BE_mean/iresults[2]<<" +/- "<<iresults[3]*BE_mean/(iresults[2]*iresults[2])<<endl;
 	cout<<" The BE gradient in u direction is: "<<iresults[4]<<" +/- "<<iresults[5]<<"GeV/mm"<<endl;
 	cout<<" The BE gradient in v direction is: "<<iresults[6]<<" +/- "<<iresults[7]<<"GeV/mm"<<endl;
 

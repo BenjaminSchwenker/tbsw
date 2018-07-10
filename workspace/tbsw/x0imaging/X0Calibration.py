@@ -16,10 +16,10 @@ def x0imaging(filename=None,caltag='',deletetag='0',steerfiles=None,nametag=''):
     :@deletetag:   Delete partial images afterwards
     :@steerfiles:  Directory, where the image cfg file lies
     :@nametag:     Name tag, that is used to modify the output filename 
-    :author: ulf.stolzenberg@phys.uni-goettinge.de  
+    :author: ulf.stolzenberg@phys.uni-goettingen.de  
   """   
 
-  cfgfilename=steerfiles+'image.cfg'
+  cfgfilename=steerfiles+'x0.cfg'
 
   if filename == None:
     return None
@@ -42,7 +42,7 @@ def x0calibration(filename=None,imagefilename='',caltag='default',steerfiles=Non
     :@filename:    Input root file with calibration data 
     :@caltag:      Use x0 calibration parameters from cfg files in the caltag subdirectory and save results there    
     :@steerfiles:  Directory, where the image cfg file lies
-    :author: ulf.stolzenberg@phys.uni-goettinge.de  
+    :author: ulf.stolzenberg@phys.uni-goettingen.de  
   """   
 
   if filename == None:
@@ -51,7 +51,7 @@ def x0calibration(filename=None,imagefilename='',caltag='default',steerfiles=Non
   if steerfiles == None:
     return None
 
-  cfgfilename=steerfiles+'x0calibration.cfg'
+  cfgfilename=steerfiles+'x0.cfg'
 
   califlags='./tbsw/x0imaging/X0Calibration.py -i '+filename+' -f '+cfgfilename+' -m '+imagefilename+' -c '+caltag
   print('Starting X0 calibration')
@@ -67,7 +67,7 @@ def merge_rootfile(filename=None,RunList='',caltag=None):
   Merges all root files from a list
     :@filename:    Name of merged output rootfile 
     :@RunList:     List of filenames , which will be merged   
-    :author: ulf.stolzenberg@phys.uni-goettinge.de  
+    :author: ulf.stolzenberg@phys.uni-goettingen.de  
   """ 
 
   if filename == None:
@@ -79,7 +79,11 @@ def merge_rootfile(filename=None,RunList='',caltag=None):
   flags='hadd '+filename+' '
   for run in RunList:
     name=os.path.splitext(os.path.basename(run))[0]
-    flags=flags+'root-files/X0-'+name+'-'+caltag+'-reco.root '
+    if caltag == '':
+      flags=flags+'root-files/X0-'+name+'-reco.root '
+    else:
+      flags=flags+'root-files/X0-'+name+'-'+caltag+'-reco.root '
+
 
   if os.path.isfile(filename):
     os.remove(filename)
@@ -149,7 +153,7 @@ if __name__ == '__main__':
   os.symlink(fullpath+'/'+rootfile,'X0File')
 
   # Copy cfg file to current work dir
-  cfgname="x0calibration.cfg"
+  cfgname="x0.cfg"
   shutil.copy(fullpath+'/'+cfgfile, cfgname)
     
   if os.path.isfile(fullpath+'/'+imagefile):
@@ -167,7 +171,7 @@ if __name__ == '__main__':
     subprocess.call('root -q -b '+scriptname, shell=True)
     print ('[Print] Marking of measurement areas done... ')
 
-    # remove DrawBoxes.C script and image file
+    # remove DrawBoxes.C script
     os.remove(scriptname) 
 
   else:
@@ -178,7 +182,7 @@ if __name__ == '__main__':
   scriptname="calibrationfit.C"
   shutil.copy(scriptsfolder+'/'+scriptname, scriptname)
 
-  # Copy the results cfg file from previous calibrations, of it exists
+  # Copy the results cfg file from previous calibrations, if it exists
   cfgfilename="x0cal_result.cfg"
   cfgfile=fullpath+'/localDB/'+caltag+'/'+cfgfilename
   if os.path.isfile(cfgfile):
@@ -189,9 +193,6 @@ if __name__ == '__main__':
 
   # remove calibrationfit.C script
   os.remove(scriptname) 
-
-  # remove cfg file
-  os.remove(cfgname) 
 
   caldir=fullpath+'/localDB/'+caltag
 

@@ -23,29 +23,92 @@ import tbsw.x0imaging.X0Calibration
 # Path to steering files 
 # Steeringfiles are xml files and define details of the simulation like how many events are produced
 # or how M26 sensors are digitized. XML parameters can be adjusted using any test editor
+
+# Steerfiles for the telescope calibration
 steerfiles_cali = 'steering-files/x0-tboct16-2GeV-air/'
+
+# Steerfiles for the angle reconstruction (can be the same directory as telescope calibration steerfiles)
 steerfiles_reco = 'steering-files/x0-tboct16-2GeV-air/'
-# Gearfile for runs 
-gearfile = 'gear.xml'
-#cal tag
-caltag='air'
-x0tag='05mmalu'
-# File name for raw data 
-rawfile_cali = '/work1/rawdata/DESY_Oktober16/2GeV_air/run006973.raw'
+
+# Steerfiles for the x0calibration/x0imaging (can be the same directory as telescope calibration steerfiles)
+steerfiles_x0 = 'steering-files/x0-tboct16-2GeV-air/'
+
 # Nominal Beam energy
 beamenergy=2.0
 
+# cal tags
+# telescope calibration cal tag (typically named after telescope setup, beam energy etc.)
+caltag='40mm-spacing-2GeV'
+
+# x0 calibration cal tag
+x0tag='05mmalu'
+
+# Name of the gearfile, which describes the telescope setup 
+gearfile = 'gear.xml'
+
+# Alignment DB file name
+alignmentdb_filename='alignmentDB.root'
+
+# Number of iterations during target alignment
+# Set to 0 or negative integer to disable target alignment
+targetalignment_iterations=0
+
+# File names and lists of filenames for the different steps 
+
+# global path to raw files
+rawfile_path='/work1/rawdata/tboct16/'
+
+# raw file used during telescope calibration (best use data with scattering target)
+# The calibration has to be done for every telescope setup, beam energy and m26 threshold settings
+cali_run='run006973.raw'
+rawfile_cali = rawfile_path + cali_run
+
+# raw file used for target alignment (only useful with a thick (X/X0 > 5 %) scattering target)
+TA_run='run006958.raw'
+rawfile_TA = rawfile_path + TA_run
+
+# List of runs, which are used as input for the scattering angle reconstruction
+# The angle reconstruction step is essential and every run, that will be used later during the x0 calibration or x0 imaging steps, must be listed
 RunList_reco = [
-		    '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006958.raw',
-		    '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006959.raw',
-		    '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006960.raw',
-		    '/work1/rawdata/DESY_Oktober16/2GeV_05mmalu/run006961.raw',
+		    'run006958.raw',
+		    'run006959.raw',
+		    'run006960.raw',
+		    'run006973.raw',
           ]
-# Number of events to simulate 
+
+RawfileList_reco = [rawfile_path+x for x in RunList_reco]
+
+# List of runs, which are input for the x0 calibration
+# Typically runs with various different materials and thicknesses have to be used to achieve a sensible calibration
+# The different measurement regions and other options have to be set in the x0.cfg file in the steer files directory
+RunList_x0cali = [
+		    'run006958.raw',
+		    'run006973.raw',
+          ]
+
+RawfileList_x0cali = [rawfile_path+x for x in RunList_x0cali]
+
+# List of runs, which are input for the first x0 image
+# Use only runs, with exactly the same target material and positioning
+RunList_x0image = [
+		    'run006958.raw',
+		    'run006959.raw',
+		    'run006960.raw',
+          ]
+
+RawfileList_x0image = [rawfile_path+x for x in RunList_x0image]
+
+# Number of events ...
+# for telescope calibration
 nevents_cali = 700000
+
+# for target alignment
+nevents_TA = 1000000
+
+# for angle reconstruction (-1 use all available events)
 nevents_reco = -1
 
-
+# Processor settings and sequence during telescope calibration
 def create_calibration_path(Env, rawfile, gearfile):
   """
   Returns a list of tbsw path objects to calibrate the tracking telescope
@@ -162,14 +225,14 @@ def create_calibration_path(Env, rawfile, gearfile):
   
   return calpath
 
-
-def create_reco_path(Env, rawfile, gearfile):
+# Processor settings and sequence during angle reconstruction
+def create_reco_path(Env, rawfile, gearfile, numberofevents):
   """
   Returns a list of tbsw path objects to reconstruct a test beam run 
   """
   
   reco = Env.create_path('reco')
-  reco.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_reco}) 
+  reco.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : numberofevents}) 
   reco.add_processor(name="RawInputProcessor", params={'FileName': rawfile})
   reco.add_processor(name="M26Unpacker")
   reco.add_processor(name="M26Clusterizer")
@@ -181,25 +244,7 @@ def create_reco_path(Env, rawfile, gearfile):
   return [ reco ]
 
 
-def reconstruct(params):
-
-  
-  rawfile, steerfiles, gearfile, caltag = params
-
-  # Set cal tag that includes run name
-  name = os.path.splitext(os.path.basename(rawfile))[0] + '-' + caltag
-  
-  # Reconsruct the rawfile using the caltag. Resulting root files are 
-  # written to folder root-files/
-  RecObj = Reconstruction(steerfiles=steerfiles, name=name + '-reco' )
-  RecObj.set_beam_momentum(beamenergy)
-
-  # Create reconstuction path
-  recopath = create_reco_path(RecObj, rawfile, gearfile)  
-
-  # Run the reconstuction  
-  RecObj.reconstruct(path=recopath,ifile=rawfile,caltag=caltag) 
-
+# Perform the telescope calibration
 def calibrate(params):
   """
   Calibrates an misaligned tracking telescope from run data. 
@@ -224,47 +269,163 @@ def calibrate(params):
   CalObj.calibrate(path=calpath,ifile=rawfile,caltag=caltag)
 
 
+
+# Perform the angle reconstruction of a single run
+def reconstruct(params):
+
+  rawfile, steerfiles, gearfile, caltag = params
+
+  # Set cal tag that includes run name
+  name = os.path.splitext(os.path.basename(rawfile))[0] + '-' + caltag
   
-if __name__ == '__main__':
+  # Reconsruct the rawfile using the caltag. Resulting root files are 
+  # written to folder root-files/
+  RecObj = Reconstruction(steerfiles=steerfiles, name=name + '-reco' )
+  RecObj.set_beam_momentum(beamenergy)
 
-  # Get current directory
-  cwdir = os.getcwd()
+  # Create reconstuction path
+  recopath = create_reco_path(RecObj, rawfile, gearfile, nevents_reco)  
 
-  params_cali = ( rawfile_cali, steerfiles_cali, gearfile, caltag)
+  # Use caltag of the last target alignment iteration
+  iteration_string='-target-alignment-it'+str(targetalignment_iterations-1)
+  localcaltag=caltag+iteration_string
 
-  print(params_cali)
+  if targetalignment_iterations < 1:
+    localcaltag=caltag
 
-  # Calibrate the telescope 
-  calibrate( params_cali )
+  # Run the reconstuction  
+  RecObj.reconstruct(path=recopath,ifile=rawfile,caltag=localcaltag) 
 
-  params_reco=[(x, steerfiles_reco, gearfile, caltag) for x in RunList_reco]
-  print "The parameters for the reconstruction are: " 
-  print params_reco
+# Perform target alignment
+def targetalignment(params):
+  """
+  Starts the scattering angle reconstruction and vertex fit on the central target
+  plane. Afterwards the mean vertex z position is set as the new target z position in
+  the aligment DB file and the calibration tag is exported
+    :@params:       consists of rawfile, steerfiles, gearfile, caltag, iteration
+    :@rawfile:      Input file for the reconstruction 
+    :@BE            Nominal beam energy of the run
+    :@nevents       Number of events
+    :@steerfiles:   Directory with the steering files for the reconstruction
+    :@gearfile:     Name of the gear file
+    :@caltag:       calibration tag for the reconstruction
+    :@iteration:    Target alignment iteration counter  
+    :author: benjamin.schwenker@phys.uni-goettinge.de  
+  """ 
 
-  count = multiprocessing.cpu_count()
-  pool = multiprocessing.Pool(processes=count)
-  pool.map(reconstruct, params_reco)
+  rawfile, steerfiles, calibrationtag, iteration = params
 
-  deletetag='1'
+  if rawfile == None:
+    return None
+
+  if iteration == None:
+    return None
+
+  prev_iteration_string='-target-alignment-it'+str(iteration-1)
+  curr_iteration_string='-target-alignment-it'+str(iteration)
+
+  localcaltag=caltag+prev_iteration_string
+
+  if iteration == 0:
+    localcaltag=calibrationtag
+
+  newcaltag=calibrationtag+curr_iteration_string
+
+  # Reconsruct the rawfile using the caltag. Resulting root files are 
+  # written to folder root-files/
+  RecObj = Reconstruction(steerfiles=steerfiles, name=newcaltag )
+
+  # Set Beam energy
+  RecObj.set_beam_momentum(beamenergy)
+  
+  recopath = create_reco_path(RecObj, rawfile, gearfile, nevents_TA)
+
+  # Run the reconstuction  
+  RecObj.reconstruct(path=reco,ifile=rawfile,caltag=localcaltag) 
+
+  # Read the vertex position and save it in the alignmentDB
+  dbname=RecObj.create_dbfilename("alignmentDB.root")
+  treename=RecObj.get_rootfilename('X0')
+  save_targetpos(treename,dbname)
+  RecObj.export_caltag(newcaltag)
+
+# Perform x0 calibration
+def xx0calibration(params):
+
+  x0caltag, RunList, steerfiles, calibrationtag, delete = params
 
   # Base filename of the X0 root file
-  basefilename='X0-merge-'+x0tag
+  basefilename='X0cal-merge-'+x0caltag
 
   # Total path of X0 root file
   filename='root-files/'+basefilename+'.root'
 
   # Merge the root trees in the root files directory
-  tbsw.x0imaging.X0Calibration.merge_rootfile(filename=filename,RunList=RunList_reco,caltag=caltag)
+  tbsw.x0imaging.X0Calibration.merge_rootfile(filename=filename,RunList=RunList,caltag=caltag)
 
   # Generate a uncalibrated X/X0 image
-  tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag='',deletetag=deletetag,steerfiles=steerfiles_reco,nametag='Uncalibrated')
+  tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag='',deletetag=delete,steerfiles=steerfiles,nametag='Uncalibrated')
 
   # Path to uncalibrated X0 image file
   imagefilename='/root-files/'+basefilename+'-UncalibratedX0image.root'
 
   # Do a calibration of the angle resolution
-  tbsw.x0imaging.X0Calibration.x0calibration(filename=filename,imagefilename=imagefilename,caltag=x0tag,steerfiles=steerfiles_reco)
+  tbsw.x0imaging.X0Calibration.x0calibration(filename=filename,imagefilename=imagefilename,caltag=x0caltag,steerfiles=steerfiles)
+
+# Generate x0 image
+def xx0image(params):
+
+  x0caltag, RunList, steerfiles, calibrationtag, delete, listnametag = params
+
+  # Base filename of the X0 root file
+  basefilename='X0-'+listnametag+'-merge-'+x0caltag
+
+  # Total path of X0 root file
+  filename='root-files/'+basefilename+'.root'
+
+  # Merge the root trees in the root files directory
+  tbsw.x0imaging.X0Calibration.merge_rootfile(filename=filename,RunList=RunList,caltag=caltag)
+
+  # Do a calibration of the angle resolution
+  tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag=x0caltag,deletetag=deletetag,steerfiles=steerfiles_reco,nametag='Calibrated')
+
+  
+if __name__ == '__main__':
+
+
+  # Calibrate the telescope 
+  params_cali = ( rawfile_cali, steerfiles_cali, gearfile, caltag)
+  print(params_cali)
+  #calibrate( params_cali )
+
+
+  # Target alignment
+  for it in range(0,targetalignment_iterations):
+    params_TA = (rawfile_TA, steerfiles_reco, caltag, it)
+    print "The parameters for the target alignment are: " 
+    print params_TA
+
+    #targetalignment(params_TA)
+
+
+  # Angle reconstruction
+  params_reco=[(x, steerfiles_reco, gearfile, caltag) for x in RawfileList_reco]
+  print "The parameters for the reconstruction are: " 
+  print params_reco
+
+  count = multiprocessing.cpu_count()
+  pool = multiprocessing.Pool(processes=count)
+  #pool.map(reconstruct, params_reco)
+
+
+  # start x0 calibration
+  deletetag='1'
+  params_x0cali = ( x0tag, RawfileList_x0cali, steerfiles_x0, caltag, deletetag)
+  xx0calibration(params_x0cali)
+
 
   # Generate a calibrated X/X0 image
-  tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag=x0tag,deletetag=deletetag,steerfiles=steerfiles_reco,nametag='Calibrated')
+  nametag='image1'
+  params_x0image = ( x0tag, RawfileList_x0image, steerfiles_x0, caltag, deletetag, nametag)
+  xx0image(params_x0image)
 

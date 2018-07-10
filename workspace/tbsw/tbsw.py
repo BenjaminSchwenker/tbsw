@@ -222,7 +222,19 @@ class Environment(object):
     for rootfile  in glob.glob(self.tmpdir + '/*.root'): 
       basename = os.path.splitext(os.path.basename(rootfile))[0]
       shutil.move(rootfile, self.cwdir+'/root-files/'+basename+'-'+self.name+'.root')  
-    
+
+  def get_rootfilename(self,name):
+
+    # if root files director doesn't exist there is nothing to do 
+    if not os.path.isdir(self.cwdir+'/root-files'):
+      raise ValueError('root-files dir does not exist!') 
+
+    localname=self.cwdir+'/root-files/'+name+'-'+self.name+'.root'
+
+    if os.path.isfile(localname):
+      return localname  
+    else: 
+      raise ValueError('No file found')    
 
 class Simulation(Environment):
   """

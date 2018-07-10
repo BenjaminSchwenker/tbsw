@@ -17,7 +17,7 @@ void DrawBoxes()
 
     // Read config file
     //------------------
-    TEnv* mEnv=new TEnv("x0calibration.cfg");
+    TEnv* mEnv=new TEnv("x0.cfg");
 
 
 	// u minimum and v maximum values (in mm)

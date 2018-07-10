@@ -16,6 +16,7 @@
 #include "Utilities.h"
 #include "TBVertex.h"
 #include "TBVertexFitter.h"
+#include "MaterialEffect.h"
 
 // Include basic C
 #include <iostream>
@@ -29,6 +30,11 @@
 // Include LCIO classes
 #include <UTIL/CellIDDecoder.h>
 #include <IMPL/LCFlagImpl.h>
+
+// ROOT includes
+#include <TMath.h>
+#include <TRandom.h>
+#include <TRandom3.h>
 
 // Include CLHEP classes
 #include <CLHEP/Matrix/Vector.h>
@@ -84,6 +90,14 @@ X0ImageProducer::X0ImageProducer() : Processor("X0ImageProducer")
   registerProcessorParameter ("VertexFitSwitch",
                               "Choose upstream-downstream track matching approach. true: vertexfit, false: distance cut",
                               _vertexfitswitch,  static_cast < bool > (true));
+
+  registerProcessorParameter ("ToyScatteringSwitch",
+                              "Switch to fast toy simulation mode: Replace reconstructed scatter angles from track fitting by angles sampled from a Gauss distribution",
+                              _m_toy,  static_cast < bool > (false));
+
+  registerProcessorParameter ("ToyRecoError",
+                              "Angle reconstruction error used in toy simulations, if its smaller than 0, use real angle reco error instead (only used in toy simulation mode)",
+                              _m_reco_error,  static_cast < double > (-1.0));
                                
   registerProcessorParameter( "RootFileName",
                                "Output root file name",
@@ -127,7 +141,16 @@ void X0ImageProducer::init() {
    streamlog_out ( MESSAGE3 )  << "Scatter DUT plane  ID = " << dut.GetDAQID()
                                << "  at position = " << _idut 
                                << endl << endl;
-    
+
+   // Initialize new random generator with unique seed 
+   gRandom = new TRandom3();
+   gRandom->SetSeed(0);
+
+   // Print random generator info
+   streamlog_out(MESSAGE3) << "Random Generator setup with seed: "
+                           << (gRandom->GetSeed())
+                           << std::endl << std::endl;
+   
       
    bookHistos();
    
@@ -494,7 +517,8 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		_rootTrackProbUp = TMath::Prob(uptrack.GetChiSqu(),uptrack.GetNDF());
 		_rootTrackProbDown = TMath::Prob(downtrack.GetChiSqu(),downtrack.GetNDF());
 		_rootTrackProbCombo = TMath::Prob( comboChi2 ,uptrack.GetNDF()+downtrack.GetNDF());
-		
+
+ 
 		_root_u_in = p_in[2][0]; 
 		_root_v_in = p_in[3][0];
 		_root_u_out = p_out[2][0]; 
@@ -504,6 +528,17 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 	   
 		_root_angle1 = theta[0][0];
 		_root_angle2 = theta[1][0];
+		_root_angle1_var = Cov[0][0];
+		_root_angle2_var = Cov[1][1];
+
+		_root_u_in = p_in[2][0]; 
+		_root_v_in = p_in[3][0];
+		_root_u_out = p_out[2][0]; 
+		_root_v_out = p_out[3][0];
+		_root_u = (instate_covs[2][2]*p_in[2][0] + outstate_covs[2][2]*p_out[2][0])/(instate_covs[2][2]+outstate_covs[2][2]); // weighted mean
+		_root_v = (instate_covs[3][3]*p_in[3][0] + outstate_covs[3][3]*p_out[3][0])/(instate_covs[3][3]+outstate_covs[3][3]); // weightes mean 
+	   
+
 		_root_angle1_var = Cov[0][0];
 		_root_angle2_var = Cov[1][1];
 
@@ -520,6 +555,56 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 
 		_root_chi2=jchisq[0][0];
 		_root_prob=TMath::Prob(jchisq[0][0], 2);
+
+		
+        if (_m_toy) 
+		{
+		  double dudw = p_in[0][0];
+		  double dvdw = p_in[1][0];
+		  double u = p_in[2][0]; 
+		  double v = p_in[3][0]; 
+		  double mom = uptrack.GetMomentum();  
+		  double l0 = dut.GetThickness(u,v)*std::sqrt(1 + dudw*dudw + dvdw*dvdw); 
+		  
+		  // Highland model scattering
+		  double theta2 = materialeffect::GetScatterTheta2(p_in, l0, dut.GetRadLength(u,v),uptrack.GetMass(), uptrack.GetCharge() );  
+		  double kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
+		  double kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 ));    
+	  
+		  // Scatter track ('in' state -> 'out' state)
+		  HepMatrix toystate=p_in;
+		  materialeffect::ScatterTrack(toystate, kink_u, kink_v); 
+
+		  TBTrackState outstate_toy;
+		  outstate_toy.Pars=toystate;
+
+		  // Calculate scattering angles from
+		  theta = TrackFitterMSC.GetScatterKinks(dut, InState, outstate_toy); 
+
+		  double reco_error1;
+		  double reco_error2;
+
+		  //  In case of a selected angle reco error smaller than 0,
+		  //  use the real reco error
+		  if(_m_reco_error<0)
+		  {
+			reco_error1=TMath::Sqrt( Cov[0][0] );
+			reco_error2=TMath::Sqrt( Cov[1][1] );
+		  }
+
+		  // Else use the selected reco error
+		  else
+		  {
+			reco_error1=_m_reco_error;
+			reco_error2=_m_reco_error;
+		  }
+
+		  _root_angle1 = theta[0][0]+gRandom->Gaus(0, reco_error1);
+		  _root_angle2 = theta[1][0]+gRandom->Gaus(0, reco_error2);
+
+		  _root_angle1_var = reco_error1*reco_error1;
+		  _root_angle2_var = reco_error2*reco_error2; 
+        } 
 		
 		_rootMscTree->Fill(); 
 

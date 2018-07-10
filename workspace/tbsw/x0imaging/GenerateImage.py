@@ -74,32 +74,39 @@ if __name__ == '__main__':
   scriptsfolder = fullpath+'/tbsw/x0imaging'
 
   # copy cfg text file to current work directory
-  shutil.copy(fullpath+'/'+cfgfile,'image.cfg')
+  default_cfg_file_name='x0.cfg'
+  shutil.copy(fullpath+'/'+cfgfile,default_cfg_file_name)
 
   # Read config txt file
   config = ConfigParser(delimiters=(':'))
-  fp = open('image.cfg')
+  fp = open(default_cfg_file_name)
   config.readfp(fp)
 
   # Read out all the relevant parameters
   # calibration factor
-  calibrationfactor = config.getfloat('x0image', 'lambda')
+  calibrationfactor = config.getfloat('general', 'lambda')
 
   # Mean value of the momentum of the beam particles
-  momentumoffset = config.getfloat('x0image', 'momentumoffset')
+  momentumoffset = config.getfloat('general', 'momentumoffset')
 
   # u momentum slope of the beam particles
-  momentumugradient = config.getfloat('x0image', 'momentumugradient')
+  momentumugradient = config.getfloat('general', 'momentumugradient')
 
   # u momentum slope of the beam particles
-  momentumvgradient = config.getfloat('x0image', 'momentumvgradient')
+  momentumvgradient = config.getfloat('general', 'momentumvgradient')
 
   # Name of the results file
   this_resultsfilename = config.get('x0image', 'resultsfilename')
 
+  # Max fit chi2ndof value
+  this_maxchi2ndof = config.get('x0image', 'maxchi2ndof')
+
+  # fit range parameter value
+  this_fitrangeparameter = config.get('general', 'fitrange_parameter')
+
   # Vertex multiplicity cut parameters
-  this_vertex_multiplicity_min = config.get('x0image', 'vertex_multiplicity_min')
-  this_vertex_multiplicity_max = config.get('x0image', 'vertex_multiplicity_max')
+  this_vertex_multiplicity_min = config.get('general', 'vertex_multiplicity_min')
+  this_vertex_multiplicity_max = config.get('general', 'vertex_multiplicity_max')
 
   # u and v length of complete X0 image 
   u_length = config.getfloat('x0image', 'u_length')
@@ -109,15 +116,21 @@ if __name__ == '__main__':
   umin = config.getfloat('x0image', 'umin')
   vmax = config.getfloat('x0image', 'vmax')
 
-  fp.close()
-
   # Pixel sizes of the image
   u_pixel_size = config.getfloat('x0image', 'u_pixel_size')
   v_pixel_size = config.getfloat('x0image', 'v_pixel_size')
 
+  # histosettings
+  num_bins = config.getfloat('x0image', 'num_bins')
+  histo_range = config.getfloat('x0image', 'histo_range')
+
+  # Fit options (log likelihood or chi2 fit?)
+  fit_options = config.get('x0image', 'fit_options')
+
+  fp.close()
+
   # Create X0 root file link in the current work dir
   os.symlink(fullpath+'/'+rootfile,this_x0filename)
-
 
   # number of pixels needed
   num_u_pixels = u_length * 1000.0 / u_pixel_size
@@ -169,9 +182,18 @@ if __name__ == '__main__':
       this_momentumugradient=str(momentumugradient)
       # momentum v gradient
       this_momentumvgradient=str(momentumvgradient)
+
+      # Angle histo range
+      this_histo_range=str(histo_range)
+
+      # fit options
+      this_fit_options=str(fit_options)
+
+      # Number of angle histo bins
+      this_num_bins=str(num_bins)
       
       # Copy placeholder x0image and change it
-      shutil.copy(scriptsfolder+'/x0imaging.C', scriptname)
+      shutil.copy(scriptsfolder+'/'+scriptname, scriptname)
 
       # Open new cfg txt file
       open('x0image-partial.cfg', 'a').close()
@@ -185,6 +207,8 @@ if __name__ == '__main__':
       config.add_section('image')
       config.set('image', 'x0filename', this_x0filename)
       config.set('image', 'x0fileidentifier', this_x0fileidentifier)
+      config.set('image', 'maxchi2ndof', this_maxchi2ndof)
+      config.set('image', 'fitrange_parameter', this_fitrangeparameter)
       config.set('image', 'umin', this_umin)
       config.set('image', 'vmax', this_vmax)
       config.set('image', 'maxupixels', this_maxupixels)
@@ -197,6 +221,9 @@ if __name__ == '__main__':
       config.set('image', 'momentumvgradient', this_momentumvgradient)
       config.set('image', 'vertexmultiplicitymin', this_vertex_multiplicity_min)
       config.set('image', 'vertexmultiplicitymax', this_vertex_multiplicity_max)
+      config.set('image', 'num_bins', this_num_bins)
+      config.set('image', 'histo_range', this_histo_range)
+      config.set('image', 'fit_options', this_fit_options)
 
       # Writing the configuration file
       with open('x0image-partial.cfg', 'w') as configfile:
@@ -264,7 +291,7 @@ if __name__ == '__main__':
     for tmpfile in glob.glob('*part*.root'):
       os.remove(tmpfile) 
     # also remove the input cfg file
-    os.remove('image.cfg') 
+    os.remove(default_cfg_file_name) 
 
   # remove MergeImage.C and config file script
   os.remove('x0merge.cfg') 
