@@ -382,6 +382,8 @@
      <parameter name="DUTPlane" type="int" value="3"/>
      <!--Choose upstream-downstream track matching approach. true: vertexfit, false: distance cut-->
      <parameter name="VertexFitSwitch" type="bool" value="false"/>
+     <!--Flag (true/false) for simulating fractional Bethe Heitler energy loss (only used in toy simulation mode)-->
+     <parameter name="ToyBetheHeitlerSwitch" type="bool" value="true" />
      <!--Switch to fast toy simulation mode: Replace reconstructed scatter angles from track fitting by angles sampled from a Gauss distribution-->
      <parameter name="ToyScatteringSwitch" type="bool" value="false"/>
      <!--Angle reconstruction error used in toy simulations, if its smaller than 0, use real angle reco error instead (only used in toy simulation mode)-->
