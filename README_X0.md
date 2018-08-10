@@ -523,16 +523,16 @@ bullet points below. Every unnecessary modification such as target alignment etc
 These are all necessary changes in the testbeam_x0.py script.
 
 
-   * Edit the x0.cfg file in the newly created directory (steering-files/x0-tb2018-xymeasurement/x0.cfg):
+* Edit the x0.cfg file in the newly created directory (steering-files/x0-tb2018-xymeasurement/x0.cfg):
 
-		* Set the beam energy start value to the nominal beam energy (line 17):
+	* Set the beam energy start value to the nominal beam energy (line 17):
 
 			```
 			# Choose a momentumoffset start value [GeV]
 			momentumoffset:4.0
 			```
 
-		* Set the side length of the x0 image (lines 43-45):
+	* Set the side length of the x0 image (lines 43-45):
 
 			```
 			# u and v length of complete X0 image  in mm
@@ -540,7 +540,7 @@ These are all necessary changes in the testbeam_x0.py script.
 			v_length : 30.0
 			```
 
-		* Define the position of the x0 image (lines 47-49):
+	* Define the position of the x0 image (lines 47-49):
 
 			```
 			# umin and vmax of the complete X0 image in mm
@@ -549,7 +549,7 @@ These are all necessary changes in the testbeam_x0.py script.
 			```
 			The given values represent the upper left corner of the x/x0 image.
 
-		* Define the pixel pitches of the x0 image (lines 51-53):
+	* Define the pixel pitches of the x0 image (lines 51-53):
 
 			```
 			# Pixel sizes of the image in µm
@@ -557,7 +557,7 @@ These are all necessary changes in the testbeam_x0.py script.
 			v_pixel_size : 400.0
 			```
 
-		* Define the measurement areas during the x/x0 calibration (from line 116 onward):
+	* Define the measurement areas during the x/x0 calibration (from line 116 onward):
 
 		    First measurement area (air, center of the beamspot), here only the thickness entry and the min/max runnumber entries have to be edited.
 			The maximum number of scattering angles per distribution can be limited by setting the corresponding variable (maxanglenumber)
@@ -603,7 +603,8 @@ These are all necessary changes in the testbeam_x0.py script.
 			MA1.maxanglenumber:10000
 			```
 
-			Create 4 more air measurement areas at other positions, which positions you choose depends on the shape of the beamspot:
+	* Create 4 more air measurement areas at other positions, which positions you choose depends on the shape of the beamspot:
+
 
 			```
 			MA2.exist:1            	
@@ -659,8 +660,8 @@ These are all necessary changes in the testbeam_x0.py script.
 			MA5.maxanglenumber:10000
 
 			```
-			Afterwards define 5 additional measurement areas (MA6-MA10) for 0.5mm of aluminium and another 5 measurement areas (MA11-MA15) for 1.0mm of aluminium.
 
+	* Afterwards define 5 additional measurement areas (MA6-MA10) for 0.5mm of aluminium and another 5 measurement areas (MA11-MA15) for 1.0mm of aluminium.
 
 
 			```
@@ -796,7 +797,7 @@ These are all necessary changes in the testbeam_x0.py script.
 
 			```
 
-		* Remove the definition of the measurement area lines (from line 216 and 258 in the original file):
+	* Remove the definition of the measurement area lines (from line 216 and 258 in the original file):
 
 			```
 			# Use line in fit: 0(no), 1(yes)
@@ -808,7 +809,7 @@ These are all necessary changes in the testbeam_x0.py script.
 			```
 
 
-     These are all necessary changes in the x0.cfg file.
+These are all necessary changes in the x0.cfg file.
 
 Afterwards you can start the analysis via:
 
@@ -816,9 +817,6 @@ Afterwards you can start the analysis via:
 $ source init_tbsw.sh
 $ python testbeam_x0.py
 ```
-
-
-
 
 The technique and algorithm behind radiation length imaging was shown VCI 2016. The link to the proceedings paper is http://www.sciencedirect.com/science/article/pii/S0168900216306519.
 Please you this reference for citing the method. 
