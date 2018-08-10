@@ -385,8 +385,9 @@ different. In particular the target position is unchanged (at least on the scale
 
 * unknown material  -->  run000011 - run000015
 
-Each step of the required modifications in the gearfiles, testbeam_x0.py and x0.cfg files to perform the telescope calibration, angle reconstruction, x/x0 calibration and x/x0 imaging will be documented in the
-bullet points below. Every unnecessary modification such as target alignment etc will just not be mentioned. The bullet point list only contains necessary modifications:
+Every necessary modification of the gearfiles, testbeam_x0.py and x0.cfg files to perform the telescope calibration, angle reconstruction, x/x0 calibration and x/x0 imaging will be documented in the
+bullet points below. Unnecessary modifications of optional features such as for example target alignment will not be mentioned here. The bullet point list below only contains crucial modification, which are 
+required for a successful x/x0 analysis:
 
 * Create a new steeringfiles folder from the default steering files folder:
 
