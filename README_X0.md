@@ -377,13 +377,13 @@ beam -->		| 4.5cm | 4.5cm |   5.0 cm  |   5.0 cm  | 4.5cm | 4.5cm |
 The measurement is based on 4 data sets with different scattering materials. For each new target the telescope setup/spacing itself is unchanged, only the thickness and radiation of the scattering target is
 different. In particular the target position is unchanged (at least on the scale of a few mm). The 4 datasets are:
 
-target: air 				 run000001 - run000005
+* air  -->  run000001 - run000005
 
-target: 0.5mm alu			 run000006 - run000010
+* 0.5mm alu  -->  run000006 - run000010
 
-target: 1.0mm alu  			 run000011 - run000015
+* 1.0mm alu  -->  run000011 - run000015
 
-target: unknown material   	 run000011 - run000015
+* unknown material  -->  run000011 - run000015
 
 Each step of the required modifications in the gearfiles, testbeam_x0.py and x0.cfg files to perform the telescope calibration, angle reconstruction, x/x0 calibration and x/x0 imaging will be documented in the
 bullet points below. Every unnecessary modification such as target alignment etc will just not be mentioned. The bullet point list only contains necessary modifications:
@@ -395,14 +395,12 @@ bullet points below. Every unnecessary modification such as target alignment etc
 	 ```
 
    * Edit the gear file in the newly created directory (steering-files/x0-tb2018-xymeasurement/gear.xml):
-
 		* Enter the correct positions of the M26 sensors (ID0 to ID5) and the target (ID11) in the gearfile.
      	* Set the thickness of the target (ID11) to 0.0001 and the radLength to 304000.0 (corresponding to the radiation length constant of air)
 
      This gear file can be used for all target thicknesses as the angle reconstruction is completely independent of the nominal target thickness documented in the gear file.
 
    * Edit the testbeam_x0.py script :
-
 		* Edit the steerfing file path(lines 27-34):
 
 			```
