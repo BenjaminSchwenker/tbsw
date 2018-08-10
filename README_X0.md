@@ -405,16 +405,16 @@ bullet points below. Every unnecessary modification such as target alignment etc
 
 	* Edit the steerfing file path(lines 27-34):
 
-		```
-		# Steerfiles for the telescope calibration
-		steerfiles_cali = 'steering-files/x0-tb2018-xymeasurement/'
+			```
+			# Steerfiles for the telescope calibration
+			steerfiles_cali = 'steering-files/x0-tb2018-xymeasurement/'
 
-		# Steerfiles for the angle reconstruction (can be the same directory as telescope calibration steerfiles)
-		steerfiles_reco = 'steering-files/x0-tb2018-xymeasurement/'
+			# Steerfiles for the angle reconstruction (can be the same directory as telescope calibration steerfiles)
+			steerfiles_reco = 'steering-files/x0-tb2018-xymeasurement/'
 
-		# Steerfiles for the x0calibration/x0imaging (can be the same directory as telescope calibration steerfiles)
-		steerfiles_x0 = 'steering-files/x0-tb2018-xymeasurement/'
-		```
+			# Steerfiles for the x0calibration/x0imaging (can be the same directory as telescope calibration steerfiles)
+			steerfiles_x0 = 'steering-files/x0-tb2018-xymeasurement/'
+			```
 
 	* Set the nominal beam energy (line 37):
 
@@ -479,7 +479,7 @@ bullet points below. Every unnecessary modification such as target alignment etc
 						'run000018.raw',
 						'run000019.raw',
 						'run000020.raw',
-					  ]
+						]
 		```
 
 	* Select all rawfiles, which will be used in the x/x0 calibration (run000001 - run000015, lines 84-87 in the original file):
