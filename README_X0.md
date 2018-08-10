@@ -234,7 +234,17 @@ rawfile_path='/work1/rawdata/tboct16/'
 cali_run='run006973.raw'
 rawfile_cali = rawfile_path + cali_run
 ```
-The path to the run raw files and the name of the run raw file has to be modified to match your data. The calibration run should have 500k to 1mio tracks without any additional material in the telescope. The calibration procedure 
+The path to the run raw files and the name of the run raw file has to be modified to match your data. Typically rawfile_path should be set to the directory, where all your raw files from a specific beam 
+test are stored. Using subdirectories for cali_run is possible. For example 
+
+```
+cali_run='run006973.raw'
+```
+and 
+```
+cali_run='some_directory/run006973.raw'
+```
+are both valid options. The calibration run should have 500k to 1mio tracks without any additional material in the telescope. The calibration procedure 
 
 ```
  # Calibrate the telescope
@@ -358,7 +368,6 @@ config file workspace/steering-files/x0-mytb/x0.cfg.
 ## Simple example analysis
 
 The following section will demonstrate how to modify the testbeam_x0.py script in order to do a x0 measurement. The beam energy is 4GeV and the telescope setup is assumed to be as follows:
-
 
 			   ID0     ID1     ID2        target	   ID3     ID4     ID5
 beam -->		| 4.5cm | 4.5cm |   5.0 cm  |   5.0 cm  | 4.5cm | 4.5cm |
