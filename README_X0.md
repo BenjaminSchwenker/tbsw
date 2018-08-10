@@ -520,7 +520,7 @@ bullet points below. Every unnecessary modification such as target alignment etc
 							'run000020.raw',
 						  ]
 			```
-	These are all necessary changes in the testbeam_x0.py script.
+These are all necessary changes in the testbeam_x0.py script.
 
 
    * Edit the x0.cfg file in the newly created directory (steering-files/x0-tb2018-xymeasurement/x0.cfg):
