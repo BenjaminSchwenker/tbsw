@@ -405,7 +405,6 @@ bullet points below. Every unnecessary modification such as target alignment etc
 
 	* Edit the steerfing file path(lines 27-34):
 
-			```
 			# Steerfiles for the telescope calibration
 			steerfiles_cali = 'steering-files/x0-tb2018-xymeasurement/'
 
@@ -414,48 +413,36 @@ bullet points below. Every unnecessary modification such as target alignment etc
 
 			# Steerfiles for the x0calibration/x0imaging (can be the same directory as telescope calibration steerfiles)
 			steerfiles_x0 = 'steering-files/x0-tb2018-xymeasurement/'
-			```
 
 	* Set the nominal beam energy (line 37):
 
-			```
 			# Nominal Beam energy
 			beamenergy=4.0
-			```
 
 	* Edit the calibration tag of the telescope calibration, typically combination of testbeam, beam energy and telescope setup (line 41):
 
-			```
 			# cal tags
 			# telescope calibration cal tag (typically named after telescope setup, beam energy etc.)
 			caltag='45mm-spacing-4GeV'
-			```
 
 	* Edit the calibration tag of the x/x0 calibration, typically combination of materials used and the beamenergy (line 44):
 
-			```
 			# x0 calibration cal tag
 			x0tag='air-1mmalu-4GeV'
-			```
 
 	* Edit the directory, where your raw files are stored (line 59):
 
-			```
 			# global path to raw files
 			rawfile_path='/work1/rawdata/tb2018/'
-			```
 
 	* Choose one raw file, which will be used during the telescope calibration, any air run (run000001 - run000005) will do (line 63):
 
-			```
 			# raw file used during telescope calibration (best use data with scattering target)
 			# The calibration has to be done for every telescope setup, beam energy and m26 threshold settings
 			cali_run='run000001.raw'
-			```
 
 	* Select all rawfiles, for which the angle reconstruction has to be done, in this case every available raw file (run000001 - run000020, lines 72-77 in the original file):
 
-			```
 			# List of runs, which are used as input for the scattering angle reconstruction
 			# The angle reconstruction step is essential and every run, that will be used later during the x0 calibration or x0 imaging steps, must be listed
 			RunList_reco = [
@@ -480,11 +467,9 @@ bullet points below. Every unnecessary modification such as target alignment etc
 							'run000019.raw',
 							'run000020.raw',
 							]
-			```
 
 	* Select all rawfiles, which will be used in the x/x0 calibration (run000001 - run000015, lines 84-87 in the original file):
 
-			```
 			# List of runs, which are input for the x0 calibration
 			# Typically runs with various different materials and thicknesses have to be used to achieve a sensible calibration
 			# The different measurement regions and other options have to be set in the x0.cfg file in the steer files directory
@@ -505,11 +490,9 @@ bullet points below. Every unnecessary modification such as target alignment etc
 							'run000014.raw',
 							'run000015.raw',
 						  ]
-			```
 
 	* Select all rawfiles, which will be used in the x/x0 imaging process (run000016 - run000020, lines 93-97 in the original file):
 
-			```
 			# List of runs, which are input for the first x0 image
 			# Use only runs, with exactly the same target material and positioning
 			RunList_x0image = [
@@ -519,7 +502,6 @@ bullet points below. Every unnecessary modification such as target alignment etc
 							'run000019.raw',
 							'run000020.raw',
 						  ]
-			```
 These are all necessary changes in the testbeam_x0.py script.
 
 
@@ -527,42 +509,35 @@ These are all necessary changes in the testbeam_x0.py script.
 
 	* Set the beam energy start value to the nominal beam energy (line 17):
 
-			```
 			# Choose a momentumoffset start value [GeV]
 			momentumoffset:4.0
-			```
 
 	* Set the side length of the x0 image (lines 43-45):
 
-			```
 			# u and v length of complete X0 image  in mm
 			u_length : 30.0
 			v_length : 30.0
-			```
 
 	* Define the position of the x0 image (lines 47-49):
 
-			```
+
 			# umin and vmax of the complete X0 image in mm
 			umin : -15
 			vmax : +15
-			```
-			The given values represent the upper left corner of the x/x0 image.
+
+	The given values represent the upper left corner of the x/x0 image.
 
 	* Define the pixel pitches of the x0 image (lines 51-53):
 
-			```
 			# Pixel sizes of the image in µm
 			u_pixel_size : 400.0
 			v_pixel_size : 400.0
-			```
 
-	* Define the measurement areas during the x/x0 calibration (from line 116 onward):
 
-		    First measurement area (air, center of the beamspot), here only the thickness entry and the min/max runnumber entries have to be edited.
-			The maximum number of scattering angles per distribution can be limited by setting the corresponding variable (maxanglenumber)
+	* Define the measurement areas during the x/x0 calibration (from line 116 onward). First measurement area (air, center of the beamspot), here only the thickness entry and the min/max runnumber entries have to be edited.
+	The maximum number of scattering angles per distribution can be limited by setting the corresponding variable (maxanglenumber)
 
-			```
+
 			# ---Measurement area settings---
 			# Measurement areas are single rectangular areas on the target u-v plane with known material properties 
 
@@ -601,12 +576,9 @@ These are all necessary changes in the testbeam_x0.py script.
 
 			# Limit number of angles in distribution to thsi value (-1 use all available angles)
 			MA1.maxanglenumber:10000
-			```
 
 	* Create 4 more air measurement areas at other positions, which positions you choose depends on the shape of the beamspot:
 
-
-			```
 			MA2.exist:1            	
 			MA2.ucenter:3.25
 			MA2.vcenter:2.0
@@ -659,12 +631,8 @@ These are all necessary changes in the testbeam_x0.py script.
 			MA5.maxrunnumber:5	
 			MA5.maxanglenumber:10000
 
-			```
-
 	* Afterwards define 5 additional measurement areas (MA6-MA10) for 0.5mm of aluminium and another 5 measurement areas (MA11-MA15) for 1.0mm of aluminium.
 
-
-			```
 			MA6.exist:1
 			MA6.ucenter:0.0
 			MA6.vcenter:0.0
@@ -795,18 +763,12 @@ These are all necessary changes in the testbeam_x0.py script.
 			MA15.maxrunnumber:15	
 			MA15.maxanglenumber:10000
 
-			```
-
 	* Remove the definition of the measurement area lines (from line 216 and 258 in the original file):
 
-			```
 			# Use line in fit: 0(no), 1(yes)
 			line1.exist:0
-			```
 
-			```
 			line2.exist:0
-			```
 
 
 These are all necessary changes in the x0.cfg file.
@@ -823,7 +785,7 @@ Please you this reference for citing the method.
 
 
 
-Ulf Stolzenberg
+Ulf Stolzenberg,
 Benjamin Schwenker
 
 Goettingen 2018
