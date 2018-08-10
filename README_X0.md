@@ -369,9 +369,10 @@ config file workspace/steering-files/x0-mytb/x0.cfg.
 
 The following section will demonstrate how to modify the testbeam_x0.py script in order to do a x0 measurement. The beam energy is 4GeV and the telescope setup is assumed to be as follows:
 
-			   ID0     ID1     ID2        target	   ID3     ID4     ID5
+```
+               ID0     ID1     ID2        target	   ID3     ID4     ID5
 beam -->		| 4.5cm | 4.5cm |   5.0 cm  |   5.0 cm  | 4.5cm | 4.5cm |
-		
+```		
 
 The measurement is based on 4 data sets with different scattering materials. For each new target the telescope setup/spacing itself is unchanged, only the thickness and radiation of the scattering target is
 different. In particular the target position is unchanged (at least on the scale of a few mm). The 4 datasets are:
