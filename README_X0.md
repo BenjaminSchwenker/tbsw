@@ -418,108 +418,108 @@ bullet points below. Every unnecessary modification such as target alignment etc
 
 	* Set the nominal beam energy (line 37):
 
-		```
-		# Nominal Beam energy
-		beamenergy=4.0
-		```
+			```
+			# Nominal Beam energy
+			beamenergy=4.0
+			```
 
 	* Edit the calibration tag of the telescope calibration, typically combination of testbeam, beam energy and telescope setup (line 41):
 
-		```
-		# cal tags
-		# telescope calibration cal tag (typically named after telescope setup, beam energy etc.)
-		caltag='45mm-spacing-4GeV'
-		```
+			```
+			# cal tags
+			# telescope calibration cal tag (typically named after telescope setup, beam energy etc.)
+			caltag='45mm-spacing-4GeV'
+			```
 
 	* Edit the calibration tag of the x/x0 calibration, typically combination of materials used and the beamenergy (line 44):
 
-		```
-		# x0 calibration cal tag
-		x0tag='air-1mmalu-4GeV'
-		```
+			```
+			# x0 calibration cal tag
+			x0tag='air-1mmalu-4GeV'
+			```
 
 	* Edit the directory, where your raw files are stored (line 59):
 
-		```
-		# global path to raw files
-		rawfile_path='/work1/rawdata/tb2018/'
-		```
+			```
+			# global path to raw files
+			rawfile_path='/work1/rawdata/tb2018/'
+			```
 
 	* Choose one raw file, which will be used during the telescope calibration, any air run (run000001 - run000005) will do (line 63):
 
-		```
-		# raw file used during telescope calibration (best use data with scattering target)
-		# The calibration has to be done for every telescope setup, beam energy and m26 threshold settings
-		cali_run='run000001.raw'
-		```
+			```
+			# raw file used during telescope calibration (best use data with scattering target)
+			# The calibration has to be done for every telescope setup, beam energy and m26 threshold settings
+			cali_run='run000001.raw'
+			```
 
 	* Select all rawfiles, for which the angle reconstruction has to be done, in this case every available raw file (run000001 - run000020, lines 72-77 in the original file):
 
-		```
-		# List of runs, which are used as input for the scattering angle reconstruction
-		# The angle reconstruction step is essential and every run, that will be used later during the x0 calibration or x0 imaging steps, must be listed
-		RunList_reco = [
-						'run000001.raw',
-						'run000002.raw',
-						'run000003.raw',
-						'run000004.raw',
-						'run000005.raw',
-						'run000006.raw',
-						'run000007.raw',
-						'run000008.raw',
-						'run000009.raw',
-						'run000010.raw',
-						'run000011.raw',
-						'run000012.raw',
-						'run000013.raw',
-						'run000014.raw',
-						'run000015.raw',
-						'run000016.raw',
-						'run000017.raw',
-						'run000018.raw',
-						'run000019.raw',
-						'run000020.raw',
-						]
-		```
+			```
+			# List of runs, which are used as input for the scattering angle reconstruction
+			# The angle reconstruction step is essential and every run, that will be used later during the x0 calibration or x0 imaging steps, must be listed
+			RunList_reco = [
+							'run000001.raw',
+							'run000002.raw',
+							'run000003.raw',
+							'run000004.raw',
+							'run000005.raw',
+							'run000006.raw',
+							'run000007.raw',
+							'run000008.raw',
+							'run000009.raw',
+							'run000010.raw',
+							'run000011.raw',
+							'run000012.raw',
+							'run000013.raw',
+							'run000014.raw',
+							'run000015.raw',
+							'run000016.raw',
+							'run000017.raw',
+							'run000018.raw',
+							'run000019.raw',
+							'run000020.raw',
+							]
+			```
 
 	* Select all rawfiles, which will be used in the x/x0 calibration (run000001 - run000015, lines 84-87 in the original file):
 
-		```
-		# List of runs, which are input for the x0 calibration
-		# Typically runs with various different materials and thicknesses have to be used to achieve a sensible calibration
-		# The different measurement regions and other options have to be set in the x0.cfg file in the steer files directory
-		RunList_x0cali = [
-						'run000001.raw',
-						'run000002.raw',
-						'run000003.raw',
-						'run000004.raw',
-						'run000005.raw',
-						'run000006.raw',
-						'run000007.raw',
-						'run000008.raw',
-						'run000009.raw',
-						'run000010.raw',
-						'run000011.raw',
-						'run000012.raw',
-						'run000013.raw',
-						'run000014.raw',
-						'run000015.raw',
-					  ]
-		```
+			```
+			# List of runs, which are input for the x0 calibration
+			# Typically runs with various different materials and thicknesses have to be used to achieve a sensible calibration
+			# The different measurement regions and other options have to be set in the x0.cfg file in the steer files directory
+			RunList_x0cali = [
+							'run000001.raw',
+							'run000002.raw',
+							'run000003.raw',
+							'run000004.raw',
+							'run000005.raw',
+							'run000006.raw',
+							'run000007.raw',
+							'run000008.raw',
+							'run000009.raw',
+							'run000010.raw',
+							'run000011.raw',
+							'run000012.raw',
+							'run000013.raw',
+							'run000014.raw',
+							'run000015.raw',
+						  ]
+			```
 
 	* Select all rawfiles, which will be used in the x/x0 imaging process (run000016 - run000020, lines 93-97 in the original file):
 
-		```
-		# List of runs, which are input for the first x0 image
-		# Use only runs, with exactly the same target material and positioning
-		RunList_x0image = [
-						'run000016.raw',
-						'run000017.raw',
-						'run000018.raw',
-						'run000019.raw',
-						'run000020.raw',
-					  ]
-		```
+			```
+			# List of runs, which are input for the first x0 image
+			# Use only runs, with exactly the same target material and positioning
+			RunList_x0image = [
+							'run000016.raw',
+							'run000017.raw',
+							'run000018.raw',
+							'run000019.raw',
+							'run000020.raw',
+						  ]
+			```
 	These are all necessary changes in the testbeam_x0.py script.
 
 
