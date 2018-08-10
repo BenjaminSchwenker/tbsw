@@ -388,75 +388,77 @@ different. In particular the target position is unchanged (at least on the scale
 Each step of the required modifications in the gearfiles, testbeam_x0.py and x0.cfg files to perform the telescope calibration, angle reconstruction, x/x0 calibration and x/x0 imaging will be documented in the
 bullet points below. Every unnecessary modification such as target alignment etc will just not be mentioned. The bullet point list only contains necessary modifications:
 
-   * Create a new steeringfiles folder from the default steering files folder:
+* Create a new steeringfiles folder from the default steering files folder:
 
-	 ```
-	  cp -r steering-files/x0-tb steering-files/x0-tb2018-xymeasurement
-	 ```
+	```
+	cp -r steering-files/x0-tb steering-files/x0-tb2018-xymeasurement
+	```
 
-   * Edit the gear file in the newly created directory (steering-files/x0-tb2018-xymeasurement/gear.xml):
-		* Enter the correct positions of the M26 sensors (ID0 to ID5) and the target (ID11) in the gearfile.
-     	* Set the thickness of the target (ID11) to 0.0001 and the radLength to 304000.0 (corresponding to the radiation length constant of air)
+* Edit the gear file in the newly created directory (steering-files/x0-tb2018-xymeasurement/gear.xml):
 
-     This gear file can be used for all target thicknesses as the angle reconstruction is completely independent of the nominal target thickness documented in the gear file.
+	* Enter the correct positions of the M26 sensors (ID0 to ID5) and the target (ID11) in the gearfile.
+	* Set the thickness of the target (ID11) to 0.0001 and the radLength to 304000.0 (corresponding to the radiation length constant of air)
 
-   * Edit the testbeam_x0.py script :
-		* Edit the steerfing file path(lines 27-34):
+    This gear file can be used for all target thicknesses as the angle reconstruction is completely independent of the nominal target thickness documented in the gear file.
 
-			```
-			# Steerfiles for the telescope calibration
-			steerfiles_cali = 'steering-files/x0-tb2018-xymeasurement/'
+* Edit the testbeam_x0.py script :
 
-			# Steerfiles for the angle reconstruction (can be the same directory as telescope calibration steerfiles)
-			steerfiles_reco = 'steering-files/x0-tb2018-xymeasurement/'
+	* Edit the steerfing file path(lines 27-34):
 
-			# Steerfiles for the x0calibration/x0imaging (can be the same directory as telescope calibration steerfiles)
-			steerfiles_x0 = 'steering-files/x0-tb2018-xymeasurement/'
-			```
+		```
+		# Steerfiles for the telescope calibration
+		steerfiles_cali = 'steering-files/x0-tb2018-xymeasurement/'
 
-		* Set the nominal beam energy (line 37):
+		# Steerfiles for the angle reconstruction (can be the same directory as telescope calibration steerfiles)
+		steerfiles_reco = 'steering-files/x0-tb2018-xymeasurement/'
 
-			```
-			# Nominal Beam energy
-			beamenergy=4.0
-			```
+		# Steerfiles for the x0calibration/x0imaging (can be the same directory as telescope calibration steerfiles)
+		steerfiles_x0 = 'steering-files/x0-tb2018-xymeasurement/'
+		```
 
-		* Edit the calibration tag of the telescope calibration, typically combination of testbeam, beam energy and telescope setup (line 41):
+	* Set the nominal beam energy (line 37):
 
-			```
-			# cal tags
-			# telescope calibration cal tag (typically named after telescope setup, beam energy etc.)
-			caltag='45mm-spacing-4GeV'
-			```
+		```
+		# Nominal Beam energy
+		beamenergy=4.0
+		```
 
-		* Edit the calibration tag of the x/x0 calibration, typically combination of materials used and the beamenergy (line 44):
+	* Edit the calibration tag of the telescope calibration, typically combination of testbeam, beam energy and telescope setup (line 41):
 
-			```
-			# x0 calibration cal tag
-			x0tag='air-1mmalu-4GeV'
-			```
+		```
+		# cal tags
+		# telescope calibration cal tag (typically named after telescope setup, beam energy etc.)
+		caltag='45mm-spacing-4GeV'
+		```
 
-		* Edit the directory, where your raw files are stored (line 59):
+	* Edit the calibration tag of the x/x0 calibration, typically combination of materials used and the beamenergy (line 44):
 
-			```
-			# global path to raw files
-			rawfile_path='/work1/rawdata/tb2018/'
-			```
+		```
+		# x0 calibration cal tag
+		x0tag='air-1mmalu-4GeV'
+		```
 
-		* Choose one raw file, which will be used during the telescope calibration, any air run (run000001 - run000005) will do (line 63):
+	* Edit the directory, where your raw files are stored (line 59):
 
-			```
-			# raw file used during telescope calibration (best use data with scattering target)
-			# The calibration has to be done for every telescope setup, beam energy and m26 threshold settings
-			cali_run='run000001.raw'
-			```
+		```
+		# global path to raw files
+		rawfile_path='/work1/rawdata/tb2018/'
+		```
 
-		* Select all rawfiles, for which the angle reconstruction has to be done, in this case every available raw file (run000001 - run000020, lines 72-77 in the original file):
+	* Choose one raw file, which will be used during the telescope calibration, any air run (run000001 - run000005) will do (line 63):
 
-			```
-			# List of runs, which are used as input for the scattering angle reconstruction
-			# The angle reconstruction step is essential and every run, that will be used later during the x0 calibration or x0 imaging steps, must be listed
-			RunList_reco = [
+		```
+		# raw file used during telescope calibration (best use data with scattering target)
+		# The calibration has to be done for every telescope setup, beam energy and m26 threshold settings
+		cali_run='run000001.raw'
+		```
+
+	* Select all rawfiles, for which the angle reconstruction has to be done, in this case every available raw file (run000001 - run000020, lines 72-77 in the original file):
+
+		```
+		# List of runs, which are used as input for the scattering angle reconstruction
+		# The angle reconstruction step is essential and every run, that will be used later during the x0 calibration or x0 imaging steps, must be listed
+		RunList_reco = [
 						'run000001.raw',
 						'run000002.raw',
 						'run000003.raw',
@@ -478,15 +480,15 @@ bullet points below. Every unnecessary modification such as target alignment etc
 						'run000019.raw',
 						'run000020.raw',
 					  ]
-			```
+		```
 
-		* Select all rawfiles, which will be used in the x/x0 calibration (run000001 - run000015, lines 84-87 in the original file):
+	* Select all rawfiles, which will be used in the x/x0 calibration (run000001 - run000015, lines 84-87 in the original file):
 
-			```
-			# List of runs, which are input for the x0 calibration
-			# Typically runs with various different materials and thicknesses have to be used to achieve a sensible calibration
-			# The different measurement regions and other options have to be set in the x0.cfg file in the steer files directory
-			RunList_x0cali = [
+		```
+		# List of runs, which are input for the x0 calibration
+		# Typically runs with various different materials and thicknesses have to be used to achieve a sensible calibration
+		# The different measurement regions and other options have to be set in the x0.cfg file in the steer files directory
+		RunList_x0cali = [
 						'run000001.raw',
 						'run000002.raw',
 						'run000003.raw',
@@ -503,22 +505,22 @@ bullet points below. Every unnecessary modification such as target alignment etc
 						'run000014.raw',
 						'run000015.raw',
 					  ]
-			```
+		```
 
-		* Select all rawfiles, which will be used in the x/x0 imaging process (run000016 - run000020, lines 93-97 in the original file):
+	* Select all rawfiles, which will be used in the x/x0 imaging process (run000016 - run000020, lines 93-97 in the original file):
 
-			```
-			# List of runs, which are input for the first x0 image
-			# Use only runs, with exactly the same target material and positioning
-			RunList_x0image = [
+		```
+		# List of runs, which are input for the first x0 image
+		# Use only runs, with exactly the same target material and positioning
+		RunList_x0image = [
 						'run000016.raw',
 						'run000017.raw',
 						'run000018.raw',
 						'run000019.raw',
 						'run000020.raw',
 					  ]
-			```
-     These are all necessary changes in the testbeam_x0.py script.
+		```
+	These are all necessary changes in the testbeam_x0.py script.
 
 
    * Edit the x0.cfg file in the newly created directory (steering-files/x0-tb2018-xymeasurement/x0.cfg):
