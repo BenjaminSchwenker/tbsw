@@ -518,14 +518,14 @@ These are all necessary changes in the testbeam_x0.py script.
 			u_length : 30.0
 			v_length : 30.0
 
-	* Define the position of the x0 image (lines 47-49):
+	* Define the position of the x0 image (lines 47-49). The given values represent the upper left corner of the x/x0 image:
 
 
 			# umin and vmax of the complete X0 image in mm
 			umin : -15
 			vmax : +15
 
-	The given values represent the upper left corner of the x/x0 image.
+
 
 	* Define the pixel pitches of the x0 image (lines 51-53):
 
@@ -534,9 +534,9 @@ These are all necessary changes in the testbeam_x0.py script.
 			v_pixel_size : 400.0
 
 
-	* Define the measurement areas during the x/x0 calibration (from line 116 onward). First measurement area (air, center of the beamspot), here only the thickness entry and the min/max runnumber entries have to be edited.
-	The maximum number of scattering angles per distribution can be limited by setting the corresponding variable (maxanglenumber)
-
+	* Define the measurement areas during the x/x0 calibration (from line 116 onward). First measurement area (air, center of the beamspot), here only the thickness entry 
+    and the min/max runnumber entries have to be edited. The maximum number of scattering angles per distribution can be limited by setting the 
+    corresponding variable (maxanglenumber).
 
 			# ---Measurement area settings---
 			# Measurement areas are single rectangular areas on the target u-v plane with known material properties 
@@ -767,7 +767,9 @@ These are all necessary changes in the testbeam_x0.py script.
 
 			# Use line in fit: 0(no), 1(yes)
 			line1.exist:0
-
+			.
+			.
+			.
 			line2.exist:0
 
 
