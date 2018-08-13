@@ -374,8 +374,9 @@ The following section will demonstrate how to modify the testbeam_x0.py script i
 beam -->		| 4.5cm | 4.5cm |   5.0 cm  |   5.0 cm  | 4.5cm | 4.5cm |
 ```		
 
-The measurement is based on 4 data sets with different scattering materials. For each new target the telescope setup/spacing itself is unchanged, only the thickness and radiation of the scattering target is
-different. In particular the target position is unchanged (at least on the scale of a few mm). The 4 datasets are:
+The position of the M26 sensor with ID0 is located at z=0mm. he distances, which are depicted in the telescope setup, correspond to the distance between the center of the frames 
+of two neighbouring M26 sensors. The measurement is based on 4 data sets with different scattering materials. For each new target the telescope setup/spacing itself is unchanged, 
+only the thickness and radiation of the scattering target is different. In particular the target position is unchanged (at least on the scale of a few mm). The 4 datasets are:
 
 * air  -->  run000001 - run000005
 
