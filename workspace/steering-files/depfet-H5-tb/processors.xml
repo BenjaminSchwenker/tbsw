@@ -633,7 +633,7 @@
     <!--Collection name for MCParticles-->
     <parameter name="MCParticleCollectionName" type="string" lcioOutType="MCParticle" value="MCParticles"/>
     <!--Number of beam particles per second-->
-    <parameter name="BeamIntensity" type="double" value="200"/>
+    <parameter name="BeamIntensity" type="double" value="2000"/>
     <!--Beam momentum [GeV]-->
     <parameter name="BeamMomentum" type="double" value="4.0"/>
     <!--Beam momentum sigma [GeV]-->
@@ -717,7 +717,7 @@
     <!--Maximum distance between ionization points (in mm)-->
     <parameter name="MaxSegmentLength" type="double" value="0.005"/>
     <!--Set fraction of noise hits per sensor per readout frame-->
-    <parameter name="NoiseFraction" type="float" value="0.00000"/>
+    <parameter name="NoiseFraction" type="float" value="0.00001"/>
     <!--Effective bulk doping concentration, in um^-3-->
     <parameter name="SiBulkDoping" type="double" value="10"/>
     <!--Only Simulated hits after the StartIntegration time in ns will be digitized-->
@@ -794,6 +794,22 @@
     <parameter name="FakeTriggerPeriod" type="int" value="0"/>
     <!--Scinti parameters: DAQID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)-->
     <parameter name="ScinitNo1" type="FloatVec" value="5 -1.8 -1.8 1.8 1.8"/>
+    <!--Scinti parameters: DAQID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)-->
+    <parameter name="ScinitNo2" type="FloatVec" value=""/>
+    <!--Scinti parameters: DAQID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)-->
+    <parameter name="ScinitNo3" type="FloatVec" value=""/>
+    <!--Scinti parameters: DAQID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)-->
+    <parameter name="ScinitNo4" type="FloatVec" value=""/>
+  </processor>
+
+  <processor name="TriggerGeneratorLargeSct" type="TriggerGenerator">
+    <!--Simulates the trigger signal from scinti coincidence for test beam experiments-->
+    <!--Collection name for SimTrackerHits-->
+    <parameter name="SimTrackerHitCollectionName" type="string" lcioOutType="SimTrackerHit" value="SimTrackerHits"/>
+    <!--Every nth simulated event will be accepted regardless of trigger coincidence-->
+    <parameter name="FakeTriggerPeriod" type="int" value="0"/>
+    <!--Scinti parameters: DAQID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)-->
+    <parameter name="ScinitNo1" type="FloatVec" value="0 -5 -5 5 5"/>
     <!--Scinti parameters: DAQID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)-->
     <parameter name="ScinitNo2" type="FloatVec" value=""/>
     <!--Scinti parameters: DAQID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)-->

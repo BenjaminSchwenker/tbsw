@@ -19,6 +19,15 @@ rawfile = os.getcwd() + '/simrun.slcio'
 # Number of events to simulate 
 nevents = 100000
 
+#Parameters for simulation of misalignment
+#Position parameters in mm
+mean_list=[0.0,0.0,0.0,0.0,0.0,0.0] 
+sigma_list=[0.1,0.1,0.1,0.1,0.1,0.1]
+
+# List of sensor ids and modes, which are excluded during misalignment
+sensorexception_list=[11,5,0] 
+modeexception_list=['positionZ']
+
 def create_sim_path(Env):
   """
   Returns a list of tbsw path objects to simulate a test beam run 
@@ -29,7 +38,7 @@ def create_sim_path(Env):
   sim.add_processor(name="InfoSetter")
   sim.add_processor(name="ParticleGun")
   sim.add_processor(name="FastSim")
-  sim.add_processor(name="TriggerGenerator")
+  sim.add_processor(name="TriggerGeneratorLargeSct")
   sim.add_processor(name="M26Digitizer")
   sim.add_processor(name="DEPFETDigitizer")
   sim.add_processor(name="LCIOOutput",params={"LCIOOutputFile" : rawfile })
@@ -131,8 +140,8 @@ def simulate(params):
   # Create steerfiles for processing
   simpath = create_sim_path(SimObj)
 
-  # Randomize sensor positions in gear file to create misalignment
-  randomize_telescope(gearfile=SimObj.get_filename(gearfile), mean_pos=0, sigma_pos=0.1, mean_rot=0, sigma_rot=0.1)
+  # Misalign gear file
+  randomize_telescope(gearfile=SimObj.get_filename(gearfile), mean_list=mean_list, sigma_list=sigma_list, sensorexception_list=sensorexception_list, modeexception_list=modeexception_list)
    
   # Run simulation to create rawfile with simulated digits 
   SimObj.simulate(path=simpath)  
