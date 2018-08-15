@@ -7,11 +7,12 @@
 #include <marlin/Global.h>
 #include <streamlog/streamlog.h>
   
-// DEPFETTrackTool includes
+// TBTool includes
 #include "MaterialEffect.h"
 #include "TBKalmanB.h"
 #include "HelixTrackModel.h"
 #include "StraightLineTrackModel.h"
+#include "ThreeDModel.h" 
 
 // C++ STL includes 
 #include <cmath>
@@ -136,12 +137,39 @@ bool TBKalmanB::Fit(TBTrack& trk)
   // Particle hypothesis  
   mass = trk.GetMass();
   charge = trk.GetCharge();
-   
+  
   for(int iter=0; iter<NumIt; iter++) { 
-     
+    
+    // This is the initial track state vector; 
+    // Linearization: it is a deviation from the reference 
+    // trajectory
+    HepMatrix x0(ndim,1,0);
+    
+    // This is the initial covariance matrix of the  
+    // track state vector 
+    HepSymMatrix C0(ndim,0);
+    
+    for (int i = 0; i < 2; i++) {
+      // There is a tradeoff between choosing large values (which makes the
+      // tracking numerically unstable) and choosing small values (which biases
+      // the track from the seed). I found 1E4 working for this model, but this
+      // might need to get tuned.
+      C0[i][i] = 1E-2;
+      C0[i+2][i+2] = 1E2; 
+    } 
+    C0[4][4] = 1;  
+    
     // Get paramters of reference trajectory   
     HepMatrix RTrkState = trk.GetReferenceState().GetPars();      
     ReferenceFrame RTrkSurf = trk.GetTE( trk.GetReferenceState().GetPlane() ).GetDet().GetNominal();
+    
+    if ( m_useBC ) {
+      // The idea is to use the beam constraint as a reference
+      // trajectory 
+      double mom = trk.GetMomentum();    
+      RTrkSurf = trk.GetTE(0).GetDet().GetNominal();
+      RTrkState = ComputeBeamConstraint( x0, C0, RTrkSurf, mass, mom, charge);
+    }
     
     // Compute intersections of the reference trajectory
     // with sub detectors. 
@@ -187,27 +215,8 @@ bool TBKalmanB::Fit(TBTrack& trk)
       return true;
     }   
      
-    // This is the initial track state vector; 
-    // Linearization: it is a deviation from the reference 
-    // trajectory
-    HepMatrix x0(ndim,1,0);
     
-    // This is the initial covariance matrix of the  
-    // track state vector 
     
-    HepSymMatrix C0(ndim,0);
-    
-    for (int i = 0; i < 2; i++) {
-      // There is a tradeoff between choosing large values (which makes the
-      // tracking numerically unstable) and choosing small values (which biases
-      // the track from the seed). I found 1E4 working for this model, but this
-      // might need to get tuned.
-      C0[i][i] = 1E-2;
-      C0[i+2][i+2] = 1E1; 
-    } 
-    //C0[4][4] = 100;  
-    C0[4][4] = 1;  
-   
      
     // Init forward filter 
     // The forward pass is initialized using 
@@ -884,6 +893,53 @@ void TBKalmanB::SetNdof(TBTrack& trk)
 
   trk.SetNDF( ndof );
   
+}
+
+/** Compute a priori predicted estimate on first sensor. Returns reference state at first sensor.
+ */
+HepMatrix TBKalmanB::ComputeBeamConstraint( HepMatrix& x0, HepSymMatrix& C0, ReferenceFrame& FirstSensorFrame, double mass, double mom, double charge)
+{
+   
+  // First, we must construct a beam uvw plane in front of the first sensor where the beam 
+  // constrained is defined. 
+  ReferenceFrame BeamFrame;
+  
+  HepVector BeamPosition(3);
+  BeamPosition[0] = 0;  
+  BeamPosition[1] = 0;
+  BeamPosition[2] = FirstSensorFrame.GetZPosition()-10; 
+  BeamFrame.SetPosition(CollimatorPosition); 
+    
+  HepMatrix BeamRotation;
+  FillRotMatrixKarimaki(BeamRotation, 0,0,0);
+  BeamFrame.SetRotation(BeamRotation); 
+   
+  // Construct a Gaussian beam state     
+  HepMatrix x_beam(ndim,1,0);
+  x_beam[4][0] = charge/mom;
+  
+  HepSymMatrix C_beam(ndim,0);
+  for (int i = 0; i < 2; i++) {
+    C_beam[i][i] = 1E-2;
+    C_beam[i+2][i+2] = 1E2; 
+  }   
+  C_beam[4][4] = 1;  
+  
+  // Extrapoate beam  state to first sensor 
+  bool error = false;
+  HepMatrix x_first = TrackModel->Extrapolate(x_beam, BeamFrame, FirstSensorFrame, error);  
+  
+  // MAP estimate [x_beam,C_beam] from beam frame to first sensor
+  int ierr = 0; 
+  double length = TrackModel->GetSignedStepLength(x_beam, BeamFrame, FirstSensorFrame); 
+  double theta2_air = materialeffect::GetScatterTheta2(x_beam, length, materialeffect::X0_air, mass, charge);   
+  ierr = MAP_FORWARD( theta2_air, x_beam, BeamFrame, x_first, FirstSensorFrame, x0, C0 );
+  if (ierr != 0) {
+    streamlog_out(ERROR) << "ERR: Problem with track extrapolation"
+                         << std::endl;
+  }	
+      
+  return x_first;
 }
 
 
