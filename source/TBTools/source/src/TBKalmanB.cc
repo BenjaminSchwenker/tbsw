@@ -908,7 +908,7 @@ HepMatrix TBKalmanB::ComputeBeamConstraint( HepMatrix& x0, HepSymMatrix& C0, Ref
   BeamPosition[0] = 0;  
   BeamPosition[1] = 0;
   BeamPosition[2] = FirstSensorFrame.GetZPosition()-10; 
-  BeamFrame.SetPosition(CollimatorPosition); 
+  BeamFrame.SetPosition(BeamPosition); 
     
   HepMatrix BeamRotation;
   FillRotMatrixKarimaki(BeamRotation, 0,0,0);
