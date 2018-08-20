@@ -6,7 +6,7 @@
 // Local includes 
 #include "KalmanAligner.h"
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "TBTrack.h"
 #include "TrackInputProvider.h"
 #include "Utilities.h"
@@ -62,21 +62,66 @@ KalmanAligner::KalmanAligner() : Processor("KalmanAligner")
   registerProcessorParameter ("AlignmentDBFileName",
                              "This is the name of the file with the alignment constants (add .root)",
                              _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) ); 
+
+  registerProcessorParameter ("LogLevel", "LogLever during alignment",
+                              _logLevel,  static_cast < int > (2));
   
-  registerProcessorParameter ("AlignConfigFileName",
-                             "Name of the alignment config file",
-                             _alignConfigFileName, std::string("cfg/align.cfg"));
+  registerProcessorParameter ("MaxTracks", "Maximum number of tracks passed to alignemnt",
+                              _maxTracks,  static_cast < int > (50000)); 
+
+  registerProcessorParameter ("UseBeamConstraint", "Use beam model to constrain track fitting",
+                              _useBC,  static_cast < bool > (false));
   
+  registerProcessorParameter ("pValueCut", "P-Value cut for tracks used during alignment",
+                              _pValueCut,  static_cast < double > (0.5)); 
+
+  registerProcessorParameter ("DeviationCut", "Filter tracks where the shift exceeds DeviationCut*Sigma ",
+                              _deviationCut,  static_cast < double > (1.0)); 
+
+  registerProcessorParameter ("AnnealingTracks",
+                              "Number of tracks before the annealign is turned OFF",
+                              _AnnealingTracks,  static_cast < int > (0));
+
+  registerProcessorParameter ("AnnealingFactor", "Scale factor for annealing schedule",
+                              _annealingFactor,  static_cast < double > (1000000.));
+  
+  std::vector<float> initErrorsShiftX;
+  initErrorsShiftX.push_back(0.0);
+  registerProcessorParameter("ErrorsShiftX", "Initial errors on alignment x shift [mm] for sensors ordered along beam line.",
+                              _errorsShiftX, initErrorsShiftX );
+
+  std::vector<float> initErrorsShiftY;
+  initErrorsShiftY.push_back(0.0);
+  registerProcessorParameter("ErrorsShiftY", "Initial errors on alignment y shift [mm] for sensors ordered along beam line.",
+                              _errorsShiftY, initErrorsShiftY );
+  
+  std::vector<float> initErrorsShiftZ;
+  initErrorsShiftZ.push_back(0.0);
+  registerProcessorParameter("ErrorsShiftZ", "Initial errors on alignment z shift [mm] for sensors ordered along beam line.",
+                              _errorsShiftZ, initErrorsShiftZ );
+
+  std::vector<float> initErrorsAlpha;
+  initErrorsAlpha.push_back(0.0);
+  registerProcessorParameter("ErrorsAlpha", "Initial errors on alignment alpha [rad] for sensors ordered along beam line.",
+                              _errorsAlpha, initErrorsAlpha );
+
+  std::vector<float> initErrorsBeta;
+  initErrorsBeta.push_back(0.0);
+  registerProcessorParameter("ErrorsBeta", "Initial errors on alignment beta [rad] for sensors ordered along beam line.",
+                              _errorsBeta, initErrorsBeta );
+
+  std::vector<float> initErrorsGamma;
+  initErrorsGamma.push_back(0.0);
+  registerProcessorParameter("ErrorsGamma", "Initial errors on alignment gamma [rad] for sensors ordered along beam line.",
+                              _errorsGamma, initErrorsGamma );
+
   registerProcessorParameter ("UpdateAlignment",
                               "Update lcio alignmentDB using alignment results (true/false)?",
                               _updateAlignment, static_cast <bool> (false) ); 
 
-   registerProcessorParameter ("NewAlignment",
+  registerProcessorParameter ("NewAlignment",
                               "Start alignment from scratch (true/false)?",
                               _newAlignment, static_cast <bool> (false) ); 
-  
-  
- 
                                 
 }
 

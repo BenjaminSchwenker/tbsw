@@ -7,7 +7,7 @@
 #define KalmanAligner_H 1
 
 
-// DEPFETTrackTools includes   
+// TBTools includes   
 #include "TBDetector.h"
 #include "AlignEvent.h"
 
@@ -48,11 +48,10 @@ namespace depfet {
  *  to define a global reference frame. The method is also suitable for alignment 
  *  of individual DUT sensors relative to the tracking telescope. 
  *  
- *  The processor has three major inputs: 
+ *  The processor has two inputs: 
  *  
- *  1) A root file containing the current nominal alignment DB  
- *  2) A text based config file for setting initial errors and outlier rejection 
- *  3) A lcio file containing a collection of tracks for detector alignment.  
+ *  1) A root file containing the current nominal alignment DB   
+ *  2) A lcio file containing a collection of tracks for detector alignment.  
  *   
  *  The processor fills the data structures for the alignment algorithm, runs the 
  *  alignment code and updates the alignment DB lcio file. A root file is written 
@@ -104,9 +103,6 @@ protected:
       
 //! AlignmentDB file name 
    std::string _alignmentDBFileName;
-   
-//! AlignConfig file name 
-   std::string _alignConfigFileName;
       
 //! Update alignmentDB   
    bool _updateAlignment;
@@ -115,8 +111,48 @@ protected:
 /*! Don't use current alignment data base, but start from scratch   
  */
    bool _newAlignment;
+
+//! Initial errors on alignment x shift [mm] for sensors ordered along beam line
+   std::vector<float >  _errorsShiftX;
+   
+//! Initial errors on alignment y shift [mm] for sensors ordered along beam line
+   std::vector<float >  _errorsShiftY;   
       
-      
+//! Initial errors on alignment z shift [mm] for sensors ordered along beam line
+   std::vector<float >  _errorsShiftZ;
+
+//! Initial errors on alignment alpha [rad] for sensors ordered along beam line
+   std::vector<float >  _errorsAlpha;
+
+//! Initial errors on alignment beta [rad] for sensors ordered along beam line
+   std::vector<float >  _errorsBeta;
+
+//! Initial errors on alignment gamma [rad] for sensors ordered along beam line
+   std::vector<float >  _errorsGamma;
+
+//! Number of tracks before the annealign is turned OFF
+   int  _AnnealingTracks;
+
+//! Scale factor for annealing schedule
+   double  _annealingFactor;
+
+/*
+registerProcessorParameter ("LogLevel", "LogLever during alignment",
+                              _logLevel,  static_cast < int > (2));
+  
+  registerProcessorParameter ("MaxTracks", "Maximum number of tracks passed to alignemnt",
+                              _maxTracks,  static_cast < int > (50000)); 
+
+  registerProcessorParameter ("UseBeamConstraint", "Use beam model to constrain track fitting",
+                              _useBC,  static_cast < bool > (false));
+  
+  registerProcessorParameter ("pValueCut", "P-Value cut for tracks used during alignment",
+                              _pValueCut,  static_cast < double > (0.5)); 
+
+  registerProcessorParameter ("DeviationCut", "Filter tracks where the shift exceeds DeviationCut*Sigma ",
+                              _deviationCut,  static_cast < double > (1.0)); 
+*/
+
  private:
    
    double _timeCPU; //!< CPU time
