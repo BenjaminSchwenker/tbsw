@@ -7,7 +7,7 @@
 // C++ includes 
 #include <iostream>
 
-// DEPFETTrackTool includes
+// TBTool includes
 #include "KalmanAlignmentAlgorithm2.h"
 #include "AlignEvent.h"
 #include "KalmanAlignmentInputProvider.h"
@@ -15,7 +15,6 @@
 #include "ThreeDModel.h"
 
 // ROOT includes
-#include "TEnv.h"
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TTree.h"

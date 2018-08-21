@@ -75,12 +75,12 @@ KalmanAligner::KalmanAligner() : Processor("KalmanAligner")
   registerProcessorParameter ("pValueCut", "P-Value cut for tracks used during alignment",
                               _pValueCut,  static_cast < double > (0.5)); 
 
-  registerProcessorParameter ("DeviationCut", "Filter tracks where the shift exceeds DeviationCut*Sigma ",
+  registerProcessorParameter ("DeviationCut", "Reject alignment corrections exceeding DeviationCut*Sigma",
                               _deviationCut,  static_cast < double > (1.0)); 
 
   registerProcessorParameter ("AnnealingTracks",
                               "Number of tracks before the annealign is turned OFF",
-                              _AnnealingTracks,  static_cast < int > (0));
+                              _annealingTracks,  static_cast < int > (0));
 
   registerProcessorParameter ("AnnealingFactor", "Scale factor for annealing schedule",
                               _annealingFactor,  static_cast < double > (1000000.));
@@ -147,7 +147,37 @@ void KalmanAligner::init() {
   if(!_newAlignment) _detector.ReadAlignmentDB( _alignmentDBFileName );
   // This is needed, because if the AlignmentDB is not read, the detector construct doesn't know the alignmentDB name
   else  _detector.SetAlignmentDBName( _alignmentDBFileName );     
+  
+  if ( (int)_errorsShiftX.size() == _detector.GetNSensors() ) {
+    _errorsShiftX.resize(_detector.GetNSensors(), 0.0);
+    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsShiftX has wrong size. Resize using default error 0.0." << endl;  
+  } 
     
+  if ( (int)_errorsShiftY.size() == _detector.GetNSensors() ) {
+    _errorsShiftY.resize(_detector.GetNSensors(), 0.0);
+    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsShiftY has wrong size. Resize using default error 0.0." << endl;  
+  } 
+  
+  if ( (int)_errorsShiftZ.size() == _detector.GetNSensors() ) {
+    _errorsShiftZ.resize(_detector.GetNSensors(), 0.0);
+    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsShiftZ has wrong size. Resize using default error 0.0." << endl;  
+  } 
+  
+  if ( (int)_errorsAlpha.size() == _detector.GetNSensors() ) {
+    _errorsAlpha.resize(_detector.GetNSensors(), 0.0);
+    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsAlpha has wrong size. Resize using default error 0.0." << endl;  
+  } 
+  
+  if ( (int)_errorsBeta.size() == _detector.GetNSensors() ) {
+    _errorsBeta.resize(_detector.GetNSensors(), 0.0);
+    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsBeta has wrong size. Resize using default error 0.0." << endl;  
+  } 
+  
+  if ( (int)_errorsGamma.size() == _detector.GetNSensors() ) {
+    _errorsGamma.resize(_detector.GetNSensors(), 0.0);
+    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsGamma has wrong size. Resize using default error 0.0." << endl;  
+  } 
+  
   //////////////////////////////////////////////////////////////////////
   // Alignment Data I/O 
   
@@ -254,6 +284,33 @@ void KalmanAligner::check( LCEvent * evt )
 //
 void KalmanAligner::end()
 {
+  
+  ///////////////////////////////////////////////////////////
+  // Construct the initial alignment state 
+  
+  int nSensors = _detector.GetNSensors();
+  int nParameters = 6;  
+  AlignableDet AlignState(nSensors,nParameters);
+  
+  for (int iSensor=0; iSensor < nSensors; iSensor++){       
+    AlignState.alignmentParameters[iSensor*nParameters + 0] = 0;
+    AlignState.alignmentCovariance[iSensor*nParameters + 0][iSensor*nParameters + 0] = _errorsShiftX[iSensor]*_errorsShiftX[iSensor];
+    
+    AlignState.alignmentParameters[iSensor*nParameters + 1] = 0;
+    AlignState.alignmentCovariance[iSensor*nParameters + 1][iSensor*nParameters + 1] = _errorsShiftY[iSensor]*_errorsShiftY[iSensor];
+    
+    AlignState.alignmentParameters[iSensor*nParameters + 2] = 0;
+    AlignState.alignmentCovariance[iSensor*nParameters + 2][iSensor*nParameters + 2] = _errorsShiftZ[iSensor]*_errorsShiftZ[iSensor];
+    
+    AlignState.alignmentParameters[iSensor*nParameters + 3] = 0;
+    AlignState.alignmentCovariance[iSensor*nParameters + 3][iSensor*nParameters + 3] = _errorsAlpha[iSensor]*_errorsAlpha[iSensor];
+    
+    AlignState.alignmentParameters[iSensor*nParameters + 4] = 0;
+    AlignState.alignmentCovariance[iSensor*nParameters + 4][iSensor*nParameters + 4] = _errorsBeta[iSensor]*_errorsBeta[iSensor];
+    
+    AlignState.alignmentParameters[iSensor*nParameters + 5] = 0;
+    AlignState.alignmentCovariance[iSensor*nParameters + 5][iSensor*nParameters + 5] = _errorsGamma[iSensor]*_errorsGamma[iSensor];
+  }
    
   ////////////////////////////////////////////////////////////
   // Try to fit alignment corrections from track residuals  
@@ -263,9 +320,9 @@ void KalmanAligner::end()
   streamlog_out ( MESSAGE3 ) << " Total of " << _nKAATracks << " tracks found" << endl;
   streamlog_out ( MESSAGE3 ) << endl;
   streamlog_out ( MESSAGE3 ) << "Starting alignment ..." << endl;
-  
+
   KalmanAlignmentAlgorithm2 Aligner;
-  AlignableDet reco_const = Aligner.Fit(tmp_detector, alignment_data, _alignConfigFileName );
+  AlignableDet reco_const = Aligner.Fit(tmp_detector, alignment_data, AlignState, _maxTracks, _annealingTracks, _annealingFactor,  _pValueCut, _deviationCut, _useBC, _logLevel );
   
   bool error_fim = Aligner.AlignDetector(tmp_detector, reco_const);
   if ( error_fim ) {

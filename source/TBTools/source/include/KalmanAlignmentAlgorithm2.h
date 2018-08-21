@@ -1,7 +1,7 @@
 #ifndef KalmanAlignmentAlgorithm2_H
 #define KalmanAlignmentAlgorithm2_H 1
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "TBDetector.h"
 #include "AlignableDet.h"
 
@@ -48,6 +48,26 @@ class KalmanAlignmentAlgorithm2 {
   
   /** Performs alignment fit. Returns alignment results. 
    */
+
+   
+   /*
+  int  _annealingTracks;
+  double  _annealingFactor;
+   
+
+
+   int  _maxTracks;
+
+   bool  _useBC;
+
+   double  _pValueCut;
+   double  _deviationCut;
+
+   int  _logLevel;
+   Aligner.Fit(tmp_detector, alignment_data, AlignState, _maxTracks, _annealingTracks, _annealingFactor,  _pValueCut, _deviationCut, _useBC, _logLevel );
+  */
+   
+
   AlignableDet Fit(TBDetector& detector, TFile * AlignmentData, std::string ConfigFile);
   
  private:

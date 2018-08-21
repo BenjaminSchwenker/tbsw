@@ -131,27 +131,25 @@ protected:
    std::vector<float >  _errorsGamma;
 
 //! Number of tracks before the annealign is turned OFF
-   int  _AnnealingTracks;
+   int  _annealingTracks;
 
 //! Scale factor for annealing schedule
    double  _annealingFactor;
 
-/*
-registerProcessorParameter ("LogLevel", "LogLever during alignment",
-                              _logLevel,  static_cast < int > (2));
-  
-  registerProcessorParameter ("MaxTracks", "Maximum number of tracks passed to alignemnt",
-                              _maxTracks,  static_cast < int > (50000)); 
+//! LogLever during alignment
+   int  _logLevel;
 
-  registerProcessorParameter ("UseBeamConstraint", "Use beam model to constrain track fitting",
-                              _useBC,  static_cast < bool > (false));
-  
-  registerProcessorParameter ("pValueCut", "P-Value cut for tracks used during alignment",
-                              _pValueCut,  static_cast < double > (0.5)); 
+//! Maximum number of tracks passed to alignemnt
+   int  _maxTracks;
 
-  registerProcessorParameter ("DeviationCut", "Filter tracks where the shift exceeds DeviationCut*Sigma ",
-                              _deviationCut,  static_cast < double > (1.0)); 
-*/
+//! Use beam model to constrain track fitting during alignment
+   bool  _useBC;
+
+//! P-Value cut for tracks used during alignment
+   double  _pValueCut;
+
+//! Reject alignment corrections exceeding DeviationCut*Sigma
+   double  _deviationCut;
 
  private:
    
