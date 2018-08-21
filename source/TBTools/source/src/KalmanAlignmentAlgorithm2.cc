@@ -125,58 +125,13 @@ bool KalmanAlignmentAlgorithm2::AlignDetector(TBDetector& detector, AlignableDet
 
 /** Performs alignment fit. Returns alignment results. 
  */
-AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * AlignmentData, string ConfigFile)
+AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * AlignmentData, AlignableDet initialAlignState, 
+                   int maxTracks, int annealingTracks, double annealingFactor, double  pValueCut, double deviationCut, bool useBC, int logLevel)
 {
  
   AlignmentData->cd("");   
-   
-  // Read config file
-  //------------------
-  TEnv mEnv(ConfigFile.c_str());
-  
-  // Number of tracks
-  int nMax = mEnv.GetValue("nMaxTracks", 0);
-  
-  // Set verbosity 
-  int LogLevel = mEnv.GetValue("LogLevel", 2);  
-  
-  // Deterministic annealing
-  double AnnealingFactor = mEnv.GetValue("annealingFactor", 1000000.);
-  int    AnnealingEvents = mEnv.GetValue("annealingEvents", 0);     
-
-  // Outlier rejection
-  double probCut = mEnv.GetValue("probabilityCut", 0.5);
-  double deviationCut = mEnv.GetValue("deviationCut", 1.0);
     
-  // Use beam model to constrain track fitting
-  int useBC = mEnv.GetValue("useBeamModel", 0);
-  double beam_divx = mEnv.GetValue("SlopeRMSX", 0.001);
-  double beam_divy = mEnv.GetValue("SlopeRMSY", 0.001);
-  double beam_sizex = mEnv.GetValue("SpotSizeX", 8.0);
-  double beam_sizey = mEnv.GetValue("SpotSizeY", 7.0);
-  double beam_corrx = mEnv.GetValue("CorrelationX", 0.0);
-  double beam_corry = mEnv.GetValue("CorrelationY", 0.0);
-  
-  // Print info about alignment options
-  //------------------------------------
-  if (probCut > 0.0) { cout << "Track probability cut: " << probCut << endl; }
-  if (deviationCut > 0.0) { cout << "Deviation cut: " << deviationCut << endl; }
-  if (AnnealingEvents != 0) { cout << "Deterministic annealing until event " << AnnealingEvents << endl; }
-  if (AnnealingEvents != 0) { cout << "Initial annealing factor is " << AnnealingFactor << endl; }
-  if (useBC) { 
-    cout << "Using beam constraint: " << endl; 
-    cout << " beam spot sizes [mm]: " << beam_sizex << ", " << beam_sizey << endl; 
-    cout << " beam slope rms [rad]: " << beam_divx  << ", " << beam_divy  << endl; 
-    cout << " beam correlations: " << beam_corrx  << ", " << beam_corry  << endl; 
-  }
-
-  
-  
-  // Print info about alignment options
-  //------------------------------------
-  if (probCut > 0.0) { cout << "Track p-value cut: " << probCut << endl; }
    
-  
   // Get information what needs to be aligned
   //------------------------------------------
   int nAlignables = detector.GetNSensors();
@@ -189,21 +144,8 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
   //-----------------------
   // It keeps all alignment corrections and quality 
   // indicators. 
-  AlignableDet AlignStore(nAlignables,nParameters);
+  AlignableDet AlignStore = initialAlignState;
    
-  // Initialize parameters and covariance
-  //--------------------------------------
-  for (int iAlignable=0; iAlignable < nAlignables; iAlignable++){
-    for (int iParameter=0; iParameter < nParameters; iParameter++){
-      double error =  mEnv.GetValue(Form("errorParameter%dofAlignable%d", iParameter, iAlignable ), 0.0); 
-      
-      cout << "Set parameter " << iParameter << " of alignable " << iAlignable  << " to 0"
-           << " +- " << error << endl;
-              
-      AlignStore.alignmentParameters[iAlignable*nParameters + iParameter] = 0;
-      AlignStore.alignmentCovariance[iAlignable*nParameters + iParameter][iAlignable*nParameters + iParameter] = error*error;
-    }
-  }
   
   // Create look up tables of floating alignment variables
   //------------------------------------------------------
@@ -221,8 +163,8 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
     int nFixed = 0; 
     for (int iParameter=0; iParameter < nParameters; iParameter++){
       // Parameter is fixed? 
-      double error =  mEnv.GetValue(Form("errorParameter%dofAlignable%d", iParameter, iAlignable ), 0.0); 
-      if (error == 0 ) {
+      double sigma2 =  AlignStore.GetAlignCovariance(iAlignable)[iParameter][iParameter];   
+      if (sigma2 == 0 ) {
         ++nFixed;
       }     
     }
@@ -244,11 +186,10 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
   t->SetBranchAddress("AlignEvent", & alignEvent);
   
   // Number of events to be processed (-1 or 0 means all)
-  if (nMax <= 0)
-    nMax=t->GetEntriesFast();
+  if (maxTracks <= 0)
+    maxTracks=t->GetEntriesFast();
   
-  cout << "Processing " << nMax  << " events" << endl;
-  
+  cout << "Processing " << maxTracks  << " events" << endl;
   
   // Counters
   int nStep = 0;
@@ -261,20 +202,13 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
   GenericTrackFitter TrackFitter(detector);
   TrackFitter.SetNumIterations(2);     
   TrackFitter.SetUseBeamConstraint(useBC);
-  TrackFitter.SetBeamDivergenceX(beam_divx);
-  TrackFitter.SetBeamDivergenceY(beam_divy);
-  TrackFitter.SetBeamSizeX(beam_sizex);
-  TrackFitter.SetBeamSizeY(beam_sizey);
-  TrackFitter.SetBeamCorrelationX(beam_corrx);
-  TrackFitter.SetBeamCorrelationY(beam_corry);
-  
      
   // Loop
   //------
   for (int ii = 0; ii < t->GetEntriesFast(); ii++) {
     
     // Check max events
-    if (nStep >= nMax) {
+    if (nStep >= maxTracks) {
       break;
     }
      
@@ -308,7 +242,7 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
      
     for (int ipl= 0; ipl< nAlignables; ++ipl) {  
       
-      if (nUpdates[ipl] < AnnealingEvents) {  
+      if (nUpdates[ipl] < annealingTracks) {  
            
         // Get data for alignable 
         //------------------------
@@ -321,7 +255,7 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
         if (fixedAlignable[ipl]) continue;  
         
         // This is the actual annealing
-        double alpha = TMath::Power(AnnealingFactor, (AnnealingEvents-nUpdates[ipl])/(static_cast<float>(AnnealingEvents)));
+        double alpha = TMath::Power(annealingFactor, (annealingTracks-nUpdates[ipl])/(static_cast<float>(annealingTracks)));
         TE.GetHit().GetCov() *= alpha;
         
       } 
@@ -332,7 +266,7 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
     //------------------------------------------------- 
     bool trkerr = TrackFitter.Fit(trk);
     if ( trkerr ) {
-      if (LogLevel > 2) { 
+      if (logLevel > 2) { 
         cout << "Fit failed. Skipping track!" << endl;
       }
       continue;
@@ -341,8 +275,8 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
     // Data quality checks I 
     //---------------------
     double prob = TMath::Prob(trk.GetChiSqu(), trk.GetNDF());
-    if (prob < probCut) { 
-      if (LogLevel > 2) { 
+    if (prob < pValueCut) { 
+      if (logLevel > 2) { 
         cout << "Skipping event because of very low chi2 probability." << endl;
       }
       
@@ -370,7 +304,7 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
       
       // Debug output
       //--------------
-      if (LogLevel > 2) { 
+      if (logLevel > 2) { 
         cout << "Align update sensor: " << ipl << endl;
       }
       
@@ -405,7 +339,7 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
       int ierr; 
       HepSymMatrix W = (V + C0.similarity(H) + E0.similarity(D) ).inverse(ierr);
       if (ierr != 0) {
-        if (LogLevel > 2) { 
+        if (logLevel > 2) { 
           cout << "ERR: Matrix inversion failed. Skipping alignable!" << endl;
         } 
         continue;
@@ -455,13 +389,9 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
       cout << theTime.GetHour() << ":" << theTime.GetMinute() << "'" << theTime.GetSecond()
                                 << ": " << nStep << " tracks finished ..." << endl;
     }
-    
-    
-     
+       
   } // END MAIN LOOP
-  
-  
-  
+    
   cout << nOutliers1 << " events rejected by outlier rejection stage 1" << endl;
   cout << nStep << " tracks processed" << endl;
   if (deviationCut > 0.0){

@@ -67,23 +67,23 @@ KalmanAligner::KalmanAligner() : Processor("KalmanAligner")
                               _logLevel,  static_cast < int > (2));
   
   registerProcessorParameter ("MaxTracks", "Maximum number of tracks passed to alignemnt",
-                              _maxTracks,  static_cast < int > (50000)); 
+                              _maxTracks,  static_cast < int > (70000)); 
 
   registerProcessorParameter ("UseBeamConstraint", "Use beam model to constrain track fitting",
                               _useBC,  static_cast < bool > (false));
   
   registerProcessorParameter ("pValueCut", "P-Value cut for tracks used during alignment",
-                              _pValueCut,  static_cast < double > (0.5)); 
+                              _pValueCut,  static_cast < double > (0.0)); 
 
   registerProcessorParameter ("DeviationCut", "Reject alignment corrections exceeding DeviationCut*Sigma",
-                              _deviationCut,  static_cast < double > (1.0)); 
+                              _deviationCut,  static_cast < double > (0.0)); 
 
   registerProcessorParameter ("AnnealingTracks",
                               "Number of tracks before the annealign is turned OFF",
-                              _annealingTracks,  static_cast < int > (0));
+                              _annealingTracks,  static_cast < int > (4000));
 
   registerProcessorParameter ("AnnealingFactor", "Scale factor for annealing schedule",
-                              _annealingFactor,  static_cast < double > (1000000.));
+                              _annealingFactor,  static_cast < double > (10000.));
   
   std::vector<float> initErrorsShiftX;
   initErrorsShiftX.push_back(0.0);
