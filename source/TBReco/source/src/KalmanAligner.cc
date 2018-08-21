@@ -148,32 +148,32 @@ void KalmanAligner::init() {
   // This is needed, because if the AlignmentDB is not read, the detector construct doesn't know the alignmentDB name
   else  _detector.SetAlignmentDBName( _alignmentDBFileName );     
   
-  if ( (int)_errorsShiftX.size() == _detector.GetNSensors() ) {
+  if ( (int)_errorsShiftX.size() != _detector.GetNSensors() ) {
     _errorsShiftX.resize(_detector.GetNSensors(), 0.0);
     streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsShiftX has wrong size. Resize using default error 0.0." << endl;  
   } 
     
-  if ( (int)_errorsShiftY.size() == _detector.GetNSensors() ) {
+  if ( (int)_errorsShiftY.size() != _detector.GetNSensors() ) {
     _errorsShiftY.resize(_detector.GetNSensors(), 0.0);
     streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsShiftY has wrong size. Resize using default error 0.0." << endl;  
   } 
   
-  if ( (int)_errorsShiftZ.size() == _detector.GetNSensors() ) {
+  if ( (int)_errorsShiftZ.size() != _detector.GetNSensors() ) {
     _errorsShiftZ.resize(_detector.GetNSensors(), 0.0);
     streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsShiftZ has wrong size. Resize using default error 0.0." << endl;  
   } 
   
-  if ( (int)_errorsAlpha.size() == _detector.GetNSensors() ) {
+  if ( (int)_errorsAlpha.size() != _detector.GetNSensors() ) {
     _errorsAlpha.resize(_detector.GetNSensors(), 0.0);
     streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsAlpha has wrong size. Resize using default error 0.0." << endl;  
   } 
   
-  if ( (int)_errorsBeta.size() == _detector.GetNSensors() ) {
+  if ( (int)_errorsBeta.size() != _detector.GetNSensors() ) {
     _errorsBeta.resize(_detector.GetNSensors(), 0.0);
     streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsBeta has wrong size. Resize using default error 0.0." << endl;  
   } 
   
-  if ( (int)_errorsGamma.size() == _detector.GetNSensors() ) {
+  if ( (int)_errorsGamma.size() != _detector.GetNSensors() ) {
     _errorsGamma.resize(_detector.GetNSensors(), 0.0);
     streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsGamma has wrong size. Resize using default error 0.0." << endl;  
   } 
