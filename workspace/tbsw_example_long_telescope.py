@@ -22,12 +22,9 @@ nevents = 100000
 #Parameters for simulation of misalignment
 #Position parameters in mm
 mean_list=[0.0,0.0,0.0,0.0,0.0,0.0] 
-sigma_list=[0.1,0.1,0.1,0.1,0.1,0.1]
+sigma_list=[0.5,0.5,0.5,0.1,0.1,0.1]
 
 # List of sensor ids and modes, which are excluded during misalignment
-#sensorexception_list=[11,5,0] 
-#modeexception_list=['positionZ']
-
 sensorexception_list=[] 
 modeexception_list=[]
 
