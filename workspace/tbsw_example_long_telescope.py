@@ -156,7 +156,7 @@ def create_calibration_path(Env):
                                                                      'ErrorsBeta'   : '0 0 0 0 0 0 0', 
                                                                      'ErrorsGamma'  : '0 0.01 0.01 0 0.01 0 0'})
   
-  correlator_quintet = Env.create_path('correlator_quadruplet')
+  correlator_quintet = Env.create_path('correlator_quintet')
   correlator_quintet.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
   correlator_quintet.add_processor(name="M26CogHitMaker")
   correlator_quintet.add_processor(name="DEPCogHitMaker")
