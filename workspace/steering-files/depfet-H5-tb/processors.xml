@@ -264,7 +264,7 @@
      <!--Second plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
      <parameter name="ForwardPass_SecondPlane" type="int" value="-1"/>
      <!--Seed tracks using hits from these planes-->
-     <parameter name="SingleHitSeeding" type="IntVec" value="5 6"/>
+     <parameter name="SingleHitSeeding" type="IntVec" value="0 1"/>
    </processor>
    
    <processor name="AlignTF_TC" type="FastTracker">
@@ -310,99 +310,7 @@
      <!--Second plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
      <parameter name="ForwardPass_SecondPlane" type="int" value="-1"/>
      <!--Seed tracks using hits from these planes-->
-     <parameter name="SingleHitSeeding" type="IntVec" value="5 6"/>
-   </processor>
-
-   <processor name="AlignTF_LC_FirstArm" type="FastTracker">
-     <!--FastTracker: Performs track finding and fitting for beam tests-->
-     <!--Input hit collection names-->
-     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit" value="hit_m26"/>
-     <!--Name of not used hit collection-->
-     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit" value="unusedhits"/>
-     <!--Collection name for fitted tracks-->
-     <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track" value="tracks"/>
-     <!--This is the name of the alignment constants file-->
-     <parameter name="AlignmentDBFileName" type="string" value="localDB/alignmentDB.root"/>
-     <!--Enter plane numbers of bad detectors-->
-     <parameter name="ExcludeDetector" type="IntVec" value="3 4 5 6"/>
-     <!--To use only GoodQuality write 0 here-->
-     <parameter name="HitQualitySelection" type="int" value="0"/>
-     <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
-     <parameter name="MaxResidualU" type="FloatVec" value="0.4"/>
-     <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
-     <parameter name="MaxResidualV" type="FloatVec" value="0.4"/>
-     <!--Maximum track chisq in track fit-->
-     <parameter name="MaxTrackChi2" type="float" value="10000000"/>
-     <!--Maximum number of consecutive missing hits in track-->
-     <parameter name="MaximumGap" type="int" value="0"/>
-     <!--Maximum slope of candiate tracks in Z=0 plane (rad). Set cut to zero to deactivate.-->
-     <parameter name="MaximumSlope" type="float" value="0.1"/>
-     <!--Minimum number of hits in track-->
-     <parameter name="MinimumHits" type="int" value="3"/>
-     <!--Maximum chi2 increment for any hit added to a track candidate-->
-     <parameter name="OutlierChi2Cut" type="float" value="100000000"/>
-     <!--Particle charge [e]-->
-     <parameter name="ParticleCharge" type="double" value="-1"/>
-     <!--Particle mass [GeV]-->
-     <parameter name="ParticleMass" type="double" value="0.000511"/>
-     <!--Particle momentum [GeV]-->
-     <parameter name="ParticleMomentum" type="double" value="4.0"/>
-     <!--First plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
-     <parameter name="BackwardPass_FirstPlane" type="int" value="-1"/>
-     <!--Second plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
-     <parameter name="BackwardPass_SecondPlane" type="int" value="-1"/>
-     <!--First plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
-     <parameter name="ForwardPass_FirstPlane" type="int" value="-1"/>
-     <!--Second plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
-     <parameter name="ForwardPass_SecondPlane" type="int" value="-1"/>
-     <!--Seed tracks using hits from these planes-->
-     <parameter name="SingleHitSeeding" type="IntVec" value="0"/>
-   </processor>
-
-   <processor name="AlignTF_TC_FirstArm" type="FastTracker">
-     <!--FastTracker: Performs track finding and fitting for beam tests-->
-     <!--Input hit collection names-->
-     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit" value="hit_m26"/>
-     <!--Name of not used hit collection-->
-     <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit" value="unusedhits"/>
-     <!--Collection name for fitted tracks-->
-     <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track" value="tracks"/>
-     <!--This is the name of the alignment constants file-->
-     <parameter name="AlignmentDBFileName" type="string" value="localDB/alignmentDB.root"/>
-     <!--Enter plane numbers of bad detectors-->
-     <parameter name="ExcludeDetector" type="IntVec" value="3 4 5 6"/>
-     <!--To use only GoodQuality write 0 here-->
-     <parameter name="HitQualitySelection" type="int" value="0"/>
-     <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
-     <parameter name="MaxResidualU" type="FloatVec" value="0.4"/>
-     <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
-     <parameter name="MaxResidualV" type="FloatVec" value="0.4"/>
-     <!--Maximum track chisq in track fit-->
-     <parameter name="MaxTrackChi2" type="float" value="100"/>
-     <!--Maximum number of consecutive missing hits in track-->
-     <parameter name="MaximumGap" type="int" value="0"/>
-     <!--Maximum slope of candiate tracks in Z=0 plane (rad). Set cut to zero to deactivate.-->
-     <parameter name="MaximumSlope" type="float" value="0.1"/>
-     <!--Minimum number of hits in track-->
-     <parameter name="MinimumHits" type="int" value="3"/>
-     <!--Maximum chi2 increment for any hit added to a track candidate-->
-     <parameter name="OutlierChi2Cut" type="float" value="10"/>
-     <!--Particle charge [e]-->
-     <parameter name="ParticleCharge" type="double" value="-1"/>
-     <!--Particle mass [GeV]-->
-     <parameter name="ParticleMass" type="double" value="0.000511"/>
-     <!--Particle momentum [GeV]-->
-     <parameter name="ParticleMomentum" type="double" value="4.0"/>
-     <!--First plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
-     <parameter name="BackwardPass_FirstPlane" type="int" value="-1"/>
-     <!--Second plane for seeding the backward Kalman filter pass. Put -1 to deactivate pass-->
-     <parameter name="BackwardPass_SecondPlane" type="int" value="-1"/>
-     <!--First plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
-     <parameter name="ForwardPass_FirstPlane" type="int" value="-1"/>
-     <!--Second plane for seeding the forward Kalman filter pass. Put -1 to deactivate pass-->
-     <parameter name="ForwardPass_SecondPlane" type="int" value="-1"/>
-     <!--Seed tracks using hits from these planes-->
-     <parameter name="SingleHitSeeding" type="IntVec" value="0"/>
+     <parameter name="SingleHitSeeding" type="IntVec" value="0 1"/>
    </processor>
    
    <processor name="PreAligner" type="KalmanAligner">
