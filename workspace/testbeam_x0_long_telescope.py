@@ -3,14 +3,19 @@ This is an example script to demonstrate how TBSW can be used to create an X0 im
 test beam experiment.
 
 The script below simulates a test beam experiment where charged tracks from a monoenergetic beam 
-cross a a misaligned pixel telescope containing six Mimosa 26 detector planes. Two data sets are 
-simulated. A first 'air' run is done with no additional scatterer between the telescope arms. The 
-'air' run is used to calibrate the telescope. In a second 'aluminium' run, a aluminium plate with 
-a well known thickness profile is inserted in between the telescope arms. This second run is used 
-to compute a X0 image from the reconstructed scattering angles. The known comparison between the 
-reconstructed X0 image and the a priori known image is used to calibrate the beam energy and the 
-angular resolution of the telescope. This second step completes the calibration of the telescope
-for X0 imaging. 
+cross a a misaligned pixel telescope containing six Mimosa 26 detector planes. This script is 
+specificially setup to handle test beam experiments with a very long telescope. In this case the 
+default script might not work, because hit correlations between the first M26 sensor and the sensors
+in the second telescope arm may be very weak. The solution implemented here is to employ a track based
+correlation algorithm and iteratively add hits from the second telescope arm to the tracks.
+
+Two data sets are simulated. A first 'air' run is done with no additional scatterer between the 
+telescope arms. The 'air' run is used to calibrate the telescope. In a second 'aluminium' run, a 
+aluminium plate with a well known thickness profile is inserted in between the telescope arms. 
+This second run is used to compute a X0 image from the reconstructed scattering angles. The known 
+comparison between the reconstructed X0 image and the a priori known image is used to calibrate
+the beam energy and the angular resolution of the telescope. This second step completes the 
+calibration of the telescope for X0 imaging. 
 
 Author: Ulf Stolzenberg <ulf.stolzenberg@phys.uni-goettingen.de>  
 """
@@ -25,13 +30,13 @@ import tbsw.x0imaging.X0Calibration
 # or how M26 sensors are digitized. XML parameters can be adjusted using any test editor
 
 # Steerfiles for the telescope calibration
-steerfiles_cali = 'steering-files/x0-tb18-triplett/'
+steerfiles_cali = 'steering-files/x0-tb-longtelescope/'
 
 # Steerfiles for the angle reconstruction (can be the same directory as telescope calibration steerfiles)
-steerfiles_reco = 'steering-files/x0-tb18-triplett/'
+steerfiles_reco = 'steering-files/x0-tb-longtelescope/'
 
 # Steerfiles for the x0calibration/x0imaging (can be the same directory as telescope calibration steerfiles)
-steerfiles_x0 = 'steering-files/x0-tb18-triplett/'
+steerfiles_x0 = 'steering-files/x0-tb-longtelescope/'
 
 # Nominal Beam energy
 beamenergy=2.0
