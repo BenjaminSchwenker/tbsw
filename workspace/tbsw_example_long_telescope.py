@@ -22,12 +22,9 @@ nevents = 100000
 #Parameters for simulation of misalignment
 #Position parameters in mm
 mean_list=[0.0,0.0,0.0,0.0,0.0,0.0] 
-sigma_list=[0.1,0.1,0.1,0.1,0.1,0.1]
+sigma_list=[0.5,0.5,0.5,0.1,0.1,0.1]
 
 # List of sensor ids and modes, which are excluded during misalignment
-#sensorexception_list=[11,5,0] 
-#modeexception_list=['positionZ']
-
 sensorexception_list=[] 
 modeexception_list=[]
 
@@ -156,7 +153,7 @@ def create_calibration_path(Env):
                                                                      'ErrorsBeta'   : '0 0 0 0 0 0 0', 
                                                                      'ErrorsGamma'  : '0 0.01 0.01 0 0.01 0 0'})
   
-  correlator_quintet = Env.create_path('correlator_quadruplet')
+  correlator_quintet = Env.create_path('correlator_quintet')
   correlator_quintet.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
   correlator_quintet.add_processor(name="M26CogHitMaker")
   correlator_quintet.add_processor(name="DEPCogHitMaker")
