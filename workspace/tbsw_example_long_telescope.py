@@ -101,7 +101,7 @@ def create_calibration_path(Env):
   correlator_triplet.add_processor(name="M26CogHitMaker")
   correlator_triplet.add_processor(name="DEPCogHitMaker")
   correlator_triplet.add_processor(name="AlignTF_TC", params={'ExcludeDetector' : '3 4 5 6', 'MinimumHits' : '3' })    
-  correlator_triplet.add_processor(name="TriplettCorrelator")
+  correlator_triplet.add_processor(name="TriplettCorrelator", params={'OutputRootFileName':'TripletCorrelator.root'})
 
   # Add fourth m26
   kalman_aligner_quadruplet_0 = Env.create_path('kalman_aligner_quadruplet_0')
@@ -131,7 +131,7 @@ def create_calibration_path(Env):
   correlator_quadruplet.add_processor(name="M26CogHitMaker")
   correlator_quadruplet.add_processor(name="DEPCogHitMaker")
   correlator_quadruplet.add_processor(name="AlignTF_TC", params={'ExcludeDetector' : '3 5 6', 'MinimumHits' : '4' })    
-  correlator_quadruplet.add_processor(name="TriplettCorrelator")
+  correlator_quadruplet.add_processor(name="TriplettCorrelator", params={'OutputRootFileName':'QuadrupletCorrelator.root'})
 
   # Add fifth m26
   kalman_aligner_quintet_0 = Env.create_path('kalman_aligner_quintet_0')
@@ -161,10 +161,8 @@ def create_calibration_path(Env):
   correlator_quintet.add_processor(name="M26CogHitMaker")
   correlator_quintet.add_processor(name="DEPCogHitMaker")
   correlator_quintet.add_processor(name="AlignTF_TC", params={'ExcludeDetector' : '3 6', 'MinimumHits' : '5' })    
-  correlator_quintet.add_processor(name="TriplettCorrelator")
-
-
-   
+  correlator_quintet.add_processor(name="TriplettCorrelator", params={'OutputRootFileName':'QuintetCorrelator.root'})
+  
   kalman_aligner_1 = Env.create_path('kalman_aligner_1')
   kalman_aligner_1.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
   kalman_aligner_1.add_processor(name="M26CogHitMaker")
