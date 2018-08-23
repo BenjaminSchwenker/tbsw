@@ -6,7 +6,7 @@
 // Local includes 
 #include "KalmanAligner.h"
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "TBTrack.h"
 #include "TrackInputProvider.h"
 #include "Utilities.h"
@@ -62,21 +62,66 @@ KalmanAligner::KalmanAligner() : Processor("KalmanAligner")
   registerProcessorParameter ("AlignmentDBFileName",
                              "This is the name of the file with the alignment constants (add .root)",
                              _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) ); 
+
+  registerProcessorParameter ("LogLevel", "LogLever during alignment",
+                              _logLevel,  static_cast < int > (2));
   
-  registerProcessorParameter ("AlignConfigFileName",
-                             "Name of the alignment config file",
-                             _alignConfigFileName, std::string("cfg/align.cfg"));
+  registerProcessorParameter ("MaxTracks", "Maximum number of tracks passed to alignemnt",
+                              _maxTracks,  static_cast < int > (70000)); 
+
+  registerProcessorParameter ("UseBeamConstraint", "Use beam model to constrain track fitting",
+                              _useBC,  static_cast < bool > (false));
   
+  registerProcessorParameter ("pValueCut", "P-Value cut for tracks used during alignment",
+                              _pValueCut,  static_cast < double > (0.0)); 
+
+  registerProcessorParameter ("DeviationCut", "Reject alignment corrections exceeding DeviationCut*Sigma",
+                              _deviationCut,  static_cast < double > (0.0)); 
+
+  registerProcessorParameter ("AnnealingTracks",
+                              "Number of tracks before the annealign is turned OFF",
+                              _annealingTracks,  static_cast < int > (4000));
+
+  registerProcessorParameter ("AnnealingFactor", "Scale factor for annealing schedule",
+                              _annealingFactor,  static_cast < double > (10000.));
+  
+  std::vector<float> initErrorsShiftX;
+  initErrorsShiftX.push_back(0.0);
+  registerProcessorParameter("ErrorsShiftX", "Initial errors on alignment x shift [mm] for sensors ordered along beam line.",
+                              _errorsShiftX, initErrorsShiftX );
+
+  std::vector<float> initErrorsShiftY;
+  initErrorsShiftY.push_back(0.0);
+  registerProcessorParameter("ErrorsShiftY", "Initial errors on alignment y shift [mm] for sensors ordered along beam line.",
+                              _errorsShiftY, initErrorsShiftY );
+  
+  std::vector<float> initErrorsShiftZ;
+  initErrorsShiftZ.push_back(0.0);
+  registerProcessorParameter("ErrorsShiftZ", "Initial errors on alignment z shift [mm] for sensors ordered along beam line.",
+                              _errorsShiftZ, initErrorsShiftZ );
+
+  std::vector<float> initErrorsAlpha;
+  initErrorsAlpha.push_back(0.0);
+  registerProcessorParameter("ErrorsAlpha", "Initial errors on alignment alpha [rad] for sensors ordered along beam line.",
+                              _errorsAlpha, initErrorsAlpha );
+
+  std::vector<float> initErrorsBeta;
+  initErrorsBeta.push_back(0.0);
+  registerProcessorParameter("ErrorsBeta", "Initial errors on alignment beta [rad] for sensors ordered along beam line.",
+                              _errorsBeta, initErrorsBeta );
+
+  std::vector<float> initErrorsGamma;
+  initErrorsGamma.push_back(0.0);
+  registerProcessorParameter("ErrorsGamma", "Initial errors on alignment gamma [rad] for sensors ordered along beam line.",
+                              _errorsGamma, initErrorsGamma );
+
   registerProcessorParameter ("UpdateAlignment",
                               "Update lcio alignmentDB using alignment results (true/false)?",
                               _updateAlignment, static_cast <bool> (false) ); 
 
-   registerProcessorParameter ("NewAlignment",
+  registerProcessorParameter ("NewAlignment",
                               "Start alignment from scratch (true/false)?",
                               _newAlignment, static_cast <bool> (false) ); 
-  
-  
- 
                                 
 }
 
@@ -102,7 +147,37 @@ void KalmanAligner::init() {
   if(!_newAlignment) _detector.ReadAlignmentDB( _alignmentDBFileName );
   // This is needed, because if the AlignmentDB is not read, the detector construct doesn't know the alignmentDB name
   else  _detector.SetAlignmentDBName( _alignmentDBFileName );     
+  
+  if ( (int)_errorsShiftX.size() != _detector.GetNSensors() ) {
+    _errorsShiftX.resize(_detector.GetNSensors(), 0.0);
+    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsShiftX has wrong size. Resize using default error 0.0." << endl;  
+  } 
     
+  if ( (int)_errorsShiftY.size() != _detector.GetNSensors() ) {
+    _errorsShiftY.resize(_detector.GetNSensors(), 0.0);
+    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsShiftY has wrong size. Resize using default error 0.0." << endl;  
+  } 
+  
+  if ( (int)_errorsShiftZ.size() != _detector.GetNSensors() ) {
+    _errorsShiftZ.resize(_detector.GetNSensors(), 0.0);
+    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsShiftZ has wrong size. Resize using default error 0.0." << endl;  
+  } 
+  
+  if ( (int)_errorsAlpha.size() != _detector.GetNSensors() ) {
+    _errorsAlpha.resize(_detector.GetNSensors(), 0.0);
+    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsAlpha has wrong size. Resize using default error 0.0." << endl;  
+  } 
+  
+  if ( (int)_errorsBeta.size() != _detector.GetNSensors() ) {
+    _errorsBeta.resize(_detector.GetNSensors(), 0.0);
+    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsBeta has wrong size. Resize using default error 0.0." << endl;  
+  } 
+  
+  if ( (int)_errorsGamma.size() != _detector.GetNSensors() ) {
+    _errorsGamma.resize(_detector.GetNSensors(), 0.0);
+    streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsGamma has wrong size. Resize using default error 0.0." << endl;  
+  } 
+  
   //////////////////////////////////////////////////////////////////////
   // Alignment Data I/O 
   
@@ -209,6 +284,33 @@ void KalmanAligner::check( LCEvent * evt )
 //
 void KalmanAligner::end()
 {
+  
+  ///////////////////////////////////////////////////////////
+  // Construct the initial alignment state 
+  
+  int nSensors = _detector.GetNSensors();
+  int nParameters = 6;  
+  AlignableDet AlignState(nSensors,nParameters);
+  
+  for (int iSensor=0; iSensor < nSensors; iSensor++){       
+    AlignState.alignmentParameters[iSensor*nParameters + 0] = 0;
+    AlignState.alignmentCovariance[iSensor*nParameters + 0][iSensor*nParameters + 0] = _errorsShiftX[iSensor]*_errorsShiftX[iSensor];
+    
+    AlignState.alignmentParameters[iSensor*nParameters + 1] = 0;
+    AlignState.alignmentCovariance[iSensor*nParameters + 1][iSensor*nParameters + 1] = _errorsShiftY[iSensor]*_errorsShiftY[iSensor];
+    
+    AlignState.alignmentParameters[iSensor*nParameters + 2] = 0;
+    AlignState.alignmentCovariance[iSensor*nParameters + 2][iSensor*nParameters + 2] = _errorsShiftZ[iSensor]*_errorsShiftZ[iSensor];
+    
+    AlignState.alignmentParameters[iSensor*nParameters + 3] = 0;
+    AlignState.alignmentCovariance[iSensor*nParameters + 3][iSensor*nParameters + 3] = _errorsAlpha[iSensor]*_errorsAlpha[iSensor];
+    
+    AlignState.alignmentParameters[iSensor*nParameters + 4] = 0;
+    AlignState.alignmentCovariance[iSensor*nParameters + 4][iSensor*nParameters + 4] = _errorsBeta[iSensor]*_errorsBeta[iSensor];
+    
+    AlignState.alignmentParameters[iSensor*nParameters + 5] = 0;
+    AlignState.alignmentCovariance[iSensor*nParameters + 5][iSensor*nParameters + 5] = _errorsGamma[iSensor]*_errorsGamma[iSensor];
+  }
    
   ////////////////////////////////////////////////////////////
   // Try to fit alignment corrections from track residuals  
@@ -218,9 +320,9 @@ void KalmanAligner::end()
   streamlog_out ( MESSAGE3 ) << " Total of " << _nKAATracks << " tracks found" << endl;
   streamlog_out ( MESSAGE3 ) << endl;
   streamlog_out ( MESSAGE3 ) << "Starting alignment ..." << endl;
-  
+
   KalmanAlignmentAlgorithm2 Aligner;
-  AlignableDet reco_const = Aligner.Fit(tmp_detector, alignment_data, _alignConfigFileName );
+  AlignableDet reco_const = Aligner.Fit(tmp_detector, alignment_data, AlignState, _maxTracks, _annealingTracks, _annealingFactor,  _pValueCut, _deviationCut, _useBC, _logLevel );
   
   bool error_fim = Aligner.AlignDetector(tmp_detector, reco_const);
   if ( error_fim ) {
