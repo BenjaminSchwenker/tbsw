@@ -55,9 +55,7 @@ gearfile = 'gear.xml'
 alignmentdb_filename='alignmentDB.root'
 
 # Determine cluster resolution and store in cluster DB?
-# 0: No
-# 1: Yes
-Use_clusterDB=1
+Use_clusterDB=True
 
 # Number of iterations during target alignment
 # Set to 0 or negative integer to disable target alignment
@@ -616,7 +614,7 @@ def create_calibration_path(Env, rawfile, gearfile, useclusterdb):
              telescope_dqm2, 
            ]
 
-  if useclusterdb == 1:
+  if useclusterdb:
     calpath.extend(calpath2)
   
   return calpath
