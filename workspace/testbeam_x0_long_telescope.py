@@ -66,7 +66,7 @@ targetalignment_iterations=0
 # File names and lists of filenames for the different steps 
 
 # global path to raw files
-rawfile_path='/work1/rawdata/luise/'
+rawfile_path='/home/luise/TBSW/tbsw/workspace/Data/'
 
 # raw file used during telescope calibration (best use data with scattering target)
 # The calibration has to be done for every telescope setup, beam energy and m26 threshold settings
@@ -801,7 +801,7 @@ if __name__ == '__main__':
     print "The parameters for the target alignment are: " 
     print params_TA
 
-    #targetalignment(params_TA)
+    targetalignment(params_TA)
 
 
   # Angle reconstruction
@@ -811,17 +811,17 @@ if __name__ == '__main__':
 
   count = multiprocessing.cpu_count()
   pool = multiprocessing.Pool(processes=count)
-  #pool.map(reconstruct, params_reco)
+  pool.map(reconstruct, params_reco)
 
 
   # start x0 calibration
   deletetag='1'
   params_x0cali = ( x0tag, RawfileList_x0cali, steerfiles_x0, caltag, deletetag)
-  #xx0calibration(params_x0cali)
+  xx0calibration(params_x0cali)
 
 
   # Generate a calibrated X/X0 image
   nametag='image1'
   params_x0image = ( x0tag, RawfileList_x0image, steerfiles_x0, caltag, deletetag, nametag)
-  #xx0image(params_x0image)
+  xx0image(params_x0image)
 
