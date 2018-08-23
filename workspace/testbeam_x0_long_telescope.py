@@ -54,6 +54,11 @@ gearfile = 'gear.xml'
 # Alignment DB file name
 alignmentdb_filename='alignmentDB.root'
 
+# Determine cluster resolution and store in cluster DB?
+# 0: No
+# 1: Yes
+Use_clusterDB=1
+
 # Number of iterations during target alignment
 # Set to 0 or negative integer to disable target alignment
 targetalignment_iterations=0
@@ -225,7 +230,7 @@ nevents_TA = 1000000
 nevents_reco = -1
 
 # Processor settings and sequence during telescope calibration
-def create_calibration_path(Env, rawfile, gearfile):
+def create_calibration_path(Env, rawfile, gearfile, useclusterdb):
   """
   Returns a list of tbsw path objects to calibrate the tracking telescope
   """
@@ -387,6 +392,163 @@ def create_calibration_path(Env, rawfile, gearfile):
   telescope_dqm.add_processor(name="M26CogHitMaker")
   telescope_dqm.add_processor(name="AlignTF_TC")
   telescope_dqm.add_processor(name="TelescopeDQM")
+
+  cluster_calibration_1 = Env.create_path('cluster_calibration_1')
+  cluster_calibration_1.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_cali, 'LCIOInputFiles': "tmp.slcio" }) 
+  cluster_calibration_1.add_processor(name="M26CogHitMaker") 
+  cluster_calibration_1.add_processor(name="AlignTF_TC")
+  cluster_calibration_1.add_processor(name="M26ClusterCalibrator")
+  
+  kalman_aligner_3 = Env.create_path('kalman_aligner_3')
+  kalman_aligner_3.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
+  kalman_aligner_3.add_processor(name="M26GoeHitMaker")
+  kalman_aligner_3.add_processor(name="AlignTF_TC")
+  kalman_aligner_3.add_processor(name="TelAligner")
+  
+  cluster_calibration_2 = Env.create_path('cluster_calibration_2')
+  cluster_calibration_2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_cali, 'LCIOInputFiles': "tmp.slcio" })  
+  cluster_calibration_2.add_processor(name="M26GoeHitMaker") 
+  cluster_calibration_2.add_processor(name="AlignTF_TC")
+  cluster_calibration_2.add_processor(name="M26ClusterCalibrator")
+
+  correlator2 = Env.create_path('correlator2')
+  correlator2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })
+  correlator2.add_processor(name="M26GoeHitMaker")  
+  correlator2.add_processor(name="RawDQM", params={'RootFileName': 'RawDQM2.root'})
+  correlator2.add_processor(name="TelCorrelator", params={'OutputRootFileName': 'XCorrelator2.root'})
+
+  kalman_aligner_triplet_0_goehits = Env.create_path('kalman_aligner_triplet_0_goehits')
+  kalman_aligner_triplet_0_goehits.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 400000, 'LCIOInputFiles': "tmp.slcio" })  
+  kalman_aligner_triplet_0_goehits.add_processor(name="M26GoeHitMaker")
+  kalman_aligner_triplet_0_goehits.add_processor(name="AlignTF_LC", params={'ExcludeDetector' : '3 4 5 6', 'MinimumHits' : '3' })     
+  kalman_aligner_triplet_0_goehits.add_processor(name="PreAligner", params={'ErrorsShiftX' : '0 10 0 0 0 0 0', 
+                                                                     'ErrorsShiftY' : '0 10 0 0 0 0 0', 
+                                                                     'ErrorsShiftZ' : '0 0 0 0 0 0 0', 
+                                                                     'ErrorsAlpha'  : '0 0 0 0 0 0 0',
+                                                                     'ErrorsBeta'   : '0 0 0 0 0 0 0', 
+                                                                     'ErrorsGamma'  : '0 0.01 0 0 0 0 0'})
+  
+  kalman_aligner_triplet_1_goehits = Env.create_path('kalman_aligner_triplet_1_goehits')
+  kalman_aligner_triplet_1_goehits.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 400000, 'LCIOInputFiles': "tmp.slcio" })  
+  kalman_aligner_triplet_1_goehits.add_processor(name="M26GoeHitMaker")
+  kalman_aligner_triplet_1_goehits.add_processor(name="AlignTF_TC", params={'ExcludeDetector' : '3 4 5 6', 'MinimumHits' : '3' })    
+  kalman_aligner_triplet_1_goehits.add_processor(name="TelAligner", params={'ErrorsShiftX' : '0 10 0 0 0 0 0', 
+                                                                     'ErrorsShiftY' : '0 10 0 0 0 0 0', 
+                                                                     'ErrorsShiftZ' : '0 0 0 0 0 0 0', 
+                                                                     'ErrorsAlpha'  : '0 0 0 0 0 0 0',
+                                                                     'ErrorsBeta'   : '0 0 0 0 0 0 0', 
+                                                                     'ErrorsGamma'  : '0 0.01 0 0 0 0 0'})
+  
+  triplet_dqm_goehits = Env.create_path('triplet_dqm_goehits')
+  triplet_dqm_goehits.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 400000, 'LCIOInputFiles': "tmp.slcio" })  
+  triplet_dqm_goehits.add_processor(name="M26GoeHitMaker")
+  triplet_dqm_goehits.add_processor(name="AlignTF_TC",params={'ExcludeDetector': "3 4 5 6", 'MinimumHits': 3})
+  triplet_dqm_goehits.add_processor(name="TelescopeDQM", params={'RootFileName' : 'TelescopeDQM_triplet.root'})
+
+  tripletcorrelator_goehits = Env.create_path('tripletcorrelator_goehits')
+  tripletcorrelator_goehits.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 400000, 'LCIOInputFiles': "tmp.slcio" }) 
+  tripletcorrelator_goehits.add_processor(name="M26GoeHitMaker")
+  tripletcorrelator_goehits.add_processor(name="AlignTF_TC",params={'ExcludeDetector': "3 4 5 6", 'MinimumHits': 3})
+  tripletcorrelator_goehits.add_processor(name="TriplettCorrelator", params={'OutputRootFileName':'TripletCorrelator.root'})
+
+  kalman_aligner_quadruplet_0_goehits = Env.create_path('kalman_aligner_quadruplet_0_goehits')
+  kalman_aligner_quadruplet_0_goehits.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 400000, 'LCIOInputFiles': "tmp.slcio" })  
+  kalman_aligner_quadruplet_0_goehits.add_processor(name="M26GoeHitMaker")
+  kalman_aligner_quadruplet_0_goehits.add_processor(name="AlignTF_LC", params={'ExcludeDetector' : '3 5 6', 'MinimumHits' : '4' })     
+  kalman_aligner_quadruplet_0_goehits.add_processor(name="PreAligner", params={'ErrorsShiftX' : '0 10 10 0 0 0 0', 
+                                                                       'ErrorsShiftY' : '0 10 10 0 0 0 0', 
+                                                                       'ErrorsShiftZ' : '0 0 0 0 0 0 0', 
+                                                                       'ErrorsAlpha'  : '0 0 0 0 0 0 0',
+                                                                       'ErrorsBeta'   : '0 0 0 0 0 0 0', 
+                                                                       'ErrorsGamma'  : '0 0.01 0.01 0 0 0 0'})
+
+  telescope_dqm_LC_quadruplet_goehits = Env.create_path('telescope_dqm_LC_quadruplet_goehits')
+  telescope_dqm_LC_quadruplet_goehits.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 400000, 'LCIOInputFiles': "tmp.slcio" })  
+  telescope_dqm_LC_quadruplet_goehits.add_processor(name="M26GoeHitMaker")
+  telescope_dqm_LC_quadruplet_goehits.add_processor(name="AlignTF_LC",params={'ExcludeDetector': "3 5 6", 'MinimumHits': 4})
+  telescope_dqm_LC_quadruplet_goehits.add_processor(name="TelescopeDQM", params={'RootFileName' : 'TelescopeDQM_LC_quadruplet.root'})
+  
+  kalman_aligner_quadruplet_1_goehits = Env.create_path('kalman_aligner_quadruplet_1_goehits')
+  kalman_aligner_quadruplet_1_goehits.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 400000, 'LCIOInputFiles': "tmp.slcio" })  
+  kalman_aligner_quadruplet_1_goehits.add_processor(name="M26GoeHitMaker")
+  kalman_aligner_quadruplet_1_goehits.add_processor(name="AlignTF_TC", params={'ExcludeDetector' : '3 5 6', 'MinimumHits' : '4' })    
+  kalman_aligner_quadruplet_1_goehits.add_processor(name="TelAligner", params={'ErrorsShiftX' : '0 10 10 0 0 0 0', 
+                                                                       'ErrorsShiftY' : '0 10 10 0 0 0 0', 
+                                                                       'ErrorsShiftZ' : '0 0 0 0 0 0 0', 
+                                                                       'ErrorsAlpha'  : '0 0 0 0 0 0 0',
+                                                                       'ErrorsBeta'   : '0 0 0 0 0 0 0', 
+                                                                       'ErrorsGamma'  : '0 0.01 0.01 0 0 0 0'})
+
+  telescope_dqm_TC_quadruplet_goehits = Env.create_path('telescope_dqm_TC_quadruplet_goehits')
+  telescope_dqm_TC_quadruplet_goehits.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 400000, 'LCIOInputFiles': "tmp.slcio" })  
+  telescope_dqm_TC_quadruplet_goehits.add_processor(name="M26GoeHitMaker")
+  telescope_dqm_TC_quadruplet_goehits.add_processor(name="AlignTF_TC",params={'ExcludeDetector': "3 5 6", 'MinimumHits': 4})
+  telescope_dqm_TC_quadruplet_goehits.add_processor(name="TelescopeDQM", params={'RootFileName' : 'TelescopeDQM_TC_quadruplet.root'})
+
+  quadrupletcorrelator_goehits = Env.create_path('quadrupletcorrelator_goehits')
+  quadrupletcorrelator_goehits.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 400000, 'LCIOInputFiles': "tmp.slcio" }) 
+  quadrupletcorrelator_goehits.add_processor(name="M26GoeHitMaker")
+  quadrupletcorrelator_goehits.add_processor(name="AlignTF_TC",params={'ExcludeDetector': "3 5 6", 'MinimumHits': 4})
+  quadrupletcorrelator_goehits.add_processor(name="TelescopeDQM", params={'RootFileName' : 'TelescopeDQM_TC_sensor4_precorrelator.root'})
+  quadrupletcorrelator_goehits.add_processor(name="TriplettCorrelator", params={'OutputRootFileName' : 'QuadrupletCorrelator.root'})
+
+  kalman_aligner_quintet_0_goehits = Env.create_path('kalman_aligner_quintet_0_goehits')
+  kalman_aligner_quintet_0_goehits.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 400000, 'LCIOInputFiles': "tmp.slcio" })  
+  kalman_aligner_quintet_0_goehits.add_processor(name="M26GoeHitMaker")
+  kalman_aligner_quintet_0_goehits.add_processor(name="AlignTF_LC", params={'ExcludeDetector' : '3 6', 'MinimumHits' : '5' })     
+  kalman_aligner_quintet_0_goehits.add_processor(name="PreAligner", params={'ErrorsShiftX' : '0 10 10 0 10 0 0', 
+                                                                    'ErrorsShiftY' : '0 10 10 0 10 0 0', 
+                                                                    'ErrorsShiftZ' : '0 0 0 0 0 0 0', 
+                                                                    'ErrorsAlpha'  : '0 0 0 0 0 0 0',
+                                                                    'ErrorsBeta'   : '0 0 0 0 0 0 0', 
+                                                                    'ErrorsGamma'  : '0 0.01 0.01 0 0.01 0 0'})
+
+  telescope_dqm_LC_quintet_goehits = Env.create_path('telescope_dqm_LC_quintet_goehits')
+  telescope_dqm_LC_quintet_goehits.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 400000, 'LCIOInputFiles': "tmp.slcio" })  
+  telescope_dqm_LC_quintet_goehits.add_processor(name="M26GoeHitMaker")
+  telescope_dqm_LC_quintet_goehits.add_processor(name="AlignTF_LC",params={'ExcludeDetector': "3 6", 'MinimumHits': 5})
+  telescope_dqm_LC_quintet_goehits.add_processor(name="TelescopeDQM", params={'RootFileName' : 'TelescopeDQM_LC_quintet.root'})
+  
+  kalman_aligner_quintet_1_goehits = Env.create_path('kalman_aligner_quintet_1_goehits')
+  kalman_aligner_quintet_1_goehits.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 400000, 'LCIOInputFiles': "tmp.slcio" })  
+  kalman_aligner_quintet_1_goehits.add_processor(name="M26GoeHitMaker")
+  kalman_aligner_quintet_1_goehits.add_processor(name="AlignTF_TC", params={'ExcludeDetector' : '3 6', 'MinimumHits' : '5' })    
+  kalman_aligner_quintet_1_goehits.add_processor(name="TelAligner", params={ 'ErrorsShiftX' : '0 10 10 0 10 0 0', 
+                                                                     'ErrorsShiftY' : '0 10 10 0 10 0 0', 
+                                                                     'ErrorsShiftZ' : '0 0 0 0 0 0 0', 
+                                                                     'ErrorsAlpha'  : '0 0 0 0 0 0 0',
+                                                                     'ErrorsBeta'   : '0 0 0 0 0 0 0', 
+                                                                     'ErrorsGamma'  : '0 0.01 0.01 0 0.01 0 0'})
+
+  telescope_dqm_TC_quintet_goehits = Env.create_path('telescope_dqm_TC_quintet_goehits')
+  telescope_dqm_TC_quintet_goehits.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 400000, 'LCIOInputFiles': "tmp.slcio" })  
+  telescope_dqm_TC_quintet_goehits.add_processor(name="M26GoeHitMaker")
+  telescope_dqm_TC_quintet_goehits.add_processor(name="AlignTF_TC",params={'ExcludeDetector': "3 6", 'MinimumHits': 5})
+  telescope_dqm_TC_quintet_goehits.add_processor(name="TelescopeDQM", params={'RootFileName' : 'TelescopeDQM_TC_quintet.root'})
+
+  quintetcorrelator_goehits = Env.create_path('quintetcorrelator_goehits')
+  quintetcorrelator_goehits.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 400000, 'LCIOInputFiles': "tmp.slcio" }) 
+  quintetcorrelator_goehits.add_processor(name="M26GoeHitMaker")
+  quintetcorrelator_goehits.add_processor(name="AlignTF_TC",params={'ExcludeDetector': "3 6", 'MinimumHits': 5})
+  quintetcorrelator_goehits.add_processor(name="TriplettCorrelator", params={'OutputRootFileName' : 'QuintetCorrelator.root'})
+  
+  kalman_aligner_4 = Env.create_path('kalman_aligner_4')
+  kalman_aligner_4.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" }) 
+  kalman_aligner_4.add_processor(name="M26GoeHitMaker")   
+  kalman_aligner_4.add_processor(name="AlignTF_LC")
+  kalman_aligner_4.add_processor(name="PreAligner")
+  
+  kalman_aligner_5 = Env.create_path('kalman_aligner_5')
+  kalman_aligner_5.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" }) 
+  kalman_aligner_5.add_processor(name="M26GoeHitMaker")  
+  kalman_aligner_5.add_processor(name="AlignTF_TC")
+  kalman_aligner_5.add_processor(name="TelAligner") 
+  
+  telescope_dqm2 = Env.create_path('telescope_dqm2')
+  telescope_dqm2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_cali, 'LCIOInputFiles': "tmp.slcio" }) 
+  telescope_dqm2.add_processor(name="M26GoeHitMaker")  
+  telescope_dqm2.add_processor(name="AlignTF_TC")
+  telescope_dqm2.add_processor(name="TelescopeDQM", params={'RootFileName' : 'TelescopeDQM2.root'})
   
   
   # create sequence of calibration paths 
@@ -419,6 +581,43 @@ def create_calibration_path(Env, rawfile, gearfile):
              kalman_aligner_2, 
              telescope_dqm,
            ]
+
+  calpath2=[ cluster_calibration_1,
+             kalman_aligner_3, 
+             kalman_aligner_3, 
+             kalman_aligner_3,  
+             cluster_calibration_2, 
+             cluster_calibration_2, 
+             cluster_calibration_2, 
+             cluster_calibration_2, 
+             cluster_calibration_2, 
+             cluster_calibration_2, 
+             cluster_calibration_2, 
+             cluster_calibration_2, 
+             correlator2, 
+			 kalman_aligner_triplet_0_goehits,
+             kalman_aligner_triplet_1_goehits,
+             triplet_dqm_goehits, 
+			 tripletcorrelator_goehits,
+             kalman_aligner_quadruplet_0_goehits,
+			 telescope_dqm_LC_quadruplet_goehits,
+             kalman_aligner_quadruplet_1_goehits,
+			 telescope_dqm_TC_quadruplet_goehits,
+			 quadrupletcorrelator_goehits,
+			 kalman_aligner_quintet_0_goehits,
+			 telescope_dqm_LC_quintet_goehits,
+			 kalman_aligner_quintet_1_goehits,
+			 telescope_dqm_TC_quintet_goehits,
+			 quintetcorrelator_goehits,
+             kalman_aligner_4, 
+             kalman_aligner_5, 
+             kalman_aligner_5, 
+             kalman_aligner_5, 
+             telescope_dqm2, 
+           ]
+
+  if useclusterdb == 1:
+    calpath.extend(calpath2)
   
   return calpath
 
@@ -460,7 +659,7 @@ def calibrate(params):
   CalObj.set_beam_momentum(beamenergy)
   
   # Create list of calibration steps 
-  calpath = create_calibration_path(CalObj, rawfile, gearfile)
+  calpath = create_calibration_path(CalObj, rawfile, gearfile, Use_clusterDB)
   
   # Run the calibration steps 
   CalObj.calibrate(path=calpath,ifile=rawfile,caltag=caltag)
