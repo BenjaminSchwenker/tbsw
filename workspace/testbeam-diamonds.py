@@ -25,6 +25,9 @@ runlist = [
 # Number of events to be processed (put -1 to process all)
 nevents = -1
 
+# Use cluster_db flag
+use_clusterDB = False
+
 
 def create_calibration_path(Env, rawfile, gearfile):
   """
@@ -61,24 +64,49 @@ def create_calibration_path(Env, rawfile, gearfile):
   correlator.add_processor(name="LCIOOutput")
   
   kalman_aligner_1 = Env.create_path('kalman_aligner_1')
-  kalman_aligner_1.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 300000, 'LCIOInputFiles': "tmp.slcio" })  
+  kalman_aligner_1.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
+  kalman_aligner_1.add_processor(name="M26CogHitMaker")
+  kalman_aligner_1.add_processor(name="DEPCogHitMaker")
   kalman_aligner_1.add_processor(name="AlignTF_LC")
-  kalman_aligner_1.add_processor(name="PreAligner")
+  kalman_aligner_1.add_processor(name="PreAligner", params={'ErrorsShiftX' : '0 10 10 10 10 10 10 0', 
+                                                            'ErrorsShiftY' : '0 10 10 10 10 10 10 0', 
+                                                            'ErrorsShiftZ' : '0 0 0 0 0 0 0 0', 
+                                                            'ErrorsAlpha'  : '0 0 0 0 0 0 0 0',
+                                                            'ErrorsBeta'   : '0 0 0 0 0 0 0 0', 
+                                                            'ErrorsGamma'  : '0 0.01 0.01 0.01 0.01 0.01 0.01 0'})
   
   kalman_aligner_2 = Env.create_path('kalman_aligner_2')
-  kalman_aligner_2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 300000, 'LCIOInputFiles': "tmp.slcio" })  
+  kalman_aligner_2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
+  kalman_aligner_2.add_processor(name="M26CogHitMaker")
+  kalman_aligner_2.add_processor(name="DEPCogHitMaker")
   kalman_aligner_2.add_processor(name="AlignTF_TC")
-  kalman_aligner_2.add_processor(name="TelAligner")
- 
+  kalman_aligner_2.add_processor(name="TelAligner", params={'ErrorsShiftX' : '0 10 10 10 10 10 10 0', 
+                                                            'ErrorsShiftY' : '0 10 10 10 10 10 10 0', 
+                                                            'ErrorsShiftZ' : '0 10 10 10 10 10 10 0', 
+                                                            'ErrorsAlpha'  : '0 0 0 0 0 0 0 0',
+                                                            'ErrorsBeta'   : '0 0 0 0 0 0 0 0', 
+                                                            'ErrorsGamma'  : '0 0.01 0.01 0.01 0.01 0.01 0.01 0'})
+
+
   kalman_aligner_dia_1 = Env.create_path('kalman_aligner_dia_1')
   kalman_aligner_dia_1.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 300000, 'LCIOInputFiles': "tmp.slcio" })  
   kalman_aligner_dia_1.add_processor(name="AlignTF_Dia_LC")
-  kalman_aligner_dia_1.add_processor(name="PreAligner_Dia")
+  kalman_aligner_dia_1.add_processor(name="PreAligner", params={'ErrorsShiftX' : '0 0 0 10 0 0 0 0', 
+                                                                    'ErrorsShiftY' : '0 0 0 10 0 0 0 0', 
+                                                                    'ErrorsShiftZ' : '0 0 0 0 0 0 0 0', 
+                                                                    'ErrorsAlpha'  : '0 0 0 0 0 0 0 0',
+                                                                    'ErrorsBeta'   : '0 0 0 0 0 0 0 0', 
+                                                                    'ErrorsGamma'  : '0 0 0 0.01 0 0 0 0'})
   
   kalman_aligner_dia_2 = Env.create_path('kalman_aligner_dia_2')
   kalman_aligner_dia_2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 300000, 'LCIOInputFiles': "tmp.slcio" })  
   kalman_aligner_dia_2.add_processor(name="AlignTF_Dia_TC")
-  kalman_aligner_dia_2.add_processor(name="TelAligner_Dia")
+  kalman_aligner_dia_2.add_processor(name="TelAligner", params={'ErrorsShiftX' : '0 0 0 10 0 0 0 0', 
+                                                                'ErrorsShiftY' : '0 0 0 10 0 0 0 0', 
+                                                                'ErrorsShiftZ' : '0 0 0 10 0 0 0 0', 
+                                                                'ErrorsAlpha'  : '0 0 0 0 0 0 0 0',
+                                                                'ErrorsBeta'   : '0 0 0 0 0 0 0 0', 
+                                                                'ErrorsGamma'  : '0 0 0 0.01 0 0 0 0'})
 
   telescope_dqm = Env.create_path('telescope_dqm')
   telescope_dqm.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 300000, 'LCIOInputFiles': "tmp.slcio" })  
@@ -121,21 +149,23 @@ def create_calibration_path(Env, rawfile, gearfile):
              kalman_aligner_dia_2,
              kalman_aligner_dia_2,
              kalman_aligner_dia_2,    
-             telescope_dqm, 
-             #cluster_calibration_1, 
-             #kalman_aligner_3, 
-             #kalman_aligner_3, 
-             #kalman_aligner_3, 
-             #cluster_calibration_2, 
-             #cluster_calibration_2, 
-             #cluster_calibration_2, 
-             #cluster_calibration_2, 
-             #cluster_calibration_2, 
-             #cluster_calibration_2, 
-             #kalman_aligner_3, 
-             #kalman_aligner_3, 
-             #kalman_aligner_3, 
-           ]
+             telescope_dqm,]
+    
+  if use_clusterDB: 
+    calpath_db = [ cluster_calibration_1, 
+                   kalman_aligner_3, 
+                   kalman_aligner_3, 
+                   kalman_aligner_3, 
+                   cluster_calibration_2, 
+                   cluster_calibration_2, 
+                   cluster_calibration_2, 
+                   cluster_calibration_2, 
+                   cluster_calibration_2, 
+                   cluster_calibration_2, 
+                   kalman_aligner_3, 
+                   kalman_aligner_3, 
+                   kalman_aligner_3, ] 
+    calpath.extend(calpath_db)
   
   return calpath
 
