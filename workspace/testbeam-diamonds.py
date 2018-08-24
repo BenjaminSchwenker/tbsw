@@ -65,8 +65,6 @@ def create_calibration_path(Env, rawfile, gearfile):
   
   kalman_aligner_1 = Env.create_path('kalman_aligner_1')
   kalman_aligner_1.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
-  kalman_aligner_1.add_processor(name="M26CogHitMaker")
-  kalman_aligner_1.add_processor(name="DEPCogHitMaker")
   kalman_aligner_1.add_processor(name="AlignTF_LC")
   kalman_aligner_1.add_processor(name="PreAligner", params={'ErrorsShiftX' : '0 10 10 10 10 10 10 0', 
                                                             'ErrorsShiftY' : '0 10 10 10 10 10 10 0', 
@@ -77,8 +75,6 @@ def create_calibration_path(Env, rawfile, gearfile):
   
   kalman_aligner_2 = Env.create_path('kalman_aligner_2')
   kalman_aligner_2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
-  kalman_aligner_2.add_processor(name="M26CogHitMaker")
-  kalman_aligner_2.add_processor(name="DEPCogHitMaker")
   kalman_aligner_2.add_processor(name="AlignTF_TC")
   kalman_aligner_2.add_processor(name="TelAligner", params={'ErrorsShiftX' : '0 10 10 10 10 10 10 0', 
                                                             'ErrorsShiftY' : '0 10 10 10 10 10 10 0', 
