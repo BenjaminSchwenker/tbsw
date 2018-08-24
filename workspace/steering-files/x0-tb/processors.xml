@@ -182,30 +182,78 @@
 
    <processor name="PreAligner" type="KalmanAligner">
      <!--KalmanAligner: Tracking telescope alignment using the Kalman Alignment Algorithm (KAA) with annealing-->
+     <!--This is the name of the file with the alignment constants (add .root)-->
+     <parameter name="AlignmentDBFileName" type="string" value="localDB/alignmentDB.root" />
+     <!--Scale factor for annealing schedule-->
+     <parameter name="AnnealingFactor" type="double" value="10000" />
+     <!--Number of tracks before the annealign is turned OFF-->
+     <parameter name="AnnealingTracks" type="int" value="4000" />
+     <!--Reject alignment corrections exceeding DeviationCut*Sigma-->
+     <parameter name="DeviationCut" type="double" value="0" />
+     <!--Initial errors on alignment alpha [rad] for sensors ordered along beam line.-->
+     <parameter name="ErrorsAlpha" type="FloatVec" value="0 0 0 0 0 0 0" />
+     <!--Initial errors on alignment beta [rad] for sensors ordered along beam line.-->
+     <parameter name="ErrorsBeta" type="FloatVec" value="0 0 0 0 0 0 0" />
+     <!--Initial errors on alignment gamma [rad] for sensors ordered along beam line.-->
+     <parameter name="ErrorsGamma" type="FloatVec" value="0 0.01 0.01 0 0.01 0.01 0" />
+     <!--Initial errors on alignment x shift [mm] for sensors ordered along beam line.-->
+     <parameter name="ErrorsShiftX" type="FloatVec" value="0 10 10 0 10 10 0" />
+     <!--Initial errors on alignment y shift [mm] for sensors ordered along beam line.-->
+     <parameter name="ErrorsShiftY" type="FloatVec" value="0 10 10 0 10 10 0" />
+     <!--Initial errors on alignment z shift [mm] for sensors ordered along beam line.-->
+     <parameter name="ErrorsShiftZ" type="FloatVec" value="0 0 0 0 0 0 0" />
+     <!--LogLever during alignment-->
+     <parameter name="LogLevel" type="int" value="2" />
+     <!--Maximum number of tracks passed to alignemnt-->
+     <parameter name="MaxTracks" type="int" value="70000" />
+     <!--Start alignment from scratch (true/false)?-->
+     <parameter name="NewAlignment" type="bool" value="false" />
      <!--Track collection for alignment-->
-     <parameter name="TrackCollectionName" type="string" lcioInType="Track" value="tracks"/>
-     <!--Name of the alignment config file-->
-     <parameter name="AlignConfigFileName" type="string" value="align-config-iteration-1.cfg"/>
-     <!--This is the name of the alignment constants file-->
-     <parameter name="AlignmentDBFileName" type="string" value="localDB/alignmentDB.root"/>
+     <parameter name="TrackCollectionName" type="string" lcioInType="Track" value="tracks" />
      <!--Update lcio alignmentDB using alignment results (true/false)?-->
-     <parameter name="UpdateAlignment" type="bool" value="true"/>
-     <!--Start new alignment DB (true/false)?-->
-     <parameter name="NewAlignment" type="bool" value="false"/>
+     <parameter name="UpdateAlignment" type="bool" value="true" />
+     <!--Use beam model to constrain track fitting-->
+     <parameter name="UseBeamConstraint" type="bool" value="false" />
+     <!--P-Value cut for tracks used during alignment-->
+     <parameter name="pValueCut" type="double" value="0" />
    </processor>
-   
+
    <processor name="TelAligner" type="KalmanAligner">
      <!--KalmanAligner: Tracking telescope alignment using the Kalman Alignment Algorithm (KAA) with annealing-->
+     <!--This is the name of the file with the alignment constants (add .root)-->
+     <parameter name="AlignmentDBFileName" type="string" value="localDB/alignmentDB.root" />
+     <!--Scale factor for annealing schedule-->
+     <parameter name="AnnealingFactor" type="double" value="10000" />
+     <!--Number of tracks before the annealign is turned OFF-->
+     <parameter name="AnnealingTracks" type="int" value="4000" />
+     <!--Reject alignment corrections exceeding DeviationCut*Sigma-->
+     <parameter name="DeviationCut" type="double" value="0" />
+     <!--Initial errors on alignment alpha [rad] for sensors ordered along beam line.-->
+     <parameter name="ErrorsAlpha" type="FloatVec" value="0 0 0 0 0 0 0" />
+     <!--Initial errors on alignment beta [rad] for sensors ordered along beam line.-->
+     <parameter name="ErrorsBeta" type="FloatVec" value="0 0 0 0 0 0 0" />
+     <!--Initial errors on alignment gamma [rad] for sensors ordered along beam line.-->
+     <parameter name="ErrorsGamma" type="FloatVec" value="0 0.01 0.01 0 0.01 0.01 0" />
+     <!--Initial errors on alignment x shift [mm] for sensors ordered along beam line.-->
+     <parameter name="ErrorsShiftX" type="FloatVec" value="0 10 10 0 10 10 0" />
+     <!--Initial errors on alignment y shift [mm] for sensors ordered along beam line.-->
+     <parameter name="ErrorsShiftY" type="FloatVec" value="0 10 10 0 10 10 0" />
+     <!--Initial errors on alignment z shift [mm] for sensors ordered along beam line.-->
+     <parameter name="ErrorsShiftZ" type="FloatVec" value="0 10 10 0 10 10 0" />
+     <!--LogLever during alignment-->
+     <parameter name="LogLevel" type="int" value="2" />
+     <!--Maximum number of tracks passed to alignemnt-->
+     <parameter name="MaxTracks" type="int" value="70000" />
+     <!--Start alignment from scratch (true/false)?-->
+     <parameter name="NewAlignment" type="bool" value="false" />
      <!--Track collection for alignment-->
-     <parameter name="TrackCollectionName" type="string" lcioInType="Track" value="tracks"/>
-     <!--Name of the alignment config file-->
-     <parameter name="AlignConfigFileName" type="string" value="align-config-iteration-2.cfg"/>
-     <!--This is the name of the alignment constants file-->
-     <parameter name="AlignmentDBFileName" type="string" value="localDB/alignmentDB.root"/>
+     <parameter name="TrackCollectionName" type="string" lcioInType="Track" value="tracks" />
      <!--Update lcio alignmentDB using alignment results (true/false)?-->
-     <parameter name="UpdateAlignment" type="bool" value="true"/>
-     <!--Start new alignment DB (true/false)?-->
-     <parameter name="NewAlignment" type="bool" value="false"/>
+     <parameter name="UpdateAlignment" type="bool" value="true" />
+     <!--Use beam model to constrain track fitting-->
+     <parameter name="UseBeamConstraint" type="bool" value="false" />
+     <!--P-Value cut for tracks used during alignment-->
+     <parameter name="pValueCut" type="double" value="0.0005" />
    </processor>
    
    <processor name="M26HotPixelKiller" type="HotPixelKiller">
@@ -382,6 +430,12 @@
      <parameter name="DUTPlane" type="int" value="3"/>
      <!--Choose upstream-downstream track matching approach. true: vertexfit, false: distance cut-->
      <parameter name="VertexFitSwitch" type="bool" value="false"/>
+     <!--Flag (true/false) for simulating fractional Bethe Heitler energy loss (only used in toy simulation mode)-->
+     <parameter name="ToyBetheHeitlerSwitch" type="bool" value="true" />
+     <!--Switch to fast toy simulation mode: Replace reconstructed scatter angles from track fitting by angles sampled from a Gauss distribution-->
+     <parameter name="ToyScatteringSwitch" type="bool" value="false"/>
+     <!--Angle reconstruction error used in toy simulations, if its smaller than 0, use real angle reco error instead (only used in toy simulation mode)-->
+     <parameter name="ToyRecoError" type="double" value="-1.0"/>
      <!--Maximal Chi2 value for vertex fit of matched up and downstream tracks, only used when VertexFitSwitch is true-->
      <parameter name="MaxVertexChi2" type="double" value="5.0"/>
      <!--Maximum distance between up and downstream tracks at dut plane [mm], only used when VertexFitSwitch is false-->
@@ -426,19 +480,19 @@
     <!--Number of beam particles per second-->
     <parameter name="BeamIntensity" type="double" value="60000"/>
     <!--Beam momentum [GeV]-->
-    <parameter name="BeamMomentum" type="double" value="4.0"/>
+    <parameter name="BeamMomentum" type="double" value="2.0"/>
     <!--Beam momentum sigma [GeV]-->
     <parameter name="BeamMomentumSigma" type="double" value="0.001"/>
     <!--Beam slope sigma in XZ plane [rad]-->
-    <parameter name="BeamSlopeXSigma" type="double" value="0.001"/>
+    <parameter name="BeamSlopeXSigma" type="double" value="0.0035"/>
     <!--Beam slope sigma in YZ plane [rad]-->
-    <parameter name="BeamSlopeYSigma" type="double" value="0.001"/>
+    <parameter name="BeamSlopeYSigma" type="double" value="0.0035"/>
     <!--A simulated event contains one particle at t=0 and extends for given time window in seconds-->
     <parameter name="BeamTimeWindow" type="double" value="0.0001"/>
     <!--Beam vertex position in X direction [mm]-->
     <parameter name="BeamVertexX" type="double" value="0"/>
     <!--Beam vertex sigma in X direction [mm]-->
-    <parameter name="BeamVertexXSigma" type="double" value="7"/>
+    <parameter name="BeamVertexXSigma" type="double" value="20"/>
     <!--Beam vertex position in Y direction [mm]-->
     <parameter name="BeamVertexY" type="double" value="0"/>
     <!--Beam vertex sigma in Y direction [mm]-->
@@ -486,7 +540,7 @@
     <!--Choose front-end electronics: ADC(0) or Comparator(1) or None(2) -->
     <parameter name="FrontEndType" type="int" value="1"/>
     <!--Set threshold for comparator (in e)-->
-    <parameter name="ComparatorThrehold" type="float" value="800"/>
+    <parameter name="ComparatorThrehold" type="float" value="1100"/>
     <!--Set how many bits the ADC uses-->
     <parameter name="ADCBits" type="int" value="8"/>
     <!--Set analog-to-digital converter range 0 - ? (in e)-->
@@ -500,7 +554,7 @@
     <!--Apply electronic effects?-->
     <parameter name="ElectronicEffects" type="bool" value="true"/>
     <!--Noise added by the electronics, set in ENC (one value for each detector)-->
-    <parameter name="ElectronicNoise" type="double" value="400"/>
+    <parameter name="ElectronicNoise" type="double" value="300"/>
     <!--Apply digitization only to SimTrackerHits for sensors having DAQ IDs in this list-->
     <parameter name="FilterIDs" type="IntVec" value="0 1 2 3 4 5"/>
     <!--Use integration window?-->

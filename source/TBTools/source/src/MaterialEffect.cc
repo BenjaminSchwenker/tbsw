@@ -192,6 +192,44 @@ double GetScatterTheta2(HepMatrix& State, double x, double x0, double mass, doub
   return SigTheta2;
 }  
 
+
+/** Calculate variance of the projected angular deflection due to multiple
+ *  scattering of a particle for x/x0 a la Highland.
+ *
+ *  Projected means that the angle is not the angle in space, but rather a
+ *  one-dimensional projection on one axis of a plane that is perpendicular
+ *  to the particle direction before scattering. 
+ */ 
+double GetScatterTheta2(double mom, double x, double x0, double mass, double charge)  
+{
+  // Sanity check -  mass 
+  if (mass <= 0) return 0;
+  
+  // Sanity check - momentum 
+  if (mom <= 0) return 0;
+
+  // Sanity check - use unsigned lenght 
+  if (x < 0) x*=-1;
+  
+  // Highland model does not like x=0 case
+  if (x == 0) return 0; 
+  
+  // Sanity check - use air as default  
+  if (x0 <= 0) x0 = 305000;    
+  
+  double RI = x/x0;   
+  double Etot = std::sqrt(mom*mom + mass*mass);  
+  double pBeta = mom*mom/Etot;  
+       
+  // Highland formula 
+  // -------------------
+  double SigTheta = 0.0136*(charge/pBeta)*std::sqrt(RI)*(1.+0.038*std::log(RI));   
+  double SigTheta2 = SigTheta*SigTheta;
+     
+  return SigTheta2;
+}  
+
+
 /** Scatter track at thin scatterer 
  *
  * The track is locally scattered by two scatter kink angles. The kink angles 

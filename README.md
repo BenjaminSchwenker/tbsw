@@ -58,8 +58,6 @@ with the simulated truth data. The steerfiles folder 'workspace/steering-files/d
 
 - gear_desynov15_geoID15.xml         : Telescope geometry file, describes a small depfet sensor installed in the EUDET telescope 
 - processors.xml                     : XML file containing default parameters for all Marlin processors needed for this example 
-- align-config-iteration-1.cfg       : Alignment configuration file, describes which sensor parameters should be corrected 
-- align-config-iteration-2.cfg       : Alignment configuration file, describes which sensor parameters should be corrected 
 
 
 All these files area readable by a text editor and heavily commented. The Python script tbsw_example.py runs us through all steps of the 

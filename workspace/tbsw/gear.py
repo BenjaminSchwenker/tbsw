@@ -19,6 +19,54 @@ try:
 except:
     from itertools import izip_longest as zip_longest
 
+def getCurrentValue(event,branchname):
+  return getattr(event,branchname)
+
+# Function, which saves the vertex z mean position from a given file as the new nominal position of the target in the alignment DB file
+def save_targetpos(treefilename=None,dbfilename=None): 
+  """
+  Updates the alignment DB with the expected target position from the vertex fit
+    :@filename:    Name of file with MSCTree which includes the vertex parameters 
+    :@dbfilename   Name of the db root file 
+    :author: ulf.stolzenberg@phys.uni-goettingen.de  
+  """ 
+
+  if treefilename == None:
+    return None
+
+  if dbfilename == None:
+    return None
+
+  gROOT.SetBatch(1)
+  rawfile = gROOT.FindObject( treefilename )
+
+  # if tree file is open, close it
+  if rawfile:
+    rawfile.Close()
+
+  # Open tree file in read mode
+  rawfile = TFile( treefilename, 'READ' )
+  tree=rawfile.Get('MSCTree')
+  
+  # Calculate mean value of the vertex z position
+  count=0
+  mean=0
+ 
+  for event in tree:
+    mean += getCurrentValue(event,"vertex_z")
+    count +=1
+
+  if count == 0:
+    raise ValueError('Tree is empty!')
+
+  # Round mean value to first decimal (100 microns)
+  mean=round(mean/count,1)
+
+  print "New target position is"
+  print mean
+
+  Modify_AlignmentDBFile(dbfilename=dbfilename, planenumber=3, mode='z', value=mean)
+
 
 def Create_AlignmentDBFile_From_Gear(gearfile=None, truthdbfilename=None):
   """
@@ -435,7 +483,10 @@ def Modify_AlignmentDBFile(dbfilename=None, planenumber=None, mode=None, value=N
   if value == None:
     return None
     
-  dbfile = TFile( dbfilename, 'UPDATE' )
+  if os.path.isfile(dbfilename):
+    dbfile = TFile( dbfilename, 'UPDATE' )
+  else: 
+    raise ValueError('alignment DB ('+dbfilename+') file not found') 
 
   # Get access to histogram  
 

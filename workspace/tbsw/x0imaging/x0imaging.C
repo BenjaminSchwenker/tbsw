@@ -175,7 +175,7 @@ using namespace std ;
 
 
   // This function fills histograms corresponding to certain u v values with msc angle distributions 
-  void savehistos(TFile* file1, TFile* file2, int numberofbins, const int numcol, const int numrow, double umin, double vmin, double umax, double vmax, int vertex_multiplicity_min, int vertex_multiplicity_max)
+  void savehistos(TFile* file1, TFile* file2, int numberofbins, double histo_range, const int numcol, const int numrow, double umin, double vmin, double umax, double vmax, int vertex_multiplicity_min, int vertex_multiplicity_max)
   {
 	// parameters which are read out from the root file
 	Double_t theta1;
@@ -252,14 +252,14 @@ using namespace std ;
 			TH1* histogram2=(TH1*)file2->Get("mapping/raw/theta2_uncorrected_"+aidhistoname);
 			
 			// Determine plot range from uncorrected histograms
-			double plotrange=(histogram1->GetRMS()+histogram2->GetRMS())*2;
+			double limits=histo_range/2.0*(histogram1->GetRMS()+histogram2->GetRMS());
 
-		 	histo_theta1[i][j] = new TH1F("","",numberofbins,-plotrange,plotrange);
-		 	histo_theta2[i][j] = new TH1F("","",numberofbins,-plotrange,plotrange);
+		 	histo_theta1[i][j] = new TH1F("","",numberofbins,-limits,limits);
+		 	histo_theta2[i][j] = new TH1F("","",numberofbins,-limits,limits);
 		 	histo_uresidual[i][j] = new TH1F("","",1000,-1.0,1.0);
 		 	histo_vresidual[i][j] = new TH1F("","",1000,-1.0,1.0);
-		 	histo_thetasum[i][j] = new TH1F("","",numberofbins,-plotrange,plotrange);
-			histo_2d[i][j] = new TH2F("","",numberofbins,-plotrange,plotrange,numberofbins,-plotrange,plotrange);
+		 	histo_thetasum[i][j] = new TH1F("","",numberofbins,-limits,limits);
+			histo_2d[i][j] = new TH2F("","",numberofbins,-limits,limits,numberofbins,-limits,limits);
 
 			// Set range and title of vertex histograms
 		 	histo_vertex_w[i][j] = new TH1F("","",900,-15.0,15.0);
@@ -373,8 +373,42 @@ using namespace std ;
   }
 
 
+// Determine fit range for a kink angle histogram
+// This is done by finding the first and last bin above a certain threshold.
+// The fit range is half of the distance between these two bins in rad
+double DetermineFitrange(TH1* histo,double rangevalue)
+{
+
+    // Clone histo
+	TH1F *h2 = (TH1F*) histo->Clone();
+
+	cout<<"RMS value of distribution: "<<histo->GetRMS()<<endl;
+	cout<<"Selected range parameter: "<<rangevalue<<" -> Fit range up to y=1/("<<rangevalue<<"*e)"<<endl;
+	double fitrange = sqrt(2.0*rangevalue)*histo->GetRMS();
+
+	// Use RMS value as a rough measure of the fit range for a gaussian fit
+	TF1 *f1 = new TF1("f1","gaus(x)",-fitrange,fitrange);
+	f1->SetLineStyle(2);
+	TFitResultPtr fitr=h2->Fit("f1","RS");
+
+	// Repeat fit in case it failed
+	if(fitr!=0)
+	{
+		cout<<"Fit of angle distribution failed with status: "<<fitr<<endl;
+		cout<<"Repeat fit "<<endl;
+		h2->Fit("f1","RM");
+	}
+
+	// Use the determined sigma value to calculate the fit range
+	double sigma = f1->GetParameter(2);
+	fitrange=sqrt(2.0*rangevalue)*sigma;
+	cout<<"Determined fit range: " << fitrange<<endl<<endl;
+
+	return fitrange;
+}
+
   // Function to fit the MSC angle histograms and fill the map histograms
-  void fithisto( TFile* file, int fittype, int col, int numcol, int row,int numrow, double* parameters)
+  void fithisto( TFile* file, int fittype, double maxchi2ndof_fit, double rangevalue, int col, int numcol, int row,int numrow, double* parameters, TString fitoptions)
   { 
 	// Calculate number of parameters
 	int num_parameters = 7;
@@ -462,7 +496,7 @@ using namespace std ;
 	double uresidual_mean;
 	double vresidual_mean;
 
-	double minvalue=1.0/(2.0*2.7);
+	double minvalue=1.0/(rangevalue*2.7);
 
 	int NumberOfTracks=fithistogram1->GetEntries();
 
@@ -484,24 +518,21 @@ using namespace std ;
 	{
 		//Fit histogram with Highland model
 
-		// Fit histograms
-		bin1 = fithistogram1->FindFirstBinAbove(fithistogram1->GetMaximum()*minvalue);
-		bin2 = fithistogram1->FindLastBinAbove(fithistogram1->GetMaximum()*minvalue);
-		fitrange = (fithistogram1->GetBinCenter(bin2) - fithistogram1->GetBinCenter(bin1))/2.0;
-
-		bin1 = fithistogram2->FindFirstBinAbove(fithistogram2->GetMaximum()*minvalue);
-		bin2 = fithistogram2->FindLastBinAbove(fithistogram2->GetMaximum()*minvalue);
-		fitrange = (fithistogram2->GetBinCenter(bin2) - fithistogram2->GetBinCenter(bin1))/2.0;
-
-	
-		bin1 = fithistogramsum->FindFirstBinAbove(fithistogramsum->GetMaximum()*minvalue);
-		bin2 = fithistogramsum->FindLastBinAbove(fithistogramsum->GetMaximum()*minvalue);
-		fitrange = (fithistogramsum->GetBinCenter(bin2) - fithistogramsum->GetBinCenter(bin1))/2.0;
-
-		// Fit functions	
+		// Fit functions definition
+		// The fit range is determined from the RMS value of the histogram
+		// The Highland model is validated up to the width sigma_1/e, where the 
+		// distribution reaches the values max/e. The fit range should be therefore limited to 
+		// The intervall [-sqrt(2)*RMS,+sqrt(2)*RMS]
+		fitrange =DetermineFitrange(fithistogram1,rangevalue);
 		TF1 *fit1 = new TF1("theta1_fit",highlandfunction,-fitrange,fitrange,num_parameters);
+
+		fitrange =DetermineFitrange(fithistogram2,rangevalue);
 		TF1 *fit2 = new TF1("theta2_fit",highlandfunction,-fitrange,fitrange,num_parameters);
+
+		fitrange =DetermineFitrange(fithistogramsum,rangevalue);
 		TF1 *fitsum = new TF1("thetasum_fit",highlandfunction,-fitrange,fitrange,num_parameters);
+
+
 
 		// Set starting values
    		fit1->SetParameters(parameters);
@@ -510,7 +541,7 @@ using namespace std ;
 
 		for(int i=0; i<num_parameters;i++)
 		{
-			if(i!=3&&i!=5&&i!=6)
+			if(i!=3&&i!=5)
 			{
    				fit1->FixParameter(i,parameters[i]);
    				fit2->FixParameter(i,parameters[i]);
@@ -519,18 +550,56 @@ using namespace std ;
 		}	
 
 		// The mean value of the distribution should not be shifted more than 100 µrad -> limit parameter 6
-   		fit1->SetParLimits(6,-0.0001,0.0001);
-   		fit2->SetParLimits(6,-0.0001,0.0001);
-   		fitsum->SetParLimits(6,-0.0001,0.0001);
+		// --> Just don't fit the mean, just fix it at 0.0
+   		//fit1->SetParLimits(6,-0.0001,0.0001);
+   		//fit2->SetParLimits(6,-0.0001,0.0001);
+   		//fitsum->SetParLimits(6,-0.0001,0.0001);
 
    		fit1->SetParLimits(3,0.00001,200.0);
    		fit2->SetParLimits(3,0.00001,200.0);
    		fitsum->SetParLimits(3,0.00001,200.0);
 
-		fithistogram1->Fit("theta1_fit","R");
-		fithistogram2->Fit("theta2_fit","R");
-		fithistogramsum->Fit("thetasum_fit","R");
+		TFitResultPtr fitr=fithistogram1->Fit("theta1_fit",fitoptions);
+		if(fitr!=0)
+		{
+			cout<<"Fit of first angle distribution failed with status: "<<fitr<<endl;
+			cout<<"Repeat fit "<<endl;
+			fithistogram1->Fit("theta1_fit",fitoptions);
+		}
+		fitr=fithistogram2->Fit("theta2_fit",fitoptions);
+		if(fitr!=0)
+		{
+			cout<<"Fit of second angle distribution failed with status: "<<fitr<<endl;
+			cout<<"Repeat fit "<<endl;
+			fithistogram2->Fit("theta2_fit",fitoptions);
+		}
+		fitr=fithistogramsum->Fit("thetasum_fit",fitoptions);
+		if(fitr!=0)
+		{
+			cout<<"Fit of combined angle distribution failed with status: "<<fitr<<endl;
+			cout<<"Repeat fit "<<endl;
+			fithistogramsum->Fit("thetasum_fit",fitoptions);
+		}
 
+		// Names of the 14 local parameters
+		const int num_localparameters=7;
+		TString name[num_localparameters];
+		name[0]="E";
+		name[1]="z[e]";
+		name[2]="m";
+		name[3]="X/X0";
+		name[4]="reco err";
+		name[5]="norm";
+		name[6]="mean";
+
+		gStyle->SetOptFit(1111);
+
+		for(int iname=0;iname<num_localparameters;iname++) 
+		{
+			fit1->SetParName(iname,name[iname]);			
+			fit2->SetParName(iname,name[iname]);
+			fitsum->SetParName(iname,name[iname]);
+		}
 
 		// Chi2ndof of the fit
 		chi2ndof1=fit1->GetChisquare()/(fit1->GetNDF()*1.0);
@@ -538,7 +607,7 @@ using namespace std ;
 		chi2ndofsum=fitsum->GetChisquare()/(fitsum->GetNDF()*1.0);	
 
 		// define chi2 cut
-		double chi2_cut=20.0;
+		double chi2_cut=maxchi2ndof_fit;
 
 		// Use the chi2 values for quality cuts
 		if((fittype==0)&&((chi2ndof1+chi2ndof2)>chi2_cut*2.0))
@@ -992,12 +1061,21 @@ int x0imaging()
 	cout<<"Minimal v value:"<<vmin<<" mm"<<endl;
 	cout<<"Max. v value:"<<vmax<<" mm"<<endl;
 
-    // Vertex multiplicity cu (should be 1 for default X0 analysis)
+    // Vertex multiplicity cut (should be 1 for default X0 analysis)
 	int vertex_multiplicity_min=mEnv.GetValue("vertexmultiplicitymin", 1);
 	int vertex_multiplicity_max=mEnv.GetValue("vertexmultiplicitymax", 1);
 
 	cout<<"Minimal vertex multiplicity:"<<vertex_multiplicity_min<<endl;
 	cout<<"Maximal vertex multiplicity:"<<vertex_multiplicity_max<<endl;
+
+    // Vertex multiplicity cut (should be 1 for default X0 analysis)
+	double maxchi2ndof_fit=mEnv.GetValue("maxchi2ndof", 10.0);
+
+    // Fit range parameter
+	double rangevalue=mEnv.GetValue("fitrange_parameter", 2.0);
+
+    // Fit options
+	TString fitoptions=mEnv.GetValue("fit_options", "RMELS");
 
 	// Choose the type of fit
 	// 0: gaussian fit function with cuts on the tails, both kink distributions are used seperately
@@ -1022,8 +1100,11 @@ int x0imaging()
 	plotranges.push_back(4*tree->GetHistogram()->GetRMS());
 	means.push_back(tree->GetHistogram()->GetMean());
 	
-	// The number of bins is constant
-	int numberofbins=100;
+	// The number of bins of angle histograms
+	int numberofbins=mEnv.GetValue("num_bins", 50);
+
+	// Range parameter of angle histograms
+	double histo_range=mEnv.GetValue("histo_range", 5.0);
 
 	cout<<"The first Scattering angle distributions will be plotted with range "<<plotranges.at(0)<<" rad and "<<numberofbins<<" bins!"<<endl;
 	cout<<"The mean value of the histogram is "<<means.at(0)<<" rad !"<<endl;
@@ -1124,7 +1205,7 @@ int x0imaging()
 	rootfile->cd("");
 	
 	getcorrection(X0file, rootfile, means, plotranges, numberofbins, numcol, numrow, umin, vmin, umax, vmax, vertex_multiplicity_min, vertex_multiplicity_max);
-	savehistos(X0file, rootfile, numberofbins, numcol, numrow, umin, vmin, umax, vmax, vertex_multiplicity_min, vertex_multiplicity_max);
+	savehistos(X0file, rootfile, numberofbins, histo_range, numcol, numrow, umin, vmin, umax, vmax, vertex_multiplicity_min, vertex_multiplicity_max);
 
 	X0file->Close();
 
@@ -1134,7 +1215,6 @@ int x0imaging()
 	// X0 map
 	TH2F * x0_image = new TH2F("x0_image","x0_image",numcol,umin,umax,numrow,vmin,vmax);
     x0_image->SetStats(kFALSE);
-    x0_image->SetMaximum(10);
     x0_image->SetMinimum(0);
     x0_image->GetXaxis()->SetTitle("u [mm]");
     x0_image->GetYaxis()->SetTitle("v [mm]");
@@ -1145,7 +1225,6 @@ int x0imaging()
 	// X0 statistical error map (absolute value)
 	TH2F * x0err_image = new TH2F("x0err_image","x0err_image",numcol,umin,umax,numrow,vmin,vmax);
     x0err_image->SetStats(kFALSE);
-    x0err_image->SetMaximum(10);
     x0err_image->SetMinimum(0);
     x0err_image->GetXaxis()->SetTitle("u [mm]");
     x0err_image->GetYaxis()->SetTitle("v [mm]");
@@ -1156,7 +1235,6 @@ int x0imaging()
 	// X0 statistical error map (relative value)
 	TH2F * x0relerr_image = new TH2F("x0relerr_image","x0relerr_image",numcol,umin,umax,numrow,vmin,vmax);
     x0relerr_image->SetStats(kFALSE);
-    x0relerr_image->SetMaximum(100);
     x0relerr_image->SetMinimum(0);
     x0relerr_image->GetXaxis()->SetTitle("u [mm]");
     x0relerr_image->GetYaxis()->SetTitle("v [mm]");
@@ -1203,6 +1281,7 @@ int x0imaging()
 	fit1prob_image->SetStats(kFALSE);
     fit1prob_image->GetXaxis()->SetTitle("u [mm]");
     fit1prob_image->GetYaxis()->SetTitle("v [mm]");
+    fit1prob_image->SetMinimum(-0.1);
     fit1prob_image->GetZaxis()->SetTitle("fit1 p value");
     fit1prob_image->GetZaxis()->SetTitleSize(0.02);
     fit1prob_image->GetZaxis()->SetLabelSize(0.02);
@@ -1219,6 +1298,7 @@ int x0imaging()
 	fit2prob_image->SetStats(kFALSE);
     fit2prob_image->GetXaxis()->SetTitle("u [mm]");
     fit2prob_image->GetYaxis()->SetTitle("v [mm]");
+    fit2prob_image->SetMinimum(-0.1);
     fit2prob_image->GetZaxis()->SetTitle("fit2 p value");
     fit2prob_image->GetZaxis()->SetTitleSize(0.02);
     fit2prob_image->GetZaxis()->SetLabelSize(0.02);
@@ -1234,6 +1314,7 @@ int x0imaging()
 	fitsumprob_image->SetStats(kFALSE);
     fitsumprob_image->GetXaxis()->SetTitle("u [mm]");
     fitsumprob_image->GetYaxis()->SetTitle("v [mm]");
+    fitsumprob_image->SetMinimum(-0.1);
     fitsumprob_image->GetZaxis()->SetTitle("fitsum p value");
     fitsumprob_image->GetZaxis()->SetTitleSize(0.02);
     fitsumprob_image->GetZaxis()->SetLabelSize(0.02);
@@ -1402,6 +1483,7 @@ int x0imaging()
 		{
 
 			cout<<"fit histogram in (col,row): ("<<col<<","<<row<<")"<<endl;
+			cout<<"Fit range value: "<<rangevalue<<endl;
 
             // Calculate the u position of this bin
             double u=umin+col*upitch;
@@ -1420,7 +1502,7 @@ int x0imaging()
 			double parameters[7]={mom,charge,mass,0.01,recoerror,300,0.0};
 
 			// fit the histograms
-			fithisto(rootfile, fittype,col,numcol,row,numrow,parameters);
+			fithisto(rootfile, fittype, maxchi2ndof_fit, rangevalue, col,numcol,row,numrow,parameters,fitoptions);
 		}
 	}
 

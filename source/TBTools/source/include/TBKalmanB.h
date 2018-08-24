@@ -166,6 +166,10 @@ class TBKalmanB {
  // Private Methods -----------------
  private:
   
+  /** Compute a priori predicted estimate on first sensor. Returns reference state at first sensor.
+   */
+  CLHEP::HepMatrix ComputeBeamConstraint( CLHEP::HepMatrix& x0, CLHEP::HepSymMatrix& C0, ReferenceFrame& FirstSensorFrame, double mass, double mom, double charge);
+  
   /** Run filter on track. Returns fit chi2. 
    *    
    *  Input: RefStateVec    : Vector of reference track parameters  

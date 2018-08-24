@@ -214,6 +214,9 @@ namespace depfet {
       // Enter main loop to propagate particle through telescope
       int ipl = -1;
       
+      // Average mometum before and after energy loss. 
+      double average_mom = 0;
+
       do  { 
         
         streamlog_out(MESSAGE1) << " Particle is at plane " << ipl << " with state " << state << endl; 
@@ -224,7 +227,7 @@ namespace depfet {
                  
           Det& current_det = m_detector.GetDet(ipl);
           
-          // Local track state on sensor
+          // Local track state on sensor == defined as state before scattering and energy loss 
           // --------------------------- 
           double dudw = state[0][0];
           double dvdw = state[1][0];
@@ -264,20 +267,23 @@ namespace depfet {
           // Put the hit into LCIO collection
           simHitVec->push_back( simHit );
            
-          if(  m_scatterModel==0  ) { 
-            // Highland model scattering
-            double theta2 = materialeffect::GetScatterTheta2(state, l0, current_det.GetRadLength(u,v), mcp->getMass(), mcp->getCharge() );      
-            double kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
-            double kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 ));      
-            // Scatter track ('in' state -> 'out' state)
-            materialeffect::ScatterTrack(state, kink_u, kink_v); 
-          }
-          
           // Simulate energy loss by bremsstrahlung (Bethe Heitler theory)
+          average_mom = 0.5*mcp->getCharge()/state[4][0];
           if (m_doFractionalBetheHeitlerEnergyLoss) {
             double t = l0/current_det.GetRadLength(u,v);
             double rndm = gRandom->Rndm(1);
             materialeffect::SimulateBetherHeitlerEnergyLoss(state, t, mcp->getMass(), mcp->getCharge(), rndm);    
+          }
+          // Take average of momentum before and after scattering
+          average_mom += 0.5*mcp->getCharge()/state[4][0]; 
+           
+          if(  m_scatterModel==0  ) { 
+            // Highland model scattering
+            double theta2 = materialeffect::GetScatterTheta2(average_mom, l0, current_det.GetRadLength(u,v), mcp->getMass(), mcp->getCharge() );      
+            double kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
+            double kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 ));      
+            // Scatter track ('in' state -> 'out' state)
+            materialeffect::ScatterTrack(state, kink_u, kink_v); 
           }
         }
          
@@ -306,21 +312,24 @@ namespace depfet {
         // Scatter in air between detectors
         // ------------------------------- 
         
-        if( m_scatterModel==0 ) { 
-          // Highland model scattering     
-          double theta2 = materialeffect::GetScatterTheta2(state, length, materialeffect::X0_air, mcp->getMass(), mcp->getCharge()) ;   
-          double kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
-          double kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 )); 
-          // Scatter track ('in' state -> 'out' state)
-          materialeffect::ScatterTrack(state, kink_u, kink_v);     
-        }
-        
         // Simulate energy loss by bremsstrahlung (Bethe Heitler theory)
+        average_mom = 0.5*mcp->getCharge()/state[4][0];
         if (m_doFractionalBetheHeitlerEnergyLoss) {
           double t = length/materialeffect::X0_air;
           double rndm = gRandom->Rndm(1);
           materialeffect::SimulateBetherHeitlerEnergyLoss(state, t, mcp->getMass(), mcp->getCharge(), rndm); 
         } 
+        // Take average of momentum before and after scattering
+        average_mom += 0.5*mcp->getCharge()/state[4][0];
+        
+        if( m_scatterModel==0 ) { 
+          // Highland model scattering     
+          double theta2 = materialeffect::GetScatterTheta2(average_mom, length, materialeffect::X0_air, mcp->getMass(), mcp->getCharge()) ;   
+          double kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
+          double kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 )); 
+          // Scatter track ('in' state -> 'out' state)
+          materialeffect::ScatterTrack(state, kink_u, kink_v);     
+        }
           
         // Get state on next detector
         bool error = false; 
