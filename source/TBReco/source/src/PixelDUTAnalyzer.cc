@@ -244,9 +244,11 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, _detector );  
     
     // Require that track is a hit on reference (timing) plane
-    if (  (not trk.GetTE(_iref).HasHit()) && _iref >= 0 ) {
-      streamlog_out ( MESSAGE2 ) << "Track has no hit on reference plane. Skipping track!" << endl;
-      continue;  
+    if (_iref >= 0 && _iref < _detector.GetNSensors()  ) {
+      if ( not trk.GetTE(_iref).HasHit() ) {
+        streamlog_out ( MESSAGE2 ) << "Track has no hit on reference plane. Skipping track!" << endl;
+        continue;
+      }  
     } 
     
     // Check that track has no hit on the DUT to avoid bias of residuals and efficiency
