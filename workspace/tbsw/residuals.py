@@ -2,7 +2,7 @@ from ROOT import TFile, TH1F, TH2F
 from ROOT import gROOT, Double, TCut
 
 
-def plot(inputfilename = None, histofilename = "ResidualHistos.root" , basecut = "hasTrack==0"):
+def plot(inputfilename = None, histofilename = "ResidualHistos.root" , basecut = "hasTrack==0", urange=200, vrange=200):
   
   # Analysis cuts 
   hitcut = TCut(basecut)
@@ -52,14 +52,14 @@ def plot(inputfilename = None, histofilename = "ResidualHistos.root" , basecut =
   hspot.GetZaxis().SetTitle("number of clusters")
   hspot.SetStats(0)
 
-  hu = TH1F("hu","",101,-75.,+75.)
+  hu = TH1F("hu","",101,-urange,+urange)
   hittree.Draw("(u_hit - u_fit)*1000 >>+hu", hitcut,"goff")
   hu.SetTitle("")
   hu.GetXaxis().SetTitle("residuals u [#mum]")
   hu.GetYaxis().SetTitle("number of hits")
   hu.GetYaxis().SetTitleOffset(1.2)
 
-  hv = TH1F("hv","",101,-75.,+75.)
+  hv = TH1F("hv","",101,-vrange,+vrange)
   hittree.Draw("(v_hit - v_fit)*1000 >>+hv", hitcut,"goff")
   hv.SetTitle("")
   hv.GetXaxis().SetTitle("residuals v [#mum]")

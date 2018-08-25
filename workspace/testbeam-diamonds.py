@@ -13,13 +13,9 @@ steerfiles = 'steering-files/diamonds-tb/'
 # Path to gear file 
 gearfile = 'gear_desy_dia_feonly.xml'
 
-# Select diamond pixel type: 0 not on diamond, 1 FE only, 2 rectangular, 3 hexagonal
-diamond_pixeltype = 1
-
-
 # List of runs to be processed
 runlist = [
-            '/home/benjamin/Desktop/workspace_3dDiamond/3DDiamond/rawdata/run002261.raw',
+            '/home/benjamin/Desktop/3DDiamond/rawdata/run002261.raw',
           ]
 
 # Number of events to be processed (put -1 to process all)
@@ -29,7 +25,7 @@ nevents = -1
 use_clusterDB = False
 
 
-def create_calibration_path(Env, rawfile, gearfile):
+def create_calibration_path(Env, rawfile, gearfile, diamond_pixeltype):
   """
   Returns a list of tbsw path objects needed to calibrate the tracking telescope
   """
@@ -166,7 +162,7 @@ def create_calibration_path(Env, rawfile, gearfile):
   return calpath
 
 
-def create_reco_path(Env, rawfile, gearfile):
+def create_reco_path(Env, rawfile, gearfile, diamond_pixeltype):
   """
   Returns a list of tbsw path objects for reconstruciton of a test beam run 
   """
@@ -185,50 +181,52 @@ def create_reco_path(Env, rawfile, gearfile):
   reco.add_processor(name="FEI4Clusterizer")
   reco.add_processor(name="FEI4CogHitMaker")
   reco.add_processor(name="RecoTF")
-  reco.add_processor(name="DiamondAnalyzer")
-  reco.add_processor(name="FEI4Analyzer")
+  reco.add_processor(name="DiamondAnalyzer", params={'RootFileName':'Histos-DIA.root'})
+  reco.add_processor(name="FEI4Analyzer", params={'RootFileName':'Histos-FEI.root'})
 
   return [ reco ]
 
   
 def calibrate_and_reconstruct(params):
   
-  rawfile, gearfile = params
+  rawfile, gearfile, diamond_pixeltype = params
   
- 
   # Tag for calibration data
-  caltag = os.path.splitext(os.path.basename(rawfile))[0] 
+  caltag = os.path.splitext(os.path.basename(rawfile))[0] + '-type-{}'.format(diamond_pixeltype) 
   
   # Calibrate of the run using beam data. Creates a folder cal-files/caltag 
   # containing all calibration data. 
   CalObj = Calibration(steerfiles=steerfiles, name=caltag + '-cal') 
   
   # Create list of calibration paths
-  calpath = create_calibration_path(CalObj, rawfile, gearfile)
+  calpath = create_calibration_path(CalObj, rawfile, gearfile, diamond_pixeltype)
   
   # Run the calibration steps 
   CalObj.calibrate(path=calpath,ifile=rawfile,caltag=caltag)  
-  
+   
   # Reconsruct the rawfile using caltag. Resulting root files are 
   # written to folder root-files/
   RecObj = Reconstruction(steerfiles=steerfiles, name=caltag + '-reco' )
-
+  
   # Create reconstuction path
-  recopath = create_reco_path(RecObj, rawfile, gearfile)  
-
+  recopath = create_reco_path(RecObj, rawfile, gearfile, diamond_pixeltype)  
+  
   # Run the reconstuction  
   RecObj.reconstruct(path=recopath,ifile=rawfile,caltag=caltag) 
   
   
 if __name__ == '__main__':
-  count = 1 # multiprocessing.cpu_count()
-  pool = multiprocessing.Pool(processes=count)
-   
-  params = [ (rawfile, gearfile ) for rawfile in runlist ]
-  pool.map(calibrate_and_reconstruct, params)
-
   
+  # Select diamond pixel type: 0 not on diamond, 1 FE only, 2 rectangular, 3 hexagonal
+  diamond_pixeltype = 0
+  calibrate_and_reconstruct( (runlist[0], gearfile, diamond_pixeltype) ) 
   
-
-
-
+  diamond_pixeltype = 1
+  calibrate_and_reconstruct( (runlist[0], gearfile, diamond_pixeltype) ) 
+  
+  diamond_pixeltype = 2
+  calibrate_and_reconstruct( (runlist[0], gearfile, diamond_pixeltype) ) 
+  
+  diamond_pixeltype = 3
+  calibrate_and_reconstruct( (runlist[0], gearfile, diamond_pixeltype) ) 
+  
