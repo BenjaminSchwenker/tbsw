@@ -243,10 +243,15 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     // Convert LCIO -> TB track  
     TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, _detector );  
     
-    // Do not touch sensors contributing hits in trackletts 
+    // Require that track is a hit on reference (timing) plane
     if (  (not trk.GetTE(_iref).HasHit()) && _iref >= 0 ) {
-      streamlog_out ( MESSAGE4 ) << "Track has no hit on reference plane. Skipping track!" << endl;
+      streamlog_out ( MESSAGE2 ) << "Track has no hit on reference plane. Skipping track!" << endl;
       continue;  
+    } 
+    
+    // Check that track has no hit on the DUT to avoid bias of residuals and efficiency
+    if ( trk.GetTE(_idut).HasHit()  ) {
+      streamlog_out ( MESSAGE3 ) << "Track has already hit on dut plane. Danger to bias final results" << endl;
     } 
     
     // Refit track in nominal alignment
