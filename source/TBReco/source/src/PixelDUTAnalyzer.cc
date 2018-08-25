@@ -86,7 +86,11 @@ PixelDUTAnalyzer::PixelDUTAnalyzer() : Processor("PixelDUTAnalyzer")
   registerProcessorParameter ("DUTPlane",
                               "Plane number of DUT along the beam line",
                               _idut,  static_cast < int > (3));
-       
+  
+  registerProcessorParameter ("ReferencePlane",
+                              "Plane number of teference plane. Use only tracks having a hit on the reference plane to measure DUT efficiency. Put -1 to deactivate.",
+                              _iref,  static_cast < int > (-1));
+        
   registerProcessorParameter ("MaxResidualU",
                               "Maximum u residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.",
                               _maxResidualU,  static_cast < double > (0.2));
@@ -238,7 +242,13 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
       
     // Convert LCIO -> TB track  
     TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, _detector );  
-      
+    
+    // Do not touch sensors contributing hits in trackletts 
+    if (  (not trk.GetTE(_iref).HasHit()) && _iref >= 0 ) {
+      streamlog_out ( MESSAGE4 ) << "Track has no hit on reference plane. Skipping track!" << endl;
+      continue;  
+    } 
+    
     // Refit track in nominal alignment
     bool trkerr = TrackFitter.Fit(trk);
     if ( trkerr ) {

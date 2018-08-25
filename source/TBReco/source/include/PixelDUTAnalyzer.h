@@ -111,6 +111,9 @@ protected:
    
 //! DUT plane number, counting sensors in gear file along the beam line starting at zero 
    int _idut; 
+
+//! Reference plane number, a track is required to have a hit on the reference plane 
+   int _iref; 
       
 //! Max residual for hit-track matching in 
    double _maxResidualU;  // in mm, local DUT uvw coordinate frame 
