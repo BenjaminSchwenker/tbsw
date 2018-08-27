@@ -88,6 +88,12 @@ namespace depfet {
     //! Minimum number of clusters occurances 
     int _minClusters; 
     
+    //! Periodicity for vCells used for clusterDB
+    int _vCellPeriod;
+
+    //! Periodicity for uCells used for clusterDB
+    int _uCellPeriod; 
+
     //! Position of steps for software ADC 
     std::vector<int> _swADCSteps; 
     

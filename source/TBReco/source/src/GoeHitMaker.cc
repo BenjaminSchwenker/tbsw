@@ -138,7 +138,14 @@ namespace depfet {
     for(auto step : _swADCSteps ) {
       streamlog_out( MESSAGE2 ) << " adc step "  << step << endl;
     }
-     
+    
+    histoName = "DB_periods";
+    if ((TVectorD*) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+      TVectorD *DB_periods = (TVectorD*) clusterDBFile->Get( histoName.c_str() );
+      _vCellPeriod  = (*DB_periods)[0] ; 
+      _uCellPeriod  = (*DB_periods)[1] ; 
+    } 
+         
     // Close root  file
     clusterDBFile->Close();
     delete clusterDBFile;
@@ -205,7 +212,7 @@ namespace depfet {
       
       // Compute the cluster ID string
       PixelCluster aCluster(cluster->getTrackerData());   
-      string id = aCluster.getLabel(_swADCSteps); 
+      string id = aCluster.getLabel(_swADCSteps,_vCellPeriod, _uCellPeriod); 
       
       streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID << " with label " << id << endl; 
       

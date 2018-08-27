@@ -76,6 +76,14 @@ namespace depfet {
                                 "List of steps for software ADC. An empty list gives a constant transfer curve (0bit limit)",
                                 _swADCSteps, initSoftADCSteps);
     
+    registerProcessorParameter ("vCellPeriod",
+                                "Periodicity for vCells used for clusterDB",
+                                _vCellPeriod,  static_cast < int > (1));
+     
+    registerProcessorParameter ("uCellPeriod",
+                                "Periodicity for uCells used for clusterDB",
+                                _uCellPeriod,  static_cast < int > (1));
+    
     registerProcessorParameter ("MinVarianceU", "Minimum value of variance for u position measurement [mm^2]",
                                 _minVarianceU, static_cast < float > (1.0E-6) );
     
@@ -235,7 +243,7 @@ namespace depfet {
           
           // Get cluster id  
           PixelCluster Cluster = TE.GetHit().GetCluster();  
-          string id = Cluster.getLabel(_swADCSteps); 
+          string id = Cluster.getLabel(_swADCSteps, _vCellPeriod, _uCellPeriod);
           
           // Register new cluster if needed
           if (_sensorMap.find(id) == _sensorMap.end() ) {
@@ -581,6 +589,11 @@ namespace depfet {
     }
     DB_swADCSteps.Write("DB_swADCSteps");
               
+    TVectorD DB_periods( 2 );
+    DB_periods[0] = _vCellPeriod;
+    DB_periods[1] = _uCellPeriod;
+    DB_periods.Write("DB_periods");
+    
     streamlog_out(MESSAGE3) << "ClusterDB written to file " << _clusterDBFileName 
                             << endl; 
     
