@@ -384,7 +384,7 @@
      <!--Maximum hit residual [mm]. Only used for pre-seleciton of hits-->
      <parameter name="MaxResidualV" type="FloatVec" value="0.5"/>
      <!--Maximum track chisq in track fit-->
-     <parameter name="MaxTrackChi2" type="float" value="10000000"/>
+     <parameter name="MaxTrackChi2" type="float" value="100000000"/>
      <!--Maximum number of consecutive missing hits in track-->
      <parameter name="MaximumGap" type="int" value="0"/>
      <!--Maximum slope of candiate tracks in Z=0 plane (rad). Set cut to zero to deactivate.-->
@@ -392,7 +392,7 @@
      <!--Minimum number of hits in track-->
      <parameter name="MinimumHits" type="int" value="8"/>
      <!--Maximum chi2 increment for any hit added to a track candidate-->
-     <parameter name="OutlierChi2Cut" type="float" value="100000000"/>
+     <parameter name="OutlierChi2Cut" type="float" value="1000000000"/>
      <!--Particle charge [e]-->
      <parameter name="ParticleCharge" type="double" value="-1"/>
      <!--Particle mass [GeV]-->
@@ -645,7 +645,7 @@
     <!--Output clusterDB file name-->
     <parameter name="ClusterDBFileName" type="string" value="localDB/clusterDB-DIA.root"/>
     <!--Minimum number of cluster ID occurances for clusterDB-->
-    <parameter name="MinClusters" type="int" value="500"/>
+    <parameter name="MinClusters" type="int" value="50"/>
     <!--Minimum value of variance for u position measurement [mm^2]-->
     <parameter name="MinVarianceU" type="float" value="2e-06"/>
     <!--Minimum value of variance for v position measurement [mm^2]-->
