@@ -10,25 +10,25 @@ import multiprocessing
 # Path to steering files 
 steerfiles = 'steering-files/diamonds-tb/'
 
-# Path to gear file 
-gearfile = 'gear_desy_dia_feonly.xml'
-
 # List of runs to be processed
 runlist = [
             '/home/benjamin/Desktop/3DDiamond/rawdata/run002261.raw',
           ]
 
-# Number of events to be processed (put -1 to process all)
-nevents = -1
-
-# Use cluster_db flag
-use_clusterDB = True
-
-
 def create_calibration_path(Env, rawfile, gearfile, diamond_pixeltype):
   """
   Returns a list of tbsw path objects needed to calibrate the tracking telescope
   """
+
+  if diamond_pixeltype == 1: 
+    uCellPeriod = 2
+    vCellPeriod = 1
+  elif diamond_pixeltype == 2:
+    uCellPeriod = 5
+    vCellPeriod = 1
+  elif diamond_pixeltype == 3:
+    uCellPeriod = 5
+    vCellPeriod = 2
   
   hotpixelkiller = Env.create_path('hotpixelkiller')
   hotpixelkiller.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : -1 })  
@@ -155,8 +155,8 @@ def create_calibration_path(Env, rawfile, gearfile, diamond_pixeltype):
   diamond_calibration_1.add_processor(name="M26GoeHitMaker", params={'HitCollectionName' : 'goehit_m26' })
   diamond_calibration_1.add_processor(name="FEI4GoeHitMaker", params={'HitCollectionName' : 'goehit_fei' }) 
   diamond_calibration_1.add_processor(name="AlignTF_Dia_LC", params={'InputHitCollectionNameVec': 'goehit_m26 goehit_fei hit_dia'})
-  diamond_calibration_1.add_processor(name="DiamondClusterCalibrator")
-  
+  diamond_calibration_1.add_processor(name="DiamondClusterCalibrator", params={'uCellPeriod': uCellPeriod, 'vCellPeriod': vCellPeriod})
+
   kalman_aligner_dia_3 = Env.create_path('kalman_aligner_dia_3')
   kalman_aligner_dia_3.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : -1, 'LCIOInputFiles': "tmp.slcio" })  
   kalman_aligner_dia_3.add_processor(name="M26GoeHitMaker", params={'HitCollectionName' : 'goehit_m26' })
@@ -176,8 +176,8 @@ def create_calibration_path(Env, rawfile, gearfile, diamond_pixeltype):
   diamond_calibration_2.add_processor(name="DiamondGoeHitMaker", params={'HitCollectionName' : 'goehit_dia' })
   diamond_calibration_2.add_processor(name="FEI4GoeHitMaker", params={'HitCollectionName' : 'goehit_fei' })
   diamond_calibration_2.add_processor(name="DiamondGoeHitMaker", params={'HitCollectionName' : 'goehit_dia' })
-  diamond_calibration_2.add_processor(name="AlignTF_LC", params={'InputHitCollectionNameVec': 'goehit_m26 goehit_fei goehit_dia'})
-  diamond_calibration_2.add_processor(name="DiamondClusterCalibrator")
+  diamond_calibration_2.add_processor(name="AlignTF_Dia_LC", params={'InputHitCollectionNameVec': 'goehit_m26 goehit_fei goehit_dia'})
+  diamond_calibration_2.add_processor(name="DiamondClusterCalibrator", params={'uCellPeriod': uCellPeriod, 'vCellPeriod': vCellPeriod})
   
   telescope_dqm_4 = Env.create_path('telescope_dqm_4')
   telescope_dqm_4.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : -1, 'LCIOInputFiles': "tmp.slcio" })  
@@ -222,17 +222,17 @@ def create_calibration_path(Env, rawfile, gearfile, diamond_pixeltype):
   
   diamond_db_path = [ diamond_calibration_1, 
                       kalman_aligner_dia_3, 
-                      #kalman_aligner_dia_3, 
-                      #kalman_aligner_dia_3, 
+                      kalman_aligner_dia_3, 
+                      kalman_aligner_dia_3, 
+                      diamond_calibration_2, 
+                      diamond_calibration_2, 
+                      diamond_calibration_2, 
                       #diamond_calibration_2, 
                       #diamond_calibration_2, 
                       #diamond_calibration_2, 
-                      #diamond_calibration_2, 
-                      #diamond_calibration_2, 
-                      #diamond_calibration_2, 
-                      #kalman_aligner_dia_3, 
-                      #kalman_aligner_dia_3, 
-                      #kalman_aligner_dia_3,
+                      kalman_aligner_dia_3, 
+                      kalman_aligner_dia_3, 
+                      kalman_aligner_dia_3,
                       telescope_dqm_4,  
                     ] 
 
@@ -251,7 +251,7 @@ def create_reco_path(Env, rawfile, gearfile, diamond_pixeltype):
   """
   
   reco = Env.create_path('reco')
-  reco.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents }) 
+  reco.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : -1 }) 
   reco.add_processor(name="RawInputProcessor",params={'FileName': rawfile})
   reco.add_processor(name="M26Unpacker")
   reco.add_processor(name="M26Clusterizer")
@@ -305,11 +305,14 @@ if __name__ == '__main__':
   
   # Select diamond pixel type: 0 not on diamond, 1 FE only, 2 rectangular, 3 hexagonal
   diamond_pixeltype = 1
+  gearfile = 'gear_desy_dia_type_{}.xml'.format(diamond_pixeltype)
   calibrate_and_reconstruct( (runlist[0], gearfile, diamond_pixeltype) ) 
   
   diamond_pixeltype = 2
+  gearfile = 'gear_desy_dia_type_{}.xml'.format(diamond_pixeltype)
   calibrate_and_reconstruct( (runlist[0], gearfile, diamond_pixeltype) ) 
   
   diamond_pixeltype = 3
+  gearfile = 'gear_desy_dia_type_{}.xml'.format(diamond_pixeltype)
   calibrate_and_reconstruct( (runlist[0], gearfile, diamond_pixeltype) ) 
   

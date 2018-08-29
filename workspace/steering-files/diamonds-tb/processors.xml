@@ -635,7 +635,7 @@
     <!--List of steps for software ADC. An empty list gives a constant transfer curve (0bit limit)-->
     <parameter name="SoftwareADC" type="IntVec"  value=""/> 
   </processor>
-
+  
   <processor name="DiamondClusterCalibrator" type="GoeClusterCalibrator">
     <!--GoeClusterCalibrator: Create clusterDB for clusters using reco tracks-->
     <!--Track input collection-->
@@ -654,6 +654,10 @@
     <parameter name="IgnoreIDs" type="IntVec"  value="0 1 2 3 4 5 21"/>  
     <!--List of steps for software ADC. An empty list gives a constant transfer curve (0bit limit)-->
     <parameter name="SoftwareADC" type="IntVec"  value=""/> 
+    <!--Periodicity for uCells used for clusterDB-->
+    <parameter name="uCellPeriod" type="int" value="1" />
+    <!--Periodicity for vCells used for clusterDB-->
+    <parameter name="vCellPeriod" type="int" value="1" />
   </processor>
    
   <processor name="M26ClusterCalibrator" type="GoeClusterCalibrator">
