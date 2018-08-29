@@ -441,6 +441,8 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     _rootHitSize = Cluster.getSize();  
     _rootHitSizeU = Cluster.getUSize();     
     _rootHitSizeV = Cluster.getVSize();     
+    _rootClusterStartCellU = Cluster.getUStart();
+    _rootClusterStartCellV = Cluster.getVStart();
     
     // Add variables for matched track 
     if ( hit2track[ihit] >= 0 ) {  
@@ -686,6 +688,8 @@ void PixelDUTAnalyzer::bookHistos()
    _rootHitTree->Branch("cellV_fit"       ,&_rootHitFitCellV           ,"cellV_fit/I");
    _rootHitTree->Branch("cellU_hit"       ,&_rootHitCellU           ,"cellU_hit/I");
    _rootHitTree->Branch("cellV_hit"       ,&_rootHitCellV           ,"cellV_hit/I");
+   _rootHitTree->Branch("startCellU_cluster"       ,&_rootClusterStartCellU           ,"startCellU_cluster/I");
+   _rootHitTree->Branch("srartCellV_cluster"       ,&_rootClusterStartCellV           ,"startCellV_cluster/I");
    _rootHitTree->Branch("cellUCenter_fit" ,&_rootHitFitCellUCenter  ,"cellUCenter_fit/D");
    _rootHitTree->Branch("cellVCenter_fit" ,&_rootHitFitCellVCenter  ,"cellVCenter_fit/D");                                      
    _rootHitTree->Branch("trackChi2"       ,&_rootHitTrackChi2      ,"trackChi2/D");
