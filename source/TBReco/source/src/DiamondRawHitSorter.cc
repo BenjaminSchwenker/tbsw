@@ -348,58 +348,76 @@ vector<int> DiamondRawHitSorter::getRectCoord(int x, int y){
 
 vector<int> DiamondRawHitSorter::getHexCoord(int x, int y){
   int c = 0, r  = 0;
-  vector<int> coord;
+  std::vector<int> coord;
+  	
+  // column periodicity is 4 in one row of hex and 5 in the second if you count the small rectangle without dedicated connection in the odd d columns.
+  // So do not count these small rectangles to get a 4 periodicity every where. This entails extra handling of some odd dcolumn rows and left columns
   
-  // columns
-  // at the moment no special handling for last rows which are not connected to the expected pixels
-  if (x%2 == 0){ // right column
-    if ((y-hexStartY)%4 == 0){
-      c = (x-metalStartX)/2 *hexPeriod +1; // +1
-    }
-    else if ((y-hexStartY)%4 == 1){
-      c = (x-metalStartX)/2 *hexPeriod; // +0
-    }
-    else if ((y-hexStartY)%4 == 2){
-      c = (x-metalStartX)/2 *hexPeriod +1; // +1
-    }
-    else {
-      if ((x/2) %2 == 0){ // right column of even double column
-        c = (x-metalStartX)/2 *hexPeriod; // +0
-      }
-      else { // right column of odd double column
-        c = (x-metalStartX)/2 *hexPeriod +2; // +2
-      }
-    }
-  }
-  else { // left column
-    if ((y-hexStartY)%4 == 0){
-      c = (x-metalStartX+1)/2 *hexPeriod -1 -1; // -1
-    }
-    else if ((y-hexStartY)%4 == 1){
-      c = (x-metalStartX+1)/2 *hexPeriod -1; // -0
-    }
-    else if ((y-hexStartY)%4 == 2){
-      c = (x-metalStartX+1)/2 *hexPeriod -1 -1; // +1
-    }
-    else {
-      if ((x+1)/2 %2 == 0){ // left column of even double column
-        c = (x-metalStartX+1)/2 *hexPeriod -1; // -0
-      }
-      else { // left column of odd double column
-        c = (x-metalStartX+1)/2 *hexPeriod -2; // -2
-      }
-    }
-  }
-  coord.push_back(c);
-  //rows
-  if ((y-hexStartY) %2 == 0){
-    r = (y-hexStartY)/2;
-  }
-  else {
-    r = (y-hexStartY-1)/2;
-  }
-  coord.push_back(r);
-  return coord;
+	// columns
+	// at the moment no special handling for last rows which are not connected to the expected pixels
+	if (x%2 == 0){ // right column
+		if ((y-hexStartY)%4 == 0){
+			c = (x-metalStartX)/2 *hexPeriod +1; // +1
+		}
+		else if ((y-hexStartY)%4 == 1){
+			c = (x-metalStartX)/2 *hexPeriod; // +0
+		}
+		
+		else {
+			if ((x/2) %2 == 0){ // right column of even double column
+				if ((y-hexStartY)%4 == 2){
+					c = (x-metalStartX)/2 *hexPeriod +1; // +1
+				}
+				else if ((y-hexStartY)%4 == 3){
+					c = (x-metalStartX)/2 *hexPeriod; // +0
+				}
+			}
+			else { // right column of odd double column
+				if ((y-hexStartY)%4 == 2){
+					c = (x-metalStartX)/2 *hexPeriod; // +0 because small rectangle does not count
+				}
+				else if ((y-hexStartY)%4 == 3){
+					c = (x-metalStartX)/2 *hexPeriod +1; // +1 because small rectangle
+				}
+			}
+		}
+	}
+	else { // left column
+		if ((y-hexStartY)%4 == 0){
+			c = (x-metalStartX+1)/2 *hexPeriod -1 -1; // -1
+		}
+		else if ((y-hexStartY)%4 == 1){
+			c = (x-metalStartX+1)/2 *hexPeriod -1; // -0
+		}
+		else {
+			if ((x+1)/2 %2 == 0){ // left column of even double column
+				if ((y-hexStartY)%4 == 2){
+					c = (x-metalStartX+1)/2 *hexPeriod -1 -1; // -1 
+				}
+				else if ((y-hexStartY)%4 == 3){
+					c = (x-metalStartX+1)/2 *hexPeriod -1; // -0
+				}
+			}
+			else { // left column of odd double column
+				if ((y-hexStartY)%4 == 2){
+					c = (x-metalStartX+1)/2 *hexPeriod -1; // -0 because no small rect counting
+				}
+				else if ((y-hexStartY)%4 == 3){
+					c = (x-metalStartX+1)/2 *hexPeriod -2; // -1
+				}
+			}
+		}
+	}
+	coord.push_back(c);
+	//rows
+	if ((y-hexStartY) %2 == 0){
+		r = (y-hexStartY)/2;
+	}
+	else {
+		r = (y-hexStartY-1)/2;
+	}
+	coord.push_back(r);
+	return coord;  
 }
 
 
