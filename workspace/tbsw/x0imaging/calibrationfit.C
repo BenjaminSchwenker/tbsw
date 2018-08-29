@@ -1452,9 +1452,120 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		c->SaveAs(pdfname); 
 	}
 
+	// Do a self consistency check:
+	// Check whether a fit with the determined calibration parameters yields the correct radiation length value for all the
+    // angle distributions used in the calibration fit
+
+	TString fitoption;
+	if(model=="moliere") fitoption="RMELS";
+	else fitoption="RMES";
+
+	// Declaration of another set of fit functions, these will be used for the self consistency check
+	std::vector<TF1 *> fitFcn_vec2;
+
+	TH1F* h_d = new TH1F("h_d","h_d",num_fitfunctions,0.5,num_fitfunctions+0.5);
+	h_d->GetXaxis()->SetTitle("Measurement area");
+	h_d->GetXaxis()->SetNdivisions(num_fitfunctions);
+	h_d->GetYaxis()->SetTitle("Thickness [mm]");
+	h_d->SetTitle("Self-consistency check");
+	TH1F* h_d_true = new TH1F("h_d_true","h_d_true",num_fitfunctions,0.5,num_fitfunctions+0.5);
+
+	// loop for definition of the fit functions, the fitrange is determined for every one of them
+	for(int i=0;i<num_fitfunctions;i++)
+	{
+
+		fitrange=DetermineFitrange(histo_vec.at(i),rangevalue);
+		fctname.Form("fitFcn%i",i);
+
+		if(model=="moliere") fitFcn = new TF1(fctname,molierefunction,-fitrange,fitrange,num_localparameters);
+		else fitFcn = new TF1(fctname,highlandfunction,-fitrange,fitrange,num_localparameters);
+
+		// Set starting values
+		double lambda=fitresults[0];
+		double BE_mean=fitresults[2];
+		double BE_ugrad=fitresults[4];
+		double BE_vgrad=fitresults[6];
+		double parameters_temp[num_localparameters]={ BE_mean,z,mass,grid.GetMeasurementAreas().at(0).Get_density(),grid.GetMeasurementAreas().at(0).Get_Z(),grid.GetMeasurementAreas().at(0).Get_A(),
+											1.0,recoerr,lambda,700.0,grid.GetMeasurementAreas().at(0).Get_u_center(),
+											grid.GetMeasurementAreas().at(0).Get_v_center(),BE_ugrad,BE_vgrad};
+   		fitFcn->SetParameters(parameters_temp);
+
+		for(int i=0; i<num_localparameters;i++)
+		{
+			if(i!=6&&i!=9)
+			{
+   				fitFcn->FixParameter(i,parameters_temp[i]);
+			}
+		}	
+
+		// Fill vector with pointers to fit functions
+		fitFcn_vec2.push_back(fitFcn);
+	}
+
+	for(int i=0;i<TMath::Ceil(double(num_fitfunctions)/4.0);i++)
+	{
+		TString canvasname;
+		canvasname.Form("c%i",i);
+		TCanvas *c = new TCanvas(canvasname,canvasname,900,1000);
+		std::vector<TPad*> pads;
+		TPad *pad1 = new TPad("pad1","pad1",0.01,0.51,0.49,0.99);
+		pad1->Draw();
+		pads.push_back(pad1);
+		TPad *pad2 = new TPad("pad2","pad2",0.51,0.51,0.99,0.99);
+		pad2->Draw();
+		pads.push_back(pad2);
+		TPad *pad3 = new TPad("pad3","pad3",0.01,0.01,0.49,0.49);
+		pad3->Draw();
+		pads.push_back(pad3);
+		TPad *pad4 = new TPad("pad4","pad4",0.51,0.01,0.99,0.49);
+		pad4->Draw();
+		pads.push_back(pad4);
+
+		for(int j=0;j<4;j++)
+		{
+		   	pads.at(j)->cd();
+			if(((4*i)+j)<num_fitfunctions)
+			{
+				Title.Form("Area %i: d=%fmm",(4*i)+j,grid.GetMeasurementAreas().at((4*i)+j).Get_thickness());
+				histo_vec.at((4*i)+j)->SetTitle(Title);
+
+
+				TFitResultPtr fitr=histo_vec.at((4*i)+j)->Fit(fitFcn_vec2.at((4*i)+j),fitoption);
+				if(fitr!=0)
+				{
+					cout<<"Fit of angle distribution failed with status: "<<fitr<<endl;
+					cout<<"Repeat fit "<<endl;
+					histo_vec.at((4*i)+j)->Fit(fitFcn_vec2.at((4*i)+j),fitoption);
+				}
+				
+				
+				histo_vec.at((4*i)+j)->Draw();
+                cout<<"fitfunction "<<(4*i)+j<<" of "<<num_fitfunctions<<endl;
+
+				h_d->SetBinContent((4*i)+j+1,fitFcn_vec2.at((4*i)+j)->GetParameter(6));
+				h_d->SetBinError((4*i)+j+1,fitFcn_vec2.at((4*i)+j)->GetParError(6));
+				h_d_true->SetBinContent((4*i)+j+1,grid.GetMeasurementAreas().at((4*i)+j).Get_thickness());
+            }
+		}
+
+		pdfname="x0fit_"+model+"_"+canvasname+".pdf";
+
+		c->SaveAs(pdfname); 
+	}
+
+	TCanvas *c = new TCanvas("c1","c1",900,1000);
+	gStyle->SetOptStat(0);
+	h_d->SetLineColor(2);
+	h_d->Draw("");
+	h_d_true->Draw("same");
+   	TLegend* legend = new TLegend(0.55,0.15,0.85,0.25);
+   	legend->AddEntry(h_d,"Measured values","l");
+   	legend->AddEntry(h_d_true,"Truth values","l");
+   	legend->Draw();
+	c->SaveAs("selfconsistency.pdf");
+
 	// Create a results root file and save the fit results in a histogram
 	TFile *resultsfile = new TFile("X0calibration_results.root", "RECREATE");
-
 	TH1F * resultshist=new TH1F("resultshist","results of calibration",4,1,4);
 
     resultshist->GetXaxis()->SetBinLabel( 1, "#lambda" );
@@ -1463,20 +1574,13 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
     resultshist->GetXaxis()->SetBinLabel( 4, "#nablaE_{v}[GeV/mm]" );
 
 	// Save the results to histogram
-	resultshist->SetBinContent(1,fitresults[0]);
-	resultshist->SetBinError(1,fitresults[1]);
-
-	resultshist->SetBinContent(2,fitresults[2]);
-	resultshist->SetBinError(2,fitresults[3]);
-
-	resultshist->SetBinContent(3,fitresults[4]);
-	resultshist->SetBinError(3,fitresults[5]);
-
-	resultshist->SetBinContent(4,fitresults[6]);
-	resultshist->SetBinError(4,fitresults[7]);
+	for(int i=0;i<8;i++)
+	{
+		resultshist->SetBinContent(TMath::Floor(double(i)/2.0)+1,fitresults[i]);
+		resultshist->SetBinError(TMath::Floor(double(i)/2.0)+1,fitresults[i+1]);
+	}
 
 	resultshist->Write("results");
-
 	resultsfile->Close();
 	
 
@@ -1692,14 +1796,14 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	cout<<"Beam particle lambda		 start value is				"<<lambda_start<<endl<<endl;
 
 	if(fixlambda) 	cout<<"Calibration factor Lambda will not be calibrated"<<endl;
-	else cout<<endl<<"Beam particle mean energy will be calibrated"<<endl;
+	else cout<<"Calibration factor Lambda will be calibrated"<<endl;
 
-	if(fix_offset) cout<<endl<<"Beam particle mean energy will not be calibrated"<<endl;
-	else cout<<endl<<"Beam particle mean energy will be calibrated"<<endl;
+	if(fix_offset) cout<<"Beam particle mean energy will not be calibrated"<<endl<<endl;
+	else cout<<"Beam particle mean energy will be calibrated"<<endl<<endl;
 
-	cout<<"Beam particle energy u gradient start value is		"<<BE_ugrad<<" GeV/mm"<<endl;
-	cout<<"Beam particle energy v gradient start value is		"<<BE_vgrad<<" GeV/mm"<<endl;
-
+	cout<<"Using "<<model<<" fit model during calibration and self-consistency check!"<<endl;
+	if(Use_loglikelihood_estimator) cout<<"Using log-likelihood estimator fit during calibration and self-consistency check!"<<endl<<endl;
+	else cout<<"Using chi2 estimator fit during calibration and self-consistency check!"<<endl<<endl;
 
 	double* iresults=fit(rootfile, grid, beamoptions, recoerr, model, fitoptions, rangevalue);
 
