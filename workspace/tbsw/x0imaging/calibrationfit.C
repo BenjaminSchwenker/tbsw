@@ -636,8 +636,6 @@ Double_t molierefunction(Double_t *x, Double_t *par)
 			// Set histogram values
 			h_f1_table->SetBinContent(i+1,interpolation1);
 			h_f2_table->SetBinContent(i+1,interpolation2);	
-	
-
 	} 
 
 
@@ -1464,11 +1462,12 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	std::vector<TF1 *> fitFcn_vec2;
 
 	TH1F* h_d = new TH1F("h_d","h_d",num_fitfunctions,0.5,num_fitfunctions+0.5);
-	h_d->GetXaxis()->SetTitle("Measurement area");
-	h_d->GetXaxis()->SetNdivisions(num_fitfunctions);
-	h_d->GetYaxis()->SetTitle("Thickness [mm]");
-	h_d->SetTitle("Self-consistency check");
 	TH1F* h_d_true = new TH1F("h_d_true","h_d_true",num_fitfunctions,0.5,num_fitfunctions+0.5);
+	h_d_true->SetMinimum(-0.5);
+	h_d_true->GetXaxis()->SetTitle("Measurement area");
+	h_d_true->GetXaxis()->SetNdivisions(num_fitfunctions);
+	h_d_true->GetYaxis()->SetTitle("Thickness [mm]");
+	h_d_true->SetTitle("Self-consistency check");
 
 	// loop for definition of the fit functions, the fitrange is determined for every one of them
 	for(int i=0;i<num_fitfunctions;i++)
@@ -1556,13 +1555,17 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	TCanvas *c = new TCanvas("c1","c1",900,1000);
 	gStyle->SetOptStat(0);
 	h_d->SetLineColor(2);
-	h_d->Draw("");
-	h_d_true->Draw("same");
+	h_d_true->Draw("");
+	h_d->Draw("same");
    	TLegend* legend = new TLegend(0.55,0.15,0.85,0.25);
    	legend->AddEntry(h_d,"Measured values","l");
    	legend->AddEntry(h_d_true,"Truth values","l");
    	legend->Draw();
 	c->SaveAs("selfconsistency.pdf");
+
+	file->cd("selfconsistency/");
+	h_d->Write("d_measured");
+	h_d_true->Write("d_truth");
 
 	// Create a results root file and save the fit results in a histogram
 	TFile *resultsfile = new TFile("X0calibration_results.root", "RECREATE");
@@ -1711,6 +1714,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	rootfile->mkdir("grid");
 	rootfile->mkdir("grid/raw");
 	rootfile->mkdir("grid/fit");
+	rootfile->mkdir("selfconsistency");
 
 	rootfile->cd("");
 
