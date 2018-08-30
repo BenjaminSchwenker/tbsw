@@ -220,7 +220,7 @@
 						radLength="93.660734"
 					/>
 				</layer>
-				<!--3D Diamond -->
+				<!--3D Diamond, haxogonal lattice-->
 				<layer>
 					<ladder ID="22"
 						positionX="0.00"
@@ -236,12 +236,12 @@
 						positionX="0.00"
 						positionY="0.00"
 						positionZ="451"
-						sizeX="8.0"
+						sizeX="10.0"
 						sizeY="8.0"
 						thickness="1.9831"
 						npixelX="80"
 						npixelY="80"
-						pitchX="0.100"
+						pitchX="0.125"
 						pitchY="0.100"
 						resolutionX="0.072"
                         resolutionY="0.0144"

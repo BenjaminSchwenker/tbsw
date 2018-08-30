@@ -27,7 +27,7 @@ def create_calibration_path(Env, rawfile, gearfile, diamond_pixeltype):
     uCellPeriod = 5
     vCellPeriod = 1
   elif diamond_pixeltype == 3:
-    uCellPeriod = 5
+    uCellPeriod = 4
     vCellPeriod = 2
   
   hotpixelkiller = Env.create_path('hotpixelkiller')
