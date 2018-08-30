@@ -357,7 +357,7 @@ Double_t highlandfunction(Double_t *x, Double_t *par)
 	double X0=716.4*A/((Z+1)*Z*density*TMath::Log(287.0/TMath::Sqrt(Z)));
 
 	// Combination of Highland width and reconstruction error
-	double sigma=TMath::Sqrt(pow(0.0136*charge/(p*beta)*TMath::Sqrt(d1/X0)*(1.0+0.038*TMath::Log(d1/X0)),2)+pow(recoerror,2));
+	double sigma=TMath::Sqrt(pow(recoerror,2)+pow(0.0136*charge/(p*beta)*TMath::Sqrt(d1/X0)*(1.0+0.038*TMath::Log(d1/X0)),2));
 
 	// function value at a certain theta value
 	double value=par[9]*TMath::Gaus(x[0],0.0,sigma);
@@ -1463,7 +1463,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 	TH1F* h_d = new TH1F("h_d","h_d",num_fitfunctions,0.5,num_fitfunctions+0.5);
 	TH1F* h_d_true = new TH1F("h_d_true","h_d_true",num_fitfunctions,0.5,num_fitfunctions+0.5);
-	h_d_true->SetMinimum(-0.5);
+	h_d_true->SetMinimum(-0.2);
 	h_d_true->GetXaxis()->SetTitle("Measurement area");
 	h_d_true->GetXaxis()->SetNdivisions(num_fitfunctions);
 	h_d_true->GetYaxis()->SetTitle("Thickness [mm]");
@@ -1496,6 +1496,8 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
    				fitFcn->FixParameter(i,parameters_temp[i]);
 			}
 		}	
+
+   		fitFcn->SetParLimits(6,1E-8,200.0);
 
 		// Fill vector with pointers to fit functions
 		fitFcn_vec2.push_back(fitFcn);
