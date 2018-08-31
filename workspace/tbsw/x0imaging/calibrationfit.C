@@ -1579,10 +1579,10 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
     resultshist->GetXaxis()->SetBinLabel( 4, "#nablaE_{v}[GeV/mm]" );
 
 	// Save the results to histogram
-	for(int i=0;i<8;i++)
+	for(int i=0;i<4;i++)
 	{
-		resultshist->SetBinContent(TMath::Floor(double(i)/2.0)+1,fitresults[i]);
-		resultshist->SetBinError(TMath::Floor(double(i)/2.0)+1,fitresults[i+1]);
+		resultshist->SetBinContent(i+1,fitresults[2*i]);
+		resultshist->SetBinError(i+1,fitresults[2*i+1]);
 	}
 
 	resultshist->Write("results");
