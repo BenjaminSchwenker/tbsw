@@ -29,12 +29,16 @@ void DrawBoxes()
 	// Determine the number of fit functions from the cfg file
 	int num_MA=0;   // Number of additional measurement areas
 	int num_line=0; // Number of lines, which are used for BE gradient calibration
+	int num_rectangle=0; // Number of rectangular areasle, which include a whole grid of measurement areas
     
 	TString MAname;
 	MAname.Form("MA%i",num_MA+1);
 
 	TString linename;
 	linename.Form("line%i",num_line+1);
+
+	TString rectanglename;
+	rectanglename.Form("rectangle%i",num_rectangle+1);
 
 	while(mEnv->GetValue(MAname+".exist",0)!=0)
 	{
@@ -82,6 +86,32 @@ void DrawBoxes()
 
 		num_line++;
 		linename.Form("line%i",num_line+1);
+	}
+
+	while(mEnv->GetValue(rectanglename+".exist",0)!=0)
+	{
+		// Find number of measurement areas in rectangle
+		if((mEnv->GetValue(rectanglename+".usteplength",0.0)!=0.0)&&(mEnv->GetValue(rectanglename+".usteplength",0.0)!=0.0))
+		{
+
+			for(double d_u=mEnv->GetValue(rectanglename+".startu",0.0);d_u<(mEnv->GetValue(rectanglename+".startu",0.0)+mEnv->GetValue(rectanglename+".ulength",-1.0));d_u+=mEnv->GetValue(rectanglename+".usteplength",10.0))
+			{
+				for(double d_v=mEnv->GetValue(rectanglename+".startv",0.0);d_v<(mEnv->GetValue(rectanglename+".startv",0.0)+mEnv->GetValue(rectanglename+".vlength",-1.0));d_v+=mEnv->GetValue(rectanglename+".vsteplength",10.0))
+				{
+					// Compute/Read out measurement area parameters
+					umin.push_back(d_u-0.5*mEnv->GetValue(rectanglename+".usteplength",0.0));
+					umax.push_back(d_u+0.5*mEnv->GetValue(rectanglename+".usteplength",0.0));
+					vmin.push_back(d_v-0.5*mEnv->GetValue(rectanglename+".vsteplength",0.0));
+					vmax.push_back(d_v+0.5*mEnv->GetValue(rectanglename+".vsteplength",0.0));
+				}
+			}
+
+
+		}
+		else continue;
+
+		num_rectangle++;
+		rectanglename.Form("rectangle%i",num_rectangle+1);
 	}
 
     // TString for the input root file name

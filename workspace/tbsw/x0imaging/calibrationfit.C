@@ -168,6 +168,7 @@ Grid::Grid(TEnv* mEnv)
 	// Determine the number of fit functions from the cfg file
 	int num_MA=0; // Number of additional measurement areas
 	int num_line=0; // Number of Lines, which are used for BE gradient calibration
+	int num_rectangle=0; // Number of rectangular areasle, which include a whole grid of measurement areas
 
 	
 
@@ -176,6 +177,9 @@ Grid::Grid(TEnv* mEnv)
 
 	TString linename;
 	linename.Form("line%i",num_line+1);
+
+	TString rectanglename;
+	rectanglename.Form("rectangle%i",num_rectangle+1);
 
 	while(mEnv->GetValue(MAname+".exist",0)!=0)
 	{
@@ -263,6 +267,47 @@ Grid::Grid(TEnv* mEnv)
 		num_line++;
 		linename.Form("line%i",num_line+1);
 	}	
+
+	while(mEnv->GetValue(rectanglename+".exist",0)!=0)
+	{
+
+		cout<<"rectanglename: "<<rectanglename<<endl;
+		if((mEnv->GetValue(rectanglename+".usteplength",0.0)!=0.0)&&(mEnv->GetValue(rectanglename+".vsteplength",0.0)!=0.0)) 
+		{
+
+			cout<<"inside if statement"<<endl;
+			for(double d_u=mEnv->GetValue(rectanglename+".startu",0.0);d_u<(mEnv->GetValue(rectanglename+".startu",0.0)+mEnv->GetValue(rectanglename+".ulength",-1.0));d_u+=mEnv->GetValue(rectanglename+".usteplength",10.0))
+			{
+				for(double d_v=mEnv->GetValue(rectanglename+".startv",0.0);d_v<(mEnv->GetValue(rectanglename+".startv",0.0)+mEnv->GetValue(rectanglename+".vlength",-1.0));d_v+=mEnv->GetValue(rectanglename+".vsteplength",10.0))
+				{
+					// Compute/Read out measurement area parameters
+					double ucenter=d_u;
+					double vcenter=d_v;
+					double ulength=mEnv->GetValue(rectanglename+".usteplength", 0.1);
+					double vlength=mEnv->GetValue(rectanglename+".vsteplength", 0.1);
+					double thickness=mEnv->GetValue(rectanglename+".thickness", 1.8);
+					double Z=mEnv->GetValue(rectanglename+".atomicnumber", 13.0);
+					double A=mEnv->GetValue(rectanglename+".atomicmassnumber", 27.0);
+					double density=mEnv->GetValue(rectanglename+".density", 2.7);
+					int run_min=mEnv->GetValue(rectanglename+".minrunnumber", -1);
+					int run_max=mEnv->GetValue(rectanglename+".maxrunnumber", -1);
+					int max_angle=mEnv->GetValue(rectanglename+".maxanglenumber", -1);
+
+					// Define measurement area based on these parameters
+					MeasurementArea MA(ucenter,vcenter,ulength,vlength,thickness,density,Z,A,run_min,run_max,max_angle);
+				  
+					// Add measurement area to predefined grid
+					m_MeasurementAreas.push_back(MA);
+				}
+			}
+		}
+
+		// in this case there is nothing to do
+		else continue;
+
+		num_rectangle++;
+		rectanglename.Form("rectangle%i",num_rectangle+1);
+	}
 
 }
 
