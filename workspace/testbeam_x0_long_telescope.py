@@ -58,7 +58,7 @@ alignmentdb_filename='alignmentDB.root'
 Use_clusterDB=True
 
 # Use Single Hit seeding to speed up track finding?
-Use_SingleHitSeeding=True
+Use_SingleHitSeeding=False
 
 # Number of iterations during target alignment
 # Set to 0 or negative integer to disable target alignment
