@@ -57,6 +57,9 @@ alignmentdb_filename='alignmentDB.root'
 # Determine cluster resolution and store in cluster DB?
 Use_clusterDB=True
 
+# Use Single Hit seeding to speed up track finding?
+Use_SingleHitSeeding=True
+
 # Number of iterations during target alignment
 # Set to 0 or negative integer to disable target alignment
 targetalignment_iterations=0
@@ -216,6 +219,16 @@ RunList_x0image = [
           ]
 
 RawfileList_x0image = [rawfile_path+x for x in RunList_x0image]
+
+
+# List of runs, which are input for the second x0 image
+# Remove comment in case you want to produce more than one image
+#RunList_x0image2 = [
+#		    'run000209.raw', #other material
+#		    'run000210.raw', #other material
+#          ]
+
+#RawfileList_x0image2 = [rawfile_path+x for x in RunList_x0image2]
 
 # Number of events ...
 # for telescope calibration
@@ -620,7 +633,7 @@ def create_calibration_path(Env, rawfile, gearfile, useclusterdb):
   return calpath
 
 # Processor settings and sequence during angle reconstruction
-def create_reco_path(Env, rawfile, gearfile, numberofevents):
+def create_reco_path(Env, rawfile, gearfile, numberofevents, usesinglehitseeding):
   """
   Returns a list of tbsw path objects to reconstruct a test beam run 
   """
@@ -631,8 +644,15 @@ def create_reco_path(Env, rawfile, gearfile, numberofevents):
   reco.add_processor(name="M26Unpacker")
   reco.add_processor(name="M26Clusterizer")
   reco.add_processor(name="M26GoeHitMaker")
-  reco.add_processor(name="DownstreamFinder")
-  reco.add_processor(name="UpstreamFinder")
+
+  if usesinglehitseeding:
+    reco.add_processor(name="DownstreamFinder", params={'ForwardPass_FirstPlane': -1, 'ForwardPass_SecondPlane': -1, 'SingleHitSeeding': 6 })
+    reco.add_processor(name="UpstreamFinder", params={'ForwardPass_FirstPlane': -1, 'ForwardPass_SecondPlane': -1, 'SingleHitSeeding': 0 })
+
+  else:
+    reco.add_processor(name="DownstreamFinder")
+    reco.add_processor(name="UpstreamFinder")
+
   reco.add_processor(name="X0Imager")
     
   return [ reco ]
@@ -678,12 +698,12 @@ def reconstruct(params):
   RecObj.set_beam_momentum(beamenergy)
 
   # Create reconstuction path
-  recopath = create_reco_path(RecObj, rawfile, gearfile, nevents_reco)  
+  recopath = create_reco_path(RecObj, rawfile, gearfile, nevents_reco, Use_SingleHitSeeding)  
 
   # Use caltag of the last target alignment iteration
   iteration_string='-target-alignment-it'+str(targetalignment_iterations-1)
   localcaltag=caltag+iteration_string
-
+ 
   if targetalignment_iterations < 1:
     localcaltag=caltag
 
@@ -788,6 +808,8 @@ if __name__ == '__main__':
 
 
   # Calibrate the telescope 
+  # In case you already have all the DB files from another telescope calibration 
+  # and want to reuse it, just comment out the following three lines
   params_cali = ( rawfile_cali, steerfiles_cali, gearfile, caltag)
   print(params_cali)
   calibrate( params_cali )
@@ -813,6 +835,8 @@ if __name__ == '__main__':
 
 
   # start x0 calibration
+  # In case you already have the x0 calibration DB file from a previous x0 calibration 
+  # and want to reuse it, just comment out the following three lines
   deletetag='1'
   params_x0cali = ( x0tag, RawfileList_x0cali, steerfiles_x0, caltag, deletetag)
   xx0calibration(params_x0cali)
@@ -822,4 +846,11 @@ if __name__ == '__main__':
   nametag='image1'
   params_x0image = ( x0tag, RawfileList_x0image, steerfiles_x0, caltag, deletetag, nametag)
   xx0image(params_x0image)
+
+  # Generate another calibrated X/X0 image
+  # The X/X0 image step can be repeated multiple times to generate a set of images
+  # Just remove the comment and add a run list for each image
+  #nametag='image2'
+  #params_x0image = ( x0tag, RawfileList_x0image2, steerfiles_x0, caltag, deletetag, nametag)
+  #xx0image(params_x0image)
 
