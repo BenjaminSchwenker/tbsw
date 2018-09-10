@@ -60,6 +60,12 @@ Use_clusterDB=True
 # Use Single Hit seeding to speed up track finding?
 Use_SingleHitSeeding=False
 
+# Script purpose option:
+# 0: Script only processes imaging part
+# 1: Script processes x0 calibration and imaging part
+# Everything else: Script processes the whole chain: Telescope calibration, angle reconstruction, x0 calibration and x0 imaging 
+Script_purpose_option=2
+
 # Number of iterations during target alignment
 # Set to 0 or negative integer to disable target alignment
 targetalignment_iterations=0
@@ -632,31 +638,6 @@ def create_calibration_path(Env, rawfile, gearfile, useclusterdb):
   
   return calpath
 
-# Processor settings and sequence during angle reconstruction
-def create_reco_path(Env, rawfile, gearfile, numberofevents, usesinglehitseeding):
-  """
-  Returns a list of tbsw path objects to reconstruct a test beam run 
-  """
-  
-  reco = Env.create_path('reco')
-  reco.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : numberofevents}) 
-  reco.add_processor(name="RawInputProcessor", params={'FileName': rawfile})
-  reco.add_processor(name="M26Unpacker")
-  reco.add_processor(name="M26Clusterizer")
-  reco.add_processor(name="M26GoeHitMaker")
-
-  if usesinglehitseeding:
-    reco.add_processor(name="DownstreamFinder", params={'ForwardPass_FirstPlane': -1, 'ForwardPass_SecondPlane': -1, 'SingleHitSeeding': 6 })
-    reco.add_processor(name="UpstreamFinder", params={'ForwardPass_FirstPlane': -1, 'ForwardPass_SecondPlane': -1, 'SingleHitSeeding': 0 })
-
-  else:
-    reco.add_processor(name="DownstreamFinder")
-    reco.add_processor(name="UpstreamFinder")
-
-  reco.add_processor(name="X0Imager")
-    
-  return [ reco ]
-
 
 # Perform the telescope calibration
 def calibrate(params):
@@ -698,7 +679,7 @@ def reconstruct(params):
   RecObj.set_beam_momentum(beamenergy)
 
   # Create reconstuction path
-  recopath = create_reco_path(RecObj, rawfile, gearfile, nevents_reco, Use_SingleHitSeeding)  
+  recopath = create_x0reco_path(RecObj, rawfile, gearfile, nevents_reco, Use_SingleHitSeeding)  
 
   # Use caltag of the last target alignment iteration
   iteration_string='-target-alignment-it'+str(targetalignment_iterations-1)
@@ -809,37 +790,43 @@ if __name__ == '__main__':
 
   # Calibrate the telescope 
   # In case you already have all the DB files from another telescope calibration 
-  # and want to reuse it, just comment out the following three lines
-  params_cali = ( rawfile_cali, steerfiles_cali, gearfile, caltag)
-  print(params_cali)
-  calibrate( params_cali )
+  # and want to reuse it, just switch to Script_purpose_option 0 or 1
+  
+  if Script_purpose_option !=0 and Script_purpose_option !=1:
+    params_cali = ( rawfile_cali, steerfiles_cali, gearfile, caltag)
+    print(params_cali)
+    calibrate( params_cali )
 
 
   # Target alignment
-  for it in range(0,targetalignment_iterations):
-    params_TA = (rawfile_TA, steerfiles_reco, caltag, it)
-    print "The parameters for the target alignment are: " 
-    print params_TA
+  if Script_purpose_option !=0 and Script_purpose_option !=1:
+    for it in range(0,targetalignment_iterations):
+      params_TA = (rawfile_TA, steerfiles_reco, caltag, it)
+      print "The parameters for the target alignment are: " 
+      print params_TA
 
-    targetalignment(params_TA)
+      targetalignment(params_TA)
 
 
   # Angle reconstruction
-  params_reco=[(x, steerfiles_reco, gearfile, caltag) for x in RawfileList_reco]
-  print "The parameters for the reconstruction are: " 
-  print params_reco
+  if Script_purpose_option !=0 and Script_purpose_option !=1:
+    params_reco=[(x, steerfiles_reco, gearfile, caltag) for x in RawfileList_reco]
+    print "The parameters for the reconstruction are: " 
+    print params_reco
 
-  count = multiprocessing.cpu_count()
-  pool = multiprocessing.Pool(processes=count)
-  pool.map(reconstruct, params_reco)
+    count = multiprocessing.cpu_count()
+    pool = multiprocessing.Pool(processes=count)
+    pool.map(reconstruct, params_reco)
 
 
   # start x0 calibration
   # In case you already have the x0 calibration DB file from a previous x0 calibration 
-  # and want to reuse it, just comment out the following three lines
-  deletetag='1'
-  params_x0cali = ( x0tag, RawfileList_x0cali, steerfiles_x0, caltag, deletetag)
-  xx0calibration(params_x0cali)
+  # and want to reuse it, just switch to Script_purpose_option 0
+
+  if Script_purpose_option !=0:
+    deletetag='1'
+    params_x0cali = ( x0tag, RawfileList_x0cali, steerfiles_x0, caltag, deletetag)
+    xx0calibration(params_x0cali)
 
 
   # Generate a calibrated X/X0 image
