@@ -136,7 +136,7 @@ def calibrate():
   set_parameter(gearfile=localgearfile, sensorID=11, parametername='radLength', value=304000.0)
   
   # Create list of calibration steps 
-  calpath = create_mc_calibration_path(CalObj, rawfile_air, gearfile, nevents_air)
+  calpath = create_mc_x0calibration_path(CalObj, rawfile_air, gearfile, nevents_air)
 
   # Run the calibration steps 
   CalObj.calibrate(path=calpath,ifile=rawfile_air,caltag=caltag)  

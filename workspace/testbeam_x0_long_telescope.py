@@ -266,7 +266,7 @@ def calibrate(params):
   CalObj.set_beam_momentum(beamenergy)
   
   # Create list of calibration steps 
-  calpath = create_calibration_longtelescope_path(CalObj, rawfile, gearfile, nevents_cali, Use_clusterDB)
+  calpath = create_x0calibration_longtelescope_path(CalObj, rawfile, gearfile, nevents_cali, Use_clusterDB)
   
   # Run the calibration steps 
   CalObj.calibrate(path=calpath,ifile=rawfile,caltag=caltag)

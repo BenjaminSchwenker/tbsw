@@ -131,7 +131,7 @@ def calibrate(params):
   CalObj.set_beam_momentum(beamenergy)
   
   # Create list of calibration steps 
-  calpath = create_calibration_path(CalObj, rawfile, gearfile, nevents_cali)
+  calpath = create_x0calibration_path(CalObj, rawfile, gearfile, nevents_cali)
   
   # Run the calibration steps 
   CalObj.calibrate(path=calpath,ifile=rawfile,caltag=caltag)
