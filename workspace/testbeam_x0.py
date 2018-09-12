@@ -36,6 +36,9 @@ steerfiles_x0 = 'steering-files/x0-tboct16-2GeV-air/'
 # Nominal Beam energy
 beamenergy=2.0
 
+# Use Single Hit seeding to speed up track finding?
+Use_SingleHitSeeding=False
+
 # cal tags
 # telescope calibration cal tag (typically named after telescope setup, beam energy etc.)
 caltag='40mm-spacing-2GeV'
@@ -108,141 +111,6 @@ nevents_TA = 1000000
 # for angle reconstruction (-1 use all available events)
 nevents_reco = -1
 
-# Processor settings and sequence during telescope calibration
-def create_calibration_path(Env, rawfile, gearfile):
-  """
-  Returns a list of tbsw path objects to calibrate the tracking telescope
-  """
-  
-  hotpixelkiller = Env.create_path('hotpixelkiller')
-  hotpixelkiller.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000})  
-  hotpixelkiller.add_processor(name="RawInputProcessor",params={'FileName': rawfile})
-  hotpixelkiller.add_processor(name="M26Unpacker")
-  hotpixelkiller.add_processor(name="M26HotPixelKiller")
-  
-  clusterizer = Env.create_path('clusterizer')
-  clusterizer.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_cali}) 
-  clusterizer.add_processor(name="RawInputProcessor",params={'FileName': rawfile})
-  clusterizer.add_processor(name="M26Unpacker")
-  clusterizer.add_processor(name="M26Clusterizer")
-  clusterizer.add_processor(name="LCIOOutput")
-
-  correlator = Env.create_path('correlator')
-  correlator.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" }) 
-  correlator.add_processor(name="M26CogHitMaker")
-  correlator.add_processor(name="RawDQM") 
-  correlator.add_processor(name="TelCorrelator")
-  
-  kalman_aligner_1 = Env.create_path('kalman_aligner_1')
-  kalman_aligner_1.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
-  kalman_aligner_1.add_processor(name="M26CogHitMaker")
-  kalman_aligner_1.add_processor(name="AlignTF_LC")
-  kalman_aligner_1.add_processor(name="PreAligner")
-  
-  kalman_aligner_2 = Env.create_path('kalman_aligner_2')
-  kalman_aligner_2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
-  kalman_aligner_2.add_processor(name="M26CogHitMaker")
-  kalman_aligner_2.add_processor(name="AlignTF_TC")
-  kalman_aligner_2.add_processor(name="TelAligner")
-  
-  telescope_dqm = Env.create_path('telescope_dqm')
-  telescope_dqm.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
-  telescope_dqm.add_processor(name="M26CogHitMaker")
-  telescope_dqm.add_processor(name="AlignTF_TC")
-  telescope_dqm.add_processor(name="TelescopeDQM")
-  
-  cluster_calibration_1 = Env.create_path('cluster_calibration_1')
-  cluster_calibration_1.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_cali, 'LCIOInputFiles': "tmp.slcio" }) 
-  cluster_calibration_1.add_processor(name="M26CogHitMaker") 
-  cluster_calibration_1.add_processor(name="AlignTF_TC")
-  cluster_calibration_1.add_processor(name="M26ClusterCalibrator")
-  
-  kalman_aligner_3 = Env.create_path('kalman_aligner_3')
-  kalman_aligner_3.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
-  kalman_aligner_3.add_processor(name="M26GoeHitMaker")
-  kalman_aligner_3.add_processor(name="AlignTF_TC")
-  kalman_aligner_3.add_processor(name="TelAligner")
-  
-  cluster_calibration_2 = Env.create_path('cluster_calibration_2')
-  cluster_calibration_2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_cali, 'LCIOInputFiles': "tmp.slcio" })  
-  cluster_calibration_2.add_processor(name="M26GoeHitMaker") 
-  cluster_calibration_2.add_processor(name="AlignTF_TC")
-  cluster_calibration_2.add_processor(name="M26ClusterCalibrator")
-
-  correlator2 = Env.create_path('correlator2')
-  correlator2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })
-  correlator2.add_processor(name="M26GoeHitMaker")  
-  correlator2.add_processor(name="RawDQM", params={'RootFileName': 'RawDQM2.root'})
-  correlator2.add_processor(name="TelCorrelator", params={'OutputRootFileName': 'XCorrelator2.root'})
-  
-  kalman_aligner_4 = Env.create_path('kalman_aligner_4')
-  kalman_aligner_4.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" }) 
-  kalman_aligner_4.add_processor(name="M26GoeHitMaker")   
-  kalman_aligner_4.add_processor(name="AlignTF_LC")
-  kalman_aligner_4.add_processor(name="PreAligner")
-  
-  kalman_aligner_5 = Env.create_path('kalman_aligner_5')
-  kalman_aligner_5.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" }) 
-  kalman_aligner_5.add_processor(name="M26GoeHitMaker")  
-  kalman_aligner_5.add_processor(name="AlignTF_TC")
-  kalman_aligner_5.add_processor(name="TelAligner") 
-  
-  telescope_dqm2 = Env.create_path('telescope_dqm2')
-  telescope_dqm2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_cali, 'LCIOInputFiles': "tmp.slcio" }) 
-  telescope_dqm2.add_processor(name="M26GoeHitMaker")  
-  telescope_dqm2.add_processor(name="AlignTF_TC")
-  telescope_dqm2.add_processor(name="TelescopeDQM", params={'RootFileName' : 'TelescopeDQM2.root'})
-  
-  
-  # create sequence of calibration paths 
-  calpath= [ hotpixelkiller ,
-			 clusterizer, 
-             correlator, 
-             kalman_aligner_1, 
-             kalman_aligner_2, 
-             kalman_aligner_2, 
-             kalman_aligner_2, 
-             telescope_dqm, 
-             cluster_calibration_1,
-             kalman_aligner_3, 
-             kalman_aligner_3, 
-             kalman_aligner_3,  
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             correlator2, 
-             kalman_aligner_4, 
-             kalman_aligner_5, 
-             kalman_aligner_5, 
-             kalman_aligner_5, 
-             telescope_dqm2, 
-           ]
-  
-  return calpath
-
-# Processor settings and sequence during angle reconstruction
-def create_reco_path(Env, rawfile, gearfile, numberofevents):
-  """
-  Returns a list of tbsw path objects to reconstruct a test beam run 
-  """
-  
-  reco = Env.create_path('reco')
-  reco.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : numberofevents}) 
-  reco.add_processor(name="RawInputProcessor", params={'FileName': rawfile})
-  reco.add_processor(name="M26Unpacker")
-  reco.add_processor(name="M26Clusterizer")
-  reco.add_processor(name="M26GoeHitMaker")
-  reco.add_processor(name="DownstreamFinder")
-  reco.add_processor(name="UpstreamFinder")
-  reco.add_processor(name="X0Imager")
-    
-  return [ reco ]
-
 
 # Perform the telescope calibration
 def calibrate(params):
@@ -263,7 +131,7 @@ def calibrate(params):
   CalObj.set_beam_momentum(beamenergy)
   
   # Create list of calibration steps 
-  calpath = create_calibration_path(CalObj, rawfile, gearfile)
+  calpath = create_calibration_path(CalObj, rawfile, gearfile, nevents_cali)
   
   # Run the calibration steps 
   CalObj.calibrate(path=calpath,ifile=rawfile,caltag=caltag)
@@ -284,7 +152,7 @@ def reconstruct(params):
   RecObj.set_beam_momentum(beamenergy)
 
   # Create reconstuction path
-  recopath = create_reco_path(RecObj, rawfile, gearfile, nevents_reco)  
+  recopath = create_x0reco_path(RecObj, rawfile, gearfile, nevents_reco, Use_SingleHitSeeding) 
 
   # Use caltag of the last target alignment iteration
   iteration_string='-target-alignment-it'+str(targetalignment_iterations-1)
@@ -338,7 +206,7 @@ def targetalignment(params):
   # Set Beam energy
   RecObj.set_beam_momentum(beamenergy)
   
-  recopath = create_reco_path(RecObj, rawfile, gearfile, nevents_TA)
+  recopath = create_x0reco_path(RecObj, rawfile, gearfile, nevents_TA, Use_SingleHitSeeding)
 
   # Run the reconstuction  
   RecObj.reconstruct(path=reco,ifile=rawfile,caltag=localcaltag) 
