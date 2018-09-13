@@ -3,14 +3,19 @@ This is an example script to demonstrate how TBSW can be used to create an X0 im
 test beam experiment.
 
 The script below simulates a test beam experiment where charged tracks from a monoenergetic beam 
-cross a a misaligned pixel telescope containing six Mimosa 26 detector planes. Two data sets are 
-simulated. A first 'air' run is done with no additional scatterer between the telescope arms. The 
-'air' run is used to calibrate the telescope. In a second 'aluminium' run, a aluminium plate with 
-a well known thickness profile is inserted in between the telescope arms. This second run is used 
-to compute a X0 image from the reconstructed scattering angles. The known comparison between the 
-reconstructed X0 image and the a priori known image is used to calibrate the beam energy and the 
-angular resolution of the telescope. This second step completes the calibration of the telescope
-for X0 imaging. 
+cross a a misaligned pixel telescope containing six Mimosa 26 detector planes. This script is 
+specificially setup to handle test beam experiments with a very long telescope. In this case the 
+default script might not work, because hit correlations between the first M26 sensor and the sensors
+in the second telescope arm may be very weak. The solution implemented here is to employ a track based
+correlation algorithm and iteratively add hits from the second telescope arm to the tracks.
+
+Two data sets are simulated. A first 'air' run is done with no additional scatterer between the 
+telescope arms. The 'air' run is used to calibrate the telescope. In a second 'aluminium' run, a 
+aluminium plate with a well known thickness profile is inserted in between the telescope arms. 
+This second run is used to compute a X0 image from the reconstructed scattering angles. The known 
+comparison between the reconstructed X0 image and the a priori known image is used to calibrate
+the beam energy and the angular resolution of the telescope. This second step completes the 
+calibration of the telescope for X0 imaging. 
 
 Author: Ulf Stolzenberg <ulf.stolzenberg@phys.uni-goettingen.de>  
 """
@@ -25,32 +30,45 @@ import tbsw.x0imaging.X0Calibration
 # or how M26 sensors are digitized. XML parameters can be adjusted using any test editor
 
 # Steerfiles for the telescope calibration
-steerfiles_cali = 'steering-files/x0-tboct16-2GeV-air/'
+steerfiles_cali = 'steering-files/x0-tb/'
 
 # Steerfiles for the angle reconstruction (can be the same directory as telescope calibration steerfiles)
-steerfiles_reco = 'steering-files/x0-tboct16-2GeV-air/'
+steerfiles_reco = 'steering-files/x0-tb/'
 
 # Steerfiles for the x0calibration/x0imaging (can be the same directory as telescope calibration steerfiles)
-steerfiles_x0 = 'steering-files/x0-tboct16-2GeV-air/'
+steerfiles_x0 = 'steering-files/x0-tb/'
 
 # Nominal Beam energy
 beamenergy=2.0
 
-# Use Single Hit seeding to speed up track finding?
-Use_SingleHitSeeding=False
-
 # cal tags
 # telescope calibration cal tag (typically named after telescope setup, beam energy etc.)
-caltag='40mm-spacing-2GeV'
+caltag='tb2017_PB'
 
 # x0 calibration cal tag
-x0tag='05mmalu'
+x0tag='air-alu-2GeV'
 
 # Name of the gearfile, which describes the telescope setup 
 gearfile = 'gear.xml'
+gearfile_longtelescope = 'gear_long_telescope.xml'
 
 # Alignment DB file name
 alignmentdb_filename='alignmentDB.root'
+
+# Determine cluster resolution and store in cluster DB?
+Use_clusterDB=True
+
+# Use Single Hit seeding to speed up track finding?
+Use_SingleHitSeeding=False
+
+# Use Single Hit seeding to speed up track finding?
+Use_LongTelescopeCali=False
+
+# Script purpose option:
+# 0: Script only processes imaging part
+# 1: Script processes x0 calibration and imaging part
+# Everything else: Script processes the whole chain: Telescope calibration, angle reconstruction, x0 calibration and x0 imaging 
+Script_purpose_option=2
 
 # Number of iterations during target alignment
 # Set to 0 or negative integer to disable target alignment
@@ -59,24 +77,80 @@ targetalignment_iterations=0
 # File names and lists of filenames for the different steps 
 
 # global path to raw files
-rawfile_path='/work1/rawdata/tboct16/'
+rawfile_path='/home/luise/TBSW/tbsw/workspace/Data/'
 
 # raw file used during telescope calibration (best use data with scattering target)
 # The calibration has to be done for every telescope setup, beam energy and m26 threshold settings
-cali_run='run006973.raw'
+cali_run='run000210.raw'
 rawfile_cali = rawfile_path + cali_run
 
 # raw file used for target alignment (only useful with a thick (X/X0 > 5 %) scattering target)
-TA_run='run006958.raw'
-rawfile_TA = rawfile_path + TA_run
+#TA_run='run006958.raw'
+#rawfile_TA = rawfile_path + TA_run
 
 # List of runs, which are used as input for the scattering angle reconstruction
 # The angle reconstruction step is essential and every run, that will be used later during the x0 calibration or x0 imaging steps, must be listed
 RunList_reco = [
-		    'run006958.raw',
-		    'run006959.raw',
-		    'run006960.raw',
-		    'run006973.raw',
+		    'run000208.raw', #air
+		    'run000209.raw', #air
+		    'run000210.raw', #air
+		    'run000211.raw', #air
+		    'run000212.raw', #air
+		    'run000213.raw', #air
+		    'run000138.raw', #0.5 mm Alu
+		    'run000139.raw', #0.5 mm Alu
+		    'run000140.raw', #0.5 mm Alu
+		    'run000141.raw', #0.5 mm Alu
+		    'run000142.raw', #0.5 mm Alu
+		    'run000143.raw', #0.5 mm Alu
+		    'run000144.raw', #0.5 mm Alu
+		    'run000130.raw', #1.5 mm Alu
+		    'run000131.raw', #1.5 mm Alu
+		    'run000132.raw', #1.5 mm Alu
+		    'run000133.raw', #1.5 mm Alu
+		    'run000134.raw', #1.5 mm Alu
+		    'run000135.raw', #1.5 mm Alu
+		    'run000136.raw', #1.5 mm Alu
+		    'run000137.raw', #1.5 mm Alu
+		    'run000145.raw', #3 mm Alu
+		    'run000146.raw', #3 mm Alu
+		    'run000147.raw', #3 mm Alu
+		    'run000148.raw', #3 mm Alu
+		    'run000149.raw', #3 mm Alu
+		    'run000150.raw', #3 mm Alu
+		    'run000152.raw', #4 mm Alu
+		    'run000153.raw', #4 mm Alu
+		    'run000154.raw', #4 mm Alu
+		    'run000155.raw', #4 mm Alu
+		    'run000156.raw', #4 mm Alu
+		    'run000157.raw', #4 mm Alu
+		    'run000159.raw', #6 mm Alu
+		    'run000160.raw', #6 mm Alu
+		    'run000161.raw', #6 mm Alu
+		    'run000162.raw', #6 mm Alu
+		    'run000163.raw', #6 mm Alu
+		    'run000164.raw', #6 mm Alu
+		    'run000166.raw', #PB 1
+		    'run000167.raw', #PB 1
+		    'run000168.raw', #PB 1
+		    'run000169.raw', #PB 1
+		    'run000170.raw', #PB 1
+		    'run000171.raw', #PB 1
+		    'run000172.raw', #PB 1
+		    'run000173.raw', #PB 1
+		    'run000174.raw', #PB 1
+		    'run000175.raw', #PB 1
+		    'run000176.raw', #PB 1
+		    'run000177.raw', #PB 1
+		    'run000178.raw', #PB 1
+		    'run000179.raw', #PB 1
+		    'run000180.raw', #PB 1
+		    'run000181.raw', #PB 1
+		    'run000182.raw', #PB 1
+		    'run000183.raw', #PB 1
+		    'run000184.raw', #PB 1
+		    'run000185.raw', #PB 1
+		    'run000186.raw', #PB 1
           ]
 
 RawfileList_reco = [rawfile_path+x for x in RunList_reco]
@@ -85,8 +159,45 @@ RawfileList_reco = [rawfile_path+x for x in RunList_reco]
 # Typically runs with various different materials and thicknesses have to be used to achieve a sensible calibration
 # The different measurement regions and other options have to be set in the x0.cfg file in the steer files directory
 RunList_x0cali = [
-		    'run006958.raw',
-		    'run006973.raw',
+		    'run000208.raw', #air
+		    'run000209.raw', #air
+		    'run000210.raw', #air
+		    'run000211.raw', #air
+		    'run000212.raw', #air
+		    'run000213.raw', #air
+		    'run000138.raw', #0.5 mm Alu
+		    'run000139.raw', #0.5 mm Alu
+		    'run000140.raw', #0.5 mm Alu
+		    'run000141.raw', #0.5 mm Alu
+		    'run000142.raw', #0.5 mm Alu
+		    'run000143.raw', #0.5 mm Alu
+		    'run000144.raw', #0.5 mm Alu
+		    'run000130.raw', #1.5 mm Alu
+		    'run000131.raw', #1.5 mm Alu
+		    'run000132.raw', #1.5 mm Alu
+		    'run000133.raw', #1.5 mm Alu
+		    'run000134.raw', #1.5 mm Alu
+		    'run000135.raw', #1.5 mm Alu
+		    'run000136.raw', #1.5 mm Alu
+		    'run000137.raw', #1.5 mm Alu
+		    'run000145.raw', #3 mm Alu
+		    'run000146.raw', #3 mm Alu
+		    'run000147.raw', #3 mm Alu
+		    'run000148.raw', #3 mm Alu
+		    'run000149.raw', #3 mm Alu
+		    'run000150.raw', #3 mm Alu
+		    'run000152.raw', #4 mm Alu
+		    'run000153.raw', #4 mm Alu
+		    'run000154.raw', #4 mm Alu
+		    'run000155.raw', #4 mm Alu
+		    'run000156.raw', #4 mm Alu
+		    'run000157.raw', #4 mm Alu
+		    'run000159.raw', #6 mm Alu
+		    'run000160.raw', #6 mm Alu
+		    'run000161.raw', #6 mm Alu
+		    'run000162.raw', #6 mm Alu
+		    'run000163.raw', #6 mm Alu
+		    'run000164.raw', #6 mm Alu
           ]
 
 RawfileList_x0cali = [rawfile_path+x for x in RunList_x0cali]
@@ -94,16 +205,44 @@ RawfileList_x0cali = [rawfile_path+x for x in RunList_x0cali]
 # List of runs, which are input for the first x0 image
 # Use only runs, with exactly the same target material and positioning
 RunList_x0image = [
-		    'run006958.raw',
-		    'run006959.raw',
-		    'run006960.raw',
+		    'run000166.raw', #PB 1
+		    'run000167.raw', #PB 1
+		    'run000168.raw', #PB 1
+		    'run000169.raw', #PB 1
+		    'run000170.raw', #PB 1
+		    'run000171.raw', #PB 1
+		    'run000172.raw', #PB 1
+		    'run000173.raw', #PB 1
+		    'run000174.raw', #PB 1
+		    'run000175.raw', #PB 1
+		    'run000176.raw', #PB 1
+		    'run000177.raw', #PB 1
+		    'run000178.raw', #PB 1
+		    'run000179.raw', #PB 1
+		    'run000180.raw', #PB 1
+		    'run000181.raw', #PB 1
+		    'run000182.raw', #PB 1
+		    'run000183.raw', #PB 1
+		    'run000184.raw', #PB 1
+		    'run000185.raw', #PB 1
+		    'run000186.raw', #PB 1
           ]
 
 RawfileList_x0image = [rawfile_path+x for x in RunList_x0image]
 
+
+# List of runs, which are input for the second x0 image
+# Remove comment in case you want to produce more than one image
+#RunList_x0image2 = [
+#		    'run000209.raw', #other material
+#		    'run000210.raw', #other material
+#          ]
+
+#RawfileList_x0image2 = [rawfile_path+x for x in RunList_x0image2]
+
 # Number of events ...
 # for telescope calibration
-nevents_cali = 700000
+nevents_cali = 50000
 
 # for target alignment
 nevents_TA = 1000000
@@ -122,8 +261,7 @@ def calibrate(params):
   Marlin steering and logfiles.  
   """ 
   
-  rawfile, steerfiles, gearfile, caltag = params
-  print(gearfile)
+  rawfile, steerfiles, caltag = params
   
   # Calibrate of the run using beam data. Creates a folder cal-files/caltag 
   # containing all calibration data. 
@@ -131,17 +269,19 @@ def calibrate(params):
   CalObj.set_beam_momentum(beamenergy)
   
   # Create list of calibration steps 
-  calpath = create_x0calibration_path(CalObj, rawfile, gearfile, nevents_cali)
+  if Use_LongTelescopeCali:
+    calpath = create_x0calibration_longtelescope_path(CalObj, rawfile, gearfile_longtelescope, nevents_cali, Use_clusterDB)
+  else:
+    calpath = create_x0calibration_path(CalObj, rawfile, gearfile, nevents_cali, Use_clusterDB)
   
   # Run the calibration steps 
   CalObj.calibrate(path=calpath,ifile=rawfile,caltag=caltag)
 
 
-
 # Perform the angle reconstruction of a single run
 def reconstruct(params):
 
-  rawfile, steerfiles, gearfile, caltag = params
+  rawfile, steerfiles, caltag = params
 
   # Set cal tag that includes run name
   name = os.path.splitext(os.path.basename(rawfile))[0] + '-' + caltag
@@ -152,12 +292,16 @@ def reconstruct(params):
   RecObj.set_beam_momentum(beamenergy)
 
   # Create reconstuction path
-  recopath = create_x0reco_path(RecObj, rawfile, gearfile, nevents_reco, Use_SingleHitSeeding) 
+  if Use_LongTelescopeCali:
+    recopath = create_x0reco_path(RecObj, rawfile, gearfile_longtelescope, nevents_reco, Use_SingleHitSeeding)  
+
+  else:
+    recopath = create_x0reco_path(RecObj, rawfile, gearfile, nevents_reco, Use_SingleHitSeeding)  
 
   # Use caltag of the last target alignment iteration
   iteration_string='-target-alignment-it'+str(targetalignment_iterations-1)
   localcaltag=caltag+iteration_string
-
+ 
   if targetalignment_iterations < 1:
     localcaltag=caltag
 
@@ -206,7 +350,8 @@ def targetalignment(params):
   # Set Beam energy
   RecObj.set_beam_momentum(beamenergy)
   
-  recopath = create_x0reco_path(RecObj, rawfile, gearfile, nevents_TA, Use_SingleHitSeeding)
+  # Create reconstuction path
+  recopath = create_x0reco_path(RecObj, rawfile, gearfile, nevents_TA, Use_SingleHitSeeding)  
 
   # Run the reconstuction  
   RecObj.reconstruct(path=reco,ifile=rawfile,caltag=localcaltag) 
@@ -262,38 +407,55 @@ if __name__ == '__main__':
 
 
   # Calibrate the telescope 
-  params_cali = ( rawfile_cali, steerfiles_cali, gearfile, caltag)
-  print(params_cali)
-  #calibrate( params_cali )
+  # In case you already have all the DB files from another telescope calibration 
+  # and want to reuse it, just switch to Script_purpose_option 0 or 1
+  
+  if Script_purpose_option !=0 and Script_purpose_option !=1:
+    params_cali = ( rawfile_cali, steerfiles_cali, caltag)
+    print(params_cali)
+    calibrate( params_cali )
 
 
   # Target alignment
-  for it in range(0,targetalignment_iterations):
-    params_TA = (rawfile_TA, steerfiles_reco, caltag, it)
-    print "The parameters for the target alignment are: " 
-    print params_TA
+  if Script_purpose_option !=0 and Script_purpose_option !=1:
+    for it in range(0,targetalignment_iterations):
+      params_TA = (rawfile_TA, steerfiles_reco, caltag, it)
+      print "The parameters for the target alignment are: " 
+      print params_TA
 
-    #targetalignment(params_TA)
+      targetalignment(params_TA)
 
 
   # Angle reconstruction
-  params_reco=[(x, steerfiles_reco, gearfile, caltag) for x in RawfileList_reco]
-  print "The parameters for the reconstruction are: " 
-  print params_reco
+  if Script_purpose_option !=0 and Script_purpose_option !=1:
+    params_reco=[(x, steerfiles_reco, caltag) for x in RawfileList_reco]
+    print "The parameters for the reconstruction are: " 
+    print params_reco
 
-  count = multiprocessing.cpu_count()
-  pool = multiprocessing.Pool(processes=count)
-  #pool.map(reconstruct, params_reco)
+    count = multiprocessing.cpu_count()
+    pool = multiprocessing.Pool(processes=count)
+    pool.map(reconstruct, params_reco)
 
 
   # start x0 calibration
-  deletetag='1'
-  params_x0cali = ( x0tag, RawfileList_x0cali, steerfiles_x0, caltag, deletetag)
-  xx0calibration(params_x0cali)
+  # In case you already have the x0 calibration DB file from a previous x0 calibration 
+  # and want to reuse it, just switch to Script_purpose_option 0
+
+  if Script_purpose_option !=0:
+    deletetag='1'
+    params_x0cali = ( x0tag, RawfileList_x0cali, steerfiles_x0, caltag, deletetag)
+    xx0calibration(params_x0cali)
 
 
   # Generate a calibrated X/X0 image
   nametag='image1'
   params_x0image = ( x0tag, RawfileList_x0image, steerfiles_x0, caltag, deletetag, nametag)
   xx0image(params_x0image)
+
+  # Generate another calibrated X/X0 image
+  # The X/X0 image step can be repeated multiple times to generate a set of images
+  # Just remove the comment and add a run list for each image
+  #nametag='image2'
+  #params_x0image = ( x0tag, RawfileList_x0image2, steerfiles_x0, caltag, deletetag, nametag)
+  #xx0image(params_x0image)
 
