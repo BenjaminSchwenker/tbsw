@@ -440,9 +440,8 @@ if __name__ == '__main__':
   # start x0 calibration
   # In case you already have the x0 calibration DB file from a previous x0 calibration 
   # and want to reuse it, just switch to Script_purpose_option 0
-
+  deletetag='1'
   if Script_purpose_option !=0:
-    deletetag='1'
     params_x0cali = ( x0tag, RawfileList_x0cali, steerfiles_x0, caltag, deletetag)
     xx0calibration(params_x0cali)
 

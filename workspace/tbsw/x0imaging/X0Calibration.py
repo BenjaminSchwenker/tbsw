@@ -136,7 +136,7 @@ if __name__ == '__main__':
   this_x0filename = os.path.splitext(os.path.basename(rootfile))[0]
 
   # Change to work directory
-  workdir = 'tmp-runs/'+this_x0filename+'-X0Calibration'
+  workdir = 'tmp-runs/'+this_x0filename+'-'+caltag+'-X0Calibration'
 
   # remove old workdir if exists 
   if os.path.isdir(workdir):

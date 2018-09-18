@@ -1094,7 +1094,7 @@ void savehisto(TFile* file, TFile* file2, TString histoname, int numbins, double
 	if((correctmean==1)&&(abs(mean1+mean2)>(2*limits/numbins))) 
 	{
 		cout<<endl<<"Correct histogram sum offset"<<endl;
-		shiftbins(h,mean1+mean2);
+		shiftbins(h,0.5*(mean1+mean2));
 	}
 
 	// Go to raw directory
