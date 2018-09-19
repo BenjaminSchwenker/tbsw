@@ -156,48 +156,26 @@ RunList_reco = [
 RawfileList_reco = [rawfile_path+x for x in RunList_reco]
 
 # List of runs, which are input for the x0 calibration
-# Typically runs with various different materials and thicknesses have to be used to achieve a sensible calibration
+# Typically runs with various different materials and thicknesses have to be used to achieve a sensible calibration.
+# Good results can for example be achieved with air (no material between the telescope arms) and two different 
+# aluminium thicknesses.
+#
+# In most cases two 1-2 runs per thickness/material are sufficient for a good x0 calibration
+#
 # The different measurement regions and other options have to be set in the x0.cfg file in the steer files directory
 RunList_x0cali = [
 		    'run000208.raw', #air
 		    'run000209.raw', #air
-		    'run000210.raw', #air
-		    'run000211.raw', #air
-		    'run000212.raw', #air
-		    'run000213.raw', #air
 		    'run000138.raw', #0.5 mm Alu
 		    'run000139.raw', #0.5 mm Alu
-		    'run000140.raw', #0.5 mm Alu
-		    'run000141.raw', #0.5 mm Alu
-		    'run000142.raw', #0.5 mm Alu
-		    'run000143.raw', #0.5 mm Alu
-		    'run000144.raw', #0.5 mm Alu
 		    'run000130.raw', #1.5 mm Alu
 		    'run000131.raw', #1.5 mm Alu
-		    'run000132.raw', #1.5 mm Alu
-		    'run000133.raw', #1.5 mm Alu
-		    'run000134.raw', #1.5 mm Alu
-		    'run000135.raw', #1.5 mm Alu
-		    'run000136.raw', #1.5 mm Alu
-		    'run000137.raw', #1.5 mm Alu
 		    'run000145.raw', #3 mm Alu
 		    'run000146.raw', #3 mm Alu
-		    'run000147.raw', #3 mm Alu
-		    'run000148.raw', #3 mm Alu
-		    'run000149.raw', #3 mm Alu
-		    'run000150.raw', #3 mm Alu
 		    'run000152.raw', #4 mm Alu
 		    'run000153.raw', #4 mm Alu
-		    'run000154.raw', #4 mm Alu
-		    'run000155.raw', #4 mm Alu
-		    'run000156.raw', #4 mm Alu
-		    'run000157.raw', #4 mm Alu
 		    'run000159.raw', #6 mm Alu
 		    'run000160.raw', #6 mm Alu
-		    'run000161.raw', #6 mm Alu
-		    'run000162.raw', #6 mm Alu
-		    'run000163.raw', #6 mm Alu
-		    'run000164.raw', #6 mm Alu
           ]
 
 RawfileList_x0cali = [rawfile_path+x for x in RunList_x0cali]
@@ -409,6 +387,10 @@ if __name__ == '__main__':
   # Calibrate the telescope 
   # In case you already have all the DB files from another telescope calibration 
   # and want to reuse it, just switch to Script_purpose_option 0 or 1
+  #
+  # DQM plots like track p/chi2 values, residuals and other interesting parameters
+  # from this telescope calibration step can be found in 
+  # workspace/tmp-runs/*caltag*-cal/TelescopeDQM2.root
   
   if Script_purpose_option !=0 and Script_purpose_option !=1:
     params_cali = ( rawfile_cali, steerfiles_cali, caltag)
@@ -427,6 +409,12 @@ if __name__ == '__main__':
 
 
   # Angle reconstruction
+  # In case you already have reconstructed the scattering angles for all
+  # the runs you are interested in, just switch to Script_purpose_option 0 or 1
+  #
+  # The root files with the reconstructed angles and other parameters (see 
+  # README_X0.md for a full list and some descriptions) can be found in 
+  # workspace/root-files/X0-run*runnumber, etc*-reco.root
   if Script_purpose_option !=0 and Script_purpose_option !=1:
     params_reco=[(x, steerfiles_reco, caltag) for x in RawfileList_reco]
     print "The parameters for the reconstruction are: " 
@@ -440,6 +428,9 @@ if __name__ == '__main__':
   # start x0 calibration
   # In case you already have the x0 calibration DB file from a previous x0 calibration 
   # and want to reuse it, just switch to Script_purpose_option 0
+  #
+  # The fitted distributions and self-consistency plots in pdf format from this 
+  # x0 calibration can be found in the workspace/tmp-runs/*X0Calibration/ directory
   deletetag='1'
   if Script_purpose_option !=0:
     params_x0cali = ( x0tag, RawfileList_x0cali, steerfiles_x0, caltag, deletetag)
@@ -447,6 +438,9 @@ if __name__ == '__main__':
 
 
   # Generate a calibrated X/X0 image
+  #
+  # The calibrated radiation length image and other images, such as the beamspot
+  # etc can be found in the workspace/root-files/*CalibratedX0Image.root
   nametag='image1'
   params_x0image = ( x0tag, RawfileList_x0image, steerfiles_x0, caltag, deletetag, nametag)
   xx0image(params_x0image)
