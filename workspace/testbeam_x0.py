@@ -160,7 +160,7 @@ RawfileList_reco = [rawfile_path+x for x in RunList_reco]
 # Good results can for example be achieved with air (no material between the telescope arms) and two different 
 # aluminium thicknesses.
 #
-# In most cases two 1-2 runs per thickness/material are sufficient for a good x0 calibration
+# In most cases two 1-2 runs with approximately 1 million events per thickness/material are sufficient for a good x0 calibration
 #
 # The different measurement regions and other options have to be set in the x0.cfg file in the steer files directory
 RunList_x0cali = [
