@@ -339,6 +339,7 @@ int** GetParameterMapping(int);
 	* par[11]: v coordinate
 	* par[12]: u BE gradient
 	* par[13]: v BE gradient
+	* par[14]:  mean of angle distribution
 
 */
 
@@ -405,7 +406,7 @@ Double_t highlandfunction(Double_t *x, Double_t *par)
 	double sigma=TMath::Sqrt(pow(recoerror,2)+pow(0.0136*charge/(p*beta)*TMath::Sqrt(d1/X0)*(1.0+0.038*TMath::Log(d1/X0)),2));
 
 	// function value at a certain theta value
-	double value=par[9]*TMath::Gaus(x[0],0.0,sigma);
+	double value=par[9]*TMath::Gaus(x[0],par[14],sigma);
 
 	return value;
 }// End definition of highland model
@@ -428,6 +429,7 @@ Double_t highlandfunction(Double_t *x, Double_t *par)
 	* par[11]:  v coordinate
 	* par[12]:  u BE gradient
 	* par[13]:  v BE gradient
+	* par[14]:  mean of angle distribution
 
 */
   
@@ -706,7 +708,7 @@ Double_t molierefunction(Double_t *x, Double_t *par)
 	for(int i=0; i<numbins;i++)
 	{
 		// current value of the sum
-		convolutionintegral+=h_total1->GetBinContent(i+1)*TMath::Gaus(phi_values_rad[i]-x[0],0.0,recoerror);
+		convolutionintegral+=h_total1->GetBinContent(i+1)*TMath::Gaus(phi_values_rad[i]-x[0],2*par[14],recoerror);
 	}
 
 	//delete all histograms from memory
@@ -734,7 +736,10 @@ Double_t molierefunction(Double_t *x, Double_t *par)
 // a globalEstimator structure
 
 // Number of parameters per fit function
-const int num_localparameters=14;
+const int num_localparameters=15;
+
+// Number of new parameters per fit function
+const int newparsperfunction=8;
 
 // Global estimator object, will be used in fit
 struct GlobalEstimator { 
@@ -778,8 +783,6 @@ int **GetParameterMapping(int numfuncs)
 
 	  int **ipar=0;
 
-	  int newparsperfunction=7;
-
       ipar = new int*[numfuncs];
 
       for (int i = 0; i < numfuncs; i++)
@@ -789,9 +792,10 @@ int **GetParameterMapping(int numfuncs)
             for (int j = 0; j < num_localparameters; j++)
             {
                   
-				// There are basically 2 cases: The first function has the Parameters 0-14,
+				// There are basically 2 cases: The first function has the Parameters 0-15,
 				//								the other function have a new Parameter number at the 3rd parameter (density), the 4th parameter (Z), the 4th parameter (A)
-				//								the 6th Parameter (thickness of target material), the 9th Parameter (~#tracks), the 10th parameter (u coordinate) and 11th parameter (v coordinate)
+				//								the 6th Parameter (thickness of target material), the 9th Parameter (~#tracks), the 10th parameter (u coordinate), the 11th parameter (v coordinate)
+				//								and the 14th parameter (mean value)
 						
 				if(i==0) 
 				{
@@ -799,16 +803,17 @@ int **GetParameterMapping(int numfuncs)
 				}
 				else
 				{
-					if((j!=3)&&(j!=4)&&(j!=5)&&(j!=6)&&(j!=9)&&(j!=10)&&(j!=11)) ipar[i][j]=j;
-					else if(j==3) ipar[i][j]=14+(i-1)*newparsperfunction;
-					else if(j==4) ipar[i][j]=15+(i-1)*newparsperfunction;
-					else if(j==5) ipar[i][j]=16+(i-1)*newparsperfunction;
-					else if(j==6) ipar[i][j]=17+(i-1)*newparsperfunction;
-					else if(j==9) ipar[i][j]=18+(i-1)*newparsperfunction;
-					else if(j==10) ipar[i][j]=19+(i-1)*newparsperfunction;
-					else ipar[i][j]=20+(i-1)*newparsperfunction;
+					if((j!=3)&&(j!=4)&&(j!=5)&&(j!=6)&&(j!=9)&&(j!=10)&&(j!=11)&&(j!=14)) ipar[i][j]=j;
+					else if(j==3) ipar[i][j]=num_localparameters+(i-1)*newparsperfunction;
+					else if(j==4) ipar[i][j]=num_localparameters+1+(i-1)*newparsperfunction;
+					else if(j==5) ipar[i][j]=num_localparameters+2+(i-1)*newparsperfunction;
+					else if(j==6) ipar[i][j]=num_localparameters+3+(i-1)*newparsperfunction;
+					else if(j==9) ipar[i][j]=num_localparameters+4+(i-1)*newparsperfunction;
+					else if(j==10) ipar[i][j]=num_localparameters+5+(i-1)*newparsperfunction;
+					else if(j==11) ipar[i][j]=num_localparameters+6+(i-1)*newparsperfunction;
+					else ipar[i][j]=num_localparameters+7+(i-1)*newparsperfunction;
 				}
-				//cout<<"Parameter mapping: Global parameter number of local parameter "<<j<<" in fit function "<<i<<" is "<<ipar[i][j]<<endl;
+				cout<<"Parameter mapping: Global parameter number of local parameter "<<j<<" in fit function "<<i<<" is "<<ipar[i][j]<<endl;
             }
       }
 
@@ -1160,9 +1165,6 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 	double lambda_startvalue=beamoptions.at(5);
 
-	// Number of new parameters for every new measurement area
-	int newparsperfunction=7;
-
 	// histogram name
 	TString histoname;
 
@@ -1215,7 +1217,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		{
 			// Use Gaussian function with width corresponding to the calibrated angle resolution, if material is only air or extremely thin
 			// Also in this case the fit range is set to be a little smaller
-			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0001) fitFcn = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13],[7]*[8])",-fitrange,fitrange);
+			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0001) fitFcn = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13]+[14],[7]*[8])",-fitrange,fitrange);
 
 
 			// Use Moliere model in case the material is not just air
@@ -1225,7 +1227,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		else
 		{
 			// Use Gaussian function with width corresponding to the calibrated angle resolution, if material is only air or extremely thin
-			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0001) fitFcn = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13],[7]*[8])",-fitrange,fitrange);
+			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0001) fitFcn = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13]+[14],[7]*[8])",-fitrange,fitrange);
 			// Use Highland model in case the material is not just air
 			else fitFcn = new TF1(fctname,highlandfunction,-fitrange,fitrange,num_localparameters);
 		}
@@ -1309,19 +1311,20 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// First fit function has num_localparameters new parameters:
 	double aid_array[num_localparameters]={ BE_mean,z,mass,grid.GetMeasurementAreas().at(0).Get_density(),grid.GetMeasurementAreas().at(0).Get_Z(),grid.GetMeasurementAreas().at(0).Get_A(),
 											grid.GetMeasurementAreas().at(0).Get_thickness(),recoerr,lambda_startvalue,700.0,grid.GetMeasurementAreas().at(0).Get_u_center(),
-											grid.GetMeasurementAreas().at(0).Get_v_center(),BE_ugrad,BE_vgrad};
+											grid.GetMeasurementAreas().at(0).Get_v_center(),BE_ugrad,BE_vgrad,0.0};
 	for(int i=0;i<num_localparameters;i++) par0[i]=aid_array[i];
 
-	// Afterwards for each fit functions we get 3 new parameters
+	// Afterwards for each fit functions we get several new parameters
 	for(int i=1;i<num_fitfunctions;i++)
 	{
-		par0[14+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_density();
-		par0[15+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_Z();
-		par0[16+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_A();
-		par0[17+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_thickness();
-		par0[18+(i-1)*newparsperfunction]=700;
-		par0[19+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_u_center();
-		par0[20+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_v_center();
+		par0[num_localparameters+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_density();
+		par0[num_localparameters+1+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_Z();
+		par0[num_localparameters+2+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_A();
+		par0[num_localparameters+3+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_thickness();
+		par0[num_localparameters+4+(i-1)*newparsperfunction]=700;
+		par0[num_localparameters+5+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_u_center();
+		par0[num_localparameters+6+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_v_center();
+		par0[num_localparameters+7+(i-1)*newparsperfunction]=0.0;
 	}
 
 	// create before the parameter settings in order to fix or set range on them
@@ -1352,12 +1355,12 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// fix density, A, Z, thickness and coordinate parameters for all fitfunctions
 	for(int i=1;i<num_fitfunctions;i++)
 	{
-		fitter.Config().ParSettings(14+(i-1)*newparsperfunction).Fix();
-		fitter.Config().ParSettings(15+(i-1)*newparsperfunction).Fix();
-		fitter.Config().ParSettings(16+(i-1)*newparsperfunction).Fix();
-		fitter.Config().ParSettings(17+(i-1)*newparsperfunction).Fix();
-		fitter.Config().ParSettings(19+(i-1)*newparsperfunction).Fix();
-		fitter.Config().ParSettings(20+(i-1)*newparsperfunction).Fix();
+		fitter.Config().ParSettings(num_localparameters+(i-1)*newparsperfunction).Fix();
+		fitter.Config().ParSettings(num_localparameters+1+(i-1)*newparsperfunction).Fix();
+		fitter.Config().ParSettings(num_localparameters+2+(i-1)*newparsperfunction).Fix();
+		fitter.Config().ParSettings(num_localparameters+3+(i-1)*newparsperfunction).Fix();
+		fitter.Config().ParSettings(num_localparameters+5+(i-1)*newparsperfunction).Fix();
+		fitter.Config().ParSettings(num_localparameters+6+(i-1)*newparsperfunction).Fix();
 	}
 
 	if(fixlambda) fitter.Config().ParSettings(8).Fix();				 //fix lambda?
@@ -1365,9 +1368,14 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// set limits on the calibration factor parameter
 	fitter.Config().ParSettings(8).SetLimits(0.6,1.4);
 
-	//Set limits on fit function Normalizations
+	//Set limits on fit function Normalizations and mean angle values
 	fitter.Config().ParSettings(9).SetLimits(10.0,200000.0);
-	for(int i=1;i<num_fitfunctions;i++) fitter.Config().ParSettings(18+(i-1)*newparsperfunction).SetLimits(10.0,200000.0);
+	fitter.Config().ParSettings(14).SetLimits(-0.0001,+0.0001);
+	for(int i=1;i<num_fitfunctions;i++) 
+	{
+		fitter.Config().ParSettings(num_localparameters+4+(i-1)*newparsperfunction).SetLimits(10.0,200000.0);
+		fitter.Config().ParSettings(num_localparameters+7+(i-1)*newparsperfunction).SetLimits(-0.0001,+0.0001);
+	}
 
 	fitter.Config().MinimizerOptions().SetPrintLevel(1);
 	fitter.Config().SetMinimizer("Minuit2","Migrad"); 
@@ -1398,6 +1406,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	name[11]="v[mm]";
 	name[12]="#nablaE_{u}[GeV/mm]";
 	name[13]="#nablaE_{v}[GeV/mm]";
+	name[14]="#theta_{mean}[rad]";
 
 	for(int i=0;i<num_fitfunctions;i++)
 	{	
