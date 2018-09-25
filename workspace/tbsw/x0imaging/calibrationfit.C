@@ -168,6 +168,7 @@ Grid::Grid(TEnv* mEnv)
 	// Determine the number of fit functions from the cfg file
 	int num_MA=0; // Number of additional measurement areas
 	int num_line=0; // Number of Lines, which are used for BE gradient calibration
+	int num_rectangle=0; // Number of rectangular areasle, which include a whole grid of measurement areas
 
 	
 
@@ -176,6 +177,9 @@ Grid::Grid(TEnv* mEnv)
 
 	TString linename;
 	linename.Form("line%i",num_line+1);
+
+	TString rectanglename;
+	rectanglename.Form("rectangle%i",num_rectangle+1);
 
 	while(mEnv->GetValue(MAname+".exist",0)!=0)
 	{
@@ -264,6 +268,47 @@ Grid::Grid(TEnv* mEnv)
 		linename.Form("line%i",num_line+1);
 	}	
 
+	while(mEnv->GetValue(rectanglename+".exist",0)!=0)
+	{
+
+		cout<<"rectanglename: "<<rectanglename<<endl;
+		if((mEnv->GetValue(rectanglename+".usteplength",0.0)!=0.0)&&(mEnv->GetValue(rectanglename+".vsteplength",0.0)!=0.0)) 
+		{
+
+			cout<<"inside if statement"<<endl;
+			for(double d_u=mEnv->GetValue(rectanglename+".startu",0.0);d_u<(mEnv->GetValue(rectanglename+".startu",0.0)+mEnv->GetValue(rectanglename+".ulength",-1.0));d_u+=mEnv->GetValue(rectanglename+".usteplength",10.0))
+			{
+				for(double d_v=mEnv->GetValue(rectanglename+".startv",0.0);d_v<(mEnv->GetValue(rectanglename+".startv",0.0)+mEnv->GetValue(rectanglename+".vlength",-1.0));d_v+=mEnv->GetValue(rectanglename+".vsteplength",10.0))
+				{
+					// Compute/Read out measurement area parameters
+					double ucenter=d_u;
+					double vcenter=d_v;
+					double ulength=mEnv->GetValue(rectanglename+".usteplength", 0.1);
+					double vlength=mEnv->GetValue(rectanglename+".vsteplength", 0.1);
+					double thickness=mEnv->GetValue(rectanglename+".thickness", 1.8);
+					double Z=mEnv->GetValue(rectanglename+".atomicnumber", 13.0);
+					double A=mEnv->GetValue(rectanglename+".atomicmassnumber", 27.0);
+					double density=mEnv->GetValue(rectanglename+".density", 2.7);
+					int run_min=mEnv->GetValue(rectanglename+".minrunnumber", -1);
+					int run_max=mEnv->GetValue(rectanglename+".maxrunnumber", -1);
+					int max_angle=mEnv->GetValue(rectanglename+".maxanglenumber", -1);
+
+					// Define measurement area based on these parameters
+					MeasurementArea MA(ucenter,vcenter,ulength,vlength,thickness,density,Z,A,run_min,run_max,max_angle);
+				  
+					// Add measurement area to predefined grid
+					m_MeasurementAreas.push_back(MA);
+				}
+			}
+		}
+
+		// in this case there is nothing to do
+		else continue;
+
+		num_rectangle++;
+		rectanglename.Form("rectangle%i",num_rectangle+1);
+	}
+
 }
 
 // Functions used in this script
@@ -294,6 +339,7 @@ int** GetParameterMapping(int);
 	* par[11]: v coordinate
 	* par[12]: u BE gradient
 	* par[13]: v BE gradient
+	* par[14]:  mean of angle distribution
 
 */
 
@@ -357,10 +403,10 @@ Double_t highlandfunction(Double_t *x, Double_t *par)
 	double X0=716.4*A/((Z+1)*Z*density*TMath::Log(287.0/TMath::Sqrt(Z)));
 
 	// Combination of Highland width and reconstruction error
-	double sigma=TMath::Sqrt(pow(0.0136*charge/(p*beta)*TMath::Sqrt(d1/X0)*(1.0+0.038*TMath::Log(d1/X0)),2)+pow(recoerror,2));
+	double sigma=TMath::Sqrt(pow(recoerror,2)+pow(0.0136*charge/(p*beta)*TMath::Sqrt(d1/X0)*(1.0+0.038*TMath::Log(d1/X0)),2));
 
 	// function value at a certain theta value
-	double value=par[9]*TMath::Gaus(x[0],0.0,sigma);
+	double value=par[9]*TMath::Gaus(x[0],par[14],sigma);
 
 	return value;
 }// End definition of highland model
@@ -383,6 +429,7 @@ Double_t highlandfunction(Double_t *x, Double_t *par)
 	* par[11]:  v coordinate
 	* par[12]:  u BE gradient
 	* par[13]:  v BE gradient
+	* par[14]:  mean of angle distribution
 
 */
   
@@ -636,8 +683,6 @@ Double_t molierefunction(Double_t *x, Double_t *par)
 			// Set histogram values
 			h_f1_table->SetBinContent(i+1,interpolation1);
 			h_f2_table->SetBinContent(i+1,interpolation2);	
-	
-
 	} 
 
 
@@ -663,7 +708,7 @@ Double_t molierefunction(Double_t *x, Double_t *par)
 	for(int i=0; i<numbins;i++)
 	{
 		// current value of the sum
-		convolutionintegral+=h_total1->GetBinContent(i+1)*TMath::Gaus(phi_values_rad[i]-x[0],0.0,recoerror);
+		convolutionintegral+=h_total1->GetBinContent(i+1)*TMath::Gaus(phi_values_rad[i]-x[0],2*par[14],recoerror);
 	}
 
 	//delete all histograms from memory
@@ -691,7 +736,10 @@ Double_t molierefunction(Double_t *x, Double_t *par)
 // a globalEstimator structure
 
 // Number of parameters per fit function
-const int num_localparameters=14;
+const int num_localparameters=15;
+
+// Number of new parameters per fit function
+const int newparsperfunction=8;
 
 // Global estimator object, will be used in fit
 struct GlobalEstimator { 
@@ -735,8 +783,6 @@ int **GetParameterMapping(int numfuncs)
 
 	  int **ipar=0;
 
-	  int newparsperfunction=7;
-
       ipar = new int*[numfuncs];
 
       for (int i = 0; i < numfuncs; i++)
@@ -746,9 +792,10 @@ int **GetParameterMapping(int numfuncs)
             for (int j = 0; j < num_localparameters; j++)
             {
                   
-				// There are basically 2 cases: The first function has the Parameters 0-14,
+				// There are basically 2 cases: The first function has the Parameters 0-15,
 				//								the other function have a new Parameter number at the 3rd parameter (density), the 4th parameter (Z), the 4th parameter (A)
-				//								the 6th Parameter (thickness of target material), the 9th Parameter (~#tracks), the 10th parameter (u coordinate) and 11th parameter (v coordinate)
+				//								the 6th Parameter (thickness of target material), the 9th Parameter (~#tracks), the 10th parameter (u coordinate), the 11th parameter (v coordinate)
+				//								and the 14th parameter (mean value)
 						
 				if(i==0) 
 				{
@@ -756,16 +803,17 @@ int **GetParameterMapping(int numfuncs)
 				}
 				else
 				{
-					if((j!=3)&&(j!=4)&&(j!=5)&&(j!=6)&&(j!=9)&&(j!=10)&&(j!=11)) ipar[i][j]=j;
-					else if(j==3) ipar[i][j]=14+(i-1)*newparsperfunction;
-					else if(j==4) ipar[i][j]=15+(i-1)*newparsperfunction;
-					else if(j==5) ipar[i][j]=16+(i-1)*newparsperfunction;
-					else if(j==6) ipar[i][j]=17+(i-1)*newparsperfunction;
-					else if(j==9) ipar[i][j]=18+(i-1)*newparsperfunction;
-					else if(j==10) ipar[i][j]=19+(i-1)*newparsperfunction;
-					else ipar[i][j]=20+(i-1)*newparsperfunction;
+					if((j!=3)&&(j!=4)&&(j!=5)&&(j!=6)&&(j!=9)&&(j!=10)&&(j!=11)&&(j!=14)) ipar[i][j]=j;
+					else if(j==3) ipar[i][j]=num_localparameters+(i-1)*newparsperfunction;
+					else if(j==4) ipar[i][j]=num_localparameters+1+(i-1)*newparsperfunction;
+					else if(j==5) ipar[i][j]=num_localparameters+2+(i-1)*newparsperfunction;
+					else if(j==6) ipar[i][j]=num_localparameters+3+(i-1)*newparsperfunction;
+					else if(j==9) ipar[i][j]=num_localparameters+4+(i-1)*newparsperfunction;
+					else if(j==10) ipar[i][j]=num_localparameters+5+(i-1)*newparsperfunction;
+					else if(j==11) ipar[i][j]=num_localparameters+6+(i-1)*newparsperfunction;
+					else ipar[i][j]=num_localparameters+7+(i-1)*newparsperfunction;
 				}
-				//cout<<"Parameter mapping: Global parameter number of local parameter "<<j<<" in fit function "<<i<<" is "<<ipar[i][j]<<endl;
+				cout<<"Parameter mapping: Global parameter number of local parameter "<<j<<" in fit function "<<i<<" is "<<ipar[i][j]<<endl;
             }
       }
 
@@ -1051,7 +1099,7 @@ void savehisto(TFile* file, TFile* file2, TString histoname, int numbins, double
 	if((correctmean==1)&&(abs(mean1+mean2)>(2*limits/numbins))) 
 	{
 		cout<<endl<<"Correct histogram sum offset"<<endl;
-		shiftbins(h,mean1+mean2);
+		shiftbins(h,0.5*(mean1+mean2));
 	}
 
 	// Go to raw directory
@@ -1117,9 +1165,6 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 	double lambda_startvalue=beamoptions.at(5);
 
-	// Number of new parameters for every new measurement area
-	int newparsperfunction=7;
-
 	// histogram name
 	TString histoname;
 
@@ -1172,7 +1217,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		{
 			// Use Gaussian function with width corresponding to the calibrated angle resolution, if material is only air or extremely thin
 			// Also in this case the fit range is set to be a little smaller
-			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0001) fitFcn = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13],[7]*[8])",-fitrange,fitrange);
+			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0001) fitFcn = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13]+[14],[7]*[8])",-fitrange,fitrange);
 
 
 			// Use Moliere model in case the material is not just air
@@ -1182,7 +1227,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		else
 		{
 			// Use Gaussian function with width corresponding to the calibrated angle resolution, if material is only air or extremely thin
-			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0001) fitFcn = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13],[7]*[8])",-fitrange,fitrange);
+			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0001) fitFcn = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13]+[14],[7]*[8])",-fitrange,fitrange);
 			// Use Highland model in case the material is not just air
 			else fitFcn = new TF1(fctname,highlandfunction,-fitrange,fitrange,num_localparameters);
 		}
@@ -1266,19 +1311,20 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// First fit function has num_localparameters new parameters:
 	double aid_array[num_localparameters]={ BE_mean,z,mass,grid.GetMeasurementAreas().at(0).Get_density(),grid.GetMeasurementAreas().at(0).Get_Z(),grid.GetMeasurementAreas().at(0).Get_A(),
 											grid.GetMeasurementAreas().at(0).Get_thickness(),recoerr,lambda_startvalue,700.0,grid.GetMeasurementAreas().at(0).Get_u_center(),
-											grid.GetMeasurementAreas().at(0).Get_v_center(),BE_ugrad,BE_vgrad};
+											grid.GetMeasurementAreas().at(0).Get_v_center(),BE_ugrad,BE_vgrad,0.0};
 	for(int i=0;i<num_localparameters;i++) par0[i]=aid_array[i];
 
-	// Afterwards for each fit functions we get 3 new parameters
+	// Afterwards for each fit functions we get several new parameters
 	for(int i=1;i<num_fitfunctions;i++)
 	{
-		par0[14+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_density();
-		par0[15+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_Z();
-		par0[16+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_A();
-		par0[17+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_thickness();
-		par0[18+(i-1)*newparsperfunction]=700;
-		par0[19+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_u_center();
-		par0[20+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_v_center();
+		par0[num_localparameters+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_density();
+		par0[num_localparameters+1+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_Z();
+		par0[num_localparameters+2+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_A();
+		par0[num_localparameters+3+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_thickness();
+		par0[num_localparameters+4+(i-1)*newparsperfunction]=700;
+		par0[num_localparameters+5+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_u_center();
+		par0[num_localparameters+6+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_v_center();
+		par0[num_localparameters+7+(i-1)*newparsperfunction]=0.0;
 	}
 
 	// create before the parameter settings in order to fix or set range on them
@@ -1309,12 +1355,12 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// fix density, A, Z, thickness and coordinate parameters for all fitfunctions
 	for(int i=1;i<num_fitfunctions;i++)
 	{
-		fitter.Config().ParSettings(14+(i-1)*newparsperfunction).Fix();
-		fitter.Config().ParSettings(15+(i-1)*newparsperfunction).Fix();
-		fitter.Config().ParSettings(16+(i-1)*newparsperfunction).Fix();
-		fitter.Config().ParSettings(17+(i-1)*newparsperfunction).Fix();
-		fitter.Config().ParSettings(19+(i-1)*newparsperfunction).Fix();
-		fitter.Config().ParSettings(20+(i-1)*newparsperfunction).Fix();
+		fitter.Config().ParSettings(num_localparameters+(i-1)*newparsperfunction).Fix();
+		fitter.Config().ParSettings(num_localparameters+1+(i-1)*newparsperfunction).Fix();
+		fitter.Config().ParSettings(num_localparameters+2+(i-1)*newparsperfunction).Fix();
+		fitter.Config().ParSettings(num_localparameters+3+(i-1)*newparsperfunction).Fix();
+		fitter.Config().ParSettings(num_localparameters+5+(i-1)*newparsperfunction).Fix();
+		fitter.Config().ParSettings(num_localparameters+6+(i-1)*newparsperfunction).Fix();
 	}
 
 	if(fixlambda) fitter.Config().ParSettings(8).Fix();				 //fix lambda?
@@ -1322,9 +1368,14 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// set limits on the calibration factor parameter
 	fitter.Config().ParSettings(8).SetLimits(0.6,1.4);
 
-	//Set limits on fit function Normalizations
+	//Set limits on fit function Normalizations and mean angle values
 	fitter.Config().ParSettings(9).SetLimits(10.0,200000.0);
-	for(int i=1;i<num_fitfunctions;i++) fitter.Config().ParSettings(18+(i-1)*newparsperfunction).SetLimits(10.0,200000.0);
+	fitter.Config().ParSettings(14).SetLimits(-0.0001,+0.0001);
+	for(int i=1;i<num_fitfunctions;i++) 
+	{
+		fitter.Config().ParSettings(num_localparameters+4+(i-1)*newparsperfunction).SetLimits(10.0,200000.0);
+		fitter.Config().ParSettings(num_localparameters+7+(i-1)*newparsperfunction).SetLimits(-0.0001,+0.0001);
+	}
 
 	fitter.Config().MinimizerOptions().SetPrintLevel(1);
 	fitter.Config().SetMinimizer("Minuit2","Migrad"); 
@@ -1355,6 +1406,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	name[11]="v[mm]";
 	name[12]="#nablaE_{u}[GeV/mm]";
 	name[13]="#nablaE_{v}[GeV/mm]";
+	name[14]="#theta_{mean}[rad]";
 
 	for(int i=0;i<num_fitfunctions;i++)
 	{	
@@ -1452,9 +1504,127 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		c->SaveAs(pdfname); 
 	}
 
+	// Do a self consistency check:
+	// Check whether a fit with the determined calibration parameters yields the correct radiation length value for all the
+    // angle distributions used in the calibration fit
+
+	TString fitoption;
+	if(model=="moliere") fitoption="RMELS";
+	else fitoption="RMES";
+
+	// Declaration of another set of fit functions, these will be used for the self consistency check
+	std::vector<TF1 *> fitFcn_vec2;
+
+	TH1F* h_d = new TH1F("h_d","h_d",num_fitfunctions,0.5,num_fitfunctions+0.5);
+	TH1F* h_d_true = new TH1F("h_d_true","h_d_true",num_fitfunctions,0.5,num_fitfunctions+0.5);
+	h_d_true->SetMinimum(-0.2);
+	h_d_true->GetXaxis()->SetTitle("Measurement area");
+	h_d_true->GetXaxis()->SetNdivisions(num_fitfunctions);
+	h_d_true->GetYaxis()->SetTitle("Thickness [mm]");
+	h_d_true->SetTitle("Self-consistency check");
+
+	// loop for definition of the fit functions, the fitrange is determined for every one of them
+	for(int i=0;i<num_fitfunctions;i++)
+	{
+
+		fitrange=DetermineFitrange(histo_vec.at(i),rangevalue);
+		fctname.Form("fitFcn%i",i);
+
+		if(model=="moliere") fitFcn = new TF1(fctname,molierefunction,-fitrange,fitrange,num_localparameters);
+		else fitFcn = new TF1(fctname,highlandfunction,-fitrange,fitrange,num_localparameters);
+
+		// Set starting values
+		double lambda=fitresults[0];
+		double BE_mean=fitresults[2];
+		double BE_ugrad=fitresults[4];
+		double BE_vgrad=fitresults[6];
+		double parameters_temp[num_localparameters]={ BE_mean,z,mass,grid.GetMeasurementAreas().at(0).Get_density(),grid.GetMeasurementAreas().at(0).Get_Z(),grid.GetMeasurementAreas().at(0).Get_A(),
+											1.0,recoerr,lambda,700.0,grid.GetMeasurementAreas().at(0).Get_u_center(),
+											grid.GetMeasurementAreas().at(0).Get_v_center(),BE_ugrad,BE_vgrad};
+   		fitFcn->SetParameters(parameters_temp);
+
+		for(int i=0; i<num_localparameters;i++)
+		{
+			if(i!=6&&i!=9)
+			{
+   				fitFcn->FixParameter(i,parameters_temp[i]);
+			}
+		}	
+
+   		fitFcn->SetParLimits(6,1E-8,200.0);
+
+		// Fill vector with pointers to fit functions
+		fitFcn_vec2.push_back(fitFcn);
+	}
+
+	for(int i=0;i<TMath::Ceil(double(num_fitfunctions)/4.0);i++)
+	{
+		TString canvasname;
+		canvasname.Form("c%i",i);
+		TCanvas *c = new TCanvas(canvasname,canvasname,900,1000);
+		std::vector<TPad*> pads;
+		TPad *pad1 = new TPad("pad1","pad1",0.01,0.51,0.49,0.99);
+		pad1->Draw();
+		pads.push_back(pad1);
+		TPad *pad2 = new TPad("pad2","pad2",0.51,0.51,0.99,0.99);
+		pad2->Draw();
+		pads.push_back(pad2);
+		TPad *pad3 = new TPad("pad3","pad3",0.01,0.01,0.49,0.49);
+		pad3->Draw();
+		pads.push_back(pad3);
+		TPad *pad4 = new TPad("pad4","pad4",0.51,0.01,0.99,0.49);
+		pad4->Draw();
+		pads.push_back(pad4);
+
+		for(int j=0;j<4;j++)
+		{
+		   	pads.at(j)->cd();
+			if(((4*i)+j)<num_fitfunctions)
+			{
+				Title.Form("Area %i: d=%fmm",(4*i)+j,grid.GetMeasurementAreas().at((4*i)+j).Get_thickness());
+				histo_vec.at((4*i)+j)->SetTitle(Title);
+
+
+				TFitResultPtr fitr=histo_vec.at((4*i)+j)->Fit(fitFcn_vec2.at((4*i)+j),fitoption);
+				if(fitr!=0)
+				{
+					cout<<"Fit of angle distribution failed with status: "<<fitr<<endl;
+					cout<<"Repeat fit "<<endl;
+					histo_vec.at((4*i)+j)->Fit(fitFcn_vec2.at((4*i)+j),fitoption);
+				}
+				
+				
+				histo_vec.at((4*i)+j)->Draw();
+                cout<<"fitfunction "<<(4*i)+j<<" of "<<num_fitfunctions<<endl;
+
+				h_d->SetBinContent((4*i)+j+1,fitFcn_vec2.at((4*i)+j)->GetParameter(6));
+				h_d->SetBinError((4*i)+j+1,fitFcn_vec2.at((4*i)+j)->GetParError(6));
+				h_d_true->SetBinContent((4*i)+j+1,grid.GetMeasurementAreas().at((4*i)+j).Get_thickness());
+            }
+		}
+
+		pdfname="x0fit_"+model+"_"+canvasname+".pdf";
+
+		c->SaveAs(pdfname); 
+	}
+
+	TCanvas *c = new TCanvas("c1","c1",900,1000);
+	gStyle->SetOptStat(0);
+	h_d->SetLineColor(2);
+	h_d_true->Draw("");
+	h_d->Draw("same");
+   	TLegend* legend = new TLegend(0.55,0.15,0.85,0.25);
+   	legend->AddEntry(h_d,"Measured values","l");
+   	legend->AddEntry(h_d_true,"Truth values","l");
+   	legend->Draw();
+	c->SaveAs("selfconsistency.pdf");
+
+	file->cd("selfconsistency/");
+	h_d->Write("d_measured");
+	h_d_true->Write("d_truth");
+
 	// Create a results root file and save the fit results in a histogram
 	TFile *resultsfile = new TFile("X0calibration_results.root", "RECREATE");
-
 	TH1F * resultshist=new TH1F("resultshist","results of calibration",4,1,4);
 
     resultshist->GetXaxis()->SetBinLabel( 1, "#lambda" );
@@ -1463,20 +1633,13 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
     resultshist->GetXaxis()->SetBinLabel( 4, "#nablaE_{v}[GeV/mm]" );
 
 	// Save the results to histogram
-	resultshist->SetBinContent(1,fitresults[0]);
-	resultshist->SetBinError(1,fitresults[1]);
-
-	resultshist->SetBinContent(2,fitresults[2]);
-	resultshist->SetBinError(2,fitresults[3]);
-
-	resultshist->SetBinContent(3,fitresults[4]);
-	resultshist->SetBinError(3,fitresults[5]);
-
-	resultshist->SetBinContent(4,fitresults[6]);
-	resultshist->SetBinError(4,fitresults[7]);
+	for(int i=0;i<4;i++)
+	{
+		resultshist->SetBinContent(i+1,fitresults[2*i]);
+		resultshist->SetBinError(i+1,fitresults[2*i+1]);
+	}
 
 	resultshist->Write("results");
-
 	resultsfile->Close();
 	
 
@@ -1607,6 +1770,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	rootfile->mkdir("grid");
 	rootfile->mkdir("grid/raw");
 	rootfile->mkdir("grid/fit");
+	rootfile->mkdir("selfconsistency");
 
 	rootfile->cd("");
 
@@ -1692,14 +1856,14 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	cout<<"Beam particle lambda		 start value is				"<<lambda_start<<endl<<endl;
 
 	if(fixlambda) 	cout<<"Calibration factor Lambda will not be calibrated"<<endl;
-	else cout<<endl<<"Beam particle mean energy will be calibrated"<<endl;
+	else cout<<"Calibration factor Lambda will be calibrated"<<endl;
 
-	if(fix_offset) cout<<endl<<"Beam particle mean energy will not be calibrated"<<endl;
-	else cout<<endl<<"Beam particle mean energy will be calibrated"<<endl;
+	if(fix_offset) cout<<"Beam particle mean energy will not be calibrated"<<endl<<endl;
+	else cout<<"Beam particle mean energy will be calibrated"<<endl<<endl;
 
-	cout<<"Beam particle energy u gradient start value is		"<<BE_ugrad<<" GeV/mm"<<endl;
-	cout<<"Beam particle energy v gradient start value is		"<<BE_vgrad<<" GeV/mm"<<endl;
-
+	cout<<"Using "<<model<<" fit model during calibration and self-consistency check!"<<endl;
+	if(Use_loglikelihood_estimator) cout<<"Using log-likelihood estimator fit during calibration and self-consistency check!"<<endl<<endl;
+	else cout<<"Using chi2 estimator fit during calibration and self-consistency check!"<<endl<<endl;
 
 	double* iresults=fit(rootfile, grid, beamoptions, recoerr, model, fitoptions, rangevalue);
 

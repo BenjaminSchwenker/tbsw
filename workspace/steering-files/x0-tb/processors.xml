@@ -255,6 +255,22 @@
      <!--P-Value cut for tracks used during alignment-->
      <parameter name="pValueCut" type="double" value="0.0005" />
    </processor>
+
+   <processor name="TriplettCorrelator" type="TriplettCorrelator">
+     <!--TriplettCorrelator: Pre- alignment in xy of tracking telescopes with trackletts-->
+     <!--This is the name of the file with the alignment constants (add .root)-->
+     <parameter name="AlignmentDBFileName" type="string" value="localDB/alignmentDB.root"/>
+     <!--Hit collection names-->
+     <parameter name="InputHitCollectionNameVec" type="StringVec" lcioInType="TrackerHit" value="hit_m26 hit_dep"/>
+     <!--Start alignment from scratch (true/false)?-->
+     <parameter name="NewAlignment" type="bool" value="false" />
+     <!--This is the name of the output root file-->
+     <parameter name="OutputRootFileName" type="string" value="TriplettCorrelator.root" />
+     <!--Tracklett collection for alignment-->
+     <parameter name="TrackCollectionName" type="string" lcioInType="Track" value="tracks" />
+     <!--Update alignment DB using offset corrections (true/false)?-->
+     <parameter name="UpdateAlignment" type="bool" value="true" />
+   </processor>
    
    <processor name="M26HotPixelKiller" type="HotPixelKiller">
      <!--HotPixelKiller: Masking of hot pixels-->
