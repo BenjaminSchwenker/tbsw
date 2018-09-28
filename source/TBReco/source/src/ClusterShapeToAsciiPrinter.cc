@@ -186,7 +186,8 @@ namespace depfet {
           double cov_uv   = TE.GetState().GetCov()[2][3];  
            
           PixelCluster Cluster = TE.GetHit().GetCluster();  
-          string id = Cluster.getLabel();
+          std::vector<int> _swADCSteps;  
+          string id = Cluster.getLabel(_swADCSteps); 
           
           trk_u -= Sensor.GetPixelCenterCoordU( Cluster.getVStart(), Cluster.getUStart()); 
           trk_v -= Sensor.GetPixelCenterCoordV( Cluster.getVStart(), Cluster.getUStart()); 

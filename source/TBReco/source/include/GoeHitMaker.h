@@ -100,7 +100,13 @@ namespace depfet {
     
     //! Position of steps for software ADC 
     std::vector<int> _swADCSteps;  
-  
+     
+    //! Periodicity for vCells used for clusterDB
+    int _vCellPeriod;
+    
+    //! Periodicity for uCells used for clusterDB
+    int _uCellPeriod; 
+    
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number
     int    _nEvt ;   //!< Event number

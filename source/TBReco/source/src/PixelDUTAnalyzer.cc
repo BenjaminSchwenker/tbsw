@@ -86,7 +86,11 @@ PixelDUTAnalyzer::PixelDUTAnalyzer() : Processor("PixelDUTAnalyzer")
   registerProcessorParameter ("DUTPlane",
                               "Plane number of DUT along the beam line",
                               _idut,  static_cast < int > (3));
-       
+  
+  registerProcessorParameter ("ReferencePlane",
+                              "Plane number of teference plane. Use only tracks having a hit on the reference plane to measure DUT efficiency. Put -1 to deactivate.",
+                              _iref,  static_cast < int > (-1));
+        
   registerProcessorParameter ("MaxResidualU",
                               "Maximum u residual for matching DUT hits to telescope track [mm]. Put -1 to deactivate cut.",
                               _maxResidualU,  static_cast < double > (0.2));
@@ -238,7 +242,20 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
       
     // Convert LCIO -> TB track  
     TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, _detector );  
-      
+    
+    // Require that track is a hit on reference (timing) plane
+    if (_iref >= 0 && _iref < _detector.GetNSensors()  ) {
+      if ( not trk.GetTE(_iref).HasHit() ) {
+        streamlog_out ( MESSAGE2 ) << "Track has no hit on reference plane. Skipping track!" << endl;
+        continue;
+      }  
+    } 
+    
+    // Check that track has no hit on the DUT to avoid bias of residuals and efficiency
+    if ( trk.GetTE(_idut).HasHit()  ) {
+      streamlog_out ( MESSAGE3 ) << "Track has already hit on dut plane. Danger to bias final results" << endl;
+    } 
+    
     // Refit track in nominal alignment
     bool trkerr = TrackFitter.Fit(trk);
     if ( trkerr ) {
@@ -424,6 +441,8 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     _rootHitSize = Cluster.getSize();  
     _rootHitSizeU = Cluster.getUSize();     
     _rootHitSizeV = Cluster.getVSize();     
+    _rootClusterStartCellU = Cluster.getUStart();
+    _rootClusterStartCellV = Cluster.getVStart();
     
     // Add variables for matched track 
     if ( hit2track[ihit] >= 0 ) {  
@@ -669,6 +688,8 @@ void PixelDUTAnalyzer::bookHistos()
    _rootHitTree->Branch("cellV_fit"       ,&_rootHitFitCellV           ,"cellV_fit/I");
    _rootHitTree->Branch("cellU_hit"       ,&_rootHitCellU           ,"cellU_hit/I");
    _rootHitTree->Branch("cellV_hit"       ,&_rootHitCellV           ,"cellV_hit/I");
+   _rootHitTree->Branch("startCellU_cluster"       ,&_rootClusterStartCellU           ,"startCellU_cluster/I");
+   _rootHitTree->Branch("srartCellV_cluster"       ,&_rootClusterStartCellV           ,"startCellV_cluster/I");
    _rootHitTree->Branch("cellUCenter_fit" ,&_rootHitFitCellUCenter  ,"cellUCenter_fit/D");
    _rootHitTree->Branch("cellVCenter_fit" ,&_rootHitFitCellVCenter  ,"cellVCenter_fit/D");                                      
    _rootHitTree->Branch("trackChi2"       ,&_rootHitTrackChi2      ,"trackChi2/D");

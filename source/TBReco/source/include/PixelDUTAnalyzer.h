@@ -111,6 +111,9 @@ protected:
    
 //! DUT plane number, counting sensors in gear file along the beam line starting at zero 
    int _idut; 
+
+//! Reference plane number, a track is required to have a hit on the reference plane 
+   int _iref; 
       
 //! Max residual for hit-track matching in 
    double _maxResidualU;  // in mm, local DUT uvw coordinate frame 
@@ -144,6 +147,9 @@ protected:
    int _rootHitSizeV;                // Number of hit cells along v direction in cluster
    int _rootHitCellU;                // Hit u coordinate lies on this u cell
    int _rootHitCellV;                // Hit v coordinate lies on this v cell
+   int _rootClusterStartCellU;       // Smallest uCell of cluster related to Hit 
+   int _rootClusterStartCellV;       // Smallest vCell of cluster related to Hit 
+
    int _rootHitHasTrack;             // Hit can be matched to track (== 0)     
    double _rootHitFitMomentum;       // Estimated track momentum from fit, only filled in case HasTrack==0            
    double _rootHitFitU;              // Estimated track intersection u coordimate in mm, in local DUT uvw coordinates        

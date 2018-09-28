@@ -55,25 +55,11 @@ namespace depfet {
     std::sort(m_sortedDigits.begin(), m_sortedDigits.end());
   }
   
-  
-  std::string PixelCluster::getLabel(int scale) const 
+  std::string PixelCluster::getLabel(const std::vector<int>& jumps, int vCellPeriod, int uCellPeriod) const 
   {
     // Compute cluster label string
-    stringstream streamLabel;         
-    streamLabel << m_clsSize; 
-     
-    for (auto digit : m_sortedDigits ) {
-      streamLabel << "D" << digit.m_cellIDV - m_vStart  <<  "." << digit.m_cellIDU - m_uStart << "." << digit.m_charge/scale;  
-    } 
-    return streamLabel.str();   
-  }
-
-  
-  std::string PixelCluster::getLabel(const std::vector<int>& jumps) const 
-  {
-    // Compute cluster label string
-    stringstream streamLabel;         
-    streamLabel << m_clsSize; 
+    stringstream streamLabel;  
+    streamLabel << "H" << m_clsSize << "." << m_vStart % vCellPeriod << "." <<  m_uStart % uCellPeriod;       
      
     for (auto digit : m_sortedDigits ) {
       int mapped_charge = std::distance(jumps.cbegin(), std::upper_bound(jumps.begin(), jumps.end(), digit.m_charge) );
