@@ -1538,20 +1538,21 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		double BE_mean=fitresults[2];
 		double BE_ugrad=fitresults[4];
 		double BE_vgrad=fitresults[6];
-		double parameters_temp[num_localparameters]={ BE_mean,z,mass,grid.GetMeasurementAreas().at(0).Get_density(),grid.GetMeasurementAreas().at(0).Get_Z(),grid.GetMeasurementAreas().at(0).Get_A(),
-											1.0,recoerr,lambda,700.0,grid.GetMeasurementAreas().at(0).Get_u_center(),
-											grid.GetMeasurementAreas().at(0).Get_v_center(),BE_ugrad,BE_vgrad};
+		double parameters_temp[num_localparameters]={ BE_mean,z,mass,grid.GetMeasurementAreas().at(i).Get_density(),grid.GetMeasurementAreas().at(i).Get_Z(),grid.GetMeasurementAreas().at(i).Get_A(),
+											1.0,recoerr,lambda,700.0,grid.GetMeasurementAreas().at(i).Get_u_center(),
+											grid.GetMeasurementAreas().at(i).Get_v_center(),BE_ugrad,BE_vgrad,0.0};
    		fitFcn->SetParameters(parameters_temp);
 
 		for(int i=0; i<num_localparameters;i++)
 		{
-			if(i!=6&&i!=9)
+			if(i!=6&&i!=9&&i!=14)
 			{
    				fitFcn->FixParameter(i,parameters_temp[i]);
 			}
 		}	
 
    		fitFcn->SetParLimits(6,1E-8,200.0);
+   		fitFcn->SetParLimits(14,-1E-4,+1E-4);
 
 		// Fill vector with pointers to fit functions
 		fitFcn_vec2.push_back(fitFcn);
