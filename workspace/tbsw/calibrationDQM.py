@@ -1,6 +1,6 @@
 from ROOT import TFile, TCanvas, TF1, TH1F, TH2F, TGraphAsymmErrors, TLegend, TAxis
 from ROOT import gROOT, Double, TCut
-import math
+import math, os, shutil
 
 def plot_alignment_parameters(inputfilename = None):
 
@@ -31,7 +31,7 @@ def plot_alignment_parameters(inputfilename = None):
   hxshift.Draw()
   hxshift.SetStats(False)
   c_xshifts.Update()
-  c_xshifts.SaveAs("hxshift.pdf")
+  c_xshifts.SaveAs("alignment_shift_x.pdf")
 
 
   histoname="alignment/hyshift_diff"
@@ -50,7 +50,7 @@ def plot_alignment_parameters(inputfilename = None):
   hyshift.Draw()
   hyshift.SetStats(False)
   c_yshifts.Update()
-  c_yshifts.SaveAs("hyshift.pdf")
+  c_yshifts.SaveAs("alignment_shift_y.pdf")
 
 
   histoname="alignment/hzshift_diff"
@@ -69,7 +69,7 @@ def plot_alignment_parameters(inputfilename = None):
   hzshift.Draw()
   hzshift.SetStats(False)
   c_zshifts.Update()
-  c_zshifts.SaveAs("hzshift.pdf")
+  c_zshifts.SaveAs("alignment_shift_z.pdf")
 
 
   histoname="alignment/hzrot_diff"
@@ -90,7 +90,7 @@ def plot_alignment_parameters(inputfilename = None):
   hzrot.Draw("hist")
   hzrot.SetStats(False)
   c_zrots.Update()
-  c_zrots.SaveAs("hzrots.pdf")
+  c_zrots.SaveAs("alignment_rotation_z.pdf")
 
 
 
@@ -199,92 +199,40 @@ def plot_pulls(inputfilename = None):
 
   nsensors=6
   sensorIDs=[0,1,2,4,5,6]
-  colors=[0,1,2,4,6,7]
+  colors=[1,2,4,6,7,8]
 
-  c_resu = TCanvas( 'c_resu', 'c_resu', 200, 10, 700, 500 )
-
-  for isens in range(0,nsensors):
-
-    sensorname='Sensor'+str(sensorIDs[isens])
-
-    histoname=sensorname+"/hresU_sensor"+str(sensorIDs[isens])
-    hresu = rawfile.Get(histoname)
-
-    integral =  hresu.Integral()
-    hresu.Scale(1.0/integral)
-
-    hresu.SetMaximum(0.045)
-    hresu.SetMinimum(0.0)
-    hresu.SetLineColor(colors[isens])
-
-    if isens > 0:
-      hresu.Draw("Hsame")
-    else:
-      hresu.Draw()
-    hresu.SetStats(False)
-
-    c_resu.Update()
-  c_resu.SaveAs("hresu.pdf")
-
-
-  c_resv = TCanvas( 'c_resv', 'c_resv', 200, 10, 700, 500 )
-  leg = TLegend(.73,.32,.97,.53)
-
-  for isens in range(0,nsensors):
-
-    sensorname='Sensor'+str(sensorIDs[isens])
-
-    histoname=sensorname+"/hresV_sensor"+str(sensorIDs[isens])
-    hresv = rawfile.Get(histoname)
-
-    integral =  hresv.Integral()
-    hresv.Scale(1.0/integral)
-
-    hresv.SetMaximum(0.045)
-    hresv.SetMinimum(0.0)
-    hresv.SetLineColor(colors[isens])
-
-    if isens > 0:
-      hresv.Draw("Hsame")
-    else:
-      hresv.Draw()
-
-    hresv.SetStats(False)
-
-
-    leg.AddEntry(hresv,sensorname,"H")
-    c_resv.Update()
-
-  leg.Draw()
-  c_resv.SaveAs("hresv.pdf")
-
-
+  leg_u = TLegend(.73,.73,.97,.97)
   c_pullu = TCanvas( 'c_pullu', 'c_pullu', 200, 10, 700, 500 )
 
   for isens in range(0,nsensors):
 
     sensorname='Sensor'+str(sensorIDs[isens])
-
     histoname=sensorname+"/hpull_resU_sensor"+str(sensorIDs[isens])
     hpullu = rawfile.Get(histoname)
 
-    integral =  hpullu.Integral()
-    hpullu.Scale(1.0/integral)
+    hpullu.GetXaxis().SetTitle("track pull")
+    hpullu.GetYaxis().SetTitle("number of tracks[10^{3}]")
+    hpullu.SetTitle("track pull (u direction)")
 
-    #hpullu.SetMaximum(0.045)
-    #hpullu.SetMinimum(0.0)
+#    integral =  hpullu.Integral()
+    hpullu.Scale(1E-3)
+
     hpullu.SetLineColor(colors[isens])
 
     if isens > 0:
       hpullu.Draw("Hsame")
     else:
       hpullu.Draw()
+
     hpullu.SetStats(False)
-
+    leg_u.AddEntry(hpullu,sensorname,"LE")
     c_pullu.Update()
-  c_pullu.SaveAs("hpullu.pdf")
+
+  leg_u.Draw()
+  c_pullu.SaveAs("trackpulls_u.pdf")
 
 
+  leg_v = TLegend(.73,.73,.97,.97)
   c_pullv = TCanvas( 'c_pullv', 'c_pullv', 200, 10, 700, 500 )
 
   for isens in range(0,nsensors):
@@ -294,11 +242,13 @@ def plot_pulls(inputfilename = None):
     histoname=sensorname+"/hpull_resV_sensor"+str(sensorIDs[isens])
     hpullv = rawfile.Get(histoname)
 
-    integral =  hpullv.Integral()
-    hpullv.Scale(1.0/integral)
+    hpullv.GetXaxis().SetTitle("track pull")
+    hpullv.GetYaxis().SetTitle("number of tracks[10^{3}]")
+    hpullv.SetTitle("track pull (v direction)")
 
-    #hpullv.SetMaximum(0.045)
-    #hpullv.SetMinimum(0.0)
+#   integral =  hpullv.Integral()
+    hpullv.Scale(1E-3)
+
     hpullv.SetLineColor(colors[isens])
 
     if isens > 0:
@@ -307,8 +257,11 @@ def plot_pulls(inputfilename = None):
       hpullv.Draw()
 
     hpullv.SetStats(False)
+    leg_v.AddEntry(hpullv,sensorname,"LE")
     c_pullv.Update()
-  c_pullv.SaveAs("hpullv.pdf")
+
+  leg_v.Draw()
+  c_pullv.SaveAs("trackpulls_v.pdf")
 
 
 
@@ -316,7 +269,6 @@ def plot_pvalues(inputfilename = None):
 
   if inputfilename == None:
     return None
-
 
   gROOT.Reset()
 
@@ -329,11 +281,130 @@ def plot_pvalues(inputfilename = None):
   histoname="hchi2prob"
   hpvalues = rawfile.Get(histoname)
 
+  histoname="hntracks"
+  hntracks = rawfile.Get(histoname)
+
+  hpvalues.Scale(1E-3)
+  hpvalues.GetXaxis().SetTitle("track p value")
+  hpvalues.GetYaxis().SetTitle("number of tracks[10^{3}]")
+
+  hntracks.Scale(1E-3)
+  hntracks.GetYaxis().SetTitle("number of events[10^{3}]")
+
+
   c_pvalues = TCanvas( 'c_pvalues', 'c_pvalues', 200, 10, 700, 500 )
-  hpvalues.Draw()
+  hpvalues.Draw("hist")
   hpvalues.SetStats(False)
   c_pvalues.Update()
-  c_pvalues.SaveAs("hpvalues.pdf")
+  c_pvalues.SaveAs("track_pvalues.pdf")
+
+  c_ntracks = TCanvas( 'c_ntracks', 'c_ntracks', 200, 10, 700, 500 )
+  hntracks.Draw("hist")
+  hntracks.SetStats(False)
+  c_ntracks.Update()
+  c_ntracks.SaveAs("ntracks.pdf")
+
+
+
+def plot_anglereco_DQM(inputfilename = None):
+
+  if inputfilename == None:
+    return None
+
+  gROOT.Reset()
+
+
+
+def calibration_DQMPlots(params):
+  """
+  Generation of DQM Plots from the root files created during the
+  telescope calibration step. 
+  Creates a folder results/telescopeDQM/name and populates it with 
+  pdf files with the most important and insightful DQM plots.  
+  """ 
+
+  name, DQMfilename, clusterDBfilename = params
+
+  # remember current working dir 
+  fullpath = os.getcwd() 
+    
+  # create results dir if not exist
+  if not os.path.isdir(fullpath+'/results'):
+      os.mkdir(fullpath+'/results')
+
+  # create telescopeDQM dir if not exist
+  if not os.path.isdir(fullpath+'/results/telescopeDQM'):
+      os.mkdir(fullpath+'/results/telescopeDQM')
+
+  # Name of directory
+  workdir = 'results/telescopeDQM/'+name
+
+  # remove olddir if exists 
+  if os.path.isdir(workdir):
+    shutil.rmtree(workdir)
+    
+  # create dir and change directory
+  os.mkdir(workdir) 
+  os.chdir(workdir)
+
+  if os.path.isfile(fullpath+'/'+DQMfilename):
+
+    # Create file links in the current work dir
+    os.symlink(fullpath+'/'+DQMfilename,'TelescopeDQM')
+    os.symlink(fullpath+'/'+clusterDBfilename,'clusterDB')
+
+  # Generate DQM plots
+  plot_alignment_parameters(inputfilename = 'TelescopeDQM') 
+  plot_clusterDB_parameters(inputfilename = 'clusterDB') 
+  plot_pulls(inputfilename = 'TelescopeDQM') 
+  plot_pvalues(inputfilename = 'TelescopeDQM') 
+
+  os.chdir(fullpath)
+
+
+
+
+
+def anglereco_DQMPlots(params):
+  """
+  Generation of DQM Plots from the root files created during the
+  telescope calibration step. 
+  Creates a folder results/telescopeDQM/name and populates it with 
+  pdf files with the most important and insightful DQM plots.  
+  """ 
+
+  name, filename = params
+
+  # remember current working dir 
+  fullpath = os.getcwd() 
+    
+  # create results dir if not exist
+  if not os.path.isdir(fullpath+'/results'):
+      os.mkdir(fullpath+'/results')
+
+  # create telescopeDQM dir if not exist
+  if not os.path.isdir(fullpath+'/results/anglerecoDQM'):
+      os.mkdir(fullpath+'/results/anglerecoDQM')
+
+  # Name of directory
+  workdir = 'results/anglerecoDQM/'+name
+
+  # remove olddir if exists 
+  if os.path.isdir(workdir):
+    shutil.rmtree(workdir)
+    
+  # create dir and change directory
+  os.mkdir(workdir) 
+  os.chdir(workdir)
+
+  if os.path.isfile(fullpath+'/'+filename):
+
+    # Create file link in the current work dir
+    os.symlink(fullpath+'/'+filename,'anglereco')
+
+  plot_anglereco_DQM(inputfilename = 'anglereco') 
+
+  os.chdir(fullpath)
 
 
 

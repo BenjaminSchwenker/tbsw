@@ -141,6 +141,7 @@ def calibrate():
   # Run the calibration steps 
   CalObj.calibrate(path=calpath,ifile=rawfile_air,caltag=caltag)  
 
+
 def reconstruct():
 
   # Reconsruct the rawfile using the caltag. Resulting root files are 
@@ -229,6 +230,9 @@ if __name__ == '__main__':
 
   # Calibrate the telescope 
   calibrate( )
+  caldir='tmp-runs/'+caltag+'-cal'
+  paramsDQM = (caltag,caldir+'/TelescopeDQM2.root', caldir+'/localDB/clusterDB-M26.root')
+  calibrationDQM.calibration_DQMPlots(paramsDQM)
 
 
   for it in range(0,targetalignment_iterations):
@@ -239,6 +243,9 @@ if __name__ == '__main__':
 
   # Reconstruct the alu rawfile 
   reconstruct( )
+  recofile='root-files/'
+  paramsDQM = (caltag,recofile)
+  calibrationDQM.anglereco_DQMPlots(paramsDQM)
 
   # Base filename of the X0 root file
   basefilename='X0-mc-air-test-reco'
