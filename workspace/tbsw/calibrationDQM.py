@@ -1,6 +1,6 @@
 from ROOT import TFile, TCanvas, TF1, TH1F, TH2F, TGraphAsymmErrors, TLegend, TAxis
 from ROOT import gROOT, Double, TCut
-import math, os, shutil
+import math
 
 def plot_alignment_parameters(inputfilename = None):
 
@@ -265,7 +265,7 @@ def plot_pulls(inputfilename = None):
 
 
 
-def plot_pvalues(inputfilename = None):
+def plot_trackDQM(inputfilename = None):
 
   if inputfilename == None:
     return None
@@ -284,12 +284,17 @@ def plot_pvalues(inputfilename = None):
   histoname="hntracks"
   hntracks = rawfile.Get(histoname)
 
+  histoname="Sensor2/BeamProfile/hhitmap_sensor2"
+  hhitmap = rawfile.Get(histoname)
+
   hpvalues.Scale(1E-3)
   hpvalues.GetXaxis().SetTitle("track p value")
   hpvalues.GetYaxis().SetTitle("number of tracks[10^{3}]")
 
   hntracks.Scale(1E-3)
   hntracks.GetYaxis().SetTitle("number of events[10^{3}]")
+
+  hhitmap.GetZaxis().SetTitleOffset(0.95)
 
 
   c_pvalues = TCanvas( 'c_pvalues', 'c_pvalues', 200, 10, 700, 500 )
@@ -304,6 +309,13 @@ def plot_pvalues(inputfilename = None):
   c_ntracks.Update()
   c_ntracks.SaveAs("ntracks.pdf")
 
+  c_hitmap = TCanvas( 'c_hitmap', 'c_hitmap', 200, 10, 700, 500 )
+  c_hitmap.SetRightMargin(0.13)
+  hhitmap.Draw("colz")
+  hhitmap.SetStats(False)
+  c_hitmap.Update()
+  c_hitmap.SaveAs("hitmap.pdf")
+
 
 
 def plot_anglereco_DQM(inputfilename = None):
@@ -313,98 +325,45 @@ def plot_anglereco_DQM(inputfilename = None):
 
   gROOT.Reset()
 
+  rawfile = gROOT.FindObject( inputfilename )
+  if rawfile:
+    rawfile.Close()
+  rawfile = TFile( inputfilename, 'READ' )
 
+  tree = rawfile.Get("MSCTree")
 
-def calibration_DQMPlots(params):
-  """
-  Generation of DQM Plots from the root files created during the
-  telescope calibration step. 
-  Creates a folder results/telescopeDQM/name and populates it with 
-  pdf files with the most important and insightful DQM plots.  
-  """ 
+  h_theta_u_reso = TH1F()
+  tree.Draw("1E6*sqrt(theta1_var) >>h_theta_u_reso")
+  h_theta_u_reso= tree.GetHistogram()
+  h_theta_u_reso.Scale(1E-3)
+  h_theta_u_reso.GetXaxis().SetTitle("#theta_{u} reconstruction error[#murad]")
+  h_theta_u_reso.GetYaxis().SetTitle("reconstructed angles[10^{3}]")
+  h_theta_u_reso.SetTitle("")
+  h_theta_u_reso.SetStats(False)
 
-  name, DQMfilename, clusterDBfilename = params
+  h_theta_v_reso = TH1F()
+  tree.Draw("1E6*sqrt(theta2_var) >>h_theta_v_reso")
+  h_theta_v_reso= tree.GetHistogram()
+  h_theta_v_reso.Scale(1E-3)
+  h_theta_v_reso.GetXaxis().SetTitle("#theta_{v} reconstruction error[#murad]")
+  h_theta_v_reso.GetYaxis().SetTitle("reconstructed angles[10^{3}]")
+  h_theta_v_reso.SetTitle("")
+  h_theta_v_reso.SetStats(False)
 
-  # remember current working dir 
-  fullpath = os.getcwd() 
-    
-  # create results dir if not exist
-  if not os.path.isdir(fullpath+'/results'):
-      os.mkdir(fullpath+'/results')
+  c_theta_u_reso = TCanvas( 'c_theta_u_reso', 'c_theta_u_reso', 200, 10, 700, 500 )
+  c_theta_u_reso.SetRightMargin(0.13)
+  h_theta_u_reso.Draw("hist")
+  h_theta_u_reso.SetStats(False)
+  c_theta_u_reso.Update()
+  c_theta_u_reso.SaveAs("theta_u_reso.pdf")
 
-  # create telescopeDQM dir if not exist
-  if not os.path.isdir(fullpath+'/results/telescopeDQM'):
-      os.mkdir(fullpath+'/results/telescopeDQM')
+  c_theta_v_reso = TCanvas( 'c_theta_v_reso', 'c_theta_v_reso', 200, 10, 700, 500 )
+  c_theta_v_reso.SetRightMargin(0.13)
+  h_theta_v_reso.Draw("hist")
+  h_theta_v_reso.SetStats(False)
+  c_theta_v_reso.Update()
+  c_theta_v_reso.SaveAs("theta_v_reso.pdf")
 
-  # Name of directory
-  workdir = 'results/telescopeDQM/'+name
-
-  # remove olddir if exists 
-  if os.path.isdir(workdir):
-    shutil.rmtree(workdir)
-    
-  # create dir and change directory
-  os.mkdir(workdir) 
-  os.chdir(workdir)
-
-  if os.path.isfile(fullpath+'/'+DQMfilename):
-
-    # Create file links in the current work dir
-    os.symlink(fullpath+'/'+DQMfilename,'TelescopeDQM')
-    os.symlink(fullpath+'/'+clusterDBfilename,'clusterDB')
-
-  # Generate DQM plots
-  plot_alignment_parameters(inputfilename = 'TelescopeDQM') 
-  plot_clusterDB_parameters(inputfilename = 'clusterDB') 
-  plot_pulls(inputfilename = 'TelescopeDQM') 
-  plot_pvalues(inputfilename = 'TelescopeDQM') 
-
-  os.chdir(fullpath)
-
-
-
-
-
-def anglereco_DQMPlots(params):
-  """
-  Generation of DQM Plots from the root files created during the
-  telescope calibration step. 
-  Creates a folder results/telescopeDQM/name and populates it with 
-  pdf files with the most important and insightful DQM plots.  
-  """ 
-
-  name, filename = params
-
-  # remember current working dir 
-  fullpath = os.getcwd() 
-    
-  # create results dir if not exist
-  if not os.path.isdir(fullpath+'/results'):
-      os.mkdir(fullpath+'/results')
-
-  # create telescopeDQM dir if not exist
-  if not os.path.isdir(fullpath+'/results/anglerecoDQM'):
-      os.mkdir(fullpath+'/results/anglerecoDQM')
-
-  # Name of directory
-  workdir = 'results/anglerecoDQM/'+name
-
-  # remove olddir if exists 
-  if os.path.isdir(workdir):
-    shutil.rmtree(workdir)
-    
-  # create dir and change directory
-  os.mkdir(workdir) 
-  os.chdir(workdir)
-
-  if os.path.isfile(fullpath+'/'+filename):
-
-    # Create file link in the current work dir
-    os.symlink(fullpath+'/'+filename,'anglereco')
-
-  plot_anglereco_DQM(inputfilename = 'anglereco') 
-
-  os.chdir(fullpath)
 
 
 
