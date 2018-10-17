@@ -217,93 +217,6 @@ def targetalignment(params):
   save_targetpos(treename,dbname)
   RecObj.export_caltag(newcaltag)
 
-def calibration_DQMPlots(params):
-  """
-  Generation of DQM Plots from the root files created during the
-  telescope calibration step. 
-  Creates a folder results/telescopeDQM/name and populates it with 
-  pdf files with the most important and insightful DQM plots.  
-  """ 
-
-  name, DQMfilename, clusterDBfilename = params
-
-  # remember current working dir 
-  fullpath = os.getcwd() 
-    
-  # create results dir if not exist
-  if not os.path.isdir(fullpath+'/results'):
-      os.mkdir(fullpath+'/results')
-
-  # create telescopeDQM dir if not exist
-  if not os.path.isdir(fullpath+'/results/telescopeDQM'):
-      os.mkdir(fullpath+'/results/telescopeDQM')
-
-  # Name of directory
-  workdir = 'results/telescopeDQM/'+name
-
-  # remove olddir if exists 
-  if os.path.isdir(workdir):
-    shutil.rmtree(workdir)
-    
-  # create dir and change directory
-  os.mkdir(workdir) 
-  os.chdir(workdir)
-
-  if os.path.isfile(fullpath+'/'+DQMfilename):
-
-    # Create file links in the current work dir
-    os.symlink(fullpath+'/'+DQMfilename,'TelescopeDQM')
-    os.symlink(fullpath+'/'+clusterDBfilename,'clusterDB')
-
-  # Generate DQM plots
-  calibrationDQM.plot_alignment_parameters(inputfilename = 'TelescopeDQM') 
-  calibrationDQM.plot_clusterDB_parameters(inputfilename = 'clusterDB') 
-  calibrationDQM.plot_pulls(inputfilename = 'TelescopeDQM') 
-  calibrationDQM.plot_trackDQM(inputfilename = 'TelescopeDQM') 
-
-  os.chdir(fullpath)
-
-def anglereco_DQMPlots(params):
-  """
-  Generation of DQM Plots from the root files created during the
-  telescope calibration step. 
-  Creates a folder results/telescopeDQM/name and populates it with 
-  pdf files with the most important and insightful DQM plots.  
-  """ 
-
-  name, filename = params
-
-  # remember current working dir 
-  fullpath = os.getcwd() 
-    
-  # create results dir if not exist
-  if not os.path.isdir(fullpath+'/results'):
-      os.mkdir(fullpath+'/results')
-
-  # create telescopeDQM dir if not exist
-  if not os.path.isdir(fullpath+'/results/anglerecoDQM'):
-      os.mkdir(fullpath+'/results/anglerecoDQM')
-
-  # Name of directory
-  workdir = 'results/anglerecoDQM/'+name
-
-  # remove olddir if exists 
-  if os.path.isdir(workdir):
-    shutil.rmtree(workdir)
-    
-  # create dir and change directory
-  os.mkdir(workdir) 
-  os.chdir(workdir)
-
-  if os.path.isfile(fullpath+'/'+filename):
-
-    # Create file link in the current work dir
-    os.symlink(fullpath+'/'+filename,'anglereco')
-
-  calibrationDQM.plot_anglereco_DQM(inputfilename = 'anglereco') 
-
-  os.chdir(fullpath)
-
   
 if __name__ == '__main__':
 
@@ -312,13 +225,13 @@ if __name__ == '__main__':
   cwdir = os.getcwd()
 
   # Create a simulated rawfile with air data 
-  #simulate( )
+  simulate( )
 
   # Calibrate the telescope 
-  #calibrate( )
+  calibrate( )
   caldir='tmp-runs/'+caltag+'-cal'
   paramsDQM = (caltag,caldir+'/TelescopeDQM2.root', caldir+'/localDB/clusterDB-M26.root')
-  calibration_DQMPlots(paramsDQM)
+  DQMplots.calibration_DQMPlots(paramsDQM)
 
 
   for it in range(0,targetalignment_iterations):
@@ -328,10 +241,10 @@ if __name__ == '__main__':
     targetalignment(params_TA)
 
   # Reconstruct the alu rawfile 
-  #reconstruct( )
+  reconstruct( )
   recofile='root-files/X0-'+caltag+'-reco.root'
   paramsDQM = (caltag,recofile)
-  anglereco_DQMPlots(paramsDQM)
+  DQMplots.anglereco_DQMPlots(paramsDQM)
 
   # Base filename of the X0 root file
   basefilename='X0-mc-air-test-reco'
@@ -340,14 +253,23 @@ if __name__ == '__main__':
   filename='root-files/'+basefilename+'.root'
 
   # Generate a uncalibrated X/X0 image
-  #tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag='',deletetag=deletetag,steerfiles=steerfiles,nametag='Uncalibrated')
+  tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag='',deletetag=deletetag,steerfiles=steerfiles,nametag='Uncalibrated')
+  imagefile='tmp-runs/X0-'+caltag+'-reco-Uncalibrated-X0image/X0-completeimage.root'
+  paramsDQM = ('uncalibrated',imagefile)
+  DQMplots.x0image_Plots(paramsDQM)
 
   # Path to uncalibrated X0 image file
   imagefilename='/root-files/'+basefilename+'-UncalibratedX0image.root'
 
   # Do a calibration of the angle resolution
-  #tbsw.x0imaging.X0Calibration.x0calibration(filename=filename,imagefilename=imagefilename,caltag=x0tag,steerfiles=steerfiles)
+  tbsw.x0imaging.X0Calibration.x0calibration(filename=filename,imagefilename=imagefilename,caltag=x0tag,steerfiles=steerfiles)
+  x0caldir='tmp-runs/X0-'+caltag+'-reco-'+x0tag+'-X0Calibration/'
+  paramsDQM = ('x0calibration-'+x0tag,x0caldir)
+  DQMplots.x0calibration_DQMPlots(paramsDQM)
 
   # Generate a calibrated X/X0 image
-  #tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag=x0tag,deletetag=deletetag,steerfiles=steerfiles,nametag='Calibrated')
+  tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag=x0tag,deletetag=deletetag,steerfiles=steerfiles,nametag='Calibrated')
+  imagefile='tmp-runs/X0-'+caltag+'-reco-Calibrated-X0image/X0-completeimage.root'
+  paramsDQM = ('calibrated-'+x0tag,imagefile)
+  DQMplots.x0image_Plots(paramsDQM)
 
