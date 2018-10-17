@@ -140,6 +140,11 @@ def calibrate():
   # Run the calibration steps 
   CalObj.calibrate(path=calpath,ifile=rawfile_air,caltag=caltag)  
 
+  # Run DQM scripts
+  caldir='tmp-runs/'+caltag+'-cal'
+  paramsDQM = (caltag,caldir+'/TelescopeDQM2.root', caldir+'/localDB/clusterDB-M26.root', True)
+  DQMplots.calibration_DQMPlots(paramsDQM)
+
 
 def reconstruct():
 
@@ -161,7 +166,12 @@ def reconstruct():
     localcaltag=caltag
 
   # Run the reconstuction  
-  RecObj.reconstruct(path=recopath,ifile=rawfile_alu,caltag=localcaltag)   
+  RecObj.reconstruct(path=recopath,ifile=rawfile_alu,caltag=localcaltag)  
+
+  # Run DQM scripts
+  recofile='root-files/X0-'+caltag+'-reco.root'
+  paramsDQM = (caltag,recofile)
+  DQMplots.anglereco_DQMPlots(paramsDQM) 
 
 
 def targetalignment(params):
@@ -229,9 +239,6 @@ if __name__ == '__main__':
 
   # Calibrate the telescope 
   calibrate( )
-  caldir='tmp-runs/'+caltag+'-cal'
-  paramsDQM = (caltag,caldir+'/TelescopeDQM2.root', caldir+'/localDB/clusterDB-M26.root')
-  DQMplots.calibration_DQMPlots(paramsDQM)
 
 
   for it in range(0,targetalignment_iterations):
@@ -242,9 +249,6 @@ if __name__ == '__main__':
 
   # Reconstruct the alu rawfile 
   reconstruct( )
-  recofile='root-files/X0-'+caltag+'-reco.root'
-  paramsDQM = (caltag,recofile)
-  DQMplots.anglereco_DQMPlots(paramsDQM)
 
   # Base filename of the X0 root file
   basefilename='X0-mc-air-test-reco'

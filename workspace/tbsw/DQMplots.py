@@ -412,7 +412,7 @@ def plot_x0image_DQM(inputfilename = None):
 
 def calibration_DQMPlots(params):
 
-  name, DQMfilename, clusterDBfilename = params
+  name, DQMfilename, clusterDBfilename, UseclusterDB = params
 
   # remember current working dir 
   fullpath = os.getcwd() 
@@ -444,7 +444,8 @@ def calibration_DQMPlots(params):
 
   # Generate DQM plots
   plot_alignment_parameters(inputfilename = 'TelescopeDQM') 
-  plot_clusterDB_parameters(inputfilename = 'clusterDB') 
+  if UseclusterDB:
+    plot_clusterDB_parameters(inputfilename = 'clusterDB') 
   plot_pulls(inputfilename = 'TelescopeDQM') 
   plot_trackDQM(inputfilename = 'TelescopeDQM') 
 
