@@ -1,105 +1,66 @@
 import os
 import shutil
-import subprocess
 import glob
-import xml.etree.ElementTree
-import random
 import math
 
-from ROOT import TFile, TCanvas, TF1, TH1F, TH2F, TGraphAsymmErrors, TLegend, TAxis
-from ROOT import gROOT, Double, TCut, TPaveLabel
 import ROOT
 import math
+
+
+canvases = {}
+def plot_align_parameter(histoname, paramname, unit, scale,uselatex, inputfilename = None):
+
+  if inputfilename == None:
+    return None
+
+  ROOT.gROOT.Reset()
+
+  rawfile = ROOT.gROOT.FindObject( inputfilename )
+  if rawfile:
+    rawfile.Close()
+  rawfile = ROOT.TFile( inputfilename, 'READ' )
+
+  diffhisto_tmp = rawfile.Get(histoname)
+
+  diffhisto = ROOT.TH1F("h{:s}shift", "h{:s}shift", diffhisto_tmp.GetNbinsX(), 0.5, diffhisto_tmp.GetNbinsX()+0.5)
+  for i in range(0,diffhisto_tmp.GetNbinsX()):
+    diffhisto.SetBinContent(i,diffhisto_tmp.GetBinContent(i))
+  diffhisto.SetTitle("")
+
+  ytitle='{:s}'.format(paramname)+'_{nom.}-'+'{:s}'.format(paramname)+'_{align.} '+'[{:s}]'.format(unit)
+  if uselatex:
+    ytitle='#{:s}'.format(paramname)+'_{nom.}-'+'#{:s}'.format(paramname)+'_{align.} '+'[{:s}]'.format(unit)
+  diffhisto.SetYTitle(ytitle)
+  diffhisto.GetYaxis().SetTitleOffset(1.25)
+  diffhisto.SetXTitle("sensor position")
+  diffhisto.Scale(scale)
+  diffhisto.SetNdivisions(diffhisto.GetNbinsX())
+
+  canvases[histoname] = ROOT.TCanvas( '{:s}'.format(histoname), '{:s}'.format(histoname), 200, 10, 700, 500 )
+  diffhisto.Draw("hist")
+  diffhisto.SetStats(False)
+  canvases[histoname].Update()
+  canvases[histoname].SaveAs("alignment_shift_{:s}.pdf".format(paramname))
+
 
 def plot_alignment_parameters(inputfilename = None):
 
   if inputfilename == None:
     return None
 
-  gROOT.Reset()
-
-  rawfile = gROOT.FindObject( inputfilename )
-  if rawfile:
-    rawfile.Close()
-  rawfile = TFile( inputfilename, 'READ' )
+  ROOT.gROOT.Reset()
 
   histoname="alignment/hxshift_diff"
-  hxshift_tmp = rawfile.Get(histoname)
-
-  hxshift = TH1F("hxshift", "hxshift", hxshift_tmp.GetNbinsX(), 0.5, hxshift_tmp.GetNbinsX()+0.5)
-  for i in range(0,hxshift_tmp.GetNbinsX()):
-    hxshift.SetBinContent(i,hxshift_tmp.GetBinContent(i))
-  hxshift.SetTitle("")
-  hxshift.SetYTitle("x_{nom.}-x_{align.} [mm]")
-  hxshift.GetYaxis().SetTitleOffset(1.25)
-  hxshift.SetXTitle("sensor position")
-  hxshift.SetNdivisions(hxshift_tmp.GetNbinsX())
-
-  c_xshifts = TCanvas( 'c_xshifts', 'c_xshifts', 200, 10, 700, 500 )
-  hxshift.Draw()
-  hxshift.SetStats(False)
-  c_xshifts.Update()
-  c_xshifts.SaveAs("alignment_shift_x.pdf")
-
+  plot_align_parameter(histoname,'x','mm',1,False,inputfilename)
 
   histoname="alignment/hyshift_diff"
-  hyshift_tmp = rawfile.Get(histoname)
-
-  hyshift = TH1F("hyshift", "hyshift", hyshift_tmp.GetNbinsX(), 0.5, hyshift_tmp.GetNbinsX()+0.5)
-  for i in range(0,hyshift_tmp.GetNbinsX()):
-    hyshift.SetBinContent(i,hyshift_tmp.GetBinContent(i))
-  hxshift.SetTitle("")
-  hyshift.SetYTitle("y_{nom.}-y_{align.} [mm]")
-  hyshift.GetYaxis().SetTitleOffset(1.25)
-  hyshift.SetXTitle("sensor position")
-  hyshift.SetNdivisions(hyshift_tmp.GetNbinsX())
-
-  c_yshifts = TCanvas( 'c_yshifts', 'c_yshifts', 200, 10, 700, 500 )
-  hyshift.Draw()
-  hyshift.SetStats(False)
-  c_yshifts.Update()
-  c_yshifts.SaveAs("alignment_shift_y.pdf")
-
+  plot_align_parameter(histoname,'y','mm',1,False,inputfilename)
 
   histoname="alignment/hzshift_diff"
-  hzshift_tmp = rawfile.Get(histoname)
-
-  hzshift = TH1F("hzshift", "hzshift", hzshift_tmp.GetNbinsX(), 0.5, hzshift_tmp.GetNbinsX()+0.5)
-  for i in range(0,hzshift_tmp.GetNbinsX()):
-    hzshift.SetBinContent(i,hzshift_tmp.GetBinContent(i))
-  hzshift.SetTitle("")
-  hzshift.SetYTitle("z_{nom.}-z_{align.} [mm]")
-  hzshift.GetYaxis().SetTitleOffset(1.25)
-  hzshift.SetXTitle("sensor position")
-  hzshift.SetNdivisions(hzshift_tmp.GetNbinsX())
-
-  c_zshifts = TCanvas( 'c_zshifts', 'c_zshifts', 200, 10, 700, 500 )
-  hzshift.Draw()
-  hzshift.SetStats(False)
-  c_zshifts.Update()
-  c_zshifts.SaveAs("alignment_shift_z.pdf")
-
+  plot_align_parameter(histoname,'z','mm',1,False,inputfilename)
 
   histoname="alignment/hzrot_diff"
-  hzrot_tmp = rawfile.Get(histoname)
-
-  hzrot = TH1F("hzrot", "hzrot", hzrot_tmp.GetNbinsX(), 0.5, hzrot_tmp.GetNbinsX()+0.5)
-  for i in range(0,hzrot_tmp.GetNbinsX()):
-    hzrot.SetBinContent(i,hzrot_tmp.GetBinContent(i))
-  hzrot.SetTitle("")
-  hzrot.SetYTitle("#gamma_{nom.}-#gamma_{align.} [mrad]")
-  hzrot.GetYaxis().SetTitleOffset(1.0)
-  hzrot.SetXTitle("sensor position")
-  hzrot.Scale(1E3)
-  hzrot.SetNdivisions(hzrot_tmp.GetNbinsX())
-
-
-  c_zrots = TCanvas( 'c_zrots', 'c_zrots', 200, 10, 700, 500 )
-  hzrot.Draw("hist")
-  hzrot.SetStats(False)
-  c_zrots.Update()
-  c_zrots.SaveAs("alignment_rotation_z.pdf")
-
+  plot_align_parameter(histoname,'gamma','mrad',1E3,True,inputfilename)
 
 
 def plot_clusterDB_parameters(inputfilename = None):
@@ -110,24 +71,24 @@ def plot_clusterDB_parameters(inputfilename = None):
   oldlabels=["H1.0.0D0.0.0","H2.0.0D0.0.0D0.1.0","H2.0.0D0.0.0D1.0.0","H3.0.0D0.0.0D0.1.0D1.0.0","H3.0.0D0.0.0D0.1.0D1.1.0","H3.0.0D0.0.0D1.0.0D1.1.0","H3.0.0D0.1.0D1.0.0D1.1.0","H4.0.0D0.0.0D0.1.0D1.0.0D1.1.0"]
   newlabels=["1p","2pu","2pv","3p1","3p2","3p3","3p4","4p"]
 
-  rawfile = gROOT.FindObject( inputfilename )
+  rawfile = ROOT.gROOT.FindObject( inputfilename )
   if rawfile:
     rawfile.Close()
-  rawfile = TFile( inputfilename, 'READ' )
+  rawfile = ROOT.TFile( inputfilename, 'READ' )
 
   histoname="hDB_Weight"
   hfractions_tmp = rawfile.Get(histoname)
   integral =  hfractions_tmp.Integral()
   hfractions_tmp.Scale(100.0/integral)
-  hfractions = TH1F("hfractions", "cluster type fractions", len(oldlabels),0.5,len(oldlabels)+0.5)
+  hfractions = ROOT.TH1F("hfractions", "cluster type fractions", len(oldlabels),0.5,len(oldlabels)+0.5)
 
   histoname="hDB_Sigma2_U"
   hsigma2_u_tmp = rawfile.Get(histoname)
-  hsigma_u = TH1F("hsigma_u", "cluster u resolution ", len(oldlabels),0.5,len(oldlabels)+0.5)
+  hsigma_u = ROOT.TH1F("hsigma_u", "cluster u resolution ", len(oldlabels),0.5,len(oldlabels)+0.5)
 
   histoname="hDB_Sigma2_V"
   hsigma2_v_tmp = rawfile.Get(histoname)
-  hsigma_v = TH1F("hsigma_v", "cluster v resolution ", len(oldlabels),0.5,len(oldlabels)+0.5)
+  hsigma_v = ROOT.TH1F("hsigma_v", "cluster v resolution ", len(oldlabels),0.5,len(oldlabels)+0.5)
 
   for ilabel,label in enumerate(oldlabels):
 
@@ -174,17 +135,17 @@ def plot_clusterDB_parameters(inputfilename = None):
   hsigma_v.GetYaxis().SetLabelSize(0.05)
 
 
-  c1 = TCanvas( 'c1', 'c1', 200, 10, 700, 500 )
+  c1 = ROOT.TCanvas( 'c1', 'c1', 200, 10, 700, 500 )
   hfractions.Draw("histE")
   c1.Update()
   c1.SaveAs("cluster_fractions.pdf")
 
-  c2 = TCanvas( 'c2', 'c2', 200, 10, 700, 500 )
+  c2 = ROOT.TCanvas( 'c2', 'c2', 200, 10, 700, 500 )
   hsigma_u.Draw("histE")
   c2.Update()
   c2.SaveAs("cluster_sigma_u.pdf")
 
-  c3 = TCanvas( 'c3', 'c3', 200, 10, 700, 500 )
+  c3 = ROOT.TCanvas( 'c3', 'c3', 200, 10, 700, 500 )
   hsigma_v.Draw("histE")
   c3.Update()
   c3.SaveAs("cluster_sigma_v.pdf")
@@ -196,20 +157,20 @@ def plot_pulls(inputfilename = None):
   if inputfilename == None:
     return None
 
-  gROOT.Reset()
+  ROOT.gROOT.Reset()
 
-  rawfile = gROOT.FindObject( inputfilename )
+  rawfile = ROOT.gROOT.FindObject( inputfilename )
   if rawfile:
     rawfile.Close()
-  rawfile = TFile( inputfilename, 'READ' )
+  rawfile = ROOT.TFile( inputfilename, 'READ' )
 
   nsensors=6
   sensorIDs=[0,1,2,4,5,6]
   colors=[1,2,4,6,7,8]
 
-  leg_u = TLegend(.82,.35,.97,.97)
+  leg_u = ROOT.TLegend(.82,.35,.97,.97)
   leg_u.SetTextSize(.03)
-  c_pullu = TCanvas( 'c_pullu', 'c_pullu', 200, 10, 700, 500 )
+  c_pullu = ROOT.TCanvas( 'c_pullu', 'c_pullu', 200, 10, 700, 500 )
 
   for isens in range(0,nsensors):
 
@@ -239,9 +200,9 @@ def plot_pulls(inputfilename = None):
   c_pullu.SaveAs("trackpulls_u.pdf")
 
 
-  leg_v = TLegend(.82,.35,.97,.97)
+  leg_v = ROOT.TLegend(.82,.35,.97,.97)
   leg_v.SetTextSize(.03)
-  c_pullv = TCanvas( 'c_pullv', 'c_pullv', 200, 10, 700, 500 )
+  c_pullv = ROOT.TCanvas( 'c_pullv', 'c_pullv', 200, 10, 700, 500 )
 
   for isens in range(0,nsensors):
 
@@ -278,12 +239,12 @@ def plot_trackDQM(inputfilename = None):
   if inputfilename == None:
     return None
 
-  gROOT.Reset()
+  ROOT.gROOT.Reset()
 
-  rawfile = gROOT.FindObject( inputfilename )
+  rawfile = ROOT.gROOT.FindObject( inputfilename )
   if rawfile:
     rawfile.Close()
-  rawfile = TFile( inputfilename, 'READ' )
+  rawfile = ROOT.TFile( inputfilename, 'READ' )
 
   histoname="hchi2prob"
   hpvalues = rawfile.Get(histoname)
@@ -302,13 +263,13 @@ def plot_trackDQM(inputfilename = None):
   hntracks.GetYaxis().SetTitle("number of events[10^{3}]")
 
 
-  c_pvalues = TCanvas( 'c_pvalues', 'c_pvalues', 200, 10, 700, 500 )
+  c_pvalues = ROOT.TCanvas( 'c_pvalues', 'c_pvalues', 200, 10, 700, 500 )
   hpvalues.Draw("hist")
   hpvalues.SetStats(False)
   c_pvalues.Update()
   c_pvalues.SaveAs("track_pvalues.pdf")
 
-  c_ntracks = TCanvas( 'c_ntracks', 'c_ntracks', 200, 10, 700, 500 )
+  c_ntracks = ROOT.TCanvas( 'c_ntracks', 'c_ntracks', 200, 10, 700, 500 )
   hntracks.Draw("hist")
   hntracks.SetStats(False)
   c_ntracks.Update()
@@ -320,16 +281,16 @@ def plot_anglereco_DQM(inputfilename = None):
   if inputfilename == None:
     return None
 
-  gROOT.Reset()
+  ROOT.gROOT.Reset()
 
-  rawfile = gROOT.FindObject( inputfilename )
+  rawfile = ROOT.gROOT.FindObject( inputfilename )
   if rawfile:
     rawfile.Close()
-  rawfile = TFile( inputfilename, 'READ' )
+  rawfile = ROOT.TFile( inputfilename, 'READ' )
 
   tree = rawfile.Get("MSCTree")
 
-  h_theta_u_reso = TH1F()
+  h_theta_u_reso = ROOT.TH1F()
   tree.Draw("1E6*sqrt(theta1_var) >>h_theta_u_reso")
   h_theta_u_reso= tree.GetHistogram()
   h_theta_u_reso.Scale(1E-3)
@@ -338,7 +299,7 @@ def plot_anglereco_DQM(inputfilename = None):
   h_theta_u_reso.SetTitle("")
   h_theta_u_reso.SetStats(False)
 
-  h_theta_v_reso = TH1F()
+  h_theta_v_reso = ROOT.TH1F()
   tree.Draw("1E6*sqrt(theta2_var) >>h_theta_v_reso")
   h_theta_v_reso= tree.GetHistogram()
   h_theta_v_reso.Scale(1E-3)
@@ -348,7 +309,7 @@ def plot_anglereco_DQM(inputfilename = None):
   h_theta_v_reso.SetLineColor(2)
   h_theta_v_reso.SetStats(False)
 
-  h_trackmap = TH2F()
+  h_trackmap = ROOT.TH2F()
   tree.Draw("v:u >>h_trackmap")
   h_trackmap= tree.GetHistogram()
   h_trackmap.GetXaxis().SetTitle("u[mm]") 
@@ -359,8 +320,8 @@ def plot_anglereco_DQM(inputfilename = None):
   h_trackmap.SetTitle(NoTracks)
   h_trackmap.SetStats(False)
 
-  c_theta_reso = TCanvas( 'c_theta_u_reso', 'c_theta_u_reso', 200, 10, 700, 500 )
-  leg = TLegend(.13,.57,.43,.93)
+  c_theta_reso = ROOT.TCanvas( 'c_theta_u_reso', 'c_theta_u_reso', 200, 10, 700, 500 )
+  leg = ROOT.TLegend(.13,.57,.43,.93)
   leg.SetTextSize(.038)
 
   c_theta_reso.SetRightMargin(0.13)
@@ -378,7 +339,7 @@ def plot_anglereco_DQM(inputfilename = None):
   leg.Draw()
   c_theta_reso.SaveAs("theta_reso.pdf")
 
-  c_trackmap = TCanvas( 'c_trackmap', 'c_trackmap', 200, 10, 700, 500 )
+  c_trackmap = ROOT.TCanvas( 'c_trackmap', 'c_trackmap', 200, 10, 700, 500 )
   c_trackmap.SetRightMargin(0.13)
   h_trackmap.Draw("colz")
   c_trackmap.SaveAs("beamspot.pdf")
@@ -389,17 +350,17 @@ def plot_x0image_DQM(inputfilename = None):
   if inputfilename == None:
     return None
 
-  gROOT.Reset()
+  ROOT.gROOT.Reset()
 
-  rawfile = gROOT.FindObject( inputfilename )
+  rawfile = ROOT.gROOT.FindObject( inputfilename )
   if rawfile:
     rawfile.Close()
-  rawfile = TFile( inputfilename, 'READ' )
+  rawfile = ROOT.TFile( inputfilename, 'READ' )
 
   histoname="x0_image"
   hx0 = rawfile.Get(histoname)
 
-  c_x0 = TCanvas( 'c_x0', 'c_x0', 200, 10, 700, 500 )
+  c_x0 = ROOT.TCanvas( 'c_x0', 'c_x0', 200, 10, 700, 500 )
   maxbin=hx0.GetMaximumBin()
   maxvalue=hx0.GetBinContent(maxbin)
   hx0.SetMaximum(1.2*maxvalue)
