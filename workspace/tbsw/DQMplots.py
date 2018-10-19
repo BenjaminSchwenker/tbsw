@@ -352,9 +352,12 @@ def plot_x0image_DQM(inputfilename = None):
   c_x0.SaveAs("x0image.pdf")
 
 
-def calibration_DQMPlots(params):
+def calibration_DQMPlots(caltag,UseclusterDB):
 
-  name, DQMfilename, clusterDBfilename, UseclusterDB = params
+  caldir='tmp-runs/'+caltag+'-cal'
+
+  DQMfilename=caldir+'/TelescopeDQM2.root'
+  clusterDBfilename=caldir+'/localDB/clusterDB-M26.root'
 
   # remember current working dir 
   fullpath = os.getcwd() 
@@ -368,7 +371,7 @@ def calibration_DQMPlots(params):
       os.mkdir(fullpath+'/results/telescopeDQM')
 
   # Name of directory
-  workdir = 'results/telescopeDQM/'+name
+  workdir = 'results/telescopeDQM/'+caltag+'-cal'
 
   # remove olddir if exists 
   if os.path.isdir(workdir):
@@ -393,9 +396,10 @@ def calibration_DQMPlots(params):
 
   os.chdir(fullpath)
 
-def anglereco_DQMPlots(params):
+def anglereco_DQMPlots(runspec,caltag):
 
-  name, filename = params
+  recofile='root-files/X0-'+runspec+caltag+'-reco.root'
+  paramsDQM = (caltag,recofile)
 
   # remember current working dir 
   fullpath = os.getcwd() 
@@ -409,7 +413,7 @@ def anglereco_DQMPlots(params):
       os.mkdir(fullpath+'/results/anglerecoDQM')
 
   # Name of directory
-  workdir = 'results/anglerecoDQM/'+name
+  workdir = 'results/anglerecoDQM/'+runspec+caltag
 
   # remove olddir if exists 
   if os.path.isdir(workdir):
@@ -419,19 +423,23 @@ def anglereco_DQMPlots(params):
   os.mkdir(workdir) 
   os.chdir(workdir)
 
-  if os.path.isfile(fullpath+'/'+filename):
+  if os.path.isfile(fullpath+'/'+recofile):
 
     # Create file link in the current work dir
-    os.symlink(fullpath+'/'+filename,'anglereco')
+    os.symlink(fullpath+'/'+recofile,'anglereco')
 
   plot_anglereco_DQM(inputfilename = 'anglereco') 
 
   os.chdir(fullpath)
 
 
-def x0image_Plots(params):
+def x0image_Plots(namespec,caltag,calibrated,x0tag):
 
-  name, filename = params
+  calibrationflag='Uncalibrated'
+  if calibrated:
+    calibrationflag='Calibrated'
+
+  imagefile='tmp-runs/X0-'+namespec+caltag+'-reco-'+calibrationflag+'-X0image/X0-completeimage.root'
 
   # remember current working dir 
   fullpath = os.getcwd() 
@@ -445,7 +453,9 @@ def x0image_Plots(params):
       os.mkdir(fullpath+'/results/images')
 
   # Name of directory
-  workdir = 'results/images/'+name
+  workdir = 'results/images/'+namespec+caltag+'-'+calibrationflag
+  if calibrated:
+    workdir = 'results/images/'+namespec+caltag+'-'+calibrationflag+'-'+x0tag
 
   # remove olddir if exists 
   if os.path.isdir(workdir):
@@ -455,19 +465,17 @@ def x0image_Plots(params):
   os.mkdir(workdir) 
   os.chdir(workdir)
 
-  if os.path.isfile(fullpath+'/'+filename):
+  if os.path.isfile(fullpath+'/'+imagefile):
 
     # Create file link in the current work dir
-    os.symlink(fullpath+'/'+filename,'x0image')
+    os.symlink(fullpath+'/'+imagefile,'x0image')
 
   plot_x0image_DQM(inputfilename = 'x0image') 
 
   os.chdir(fullpath)
 
 
-def x0calibration_DQMPlots(params):
-
-  name, dirname = params
+def x0calibration_DQMPlots(namespec,caltag,x0tag):
 
   # remember current working dir 
   fullpath = os.getcwd() 
@@ -481,7 +489,7 @@ def x0calibration_DQMPlots(params):
       os.mkdir(fullpath+'/results/x0calibrationDQM')
 
   # Name of directory
-  workdir = 'results/x0calibrationDQM/'+name
+  workdir = 'results/x0calibrationDQM/'+namespec+caltag+'-reco-'+x0tag
 
   # remove olddir if exists 
   if os.path.isdir(workdir):
@@ -489,6 +497,8 @@ def x0calibration_DQMPlots(params):
     
   # create dir and change directory
   os.mkdir(workdir)
+
+  dirname='tmp-runs/X0-'+namespec+caltag+'-reco-'+x0tag+'-X0Calibration/'
 
   for pdffile in glob.glob(dirname+'*.pdf'): 
     shutil.copy(pdffile, os.path.join(workdir+'/',os.path.basename(pdffile))) 

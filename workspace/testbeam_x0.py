@@ -170,9 +170,7 @@ def calibrate(params):
   # Run the calibration steps 
   CalObj.calibrate(path=calpath,ifile=rawfile,caltag=caltag)
 
-  caldir='tmp-runs/'+caltag+'-cal'
-  paramsDQM = (caltag,caldir+'/TelescopeDQM2.root', caldir+'/localDB/clusterDB-M26.root', Use_clusterDB )
-  DQMplots.calibration_DQMPlots(paramsDQM)
+  DQMplots.calibration_DQMPlots(caltag, Use_clusterDB)
 
 
 # Perform the angle reconstruction of a single run
@@ -276,10 +274,12 @@ def xx0calibration(params):
   # Generate a uncalibrated X/X0 image
   tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag='',deletetag=delete,steerfiles=steerfiles,nametag='Uncalibrated')
 
-  imagefile='tmp-runs/'+basefilename+'-Uncalibrated-X0image/X0-completeimage.root'
-  print(imagefile)
-  paramsDQM = ('uncalibrated',imagefile)
-  DQMplots.x0image_Plots(paramsDQM)
+  #imagefile='tmp-runs/'+basefilename+'-Uncalibrated-X0image/X0-completeimage.root'
+  #print(imagefile)
+  #paramsDQM = ('uncalibrated',imagefile)
+  #DQMplots.x0image_Plots(paramsDQM)
+
+  DQMplots.x0image_Plots(namespec='',caltag=caltag,calibrated=False,x0tag=x0tag)
 
   # Path to uncalibrated X0 image file
   imagefilename='/root-files/'+basefilename+'-UncalibratedX0image.root'
@@ -290,6 +290,7 @@ def xx0calibration(params):
   x0caldir='tmp-runs/'+basefilename+'-'+x0caltag+'-X0Calibration/'
   paramsDQM = ('x0calibration-'+x0tag,x0caldir)
   DQMplots.x0calibration_DQMPlots(paramsDQM)
+
 
 # Generate x0 image
 def xx0image(params):
@@ -308,10 +309,12 @@ def xx0image(params):
   # Do a calibration of the angle resolution
   tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag=x0caltag,deletetag=deletetag,steerfiles=steerfiles_reco,nametag='Calibrated')
 
-  imagefile='tmp-runs/'+basefilename+'-Calibrated-X0image/X0-completeimage.root'
-  print(imagefile)
-  paramsDQM = ('calibrated-'+x0tag,imagefile)
-  DQMplots.x0image_Plots(paramsDQM)
+  #imagefile='tmp-runs/'+basefilename+'-Calibrated-X0image/X0-completeimage.root'
+  #print(imagefile)
+  #paramsDQM = ('calibrated-'+x0tag,imagefile)
+  #DQMplots.x0image_Plots(paramsDQM)
+
+  DQMplots.x0image_Plots(namespec='',caltag=caltag,calibrated=True,x0tag=x0tag)
 
   
 if __name__ == '__main__':
@@ -359,10 +362,8 @@ if __name__ == '__main__':
     pool.map(reconstruct, params_reco)
 
     for rawfile in RawfileList_reco:
-      name = os.path.splitext(os.path.basename(rawfile))[0] + '-' + caltag
-      recofile='root-files/X0-'+name+'-reco.root'
-      paramsDQM = (name,recofile)
-      DQMplots.anglereco_DQMPlots(paramsDQM)
+      runspec = os.path.splitext(os.path.basename(rawfile))[0] + '-'
+      DQMplots.anglereco_DQMPlots(runspec,caltag)
 
   # start x0 calibration
   # In case you already have the x0 calibration DB file from a previous x0 calibration 
