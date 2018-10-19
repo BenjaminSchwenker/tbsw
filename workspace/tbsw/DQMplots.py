@@ -63,6 +63,42 @@ def plot_alignment_parameters(inputfilename = None):
   plot_align_parameter(histoname,'gamma','mrad',1E3,True,inputfilename)
 
 
+def select_labels(histo, tmphisto, calculateSigma, oldlabels, newlabels):
+  for ilabel,label in enumerate(oldlabels):
+    histo.GetXaxis().SetBinLabel( ilabel+1, newlabels[ilabel] )
+
+    if calculateSigma:
+      histo.SetBinContent(ilabel+1,1000*math.sqrt(tmphisto.GetBinContent(tmphisto.GetXaxis().FindBin(label))))
+      histo.SetBinError(ilabel+1,1000*tmphisto.GetBinError(tmphisto.GetXaxis().FindBin(label))/math.sqrt(tmphisto.GetBinContent(tmphisto.GetXaxis().FindBin(label))))
+
+    else:
+      histo.SetBinContent(ilabel+1,tmphisto.GetBinContent(tmphisto.GetXaxis().FindBin(label)))
+      histo.SetBinError(ilabel+1,tmphisto.GetBinError(tmphisto.GetXaxis().FindBin(label)))
+
+
+def plot_clusterDB_parameter(histo, paramname, ytitle):
+
+  ROOT.gROOT.Reset()
+
+  histo.SetStats(False)
+  histo.GetXaxis().SetTitle("cluster type")
+  histo.GetXaxis().SetTitleOffset(0.88)
+
+  histo.GetXaxis().SetTitleSize(0.055)
+  histo.GetXaxis().SetLabelSize(0.07)
+  histo.GetYaxis().SetTitle(ytitle)
+  histo.GetYaxis().SetTitleOffset(0.80)
+  histo.GetYaxis().SetTitleSize(0.055)
+  histo.GetYaxis().SetLabelSize(0.05)
+
+  canvases[paramname] = ROOT.TCanvas( '{:s}'.format(paramname), '{:s}'.format(paramname), 200, 10, 700, 500 )
+  histo.Draw("HE")
+  histo.SetStats(False)
+  canvases[paramname].Update()
+  canvases[paramname].SaveAs("cluster_{:s}.pdf".format(paramname))
+
+
+
 def plot_clusterDB_parameters(inputfilename = None):
 
   if inputfilename == None:
@@ -90,65 +126,13 @@ def plot_clusterDB_parameters(inputfilename = None):
   hsigma2_v_tmp = rawfile.Get(histoname)
   hsigma_v = ROOT.TH1F("hsigma_v", "cluster v resolution ", len(oldlabels),0.5,len(oldlabels)+0.5)
 
-  for ilabel,label in enumerate(oldlabels):
+  select_labels(hfractions, hfractions_tmp, False, oldlabels, newlabels)
+  select_labels(hsigma_u, hsigma2_u_tmp, True, oldlabels, newlabels)
+  select_labels(hsigma_v, hsigma2_v_tmp, True, oldlabels, newlabels)
 
-    hfractions.GetXaxis().SetBinLabel( ilabel+1, newlabels[ilabel] )
-    hfractions.SetBinContent(ilabel+1,hfractions_tmp.GetBinContent(hfractions_tmp.GetXaxis().FindBin(label)))
-    hfractions.SetBinError(ilabel+1,hfractions_tmp.GetBinError(hfractions_tmp.GetXaxis().FindBin(label)))
-
-    hsigma_u.GetXaxis().SetBinLabel( ilabel+1, newlabels[ilabel] )
-    hsigma_u.SetBinContent(ilabel+1,1000*math.sqrt(hsigma2_u_tmp.GetBinContent(hsigma2_u_tmp.GetXaxis().FindBin(label))))
-    hsigma_u.SetBinError(ilabel+1,1000*hsigma2_u_tmp.GetBinError(hsigma2_u_tmp.GetXaxis().FindBin(label))/math.sqrt(hsigma2_u_tmp.GetBinContent(hsigma2_u_tmp.GetXaxis().FindBin(label))))
-
-    hsigma_v.GetXaxis().SetBinLabel( ilabel+1, newlabels[ilabel] )
-    hsigma_v.SetBinContent(ilabel+1,1000*math.sqrt(hsigma2_v_tmp.GetBinContent(hsigma2_v_tmp.GetXaxis().FindBin(label))))
-    hsigma_v.SetBinError(ilabel+1,1000*hsigma2_v_tmp.GetBinError(hsigma2_v_tmp.GetXaxis().FindBin(label))/math.sqrt(hsigma2_v_tmp.GetBinContent(hsigma2_v_tmp.GetXaxis().FindBin(label))))
-
-  hfractions.SetStats(False)
-  hfractions.GetXaxis().SetTitle("cluster type")
-  hfractions.GetXaxis().SetTitleOffset(0.88)
-  hfractions.GetXaxis().SetTitleSize(0.055)
-  hfractions.GetXaxis().SetLabelSize(0.07)
-  hfractions.GetYaxis().SetTitle("fraction")
-  hfractions.GetYaxis().SetTitleOffset(0.80)
-  hfractions.GetYaxis().SetTitleSize(0.055)
-  hfractions.GetYaxis().SetLabelSize(0.05)
-
-  hsigma_u.SetStats(False)
-  hsigma_u.GetXaxis().SetTitle("cluster type")
-  hsigma_u.GetXaxis().SetTitleOffset(0.88)
-  hsigma_u.GetXaxis().SetTitleSize(0.055)
-  hsigma_u.GetXaxis().SetLabelSize(0.07)
-  hsigma_u.GetYaxis().SetTitle("#sigma_{u}[#mum]")
-  hsigma_u.GetYaxis().SetTitleOffset(0.80)
-  hsigma_u.GetYaxis().SetTitleSize(0.055)
-  hsigma_u.GetYaxis().SetLabelSize(0.05)
-
-  hsigma_v.SetStats(False)
-  hsigma_v.GetXaxis().SetTitle("cluster type")
-  hsigma_v.GetXaxis().SetTitleOffset(0.88)
-  hsigma_v.GetXaxis().SetTitleSize(0.055)
-  hsigma_v.GetXaxis().SetLabelSize(0.07)
-  hsigma_v.GetYaxis().SetTitle("#sigma_{v}[#mum]")
-  hsigma_v.GetYaxis().SetTitleOffset(0.80)
-  hsigma_v.GetYaxis().SetTitleSize(0.055)
-  hsigma_v.GetYaxis().SetLabelSize(0.05)
-
-
-  c1 = ROOT.TCanvas( 'c1', 'c1', 200, 10, 700, 500 )
-  hfractions.Draw("histE")
-  c1.Update()
-  c1.SaveAs("cluster_fractions.pdf")
-
-  c2 = ROOT.TCanvas( 'c2', 'c2', 200, 10, 700, 500 )
-  hsigma_u.Draw("histE")
-  c2.Update()
-  c2.SaveAs("cluster_sigma_u.pdf")
-
-  c3 = ROOT.TCanvas( 'c3', 'c3', 200, 10, 700, 500 )
-  hsigma_v.Draw("histE")
-  c3.Update()
-  c3.SaveAs("cluster_sigma_v.pdf")
+  plot_clusterDB_parameter(hfractions, 'fractions', 'fraction')
+  plot_clusterDB_parameter(hsigma_u, 'sigma_u', '#sigma_{u}[#mum]')
+  plot_clusterDB_parameter(hsigma_v, 'sigma_v', '#sigma_{v}[#mum]')
 
 
 
@@ -251,9 +235,6 @@ def plot_trackDQM(inputfilename = None):
 
   histoname="hntracks"
   hntracks = rawfile.Get(histoname)
-
-  histoname="Sensor2/BeamProfile/hhitmap_sensor2"
-  hhitmap = rawfile.Get(histoname)
 
   hpvalues.Scale(1E-3)
   hpvalues.GetXaxis().SetTitle("track p value")
@@ -511,12 +492,5 @@ def x0calibration_DQMPlots(params):
 
   for pdffile in glob.glob(dirname+'*.pdf'): 
     shutil.copy(pdffile, os.path.join(workdir+'/',os.path.basename(pdffile))) 
-
-
-
-
-
-
-
 
 
