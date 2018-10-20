@@ -183,7 +183,7 @@ def reconstruct(params):
   
   # Reconsruct the rawfile using the caltag. Resulting root files are 
   # written to folder root-files/
-  RecObj = Reconstruction(steerfiles=steerfiles, name=name + '-reco' )
+  RecObj = Reconstruction(steerfiles=steerfiles, name=name )
   RecObj.set_beam_momentum(beamenergy)
 
   # Create reconstuction path
@@ -274,22 +274,13 @@ def xx0calibration(params):
   # Generate a uncalibrated X/X0 image
   tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag='',deletetag=delete,steerfiles=steerfiles,nametag='Uncalibrated')
 
-  #imagefile='tmp-runs/'+basefilename+'-Uncalibrated-X0image/X0-completeimage.root'
-  #print(imagefile)
-  #paramsDQM = ('uncalibrated',imagefile)
-  #DQMplots.x0image_Plots(paramsDQM)
-
-  DQMplots.x0image_Plots(namespec='',caltag=caltag,calibrated=False,x0tag=x0tag)
-
   # Path to uncalibrated X0 image file
   imagefilename='/root-files/'+basefilename+'-UncalibratedX0image.root'
 
   # Do a calibration of the angle resolution
   tbsw.x0imaging.X0Calibration.x0calibration(filename=filename,imagefilename=imagefilename,caltag=x0caltag,steerfiles=steerfiles)
 
-  x0caldir='tmp-runs/'+basefilename+'-'+x0caltag+'-X0Calibration/'
-  paramsDQM = ('x0calibration-'+x0tag,x0caldir)
-  DQMplots.x0calibration_DQMPlots(paramsDQM)
+  DQMplots.x0calibration_DQMPlots(namespec='X0cal-merge',caltag='',x0tag=x0tag)
 
 
 # Generate x0 image
@@ -309,12 +300,7 @@ def xx0image(params):
   # Do a calibration of the angle resolution
   tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag=x0caltag,deletetag=deletetag,steerfiles=steerfiles_reco,nametag='Calibrated')
 
-  #imagefile='tmp-runs/'+basefilename+'-Calibrated-X0image/X0-completeimage.root'
-  #print(imagefile)
-  #paramsDQM = ('calibrated-'+x0tag,imagefile)
-  #DQMplots.x0image_Plots(paramsDQM)
-
-  DQMplots.x0image_Plots(namespec='',caltag=caltag,calibrated=True,x0tag=x0tag)
+  DQMplots.x0image_Plots(namespec=basefilename,caltag='',calibrated=True,x0tag=x0tag)
 
   
 if __name__ == '__main__':
@@ -330,7 +316,6 @@ if __name__ == '__main__':
   
   if Script_purpose_option !=0 and Script_purpose_option !=1:
     params_cali = ( rawfile_cali, steerfiles_cali, caltag)
-    print(params_cali)
     calibrate( params_cali )
 
   # Target alignment

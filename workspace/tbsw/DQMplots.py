@@ -398,7 +398,7 @@ def calibration_DQMPlots(caltag,UseclusterDB):
 
 def anglereco_DQMPlots(runspec,caltag):
 
-  recofile='root-files/X0-'+runspec+caltag+'-reco.root'
+  recofile='root-files/X0-'+runspec+caltag+'.root'
   paramsDQM = (caltag,recofile)
 
   # remember current working dir 
@@ -439,7 +439,8 @@ def x0image_Plots(namespec,caltag,calibrated,x0tag):
   if calibrated:
     calibrationflag='Calibrated'
 
-  imagefile='tmp-runs/X0-'+namespec+caltag+'-reco-'+calibrationflag+'-X0image/X0-completeimage.root'
+  imagefile='tmp-runs/'+namespec+caltag+'-'+calibrationflag+'-X0image/X0-completeimage.root'
+  print(imagefile)
 
   # remember current working dir 
   fullpath = os.getcwd() 
@@ -489,7 +490,7 @@ def x0calibration_DQMPlots(namespec,caltag,x0tag):
       os.mkdir(fullpath+'/results/x0calibrationDQM')
 
   # Name of directory
-  workdir = 'results/x0calibrationDQM/'+namespec+caltag+'-reco-'+x0tag
+  workdir = 'results/x0calibrationDQM/'+namespec+caltag+'-'+x0tag
 
   # remove olddir if exists 
   if os.path.isdir(workdir):
@@ -498,7 +499,8 @@ def x0calibration_DQMPlots(namespec,caltag,x0tag):
   # create dir and change directory
   os.mkdir(workdir)
 
-  dirname='tmp-runs/X0-'+namespec+caltag+'-reco-'+x0tag+'-X0Calibration/'
+  dirname='tmp-runs/'+namespec+caltag+'-'+x0tag+'-X0Calibration/'
+  print(dirname)
 
   for pdffile in glob.glob(dirname+'*.pdf'): 
     shutil.copy(pdffile, os.path.join(workdir+'/',os.path.basename(pdffile))) 
