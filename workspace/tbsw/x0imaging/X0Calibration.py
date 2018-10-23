@@ -80,9 +80,9 @@ def merge_rootfile(filename=None,RunList='',caltag=None):
   for run in RunList:
     name=os.path.splitext(os.path.basename(run))[0]
     if caltag == '':
-      flags=flags+'root-files/X0-'+name+'-reco.root '
+      flags=flags+'root-files/X0-'+name+'.root '
     else:
-      flags=flags+'root-files/X0-'+name+'-'+caltag+'-reco.root '
+      flags=flags+'root-files/X0-'+name+'-'+caltag+'.root '
 
 
   if os.path.isfile(filename):

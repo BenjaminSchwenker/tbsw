@@ -16,7 +16,6 @@ Author: Ulf Stolzenberg <ulf.stolzenberg@phys.uni-goettingen.de>
 """
 
 from tbsw import *
-
 import tbsw.x0imaging.X0Calibration
 
 # Path to steering files 
@@ -67,6 +66,9 @@ deletetag='1'
 
 # Use Single Hit seeding to speed up track finding?
 Use_SingleHitSeeding=False
+
+# Determine cluster resolution and store in cluster DB?
+Use_clusterDB=True
 
 def simulate(): 
   """
@@ -141,11 +143,15 @@ def calibrate():
   # Run the calibration steps 
   CalObj.calibrate(path=calpath,ifile=rawfile_air,caltag=caltag)  
 
+  # Run DQM scripts
+  DQMplots.calibration_DQMPlots(caltag, Use_clusterDB)
+
+
 def reconstruct():
 
   # Reconsruct the rawfile using the caltag. Resulting root files are 
   # written to folder root-files/
-  RecObj = Reconstruction(steerfiles=steerfiles, name=caltag + '-reco' )
+  RecObj = Reconstruction(steerfiles=steerfiles, name=caltag )
 
   # Set Beam energy
   RecObj.set_beam_momentum(beamenergy)
@@ -161,7 +167,10 @@ def reconstruct():
     localcaltag=caltag
 
   # Run the reconstuction  
-  RecObj.reconstruct(path=recopath,ifile=rawfile_alu,caltag=localcaltag)   
+  RecObj.reconstruct(path=recopath,ifile=rawfile_alu,caltag=localcaltag)  
+
+  # Run DQM scripts
+  DQMplots.anglereco_DQMPlots('',caltag) 
 
 
 def targetalignment(params):
@@ -241,20 +250,23 @@ if __name__ == '__main__':
   reconstruct( )
 
   # Base filename of the X0 root file
-  basefilename='X0-mc-air-test-reco'
+  basefilename='X0-mc-air-test'
 
   # Total path of X0 root file
   filename='root-files/'+basefilename+'.root'
 
   # Generate a uncalibrated X/X0 image
   tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag='',deletetag=deletetag,steerfiles=steerfiles,nametag='Uncalibrated')
+  DQMplots.x0image_Plots(namespec='X0-',caltag=caltag,calibrated=False,x0tag=x0tag)
 
   # Path to uncalibrated X0 image file
   imagefilename='/root-files/'+basefilename+'-UncalibratedX0image.root'
 
   # Do a calibration of the angle resolution
   tbsw.x0imaging.X0Calibration.x0calibration(filename=filename,imagefilename=imagefilename,caltag=x0tag,steerfiles=steerfiles)
+  DQMplots.x0calibration_DQMPlots(namespec='X0-',caltag=caltag,x0tag=x0tag)
 
   # Generate a calibrated X/X0 image
   tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag=x0tag,deletetag=deletetag,steerfiles=steerfiles,nametag='Calibrated')
+  DQMplots.x0image_Plots(namespec='X0-',caltag=caltag,calibrated=True,x0tag=x0tag)
 
