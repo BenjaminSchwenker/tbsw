@@ -38,7 +38,7 @@ rawfile_air = os.getcwd()+'/mc-air.slcio'
 rawfile_alu = os.getcwd()+'/mc-alu.slcio'
 
 # Tag for calibration data
-caltag = os.path.splitext(os.path.basename(rawfile_air))[0] + '-test'
+caltag = os.path.splitext(os.path.basename(rawfile_air))[0]
 
 # Number of events to simulate 
 nevents_air = 1000000
@@ -60,9 +60,6 @@ targetalignment_iterations=0
 
 # Nominal Beam energy
 beamenergy=2.0
-
-#Delete partial images after generating image
-deletetag='1'
 
 # Use Single Hit seeding to speed up track finding?
 Use_SingleHitSeeding=False
@@ -247,26 +244,31 @@ if __name__ == '__main__':
     targetalignment(params_TA)
 
   # Reconstruct the alu rawfile 
-  reconstruct( )
+  #reconstruct( )
 
   # Base filename of the X0 root file
-  basefilename='X0-mc-air-test'
+  basefilename='X0-'+caltag
 
-  # Total path of X0 root file
-  filename='root-files/'+basefilename+'.root'
+  # create root file list as input for x0 analysis scripts
+  rawlist=[caltag]
+  rootlist=[]
+  tbsw.x0imaging.X0Calibration.CreateRootFileList(rawlist=rawlist,rootlist=rootlist, caltag='')
 
   # Generate a uncalibrated X/X0 image
-  tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag='',deletetag=deletetag,steerfiles=steerfiles,nametag='Uncalibrated')
-  DQMplots.x0image_Plots(namespec='X0-',caltag=caltag,calibrated=False,x0tag=x0tag)
+  nametag='X0image-Uncalibrated'
+  tbsw.x0imaging.X0Calibration.x0imaging(filelist=rootlist,caltag='',steerfiles=steerfiles,nametag=nametag)
+  DQMplots.x0image_Plots(nametag=nametag)
 
   # Path to uncalibrated X0 image file
-  imagefilename='/root-files/'+basefilename+'-UncalibratedX0image.root'
+  imagefilename='/root-files/'+nametag+'.root'
 
   # Do a calibration of the angle resolution
-  tbsw.x0imaging.X0Calibration.x0calibration(filename=filename,imagefilename=imagefilename,caltag=x0tag,steerfiles=steerfiles)
-  DQMplots.x0calibration_DQMPlots(namespec='X0-',caltag=caltag,x0tag=x0tag)
+  nametag='X0Calibration-'+x0tag
+  tbsw.x0imaging.X0Calibration.x0calibration(filelist=rootlist,imagefilename=imagefilename,caltag=x0tag,steerfiles=steerfiles)
+  DQMplots.x0calibration_DQMPlots(nametag=nametag)
 
   # Generate a calibrated X/X0 image
-  tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag=x0tag,deletetag=deletetag,steerfiles=steerfiles,nametag='Calibrated')
-  DQMplots.x0image_Plots(namespec='X0-',caltag=caltag,calibrated=True,x0tag=x0tag)
+  nametag='X0image-Calibrated-'+x0tag
+  tbsw.x0imaging.X0Calibration.x0imaging(filelist=rootlist,caltag=x0tag,steerfiles=steerfiles,nametag=nametag)
+  DQMplots.x0image_Plots(nametag=nametag)
 

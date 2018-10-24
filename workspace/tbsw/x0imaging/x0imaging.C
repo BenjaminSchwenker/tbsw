@@ -82,7 +82,7 @@ using namespace std ;
 
 
   // This function fills histograms corresponding to certain u v values with msc angle distributions 
-  void getcorrection(TFile* file1, TFile* file2, std::vector<double> means, std::vector<double> plotranges, int numberofbins, const int numcol, const int numrow, double umin, double vmin, double umax, double vmax, int vertex_multiplicity_min, int vertex_multiplicity_max)
+  void getcorrection(std::vector<TString> filenames, TFile* file2, std::vector<double> means, std::vector<double> plotranges, int numberofbins, const int numcol, const int numrow, double umin, double vmin, double umax, double vmax, int vertex_multiplicity_min, int vertex_multiplicity_max)
   {
 	// parameters which are read out from the root file
 	Double_t theta1;
@@ -90,73 +90,76 @@ using namespace std ;
 	Double_t u;
 	Double_t v;
 	Int_t vertex_multiplicity=1;
-	
-	//TTree in input root file, that contains the MSC projected angle distributions and reconstruction error distribution
-	file1->cd("");
 
-	TTree * msc_tree = (TTree*) file1->Get("MSCTree");
+	// arrays of msc angle histograms
+	file2->cd("");
+	file2->cd("mapping/raw");
+	TH1F *histo_theta1[numcol][numrow];
+	TH1F *histo_theta2[numcol][numrow];
 
-	msc_tree->SetBranchAddress("theta1",&theta1);
-	msc_tree->SetBranchAddress("theta2",&theta2);
-	msc_tree->SetBranchAddress("u",&u);
-	msc_tree->SetBranchAddress("v",&v);
+	cout<<endl<<"Selecting raw angle distributions"<<endl;
 
-	int test=msc_tree->SetBranchAddress("vertex_multiplicity",&vertex_multiplicity);
+
+    for(int ifile=0;ifile<filenames.size();ifile++)
+	{
+
+		//TTree in input root file, that contains the MSC projected angle distributions and reconstruction error distribution
+		TFile* inputfile= new TFile(filenames.at(ifile), "READ");
+		TTree * msc_tree = (TTree*) inputfile->Get("MSCTree");
+
+		msc_tree->SetBranchAddress("theta1",&theta1);
+		msc_tree->SetBranchAddress("theta2",&theta2);
+		msc_tree->SetBranchAddress("u",&u);
+		msc_tree->SetBranchAddress("v",&v);
+		int test=msc_tree->SetBranchAddress("vertex_multiplicity",&vertex_multiplicity);
+
+		for (int i=0; i<numcol; i++)
+		{
+			for (int j=0; j<numrow; j++)
+			{
+			 	histo_theta1[i][j] = new TH1F("","",numberofbins,means.at(0)-1.0*plotranges.at(0),means.at(0)+plotranges.at(0));
+			 	histo_theta2[i][j] = new TH1F("","",numberofbins,means.at(1)-1.0*plotranges.at(1),means.at(1)+plotranges.at(1));
+			}
+		}
+
+		// Loop over all events
+		for(int i=0; i< msc_tree->GetEntries(); i++)
+		{
+
+			if(i%1000000==0) cout<<"raw angles, track number "<<i<<endl;
+			msc_tree->GetEntry(i);
+		
+			// position within the map area
+			double u_pos=u-umin;
+			double v_pos=v-vmin;
+
+			// side lengths of the map area
+			double u_length=umax-umin;
+			double v_length=vmax-vmin;
+
+			// skip this entry, when u or v is outside of the mapping area
+			if (u_pos<0) continue;
+			if (u_pos>=u_length) continue;
+			if (v_pos<0) continue;
+			if (v_pos>=v_length) continue;
+		    
+			// Apply cut on vertex multiplicity
+		    if (vertex_multiplicity>vertex_multiplicity_max||vertex_multiplicity<vertex_multiplicity_min) continue;
+
+			// Determine column and row number from the position within the map area and the number of rows and columns
+			int col=floor(u_pos*numcol/u_length);
+			int row=floor(v_pos*numrow/v_length);
+
+			// Fill histograms
+			histo_theta1[col][row]->Fill(theta1);
+			histo_theta2[col][row]->Fill(theta2);
+		}
+    }
+
+	cout<<"Writing raw angle histograms "<<endl;
 
 	file2->cd("");
 	file2->cd("mapping/raw");
-
-	// arrays of msc angle histograms
-	TH1F *histo_theta1[numcol][numrow];
-	TH1F *histo_theta2[numcol][numrow];
-	TH1F *histo_uresidual[numcol][numrow];
-	TH1F *histo_vresidual[numcol][numrow];
-	TH1F *histo_thetasum[numcol][numrow];
-	TH2F *histo_2d[numcol][numrow];
-
-	for (int i=0; i<numcol; i++)
-	{
-		for (int j=0; j<numrow; j++)
-		{
-		 	histo_theta1[i][j] = new TH1F("","",numberofbins,means.at(0)-1.0*plotranges.at(0),means.at(0)+plotranges.at(0));
-		 	histo_theta2[i][j] = new TH1F("","",numberofbins,means.at(1)-1.0*plotranges.at(1),means.at(1)+plotranges.at(1));
-		}
-	}
-
-	// Loop over all events
-	for(int i=0; i< msc_tree->GetEntries(); i++)
-	{
-
-		if(i%1000000==0) cout<<"Mean Correction loop, Track No. "<<i<<endl;
-		msc_tree->GetEntry(i);
-		
-		// position within the map area
-		double u_pos=u-umin;
-		double v_pos=v-vmin;
-
-		// side lengths of the map area
-		double u_length=umax-umin;
-		double v_length=vmax-vmin;
-
-		// skip this entry, when u or v is outside of the mapping area
-	    if (u_pos<0) continue;
-	    if (u_pos>=u_length) continue;
-	    if (v_pos<0) continue;
-	    if (v_pos>=v_length) continue;
-        
-		// Apply cut on vertex multiplicity
-        if (vertex_multiplicity>vertex_multiplicity_max||vertex_multiplicity<vertex_multiplicity_min) continue;
-
-		// Determine column and row number from the position within the map area and the number of rows and columns
-		int col=floor(u_pos*numcol/u_length);
-		int row=floor(v_pos*numrow/v_length);
-
-		// Fill histograms
-		histo_theta1[col][row]->Fill(theta1);
-		histo_theta2[col][row]->Fill(theta2);
-	}
-
-	cout<<"Write angle histograms "<<endl;
 
 	for (int i=0; i<numcol; i++)
 	{
@@ -166,8 +169,10 @@ using namespace std ;
 			TString histoname;
 			histoname.Form("area(%i,%i)",i,j);
 
-			 histo_theta1[i][j]->Write("theta1_uncorrected_"+histoname);
-			 histo_theta2[i][j]->Write("theta2_uncorrected_"+histoname);
+			histo_theta1[i][j]->Write("theta1_uncorrected_"+histoname);
+			histo_theta2[i][j]->Write("theta2_uncorrected_"+histoname);
+
+			cout<<"Raw angle distributions in pixel area (col="<<i<<", row="<<j<<") written to disk!"<<endl;
 		}
 	}
 
@@ -175,7 +180,7 @@ using namespace std ;
 
 
   // This function fills histograms corresponding to certain u v values with msc angle distributions 
-  void savehistos(TFile* file1, TFile* file2, int numberofbins, double histo_range, const int numcol, const int numrow, double umin, double vmin, double umax, double vmax, int vertex_multiplicity_min, int vertex_multiplicity_max)
+  void savehistos(std::vector<TString> filenames, TFile* file2, int numberofbins, double histo_range, const int numcol, const int numrow, double umin, double vmin, double umax, double vmax, int vertex_multiplicity_min, int vertex_multiplicity_max)
   {
 	// parameters which are read out from the root file
 	Double_t theta1;
@@ -196,28 +201,6 @@ using namespace std ;
 	// Array of mean theta1 and theta2 values in each map pixel
 	double mean1[numcol][numrow];
 	double mean2[numcol][numrow];
-	
-	//TTree in input root file, that contains the MSC projected angle distributions and reconstruction error distribution
-	file1->cd("");
-
-	TTree * msc_tree = (TTree*) file1->Get("MSCTree");
-
-	// Set branch adresses for parameters connected to the scattering angles
-	msc_tree->SetBranchAddress("theta1",&theta1);
-	msc_tree->SetBranchAddress("theta2",&theta2);
-	msc_tree->SetBranchAddress("u",&u);
-	msc_tree->SetBranchAddress("v",&v);
-	msc_tree->SetBranchAddress("u_in",&u_in);
-	msc_tree->SetBranchAddress("v_in",&v_in);
-	msc_tree->SetBranchAddress("u_out",&u_out);
-	msc_tree->SetBranchAddress("v_out",&v_out);
-
-	// Set branch adresses for parameters connected to the vertex fit
-	msc_tree->SetBranchAddress("vertex_w",&vertex_w);
-	msc_tree->SetBranchAddress("vertex_chi2ndf",&vertex_chi2);
-	int test=msc_tree->SetBranchAddress("vertex_multiplicity",&vertex_multiplicity);
-	msc_tree->SetBranchAddress("vertex_u",&vertex_u);
-	msc_tree->SetBranchAddress("vertex_v",&vertex_v);
 
 	file2->cd("");
 	file2->cd("mapping/raw");
@@ -237,101 +220,137 @@ using namespace std ;
 	TH1F *histo_vtx_trk_u_res[numcol][numrow];
 	TH1F *histo_vtx_trk_v_res[numcol][numrow];
 
+	cout<<endl<<"Determining mean values from raw histograms"<<endl;
+
 	for (int i=0; i<numcol; i++)
 	{
 		for (int j=0; j<numrow; j++)
 		{
 
-			// Get the histograms generated in the getcorrection function
-			// Name of the histograms
-			TString aidhistoname;
-			aidhistoname.Form("area(%i,%i)",i,j);
+				// Get the histograms generated in the getcorrection function
+				// Name of the histograms
+				TString aidhistoname;
+				aidhistoname.Form("area(%i,%i)",i,j);
 
-			// Get histogram
-			TH1* histogram1=(TH1*)file2->Get("mapping/raw/theta1_uncorrected_"+aidhistoname);
-			TH1* histogram2=(TH1*)file2->Get("mapping/raw/theta2_uncorrected_"+aidhistoname);
+				// Get histogram
+				TH1* histogram1=(TH1*)file2->Get("mapping/raw/theta1_uncorrected_"+aidhistoname);
+				TH1* histogram2=(TH1*)file2->Get("mapping/raw/theta2_uncorrected_"+aidhistoname);
 			
-			// Determine plot range from uncorrected histograms
-			double limits=histo_range/2.0*(histogram1->GetRMS()+histogram2->GetRMS());
+				// Determine plot range from uncorrected histograms
+				double limits=histo_range/2.0*(histogram1->GetRMS()+histogram2->GetRMS());
 
-		 	histo_theta1[i][j] = new TH1F("","",numberofbins,-limits,limits);
-		 	histo_theta2[i][j] = new TH1F("","",numberofbins,-limits,limits);
-		 	histo_uresidual[i][j] = new TH1F("","",1000,-1.0,1.0);
-		 	histo_vresidual[i][j] = new TH1F("","",1000,-1.0,1.0);
-		 	histo_thetasum[i][j] = new TH1F("","",numberofbins,-limits,limits);
-			histo_2d[i][j] = new TH2F("","",numberofbins,-limits,limits,numberofbins,-limits,limits);
+			 	histo_theta1[i][j] = new TH1F("","",numberofbins,-limits,limits);
+			 	histo_theta2[i][j] = new TH1F("","",numberofbins,-limits,limits);
+			 	histo_uresidual[i][j] = new TH1F("","",1000,-1.0,1.0);
+			 	histo_vresidual[i][j] = new TH1F("","",1000,-1.0,1.0);
+			 	histo_thetasum[i][j] = new TH1F("","",numberofbins,-limits,limits);
+				histo_2d[i][j] = new TH2F("","",numberofbins,-limits,limits,numberofbins,-limits,limits);
 
-			// Set range and title of vertex histograms
-		 	histo_vertex_w[i][j] = new TH1F("","",900,-15.0,15.0);
-		 	histo_vertex_chi2[i][j] = new TH1F("","",200,0.0,11.0);
-		 	histo_vertex_multiplicity[i][j] = new TH1F("","",10,0.0,10);
-		 	histo_vtx_trk_u_res[i][j] = new TH1F("","",1000,-5.0,5.0);
-		 	histo_vtx_trk_v_res[i][j] = new TH1F("","",1000,-5.0,5.0);
+				// Set range and title of vertex histograms
+			 	histo_vertex_w[i][j] = new TH1F("","",900,-15.0,15.0);
+			 	histo_vertex_chi2[i][j] = new TH1F("","",200,0.0,11.0);
+			 	histo_vertex_multiplicity[i][j] = new TH1F("","",10,0.0,10);
+			 	histo_vtx_trk_u_res[i][j] = new TH1F("","",1000,-5.0,5.0);
+			 	histo_vtx_trk_v_res[i][j] = new TH1F("","",1000,-5.0,5.0);
 
-			// Save mean of both distributions in arrays
-			mean1[i][j]=histogram1->GetMean();
-			mean2[i][j]=histogram2->GetMean();
+				// Save mean of both distributions in arrays
+				mean1[i][j]=histogram1->GetMean();
+				mean2[i][j]=histogram2->GetMean();
 
-            histogram1->Delete();
-            histogram2->Delete();
+				cout<<"Mean value in pixel area (col="<<i<<", row="<<j<<") determined!"<<endl;
+
+		        histogram1->Delete();
+		        histogram2->Delete();
 
 		}
 	}
 
-	file2->cd("");
-	file2->cd("mapping/raw");
+	cout<<endl<<"Selecting corrected angle distributions"<<endl;
 
-	// Loop over all events, find the corresponding image pixel from the u,v values and fill the histograms
-	for(int i=0; i< msc_tree->GetEntries(); i++)
+	//TTree in input root file, that contains the MSC projected angle distributions and reconstruction error distribution
+    for(int ifile=0;ifile<filenames.size();ifile++)
 	{
 
-		if(i%1000000==0) cout<<"Track No. "<<i<<endl;
-		msc_tree->GetEntry(i);
+		//TTree in input root file, that contains the MSC projected angle distributions and reconstruction error distribution
+		TFile* inputfile= new TFile(filenames.at(ifile), "READ");
+		TTree * msc_tree = (TTree*) inputfile->Get("MSCTree");
+
+		// Set branch adresses for parameters connected to the scattering angles
+		msc_tree->SetBranchAddress("theta1",&theta1);
+		msc_tree->SetBranchAddress("theta2",&theta2);
+		msc_tree->SetBranchAddress("u",&u);
+		msc_tree->SetBranchAddress("v",&v);
+		msc_tree->SetBranchAddress("u_in",&u_in);
+		msc_tree->SetBranchAddress("v_in",&v_in);
+		msc_tree->SetBranchAddress("u_out",&u_out);
+		msc_tree->SetBranchAddress("v_out",&v_out);
+
+		// Set branch adresses for parameters connected to the vertex fit
+		msc_tree->SetBranchAddress("vertex_w",&vertex_w);
+		msc_tree->SetBranchAddress("vertex_chi2ndf",&vertex_chi2);
+		int test=msc_tree->SetBranchAddress("vertex_multiplicity",&vertex_multiplicity);
+		msc_tree->SetBranchAddress("vertex_u",&vertex_u);
+		msc_tree->SetBranchAddress("vertex_v",&vertex_v);
+
+
+		file2->cd("");
+		file2->cd("mapping/raw");
+
+		// Loop over all events, find the corresponding image pixel from the u,v values and fill the histograms
+		for(int i=0; i< msc_tree->GetEntries(); i++)
+		{
+
+			if(i%1000000==0) cout<<"corrected angles, track number "<<i<<endl;
+			msc_tree->GetEntry(i);
 		
-		// position within the map area
-		double u_pos=u-umin;
-		double v_pos=v-vmin;
+			// position within the map area
+			double u_pos=u-umin;
+			double v_pos=v-vmin;
 
-		// side lengths of the map area
-		double u_length=umax-umin;
-		double v_length=vmax-vmin;
+			// side lengths of the map area
+			double u_length=umax-umin;
+			double v_length=vmax-vmin;
 
-		// skip this entry, when u or v is outside of the image area
-	    if (u_pos<0) continue;
-	    if (u_pos>=u_length) continue;
-	    if (v_pos<0) continue;
-	    if (v_pos>=v_length) continue;
+			// skip this entry, when u or v is outside of the image area
+			if (u_pos<0) continue;
+			if (u_pos>=u_length) continue;
+			if (v_pos<0) continue;
+			if (v_pos>=v_length) continue;
 
-		// Apply cut on vertex multiplicity
-        if (vertex_multiplicity>vertex_multiplicity_max||vertex_multiplicity<vertex_multiplicity_min) continue;
+			// Apply cut on vertex multiplicity
+		    if (vertex_multiplicity>vertex_multiplicity_max||vertex_multiplicity<vertex_multiplicity_min) continue;
 
-		// Determine column and row number from the position within the map area and the number of rows and columns
-		int col=floor(u_pos*numcol/u_length);
-		int row=floor(v_pos*numrow/v_length);
+			// Determine column and row number from the position within the map area and the number of rows and columns
+			int col=floor(u_pos*numcol/u_length);
+			int row=floor(v_pos*numrow/v_length);
 
-		// mean correction of theta
-		theta1=theta1-mean1[col][row];
-		theta2=theta2-mean2[col][row];
+			// mean correction of theta
+			theta1=theta1-mean1[col][row];
+			theta2=theta2-mean2[col][row];
 
-		// Fill histograms
-		histo_theta1[col][row]->Fill(theta1);
-		histo_theta2[col][row]->Fill(theta2);
-		histo_thetasum[col][row]->Fill(theta1);
-		histo_thetasum[col][row]->Fill(theta2);
-		histo_2d[col][row]->Fill(theta1,theta2);
+			// Fill histograms
+			histo_theta1[col][row]->Fill(theta1);
+			histo_theta2[col][row]->Fill(theta2);
+			histo_thetasum[col][row]->Fill(theta1);
+			histo_thetasum[col][row]->Fill(theta2);
+			histo_2d[col][row]->Fill(theta1,theta2);
 
-		histo_uresidual[col][row]->Fill(u_in-u_out);
-		histo_vresidual[col][row]->Fill(v_in-v_out);
+			histo_uresidual[col][row]->Fill(u_in-u_out);
+			histo_vresidual[col][row]->Fill(v_in-v_out);
 
-		histo_vertex_w[col][row]->Fill(vertex_w);
-		histo_vertex_chi2[col][row]->Fill(vertex_chi2);
-		histo_vertex_multiplicity[col][row]->Fill(vertex_multiplicity);
+			histo_vertex_w[col][row]->Fill(vertex_w);
+			histo_vertex_chi2[col][row]->Fill(vertex_chi2);
+			histo_vertex_multiplicity[col][row]->Fill(vertex_multiplicity);
 
-		histo_vtx_trk_u_res[col][row]->Fill(vertex_u-u);
-		histo_vtx_trk_v_res[col][row]->Fill(vertex_v-v);
-	}
+			histo_vtx_trk_u_res[col][row]->Fill(vertex_u-u);
+			histo_vtx_trk_v_res[col][row]->Fill(vertex_v-v);
+		}
+    }
 
 	cout<<"Write histograms "<<endl;
+
+	file2->cd("");
+	file2->cd("mapping/raw");
 
 	for (int i=0; i<numcol; i++)
 	{
@@ -365,6 +384,8 @@ using namespace std ;
 			histo_vtx_trk_u_res[i][j]->Delete();
 			histo_vtx_trk_v_res[i][j]->Write("res_v_vtx_trk_"+histoname);
 			histo_vtx_trk_v_res[i][j]->Delete();
+
+			cout<<"Corrected angle distributions in pixel area (col="<<i<<", row="<<j<<") written to disk!"<<endl;
 
 		}
 		
@@ -978,7 +999,6 @@ Double_t GetMomentum(double meanvalue,double ugrad,double vgrad, double u, doubl
 	p=meanvalue+u*ugrad+v*vgrad;
 	return p;
 }
-  
 
 
 // This script is used to create a map of a plane in a test beam telescope. The input is a TTree including 
@@ -1008,21 +1028,30 @@ int x0imaging()
 
 	// TString for the input root file name
 	TString histoname,range;
-	TString filename=mEnv.GetValue("x0filename", "X0-merge");
+	TString imagename=mEnv.GetValue("x0imagename", "X0image.root");
 
-	// Copy the X0 Analysis Root file 
-	TFile *X0file = new TFile(filename, "READ");
+	// List of input file names 
+    TString list=mEnv.GetValue("inputfile", "X0");
+    std::vector<TString> filenames;
 
-	//Open the copied file
-	filename=filename+mEnv.GetValue("x0fileidentifier", "-part-1-1");
-	TFile *rootfile = new TFile(filename+".root", "RECREATE");
+    // Read input files and sort them into a tstring vector
+    TObjArray *tx = list.Tokenize(",");
+    cout<<endl<<"Input file names: "<<endl;
+    for (Int_t i = 0; i < tx->GetEntries(); i++)
+    {
+		filenames.push_back(((TObjString *)(tx->At(i)))->String());
+		std::cout << filenames.at(i) << endl;
+	}
+
+	//Create and open image file file
+	TFile *imagefile = new TFile(imagename, "RECREATE");
 
 	// Create directories containing map histograms, fits and results
-	rootfile->mkdir("mapping");
-	rootfile->mkdir("mapping/raw");
-	rootfile->mkdir("mapping/fit");
-	rootfile->mkdir("mapping/badfit");
-	rootfile->mkdir("mapping/result");
+	imagefile->mkdir("mapping");
+	imagefile->mkdir("mapping/raw");
+	imagefile->mkdir("mapping/fit");
+	imagefile->mkdir("mapping/badfit");
+	imagefile->mkdir("mapping/result");
 
 	// Number of Rows and Columns of the sensor map
 	int numcol = mEnv.GetValue("maxupixels", 100);
@@ -1048,15 +1077,13 @@ int x0imaging()
     double u_center=umin+0.5*ulength;
 
 	// Print map parameters
-	cout<<"Column and Row values of the whole area:"<<endl;
+	cout<<endl<<"Column and Row values of the whole area:"<<endl;
 	cout<<"Lowest Column value: "<<0<<endl;
 	cout<<"Highest Column value: "<<numcol-1<<endl;
 	cout<<"Lowest Row value: "<<0<<endl;
 	cout<<"Highest Row value: "<<numrow-1<<endl;
 
-	cout<<endl;
-
-	cout<<"Minimal u value:"<<umin<<" mm"<<endl;
+	cout<<endl<<"Minimal u value:"<<umin<<" mm"<<endl;
 	cout<<"Max. u value:"<<umax<<" mm"<<endl;
 	cout<<"Minimal v value:"<<vmin<<" mm"<<endl;
 	cout<<"Max. v value:"<<vmax<<" mm"<<endl;
@@ -1065,7 +1092,7 @@ int x0imaging()
 	int vertex_multiplicity_min=mEnv.GetValue("vertexmultiplicitymin", 1);
 	int vertex_multiplicity_max=mEnv.GetValue("vertexmultiplicitymax", 1);
 
-	cout<<"Minimal vertex multiplicity:"<<vertex_multiplicity_min<<endl;
+	cout<<endl<<"Minimal vertex multiplicity:"<<vertex_multiplicity_min<<endl;
 	cout<<"Maximal vertex multiplicity:"<<vertex_multiplicity_max<<endl;
 
     // Vertex multiplicity cut (should be 1 for default X0 analysis)
@@ -1082,8 +1109,10 @@ int x0imaging()
 	// 1: gaussian fit function with cuts on the tails, use only 1 fit on the merged histogram consisting of both distributions
 	int fittype=1;
 
-	TTree * tree = (TTree*) X0file->Get("MSCTree");
+	//Create and open first input file in list
+	TFile *inputfile = new TFile(filenames.at(0), "READ");
 
+	TTree * tree = (TTree*) inputfile->Get("MSCTree");
  	std::vector<double> plotranges,means;
 
 	// Draw theta1 histogram
@@ -1106,7 +1135,7 @@ int x0imaging()
 	// Range parameter of angle histograms
 	double histo_range=mEnv.GetValue("histo_range", 5.0);
 
-	cout<<"The first Scattering angle distributions will be plotted with range "<<plotranges.at(0)<<" rad and "<<numberofbins<<" bins!"<<endl;
+	cout<<endl<<"The first Scattering angle distributions will be plotted with range "<<plotranges.at(0)<<" rad and "<<numberofbins<<" bins!"<<endl;
 	cout<<"The mean value of the histogram is "<<means.at(0)<<" rad !"<<endl;
 
 	cout<<"The second Scattering angle distributions will be plotted with range "<<plotranges.at(1)<<" rad and "<<numberofbins<<" bins!"<<endl;
@@ -1117,8 +1146,8 @@ int x0imaging()
 	// from the cfg, where it must be inserted manually
 	double lambda_default=mEnv.GetValue("lambda", 1.0);
 	double lambda=mEnv_res.GetValue("lambda_start", lambda_default);
-	double recoerror=sqrt(getanglerecovar(X0file))*lambda;
-	cout<<"The reconstruction error is "<<recoerror*1E6<<" µrad!"<<endl;
+	double recoerror=sqrt(getanglerecovar(inputfile))*lambda;
+	cout<<endl<<"The reconstruction error is "<<recoerror*1E6<<" µrad!"<<endl;
 	cout<<"This includes the calibration factor of "<<lambda<<endl;
 
 	// Beam energy in GeV
@@ -1134,10 +1163,9 @@ int x0imaging()
 	double mom_uslope=mEnv_res.GetValue("momentumugradient", mom_uslope_default);
     double mom_vslope_default=mEnv.GetValue("momentumvgradient", 0.0);    // in GeV/mm
 	double mom_vslope=mEnv_res.GetValue("momentumvgradient", mom_vslope_default);
-	cout<<"The beam energy is "<<mom0<<" GeV!"<<endl;
+	cout<<endl<<"The beam energy is "<<mom0<<" GeV!"<<endl;
 	cout<<"The beam energy gradient (u direction) is "<<mom_uslope<<" GeV/mm!"<<endl;
-	cout<<"The beam energy gradient (v direction) is "<<mom_vslope<<" GeV/mm!"<<endl;
-
+	cout<<"The beam energy gradient (v direction) is "<<mom_vslope<<" GeV/mm!"<<endl<<endl;
 
 	//particle charge
 	double charge=1;
@@ -1145,8 +1173,8 @@ int x0imaging()
 	//particle mass
 	double mass=0.000511;
 
-	rootfile->cd("");
-	rootfile->cd("mapping/result");
+	imagefile->cd("");
+	imagefile->cd("mapping/result");
 
 	// Scatter theta1 vs residual u
 	TH2F * hscatt_theta1_vs_resu = new TH2F("hscatt_theta1_vs_resu","hscatt_theta1_vs_resu",100,-0.1,0.1,150,means.at(0)-plotranges.at(0),means.at(0)+plotranges.at(0));
@@ -1188,8 +1216,6 @@ int x0imaging()
     hscatt_theta2_vs_resv->GetZaxis()->SetTitleSize(0.02);
     hscatt_theta2_vs_resv->GetZaxis()->SetLabelSize(0.02);
 
-
-
 	tree->Draw("theta1:(u_out-u_in)>>hscatt_theta1_vs_resu","","colz");
 	hscatt_theta1_vs_resu->Write();
 
@@ -1202,15 +1228,14 @@ int x0imaging()
 	tree->Draw("theta2:(v_out-v_in)>>hscatt_theta2_vs_resv","","colz");
 	hscatt_theta2_vs_resv->Write();
 
-	rootfile->cd("");
+	imagefile->cd("");
+    inputfile->Close();
 	
-	getcorrection(X0file, rootfile, means, plotranges, numberofbins, numcol, numrow, umin, vmin, umax, vmax, vertex_multiplicity_min, vertex_multiplicity_max);
-	savehistos(X0file, rootfile, numberofbins, histo_range, numcol, numrow, umin, vmin, umax, vmax, vertex_multiplicity_min, vertex_multiplicity_max);
+	getcorrection(filenames, imagefile, means, plotranges, numberofbins, numcol, numrow, umin, vmin, umax, vmax, vertex_multiplicity_min, vertex_multiplicity_max);
+	savehistos(filenames, imagefile, numberofbins, histo_range, numcol, numrow, umin, vmin, umax, vmax, vertex_multiplicity_min, vertex_multiplicity_max);
 
-	X0file->Close();
-
-	rootfile->cd("");
-	rootfile->cd("mapping/result");
+	imagefile->cd("");
+	imagefile->cd("mapping/result");
 
 	// X0 map
 	TH2F * x0_image = new TH2F("x0_image","x0_image",numcol,umin,umax,numrow,vmin,vmax);
@@ -1502,11 +1527,11 @@ int x0imaging()
 			double parameters[7]={mom,charge,mass,0.01,recoerror,300,0.0};
 
 			// fit the histograms
-			fithisto(rootfile, fittype, maxchi2ndof_fit, rangevalue, col,numcol,row,numrow,parameters,fitoptions);
+			fithisto(imagefile, fittype, maxchi2ndof_fit, rangevalue, col,numcol,row,numrow,parameters,fitoptions);
 		}
 	}
 
-	rootfile->Close();
+	imagefile->Close();
 
     return 0;
 

@@ -7,13 +7,13 @@ import sys, getopt
 import glob
 import math
 import fileinput
+import re
 
-def x0imaging(filename=None,caltag='',deletetag='0',steerfiles=None,nametag=''):
+def x0imaging(filelist=None,caltag='',steerfiles=None,nametag=''):
   """
   Performs radiation length imaging of the angle data provided by the file
-    :@filename:    Input root file with TTree of scattering angles
+    :@filelist:    List of input root files with TTree of scattering angles
     :@caltag:      Use x0 calibration parameters from cfg files in the caltag subdirectory    
-    :@deletetag:   Delete partial images afterwards
     :@steerfiles:  Directory, where the image cfg file lies
     :@nametag:     Name tag, that is used to modify the output filename 
     :author: ulf.stolzenberg@phys.uni-goettingen.de  
@@ -21,13 +21,28 @@ def x0imaging(filename=None,caltag='',deletetag='0',steerfiles=None,nametag=''):
 
   cfgfilename=steerfiles+'x0.cfg'
 
-  if filename == None:
+  if len(filelist) == 0:
+    print('The file list is empty!') 
     return None
+  
+  for filename in filelist:
+    if filename == None:
+      return None
 
   if steerfiles == None:
     return None
 
-  imageflags='./tbsw/x0imaging/GenerateImage.py -i '+filename+' -f '+cfgfilename+' -c '+caltag+' -d '+deletetag+' -t '+nametag
+  print(nametag)
+
+  imageflags='./tbsw/x0imaging/GenerateImage.py'
+
+  for filename in filelist:
+    imageflags= imageflags+ ' -i '+str(filename)
+
+  if caltag=='':
+    imageflags=imageflags+' -f '+cfgfilename+' -t '+nametag
+  else:
+    imageflags=imageflags+' -f '+cfgfilename+' -c '+caltag+' -t '+nametag
   print('Starting X0 imaging')
   print(imageflags)
   subprocess.call(imageflags, shell=True)
@@ -36,24 +51,35 @@ def x0imaging(filename=None,caltag='',deletetag='0',steerfiles=None,nametag=''):
 
 
 # Function which starts the x0 calibration script
-def x0calibration(filename=None,imagefilename='',caltag='default',steerfiles=None):
+def x0calibration(filelist=None,imagefilename='',caltag='default',steerfiles=None):
   """
   Performs radiation length calibration on well known material target
-    :@filename:    Input root file with calibration data 
+    :@filename:    List of input root file with calibration data 
     :@caltag:      Use x0 calibration parameters from cfg files in the caltag subdirectory and save results there    
     :@steerfiles:  Directory, where the image cfg file lies
     :author: ulf.stolzenberg@phys.uni-goettingen.de  
   """   
 
-  if filename == None:
+  cfgfilename=steerfiles+'x0.cfg'
+
+  if len(filelist) == 0:
+    print('The file list is empty!') 
     return None
+  
+  for filename in filelist:
+    if filename == None:
+      return None
 
   if steerfiles == None:
     return None
 
-  cfgfilename=steerfiles+'x0.cfg'
+  califlags='./tbsw/x0imaging/X0Calibration.py'
 
-  califlags='./tbsw/x0imaging/X0Calibration.py -i '+filename+' -f '+cfgfilename+' -m '+imagefilename+' -c '+caltag
+  for filename in filelist:
+    califlags= califlags+ ' -i '+str(filename)
+
+  califlags=califlags+' -f '+cfgfilename+' -m '+imagefilename+' -c '+caltag
+
   print('Starting X0 calibration')
   print(califlags)
   subprocess.call(califlags, shell=True)
@@ -66,7 +92,8 @@ def merge_rootfile(filename=None,RunList='',caltag=None):
   """
   Merges all root files from a list
     :@filename:    Name of merged output rootfile 
-    :@RunList:     List of filenames , which will be merged   
+    :@RunList:     List of filenames , which will be merged 
+    :@caltag:      caltag string needed to convert the list strings  
     :author: ulf.stolzenberg@phys.uni-goettingen.de  
   """ 
 
@@ -91,10 +118,23 @@ def merge_rootfile(filename=None,RunList='',caltag=None):
 
   return None
 
+# Create List with filenames of root tree files from raw file list
+def CreateRootFileList(rawlist,rootlist=[], caltag=None):
+  """
+  Creates a list with filenames of root tree files from a similar raw file list
+    :@rawlist:    List of raw file names
+    :@rootlist:   List of root file names to be created  
+    :author: ulf.stolzenberg@phys.uni-goettingen.de  
+  """ 
+
+  for rawfile in rawlist:
+    name=os.path.splitext(os.path.basename(rawfile))[0]
+    rootlist.append('root-files/X0-'+name+'-'+caltag+'.root')
+
 
 if __name__ == '__main__':
   
-  rootfile = ''
+  rootfilelist = []
   cfgfile = ''
   imagefile = ''
   caltag=''
@@ -110,7 +150,7 @@ if __name__ == '__main__':
       print ('X0Calibration.py -i <inputfile> -f <cfgfile> -m <imagefile> -c <cal-tag>')
       sys.exit()
     elif opt in ("-i", "--ifile"):
-      rootfile = arg
+      rootfilelist.append(arg)
     elif opt in ("-f", "--cfgfile"):
       cfgfile = arg
     elif opt in ("-m", "--mfile"):
@@ -118,8 +158,8 @@ if __name__ == '__main__':
     elif opt in ("-c", "--caltag"):
       caltag = arg
 
-  if rootfile == '':
-    print ('missing option: -i path/to/inputfilename.root')
+  if len(rootfilelist) == 0:
+    print ('missing option: -i inputfilelist')
     sys.exit(2) 
 
   if cfgfile == '':
@@ -129,14 +169,8 @@ if __name__ == '__main__':
   # remember current working dir 
   fullpath = os.getcwd() 
 
-  # Directory where the results will be stored and where the image file should be
-  resdir=os.path.splitext(os.path.dirname(rootfile))[0]
-
-  # get X0 filename without path
-  this_x0filename = os.path.splitext(os.path.basename(rootfile))[0]
-
-  # Change to work directory
-  workdir = 'tmp-runs/'+this_x0filename+'-'+caltag+'-X0Calibration'
+  # Path to work directory
+  workdir = 'tmp-runs/X0Calibration-'+caltag
 
   # remove old workdir if exists 
   if os.path.isdir(workdir):
@@ -149,8 +183,32 @@ if __name__ == '__main__':
   # Find directory with scripts
   scriptsfolder = fullpath+'/tbsw/x0imaging'
 
-  # Create X0 root file link in the current work dir
-  os.symlink(fullpath+'/'+rootfile,'X0File')
+  # Create Links of input root files
+  for ifile,rootfile in enumerate(rootfilelist):
+    this_x0filename = os.path.splitext(os.path.basename(rootfile))[0]
+    
+    runtags=re.findall('run\d+', this_x0filename )
+    if len(runtags)>1:
+      print('Input file ' + str(ifile+1) + ' contains two or more possible runnumbers! Only the first possibility is as link name.')
+      if os.path.isfile(runtags[0]):
+        print("Error link name already exists! ")
+        sys.exit(2)
+      else:
+        os.symlink(fullpath+'/'+rootfile,runtags[0]) 
+
+    elif len(runtags)==1:
+      if os.path.isfile(runtags[0]):
+        print("Error link name already exists! ")
+      else:
+        os.symlink(fullpath+'/'+rootfile,runtags[0]) 
+
+    else:
+      print('Input file ' + str(ifile+1) + ' contains no string with a runnumber! Creating link with default name.')
+      runtag='run'+str(ifile+1)
+      if os.path.isfile(runtag):
+        print("Error link name already exists! ")
+      else:
+        os.symlink(fullpath+'/'+rootfile,runtag) 
 
   # Copy cfg file to current work dir
   cfgname="x0.cfg"

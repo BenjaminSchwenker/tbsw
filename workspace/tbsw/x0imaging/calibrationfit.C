@@ -975,56 +975,39 @@ void shiftbins(TH1* histogram, double mean1)
 
 // Function to save the projected angle histograms of different regions in the u-v plane, the region lies within the given 
 // u and v min and max values.
-void savehisto(TFile* file, TFile* file2, TString histoname, int numbins, double histo_range, std::vector <double> cutparameters_position, std::vector <int> cutparameters_run, std::vector <int> cutparameters_vertex_multiplicity, int max_angles, int correctmean, TString nametag)
+void savehisto(std::vector<TString> inputfiles, TFile* file2, TString histoname, int numbins, double histo_range, std::vector <double> cutparameters_position, std::vector <int> cutparameters_run, std::vector <int> cutparameters_vertex_multiplicity, int max_angles, int correctmean, TString nametag)
 {
+
+    // Find relevant input files for the given run number range
+    std::vector<TString> relevantfiles;
+    for(int ifile=0;ifile<inputfiles.size();ifile++)
+	{
+        TString tmpstring;
+        tmpstring=inputfiles.at(ifile);
+		tmpstring.Remove(0,3);
+		int runnumber=tmpstring.Atoi();
+
+		if((cutparameters_run.at(0)<0 && cutparameters_run.at(1)<0 ) || (runnumber>=cutparameters_run.at(0)&&runnumber<=cutparameters_run.at(1)))
+		{
+			relevantfiles.push_back(inputfiles.at(ifile));
+		}
+	}
+
+	TFile* tmpfile=new TFile(relevantfiles.at(0),"READ");
+
 	//TTree in input root file, that contains the MSC projected angle distributions
-	file->cd("");
-	TTree *msc_tree = (TTree*)file->Get("MSCTree");
-
-	TString range;
-
-	// Array of mean theta1 and theta2 values in each map pixel
-	double mean1=0.0;
-	double mean2=0.0;
-
-	// parameters which are read out from the root file
-	Double_t theta1;
-	Double_t theta2;
-	Double_t u;
-	Double_t v;
-
-	Int_t RunNo;
-	Int_t vertex_multiplicity=1;
+	tmpfile->cd("");
+	TTree *tmp_tree = (TTree*)tmpfile->Get("MSCTree");
 
 	// Draw histogram of the first scattering angle in the given u and v range and save it
-	msc_tree->Draw("theta1>>h_help("+range+")","","");
+	tmp_tree->Draw("theta1>>h_help","","");
 
 	// Get the histogram and save it in the raw folder
-	TH1 * h_help=msc_tree->GetHistogram();
+	TH1 * h_help=tmp_tree->GetHistogram();
 
 	double limits=histo_range*(h_help->GetRMS());
 
-	// Set branch adresses for parameters connected to the scattering angles
-	msc_tree->SetBranchAddress("theta1",&theta1);
-	msc_tree->SetBranchAddress("theta2",&theta2);
-	msc_tree->SetBranchAddress("u",&u);
-	msc_tree->SetBranchAddress("v",&v);
-
-	msc_tree->SetBranchAddress("iRun",&RunNo);
-	msc_tree->SetBranchAddress("vertex_multiplicity",&vertex_multiplicity);
-
-	if(correctmean==1)
-	{
-		// Get histogram
-		TH1* histogram1=(TH1*)file2->Get("grid/raw/theta1_uncorrected_"+histoname);
-		TH1* histogram2=(TH1*)file2->Get("grid/raw/theta2_uncorrected_"+histoname);
-
-		// Save mean of both distributions in arrays
-		mean1=histogram1->GetMean();
-		mean2=histogram2->GetMean();
-
-		limits=histo_range/2.0*(histogram1->GetRMS()+histogram2->GetRMS());
-	}
+	tmpfile->Close();
 
 	// Temporary histos with angle distributions fulfilling the cut conditions
 	TH1F * tmp_anglehisto[2];
@@ -1032,32 +1015,77 @@ void savehisto(TFile* file, TFile* file2, TString histoname, int numbins, double
 	tmp_anglehisto[0]=new TH1F("theta1_histo","theta1_histo",numbins,-limits,limits);
 	tmp_anglehisto[1]=new TH1F("theta2_histo","theta2_histo",numbins,-limits,limits);
 
-	for(int ientry=0;ientry<msc_tree->GetEntries();ientry++)
+    for(int ifile=0;ifile<relevantfiles.size();ifile++)
 	{
 
-		if(ientry%100000==0) cout<<"Tree entry "<<ientry<<endl;
-		msc_tree->GetEntry(ientry);
+		TFile* inputfile=new TFile(relevantfiles.at(ifile),"READ");
 
-		bool u_condition,v_condition;	
-		bool run_condition=true;
-		bool vertex_multiplicity_condition=true;
+		//TTree in input root file, that contains the MSC projected angle distributions
+		inputfile->cd("");
+		TTree *msc_tree = (TTree*)inputfile->Get("MSCTree");
 
-		u_condition=(u>cutparameters_position.at(0))&&(u<cutparameters_position.at(1));
-		v_condition=(v>cutparameters_position.at(2))&&(v<cutparameters_position.at(3));
+		// Array of mean theta1 and theta2 values in each map pixel
+		double mean1=0.0;
+		double mean2=0.0;
 
-		if(cutparameters_run.at(0)>-1 && cutparameters_run.at(1)>-1 ) run_condition=(RunNo>=cutparameters_run.at(0))&&(RunNo<=cutparameters_run.at(1));
-		else if (cutparameters_run.at(0)>-1) run_condition=(RunNo>=cutparameters_run.at(0));
-		else if (cutparameters_run.at(1)>-1) run_condition=(RunNo<=cutparameters_run.at(1));
+		// parameters which are read out from the root file
+		Double_t theta1;
+		Double_t theta2;
+		Double_t u;
+		Double_t v;
 
-		if(msc_tree->GetBranchStatus("vertex_multiplicity")) vertex_multiplicity_condition=(vertex_multiplicity>=cutparameters_vertex_multiplicity.at(0))&&(vertex_multiplicity<=cutparameters_vertex_multiplicity.at(1));
+		Int_t RunNo;
+		Int_t vertex_multiplicity=1;
 
-		if(u_condition&&v_condition&&run_condition&&vertex_multiplicity_condition)
+		// Set branch adresses for parameters connected to the scattering angles
+		msc_tree->SetBranchAddress("theta1",&theta1);
+		msc_tree->SetBranchAddress("theta2",&theta2);
+		msc_tree->SetBranchAddress("u",&u);
+		msc_tree->SetBranchAddress("v",&v);
+
+		msc_tree->SetBranchAddress("iRun",&RunNo);
+		msc_tree->SetBranchAddress("vertex_multiplicity",&vertex_multiplicity);
+
+		if(correctmean==1)
 		{
-			tmp_anglehisto[0]->Fill(theta1);
-			tmp_anglehisto[1]->Fill(theta2);
+			// Get histogram
+			TH1* histogram1=(TH1*)file2->Get("grid/raw/theta1_uncorrected_"+histoname);
+			TH1* histogram2=(TH1*)file2->Get("grid/raw/theta2_uncorrected_"+histoname);
+
+			// Save mean of both distributions in arrays
+			mean1=histogram1->GetMean();
+			mean2=histogram2->GetMean();
+
+			limits=histo_range/2.0*(histogram1->GetRMS()+histogram2->GetRMS());
 		}
 
-		if((tmp_anglehisto[0]->GetEntries()>=max_angles)&&(max_angles>-1)) break;
+		for(int ientry=0;ientry<msc_tree->GetEntries();ientry++)
+		{
+
+			if(ientry%100000==0) cout<<"Tree entry "<<ientry<<endl;
+			msc_tree->GetEntry(ientry);
+
+			bool u_condition,v_condition;	
+			bool run_condition=true;
+			bool vertex_multiplicity_condition=true;
+
+			u_condition=(u>cutparameters_position.at(0))&&(u<cutparameters_position.at(1));
+			v_condition=(v>cutparameters_position.at(2))&&(v<cutparameters_position.at(3));
+
+			if(cutparameters_run.at(0)>-1 && cutparameters_run.at(1)>-1 ) run_condition=(RunNo>=cutparameters_run.at(0))&&(RunNo<=cutparameters_run.at(1));
+			else if (cutparameters_run.at(0)>-1) run_condition=(RunNo>=cutparameters_run.at(0));
+			else if (cutparameters_run.at(1)>-1) run_condition=(RunNo<=cutparameters_run.at(1));
+
+			if(msc_tree->GetBranchStatus("vertex_multiplicity")) vertex_multiplicity_condition=(vertex_multiplicity>=cutparameters_vertex_multiplicity.at(0))&&(vertex_multiplicity<=cutparameters_vertex_multiplicity.at(1));
+
+			if(u_condition&&v_condition&&run_condition&&vertex_multiplicity_condition)
+			{
+					tmp_anglehisto[0]->Fill(theta1-mean1);
+					tmp_anglehisto[1]->Fill(theta2-mean2);
+			}
+
+			if((tmp_anglehisto[0]->GetEntries()>=max_angles)&&(max_angles>-1)) break;
+		}
 	}
 
 	// Give the two histograms to a list Operator
@@ -1080,7 +1108,7 @@ void savehisto(TFile* file, TFile* file2, TString histoname, int numbins, double
 
 	tmp_anglehisto[1]->SetTitle("#theta_{2} distribution");
 	tmp_anglehisto[1]->GetXaxis()->SetTitle("#theta_{2} [rad]");
-
+/*
 	// Shift the bins of the histogram to reduce the offset, but only in case the offset is larger than the histogram bin size
 	if((correctmean==1)&&(abs(mean1)>(2*limits/numbins))) 
 	{
@@ -1101,7 +1129,7 @@ void savehisto(TFile* file, TFile* file2, TString histoname, int numbins, double
 		cout<<endl<<"Correct histogram sum offset"<<endl;
 		shiftbins(h,0.5*(mean1+mean2));
 	}
-
+*/
 	// Go to raw directory
 	file2->cd("");
 	file2->cd("grid/raw/");
@@ -1648,6 +1676,26 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	return fitresults;
 } // End of fit function
 
+void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", const char *ext="run") 
+{ 
+	TSystemDirectory dir(dirname, dirname); 
+	TList *files = dir.GetListOfFiles(); 
+	if (files) 
+	{ 
+		TSystemFile *file; 
+		TString fname; 
+		TIter next(files); 
+		while ((file=(TSystemFile*)next())) 
+		{ 
+			fname = file->GetName(); 
+			if (!file->IsDirectory() && fname.Contains(ext)) 
+			{ 	
+                inputfiles.push_back(fname); 
+			} 
+		} 
+	} 
+}
+
 
   // Function used to get the angle distributions of tracks crossing certain regions in the u-v measurement plane,
   // perform a moliere fit on the distributions to estimate the calibrationfactors mu and lambda. Usually this script is used on 
@@ -1752,20 +1800,28 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// Print out the measurement areas, which will be used for the fit
 	grid.PrintGridParameters();
 
-	// TString for the input root file name
-	TString filename,histoname,range;
-	filename.Form("X0File");
+	// TString with input root file name
+	TString histoname;
+    std::vector<TString> inputfiles;
 
-	// Copy the X0 Analysis Root file and rename it
-	TFile *X0file = new TFile(filename, "READ");
+    GetInputFiles(inputfiles);
+	for(int iinput=0;iinput<inputfiles.size();iinput++)
+	{
+		cout<<"input file:"<<inputfiles.at(iinput)<<endl;
+	}
+	// Open the first input file
+	// This is needed to determine the angle resolution
+	TFile *Inputfile = new TFile(inputfiles.at(0), "READ");
 
-	//Open the copied file
-	filename=filename+"CalibrationDQM_"+model+"fit";
+	//Open the x0 calibration file
+	TString filename="X0Calibration-"+model+"fit";
 	TFile *rootfile = new TFile(filename+".root", "RECREATE");
 
 	// Set number of layers of target	
-	recoerr=sqrt(getanglerecovar(X0file));
+	recoerr=sqrt(getanglerecovar(Inputfile));
 	cout<<"Angle reconstruction error: 	"<<recoerr<<" rad"<<endl;
+
+	Inputfile->Close();
 
 	// Create directories containing angle histograms and fits
 	rootfile->mkdir("grid");
@@ -1812,15 +1868,14 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 			// Save the angle histograms of the current measurement area to the root file
 			cout<<endl<<"Correct angle distribution offsets..."<<endl;
 			TString nametag="uncorrected_";
-			savehisto(X0file,rootfile, histoname, numbins, histo_range, cutparameters_position, cutparameters_run, cutparameters_vertex_multiplicity, maxangles, 0, nametag);
+			savehisto(inputfiles,rootfile, histoname, numbins, histo_range, cutparameters_position, cutparameters_run, cutparameters_vertex_multiplicity, maxangles, 0, nametag);
 			cout<<endl<<"Write histos..."<<endl;
 			nametag="";
-			savehisto(X0file,rootfile, histoname, numbins, histo_range, cutparameters_position, cutparameters_run, cutparameters_vertex_multiplicity, maxangles, correctmean, nametag);
+			savehisto(inputfiles,rootfile, histoname, numbins, histo_range, cutparameters_position, cutparameters_run, cutparameters_vertex_multiplicity, maxangles, correctmean, nametag);
 
 
 	}// end of first loop over measurement areas
 
-	X0file->Close();
 
 	// Open results config file
     //------------------

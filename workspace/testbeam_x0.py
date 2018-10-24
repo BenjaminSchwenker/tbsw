@@ -30,13 +30,13 @@ import tbsw.x0imaging.X0Calibration
 # or how M26 sensors are digitized. XML parameters can be adjusted using any test editor
 
 # Steerfiles for the telescope calibration
-steerfiles_cali = 'steering-files/x0-tb/'
+steerfiles_cali = 'steering-files/x0-tb17/'
 
 # Steerfiles for the angle reconstruction (can be the same directory as telescope calibration steerfiles)
-steerfiles_reco = 'steering-files/x0-tb/'
+steerfiles_reco = 'steering-files/x0-tb17/'
 
 # Steerfiles for the x0calibration/x0imaging (can be the same directory as telescope calibration steerfiles)
-steerfiles_x0 = 'steering-files/x0-tb/'
+steerfiles_x0 = 'steering-files/x0-tb17/'
 
 # Nominal Beam energy
 beamenergy=2.0
@@ -260,48 +260,42 @@ def targetalignment(params):
 # Perform x0 calibration
 def xx0calibration(params):
 
-  x0caltag, RunList, steerfiles, calibrationtag, delete = params
-
-  # Base filename of the X0 root file
-  basefilename='X0cal-merge'
-
-  # Total path of X0 root file
-  filename='root-files/'+basefilename+'.root'
-
-  # Merge the root trees in the root files directory
-  tbsw.x0imaging.X0Calibration.merge_rootfile(filename=filename,RunList=RunList,caltag=caltag)
+  x0tag, RunList, steerfiles, calibrationtag= params
 
   # Generate a uncalibrated X/X0 image
-  tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag='',deletetag=delete,steerfiles=steerfiles,nametag='Uncalibrated')
+  imagenametag='X0image-calitarget-Uncalibrated'
+  tbsw.x0imaging.X0Calibration.x0imaging(filelist=RunList,caltag='',steerfiles=steerfiles,nametag=imagenametag)
 
   # Path to uncalibrated X0 image file
-  imagefilename='/root-files/'+basefilename+'-UncalibratedX0image.root'
+  imagefilename='/root-files/'+imagenametag
 
   # Do a calibration of the angle resolution
-  tbsw.x0imaging.X0Calibration.x0calibration(filename=filename,imagefilename=imagefilename,caltag=x0caltag,steerfiles=steerfiles)
+  tbsw.x0imaging.X0Calibration.x0calibration(filelist=RunList,imagefilename=imagefilename,caltag=x0tag,steerfiles=steerfiles)
 
-  DQMplots.x0calibration_DQMPlots(namespec='X0cal-merge',caltag='',x0tag=x0tag)
+  nametag='X0Calibration-'+x0tag
+  DQMplots.x0calibration_DQMPlots(nametag=nametag)
 
 
 # Generate x0 image
 def xx0image(params):
 
-  x0caltag, RunList, steerfiles, calibrationtag, delete, listnametag = params
+  x0caltag, RunList, steerfiles, calibrationtag, listnametag = params
 
-  # Base filename of the X0 root file
-  basefilename='X0-'+listnametag+'-merge-'+x0caltag
+  if listnametag=='':
+    print("No image name found. Using default naming scheme!")
+    listnametag='X0image'
 
-  # Total path of X0 root file
-  filename='root-files/'+basefilename+'.root'
-
-  # Merge the root trees in the root files directory
-  tbsw.x0imaging.X0Calibration.merge_rootfile(filename=filename,RunList=RunList,caltag=caltag)
+  # Determine name of image
+  if caltag=='':
+    nametag=listnametag+'-Uncalibrated'
+  else:
+    nametag=listnametag+'-Calibrated-'+x0tag
 
   # Do a calibration of the angle resolution
-  tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag=x0caltag,deletetag=deletetag,steerfiles=steerfiles_reco,nametag='Calibrated')
+  tbsw.x0imaging.X0Calibration.x0imaging(filelist=RunList,caltag=x0caltag,steerfiles=steerfiles_reco,nametag=nametag)
 
-  DQMplots.x0image_Plots(namespec=basefilename,caltag='',calibrated=True,x0tag=x0tag)
-
+  DQMplots.x0image_Plots(nametag=nametag)
+    
   
 if __name__ == '__main__':
 
@@ -356,17 +350,20 @@ if __name__ == '__main__':
   #
   # The fitted distributions and self-consistency plots in pdf format from this 
   # x0 calibration can be found in the workspace/tmp-runs/*X0Calibration/ directory
-  deletetag='1'
   if Script_purpose_option !=0:
-    params_x0cali = ( x0tag, RawfileList_x0cali, steerfiles_x0, caltag, deletetag)
+    RootFileList_x0cali=[]
+    tbsw.x0imaging.X0Calibration.CreateRootFileList(rawlist=RawfileList_x0cali,rootlist=RootFileList_x0cali, caltag=caltag)
+    params_x0cali = ( x0tag, RootFileList_x0cali, steerfiles_x0, caltag)
     xx0calibration(params_x0cali)
 
   # Generate a calibrated X/X0 image
   #
   # The calibrated radiation length image and other images, such as the beamspot
   # etc can be found in the workspace/root-files/*CalibratedX0Image.root
-  nametag='image1'
-  params_x0image = ( x0tag, RawfileList_x0image, steerfiles_x0, caltag, deletetag, nametag)
+  listnametag='image1'
+  RootFileList_x0image=[]
+  tbsw.x0imaging.X0Calibration.CreateRootFileList(rawlist=RawfileList_x0image,rootlist=RootFileList_x0image, caltag=caltag)
+  params_x0image = ( x0tag, RootFileList_x0image, steerfiles_x0, caltag, listnametag)
   xx0image(params_x0image)
 
   # Generate another calibrated X/X0 image
