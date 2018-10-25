@@ -30,13 +30,13 @@ import tbsw.x0imaging.X0Calibration
 # or how M26 sensors are digitized. XML parameters can be adjusted using any test editor
 
 # Steerfiles for the telescope calibration
-steerfiles_cali = 'steering-files/x0-tb17/'
+steerfiles_cali = 'steering-files/x0-tb/'
 
 # Steerfiles for the angle reconstruction (can be the same directory as telescope calibration steerfiles)
-steerfiles_reco = 'steering-files/x0-tb17/'
+steerfiles_reco = 'steering-files/x0-tb/'
 
 # Steerfiles for the x0calibration/x0imaging (can be the same directory as telescope calibration steerfiles)
-steerfiles_x0 = 'steering-files/x0-tb17/'
+steerfiles_x0 = 'steering-files/x0-tb/'
 
 # Nominal Beam energy
 beamenergy=2.0
@@ -121,6 +121,9 @@ RunList_x0image = [
 		    'run000171.raw', #PB 1
           ]
 
+# Set the name of this image
+name_image1='image1'
+
 RawfileList_x0image = [rawfile_path+x for x in RunList_x0image]
 
 
@@ -130,6 +133,9 @@ RawfileList_x0image = [rawfile_path+x for x in RunList_x0image]
 #		    'run000209.raw', #other material
 #		    'run000210.raw', #other material
 #          ]
+
+# Set the name of this image
+name_image2='image2'
 
 #RawfileList_x0image2 = [rawfile_path+x for x in RunList_x0image2]
 
@@ -262,15 +268,19 @@ def xx0calibration(params):
 
   x0tag, RunList, steerfiles, calibrationtag= params
 
+  # Create list with input root files from list of inpur raw files
+  RootFileList_x0cali=[]
+  tbsw.x0imaging.X0Calibration.CreateRootFileList(rawlist=RunList,rootlist=RootFileList_x0cali, caltag=caltag)
+
   # Generate a uncalibrated X/X0 image
   imagenametag='X0image-calitarget-Uncalibrated'
-  tbsw.x0imaging.X0Calibration.x0imaging(filelist=RunList,caltag='',steerfiles=steerfiles,nametag=imagenametag)
+  tbsw.x0imaging.X0Calibration.x0imaging(filelist=RootFileList_x0cali,caltag='',steerfiles=steerfiles,nametag=imagenametag)
 
   # Path to uncalibrated X0 image file
   imagefilename='/root-files/'+imagenametag
 
   # Do a calibration of the angle resolution
-  tbsw.x0imaging.X0Calibration.x0calibration(filelist=RunList,imagefilename=imagefilename,caltag=x0tag,steerfiles=steerfiles)
+  tbsw.x0imaging.X0Calibration.x0calibration(filelist=RootFileList_x0cali,imagefilename=imagefilename,caltag=x0tag,steerfiles=steerfiles)
 
   nametag='X0Calibration-'+x0tag
   DQMplots.x0calibration_DQMPlots(nametag=nametag)
@@ -280,6 +290,9 @@ def xx0calibration(params):
 def xx0image(params):
 
   x0caltag, RunList, steerfiles, calibrationtag, listnametag = params
+
+  RootFileList_x0image=[]
+  tbsw.x0imaging.X0Calibration.CreateRootFileList(rawlist=RunList,rootlist=RootFileList_x0image, caltag=caltag)
 
   if listnametag=='':
     print("No image name found. Using default naming scheme!")
@@ -292,7 +305,7 @@ def xx0image(params):
     nametag=listnametag+'-Calibrated-'+x0tag
 
   # Do a calibration of the angle resolution
-  tbsw.x0imaging.X0Calibration.x0imaging(filelist=RunList,caltag=x0caltag,steerfiles=steerfiles_reco,nametag=nametag)
+  tbsw.x0imaging.X0Calibration.x0imaging(filelist=RootFileList_x0image,caltag=x0caltag,steerfiles=steerfiles_reco,nametag=nametag)
 
   DQMplots.x0image_Plots(nametag=nametag)
     
@@ -338,7 +351,7 @@ if __name__ == '__main__':
 
     count = multiprocessing.cpu_count()
     pool = multiprocessing.Pool(processes=count)
-    pool.map(reconstruct, params_reco)
+    #pool.map(reconstruct, params_reco)
 
     for rawfile in RawfileList_reco:
       runspec = os.path.splitext(os.path.basename(rawfile))[0] + '-'
@@ -351,25 +364,19 @@ if __name__ == '__main__':
   # The fitted distributions and self-consistency plots in pdf format from this 
   # x0 calibration can be found in the workspace/tmp-runs/*X0Calibration/ directory
   if Script_purpose_option !=0:
-    RootFileList_x0cali=[]
-    tbsw.x0imaging.X0Calibration.CreateRootFileList(rawlist=RawfileList_x0cali,rootlist=RootFileList_x0cali, caltag=caltag)
-    params_x0cali = ( x0tag, RootFileList_x0cali, steerfiles_x0, caltag)
+    params_x0cali = ( x0tag, RawfileList_x0cali, steerfiles_x0, caltag)
     xx0calibration(params_x0cali)
 
   # Generate a calibrated X/X0 image
   #
   # The calibrated radiation length image and other images, such as the beamspot
   # etc can be found in the workspace/root-files/*CalibratedX0Image.root
-  listnametag='image1'
-  RootFileList_x0image=[]
-  tbsw.x0imaging.X0Calibration.CreateRootFileList(rawlist=RawfileList_x0image,rootlist=RootFileList_x0image, caltag=caltag)
-  params_x0image = ( x0tag, RootFileList_x0image, steerfiles_x0, caltag, listnametag)
+  params_x0image = ( x0tag, RawfileList_x0image, steerfiles_x0, caltag, name_image1)
   xx0image(params_x0image)
 
   # Generate another calibrated X/X0 image
   # The X/X0 image step can be repeated multiple times to generate a set of images
   # Just remove the comment and add a run list for each image
-  #nametag='image2'
-  #params_x0image = ( x0tag, RawfileList_x0image2, steerfiles_x0, caltag, deletetag, nametag)
+  #params_x0image = ( x0tag, RawfileList_x0image2, steerfiles_x0, caltag, deletetag, name_image2)
   #xx0image(params_x0image)
 
