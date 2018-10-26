@@ -129,7 +129,10 @@ def CreateRootFileList(rawlist,rootlist=[], caltag=None):
 
   for rawfile in rawlist:
     name=os.path.splitext(os.path.basename(rawfile))[0]
-    rootlist.append('root-files/X0-'+name+'-'+caltag+'.root')
+    if caltag=='':
+      rootlist.append('root-files/X0-'+name+'.root')
+    else:
+      rootlist.append('root-files/X0-'+name+'-'+caltag+'.root')
 
 
 if __name__ == '__main__':
