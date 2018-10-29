@@ -27,7 +27,7 @@ steerfiles = 'steering-files/x0-tb/'
 gearfile = 'gear.xml'
 
 # Tag for x0 calibration
-x0tag='alutarget'
+x0caltag='alutarget'
 
 # Name of the truth db file
 truthdb_filename='alignmentDB_truth.root'
@@ -263,12 +263,12 @@ if __name__ == '__main__':
   imagefilename='/root-files/'+nametag+'.root'
 
   # Do a calibration of the angle resolution
-  nametag='X0Calibration-'+x0tag
-  tbsw.x0imaging.X0Calibration.x0calibration(filelist=rootlist,imagefilename=imagefilename,caltag=x0tag,steerfiles=steerfiles)
+  nametag='X0Calibration-'+x0caltag
+  tbsw.x0imaging.X0Calibration.x0calibration(filelist=rootlist,imagefilename=imagefilename,caltag=x0caltag,steerfiles=steerfiles)
   DQMplots.x0calibration_DQMPlots(nametag=nametag)
 
   # Generate a calibrated X/X0 image
-  nametag='X0image-Calibrated-'+x0tag
-  tbsw.x0imaging.X0Calibration.x0imaging(filelist=rootlist,caltag=x0tag,steerfiles=steerfiles,nametag=nametag)
+  nametag='X0image-Calibrated-'+x0caltag
+  tbsw.x0imaging.X0Calibration.x0imaging(filelist=rootlist,caltag=x0caltag,steerfiles=steerfiles,nametag=nametag)
   DQMplots.x0image_Plots(nametag=nametag)
 

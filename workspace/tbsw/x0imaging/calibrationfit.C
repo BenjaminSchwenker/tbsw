@@ -1547,7 +1547,14 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	TH1F* h_d_true = new TH1F("h_d_true","h_d_true",num_fitfunctions,0.5,num_fitfunctions+0.5);
 	h_d_true->SetMinimum(-0.2);
 	h_d_true->GetXaxis()->SetTitle("Measurement area");
-	h_d_true->GetXaxis()->SetNdivisions(num_fitfunctions);
+	if(num_fitfunctions<15) 
+	{
+		h_d_true->GetXaxis()->SetNdivisions(num_fitfunctions);
+	}
+	else
+	{
+		h_d_true->GetXaxis()->SetNdivisions(num_fitfunctions/4);
+	}
 	h_d_true->GetYaxis()->SetTitle("Thickness [mm]");
 	h_d_true->SetTitle("Self-consistency check");
 
