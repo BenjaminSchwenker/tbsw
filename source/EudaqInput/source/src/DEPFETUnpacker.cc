@@ -37,7 +37,7 @@ namespace eudaqinput {
   {
     
     // Processor description
-    _description = "DEPFETHybrid5Unpacker: Unpacker for DEPFET Hybrid5 detectors (small Belle2 PXD9 sensor) raw data" ;
+    _description = "DEPFETUnpacker: Unpacker for DEPFET detectors (small and large Belle2 PXD9 sensor) raw data" ;
     
     //   
     // First of all, we need to register the input/output collections
