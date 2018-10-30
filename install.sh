@@ -1,7 +1,7 @@
 #!/bin/bash
 
-export CLHEP_HOME=/home/benjamin/work/CLHEP-2-3-4-5/lib/CLHEP-2.3.4.5
-export ROOTSYS=/home/benjamin/work/root-v6-10-08
+export CLHEP_HOME=/home/luetticke/CLHEP/bin/lib/CLHEP-2.4.1.0
+export ROOTSYS=/opt/rh/root6.14.04/root
 
 ############################################################
 # Please do not edit stuff below here !!!!!!!!!!!!!!!!!!!!!!
@@ -15,7 +15,7 @@ cd source/gear
 mkdir build
 cd build
 cmake ..
-make install
+make install -j4
 cd ../..
 
 ############################################################
@@ -24,7 +24,7 @@ cd lcio
 mkdir build
 cd build 
 cmake ..
-make install 
+make install  -j4
 cd ../..
 
 ############################################################
@@ -33,7 +33,7 @@ cd Marlin
 mkdir build
 cd build 
 cmake -C ../BuildSetup.cmake ..
-make install
+make install -j4
 cd ../.. 
 
 ############################################################
@@ -42,7 +42,7 @@ cd EudaqInput
 mkdir build
 cd build 
 cmake -C ../config/BuildSetup.cmake ..
-make install 
+make install  -j4
 cd ../..
 
 ############################################################
@@ -51,7 +51,7 @@ cd TBTools
 mkdir build
 cd build 
 cmake -C ../config/BuildSetup.cmake ..
-make install
+make install -j4
 cd ../..
 
 ############################################################
@@ -60,7 +60,7 @@ cd TBReco
 mkdir build
 cd build 
 cmake -C ../config/BuildSetup.cmake ..
-make install
+make install -j4
 cd ../../..         
 
 ############################################################
