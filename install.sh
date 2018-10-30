@@ -15,7 +15,7 @@ cd source/gear
 mkdir build
 cd build
 cmake ..
-make install
+make install -j4
 cd ../..
 
 ############################################################
@@ -24,7 +24,7 @@ cd lcio
 mkdir build
 cd build 
 cmake ..
-make install 
+make install  -j4
 cd ../..
 
 ############################################################
@@ -33,7 +33,7 @@ cd Marlin
 mkdir build
 cd build 
 cmake -C ../BuildSetup.cmake ..
-make install
+make install -j4
 cd ../.. 
 
 ############################################################
@@ -42,7 +42,7 @@ cd EudaqInput
 mkdir build
 cd build 
 cmake -C ../config/BuildSetup.cmake ..
-make install 
+make install  -j4
 cd ../..
 
 ############################################################
@@ -51,7 +51,7 @@ cd TBTools
 mkdir build
 cd build 
 cmake -C ../config/BuildSetup.cmake ..
-make install
+make install -j4
 cd ../..
 
 ############################################################
@@ -60,7 +60,7 @@ cd TBReco
 mkdir build
 cd build 
 cmake -C ../config/BuildSetup.cmake ..
-make install
+make install -j4
 cd ../../..         
 
 ############################################################

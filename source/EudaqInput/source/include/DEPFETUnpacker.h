@@ -1,13 +1,11 @@
+
 /////////////////////////////////////////////////////////  //
 //                                                         //
-//    DEPFETHybrid5Unpacker - Marlin Processor             //
+//    DEPFETUnpacker - Marlin Processor             //
 /////////////////////////////////////////////////////////  //
 
-#ifndef DEPFETHybrid5Unpacker_H
-#define DEPFETHybrid5Unpacker_H 1
-
-#include "DEPFETADCValues.hh"
-#include "DEPFETEvent.hh"
+#ifndef DEPFETUnpacker_H
+#define DEPFETUnpacker_H 1
 
 // Include LCIO classes
 #include <lcio.h>
@@ -26,20 +24,22 @@
 #include <vector>
 #include <string>
 
+#include "depfetInterpreter.h"
+
 namespace eudaqinput {
   
   
-  class DEPFETHybrid5Unpacker : public marlin::Processor {
+  class DEPFETUnpacker : public marlin::Processor {
     typedef std::vector<unsigned char> datavect;
     typedef std::vector<unsigned char>::const_iterator datait;
     
    public:
    
     //!Method that returns a new instance of this processor
-    virtual Processor*  newProcessor() { return new DEPFETHybrid5Unpacker ; }
+    virtual Processor*  newProcessor() { return new DEPFETUnpacker ; }
     
     //!Constructor - set processor description and register processor parameters
-    DEPFETHybrid5Unpacker();
+    DEPFETUnpacker();
     
     //!Method called at the beginning of data processing - used for initialization
     virtual void init();
@@ -58,9 +58,7 @@ namespace eudaqinput {
     
    protected:
     
-    //! Method to decode raw frame 
-    depfet::DEPFETADCValues ConvertDEPFETEvent(const std::vector<unsigned char> & data, unsigned id);
-         
+
     //!Method printing processor parameters
     void printProcessorParams() const;
       
@@ -76,10 +74,17 @@ namespace eudaqinput {
     int _resetSensorID; 
     	        
    private: 
-     
+    DepfetInterpreter interpreter;
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number
     int    _nEvt ;   //!< Event number
+    int _modID;
+    int _dheID;
+    int _dhpID;
+    Mapping mapping;
+    std::string _mappingString;
+    bool _swapAxes;
+
    
   }; // Class
 
