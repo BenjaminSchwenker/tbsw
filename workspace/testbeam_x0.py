@@ -266,7 +266,7 @@ def targetalignment(params):
 # Perform x0 calibration
 def xx0calibration(params):
 
-  x0caltag, RunList, steerfiles, caltag= params
+  x0caltag, RunList, steerfiles, caltag = params
 
   # Create list with input root files from list of input raw files
   RootFileList_x0cali=[]
@@ -274,10 +274,10 @@ def xx0calibration(params):
 
   # Generate a uncalibrated X/X0 image
   imagenametag='X0image-calitarget-Uncalibrated'
-  tbsw.x0imaging.X0Calibration.x0imaging(filelist=RootFileList_x0cali,caltag='',steerfiles=steerfiles,nametag=imagenametag)
+  tbsw.x0imaging.X0Calibration.x0imaging(filelist=[RootFileList_x0cali[0]],caltag='',steerfiles=steerfiles,nametag=imagenametag)
 
   # Path to uncalibrated X0 image file
-  imagefilename='/root-files/'+imagenametag
+  imagefilename='/root-files/'+imagenametag+'.root'
 
   # Do a calibration of the angle resolution
   tbsw.x0imaging.X0Calibration.x0calibration(filelist=RootFileList_x0cali,imagefilename=imagefilename,caltag=x0caltag,steerfiles=steerfiles)
