@@ -244,7 +244,7 @@ if __name__ == '__main__':
     targetalignment(params_TA)
 
   # Reconstruct the alu rawfile 
-  #reconstruct( )
+  reconstruct( )
 
   # Base filename of the X0 root file
   basefilename='X0-'+caltag
