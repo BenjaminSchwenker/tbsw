@@ -7,61 +7,53 @@ import sys, getopt
 import glob
 import math
 import fileinput
+import argparse
 from configparser import ConfigParser
 
 if __name__ == '__main__':
   
-  rootfile = ''
+  rootfilelist = []
   cfgfile = ''
   caltag=''
-  tag='Uncalibrated'
-  deletetag='0'
+  nametag=''
 
   try:
-    opts, args = getopt.getopt(sys.argv[1:],"hi:f:c:d:t:",["ifile=","cfgfile=","caltag=","deletetag=","tag="])
+    opts, args = getopt.getopt(sys.argv[1:],"hi:f:c:t:",["ifile=","cfgfile=","caltag=","nametag="])
   except getopt.GetoptError:
-    print ('GenerateImage.py -i <inputfile> -f <cfgfile> -c <cal-tag> -d <deletetag>')
-    print ('-d is optional and defaults to: ' + deletetag )
-    print (' 1: delete partial rootfiles' )
-    print (' 0: dont delete partial rootfiles' )
-    print ('-t is optional and defaults to: ' + tag )
+    print ('GenerateImage.py -i <inputfile> -f <cfgfile> -c <cal-tag> -t <nametag>')
+    print ('-t is optional and defaults to: ' + nametag )
     sys.exit(2)
 
   for opt, arg in opts:
     if opt == '-h':
-      print ('GenerateImage.py -i <inputfile> -f <cfgfile> -c <cal-tag> -d <deletetag> -t <tag>')
-      print ('-d is optional and defaults to: ' + deletetag )
+      print ('GenerateImage.py -i <inputfile> -f <cfgfile> -c <cal-tag> -t <nametag>')
       sys.exit()
     elif opt in ("-i", "--ifile"):
-      rootfile = arg
+      rootfilelist.append(arg)
     elif opt in ("-f", "--cfgfile"):
       cfgfile = arg
     elif opt in ("-c", "--caltag"):
       caltag = arg
-    elif opt in ("-d", "--deletetag"):
-      deletetag = arg
     elif opt in ("-t", "--tag"):
-      tag = arg
+      nametag = arg
 
-  if rootfile == '':
-    print ('missing option: -i path/to/inputfilename.root')
+  if len(rootfilelist) == 0:
+    print ('missing option: -i inputfilelist')
     sys.exit(2)  
 
   if cfgfile == '':
-    print ('missing option: -i path/to/cfgfile.cfg')
+    print ('missing option: -f path/to/cfgfile.cfg')
+    sys.exit(2)  
+
+  if nametag == '':
+    print ('missing option: -t nametag')
     sys.exit(2)  
 
   # remember current working dir 
   fullpath = os.getcwd() 
 
-  # get X0 filename without path
-  this_x0filename = os.path.splitext(os.path.basename(rootfile))[0]
-
-  # Get the path without the X0 filename
-  this_x0filepath = os.path.splitext(os.path.dirname(rootfile))[0]
-
   # Change to work directory
-  workdir = 'tmp-runs/'+this_x0filename+'-'+ tag +'-X0image'
+  workdir = 'tmp-runs/'+ nametag
 
   # remove old workdir if exists 
   if os.path.isdir(workdir):
@@ -129,16 +121,18 @@ if __name__ == '__main__':
 
   fp.close()
 
-  # Create X0 root file link in the current work dir
-  os.symlink(fullpath+'/'+rootfile,this_x0filename)
+  # Create Links of input root files
+  for rootfile in rootfilelist:
+    this_x0filename = os.path.splitext(os.path.basename(rootfile))[0]
+    os.symlink(fullpath+'/'+rootfile,this_x0filename)  
 
   # number of pixels needed
   num_u_pixels = u_length * 1000.0 / u_pixel_size
   num_v_pixels = v_length * 1000.0 / v_pixel_size
 
   # Max number of pixels per x0image
-  max_u_pixels = 75
-  max_v_pixels = 75
+  max_u_pixels = 50
+  max_v_pixels = 50
 
   # Convert the number to a string
   this_maxupixels=str(max_u_pixels)
@@ -147,9 +141,6 @@ if __name__ == '__main__':
   # How many x0image parts are required in each direction?
   u_splits=math.ceil(num_u_pixels/max_u_pixels)
   v_splits=math.ceil(num_v_pixels/max_v_pixels)
-
-  # Overall number of X0 image parts required
-  num_parts=u_splits * v_splits
 
   # Copy the results cfg file from previous calibrations, if it exists
   calicfgfilename="x0cal_result.cfg"
@@ -162,10 +153,17 @@ if __name__ == '__main__':
   # copy x0image files 
   for i in range(0,int(u_splits)):
     for j in range(0,int(v_splits)):
+
+      # Input files
+      for it,rootfile in enumerate(rootfilelist):
+        if it==0:
+          this_inputfiles=os.path.splitext(os.path.basename(rootfile))[0]
+        else:
+          this_inputfiles=this_inputfiles+","+os.path.splitext(os.path.basename(rootfile))[0]
       # Function name for this x0image script
       this_functionname="x0imaging-part-"+str(i+1)+"-"+str(j+1)
       # fileidentifier for this x0image
-      this_x0fileidentifier="-part-"+str(i+1)+"-"+str(j+1)
+      this_x0imagename=nametag+"-part-"+str(i+1)+"-"+str(j+1)+".root"
       # umin for this x0image
       this_umin=str(umin + i * max_u_pixels * u_pixel_size / 1000.0)
       # vmax for this x0image
@@ -202,11 +200,12 @@ if __name__ == '__main__':
 
       config.remove_section('image')
       config.remove_section('x0image')
+      config.remove_section('x0calibration')
 
       # fill a temporary cfg file with the parameters relevant for the current partial x0image
       config.add_section('image')
-      config.set('image', 'x0filename', this_x0filename)
-      config.set('image', 'x0fileidentifier', this_x0fileidentifier)
+      config.set('image', 'inputfile', this_inputfiles)
+      config.set('image', 'x0imagename', this_x0imagename)
       config.set('image', 'maxchi2ndof', this_maxchi2ndof)
       config.set('image', 'fitrange_parameter', this_fitrangeparameter)
       config.set('image', 'umin', this_umin)
@@ -254,6 +253,8 @@ if __name__ == '__main__':
   this_ulength=str(u_length)
   this_vlength=str(v_length)
 
+  this_x0filename=nametag
+
   # Open new cfg txt file
   open('x0merge.cfg', 'a').close()
   fp = open('x0merge.cfg','r+')
@@ -286,13 +287,6 @@ if __name__ == '__main__':
   for tmpfile in glob.glob('*part_*.C'):
     os.remove(tmpfile) 
 
-  if deletetag == '1':
-    # clean up root files
-    for tmpfile in glob.glob('*part*.root'):
-      os.remove(tmpfile) 
-    # also remove the input cfg file
-    os.remove(default_cfg_file_name) 
-
   # remove MergeImage.C and config file script
   os.remove('x0merge.cfg') 
   os.remove('x0image-partial.cfg')  
@@ -300,7 +294,7 @@ if __name__ == '__main__':
     os.remove(file) 
 
   # Copy complete image file to root-files directory
-  shutil.copy(this_resultsfilename+'.root', fullpath+'/root-files/'+this_x0filename+'-'+ tag +'X0image.root')
+  shutil.copy(this_resultsfilename+'.root', fullpath+'/root-files/'+this_x0filename+'.root')
   		           
                 
 
