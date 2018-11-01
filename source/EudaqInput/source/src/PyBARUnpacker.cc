@@ -36,11 +36,11 @@ namespace eudaqinput {
     
     registerInputCollection (LCIO::TRACKERRAWDATA, "InputCollectionName",
                              "Name of collection containing raw data",
-                             _inputCollectionName, string("USBPIX_GEN3"));
+                             _inputCollectionName, string("PyBAR"));
     
     registerOutputCollection (LCIO::TRACKERDATA, "OutputCollectionName",
                               "Name of the output digit collection",
-                              _outputCollectionName, string("zsdata_usbpix"));
+                              _outputCollectionName, string("zsdata_fei4"));
 
     registerProcessorParameter( "SensorID","Set SensorID for data",
                                _sensorID, static_cast<int > (21));
