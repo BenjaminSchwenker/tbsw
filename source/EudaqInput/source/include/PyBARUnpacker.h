@@ -85,11 +85,13 @@ namespace eudaqinput {
     
     //! Sensor ID 
     int  _sensorID;
-    	        
+    
+    //! ToT mode	        
+    int _tot_mode;
+
    private: 
     
     unsigned int _consecutive_lvl1;
-    unsigned int _tot_mode;
     int _first_sensor_id;
     
     double _timeCPU; //!< CPU time

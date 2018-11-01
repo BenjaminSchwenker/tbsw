@@ -45,6 +45,9 @@ namespace eudaqinput {
     registerProcessorParameter( "SensorID","Set SensorID for data",
                                _sensorID, static_cast<int > (21));
      
+    registerProcessorParameter( "ToTMode","Set ToT mode",
+                               _tot_mode, static_cast<int > (0));
+
   }
   
   //
@@ -209,17 +212,16 @@ namespace eudaqinput {
     }
     
     // translate FE-I4 ToT code into tot
-    if (tot_mode==1) {
+    if (_tot_mode==1) {
       if (t_ToT==15) return false;
       if (t_ToT==14) ToT = 1;
       else ToT = t_ToT + 2;
-    } else if (tot_mode==2) {
+    } else if (_tot_mode==2) {
       // No tot = 2 ?
       if (t_ToT==15) return false;
       if (t_ToT==14) ToT = 1;
       else ToT = t_ToT + 3;
     } else {
-      // 0
       if (t_ToT==14 || t_ToT==15) return false;
       ToT = t_ToT + 1;
     }
