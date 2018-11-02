@@ -203,27 +203,34 @@ int DepfetInterpreter::Interprete(std::vector<depfet_event> &events, unsigned ch
    if (fillInfo) info_map.clear();
    int ret=0;
    auto startsize=events.size();
+
+   if(debug)printf("DepfetInterpreter::Interprete: Header Read, starting interpretation\n"); 
+
    switch(SUB_Header->DeviceType){
 
 
    case DEVICE_DHC_MULTI:
+       printf("DepfetInterpreter::Interprete: DEVICE_DHC_MULTI\n");
        ret= interprete_dhc_from_dhh_daq_format(events, input_buffer + 8,buffersize_in_bytes-8, dhpNR, dheNR,
                                               debug_val,info_map, skip_raw, skip_zs,returnSubevent, absoluteSubeventNumber,
                                               true,true, fillInfo);
        break;
    case DEVICE_DHC_SINGLE:
+       printf("DepfetInterpreter::Interprete: DEVICE_DHC_SINGLE\n");
        ret= interprete_dhc_from_dhh_daq_format(events, input_buffer + 12,buffersize_in_bytes-12, dhpNR, dheNR,
                                               debug_val,info_map, skip_raw, skip_zs,returnSubevent, absoluteSubeventNumber,
                                               true,false, fillInfo);
        break;
 
    case DEVICE_DHE_MULTI:
+       printf("DepfetInterpreter::Interprete: DEVICE_DHE_MULTI\n");
        ret= interprete_dhc_from_dhh_daq_format(events, input_buffer + 8,buffersize_in_bytes-8, dhpNR, dheNR,
                                               debug_val,info_map, skip_raw, skip_zs,returnSubevent, absoluteSubeventNumber,
                                               false,true, fillInfo);
        break;
 
    case DEVICE_DHE_SINGLE:
+       printf("DepfetInterpreter::Interprete: DEVICE_DHE_SINGLE\n");
        ret= interprete_dhc_from_dhh_daq_format(events, input_buffer + 12,buffersize_in_bytes-12, dhpNR, dheNR,
                                               debug_val,info_map, skip_raw, skip_zs,returnSubevent, absoluteSubeventNumber,
                                               false,false, fillInfo);
@@ -235,7 +242,7 @@ int DepfetInterpreter::Interprete(std::vector<depfet_event> &events, unsigned ch
        exit(-1);
    }
    if(events.size() != startsize+ret){
-     std::cout<<"FIX THIS CODE"<<std::endl;
+     std::cout<<"FIX THIS CODE"<<startsize <<" " << events.size()<<" "<< ret <<std::endl;
      std::terminate();
    }
    for(size_t i= startsize;i<events.size();i++){

@@ -72,20 +72,20 @@ namespace eudaqinput {
 
     //! Reset the sensorID to this number
     int _resetSensorID; 
-    	        
-   private: 
-    DepfetInterpreter interpreter;
-    double _timeCPU; //!< CPU time
-    int    _nRun ;   //!< Run number
-    int    _nEvt ;   //!< Event number
+    
     int _modID;
     int _dheID;
     int _dhpID;
-    Mapping mapping;
+
     std::string _mappingString;
     bool _swapAxes;
-
-   
+	        
+   private: 
+    DepfetInterpreter interpreter;
+    Mapping mapping;
+    double _timeCPU; //!< CPU time
+    int    _nRun ;   //!< Run number
+    int    _nEvt ;   //!< Event number
   }; // Class
 
 } // Namespace

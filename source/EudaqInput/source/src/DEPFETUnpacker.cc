@@ -50,6 +50,7 @@ namespace eudaqinput {
                               "Name of the output digit collection",
                               _outputCollectionName, string("zsdata_dep"));
     
+    
     registerProcessorParameter ("OverrideSensorID", "Override sensorID. Put -1 to keep sensorID from rawdata",
                                 _resetSensorID,  static_cast < int > (-1));
     
@@ -60,24 +61,26 @@ namespace eudaqinput {
     registerProcessorParameter ("dheID", "DHE ID which should be read. Put -1 to keep all",
                                 _dheID,  static_cast < int > (-1));
     registerProcessorParameter ("Mapping", "Sensor type for mapping. Can be PXD9_[OF,IF,OB,IB], HYBRID5, automatic or none. Put 'automatic' to determine mapping from dheID. Case insensitive.",
-                                _mappingString,  string("automatic"));
+                                _mappingString, static_cast< string > ( "automatic" ));
     registerProcessorParameter ("SwapAxis", "Swap rows and columns",
-                                _swapAxes,  false);
+                                _swapAxes,  static_cast < bool > (false));
 
-
+   
     interpreter=DepfetInterpreter();
-  
+    
   }
 
   //
   // Method called at the beginning of data processing
   //
   void DEPFETUnpacker::init() {
+    
     interpreter=DepfetInterpreter(_modID,_dhpID,_dheID);
-    interpreter.setMapping(mappingFromString(_mappingString));
+    interpreter.setDebug(true);
+    interpreter.setMapping(mappingFromString(_mappingString)); 
     interpreter.setSkipRaw(true);
     interpreter.swapRowCol(_swapAxes);
-
+     
     // Initialize variables;
     _nRun = 0 ;
     _nEvt = 0 ;
@@ -144,7 +147,11 @@ namespace eudaqinput {
         std::copy(std::begin(short_data),std::end(short_data),std::back_inserter(char_data));
 
         streamlog_out(MESSAGE2) << "ConvertDEPFETEvent() of block id " << blockID << " of length " << char_data.size() << std::endl;
+        auto start=all_events.size();
         interpreter.Interprete(all_events,&(char_data[0]),char_data.size());
+        for(auto i=start;i<all_events.size();i++){
+			all_events[i].modID=blockID;		
+		}
       }
       
       // Create DEPFET_EVENT_INFO if it does not exist
@@ -162,6 +169,8 @@ namespace eudaqinput {
         evt->addCollection( depfet_info , "DEPFET_EVENT_INFO" ) ;
       }   
       
+      streamlog_out(MESSAGE2) << "Create LCIO::TrackerData collection for DEPFET." << std::endl;
+      
       // Prepare collection for unpacked digits 
       LCCollectionVec * result = new LCCollectionVec(LCIO::TRACKERDATA);
 
@@ -170,7 +179,7 @@ namespace eudaqinput {
       
       //-----------------------------------------------
       // Decode event data to a LCIO format
-
+      
       for(const auto & event:all_events){
           // Prepare a TrackerData to store zs pixels
           TrackerDataImpl* zsFrame = new TrackerDataImpl;
@@ -180,17 +189,19 @@ namespace eudaqinput {
           } else {
             outputEncoder["sensorID"] = event.modID;
           }
-
+          
+          streamlog_out(MESSAGE2) << "Write data for moduleID " << outputEncoder["sensorID"] << " to lcio collection " <<  _outputCollectionName << "." << std::endl;
+            
           outputEncoder["sparsePixelType"] = 0;
           outputEncoder.setCellID( zsFrame );
           auto & charge_values=zsFrame->chargeValues();
           charge_values.reserve(charge_values.size()+3*event.zs_data.size());
           for ( const auto & hit : event.zs_data ) {
-
               // Store pixel data int lcio format
               charge_values.push_back( hit.col );
               charge_values.push_back( hit.row );
               charge_values.push_back( hit.val );
+              streamlog_out(MESSAGE2) << "Hit at col= " << hit.col << ", row=" <<  hit.row << ", val=" << hit.val << std::endl;
           }
           result->push_back(zsFrame);
       }
@@ -245,9 +256,8 @@ namespace eudaqinput {
                              << "DEPFETUnpacker Development Version, be carefull!!"
                              << " "
                              << std::endl  <<"Parameters:"<< std::endl;
-    for( auto & p : _map){
-         streamlog_out(MESSAGE3) <<p.first<< ": "<< *(p.second)<<std::endl;
-    }
+
+    
      streamlog_out(MESSAGE3) << std::endl;
   }
 } // Namespace

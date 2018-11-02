@@ -65,7 +65,7 @@ struct depfet_event{
     short modID;
 };
 
-int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> return_data, unsigned char * inputBuffer,unsigned int buffer_size, int dhpNR, int requested_DHE,
+int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, unsigned char * inputBuffer,unsigned int buffer_size, int dhpNR, int requested_DHE,
                                        uint8_t debug, std::map<std::string, long int> &info_map, const bool skip_raw, const bool skip_zs,const bool useDHPFrameNr,const bool useAbsoluteFrameNr,const bool isDHC,const bool new_format, const bool fill_info);
 
 
@@ -74,11 +74,11 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> return_data, un
 
 
 
-
+void printFrameAsWords(uint16_t * frameData,unsigned int size,unsigned int print_width);
 
 class frame_walker{
 public:
-    frame_walker();
+    frame_walker(){};
 protected:
     const unsigned int * data;
     const unsigned int * _current_ptr;
@@ -101,6 +101,7 @@ public:
 class dhh_daq_walker:public frame_walker{
 public:
     dhh_daq_walker(const unsigned int  * _frame_data,unsigned const _data_size_words){
+        std::cout<<"Creating dhh_daq_walker walker"<<std::endl;
         data=_frame_data;
         current_frame=0;
         data_size=_data_size_words;
@@ -213,6 +214,7 @@ public:
 class onsen_walker:public frame_walker{
 public:
     onsen_walker(const unsigned int  * _frame_data,unsigned const _data_size_words){
+        std::cout<<"Creating onsen_walker walker"<<std::endl;
         data=_frame_data;
 
         data_size=_data_size_words;
@@ -229,17 +231,22 @@ public:
             exit(-1);
         }
 
-
+		
         // We don't know the number of frames. Easy solution: Iterate and count. Slow but meh...
+
+        printFrameAsWords((uint16_t *) _frame_data,2*_data_size_words,32);
         unsigned next_idx=0;
         while (next_idx<4*data_size){
-            totalFrames++;
-            next_idx+=sizeof(Onsen_Header_t) + hdr->size;
-            hdr=reinterpret_cast<const Onsen_Header_t*>(data + next_header_index/4);
+            hdr=reinterpret_cast<const Onsen_Header_t*>(data + next_idx/4);
             if(hdr->magic!=0xCAFEBABE){
                 std::cout<<"Error! Missing Magic!"<<std::endl;
                 exit(-1);
             }
+            totalFrames++;
+            std::cout<<"Frame "<<totalFrames << " Next IDX "<< next_idx << " hdr size "<< hdr->size <<" hdr magic "<< hdr->magic <<std::endl;
+            next_idx+=sizeof(Onsen_Header_t) + hdr->size;
+
+            
         }
         if(next_idx!=4*data_size){
             std::cout<<"Error! Iterated past data size!  Event! Now at " << next_idx << " max size "<< 4*data_size <<std::endl;

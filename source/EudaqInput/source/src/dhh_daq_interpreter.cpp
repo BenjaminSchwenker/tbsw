@@ -263,7 +263,7 @@ std::unique_ptr<frame_walker> get_walker(unsigned int * inputBuffer,unsigned buf
     }
 }
 
-int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> return_data, unsigned char * inputBuffer,unsigned int buffer_size, int dhpNR, int requested_DHE,
+int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, unsigned char * inputBuffer,unsigned int buffer_size, int dhpNR, int requested_DHE,
                                        uint8_t debug, std::map<std::string, long int> &info_map, const bool skip_raw, const bool skip_zs,const bool useDHPFrameNr,const bool useAbsoluteFrameNr,const bool isDHC,const bool new_format, const bool fill_info){
 
     bool gotRawData=false;
@@ -272,9 +272,9 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> return_data, un
     int firstDHPFrameNr[]={-1,-1,-1,-1};
 
     depfet_event evt;
-
+    if(debug>=DEBUG_LVL_FINE)std::cout<<"Creating frame walker"<<std::endl;
     auto walker=get_walker(reinterpret_cast<unsigned int *>(inputBuffer),buffer_size/4,new_format);
-
+    if(debug>=DEBUG_LVL_FINE)std::cout<<"Created frame walker"<<std::endl;
     //printf(" reported number of frames:  %d, all_frames %s, CRC %s \n ",walker.get_number_of_frames(), walker.has_all_frames()?"True":"False",walker.frame_crc()?"True":"False");
 
     if((!isDHC && walker->get_number_of_frames()<1) ||
@@ -321,8 +321,9 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> return_data, un
         }
         if(hasCRC){
             unsigned crc_val=crc32_dhe_shift( (const unsigned char *)frame,4*(frame_size-1),0);
-            if(frame[frame_size-1]!=crc_val){
-                std::cout<<"Bad CRC observed. calculated "<<crc_val<<" but data got "<<frame[frame_size-1] << ". Skip Event"<<std::endl;
+            unsigned crc_calc= ((frame[frame_size-1] &0xFFFF)<<16) +  ( (frame[frame_size-1] &0xFFFF0000)>>16); 
+            if(crc_calc!=crc_val){
+                std::cout<<"Bad CRC observed. calculated "<<std::hex<<crc_val<<" but data got "<<std::hex<< crc_calc << std::dec << ". Skip Event" <<std::endl;
                 if (fill_info) info_map["ERROR,"+dhc_prefix + "BAD_CRC"]=1;
                 return 0;
             }
@@ -337,7 +338,7 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> return_data, un
 
         ++(*walker);
     } else {
-        if(dhh_hdr->DataType ==DHH_START_OF_FRAME_TYPE){
+        if(dhh_hdr->DataType!=DHH_START_OF_FRAME_TYPE){
             if (fill_info) info_map["ERROR,BAD_DATA_TYPE_IN_DHE_FIRST_FRAME"]=dhh_hdr->DataType;
             std::cout<<"unexpected data type for DHH Start of event "<< dhh_hdr->DataType <<std::endl;
             return 0;
@@ -362,8 +363,9 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> return_data, un
         frame_size=walker->get_frame_size();
         if(hasCRC){
             unsigned crc_val=crc32_dhe_shift( (const unsigned char *)frame,4*(frame_size-1),0);
-            if(frame[frame_size-1]!=crc_val){
-                std::cout<<"Bad CRC observed. calculated "<<crc_val<<" but data got "<<frame[frame_size-1] << std::endl;
+            unsigned crc_calc= ((frame[frame_size-1] &0xFFFF)<<16) +  ( (frame[frame_size-1] &0xFFFF0000)>>16); 
+            if(crc_calc!=crc_val){
+                std::cout<<"Bad CRC observed. calculated "<<std::hex<<crc_val<<" but data got "<<std::hex<<crc_calc<< std::dec<<std::endl;
                 crc_good=false;
             }
             frame_size-=1;
@@ -607,7 +609,7 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> return_data, un
             assert(dhe_hdr->dhp_data_type==DHH_ZS_DATA_FRAME_TYPE);
             assert(dhe_hdr->dhp_unused==0);
 
-            if(dhe_hdr->linkID != dhe_hdr->dhp_dhpID  || dhe_hdr->DheId!=dhe_hdr->dhp_dheID){
+            if(dhe_hdr->linkID != dhe_hdr->dhp_dhpID  || ( dhe_hdr->DheId!=dhe_hdr->dhp_dheID && dhe_hdr->dhp_dheID !=48)){
                 printf("IDs between DHE and DHP do not fit!\n");
                 if (fill_info) info_map["ERROR,"+dhc_prefix+dhe_prefix+fr_prefix + "ERROR_DHP_ID_ERROR"]+=1;
                 print_header(frame,frame_size,dhe_hdr->DataType);
