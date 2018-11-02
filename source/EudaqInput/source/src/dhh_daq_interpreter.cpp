@@ -263,7 +263,7 @@ std::unique_ptr<frame_walker> get_walker(unsigned int * inputBuffer,unsigned buf
     }
 }
 
-int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, unsigned char * inputBuffer,unsigned int buffer_size, int dhpNR, int requested_DHE,
+int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, unsigned char * inputBuffer,unsigned int buffer_size, const int dhpNR, const int requested_DHE,
                                        uint8_t debug, std::map<std::string, long int> &info_map, const bool skip_raw, const bool skip_zs,const bool useDHPFrameNr,const bool useAbsoluteFrameNr,const bool isDHC,const bool new_format, const bool fill_info){
 
     bool gotRawData=false;
@@ -401,7 +401,7 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, u
             if(!isFirst && !has_end_of_dhe){
                 dhc_words+=4;
             }
-            if (!dhe_crc_good){
+            if (finished_data && !dhe_crc_good){
                 if(debug>=DEBUG_LVL_ERROR)printf("Frame had bad CRC values! It will be ignored!\n");
             }
             if(dhe_crc_good&&finished_data){
@@ -435,6 +435,7 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, u
             evt.dhc_triggerNr=dhcTrigger;
             evt.triggerOffset=dhe_hdr->TriggerOffset;
             evt.isGood=63!=dhe_hdr->DheId;
+            evt.dheID=dhe_hdr->DheId;
             has_end_of_dhe=false;
             gotRawData=false;
             gotZSData=false;
@@ -452,7 +453,7 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, u
                 if (fill_info) info_map["ERROR,"+dhc_prefix +dhe_prefix+ "ERROR_BAD_FRAMESIZE"]+=1;
                 printf("Bad Framesize (%d) for DHE Start of Event.\n",frame_size);
             }
-            if(dhcTrigger !=last_triggerNumber){
+            if(isDHC && dhcTrigger !=last_triggerNumber){
                 printf("Inconsistent DHE DHC trigger number. DHC has trigger number %d, DHE has trigger number %d\n",dhcTrigger,last_triggerNumber);
                 if (fill_info) info_map["ERROR,"+dhc_prefix +dhe_prefix+ "ERROR_TRIGGER_MISSMATCH"]=last_triggerNumber-dhcTrigger;
             }
@@ -685,6 +686,7 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, u
                         current_val = (current_word) & 0xFF;
                         current_col =(((current_word) >> 8) & 0x3F);
                         if(dhpNR==-1){
+                            if(debug>=DEBUG_LVL_EXTRA)std::cout<<"shift column "<<current_col <<" by "<< 64*DHP_id <<std::endl;
                             current_col+=64*DHP_id;
                         }
                         current_row = current_row_base + (((current_word) >> 8) & 0x40) / 64;

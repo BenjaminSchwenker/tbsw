@@ -3,7 +3,8 @@
 #include <cstring>
 #include <vector>
 #include <stdexcept>
-
+// Include Marlin classes
+#include <marlin/Processor.h>
 
 const std::vector<short> pxd9_normal_mapping{ 240,  241,  242,  243,  244,  245,  246,  247,  248,  249, 1000, 1001, 1002, 1003, 1004, 1005,  224,  225,
                                               226,  227,  228,  229,  230,  231,  232,  233,  234,  235,  236,  237,  238,  239,  208,  209,  210,  211,
@@ -210,27 +211,27 @@ int DepfetInterpreter::Interprete(std::vector<depfet_event> &events, unsigned ch
 
 
    case DEVICE_DHC_MULTI:
-       printf("DepfetInterpreter::Interprete: DEVICE_DHC_MULTI\n");
+       if(debug)printf("DepfetInterpreter::Interprete: DEVICE_DHC_MULTI\n");
        ret= interprete_dhc_from_dhh_daq_format(events, input_buffer + 8,buffersize_in_bytes-8, dhpNR, dheNR,
                                               debug_val,info_map, skip_raw, skip_zs,returnSubevent, absoluteSubeventNumber,
                                               true,true, fillInfo);
        break;
    case DEVICE_DHC_SINGLE:
-       printf("DepfetInterpreter::Interprete: DEVICE_DHC_SINGLE\n");
+       if(debug)printf("DepfetInterpreter::Interprete: DEVICE_DHC_SINGLE\n");
        ret= interprete_dhc_from_dhh_daq_format(events, input_buffer + 12,buffersize_in_bytes-12, dhpNR, dheNR,
                                               debug_val,info_map, skip_raw, skip_zs,returnSubevent, absoluteSubeventNumber,
                                               true,false, fillInfo);
        break;
 
    case DEVICE_DHE_MULTI:
-       printf("DepfetInterpreter::Interprete: DEVICE_DHE_MULTI\n");
+       if(debug)printf("DepfetInterpreter::Interprete: DEVICE_DHE_MULTI\n");
        ret= interprete_dhc_from_dhh_daq_format(events, input_buffer + 8,buffersize_in_bytes-8, dhpNR, dheNR,
                                               debug_val,info_map, skip_raw, skip_zs,returnSubevent, absoluteSubeventNumber,
                                               false,true, fillInfo);
        break;
 
    case DEVICE_DHE_SINGLE:
-       printf("DepfetInterpreter::Interprete: DEVICE_DHE_SINGLE\n");
+       if(debug)printf("DepfetInterpreter::Interprete: DEVICE_DHE_SINGLE\n");
        ret= interprete_dhc_from_dhh_daq_format(events, input_buffer + 12,buffersize_in_bytes-12, dhpNR, dheNR,
                                               debug_val,info_map, skip_raw, skip_zs,returnSubevent, absoluteSubeventNumber,
                                               false,false, fillInfo);
@@ -262,7 +263,7 @@ int DepfetInterpreter::Interprete(std::vector<depfet_event> &events, unsigned ch
            std::cout<<"ERROR: Raw Mapping Not Implemented."<<std::endl;
        } else{
            for(auto &hit :event.zs_data){
-
+                streamlog_out(MESSAGE2)<<"Unmapped hit "<<hit.col  << " "<<hit.row << " "<<hit.val << std::endl;
                 short drain=4*hit.col  + hit.row%4;
                 short mappedDrain=(*mappingTable)[drain];
                 short mappedCol=mappedDrain/4;
@@ -277,6 +278,9 @@ int DepfetInterpreter::Interprete(std::vector<depfet_event> &events, unsigned ch
                     hit.row=mappedRow;
                     hit.col=mappedCol;
                 }
+                streamlog_out(MESSAGE2)<<"Mapped hit "<<hit.col  << " "<<hit.row << " "<<hit.val << " (drain was " <<drain << " => " << mappedDrain << " )"<<std::endl;
+
+
            }
        }
    }
@@ -288,24 +292,34 @@ Mapping DepfetInterpreter::autoSelectMapping(long dheID){
     int ladder=(dheID & 0x1e)>>1;
     int fw_bw= dheID & 0x01;
 
+    streamlog_out(MESSAGE2) <<  "DHE ID "<<dheID<< " layer "<<layer<<" ladder "<<ladder<<" fw_bw "<<fw_bw << std::endl;
+
     if(ladder==0 || ladder>12 || (layer==0 && ladder>8)){
+        streamlog_out(MESSAGE2)<< " this is hybrid 5" << std::endl;
+
         return Mapping::HYBRID5;
     }
     if(layer==0){
         if(fw_bw==0){
+            streamlog_out(MESSAGE2)<< " this is PXD9_IF" << std::endl;
             return Mapping::PXD9_IF;
         } else{
+            streamlog_out(MESSAGE2)<< " this is PXD9_IB" << std::endl;
             return Mapping::PXD9_IB;
         }
     } else{
         if(fw_bw==0){
+            streamlog_out(MESSAGE2)<< " this is PXD9_OF" << std::endl;
             return Mapping::PXD9_OF;
         } else{
+            streamlog_out(MESSAGE2)<< " this is PXD9_OB" << std::endl;
             return Mapping::PXD9_OB;
         }
     }
 }
 void DepfetInterpreter::setMapping(Mapping m){
+    streamlog_out(MESSAGE2) << "Setting mapping: "
+                              << int(m)<< std::endl;
     mapping=m;
     if(mapping!=Mapping::NONE && mapping != Mapping::AUTOMATIC){
         setMapping_impl(m);
@@ -316,15 +330,18 @@ inline void DepfetInterpreter::setMapping_impl(Mapping m){
     switch(m){
     case Mapping::PXD9_IF:
     case Mapping::PXD9_OB:
+        streamlog_out(MESSAGE2) << "Setting mapping table IFOB: "<< int(m)<< std::endl;
         mappingTable=&pxd9_normal_mapping;
         inverseGate=false;
         break;
     case Mapping::PXD9_IB:
     case Mapping::PXD9_OF:
+        streamlog_out(MESSAGE2) << "Setting mapping table IBOF: "<< int(m)<< std::endl;
         mappingTable=&pxd9_row_swap_mapping;
         inverseGate=true;
         break;
     case Mapping::HYBRID5:
+        streamlog_out(MESSAGE2) << "Setting mapping table HYB5: "<< int(m)<< std::endl;
         mappingTable=&Hyb5_mapping;
         inverseGate=false;
         break;

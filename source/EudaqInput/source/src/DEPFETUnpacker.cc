@@ -66,7 +66,6 @@ namespace eudaqinput {
                                 _swapAxes,  static_cast < bool > (false));
 
    
-    interpreter=DepfetInterpreter();
     
   }
 
@@ -74,9 +73,10 @@ namespace eudaqinput {
   // Method called at the beginning of data processing
   //
   void DEPFETUnpacker::init() {
-    
+    streamlog_out(MESSAGE3) << "Building interpreter for mapping: "
+                                << _mappingString<< std::endl;
     interpreter=DepfetInterpreter(_modID,_dhpID,_dheID);
-    interpreter.setDebug(true);
+    //interpreter.setDebug(true);
     interpreter.setMapping(mappingFromString(_mappingString)); 
     interpreter.setSkipRaw(true);
     interpreter.swapRowCol(_swapAxes);
@@ -190,7 +190,7 @@ namespace eudaqinput {
             outputEncoder["sensorID"] = event.modID;
           }
           
-          streamlog_out(MESSAGE2) << "Write data for moduleID " << outputEncoder["sensorID"] << " to lcio collection " <<  _outputCollectionName << "." << std::endl;
+          //streamlog_out(MESSAGE2) << "Write data for moduleID " << outputEncoder["sensorID"] << " to lcio collection " <<  _outputCollectionName << "." << std::endl;
             
           outputEncoder["sparsePixelType"] = 0;
           outputEncoder.setCellID( zsFrame );
@@ -201,7 +201,7 @@ namespace eudaqinput {
               charge_values.push_back( hit.col );
               charge_values.push_back( hit.row );
               charge_values.push_back( hit.val );
-              streamlog_out(MESSAGE2) << "Hit at col= " << hit.col << ", row=" <<  hit.row << ", val=" << hit.val << std::endl;
+              //streamlog_out(MESSAGE2) << "Hit at col= " << hit.col << ", row=" <<  hit.row << ", val=" << hit.val << std::endl;
           }
           result->push_back(zsFrame);
       }
