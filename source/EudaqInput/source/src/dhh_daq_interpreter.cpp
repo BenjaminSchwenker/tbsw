@@ -255,7 +255,7 @@ std::unique_ptr<T2> make_unique_and_cast(Args&&... args)
     return std::unique_ptr<T2>(new T(std::forward<Args>(args)...));
 }
 
-std::unique_ptr<frame_walker> get_walker(unsigned int * inputBuffer,unsigned buffer_size_words, bool new_format){
+std::unique_ptr<frame_walker> get_walker(const unsigned int * inputBuffer,unsigned buffer_size_words, bool new_format){
     if(new_format){
         return make_unique_and_cast<dhh_daq_walker,frame_walker>(inputBuffer,buffer_size_words);
     } else {
@@ -263,7 +263,7 @@ std::unique_ptr<frame_walker> get_walker(unsigned int * inputBuffer,unsigned buf
     }
 }
 
-int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, unsigned char * inputBuffer,unsigned int buffer_size, const int dhpNR, const int requested_DHE,
+int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, const unsigned char * inputBuffer,unsigned int buffer_size, const int dhpNR, const int requested_DHE,
                                        uint8_t debug, std::map<std::string, long int> &info_map, const bool skip_raw, const bool skip_zs,const bool useDHPFrameNr,const bool useAbsoluteFrameNr,const bool isDHC,const bool new_format, const bool fill_info){
 
     bool gotRawData=false;
@@ -273,7 +273,7 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, u
 
     depfet_event evt;
     if(debug>=DEBUG_LVL_FINE)std::cout<<"Creating frame walker"<<std::endl;
-    auto walker=get_walker(reinterpret_cast<unsigned int *>(inputBuffer),buffer_size/4,new_format);
+    auto walker=get_walker(reinterpret_cast<const unsigned int *>(inputBuffer),buffer_size/4,new_format);
     if(debug>=DEBUG_LVL_FINE)std::cout<<"Created frame walker"<<std::endl;
     //printf(" reported number of frames:  %d, all_frames %s, CRC %s \n ",walker.get_number_of_frames(), walker.has_all_frames()?"True":"False",walker.frame_crc()?"True":"False");
 
@@ -357,7 +357,7 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, u
     unsigned unaccounted_ghost_events=0;
 
 
-    for(;walker->get_frame_data()!=NULL;++(*walker)){
+    for(;walker->get_frame_data()!=nullptr;++(*walker)){
         bool crc_good=true;
         frame=walker->get_frame_data();
         frame_size=walker->get_frame_size();

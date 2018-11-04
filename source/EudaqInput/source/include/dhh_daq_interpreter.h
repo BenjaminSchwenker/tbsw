@@ -65,7 +65,7 @@ struct depfet_event{
     short modID;
 };
 
-int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, unsigned char * inputBuffer,unsigned int buffer_size, const int dhpNR, const int requested_DHE,
+int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, const unsigned char * inputBuffer,unsigned int buffer_size, const int dhpNR, const int requested_DHE,
                                        uint8_t debug, std::map<std::string, long int> &info_map, const bool skip_raw, const bool skip_zs,const bool useDHPFrameNr,const bool useAbsoluteFrameNr,const bool isDHC,const bool new_format, const bool fill_info);
 
 
@@ -157,7 +157,7 @@ public:
         return totalFrames;
     }
     const unsigned int * get_frame_data() override final{
-        if(current_frame>=totalFrames) return NULL;
+        if(current_frame>=totalFrames) return nullptr;
         return _current_ptr;
     }
     unsigned int  get_frame_size() override final{
@@ -266,7 +266,7 @@ public:
         return totalFrames;
     }
     const unsigned int * get_frame_data() override final{
-        if(current_frame>=totalFrames) return NULL;
+        if(current_frame>=totalFrames) return nullptr;
         return _current_ptr;
     }
     unsigned int  get_frame_size() override final{
