@@ -28,7 +28,7 @@ namespace eudaqinput {
   //
   // Instantiate this object
   //
-  DEPFETUnpacker aDEPFETUnpacker ;
+  static DEPFETUnpacker aDEPFETUnpacker ;
 
   //
   // Constructor
