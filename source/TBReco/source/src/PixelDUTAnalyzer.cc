@@ -8,7 +8,7 @@
 
 #include "PixelDUTAnalyzer.h"
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "TBTrack.h"
 #include "TBHit.h"
 #include "PixelCluster.h"
@@ -243,14 +243,6 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     // Convert LCIO -> TB track  
     TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, _detector );  
     
-    // Require that track is a hit on reference (timing) plane
-    if (_iref >= 0 && _iref < _detector.GetNSensors()  ) {
-      if ( not trk.GetTE(_iref).HasHit() ) {
-        streamlog_out ( MESSAGE2 ) << "Track has no hit on reference plane. Skipping track!" << endl;
-        continue;
-      }  
-    } 
-    
     // Check that track has no hit on the DUT to avoid bias of residuals and efficiency
     if ( trk.GetTE(_idut).HasHit()  ) {
       streamlog_out ( MESSAGE3 ) << "Track has already hit on dut plane. Danger to bias final results" << endl;
@@ -447,9 +439,17 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     // Add variables for matched track 
     if ( hit2track[ihit] >= 0 ) {  
      
-      _rootHitHasTrack = 0;  // matched         
+      TBTrack& trk = TrackStore[hit2track[ihit]];
+      _rootHitHasTrack = 0;  // matched   
        
-      TBTrack& trk = TrackStore[hit2track[ihit]];      
+      // Check track has a hit on reference (timing) plane
+      if (_iref >= 0 && _iref < _detector.GetNSensors()  ) {
+        if ( trk.GetTE(_iref).HasHit() ) {
+          streamlog_out ( MESSAGE2 ) << "Track has hit on reference plane." << endl;
+          _rootHitHasTrackWithRefHit = 0;
+        }  
+      } 
+      
       HepMatrix p = trk.GetTE(_idut).GetState().GetPars();
       HepSymMatrix C = trk.GetTE(_idut).GetState().GetCov();  
       
@@ -487,8 +487,9 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
       
     } else {
 
-      _rootHitHasTrack = -1; // no match
+      _rootHitHasTrack = -1; // no match with track
       // These are dummy values, always query hasTrack 
+      _rootHitHasTrackWithRefHit = -1; 
       _rootHitLocalChi2 = -1;
       _rootHitFitMomentum = -1;            
       _rootHitFitU = -1;           
@@ -518,9 +519,18 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
    
   for(int itrk=0;itrk<(int)TrackStore.size(); ++itrk)
   {
-       
     TBTrack& trk = TrackStore[itrk];
-
+    
+    // Check track has a hit on reference (timing) plane
+    if (_iref >= 0 && _iref < _detector.GetNSensors()  ) {
+      if ( trk.GetTE(_iref).HasHit() ) {
+        streamlog_out ( MESSAGE2 ) << "Track has hit on reference plane." << endl;
+        _rootHitHasTrackWithRefHit = 0;
+      }  
+    } else {
+      _rootTrackWithRefHit = -1;
+    } 
+    
     HepMatrix p = trk.GetTE(_idut).GetState().GetPars();
     HepSymMatrix C = trk.GetTE(_idut).GetState().GetCov();  
            
@@ -675,7 +685,8 @@ void PixelDUTAnalyzer::bookHistos()
    _rootHitTree->Branch("sizeU"           ,&_rootHitSizeU        ,"sizeU/I");
    _rootHitTree->Branch("sizeV"           ,&_rootHitSizeV        ,"sizeV/I");
    _rootHitTree->Branch("size"            ,&_rootHitSize         ,"size/I");
-   _rootHitTree->Branch("hasTrack"        ,&_rootHitHasTrack         ,"hasTrack/I");   
+   _rootHitTree->Branch("hasTrack"        ,&_rootHitHasTrack         ,"hasTrack/I");  
+   _rootHitTree->Branch("hasTrackWithRefHit", &_rootHitHasTrackWithRefHit,"hasTrackWithRefHit/I"); 
    _rootHitTree->Branch("u_fit"           ,&_rootHitFitU             ,"u_fit/D");
    _rootHitTree->Branch("v_fit"           ,&_rootHitFitV             ,"v_fit/D"); 
    _rootHitTree->Branch("dudw_fit"        ,&_rootHitFitdUdW          ,"dudw_fit/D");
@@ -711,6 +722,7 @@ void PixelDUTAnalyzer::bookHistos()
    _rootTrackTree->Branch("nTelTracks"      ,&_rootNTelTracks     ,"nTelTracks/I"); 
    _rootTrackTree->Branch("nDutHits"        ,&_rootNDUTHits       ,"nDutHits/I");
    _rootTrackTree->Branch("hasHit"          ,&_rootTrackHasHit         ,"hasHit/I");
+   _rootTrackTree->Branch("hasRefHit"       ,&_rootTrackWithRefHit     ,"hasRefHit/I");
    _rootTrackTree->Branch("momentum"        ,&_rootTrackFitMomentum    ,"momentum/D");                                                           
    _rootTrackTree->Branch("u_fit"           ,&_rootTrackFitU           ,"u_fit/D");
    _rootTrackTree->Branch("v_fit"           ,&_rootTrackFitV           ,"v_fit/D");

@@ -151,6 +151,7 @@ protected:
    int _rootClusterStartCellV;       // Smallest vCell of cluster related to Hit 
 
    int _rootHitHasTrack;             // Hit can be matched to track (== 0)     
+   int _rootHitHasTrackWithRefHit;   // Hit can be matched to track which has a hit on the reference plane (== 0)     
    double _rootHitFitMomentum;       // Estimated track momentum from fit, only filled in case HasTrack==0            
    double _rootHitFitU;              // Estimated track intersection u coordimate in mm, in local DUT uvw coordinates        
    double _rootHitFitV;              // Estimated track intersection v coordimate in mm, in local DUT uvw coordinates                  
@@ -172,6 +173,7 @@ protected:
    
    // Variables in track tree  
    int _rootTrackHasHit;             // Track can be matched to a DUT hit (== 0) 
+   int _rootTrackWithRefHit;     // Track has hit on reference plane (== 0) 
    double _rootTrackFitMomentum;     // Estimated track momentum from fit    
    int _rootTrackNDF;                // Number of degrees of freedom of track fit
    double _rootTrackChi2;            // Chi2 value from fit of reference track
