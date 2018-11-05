@@ -525,13 +525,12 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     TBTrack& trk = TrackStore[itrk];
     
     // Check track has a hit on reference (timing) plane
+    _rootTrackWithRefHit = -1;
     if (_iref >= 0 && _iref < _detector.GetNSensors()  ) {
       if ( trk.GetTE(_iref).HasHit() ) {
         streamlog_out ( MESSAGE2 ) << "Track has hit on reference plane." << endl;
         _rootHitHasTrackWithRefHit = 0;
       }  
-    } else {
-      _rootTrackWithRefHit = -1;
     } 
     
     HepMatrix p = trk.GetTE(_idut).GetState().GetPars();
