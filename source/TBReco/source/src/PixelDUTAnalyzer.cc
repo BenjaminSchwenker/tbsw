@@ -198,7 +198,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     // Search for digits from DUT 
     for (unsigned int iDet = 0; iDet < digitcol->getNumberOfElements(); iDet++) {    
       TrackerDataImpl * digits = dynamic_cast<TrackerDataImpl* > ( digitcol->getElementAt(iDet) );
-      int sensorID = DigitDecoder( pixModule ) ["sensorID"];
+      int sensorID = DigitDecoder( digits ) ["sensorID"];
       if ( sensorID ==  dut.GetDAQID() ) {
         nDUTDigits = digits->getChargeValues().size()/3;
       }
