@@ -34,7 +34,7 @@ def create_calibration_path(Env, rawfile, gearfile, energy):
  
   
   hitmaker = Env.create_path('hitmaker')
-  hitmaker.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000 }) 
+  hitmaker.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000 }) 
   hitmaker.add_processor(name="RawInputProcessor",params={'FileName': rawfile})
   hitmaker.add_processor(name="M26Unpacker")
   hitmaker.add_processor(name="M26Clusterizer")
@@ -81,7 +81,7 @@ def create_calibration_path(Env, rawfile, gearfile, energy):
   hitmaker.add_processor(name="LCIOOutput")
 
   kalman_aligner_1 = Env.create_path('kalman_aligner_1')
-  kalman_aligner_1.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
+  kalman_aligner_1.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
   kalman_aligner_1.add_processor(name="AlignTF_LC",params={"InputHitCollectionNameVec":"hit_m26 hit_fei4 hit_dep_big hit_dep_h5",
                                                            "ExcludeDetector": "",
                                                            "MaxTrackChi2": "10000000",
@@ -102,7 +102,7 @@ def create_calibration_path(Env, rawfile, gearfile, energy):
      
    
   kalman_aligner_2 = Env.create_path('kalman_aligner_2')
-  kalman_aligner_2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
+  kalman_aligner_2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
   kalman_aligner_2.add_processor(name="AlignTF_TC",params={"InputHitCollectionNameVec":"hit_m26 hit_fei4 hit_dep_big hit_dep_h5",
                                                            "ExcludeDetector": "",
                                                            "MaxTrackChi2": "100",
@@ -120,7 +120,7 @@ def create_calibration_path(Env, rawfile, gearfile, energy):
                                                             'ErrorsGamma'  : '0 0.01 0.01 0.01 0.01 0.01 0 0.01 0.01'})
 
   telescope_dqm = Env.create_path('telescope_dqm')
-  telescope_dqm.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
+  telescope_dqm.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
   telescope_dqm.add_processor(name="AlignTF_TC",params={"InputHitCollectionNameVec":"hit_m26 hit_fei4 hit_dep_big hit_dep_h5",
                                                            "ExcludeDetector": "",
                                                            "MaxTrackChi2": "100",
@@ -195,7 +195,7 @@ def create_reco_path(Env, rawfile, gearfile, energy):
                                                     "SigmaV2":"0.0077",
                                                     "SigmaV3":"0.0077",})  
   
-  reco.add_processor(name="RecoTF",params={"InputHitCollectionNameVec":"hit_m26",
+  reco.add_processor(name="RecoTF",params={"InputHitCollectionNameVec":"hit_m26 hit_fei4",
                                                            "ExcludeDetector": "3 8",
                                                            "MaxTrackChi2": "100",
                                                            "MaximumGap": "0",
@@ -205,9 +205,9 @@ def create_reco_path(Env, rawfile, gearfile, energy):
                                                            "SingleHitSeeding":"0 1"  
                                                             })
    
-  reco.add_processor(name="DEPH5Analyzer",params={"HitCollection":"hit_dep_h5","DUTPlane":8,"ReferencePlane":"-1","MaxResidualU":0.2,"MaxResidualV":0.2,"RootFileName":"Histos-DEPH5.root"})
-  reco.add_processor(name="DEPBIGAnalyzer",params={"HitCollection":"hit_dep_big","DUTPlane":3,"ReferencePlane":"-1","MaxResidualU":0.2,"MaxResidualV":0.2,"RootFileName":"Histos-DEPBIG.root"})
-  reco.add_processor(name="FEI4Analyzer",params={"HitCollection":"hit_fei4","DUTPlane":7,"ReferencePlane":"-1","MaxResidualU":0.2,"MaxResidualV":0.2,"RootFileName":"Histos-FEI4.root"})  
+  reco.add_processor(name="DEPH5Analyzer",params={"HitCollection":"hit_dep_h5","DUTPlane":8,"ReferencePlane":"7","MaxResidualU":0.2,"MaxResidualV":0.2,"RootFileName":"Histos-DEPH5.root"})
+  reco.add_processor(name="DEPBIGAnalyzer",params={"HitCollection":"hit_dep_big","DUTPlane":3,"ReferencePlane":"7","MaxResidualU":0.2,"MaxResidualV":0.2,"RootFileName":"Histos-DEPBIG.root"})
+  reco.add_processor(name="FEI4Analyzer",params={"HitCollection":"hit_fei4","DUTPlane":7,"ReferencePlane":"7","MaxResidualU":0.2,"MaxResidualV":0.2,"RootFileName":"Histos-FEI4.root"})  
    
   return [ reco ]  
 
@@ -242,21 +242,24 @@ def reconstruct(params):
   RecObj.reconstruct(path=recopath,ifile=rawfile,caltag=caltag) 
 
 if __name__ == '__main__':
-
+  
   import argparse
   parser = argparse.ArgumentParser(description="Perform reconstruction of a test beam run")
   parser.add_argument('--rawfile', dest='rawfile', default='/home/benjamin/Desktop/run000020.raw', type=str, help='Location of rawfile to process')
   parser.add_argument('--gearfile', dest='gearfile', default='gear_desy_v1.xml', type=str, help='Location of gearfile')
   parser.add_argument('--energy', dest='energy', default=5.0, type=float, help='Beam energy in GeV')
   parser.add_argument('--steerfiles', dest='steerfiles', default='steering-files/depfet-tb/', type=str, help='Path to steerfiles')
+  parser.add_argument('--caltag', dest='caltag', default='', type=str, help='Name of calibration tag to use')
   args = parser.parse_args()
   
-  # Tag for calibration data
-  caltag = os.path.splitext(os.path.basename(args.rawfile))[0] 
-
+  if args.caltag=='':
+    print("Compute a new calibration tag directly from the rawfile {}".format(args.rawfile))
+    args.caltag = os.path.splitext(os.path.basename(args.rawfile))[0] 
+    calibrate( (args.rawfile, args.steerfiles, args.gearfile, args.energy, args.caltag) )   
+  else: 
+    print("Use existing caltag {}".format(args.caltag))
   
-  calibrate( (args.rawfile, args.steerfiles, args.gearfile, args.energy, caltag) )   
-  reconstruct( (args.rawfile, args.steerfiles, args.gearfile, args.energy, caltag) ) 
+  reconstruct( (args.rawfile, args.steerfiles, args.gearfile, args.energy, args.caltag) ) 
   
 
 
