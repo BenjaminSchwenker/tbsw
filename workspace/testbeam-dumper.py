@@ -83,7 +83,7 @@ def create_calibration_path(Env, rawfile, gearfile, energy):
   kalman_aligner_1 = Env.create_path('kalman_aligner_1')
   kalman_aligner_1.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
   kalman_aligner_1.add_processor(name="AlignTF_LC",params={"InputHitCollectionNameVec":"hit_m26 hit_fei4 hit_dep_big hit_dep_h5",
-                                                           "ExcludeDetector": "7",
+                                                           "ExcludeDetector": "",
                                                            "MaxTrackChi2": "10000000",
                                                            "MaximumGap": "1",
                                                            "MinimumHits":"7",
@@ -104,7 +104,7 @@ def create_calibration_path(Env, rawfile, gearfile, energy):
   kalman_aligner_2 = Env.create_path('kalman_aligner_2')
   kalman_aligner_2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
   kalman_aligner_2.add_processor(name="AlignTF_TC",params={"InputHitCollectionNameVec":"hit_m26 hit_fei4 hit_dep_big hit_dep_h5",
-                                                           "ExcludeDetector": "7",
+                                                           "ExcludeDetector": "",
                                                            "MaxTrackChi2": "100",
                                                            "MaximumGap": "1",
                                                            "MinimumHits":"7",
@@ -122,7 +122,7 @@ def create_calibration_path(Env, rawfile, gearfile, energy):
   telescope_dqm = Env.create_path('telescope_dqm')
   telescope_dqm.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
   telescope_dqm.add_processor(name="AlignTF_TC",params={"InputHitCollectionNameVec":"hit_m26 hit_fei4 hit_dep_big hit_dep_h5",
-                                                           "ExcludeDetector": "7",
+                                                           "ExcludeDetector": "",
                                                            "MaxTrackChi2": "100",
                                                            "MaximumGap": "1",
                                                            "MinimumHits":"7",
@@ -196,10 +196,10 @@ def create_reco_path(Env, rawfile, gearfile, energy):
                                                     "SigmaV3":"0.0077",})  
   
   reco.add_processor(name="RecoTF",params={"InputHitCollectionNameVec":"hit_m26",
-                                                           "ExcludeDetector": "3 7 8",
+                                                           "ExcludeDetector": "3 8",
                                                            "MaxTrackChi2": "100",
                                                            "MaximumGap": "0",
-                                                           "MinimumHits":"6",
+                                                           "MinimumHits":"7",
                                                            "OutlierChi2Cut": "20",
                                                            "ParticleMomentum": energy,
                                                            "SingleHitSeeding":"0 1"  
@@ -214,11 +214,8 @@ def create_reco_path(Env, rawfile, gearfile, energy):
   
 def calibrate(params):
   
-  rawfile, steerfiles, gearfile, energy = params
-  
-  # Tag for calibration data
-  caltag = os.path.splitext(os.path.basename(rawfile))[0] 
-  
+  rawfile, steerfiles, gearfile, energy, caltag = params
+   
   # Calibrate of the run using beam data. Creates a folder cal-files/caltag 
   # containing all calibration data. 
   CalObj = Calibration(steerfiles=steerfiles, name=caltag + '-cal') 
@@ -232,10 +229,7 @@ def calibrate(params):
  
 def reconstruct(params):
   
-  rawfile, steerfiles, gearfile, energy = params
-  
-  # Tag for calibration data
-  caltag = os.path.splitext(os.path.basename(rawfile))[0] 
+  rawfile, steerfiles, gearfile, energy, caltag = params 
    
   # Reconsruct the rawfile using caltag. Resulting root files are 
   # written to folder root-files/
@@ -257,9 +251,12 @@ if __name__ == '__main__':
   parser.add_argument('--steerfiles', dest='steerfiles', default='steering-files/depfet-tb/', type=str, help='Path to steerfiles')
   args = parser.parse_args()
   
+  # Tag for calibration data
+  caltag = os.path.splitext(os.path.basename(args.rawfile))[0] 
+
   
-  calibrate( (args.rawfile, args.steerfiles, args.gearfile, args.energy) )   
-  reconstruct( (args.rawfile, args.steerfiles, args.gearfile, args.energy) ) 
+  calibrate( (args.rawfile, args.steerfiles, args.gearfile, args.energy, caltag) )   
+  reconstruct( (args.rawfile, args.steerfiles, args.gearfile, args.energy, caltag) ) 
   
 
 
