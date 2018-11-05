@@ -16,8 +16,6 @@
 #include "TrackInputProvider.h"
 #include "Det.h"
 #include "Utilities.h"
-#include "MatrixDecoder.h"
-#include "DEPFET.h" 
 
 // Include basic C
 #include <iostream>
@@ -74,8 +72,12 @@ PixelDUTAnalyzer::PixelDUTAnalyzer() : Processor("PixelDUTAnalyzer")
                            "Name of DUT hit collection"  ,
                            _hitColName ,
                            std::string("hit") ) ;
-     
-  
+    
+  registerInputCollection( LCIO::TRACKERDATA,
+                           "DigitCollection" ,
+                           "Name of unpacked DUT digit collection"  ,
+                           _digitColName ,
+                           std::string("zsdata_dut") ) ;
   
   // Processor parameters:
   
@@ -184,11 +186,32 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
   // Load DUT module    
   Det & dut = _detector.GetDet(_idut);   
   
-  // Decoding of DUT matrix
-  MatrixDecoder matrixDecoder(dut.GetNColumns(), dut.GetNRows()); 
+  //
+  // Get digit collection 
+  //
   
+  LCCollection* digitcol = NULL;
+  int nDUTDigits = 0;   
+  try {
+    digitcol = evt->getCollection( _digitColName ) ;
+    CellIDDecoder<TrackerDataImpl> DigitDecoder(digitcol);  
+    // Search for digits from DUT 
+    for (unsigned int iDet = 0; iDet < digitcol->getNumberOfElements(); iDet++) {    
+      TrackerDataImpl * digits = dynamic_cast<TrackerDataImpl* > ( digitcol->getElementAt(iDet) );
+      int sensorID = DigitDecoder( pixModule ) ["sensorID"];
+      if ( sensorID ==  dut.GetDAQID() ) {
+        nDUTDigits = digits->getChargeValues().size()/3;
+      }
+    }
+  } catch (lcio::DataNotAvailableException& e) {
+    streamlog_out(MESSAGE2) << "Not able to get collection "
+                            << _digitColName
+                            << " from event " << evt->getEventNumber()
+                            << " in run " << evt->getRunNumber()  << endl << endl;   
+  }     
   
-       
+  streamlog_out(MESSAGE2) << "Total of " << nDUTDigits << " DUT digits in collection " << _digitColName << endl; 
+     
   //
   // Get telescope track collection
   //
@@ -224,7 +247,6 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
   } 
  
   streamlog_out(MESSAGE2) << "Total of " << nHit << " hit(s) in collection " << _hitColName << endl;
-  
   
   // Read telescope tracks and DUT hits 
   // ----------------------------------
@@ -384,32 +406,13 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
   _rootEventNumber = evt->getEventNumber();  
   _rootSensorID = dut.GetDAQID();       
   _rootNTelTracks = nTrack; 
-  _rootNDUTHits = (int)HitStore.size();
-
+  _rootNDUTDigits = nDUTDigits;
   
-  // 
-  //  Read DEPFET Event info, if available  
-  //  
-  _rootDEPFETGoodEvent = -1;        
-  _rootDEPFETStartGate = -1;   
-  try {
-    LCCollectionVec* eventinfo = dynamic_cast < LCCollectionVec * > (evt->getCollection( "DEPFET_EVENT_INFO" )) ;
-    if (eventinfo->size() == 1) { 
-      LCGenericObjectImpl* metaobj = dynamic_cast<LCGenericObjectImpl* > ( eventinfo->getElementAt(0) );
-      _rootDEPFETGoodEvent = metaobj->getIntVal(0);        
-      _rootDEPFETStartGate = metaobj->getIntVal(1);    
-    }
-  } catch (lcio::DataNotAvailableException& e) {
-    streamlog_out(MESSAGE2) << " DEPFET event info not available "
-                            << endl << endl;
-  }     
-  
-
   _rootFile->cd("");
   _rootEventTree->Fill();  
-
+  
   // Fill hit tree 
-
+  
   streamlog_out(MESSAGE2) << "Start fill hit tree" << endl; 
   
   for(int ihit=0;ihit<(int)HitStore.size(); ++ihit)
@@ -673,10 +676,8 @@ void PixelDUTAnalyzer::bookHistos()
    _rootHitTree->Branch("iRun"            ,&_rootRunNumber        ,"iRun/I");
    _rootHitTree->Branch("iEvt"            ,&_rootEventNumber      ,"iEvt/I");
    _rootHitTree->Branch("sensorID"        ,&_rootSensorID       ,"sensorID/I");
-   _rootHitTree->Branch("DEPFETGoodEvent" ,&_rootDEPFETGoodEvent ,"DEPFETGoodEvent/I");
-   _rootHitTree->Branch("DEPFETStartgate" ,&_rootDEPFETStartGate ,"DEPFETStartgate/I");       
    _rootHitTree->Branch("nTelTracks"      ,&_rootNTelTracks       ,"nTelTracks/I"); 
-   _rootHitTree->Branch("nDutHits"        ,&_rootNDUTHits          ,"nDutHits/I");
+   _rootHitTree->Branch("nDutDigits"        ,&_rootNDUTDigits          ,"nDutDigits/I");
    _rootHitTree->Branch("clusterQuality"  ,&_rootHitQuality   ,"clusterQuality/I");
    _rootHitTree->Branch("u_hit"           ,&_rootHitU             ,"u_hit/D");
    _rootHitTree->Branch("v_hit"           ,&_rootHitV             ,"v_hit/D");     
@@ -717,10 +718,8 @@ void PixelDUTAnalyzer::bookHistos()
    _rootTrackTree->Branch("iRun"            ,&_rootRunNumber      ,"iRun/I");
    _rootTrackTree->Branch("iEvt"            ,&_rootEventNumber    ,"iEvt/I");
    _rootTrackTree->Branch("sensorID"        ,&_rootSensorID        ,"sensorID/I");
-   _rootTrackTree->Branch("DEPFETGoodEvent" ,&_rootDEPFETGoodEvent ,"DEPFETGoodEvent/I");
-   _rootTrackTree->Branch("DEPFETStartgate" ,&_rootDEPFETStartGate ,"DEPFETStartgate/I");    
    _rootTrackTree->Branch("nTelTracks"      ,&_rootNTelTracks     ,"nTelTracks/I"); 
-   _rootTrackTree->Branch("nDutHits"        ,&_rootNDUTHits       ,"nDutHits/I");
+   _rootTrackTree->Branch("nDutDigits"        ,&_rootNDUTDigits       ,"nDutDigits/I");
    _rootTrackTree->Branch("hasHit"          ,&_rootTrackHasHit         ,"hasHit/I");
    _rootTrackTree->Branch("hasRefHit"       ,&_rootTrackWithRefHit     ,"hasRefHit/I");
    _rootTrackTree->Branch("momentum"        ,&_rootTrackFitMomentum    ,"momentum/D");                                                           
@@ -745,10 +744,8 @@ void PixelDUTAnalyzer::bookHistos()
    _rootEventTree->Branch("iRun"            ,&_rootRunNumber      ,"iRun/I");
    _rootEventTree->Branch("iEvt"            ,&_rootEventNumber    ,"iEvt/I");
    _rootEventTree->Branch("sensorID"        ,&_rootSensorID       ,"sensorID/I");   
-   _rootEventTree->Branch("DEPFETGoodEvent" ,&_rootDEPFETGoodEvent ,"DEPFETGoodEvent/I");
-   _rootEventTree->Branch("DEPFETStartgate" ,&_rootDEPFETStartGate ,"DEPFETStartgate/I");     
    _rootEventTree->Branch("nTelTracks"      ,&_rootNTelTracks     ,"nTelTracks/I"); 
-   _rootEventTree->Branch("nDutHits"        ,&_rootNDUTHits       ,"nDutHits/I");
+   _rootEventTree->Branch("nDutDigits"        ,&_rootNDUTDigits       ,"nDutDigits/I");
    
 }
 

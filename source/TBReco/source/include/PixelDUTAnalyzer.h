@@ -7,7 +7,7 @@
 #define PixelDUTAnalyzer_H 1
 
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "TBDetector.h"
 
 
@@ -102,6 +102,9 @@ protected:
    
 //! Input DUT TrackerHit collection name
    std::string _hitColName;   
+
+//! Input digit collection name
+   std::string _digitColName;
    
 //! Alignment DB file name 
    std::string _alignmentDBFileName;
@@ -132,11 +135,9 @@ protected:
    // Variables in hit tree       
    int _rootEventNumber;             // Event number from lcio file
    int _rootRunNumber;               // Run number from lcio file 
-   int _rootDEPFETGoodEvent;         // DEPFET good event flag
-   int _rootDEPFETStartGate;         // DEPFET startgate
    int _rootSensorID;                // SensorID from lcio file (this is typically NOT the plane number!!)
-   int _rootNTelTracks;              // Number of tracks in reference telescope in same event as hit
-   int _rootNDUTHits;                // Number of DUT hits in the same event as hit   
+   int _rootNTelTracks;              // Number of tracks in reference telescope in same event 
+   int _rootNDUTDigits;              // Number of DUT digits in the same event  
    int _rootHitQuality;              // GoodCluster == 0, BadCluster != 0
    double _rootHitU;                 // Hit coordinate u reconstructed from DUT cluster in mm, in local DUT uvw coordinates       
    double _rootHitV;                 // Hit coordinate v reconstructed from DUT cluster in mm, in local DUT uvw coordinates     
