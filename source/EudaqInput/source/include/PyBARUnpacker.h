@@ -66,11 +66,12 @@ namespace eudaqinput {
     //! Method to unpack source (raw data) -> result (digits)
     bool UnpackRawCollection(lcio::LCCollectionVec * result, lcio::LCCollectionVec * source);
     
-    //! Method to decode raw frame 
+    bool isEventValid(const std::vector<unsigned char> & data) const;
+    //! Method to decode raw frame
     std::vector<APIXPix> decodeFEI4Data(std::vector<unsigned char> const & data);
     
     //! Method to decode raw hit
-    bool getHitData (unsigned int &Word, bool second_hit, unsigned int &Col, unsigned int &Row, unsigned int &ToT);
+    bool getHitData (const unsigned int &Word, bool second_hit, unsigned int &Col, unsigned int &Row, unsigned int &ToT);
          
     //!Method printing processor parameters
     void printProcessorParams() const;
@@ -91,7 +92,7 @@ namespace eudaqinput {
 
    private: 
     
-    unsigned int _consecutive_lvl1;
+    int _consecutive_lvl1;
     int _first_sensor_id;
     
     double _timeCPU; //!< CPU time
