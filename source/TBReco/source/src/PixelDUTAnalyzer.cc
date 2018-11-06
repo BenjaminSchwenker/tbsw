@@ -529,7 +529,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     if (_iref >= 0 && _iref < _detector.GetNSensors()  ) {
       if ( trk.GetTE(_iref).HasHit() ) {
         streamlog_out ( MESSAGE2 ) << "Track has hit on reference plane." << endl;
-        _rootHitHasTrackWithRefHit = 0;
+        _rootTrackWithRefHit = 0;
       }  
     } 
     
