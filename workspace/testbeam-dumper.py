@@ -31,7 +31,7 @@ def create_calibration_path(Env, rawfile, gearfile, energy):
                                                              "MaxOccupancy":"0.001",
                                                              "NoiseDBFileName":"localDB/NoiseDB-DEP-H5.root",
                                                              "OfflineZSThreshold":"0"})
- 
+   
   
   hitmaker = Env.create_path('hitmaker')
   hitmaker.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000 }) 
@@ -202,17 +202,17 @@ def create_reco_path(Env, rawfile, gearfile, energy):
                                                            "MinimumHits":"6",
                                                            "OutlierChi2Cut": "20",
                                                            "ParticleMomentum": energy,
-                                                           "SingleHitSeeding":"0 1"  
+                                                           "SingleHitSeeding":"0"  
                                                             })
    
-  reco.add_processor(name="DEPH5Analyzer",params={"HitCollection":"hit_dep_h5",
-                                                  "DigitCollection":"zsdata_dep_h5",
-                                                  "DUTPlane":8,
-                                                  "ReferencePlane":"7",
-                                                  "MaxResidualU":0.2,
-                                                  "MaxResidualV":0.2,
-                                                  "RootFileName":"Histos-DEPH5.root"})
-
+  #reco.add_processor(name="DEPH5Analyzer",params={"HitCollection":"hit_dep_h5",
+  #                                                "DigitCollection":"zsdata_dep_h5",
+  #                                                "DUTPlane":8,
+  #                                                "ReferencePlane":"7",
+  #                                                "MaxResidualU":0.2,
+  #                                                "MaxResidualV":0.2,
+  #                                                "RootFileName":"Histos-DEPH5.root"})
+  
   reco.add_processor(name="DEPBIGAnalyzer",params={"HitCollection":"hit_dep_big",
                                                    "DigitCollection":"zsdata_dep_big",
                                                    "DUTPlane":3,
@@ -220,14 +220,14 @@ def create_reco_path(Env, rawfile, gearfile, energy):
                                                    "MaxResidualU":0.2,
                                                    "MaxResidualV":0.2,
                                                    "RootFileName":"Histos-DEPBIG.root"})
- 
-  reco.add_processor(name="FEI4Analyzer",params={"HitCollection":"hit_fei4",
-                                                 "DigitCollection":"zsdata_fei4",
-                                                 "DUTPlane":7,
-                                                 "ReferencePlane":"7",
-                                                 "MaxResidualU":0.2,
-                                                 "MaxResidualV":0.2,
-                                                 "RootFileName":"Histos-FEI4.root"})  
+  
+  #reco.add_processor(name="FEI4Analyzer",params={"HitCollection":"hit_fei4",
+  #                                               "DigitCollection":"zsdata_fei4",
+  #                                               "DUTPlane":7,
+  #                                               "ReferencePlane":"7",
+  #                                               "MaxResidualU":0.2,
+  #                                               "MaxResidualV":0.2,
+  #                                               "RootFileName":"Histos-FEI4.root"})  
    
   return [ reco ]  
 
@@ -246,7 +246,7 @@ def calibrate(params):
   # Run the calibration steps 
   CalObj.calibrate(path=calpath,ifile=rawfile,caltag=caltag)  
    
- 
+  
 def reconstruct(params):
   
   rawfile, steerfiles, gearfile, energy, caltag = params 
