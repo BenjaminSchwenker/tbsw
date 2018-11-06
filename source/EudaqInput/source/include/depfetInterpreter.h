@@ -40,7 +40,8 @@ public:
 
     bool readInfoEvent();
 
-    int Interprete(std::vector<depfet_event> &events, unsigned char * input_buffer,unsigned buffersize_in_bytes);
+    int Interprete(std::vector<depfet_event> &events, const unsigned char * input_buffer,unsigned buffersize_in_bytes);
+    int constInterprete(std::vector<depfet_event> &events, const unsigned char * input_buffer,unsigned buffersize_in_bytes) const;
     std::map<std::string, long int> getInfoMap();
     inline void setDebug(bool dbg){debug=dbg;}
     inline void setForcedMapping(Mapping _val){mapping=_val;}
@@ -61,7 +62,8 @@ public:
 
 
 private:
-    Mapping autoSelectMapping(long dheID);
+    std::pair<const std::vector<short> *,bool> getMappingTable(Mapping m) const;
+    Mapping autoSelectMapping(long dheID) const;
     void setMapping_impl(Mapping m);
     std::map<std::string, long int> info_map;
     int ModNR;

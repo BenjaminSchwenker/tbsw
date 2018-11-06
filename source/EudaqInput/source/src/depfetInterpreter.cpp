@@ -3,7 +3,8 @@
 #include <cstring>
 #include <vector>
 #include <stdexcept>
-
+// Include Marlin classes
+#include <marlin/Processor.h>
 
 const std::vector<short> pxd9_normal_mapping{ 240,  241,  242,  243,  244,  245,  246,  247,  248,  249, 1000, 1001, 1002, 1003, 1004, 1005,  224,  225,
                                               226,  227,  228,  229,  230,  231,  232,  233,  234,  235,  236,  237,  238,  239,  208,  209,  210,  211,
@@ -176,12 +177,12 @@ void DepfetInterpreter::setSkipZS(bool toggle){
     }
 }
 
-int DepfetInterpreter::Interprete(std::vector<depfet_event> &events, unsigned char * input_buffer,unsigned buffersize_in_bytes){
+int DepfetInterpreter::Interprete(std::vector<depfet_event> &events, const unsigned char * input_buffer,unsigned buffersize_in_bytes){
 
     if(buffersize_in_bytes<8+8){
         std::cout<<"Buffer too small, can't interprete!"<<std::endl;
     }
-    FileEvtHeader * SUB_Header=reinterpret_cast<FileEvtHeader*>(input_buffer);
+    auto * SUB_Header=reinterpret_cast<const FileEvtHeader*>(input_buffer);
 
     if(debug)printf("DepfetInterpreter::Interprete: start\n");
 
@@ -203,27 +204,34 @@ int DepfetInterpreter::Interprete(std::vector<depfet_event> &events, unsigned ch
    if (fillInfo) info_map.clear();
    int ret=0;
    auto startsize=events.size();
+
+   if(debug)printf("DepfetInterpreter::Interprete: Header Read, starting interpretation\n"); 
+
    switch(SUB_Header->DeviceType){
 
 
    case DEVICE_DHC_MULTI:
+       if(debug)printf("DepfetInterpreter::Interprete: DEVICE_DHC_MULTI\n");
        ret= interprete_dhc_from_dhh_daq_format(events, input_buffer + 8,buffersize_in_bytes-8, dhpNR, dheNR,
                                               debug_val,info_map, skip_raw, skip_zs,returnSubevent, absoluteSubeventNumber,
                                               true,true, fillInfo);
        break;
    case DEVICE_DHC_SINGLE:
+       if(debug)printf("DepfetInterpreter::Interprete: DEVICE_DHC_SINGLE\n");
        ret= interprete_dhc_from_dhh_daq_format(events, input_buffer + 12,buffersize_in_bytes-12, dhpNR, dheNR,
                                               debug_val,info_map, skip_raw, skip_zs,returnSubevent, absoluteSubeventNumber,
                                               true,false, fillInfo);
        break;
 
    case DEVICE_DHE_MULTI:
+       if(debug)printf("DepfetInterpreter::Interprete: DEVICE_DHE_MULTI\n");
        ret= interprete_dhc_from_dhh_daq_format(events, input_buffer + 8,buffersize_in_bytes-8, dhpNR, dheNR,
                                               debug_val,info_map, skip_raw, skip_zs,returnSubevent, absoluteSubeventNumber,
                                               false,true, fillInfo);
        break;
 
    case DEVICE_DHE_SINGLE:
+       if(debug)printf("DepfetInterpreter::Interprete: DEVICE_DHE_SINGLE\n");
        ret= interprete_dhc_from_dhh_daq_format(events, input_buffer + 12,buffersize_in_bytes-12, dhpNR, dheNR,
                                               debug_val,info_map, skip_raw, skip_zs,returnSubevent, absoluteSubeventNumber,
                                               false,false, fillInfo);
@@ -235,7 +243,7 @@ int DepfetInterpreter::Interprete(std::vector<depfet_event> &events, unsigned ch
        exit(-1);
    }
    if(events.size() != startsize+ret){
-     std::cout<<"FIX THIS CODE"<<std::endl;
+     std::cout<<"FIX THIS CODE"<<startsize <<" " << events.size()<<" "<< ret <<std::endl;
      std::terminate();
    }
    for(size_t i= startsize;i<events.size();i++){
@@ -255,12 +263,128 @@ int DepfetInterpreter::Interprete(std::vector<depfet_event> &events, unsigned ch
            std::cout<<"ERROR: Raw Mapping Not Implemented."<<std::endl;
        } else{
            for(auto &hit :event.zs_data){
-
+                streamlog_out(MESSAGE2)<<"Unmapped hit "<<hit.col  << " "<<hit.row << " "<<hit.val << std::endl;
                 short drain=4*hit.col  + hit.row%4;
                 short mappedDrain=(*mappingTable)[drain];
                 short mappedCol=mappedDrain/4;
                 short mappedRow;
                 if(inverseGate)mappedRow=764 - (hit.row & 0xFFFC) + mappedDrain%4;
+                else mappedRow=(hit.row & 0xFFFC) + mappedDrain%4;
+
+                if(swapAxis){
+                    hit.col=mappedRow;
+                    hit.row=mappedCol;
+                } else {
+                    hit.row=mappedRow;
+                    hit.col=mappedCol;
+                }
+                streamlog_out(MESSAGE2)<<"Mapped hit "<<hit.col  << " "<<hit.row << " "<<hit.val << " (drain was " <<drain << " => " << mappedDrain << " )"<<std::endl;
+
+
+           }
+       }
+   }
+   return events.size();
+}
+
+
+int DepfetInterpreter::constInterprete(std::vector<depfet_event> &events, const unsigned char * input_buffer,unsigned buffersize_in_bytes)const{
+
+    if(buffersize_in_bytes<8+8){
+        std::cout<<"Buffer too small, can't interprete!"<<std::endl;
+    }
+    auto * SUB_Header=reinterpret_cast<const FileEvtHeader*>(input_buffer);
+
+    if(debug)printf("DepfetInterpreter::Interprete: start\n");
+
+
+    if(SUB_Header->EventType!=2){
+        printf("Forbidden data type\n");
+        throw std::runtime_error("No file open!");
+    }
+    unsigned payload_size=SUB_Header->EventSize-2;
+    int ModID=SUB_Header->ModuleNo;
+    if ((ModID!=ModNR)&&(-1!=ModNR)){
+        printf("unwanted module ID %d, expected ID %d! Skip the rest %d words\n",ModID,ModNR,payload_size);
+        printf(" read Header  DevTyp=%2d   EvtType=%d  Trig=%#10X  Evt_size=%6d  ModID=%2d \n"
+               ,SUB_Header->DeviceType, SUB_Header->EventType,SUB_Header->Triggernumber,SUB_Header->EventSize, SUB_Header->ModuleNo);
+        return 0;
+   }
+
+   uint8_t debug_val=debug?3:0;
+   std::map<std::string, long int> dummy_map;
+   int ret=0;
+   auto startsize=events.size();
+
+   if(debug)printf("DepfetInterpreter::Interprete: Header Read, starting interpretation\n");
+
+   switch(SUB_Header->DeviceType){
+
+
+   case DEVICE_DHC_MULTI:
+       if(debug)printf("DepfetInterpreter::Interprete: DEVICE_DHC_MULTI\n");
+       ret= interprete_dhc_from_dhh_daq_format(events, input_buffer + 8,buffersize_in_bytes-8, dhpNR, dheNR,
+                                              debug_val,dummy_map, skip_raw, skip_zs,returnSubevent, absoluteSubeventNumber,
+                                              true,true, false);
+       break;
+   case DEVICE_DHC_SINGLE:
+       if(debug)printf("DepfetInterpreter::Interprete: DEVICE_DHC_SINGLE\n");
+       ret= interprete_dhc_from_dhh_daq_format(events, input_buffer + 12,buffersize_in_bytes-12, dhpNR, dheNR,
+                                              debug_val,dummy_map, skip_raw, skip_zs,returnSubevent, absoluteSubeventNumber,
+                                              true,false, false);
+       break;
+
+   case DEVICE_DHE_MULTI:
+       if(debug)printf("DepfetInterpreter::Interprete: DEVICE_DHE_MULTI\n");
+       ret= interprete_dhc_from_dhh_daq_format(events, input_buffer + 8,buffersize_in_bytes-8, dhpNR, dheNR,
+                                              debug_val,dummy_map, skip_raw, skip_zs,returnSubevent, absoluteSubeventNumber,
+                                              false,true, false);
+       break;
+
+   case DEVICE_DHE_SINGLE:
+       if(debug)printf("DepfetInterpreter::Interprete: DEVICE_DHE_SINGLE\n");
+       ret= interprete_dhc_from_dhh_daq_format(events, input_buffer + 12,buffersize_in_bytes-12, dhpNR, dheNR,
+                                              debug_val,dummy_map, skip_raw, skip_zs,returnSubevent, absoluteSubeventNumber,
+                                              false,false, false);
+       break;
+
+
+   default:
+       printf("unwanted device type, got %d. Skip the rest %d words\n",SUB_Header->DeviceType,payload_size);
+       exit(-1);
+   }
+   if(events.size() != startsize+ret){
+     std::cout<<"FIX THIS CODE"<<startsize <<" " << events.size()<<" "<< ret <<std::endl;
+     std::terminate();
+   }
+   for(size_t i= startsize;i<events.size();i++){
+       events[i].modID=ModID;
+   }
+   if(mapping==Mapping::NONE) return events.size();
+   for(auto & event:events){
+       long dheID=event.dheID;
+
+       Mapping mappingToUse=mapping;
+       const std::vector<short> * mappingTable_locale=mappingTable;
+       bool inverseGate_locale=inverseGate;
+       if(mappingToUse==Mapping::AUTOMATIC){
+           mappingToUse=autoSelectMapping(dheID);
+           // select Mapping Table;
+           auto t=getMappingTable(mappingToUse);
+           mappingTable_locale=t.first;
+           inverseGate_locale=t.second;
+
+       }
+       if(event.isRaw){
+           std::cout<<"ERROR: Raw Mapping Not Implemented."<<std::endl;
+       } else{
+           for(auto &hit :event.zs_data){
+
+                short drain=4*hit.col  + hit.row%4;
+                short mappedDrain=(*mappingTable_locale)[drain];
+                short mappedCol=mappedDrain/4;
+                short mappedRow;
+                if(inverseGate_locale)mappedRow=764 - (hit.row & 0xFFFC) + mappedDrain%4;
                 else mappedRow=(hit.row & 0xFFFC) + mappedDrain%4;
 
                 if(swapAxis){
@@ -276,7 +400,8 @@ int DepfetInterpreter::Interprete(std::vector<depfet_event> &events, unsigned ch
    return events.size();
 }
 
-Mapping DepfetInterpreter::autoSelectMapping(long dheID){
+
+Mapping DepfetInterpreter::autoSelectMapping(long dheID)const{
     int layer= (dheID & 0x20)>>5;
     int ladder=(dheID & 0x1e)>>1;
     int fw_bw= dheID & 0x01;
@@ -305,26 +430,29 @@ void DepfetInterpreter::setMapping(Mapping m){
     }
 }
 
-inline void DepfetInterpreter::setMapping_impl(Mapping m){
+
+inline std::pair<const std::vector<short> *,bool> DepfetInterpreter::getMappingTable(Mapping m) const{
     switch(m){
     case Mapping::PXD9_IF:
     case Mapping::PXD9_OB:
-        mappingTable=&pxd9_normal_mapping;
-        inverseGate=false;
+        return std::make_pair(&pxd9_normal_mapping,false);
         break;
     case Mapping::PXD9_IB:
     case Mapping::PXD9_OF:
-        mappingTable=&pxd9_row_swap_mapping;
-        inverseGate=true;
-        break;
+        return std::make_pair(&pxd9_row_swap_mapping,true);
+
     case Mapping::HYBRID5:
-        mappingTable=&Hyb5_mapping;
-        inverseGate=false;
-        break;
+        return std::make_pair(&Hyb5_mapping,false);
+    case Mapping::AUTOMATIC:
+    case Mapping::NONE:
     default:
         std::cout<<"ERROR: Invalid mapping selected."<<std::endl;
         std::terminate();
     }
 }
-
+inline void DepfetInterpreter::setMapping_impl(Mapping m){
+    auto t=getMappingTable(m);
+    mappingTable=t.first;
+    inverseGate=t.second;
+}
 

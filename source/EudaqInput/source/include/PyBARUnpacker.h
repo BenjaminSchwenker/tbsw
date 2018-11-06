@@ -1,11 +1,10 @@
-
 /////////////////////////////////////////////////////////  //
 //                                                         //
-//    DEPFETUnpacker - Marlin Processor             //
+//    PyBARUnpacker - Marlin Processor                    //
 /////////////////////////////////////////////////////////  //
 
-#ifndef DEPFETUnpacker_H
-#define DEPFETUnpacker_H 1
+#ifndef PyBARUnpacker_H
+#define PyBARUnpacker_H 1
 
 // Include LCIO classes
 #include <lcio.h>
@@ -14,7 +13,6 @@
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerDataImpl.h>
 #include <IMPL/TrackerRawDataImpl.h>
-#include <IMPL/LCGenericObjectImpl.h>
 
 // Include Marlin classes
 #include <marlin/Processor.h>
@@ -24,22 +22,29 @@
 #include <vector>
 #include <string>
 
-#include "depfetInterpreter.h"
+#include <bitset>
+#include <algorithm>
 
 namespace eudaqinput {
   
   
-  class DEPFETUnpacker : public marlin::Processor {
+  class PyBARUnpacker : public marlin::Processor {
     typedef std::vector<unsigned char> datavect;
     typedef std::vector<unsigned char>::const_iterator datait;
     
    public:
-   
+    
+    struct APIXPix {
+	  int x, y, tot, lv1;
+	  APIXPix(int x, int y, int tot, int lv1): 
+        x(x), y(y), tot(tot), lv1(lv1) {};
+    };
+    
     //!Method that returns a new instance of this processor
-    virtual Processor*  newProcessor() { return new DEPFETUnpacker ; }
+    virtual Processor*  newProcessor() { return new PyBARUnpacker ; }
     
     //!Constructor - set processor description and register processor parameters
-    DEPFETUnpacker();
+    PyBARUnpacker();
     
     //!Method called at the beginning of data processing - used for initialization
     virtual void init();
@@ -57,8 +62,17 @@ namespace eudaqinput {
     virtual void end();
     
    protected:
+     
+    //! Method to unpack source (raw data) -> result (digits)
+    bool UnpackRawCollection(lcio::LCCollectionVec * result, lcio::LCCollectionVec * source);
     
-
+    bool isEventValid(const std::vector<unsigned char> & data) const;
+    //! Method to decode raw frame
+    std::vector<APIXPix> decodeFEI4Data(std::vector<unsigned char> const & data);
+    
+    //! Method to decode raw hit
+    bool getHitData (const unsigned int &Word, bool second_hit, unsigned int &Col, unsigned int &Row, unsigned int &ToT);
+         
     //!Method printing processor parameters
     void printProcessorParams() const;
       
@@ -69,23 +83,24 @@ namespace eudaqinput {
     
     //! Input data collection name  
     std::string _inputCollectionName;
-
-    //! Reset the sensorID to this number
-    int _resetSensorID; 
     
-    int _modID;
-    int _dheID;
-    int _dhpID;
+    //! Sensor ID 
+    int  _sensorID;
+    
+    //! ToT mode	        
+    int _tot_mode;
 
-    std::string _mappingString;
-    bool _swapAxes;
-	        
    private: 
-    DepfetInterpreter interpreter;
-    Mapping mapping;
+    
+    int _consecutive_lvl1;
+    int _first_sensor_id;
+    
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number
     int    _nEvt ;   //!< Event number
+    
+    
+   
   }; // Class
 
 } // Namespace

@@ -8,7 +8,7 @@
 
 #include "PixelDUTAnalyzer.h"
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "TBTrack.h"
 #include "TBHit.h"
 #include "PixelCluster.h"
@@ -16,8 +16,6 @@
 #include "TrackInputProvider.h"
 #include "Det.h"
 #include "Utilities.h"
-#include "MatrixDecoder.h"
-#include "DEPFET.h" 
 
 // Include basic C
 #include <iostream>
@@ -74,8 +72,12 @@ PixelDUTAnalyzer::PixelDUTAnalyzer() : Processor("PixelDUTAnalyzer")
                            "Name of DUT hit collection"  ,
                            _hitColName ,
                            std::string("hit") ) ;
-     
-  
+    
+  registerInputCollection( LCIO::TRACKERDATA,
+                           "DigitCollection" ,
+                           "Name of unpacked DUT digit collection"  ,
+                           _digitColName ,
+                           std::string("zsdata_dut") ) ;
   
   // Processor parameters:
   
@@ -184,11 +186,32 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
   // Load DUT module    
   Det & dut = _detector.GetDet(_idut);   
   
-  // Decoding of DUT matrix
-  MatrixDecoder matrixDecoder(dut.GetNColumns(), dut.GetNRows()); 
+  //
+  // Get digit collection 
+  //
   
+  LCCollection* digitcol = NULL;
+  int nDUTDigits = 0;   
+  try {
+    digitcol = evt->getCollection( _digitColName ) ;
+    CellIDDecoder<TrackerDataImpl> DigitDecoder(digitcol);  
+    // Search for digits from DUT 
+    for (unsigned int iDet = 0; iDet < digitcol->getNumberOfElements(); iDet++) {    
+      TrackerDataImpl * digits = dynamic_cast<TrackerDataImpl* > ( digitcol->getElementAt(iDet) );
+      int sensorID = DigitDecoder( digits ) ["sensorID"];
+      if ( sensorID ==  dut.GetDAQID() ) {
+        nDUTDigits = digits->getChargeValues().size()/3;
+      }
+    }
+  } catch (lcio::DataNotAvailableException& e) {
+    streamlog_out(MESSAGE2) << "Not able to get collection "
+                            << _digitColName
+                            << " from event " << evt->getEventNumber()
+                            << " in run " << evt->getRunNumber()  << endl << endl;   
+  }     
   
-       
+  streamlog_out(MESSAGE2) << "Total of " << nDUTDigits << " DUT digits in collection " << _digitColName << endl; 
+     
   //
   // Get telescope track collection
   //
@@ -225,7 +248,6 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
  
   streamlog_out(MESSAGE2) << "Total of " << nHit << " hit(s) in collection " << _hitColName << endl;
   
-  
   // Read telescope tracks and DUT hits 
   // ----------------------------------
   
@@ -242,14 +264,6 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
       
     // Convert LCIO -> TB track  
     TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, _detector );  
-    
-    // Require that track is a hit on reference (timing) plane
-    if (_iref >= 0 && _iref < _detector.GetNSensors()  ) {
-      if ( not trk.GetTE(_iref).HasHit() ) {
-        streamlog_out ( MESSAGE2 ) << "Track has no hit on reference plane. Skipping track!" << endl;
-        continue;
-      }  
-    } 
     
     // Check that track has no hit on the DUT to avoid bias of residuals and efficiency
     if ( trk.GetTE(_idut).HasHit()  ) {
@@ -392,32 +406,13 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
   _rootEventNumber = evt->getEventNumber();  
   _rootSensorID = dut.GetDAQID();       
   _rootNTelTracks = nTrack; 
-  _rootNDUTHits = (int)HitStore.size();
-
+  _rootNDUTDigits = nDUTDigits;
   
-  // 
-  //  Read DEPFET Event info, if available  
-  //  
-  _rootDEPFETGoodEvent = -1;        
-  _rootDEPFETStartGate = -1;   
-  try {
-    LCCollectionVec* eventinfo = dynamic_cast < LCCollectionVec * > (evt->getCollection( "DEPFET_EVENT_INFO" )) ;
-    if (eventinfo->size() == 1) { 
-      LCGenericObjectImpl* metaobj = dynamic_cast<LCGenericObjectImpl* > ( eventinfo->getElementAt(0) );
-      _rootDEPFETGoodEvent = metaobj->getIntVal(0);        
-      _rootDEPFETStartGate = metaobj->getIntVal(1);    
-    }
-  } catch (lcio::DataNotAvailableException& e) {
-    streamlog_out(MESSAGE2) << " DEPFET event info not available "
-                            << endl << endl;
-  }     
-  
-
   _rootFile->cd("");
   _rootEventTree->Fill();  
-
+  
   // Fill hit tree 
-
+  
   streamlog_out(MESSAGE2) << "Start fill hit tree" << endl; 
   
   for(int ihit=0;ihit<(int)HitStore.size(); ++ihit)
@@ -447,9 +442,17 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     // Add variables for matched track 
     if ( hit2track[ihit] >= 0 ) {  
      
-      _rootHitHasTrack = 0;  // matched         
+      TBTrack& trk = TrackStore[hit2track[ihit]];
+      _rootHitHasTrack = 0;  // matched   
        
-      TBTrack& trk = TrackStore[hit2track[ihit]];      
+      // Check track has a hit on reference (timing) plane
+      if (_iref >= 0 && _iref < _detector.GetNSensors()  ) {
+        if ( trk.GetTE(_iref).HasHit() ) {
+          streamlog_out ( MESSAGE2 ) << "Track has hit on reference plane." << endl;
+          _rootHitHasTrackWithRefHit = 0;
+        }  
+      } 
+      
       HepMatrix p = trk.GetTE(_idut).GetState().GetPars();
       HepSymMatrix C = trk.GetTE(_idut).GetState().GetCov();  
       
@@ -487,8 +490,9 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
       
     } else {
 
-      _rootHitHasTrack = -1; // no match
+      _rootHitHasTrack = -1; // no match with track
       // These are dummy values, always query hasTrack 
+      _rootHitHasTrackWithRefHit = -1; 
       _rootHitLocalChi2 = -1;
       _rootHitFitMomentum = -1;            
       _rootHitFitU = -1;           
@@ -518,9 +522,17 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
    
   for(int itrk=0;itrk<(int)TrackStore.size(); ++itrk)
   {
-       
     TBTrack& trk = TrackStore[itrk];
-
+    
+    // Check track has a hit on reference (timing) plane
+    _rootTrackWithRefHit = -1;
+    if (_iref >= 0 && _iref < _detector.GetNSensors()  ) {
+      if ( trk.GetTE(_iref).HasHit() ) {
+        streamlog_out ( MESSAGE2 ) << "Track has hit on reference plane." << endl;
+        _rootTrackWithRefHit = 0;
+      }  
+    } 
+    
     HepMatrix p = trk.GetTE(_idut).GetState().GetPars();
     HepSymMatrix C = trk.GetTE(_idut).GetState().GetCov();  
            
@@ -663,10 +675,8 @@ void PixelDUTAnalyzer::bookHistos()
    _rootHitTree->Branch("iRun"            ,&_rootRunNumber        ,"iRun/I");
    _rootHitTree->Branch("iEvt"            ,&_rootEventNumber      ,"iEvt/I");
    _rootHitTree->Branch("sensorID"        ,&_rootSensorID       ,"sensorID/I");
-   _rootHitTree->Branch("DEPFETGoodEvent" ,&_rootDEPFETGoodEvent ,"DEPFETGoodEvent/I");
-   _rootHitTree->Branch("DEPFETStartgate" ,&_rootDEPFETStartGate ,"DEPFETStartgate/I");       
    _rootHitTree->Branch("nTelTracks"      ,&_rootNTelTracks       ,"nTelTracks/I"); 
-   _rootHitTree->Branch("nDutHits"        ,&_rootNDUTHits          ,"nDutHits/I");
+   _rootHitTree->Branch("nDutDigits"        ,&_rootNDUTDigits          ,"nDutDigits/I");
    _rootHitTree->Branch("clusterQuality"  ,&_rootHitQuality   ,"clusterQuality/I");
    _rootHitTree->Branch("u_hit"           ,&_rootHitU             ,"u_hit/D");
    _rootHitTree->Branch("v_hit"           ,&_rootHitV             ,"v_hit/D");     
@@ -675,7 +685,8 @@ void PixelDUTAnalyzer::bookHistos()
    _rootHitTree->Branch("sizeU"           ,&_rootHitSizeU        ,"sizeU/I");
    _rootHitTree->Branch("sizeV"           ,&_rootHitSizeV        ,"sizeV/I");
    _rootHitTree->Branch("size"            ,&_rootHitSize         ,"size/I");
-   _rootHitTree->Branch("hasTrack"        ,&_rootHitHasTrack         ,"hasTrack/I");   
+   _rootHitTree->Branch("hasTrack"        ,&_rootHitHasTrack         ,"hasTrack/I");  
+   _rootHitTree->Branch("hasTrackWithRefHit", &_rootHitHasTrackWithRefHit,"hasTrackWithRefHit/I"); 
    _rootHitTree->Branch("u_fit"           ,&_rootHitFitU             ,"u_fit/D");
    _rootHitTree->Branch("v_fit"           ,&_rootHitFitV             ,"v_fit/D"); 
    _rootHitTree->Branch("dudw_fit"        ,&_rootHitFitdUdW          ,"dudw_fit/D");
@@ -706,11 +717,10 @@ void PixelDUTAnalyzer::bookHistos()
    _rootTrackTree->Branch("iRun"            ,&_rootRunNumber      ,"iRun/I");
    _rootTrackTree->Branch("iEvt"            ,&_rootEventNumber    ,"iEvt/I");
    _rootTrackTree->Branch("sensorID"        ,&_rootSensorID        ,"sensorID/I");
-   _rootTrackTree->Branch("DEPFETGoodEvent" ,&_rootDEPFETGoodEvent ,"DEPFETGoodEvent/I");
-   _rootTrackTree->Branch("DEPFETStartgate" ,&_rootDEPFETStartGate ,"DEPFETStartgate/I");    
    _rootTrackTree->Branch("nTelTracks"      ,&_rootNTelTracks     ,"nTelTracks/I"); 
-   _rootTrackTree->Branch("nDutHits"        ,&_rootNDUTHits       ,"nDutHits/I");
+   _rootTrackTree->Branch("nDutDigits"        ,&_rootNDUTDigits       ,"nDutDigits/I");
    _rootTrackTree->Branch("hasHit"          ,&_rootTrackHasHit         ,"hasHit/I");
+   _rootTrackTree->Branch("hasRefHit"       ,&_rootTrackWithRefHit     ,"hasRefHit/I");
    _rootTrackTree->Branch("momentum"        ,&_rootTrackFitMomentum    ,"momentum/D");                                                           
    _rootTrackTree->Branch("u_fit"           ,&_rootTrackFitU           ,"u_fit/D");
    _rootTrackTree->Branch("v_fit"           ,&_rootTrackFitV           ,"v_fit/D");
@@ -733,10 +743,8 @@ void PixelDUTAnalyzer::bookHistos()
    _rootEventTree->Branch("iRun"            ,&_rootRunNumber      ,"iRun/I");
    _rootEventTree->Branch("iEvt"            ,&_rootEventNumber    ,"iEvt/I");
    _rootEventTree->Branch("sensorID"        ,&_rootSensorID       ,"sensorID/I");   
-   _rootEventTree->Branch("DEPFETGoodEvent" ,&_rootDEPFETGoodEvent ,"DEPFETGoodEvent/I");
-   _rootEventTree->Branch("DEPFETStartgate" ,&_rootDEPFETStartGate ,"DEPFETStartgate/I");     
    _rootEventTree->Branch("nTelTracks"      ,&_rootNTelTracks     ,"nTelTracks/I"); 
-   _rootEventTree->Branch("nDutHits"        ,&_rootNDUTHits       ,"nDutHits/I");
+   _rootEventTree->Branch("nDutDigits"        ,&_rootNDUTDigits       ,"nDutDigits/I");
    
 }
 
