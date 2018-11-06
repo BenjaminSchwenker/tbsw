@@ -242,49 +242,49 @@ def plot_unit(inputfilename = None, histofilename = "InpixHistos.root", upitch=0
   # plot histograms    
        
   h2c.SetTitle("")
-  h2c.GetXaxis().SetTitle("u_{m} [#mum]")
-  h2c.GetYaxis().SetTitle("v_{m} [#mum]")
+  h2c.GetXaxis().SetTitle("u_{m} [mm]")
+  h2c.GetYaxis().SetTitle("v_{m} [mm]")
   h2c.GetZaxis().SetTitle("Number of tracks")
   h2c.SetStats(0)   
 
   h2ss.SetTitle("")
-  h2ss.GetXaxis().SetTitle("u_{m} [#mum]")
-  h2ss.GetYaxis().SetTitle("v_{m} [#mum]")
+  h2ss.GetXaxis().SetTitle("u_{m} [mm]")
+  h2ss.GetYaxis().SetTitle("v_{m} [mm]")
   h2ss.GetZaxis().SetTitle("Mean Seed Signal [LSB]")
   h2ss.SetStats(0)  
 
   h2cs.SetTitle("")
-  h2cs.GetXaxis().SetTitle("u_{m} [#mum]")
-  h2cs.GetYaxis().SetTitle("v_{m} [#mum]")
+  h2cs.GetXaxis().SetTitle("u_{m} [mm]")
+  h2cs.GetYaxis().SetTitle("v_{m} [mm]")
   h2cs.GetZaxis().SetTitle("Mean Cluster Signal [LSB]")
   h2cs.SetStats(0)
 
   h2ss_x = h2ss.ProjectionX("h2ss_x")
   h2ss_x.SetTitle("")
-  h2ss_x.GetXaxis().SetTitle("u_{m} [#mum]")
+  h2ss_x.GetXaxis().SetTitle("u_{m} [mm]")
   h2ss_x.GetYaxis().SetTitle("Mean Seed Signal [LSB]")
 
   h2ss_y = h2ss.ProjectionY("h2ss_y")
   h2ss_y.SetTitle("")
-  h2ss_y.GetXaxis().SetTitle("v_{m} [#mum]")
+  h2ss_y.GetXaxis().SetTitle("v_{m} [mm]")
   h2ss_y.GetYaxis().SetTitle("Mean Seed Signal [LSB]")
   
 
   h2uu.SetTitle("")
-  h2uu.GetXaxis().SetTitle("u_{m} [#mum]")
-  h2uu.GetYaxis().SetTitle("v_{m} [#mum]")
+  h2uu.GetXaxis().SetTitle("u_{m} [mm]")
+  h2uu.GetYaxis().SetTitle("v_{m} [mm]")
   h2uu.GetZaxis().SetTitle("Mean sizeU [uCells]")
   h2uu.SetStats(0)
 
   h2vv.SetTitle("")
-  h2vv.GetXaxis().SetTitle("u_{m} [#mum]")
-  h2vv.GetYaxis().SetTitle("v_{m} [#mum]")
+  h2vv.GetXaxis().SetTitle("u_{m} [mm]")
+  h2vv.GetYaxis().SetTitle("v_{m} [mm]")
   h2vv.GetZaxis().SetTitle("Mean sizeV [vCells]")
   h2vv.SetStats(0)
 
   h2px.SetTitle("")
-  h2px.GetXaxis().SetTitle("u_{m} [#mum]")
-  h2px.GetYaxis().SetTitle("v_{m} [#mum]")
+  h2px.GetXaxis().SetTitle("u_{m} [mm]")
+  h2px.GetYaxis().SetTitle("v_{m} [mm]")
   h2px.GetZaxis().SetTitle("Mean size [Pixel]")
   h2px.SetStats(0)
 
