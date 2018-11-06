@@ -4,7 +4,7 @@ import numpy
 import math
 
 
-def plot(inputfilename = None, histofilename = "InpixHistos.root", usize=0.0, vsize=0.0, ubins=10, vbins=10):
+def plot(inputfilename = None, histofilename = "InpixHistos.root", uaxis=(10,0,0), vaxis=(10,0,0) ):
     
   if inputfilename == None:
     return None
@@ -25,36 +25,39 @@ def plot(inputfilename = None, histofilename = "InpixHistos.root", usize=0.0, vs
   # Temporary data objects   
   histofile.mkdir("tmp")
   histofile.cd("tmp")
+
+  ubins = uaxis[0]
+  vbins = vaxis[0]
   
   counter = numpy.zeros(shape=(ubins,vbins))  
-  h2_cs = [[TH1F("hcs_%d_%d" % (iv,iu),"",400,0,400) for iv in range(vbins)] for iu in range(ubins)]
-  h2_ss = [[TH1F("hss_%d_%d" % (iv,iu),"",400,0,400) for iv in range(vbins)] for iu in range(ubins)]
-  h2_uu = [[TH1F("huu_%d_%d" % (iv,iu),"",10,0,10) for iv in range(vbins)] for iu in range(ubins)]
-  h2_vv = [[TH1F("hvv_%d_%d" % (iv,iu),"",10,0,10) for iv in range(vbins)] for iu in range(ubins)]
-  h2_px = [[TH1F("hpx_%d_%d" % (iv,iu),"",10,0,10) for iv in range(vbins)] for iu in range(ubins)]
+  h2_cs = [[TH1F("hcs_%d_%d" % (iv,iu),"",255,0,255) for iv in range(vbins)] for iu in range(ubins)]
+  h2_ss = [[TH1F("hss_%d_%d" % (iv,iu),"",255,0,255) for iv in range(vbins)] for iu in range(ubins)]
+  h2_uu = [[TH1F("huu_%d_%d" % (iv,iu),"",20,0,20) for iv in range(vbins)] for iu in range(ubins)]
+  h2_vv = [[TH1F("hvv_%d_%d" % (iv,iu),"",20,0,20) for iv in range(vbins)] for iu in range(ubins)]
+  h2_px = [[TH1F("hpx_%d_%d" % (iv,iu),"",20,0,20) for iv in range(vbins)] for iu in range(ubins)]
     
   histofile.cd("")
   
   # Final histos 
-  h2c = TH2F("h2c","h2c",ubins,-usize,usize,vbins,-vsize,+vsize)
-  h2cs = TH2F("h2cs","h2cs",ubins,-usize,usize,vbins,-vsize,+vsize)
-  h2ss = TH2F("h2ss","h2ss",ubins,-usize,usize,vbins,-vsize,+vsize)
-  h2uu = TH2F("h2uu","h2uu",ubins,-usize,usize,vbins,-vsize,vsize)
-  h2vv = TH2F("h2vv","h2vv",ubins,-usize,usize,vbins,-vsize,vsize)
-  h2px = TH2F("h2px","h2px",ubins,-usize,usize,vbins,-vsize,vsize)
+  h2c = TH2F("h2c","h2c",uaxis[0],uaxis[1],uaxis[2],vaxis[0],vaxis[1],vaxis[2])
+  h2cs = TH2F("h2cs","h2cs",uaxis[0],uaxis[1],uaxis[2],vaxis[0],vaxis[1],vaxis[2])
+  h2ss = TH2F("h2ss","h2ss",uaxis[0],uaxis[1],uaxis[2],vaxis[0],vaxis[1],vaxis[2])
+  h2uu = TH2F("h2uu","h2uu",uaxis[0],uaxis[1],uaxis[2],vaxis[0],vaxis[1],vaxis[2])
+  h2vv = TH2F("h2vv","h2vv",uaxis[0],uaxis[1],uaxis[2],vaxis[0],vaxis[1],vaxis[2])
+  h2px = TH2F("h2px","h2px",uaxis[0],uaxis[1],uaxis[2],vaxis[0],vaxis[1],vaxis[2])
   
   for event in tree: 
     if event.hasTrack == 0: 
       m_u = event.u_fit  
       m_v = event.v_fit
       
-      if m_u<-usize:
+      if m_u<uaxis[1]:
         continue
-      if m_u>+usize:
+      if m_u>uaxis[2]:
         continue
-      if m_v<-vsize:
+      if m_v<vaxis[1]:
         continue
-      if m_v>+vsize:
+      if m_v>vaxis[2]:
         continue
         
       # Note: This must be c-style index 
@@ -131,7 +134,7 @@ def plot(inputfilename = None, histofilename = "InpixHistos.root", usize=0.0, vs
   rawfile.Close()
 
 
-def plot_unit(inputfilename = None, histofilename = "InpixHistos.root", upitch=0.0, vpitch=0.0, ubins=10, vbins=10):
+def plot_unit(inputfilename = None, histofilename = "InpixHistos.root", upitch=0.0, vpitch=0.0, ubins=10, vbins=10, ufold=2, vfold=2):
   
   if inputfilename == None:
     return None
@@ -150,8 +153,8 @@ def plot_unit(inputfilename = None, histofilename = "InpixHistos.root", upitch=0
   tree = rawfile.Get("Hit")
  
   # Super pixel contains upix x vpix cells  
-  upix = 2  
-  vpix = 1 
+  upix = ufold 
+  vpix = vfold 
 
   counter = numpy.zeros(shape=(ubins,vbins))
   
@@ -166,6 +169,8 @@ def plot_unit(inputfilename = None, histofilename = "InpixHistos.root", upitch=0
   
   
   histofile.cd("")
+
+  
 
   for event in tree: 
     if event.hasTrack == 0: 

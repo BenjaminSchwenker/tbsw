@@ -37,3 +37,12 @@ for trackfile in glob.glob('root-files/Histos-DEPBIG-{}-reco.root'.format(args.p
     
     ofile = 'Efficiency-' + os.path.basename(trackfile)  
     efficiency.plot(inputfilename=trackfile, histofilename=ofile, basecut="trackNHits==7 && iEvt>=0 && nDutDigits>0", matchcut="hasHit==0", uaxis=(100,0,250), vaxis=(100,0,768))
+
+    # A single run will not give enough statistic for such a plot, you will need to chain tree from many runs for this
+    # Anyway, here is the commond to obtain inpixel plots for the complete sensor area
+    #ofile = 'InpixMaps-' + os.path.basename(trackfile)  
+    #inpixel.plot(inputfilename=trackfile, histofilename=ofile, uaxis=(100,-4,-2), vaxis=(150,7,10))
+
+    # Even a single run of 10min is enough to obtain a inpix plot for a generic cell of (ufold,vfold) superpixels. 
+    ofile = 'InpixUnitMaps-' + os.path.basename(trackfile)  
+    inpixel.plot_unit(inputfilename=trackfile, histofilename=ofile, upitch=0.05, vpitch=0.085, ubins=30, vbins=30, ufold=2, vfold=2)
