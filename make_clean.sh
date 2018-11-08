@@ -44,4 +44,7 @@ rm -rf source/TBTools/source/src/AlignEventDict.C
 rm -rf source/TBReco/TBRecoConfig.cmake
 rm -rf source/TBReco/build/
 
-
+############################################################
+# Remove init scripts
+rm -rf init_tbsw.sh
+rm -rf workspace/init_tbsw.sh
