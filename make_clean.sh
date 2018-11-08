@@ -45,6 +45,9 @@ rm -rf source/TBReco/TBRecoConfig.cmake
 rm -rf source/TBReco/build/
 
 ############################################################
-# Remove init scripts
+# Remove stuff from workspace 
 rm -rf init_tbsw.sh
 rm -rf workspace/init_tbsw.sh
+rm -rf workspace/tmp-runs
+rm -rf workspace/localDB
+rm -rf workspace/tbsw/*.pyc

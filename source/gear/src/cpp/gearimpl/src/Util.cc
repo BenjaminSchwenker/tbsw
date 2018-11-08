@@ -1,7 +1,6 @@
 #include <cstdio>
 #include "gearimpl/Util.h"
 #include "gear/SiPlanesLayerLayout.h"
-#include "gear/LayerLayout.h"
 
 
 namespace gear{
@@ -178,26 +177,7 @@ namespace gear{
 
     s <<  std::endl << " Setup ID : " << p.getSiPlanesID() << std::endl;
 
-    int type = p.getSiPlanesType() ;
     
-    s << " Telescope type : " ;
-    std::string strType ;
-
-    switch( type ) {
-      
-    case SiPlanesParameters::TelescopeWithDUT : 
-      strType = "TelescopeWithDUT" ;
-      s << " TelescopeWithDUT" << std::endl ;       
-      break ;
-    case SiPlanesParameters::TelescopeWithoutDUT : 
-      strType = "TelescopeWithoutDUT" ;
-      s << " TelescopeWithoutDUT " << std::endl ;      
-      break ;
-      
-    default :  
-      
-      s << " unknown " << std::endl ; 
-    }
 
     s << " Number of telescope planes : " << p.getSiPlanesNumber() << std::endl;
     
@@ -255,64 +235,11 @@ namespace gear{
       s << buffer1 ;
 
     }
-
+    
     std::sprintf(buffer,"  |-------------------------------------------------------------------------------------------------------------------------------------------------|\n") ;
     s << buffer ;
-
-    // DUT
-
-    if (strType == "TelescopeWithDUT"){
-
-      s <<  " DUT parameters : "  << std::endl ;
-      
-      s << buffer ;
-      
-      std::sprintf(buffer,"  |              ladder:                        |                    sensitive part:                                                         |\n") ;
-      s << buffer ;
-      
-      std::sprintf(buffer,"  |------------------------------------------------------------------------------------------------------------------------------------------|\n") ;
-      s << buffer ;
-      
-      std::sprintf(buffer,"  | ID | pozX| pozY|  pozZ | sizeX| sizeY| Thick| ID| pozX| pozY|  pozZ |sizeX|sizeY| Thick|NpixX|NpixY|PitchX|PitchY| Rot1| Rot2| Rot3| Rot4| \n") ;
-      s << buffer ;
-      
-      std::sprintf(buffer,"  |------------------------------------------------------------------------------------------------------------------------------------------|\n") ;
-      s << buffer ;
-      
-      char buffer1[1024] ;
-      std::sprintf(buffer1,"  |%4d|%5.2f|%5.2f|%7.2f|%6.2f|%6.2f|%6.3f|%3d|%5.2f|%5.2f|%7.2f|%5.2f|%5.2f|%6.3f| %4d| %4d|%6.2f|%6.2f| %4.2f| %4.2f| %4.2f| %4.2f|\n"
-	      , l.getDUTID() 
-	      , l.getDUTPositionX() 
-	      , l.getDUTPositionY() 
-	      , l.getDUTPositionZ()
-	      , l.getDUTSizeX() 
-	      , l.getDUTSizeY() 
-	      , l.getDUTThickness() 
-	      , l.getDUTSensitiveID() 
-	      , l.getDUTSensitivePositionX() 
-	      , l.getDUTSensitivePositionY() 
-	      , l.getDUTSensitivePositionZ()
-	      , l.getDUTSensitiveSizeX()
-	      , l.getDUTSensitiveSizeY() 
-	      , l.getDUTSensitiveThickness() 
-	      , l.getDUTSensitiveNpixelX() 
-	      , l.getDUTSensitiveNpixelY() 
-	      , l.getDUTSensitivePitchX() 
-	      , l.getDUTSensitivePitchY() 
-	      , l.getDUTSensitiveRotation1() 
-	      , l.getDUTSensitiveRotation2() 
-	      , l.getDUTSensitiveRotation3() 
-	      , l.getDUTSensitiveRotation4() ) ;
-      
-      s << buffer1 ;
-      
-      std::sprintf(buffer,"  |------------------------------------------------------------------------------------------------------------------------------------------|\n") ;
-      s << buffer ;
-      
-    }
+    
     return s ;
-    
-    
   }
 
 }

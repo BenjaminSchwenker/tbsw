@@ -5,7 +5,6 @@
 
 #include "gearxml/tinyxml.h"
 #include "gearimpl/ConstantBField.h"
-// #include "gear/LayerLayout.h"
 #include "gear/GearMgr.h"
 
 

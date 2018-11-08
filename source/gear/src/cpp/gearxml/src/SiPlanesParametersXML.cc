@@ -30,19 +30,13 @@ namespace gear {
 		       "needs to be gear::SiPlanesParameters." ) ;
     }
 
-    // Set up Beam TelescopeWithDUT or TelescopeWithoutDUT as Element
+    // Set up Beam Telescope as Element
     TiXmlElement det("detector") ;
 
     TiXmlElement setup_id( "siplanesID" ) ;
     setup_id.SetAttribute("ID", param->getSiPlanesID()) ;
     det.InsertEndChild( setup_id ) ;
-    
-    //type
-    TiXmlElement type("siplanesType");
-    type.SetAttribute( "type",  "TelescopeWithoutDUT" ) ;
-    
-    det.InsertEndChild( type ) ;
-    
+        
     TiXmlElement nplanes( "siplanesNumber" ) ;
     nplanes.SetAttribute("number", param->getSiPlanesNumber()) ;
     det.InsertEndChild( nplanes ) ;
@@ -114,9 +108,7 @@ namespace gear {
 
     const TiXmlElement* siplanesID = xmlElement->FirstChildElement( "siplanesID" ) ;
     int setupID = atoi( getXMLAttribute( siplanesID , "ID" ).c_str() ) ;
-    
-    int intType = 0 ;
-    
+     
     // number of telescope planes
     
     const TiXmlElement* siplanesNumber = xmlElement->FirstChildElement( "siplanesNumber" ) ;
@@ -125,7 +117,7 @@ namespace gear {
     //    std::cout << "SiPlanesParameters::fromXML siplanesNumber == " << nplanes << std::endl ; // debug
     
     // create SiPlanesParameters
-    SiPlanesParametersImpl* siplanesParam = new SiPlanesParametersImpl( setupID, intType , nplanes) ;
+    SiPlanesParametersImpl* siplanesParam = new SiPlanesParametersImpl( setupID, nplanes) ;
 
     
 

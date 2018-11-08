@@ -6,9 +6,8 @@ namespace gear{
 
 
   SiPlanesParametersImpl::SiPlanesParametersImpl
-  (int siplanesID, int siplanesType, int siplanesNumber) :
+  (int siplanesID, int siplanesNumber) :
     _siplanesID( siplanesID ),
-    _siplanesType( siplanesType ) ,
     _siplanesNumber( siplanesNumber ) {}
  
 } // namespace
