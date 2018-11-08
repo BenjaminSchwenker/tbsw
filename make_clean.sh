@@ -49,5 +49,6 @@ rm -rf source/TBReco/build/
 rm -rf init_tbsw.sh
 rm -rf workspace/init_tbsw.sh
 rm -rf workspace/tmp-runs
+rm -rf workspace/root-files
 rm -rf workspace/localDB
 rm -rf workspace/tbsw/*.pyc
