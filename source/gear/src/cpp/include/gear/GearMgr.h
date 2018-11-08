@@ -12,8 +12,6 @@
 namespace gear {
 
 class BField;
-class GearDistanceProperties;
-class GearPointProperties;
 class SiPlanesParameters;
 
 
@@ -54,18 +52,6 @@ public:
     virtual const SiPlanesParameters & getSiPlanesParameters() const throw (UnknownParameterException, std::exception )  = 0;
 
 
-    /** Get the point properties object.
-     * 
-     *  @throws NotImplementedException
-     */
-    virtual const GearPointProperties & getPointProperties() const throw (NotImplementedException, std::exception )  = 0;
-
-    /** Get the distance properties object.
-     * 
-     *  @throws NotImplementedException
-     */
-    virtual const GearDistanceProperties & getDistanceProperties() const throw (NotImplementedException, std::exception )  = 0;
-
     /** Keys of all GearParameters. 
      */ 
     virtual const std::vector<std::string>  & getGearParameterKeys() const = 0;
@@ -86,14 +72,7 @@ public:
     /** Set the SiPlanesParameters.
      */
     virtual void setSiPlanesParameters(SiPlanesParameters * siplanesParameters) = 0;
-
-    /** Set the point properties object.
-     */
-    virtual void setPointProperties(GearPointProperties * pointProperties) = 0;
-
-    /** Set the distance properties object.
-     */
-    virtual void setDistanceProperties(GearDistanceProperties * distanceProperties) = 0;
+    
 }; // class
 } // namespace gear
 #endif /* ifndef GEAR_GEARMGR_H */
