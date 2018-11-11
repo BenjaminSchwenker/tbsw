@@ -124,27 +124,18 @@ namespace marlin{
 
     typedef ProcessorMap::iterator MI ;
     
-    
-
     std::cout  <<  std::endl 
 	       << "<marlin xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
            << "xsi:noNamespaceSchemaLocation=\"http://ilcsoft.desy.de/marlin/marlin.xsd\">"
 	       <<  std::endl ;
-
-    std::cout  <<  " <execute>" << std::endl
-	       <<  "  <processor name=\"MyTestProcessor\"/>  " << std::endl
-	       <<  "  <processor name=\"MyLCIOOutputProcessor\"/>  " << std::endl
-	       <<  " </execute>" << std::endl
-	       << std::endl ;
-
+    
     std::cout  <<  " <global>" << std::endl 
 	       <<  "  <parameter name=\"LCIOInputFiles\" value=\"simjob.slcio\" />" << std::endl
-	       <<  "  <!-- limit the number of processed records (run+evt): -->  " << std::endl
-	       <<  "  <parameter name=\"MaxRecordNumber\" value=\"5001\" />  " << std::endl
+	       <<  "  <parameter name=\"MaxRecordNumber\" value=\"-1\" />  " << std::endl
 	       <<  "  <parameter name=\"SkipNEvents\" value=\"0\" />  " << std::endl
 	       <<  "  <parameter name=\"SupressCheck\" value=\"false\" />  " << std::endl
-	       <<  "  <parameter name=\"GearXMLFile\"> gear_ldc.xml </parameter>  " << std::endl
-	       <<  "  <parameter name=\"Verbosity\" options=\"DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT\" value=\"DEBUG\" /> " << std::endl
+	       <<  "  <parameter name=\"GearXMLFile\" value=\"gear.xml\" />  " << std::endl
+	       <<  "  <parameter name=\"Verbosity\" options=\"DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT\" value=\"MESSAGE3\" /> " << std::endl
 	       <<  " </global>" << std::endl
 	       << std::endl ;
 

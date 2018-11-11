@@ -20,7 +20,7 @@ ProcessorLoader::ProcessorLoader(
 
         //std::string libName( "lib" + *current + ".so" ) ;
         std::string libName( *current ) ;
-        std::cout << "<!-- Loading shared library : " << libName << " -->" << std::endl ;
+        //std::cout << "<!-- Loading shared library : " << libName << " -->" << std::endl ;
         
         //void* libPointer  = dlopen( libName.c_str() , RTLD_NOW) ;
         //void* libPointer  = dlopen( libName.c_str() , RTLD_LAZY ) ;
