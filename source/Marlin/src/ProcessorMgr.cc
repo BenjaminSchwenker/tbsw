@@ -130,11 +130,11 @@ namespace marlin{
 	       <<  std::endl ;
     
     std::cout  <<  " <global>" << std::endl 
-	       <<  "  <parameter name=\"LCIOInputFiles\" value=\"simjob.slcio\" />" << std::endl
+	       <<  "  <parameter name=\"LCIOInputFiles\" value=\"\" />" << std::endl
 	       <<  "  <parameter name=\"MaxRecordNumber\" value=\"-1\" />  " << std::endl
 	       <<  "  <parameter name=\"SkipNEvents\" value=\"0\" />  " << std::endl
 	       <<  "  <parameter name=\"SupressCheck\" value=\"false\" />  " << std::endl
-	       <<  "  <parameter name=\"GearXMLFile\" value=\"gear.xml\" />  " << std::endl
+	       <<  "  <parameter name=\"GearXMLFile\" value=\"\" />  " << std::endl
 	       <<  "  <parameter name=\"Verbosity\" options=\"DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT\" value=\"MESSAGE3\" /> " << std::endl
 	       <<  " </global>" << std::endl
 	       << std::endl ;

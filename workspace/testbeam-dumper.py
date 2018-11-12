@@ -1,5 +1,5 @@
 """
-Script for processing mini 3D diamond test beam data for Helge. 
+Script for processing depfet testbeam November 2018.
 
 Author: Benjamin Schwenker <benjamin.schwenker@phys.uni-goettingen.de>  
 """
@@ -8,145 +8,294 @@ from tbsw import *
 import multiprocessing
 
 
+def add_unpackers(path):
+  """
+  Adds unpackers to the path
+  """  
+  
+  m26unpacker = Processor(name="M26Unpacker",proctype="NIUnpacker")   
+  m26unpacker.param("InputCollectionName", "NI")
+  m26unpacker.param("OutputCollectionName","zsdata_m26")
+  path.add_processor(m26unpacker)
+  
+  fei4unpacker = Processor(name="FEI4Unpacker",proctype="PyBARUnpacker")
+  fei4unpacker.param("InputCollectionName","PyBAR")
+  fei4unpacker.param("OutputCollectionName", "zsdata_fei4")
+  fei4unpacker.param("SensorID","21")
+  path.add_processor(fei4unpacker)   
+  
+  pxdunpacker = Processor(name="PXDUnpacker",proctype="DEPFETUnpacker")
+  pxdunpacker.param('InputCollectionName', 'DEPFET')
+  pxdunpacker.param('OutputCollectionName','zsdata_pxd')
+  path.add_processor(pxdunpacker)
+  
+  h5unpacker = Processor(name="H5Unpacker",proctype="DEPFETUnpacker")
+  h5unpacker.param('InputCollectionName','DEPFE5')
+  h5unpacker.param('OutputCollectionName','zsdata_h5')
+  h5unpacker.param("Mapping","Hybrid5")  
+  path.add_processor(h5unpacker)   
+  
+  return path
+
+
+def add_clusterizers(path):
+  """
+  Adds clusterizers to the path
+  """  
+    
+  m26clust = Processor(name="M26Clusterizer",proctype="PixelClusterizer")   
+  m26clust.param("NoiseDBFileName","localDB/NoiseDB-M26.root")
+  m26clust.param("SparseDataCollectionName","zsdata_m26")
+  m26clust.param("ClusterCollectionName","zscluster_m26")
+  m26clust.param("SparseClusterCut",0)
+  m26clust.param("SparseSeedCut", 0)
+  m26clust.param("SparseZSCut", 0)   
+  path.add_processor(m26clust)  
+
+  fei4clust = Processor(name="FEI4Clusterizer",proctype="PixelClusterizer")   
+  fei4clust.param("NoiseDBFileName","localDB/NoiseDB-FEI4.root")
+  fei4clust.param("SparseDataCollectionName","zsdata_fei4")
+  fei4clust.param("ClusterCollectionName","zscluster_fei4")
+  fei4clust.param("SparseClusterCut",0)
+  fei4clust.param("SparseSeedCut", 0)
+  fei4clust.param("SparseZSCut", 0)   
+  path.add_processor(fei4clust)  
+
+  pxdclust = Processor(name="PXDClusterizer",proctype="PixelClusterizer")   
+  pxdclust.param("NoiseDBFileName","localDB/NoiseDB-PXD.root")
+  pxdclust.param("SparseDataCollectionName","zsdata_pxd")
+  pxdclust.param("ClusterCollectionName","zscluster_pxd")
+  pxdclust.param("SparseClusterCut",4)
+  pxdclust.param("SparseSeedCut", 4)
+  pxdclust.param("SparseZSCut", 4)   
+  path.add_processor(pxdclust)  
+  
+  h5clust = Processor(name="H5Clusterizer",proctype="PixelClusterizer")   
+  h5clust.param("NoiseDBFileName","localDB/NoiseDB-H5.root")
+  h5clust.param("SparseDataCollectionName","zsdata_h5")
+  h5clust.param("ClusterCollectionName","zscluster_h5")
+  h5clust.param("SparseClusterCut",4)
+  h5clust.param("SparseSeedCut", 4)
+  h5clust.param("SparseZSCut", 4)   
+  path.add_processor(h5clust)  
+
+  return path
+
+def add_hitmakers(path):
+  """
+  Adds hitmakers to the path
+  """  
+
+  m26hitmaker = Processor(name="M26CogHitMaker",proctype="CogHitMaker")
+  m26hitmaker.param("ClusterCollection","zscluster_m26")
+  m26hitmaker.param("HitCollectionName","hit_m26")
+  m26hitmaker.param("SigmaU1",0.0037)
+  m26hitmaker.param("SigmaU2",0.0033)
+  m26hitmaker.param("SigmaU3",0.0050)
+  m26hitmaker.param("SigmaV1",0.0037)
+  m26hitmaker.param("SigmaV2",0.0033)
+  m26hitmaker.param("SigmaV3",0.0050)
+  path.add_processor(m26hitmaker)
+
+  fei4hitmaker = Processor(name="FEI4CogHitMaker",proctype="CogHitMaker")
+  fei4hitmaker.param("ClusterCollection","zscluster_fei4")
+  fei4hitmaker.param("HitCollectionName","hit_fei4")
+  fei4hitmaker.param("SigmaU1",0.072)
+  fei4hitmaker.param("SigmaU2",0.072)
+  fei4hitmaker.param("SigmaU3",0.072)
+  fei4hitmaker.param("SigmaV1",0.0144)
+  fei4hitmaker.param("SigmaV2",0.0144)
+  fei4hitmaker.param("SigmaV3",0.0144)
+  path.add_processor(fei4hitmaker)
+
+  pxdhitmaker = Processor(name="PXDCogHitMaker",proctype="CogHitMaker")
+  pxdhitmaker.param("ClusterCollection","zscluster_pxd")
+  pxdhitmaker.param("HitCollectionName","hit_pxd")
+  pxdhitmaker.param("SigmaU1",0.0134)
+  pxdhitmaker.param("SigmaU2",0.0077)
+  pxdhitmaker.param("SigmaU3",0.0077)
+  pxdhitmaker.param("SigmaV1",0.024)
+  pxdhitmaker.param("SigmaV2",0.014)
+  pxdhitmaker.param("SigmaV3",0.014)
+  path.add_processor(pxdhitmaker)
+  
+  h5hitmaker = Processor(name="H5CogHitMaker",proctype="CogHitMaker")
+  h5hitmaker.param("ClusterCollection","zscluster_h5")
+  h5hitmaker.param("HitCollectionName","hit_h5")
+  h5hitmaker.param("SigmaU1",0.0134)
+  h5hitmaker.param("SigmaU2",0.0077)
+  h5hitmaker.param("SigmaU3",0.0077)
+  h5hitmaker.param("SigmaV1",0.0134)
+  h5hitmaker.param("SigmaV2",0.0077)
+  h5hitmaker.param("SigmaV3",0.0077)
+  path.add_processor(h5hitmaker)   
+  
+  return path
 
 def create_calibration_path(Env, rawfile, gearfile, energy):
   """
   Returns a list of tbsw path objects needed to calibrate the tracking telescope
   """
-  
-  hotpixelkiller = Env.create_path('hotpixelkiller')
-  hotpixelkiller.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : -1 })  
-  hotpixelkiller.add_processor(name="RawInputProcessor",params={'FileName': rawfile})
-  hotpixelkiller.add_processor(name="M26Unpacker")
-  hotpixelkiller.add_processor(name="FEI4Unpacker")
-  hotpixelkiller.add_processor(name="DEPBIGUnpacker",params={'InputCollectionName': 'DEPFET', 'OutputCollectionName':'zsdata_dep_big'})
-  hotpixelkiller.add_processor(name="DEPH5Unpacker",params={'InputCollectionName': 'DEPFE5', 'OutputCollectionName':'zsdata_dep_h5',"Mapping":"Hybrid5"})
-  hotpixelkiller.add_processor(name="M26HotPixelKiller")
-  hotpixelkiller.add_processor(name="FEI4HotPixelKiller")
-  hotpixelkiller.add_processor(name="DEPBIGHotPixelKiller",params={"InputCollectionName":"zsdata_dep_big",
-                                                             "MaxOccupancy":"0.001",
-                                                             "NoiseDBFileName":"localDB/NoiseDB-DEP-BIG.root",
-                                                             "OfflineZSThreshold":"0"})
-  hotpixelkiller.add_processor(name="DEPH5HotPixelKiller",params={"InputCollectionName":"zsdata_dep_h5",
-                                                             "MaxOccupancy":"0.001",
-                                                             "NoiseDBFileName":"localDB/NoiseDB-DEP-H5.root",
-                                                             "OfflineZSThreshold":"0"})
-   
-  
-  hitmaker = Env.create_path('hitmaker')
-  hitmaker.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000 }) 
-  hitmaker.add_processor(name="RawInputProcessor",params={'FileName': rawfile})
-  hitmaker.add_processor(name="M26Unpacker")
-  hitmaker.add_processor(name="M26Clusterizer")
-  hitmaker.add_processor(name="M26CogHitMaker")
-  hitmaker.add_processor(name="FEI4Unpacker")
-  hitmaker.add_processor(name="FEI4Clusterizer")
-  hitmaker.add_processor(name="FEI4CogHitMaker")
-  hitmaker.add_processor(name="DEPBIGUnpacker",params={'InputCollectionName': 'DEPFET', 'OutputCollectionName':'zsdata_dep_big'})
-  hitmaker.add_processor(name="DEPBIGClusterizer",params={"SparseDataCollectionName":"zsdata_dep_big",
-                                                    "NoiseDBFileName":"localDB/NoiseDB-DEP-BIG.root",
-                                                    "ClusterCollectionName":"zscluster_dep_big",
-                                                    "SparseClusterCut":"5",
-                                                    "SparseSeedCut":"5",
-                                                    "SparseZSCut":"5",})
-  hitmaker.add_processor(name="DEPBIGCogHitMaker",params={"ClusterCollection":"zscluster_dep_big",
-                                                    "HitCollectionName":"hit_dep_big",
-                                                    "SigmaU1":"0.0134",
-                                                    "SigmaU2":"0.0077",
-                                                    "SigmaU3":"0.0077",
-                                                    "SigmaV1":"0.024",
-                                                    "SigmaV2":"0.014",
-                                                    "SigmaV3":"0.014",})  
-   
-  hitmaker.add_processor(name="DEPH5Unpacker",params={'InputCollectionName': 'DEPFE5', 'OutputCollectionName':'zsdata_dep_h5', "Mapping":"Hybrid5"})
-  hitmaker.add_processor(name="DEPH5Clusterizer",params={"SparseDataCollectionName":"zsdata_dep_h5",
-                                                    "NoiseDBFileName":"localDB/NoiseDB-DEP-H5.root",
-                                                    "ClusterCollectionName":"zscluster_dep_h5",
-                                                    "SparseClusterCut":"5",
-                                                    "SparseSeedCut":"5",
-                                                    "SparseZSCut":"5",})
-  hitmaker.add_processor(name="DEPH5CogHitMaker",params={"ClusterCollection":"zscluster_dep_h5",
-                                                    "HitCollectionName":"hit_dep_h5",
-                                                    "SigmaU1":"0.0134",
-                                                    "SigmaU2":"0.0077",
-                                                    "SigmaU3":"0.0077",
-                                                    "SigmaV1":"0.0134",
-                                                    "SigmaV2":"0.0077",
-                                                    "SigmaV3":"0.0077",})  
-  hitmaker.add_processor(name="RawDQM",params={"InputHitCollectionNameVec":"hit_m26 hit_fei4 hit_dep_big hit_dep_h5", "RootFileName":"RawDQM.root"})
-  hitmaker.add_processor(name="TelCorrelator",params={"InputHitCollectionNameVec":"hit_m26 hit_fei4 hit_dep_big hit_dep_h5",
-                                                      "AlignmentDBFileName":"localDB/alignmentDB.root",
-                                                      "OutputRootFileName":"XCorrelator.root",
-                                                      "ParticleMomentum": energy })
-  hitmaker.add_processor(name="LCIOOutput")
 
-  kalman_aligner_1 = Env.create_path('kalman_aligner_1')
-  kalman_aligner_1.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
-  kalman_aligner_1.add_processor(name="AlignTF_LC",params={"InputHitCollectionNameVec":"hit_m26 hit_fei4 hit_dep_big hit_dep_h5",
-                                                           "ExcludeDetector": "",
-                                                           "MaxTrackChi2": "10000000",
-                                                           "MaximumGap": "1",
-                                                           "MinimumHits":"7",
-                                                           "OutlierChi2Cut": "100000000",
-                                                           "ParticleMomentum": energy,
-                                                           "SingleHitSeeding":"0 1"  
-                                                            })
-  kalman_aligner_1.add_processor(name="PreAligner", params={'ErrorsShiftX' : '0 10 10 10 10 10 0 10 10', 
-                                                            'ErrorsShiftY' : '0 10 10 10 10 10 0 10 10', 
-                                                            'ErrorsShiftZ' : '0 0 0 0 0 0 0 0 0', 
-                                                            'ErrorsAlpha'  : '0 0 0 0 0 0 0 0 0',
-                                                            'ErrorsBeta'   : '0 0 0 0 0 0 0 0 0', 
-                                                            'ErrorsGamma'  : '0 0.01 0.01 0.01 0.01 0.01 0 0.01 0.01'})
-
+  # Calibrations are organized in a sequence of calibration paths. 
+  # The calibration paths are collected in a list for later execution
+  calpaths = []
   
-     
+  # Create path for detector level masking of hot channels 
+  mask_path = Env.create_path('mask_path')
+  mask_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : -1 })  
+  
+  rawinput = Processor(name="RawInputProcessor",proctype="EudaqInputProcessor")
+  rawinput.param('FileName', rawfile)
+  mask_path.add_processor(rawinput)
+  
+  mask_path = add_unpackers(mask_path)
    
-  kalman_aligner_2 = Env.create_path('kalman_aligner_2')
-  kalman_aligner_2.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
-  kalman_aligner_2.add_processor(name="AlignTF_TC",params={"InputHitCollectionNameVec":"hit_m26 hit_fei4 hit_dep_big hit_dep_h5",
-                                                           "ExcludeDetector": "",
-                                                           "MaxTrackChi2": "100",
-                                                           "MaximumGap": "1",
-                                                           "MinimumHits":"7",
-                                                           "OutlierChi2Cut": "20",
-                                                           "ParticleMomentum": energy ,
-                                                           "SingleHitSeeding":"0 1"  
-                                                            })
-  kalman_aligner_2.add_processor(name="TelAligner", params={'ErrorsShiftX' : '0 10 10 10 10 10 0 10 10', 
-                                                            'ErrorsShiftY' : '0 10 10 10 10 10 0 10 10', 
-                                                            'ErrorsShiftZ' : '0 10 10 10 10 10 0 10 10', 
-                                                            'ErrorsAlpha'  : '0 0 0 0.01 0 0 0 0.01 0.01',
-                                                            'ErrorsBeta'   : '0 0 0 0.01 0 0 0 0.01 0.01', 
-                                                            'ErrorsGamma'  : '0 0.01 0.01 0.01 0.01 0.01 0 0.01 0.01'})
+  m26hotpixelkiller = Processor(name="M26HotPixelKiller",proctype="HotPixelKiller",)
+  m26hotpixelkiller.param("InputCollectionName", "zsdata_m26")
+  m26hotpixelkiller.param("MaxOccupancy", 0.001)
+  m26hotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-M26.root")
+  m26hotpixelkiller.param("OfflineZSThreshold", 0)
+  mask_path.add_processor(m26hotpixelkiller)
+   
+  fei4hotpixelkiller = Processor(name="FEI4HotPixelKiller", proctype="HotPixelKiller")
+  fei4hotpixelkiller.param("InputCollectionName", "zsdata_fei4")
+  fei4hotpixelkiller.param("MaxOccupancy", 0.001)
+  fei4hotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-FEI4.root")
+  fei4hotpixelkiller.param("OfflineZSThreshold", 0)
+  mask_path.add_processor(fei4hotpixelkiller)
+   
+  pxdhotpixelkiller = Processor(name="PXDHotPixelKiller", proctype="HotPixelKiller")
+  pxdhotpixelkiller.param("InputCollectionName", "zsdata_pxd")
+  pxdhotpixelkiller.param("MaxOccupancy", 0.001)
+  pxdhotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-PXD.root")
+  pxdhotpixelkiller.param("OfflineZSThreshold", 0)
+  mask_path.add_processor(pxdhotpixelkiller)  
+  
+  h5hotpixelkiller = Processor(name="H5HotPixelKiller", proctype="HotPixelKiller")
+  h5hotpixelkiller.param("InputCollectionName", "zsdata_h5")
+  h5hotpixelkiller.param("MaxOccupancy", 0.001)
+  h5hotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-H5.root")
+  h5hotpixelkiller.param("OfflineZSThreshold", 0)
+  mask_path.add_processor(h5hotpixelkiller)  
+  
+  # Add path for masking
+  calpaths.append(mask_path)  
+  
+  # Create path for detector level creation of hits
+  hit_path = Env.create_path('hit_path')
+  hit_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000 }) 
+   
+  hit_path.add_processor(rawinput)  
+  
+  # Create path for all reconstruction up to hits
+  hit_path = add_unpackers(hit_path)    
+  hit_path = add_clusterizers(hit_path)    
+  hit_path = add_hitmakers(hit_path) 
+   
+  hitdqm = Processor(name="RawDQM",proctype="RawHitDQM")
+  hitdqm.param("InputHitCollectionNameVec","hit_m26 hit_fei4 hit_pxd hit_h5")  
+  hitdqm.param("RootFileName","RawDQM.root")
+  hit_path.add_processor(hitdqm)  
+   
+  correlator = Processor(name="TelCorrelator", proctype="Correlator")
+  correlator.param("InputHitCollectionNameVec","hit_m26 hit_fei4 hit_pxd hit_h5")
+  correlator.param("AlignmentDBFileName", "localDB/alignmentDB.root")
+  correlator.param("OutputRootFileName","XCorrelator.root")
+  correlator.param("ReferencePlane","0")
+  correlator.param("ParticleCharge","-1")
+  correlator.param("ParticleMass","0.000511")
+  correlator.param("ParticleMomentum", energy)
+  hit_path.add_processor(correlator)  
+  
+  lciooutput = Processor(name="LCIOOutput",proctype="LCIOOutputProcessor")
+  lciooutput.param("LCIOOutputFile","tmp.slcio")
+  lciooutput.param("LCIOWriteMode","WRITE_NEW")
+  hit_path.add_processor(lciooutput)  
+  
+  # Finished with path for hits
+  calpaths.append(hit_path)  
+  
+  # Create path for pre alignment with loose cut track sample 
+  prealigner_path = Env.create_path('prealigner_path')
+  prealigner_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
+  
+  trackfinder_loosecut = Processor(name="AlignTF_LC",proctype="FastTracker")
+  trackfinder_loosecut.param("InputHitCollectionNameVec","hit_m26 hit_fei4 hit_dep_big hit_dep_h5")
+  trackfinder_loosecut.param("AlignmentDBFileName","localDB/alignmentDB.root")
+  trackfinder_loosecut.param("ExcludeDetector", "")
+  trackfinder_loosecut.param("MaxTrackChi2", 10000000)
+  trackfinder_loosecut.param("MaximumGap", 1)
+  trackfinder_loosecut.param("MinimumHits",7)
+  trackfinder_loosecut.param("OutlierChi2Cut", 100000000)
+  trackfinder_loosecut.param("ParticleCharge","-1")
+  trackfinder_loosecut.param("ParticleMass","0.000511")
+  trackfinder_loosecut.param("ParticleMomentum", energy)
+  trackfinder_loosecut.param("SingleHitSeeding", "0")
+  prealigner_path.add_processor(trackfinder_loosecut)
+   
+  prealigner = Processor(name="PreAligner",proctype="KalmanAligner")
+  prealigner.param("AlignmentDBFileName","localDB/alignmentDB.root")
+  prealigner.param('ErrorsShiftX' , '0 10 10 10 10 10 0 10 10')
+  prealigner.param('ErrorsShiftY' , '0 10 10 10 10 10 0 10 10')
+  prealigner.param('ErrorsShiftZ' , '0 0 0 0 0 0 0 0 0')
+  prealigner.param('ErrorsAlpha'  , '0 0 0 0 0 0 0 0 0')
+  prealigner.param('ErrorsBeta'   , '0 0 0 0 0 0 0 0 0')
+  prealigner.param('ErrorsGamma'  , '0 0.01 0.01 0.01 0.01 0.01 0 0.01 0.01')
+  prealigner_path.add_processor(prealigner)  
 
-  telescope_dqm = Env.create_path('telescope_dqm')
-  telescope_dqm.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
-  telescope_dqm.add_processor(name="AlignTF_TC",params={"InputHitCollectionNameVec":"hit_m26 hit_fei4 hit_dep_big hit_dep_h5",
-                                                           "ExcludeDetector": "",
-                                                           "MaxTrackChi2": "100",
-                                                           "MaximumGap": "1",
-                                                           "MinimumHits":"7",
-                                                           "OutlierChi2Cut": "20",
-                                                           "ParticleMomentum": energy,
-                                                           "SingleHitSeeding":"0 1"  
-                                                            })
-  telescope_dqm.add_processor(name="TelescopeDQM",params={"RootFileName":"TelescopeDQM.root"}) 
+  # Finished with path for prealigner
+  calpaths.append(prealigner_path)  
   
-  # create sequence of calibration paths 
-  telescope_path = [ hotpixelkiller, 
-                     hitmaker, 
-                     kalman_aligner_1, 
-                     kalman_aligner_2, 
-                     kalman_aligner_2, 
-                     kalman_aligner_2, 
-                     telescope_dqm, 
-                   ]
-    
-  calpath = []
-  calpath.extend(telescope_path) 
+  # Create path for alignment with tight cut track sample 
+  aligner_path = Env.create_path('aligner_path')
+  aligner_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
   
+  trackfinder_tightcut = Processor(name="AlignTF_TC",proctype="FastTracker")
+  trackfinder_tightcut.param("InputHitCollectionNameVec","hit_m26 hit_fei4 hit_dep_big hit_dep_h5")
+  trackfinder_tightcut.param("AlignmentDBFileName","localDB/alignmentDB.root")
+  trackfinder_tightcut.param("ExcludeDetector", "")
+  trackfinder_tightcut.param("MaxTrackChi2", 100)
+  trackfinder_tightcut.param("MaximumGap", 1)
+  trackfinder_tightcut.param("MinimumHits",7)
+  trackfinder_tightcut.param("OutlierChi2Cut", 20)
+  trackfinder_tightcut.param("ParticleCharge","-1")
+  trackfinder_tightcut.param("ParticleMass","0.000511")
+  trackfinder_tightcut.param("ParticleMomentum", energy)
+  trackfinder_tightcut.param("SingleHitSeeding", "0")
+  aligner_path.add_processor(trackfinder_tightcut)
+   
+  aligner = Processor(name="Aligner",proctype="KalmanAligner")
+  aligner.param("AlignmentDBFileName","localDB/alignmentDB.root")
+  aligner.param('ErrorsShiftX' , '0 10 10 10 10 10 0 10 10' )
+  aligner.param('ErrorsShiftY' , '0 10 10 10 10 10 0 10 10')
+  aligner.param('ErrorsShiftZ' , '0 10 10 10 10 10 0 10 10')
+  aligner.param('ErrorsAlpha'  , '0 0 0 0.01 0 0 0 0.01 0.01')
+  aligner.param('ErrorsBeta'   , '0 0 0 0.01 0 0 0 0.01 0.01')
+  aligner.param('ErrorsGamma'  , '0 0.01 0.01 0.01 0.01 0.01 0 0.01 0.01')
+  aligner_path.add_processor(aligner)    
   
-  return calpath
+  # Finished with path for aligner
+  # Repeat this 3x
+  calpaths.append(aligner_path)  
+  calpaths.append(aligner_path)
+  calpaths.append(aligner_path)
+   
+  # Creeate path for some track based dqm using current calibrations
+  dqm_path = Env.create_path('dqm_path')
+  dqm_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
+  
+  dqm_path.add_processor(trackfinder_tightcut)
+
+  teldqm = Processor(name="TelescopeDQM", proctype="TrackFitDQM") 
+  teldqm.param("AlignmentDBFileName","localDB/alignmentDB.root")
+  teldqm.param("RootFileName","TelescopeDQM.root")
+  dqm_path.add_processor(teldqm)  
+  
+  # Finished with path for teldqm
+  calpaths.append(dqm_path)
+  
+  return calpaths
 
 
 def create_reco_path(Env, rawfile, gearfile, energy):
@@ -154,83 +303,56 @@ def create_reco_path(Env, rawfile, gearfile, energy):
   Returns a list of tbsw path objects for reconstruciton of a test beam run 
   """
   
-  reco = Env.create_path('reco')
-  reco.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : -1 }) 
-  reco.add_processor(name="RawInputProcessor",params={'FileName': rawfile})
-  reco.add_processor(name="M26Unpacker")
-  reco.add_processor(name="M26Clusterizer")
-  reco.add_processor(name="M26CogHitMaker")
-  reco.add_processor(name="FEI4Unpacker")
-  reco.add_processor(name="FEI4Clusterizer")
-  reco.add_processor(name="FEI4CogHitMaker")
-  reco.add_processor(name="DEPBIGUnpacker",params={'InputCollectionName': 'DEPFET', 'OutputCollectionName':'zsdata_dep_big'})
-  reco.add_processor(name="DEPBIGClusterizer",params={"SparseDataCollectionName":"zsdata_dep_big",
-                                                    "NoiseDBFileName":"localDB/NoiseDB-DEP-BIG.root",
-                                                    "ClusterCollectionName":"zscluster_dep_big",
-                                                    "SparseClusterCut":"5",
-                                                    "SparseSeedCut":"5",
-                                                    "SparseZSCut":"5",})
-  reco.add_processor(name="DEPBIGCogHitMaker",params={"ClusterCollection":"zscluster_dep_big",
-                                                    "HitCollectionName":"hit_dep_big",
-                                                    "SigmaU1":"0.0134",
-                                                    "SigmaU2":"0.0077",
-                                                    "SigmaU3":"0.0077",
-                                                    "SigmaV1":"0.024",
-                                                    "SigmaV2":"0.014",
-                                                    "SigmaV3":"0.014",})    
+  reco_path = Env.create_path('reco_path')
+  reco_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : -1 }) 
   
-  reco.add_processor(name="DEPH5Unpacker",params={'InputCollectionName': 'DEPFE5', 'OutputCollectionName':'zsdata_dep_h5', "Mapping":"Hybrid5"})
-  reco.add_processor(name="DEPH5Clusterizer",params={"SparseDataCollectionName":"zsdata_dep_h5",
-                                                    "NoiseDBFileName":"localDB/NoiseDB-DEP-H5.root",
-                                                    "ClusterCollectionName":"zscluster_dep_h5",
-                                                    "SparseClusterCut":"5",
-                                                    "SparseSeedCut":"5",
-                                                    "SparseZSCut":"5",})
-  reco.add_processor(name="DEPH5CogHitMaker",params={"ClusterCollection":"zscluster_dep_h5",
-                                                    "HitCollectionName":"hit_dep_h5",
-                                                    "SigmaU1":"0.0134",
-                                                    "SigmaU2":"0.0077",
-                                                    "SigmaU3":"0.0077",
-                                                    "SigmaV1":"0.0134",
-                                                    "SigmaV2":"0.0077",
-                                                    "SigmaV3":"0.0077",})  
+  rawinput = Processor(name="RawInputProcessor",proctype="EudaqInputProcessor")
+  rawinput.param('FileName', rawfile) 
+  reco_path.add_processor(rawinput)
   
-  reco.add_processor(name="RecoTF",params={"InputHitCollectionNameVec":"hit_m26 hit_fei4",
-                                                           "ExcludeDetector": "3 8",
-                                                           "MaxTrackChi2": "100",
-                                                           "MaximumGap": "1",
-                                                           "MinimumHits":"6",
-                                                           "OutlierChi2Cut": "20",
-                                                           "ParticleMomentum": energy,
-                                                           "SingleHitSeeding":"0"  
-                                                            })
-   
-  reco.add_processor(name="DEPH5Analyzer",params={"HitCollection":"hit_dep_h5",
-                                                  "DigitCollection":"zsdata_dep_h5",
-                                                  "DUTPlane":8,
-                                                  "ReferencePlane":"7",
-                                                  "MaxResidualU":0.2,
-                                                  "MaxResidualV":0.2,
-                                                  "RootFileName":"Histos-DEPH5.root"})
+  # Create path for all reconstruction up to hits
+  reco_path = add_unpackers(reco_path)    
+  reco_path = add_clusterizers(reco_path)    
+  reco_path = add_hitmakers(reco_path) 
   
-  reco.add_processor(name="DEPBIGAnalyzer",params={"HitCollection":"hit_dep_big",
-                                                   "DigitCollection":"zsdata_dep_big",
-                                                   "DUTPlane":3,
-                                                   "ReferencePlane":"7",
-                                                   "MaxResidualU":0.2,
-                                                   "MaxResidualV":0.2,
-                                                   "RootFileName":"Histos-DEPBIG.root"})
-  
-  #reco.add_processor(name="FEI4Analyzer",params={"HitCollection":"hit_fei4",
-  #                                               "DigitCollection":"zsdata_fei4",
-  #                                               "DUTPlane":7,
-  #                                               "ReferencePlane":"7",
-  #                                               "MaxResidualU":0.2,
-  #                                               "MaxResidualV":0.2,
-  #                                               "RootFileName":"Histos-FEI4.root"})  
-   
-  return [ reco ]  
+  trackfinder = Processor(name="TrackFinder",proctype="FastTracker")
+  trackfinder.param("InputHitCollectionNameVec","hit_m26 hit_fei4")
+  trackfinder.param("AlignmentDBFileName","localDB/alignmentDB.root")
+  trackfinder.param("ExcludeDetector", "3 8")
+  trackfinder.param("MaxTrackChi2", "100")
+  trackfinder.param("MaximumGap", "1")
+  trackfinder.param("MinimumHits","6")
+  trackfinder.param("OutlierChi2Cut", "20")
+  trackfinder.param("ParticleCharge","-1")
+  trackfinder.param("ParticleMass","0.000511")
+  trackfinder.param("ParticleMomentum", energy)
+  trackfinder.param("SingleHitSeeding", "0")
+  reco_path.add_processor(trackfinder)  
 
+  hybrid_analyzer = Processor(name="HybridAnalyzer",proctype="PixelDUTAnalyzer")
+  hybrid_analyzer.param("HitCollection","hit_dep_h5")  
+  hybrid_analyzer.param("DigitCollection","zsdata_dep_h5")
+  hybrid_analyzer.param("AlignmentDBFileName","localDB/alignmentDB.root")
+  hybrid_analyzer.param("DUTPlane","8")
+  hybrid_analyzer.param("ReferencePlane","7")
+  hybrid_analyzer.param("MaxResidualU","0.2")
+  hybrid_analyzer.param("MaxResidualU","0.2")
+  hybrid_analyzer.param("RootFileName","Histos-DEPH5.root")
+  reco_path.add_processor(hybrid_analyzer)  
+
+  pxd_analyzer = Processor(name="PXDAnalyzer",proctype="PixelDUTAnalyzer")
+  pxd_analyzer.param("HitCollection","hit_dep_big")  
+  pxd_analyzer.param("DigitCollection","zsdata_dep_big")
+  pxd_analyzer.param("AlignmentDBFileName","localDB/alignmentDB.root")
+  pxd_analyzer.param("DUTPlane","3")
+  pxd_analyzer.param("ReferencePlane","7")
+  pxd_analyzer.param("MaxResidualU","0.2")
+  pxd_analyzer.param("MaxResidualU","0.2")
+  pxd_analyzer.param("RootFileName","Histos-DEPBIG.root")
+  reco_path.add_processor(pxd_analyzer)   
+  
+  return [ reco_path ]  
+  
   
 def calibrate(params):
   
@@ -241,10 +363,10 @@ def calibrate(params):
   CalObj = Calibration(steerfiles=steerfiles, name=caltag + '-cal') 
   
   # Create list of calibration paths
-  calpath = create_calibration_path(CalObj, rawfile, gearfile, energy)
+  calpaths = create_calibration_path(CalObj, rawfile, gearfile, energy)
   
   # Run the calibration steps 
-  CalObj.calibrate(path=calpath,ifile=rawfile,caltag=caltag)  
+  CalObj.calibrate(paths=calpaths,ifile=rawfile,caltag=caltag)  
    
   
 def reconstruct(params):

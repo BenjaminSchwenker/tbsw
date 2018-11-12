@@ -92,5 +92,3 @@ echo "export PATH="${MARLIN}/bin:${PATH}"" >> workspace/init_tbsw.sh
 echo "export MARLIN_DLL="${TBSW_HOME}/TBReco/lib/libTBReco.so:${TBSW_HOME}/EudaqInput/lib/libEudaqInput.so:"" >> workspace/init_tbsw.sh
 echo "" >> workspace/init_tbsw.sh
 
-echo "${TBSW_HOME}/Marlin/bin/Marlin -x > tbsw/processors.xml" >> workspace/init_tbsw.sh
-
