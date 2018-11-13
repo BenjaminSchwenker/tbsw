@@ -56,7 +56,7 @@ def create_mc_x0reco_path(Env, rawfile, gearfile, numberofevents, usesinglehitse
 
 
 # Processor settings and sequence during telescope calibration
-def create_x0calibration_path(Env, rawfile, gearfile, nevents_cali):
+def create_x0calibration_path(Env, rawfile, gearfile, nevents_cali,useclusterdb):
   """
   Returns a list of tbsw path objects to calibrate the tracking telescope
   """
@@ -149,26 +149,30 @@ def create_x0calibration_path(Env, rawfile, gearfile, nevents_cali):
              kalman_aligner_2, 
              kalman_aligner_2, 
              kalman_aligner_2, 
-             telescope_dqm, 
-             cluster_calibration_1,
-             kalman_aligner_3, 
-             kalman_aligner_3, 
-             kalman_aligner_3,  
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             cluster_calibration_2, 
-             correlator2, 
-             kalman_aligner_4, 
-             kalman_aligner_5, 
-             kalman_aligner_5, 
-             kalman_aligner_5, 
-             telescope_dqm2, 
+             telescope_dqm,
            ]
+  calpath2= [ cluster_calibration_1,
+              kalman_aligner_3, 
+              kalman_aligner_3, 
+              kalman_aligner_3,  
+              cluster_calibration_2, 
+              cluster_calibration_2, 
+              cluster_calibration_2, 
+              cluster_calibration_2, 
+              cluster_calibration_2, 
+              cluster_calibration_2, 
+              cluster_calibration_2, 
+              cluster_calibration_2, 
+              correlator2, 
+              kalman_aligner_4, 
+              kalman_aligner_5, 
+              kalman_aligner_5, 
+              kalman_aligner_5, 
+              telescope_dqm2, 
+           ]
+
+  if useclusterdb:
+    calpath.extend(calpath2)
   
   return calpath
 
