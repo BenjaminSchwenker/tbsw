@@ -12,16 +12,7 @@ parser.add_argument('--pattern', dest='pattern', default='*', type=str, help='Pa
 args = parser.parse_args()
   
   
-for trackfile in glob.glob('root-files/Histos-FEI4-{}-reco.root'.format(args.pattern)): 
-        
-    ofile = 'Residuals-' + os.path.basename(trackfile)
-    residuals.plot(inputfilename = trackfile, histofilename = ofile, basecut = "hasTrack==0", nbins=201, urange=400, vrange=400)
-    
-    ofile = 'Efficiency-' + os.path.basename(trackfile)  
-    efficiency.plot(inputfilename=trackfile, histofilename=ofile, basecut="trackNHits==7 && iEvt>=0 && nDutDigits>0", matchcut="hasHit==0", uaxis=(80,0,80), vaxis=(336,0,336))
-    
-
-for trackfile in glob.glob('root-files/Histos-DEPH5-{}-reco.root'.format(args.pattern)): 
+for trackfile in glob.glob('root-files/Histos-H5-{}-reco.root'.format(args.pattern)): 
         
     ofile = 'Residuals-' + os.path.basename(trackfile)
     residuals.plot(inputfilename = trackfile, histofilename = ofile, basecut = "hasTrack==0", nbins=201, urange=400, vrange=400)
@@ -30,7 +21,7 @@ for trackfile in glob.glob('root-files/Histos-DEPH5-{}-reco.root'.format(args.pa
     efficiency.plot(inputfilename=trackfile, histofilename=ofile, basecut="trackNHits==7 && iEvt>=0 && nDutDigits>2", matchcut="hasHit==0", uaxis=(10,0,64), vaxis=(10,0,64))
     
   
-for trackfile in glob.glob('root-files/Histos-DEPBIG-{}-reco.root'.format(args.pattern)): 
+for trackfile in glob.glob('root-files/Histos-PXD-{}-reco.root'.format(args.pattern)): 
         
     ofile = 'Residuals-' + os.path.basename(trackfile)
     residuals.plot(inputfilename=trackfile, histofilename=ofile, basecut="hasTrack==0", nbins=201, urange=400, vrange=400)

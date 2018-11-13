@@ -4,6 +4,7 @@ Some helper code to use Marlin with pyhton scripts
 :author: benjamin.schwenker@phys.uni-goettinge.de  
 """
 
+import copy
 import os
 import shutil
 import subprocess
@@ -25,11 +26,12 @@ class Processor(object):
     :@proctype: processor type string
     :@params: parameter dictionary
     """    
-    self.name = name
-    self.proctype = proctype
     self.params = {}
     self.params.update(params)
     
+    self.name = name
+    self.proctype = proctype
+
   def param(self, name, value):
     """  
     :@name: parameter name string
@@ -102,14 +104,22 @@ class Path(object):
     for key, value in self.globals.items():   
       parameter = global_node.find("./parameter[@name='%s']" % str(key))
       parameter.set('value', str(value))      
-      
+        
     # create processor nodes   
-    for processor in self.processors: 
+    for processor in self.processors:
+      # find processor node in basetree 
       xpath="./processor[@type='%s']" % str(processor.proctype)
-      processor_node = basetree.getroot().find(xpath)
+      processor_node_base = basetree.getroot().find(xpath)
+      
+      # make a copy to insert into your new tree
+      processor_node = copy.deepcopy(processor_node_base)      
       
       # set the processors name
       processor_node.set('name',str(processor.name))
+      
+      # find and remove all optional parameters 
+      for parameter in processor_node.findall( "./parameter[@isOptional]" ):
+        processor_node.remove(parameter)      
       
       # override processor parameter as needed 
       for key, value in processor.params.items():   

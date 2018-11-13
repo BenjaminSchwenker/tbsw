@@ -5,7 +5,6 @@ Author: Benjamin Schwenker <benjamin.schwenker@phys.uni-goettingen.de>
 """
 
 from tbsw import *
-import multiprocessing
 
 
 def add_unpackers(path):
@@ -221,7 +220,7 @@ def create_calibration_path(Env, rawfile, gearfile, energy):
   prealigner_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
   
   trackfinder_loosecut = Processor(name="AlignTF_LC",proctype="FastTracker")
-  trackfinder_loosecut.param("InputHitCollectionNameVec","hit_m26 hit_fei4 hit_dep_big hit_dep_h5")
+  trackfinder_loosecut.param("InputHitCollectionNameVec","hit_m26 hit_fei4 hit_pxd hit_h5")
   trackfinder_loosecut.param("AlignmentDBFileName","localDB/alignmentDB.root")
   trackfinder_loosecut.param("ExcludeDetector", "")
   trackfinder_loosecut.param("MaxTrackChi2", 10000000)
@@ -232,8 +231,10 @@ def create_calibration_path(Env, rawfile, gearfile, energy):
   trackfinder_loosecut.param("ParticleMass","0.000511")
   trackfinder_loosecut.param("ParticleMomentum", energy)
   trackfinder_loosecut.param("SingleHitSeeding", "0")
+  trackfinder_loosecut.param("MaxResidualU","0.5")
+  trackfinder_loosecut.param("MaxResidualV","0.5")
   prealigner_path.add_processor(trackfinder_loosecut)
-   
+ 
   prealigner = Processor(name="PreAligner",proctype="KalmanAligner")
   prealigner.param("AlignmentDBFileName","localDB/alignmentDB.root")
   prealigner.param('ErrorsShiftX' , '0 10 10 10 10 10 0 10 10')
@@ -252,7 +253,7 @@ def create_calibration_path(Env, rawfile, gearfile, energy):
   aligner_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
   
   trackfinder_tightcut = Processor(name="AlignTF_TC",proctype="FastTracker")
-  trackfinder_tightcut.param("InputHitCollectionNameVec","hit_m26 hit_fei4 hit_dep_big hit_dep_h5")
+  trackfinder_tightcut.param("InputHitCollectionNameVec","hit_m26 hit_fei4 hit_pxd hit_h5")
   trackfinder_tightcut.param("AlignmentDBFileName","localDB/alignmentDB.root")
   trackfinder_tightcut.param("ExcludeDetector", "")
   trackfinder_tightcut.param("MaxTrackChi2", 100)
@@ -263,6 +264,8 @@ def create_calibration_path(Env, rawfile, gearfile, energy):
   trackfinder_tightcut.param("ParticleMass","0.000511")
   trackfinder_tightcut.param("ParticleMomentum", energy)
   trackfinder_tightcut.param("SingleHitSeeding", "0")
+  trackfinder_tightcut.param("MaxResidualU","0.4")
+  trackfinder_tightcut.param("MaxResidualV","0.4")
   aligner_path.add_processor(trackfinder_tightcut)
    
   aligner = Processor(name="Aligner",proctype="KalmanAligner")
@@ -327,28 +330,30 @@ def create_reco_path(Env, rawfile, gearfile, energy):
   trackfinder.param("ParticleMass","0.000511")
   trackfinder.param("ParticleMomentum", energy)
   trackfinder.param("SingleHitSeeding", "0")
+  trackfinder.param("MaxResidualU","0.4")
+  trackfinder.param("MaxResidualV","0.4")
   reco_path.add_processor(trackfinder)  
 
   hybrid_analyzer = Processor(name="HybridAnalyzer",proctype="PixelDUTAnalyzer")
-  hybrid_analyzer.param("HitCollection","hit_dep_h5")  
-  hybrid_analyzer.param("DigitCollection","zsdata_dep_h5")
+  hybrid_analyzer.param("HitCollection","hit_h5")  
+  hybrid_analyzer.param("DigitCollection","zsdata_h5")
   hybrid_analyzer.param("AlignmentDBFileName","localDB/alignmentDB.root")
   hybrid_analyzer.param("DUTPlane","8")
   hybrid_analyzer.param("ReferencePlane","7")
   hybrid_analyzer.param("MaxResidualU","0.2")
   hybrid_analyzer.param("MaxResidualU","0.2")
-  hybrid_analyzer.param("RootFileName","Histos-DEPH5.root")
+  hybrid_analyzer.param("RootFileName","Histos-H5.root")
   reco_path.add_processor(hybrid_analyzer)  
 
   pxd_analyzer = Processor(name="PXDAnalyzer",proctype="PixelDUTAnalyzer")
-  pxd_analyzer.param("HitCollection","hit_dep_big")  
-  pxd_analyzer.param("DigitCollection","zsdata_dep_big")
+  pxd_analyzer.param("HitCollection","hit_pxd")  
+  pxd_analyzer.param("DigitCollection","zsdata_pxd")
   pxd_analyzer.param("AlignmentDBFileName","localDB/alignmentDB.root")
   pxd_analyzer.param("DUTPlane","3")
   pxd_analyzer.param("ReferencePlane","7")
   pxd_analyzer.param("MaxResidualU","0.2")
   pxd_analyzer.param("MaxResidualU","0.2")
-  pxd_analyzer.param("RootFileName","Histos-DEPBIG.root")
+  pxd_analyzer.param("RootFileName","Histos-PXD.root")
   reco_path.add_processor(pxd_analyzer)   
   
   return [ reco_path ]  

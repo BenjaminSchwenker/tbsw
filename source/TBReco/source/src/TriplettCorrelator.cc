@@ -72,7 +72,7 @@ TriplettCorrelator::TriplettCorrelator() : Processor("TriplettCorrelator")
                    
    registerProcessorParameter ("UpdateAlignment",
                               "Update alignment DB using offset corrections (true/false)?",
-                              _updateAlignment, static_cast <bool> (false) ); 
+                              _updateAlignment, static_cast <bool> (true) ); 
  
    registerProcessorParameter ("NewAlignment",
                               "Start alignment from scratch (true/false)?",

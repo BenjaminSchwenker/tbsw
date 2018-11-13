@@ -144,8 +144,13 @@ void Processor::setParameters( StringParameters* parameters) {
 	  if ( isOutputCollectionName( p->name() ) )
 	    stream << "\" lcioOutType=\"" << _outTypeMap[ p->name() ]  ;
         
+      if ( p->isOptional() )  
+        stream  << "\" isOptional=\"" << "true";  
+		         
+
       stream  << "\" value=\"" << p->defaultValue() << "\" />"
-		      << std::endl ; 
+		      << std::endl ;
+
     }
     
     stream << "</processor>" 

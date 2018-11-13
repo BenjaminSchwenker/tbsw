@@ -65,7 +65,7 @@ FastTracker::FastTracker() : Processor("FastTracker")
    
    registerOutputCollection(LCIO::TRACK,"OutputTrackCollectionName",
                            "Collection name for fitted tracks",
-                           _trackCollectionName, string ("fittracks"));
+                           _trackCollectionName, string ("tracks"));
     
    registerOutputCollection (LCIO::TRACKERHIT, "HitCollectionName",
                             "Name of not used hit collection",
