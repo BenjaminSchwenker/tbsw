@@ -9,7 +9,7 @@ class SiPlanesLayerLayout;
 
 /**Geometry properties of a pixel beam telescope needed for reconstruction code.
    *  @author T. Klimkovich, DESY
-   *  @version $Id: 
+   *  @author B. Schwenker, Uni Göttingen 
    */
 	
 class SiPlanesParameters : virtual public GearParameters {

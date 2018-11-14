@@ -6,6 +6,9 @@
 #include "gearimpl/GearParametersImpl.h"
 #include "gearimpl/SiPlanesLayerLayoutImpl.h"
 
+#include <vector>
+#include <tuple>
+
 
 namespace gear {
 
@@ -14,7 +17,7 @@ class SiPlanesLayerLayout;
   /** Abstract description of layers in pixel beam telescope.
    * 
    *  @author T Klimkovich, DESY
-   *  @version $Id: 
+   *  @author B. Schwenker, Uni Göttingen
    */
 class SiPlanesParametersImpl : public GearParametersImpl, public SiPlanesParameters {
 
@@ -30,75 +33,66 @@ public:
   
   /** Adding a Layer to the SiPlanes detector
    *
-   * @param layerID            ID of nonsensitive volume of telescope plane
-   * @param layerPositionX     x position of nonsensitive volume of telescope plane (mm)
-   * @param layerPositionY     y position of nonsensitive volume of telescope plane (mm)
-   * @param layerPositionZ     z position of nonsensitive volume of telescope plane (mm)
-   * @param layerSizeX         size in x direction of nonsensitive volume of telescope plane (mm)
-   * @param layerSizeY         size in y direction of nonsensitive volume of telescope plane (mm)
-   * @param layerThickness     the thickness of nonsensitive volume of telescope plane (mm)
-   * @param layerRadLenght     the radiation lenght of nonsensitive volume of telescope plane (mm)
-   * @param sensitiveID        ID of sensitive volume of telescope plane
-   * @param sensitivePixType   PixType of sensitive volume of telescope plane
-   * @param sensitivePositionX x position of sensitive volume of telescope plane (mm)
-   * @param sensitivePositionY y position of sensitive volume of telescope plane (mm)
-   * @param sensitivePositionZ z position of sensitive volume of telescope plane (mm)
-   * @param sensitiveSizeX     size in x direction of sensitive volume of telescope plane (mm)
-   * @param sensitiveSizeY     size in y direction of sensitive volume of telescope plane (mm)
-   * @param sensitiveThickness the thickness of sensitive volume of telescope plane (mm)
-   * @param sensitiveNpixelX   number of pixels in x direction of the sensitive area of telescope plane
-   * @param sensitiveNpixelY   number of pixels in y direction of the sensitive area of telescope plane
-   * @param sensitivePitchX    x size of pitch of sensitive area of telescope plane (mm)
-   * @param sensitivePitchY    y size of pitch of sensitive area of telescope plane (mm)
-   * @param sensitiveResolutionX intrinsic resolution in X of sensitive area of telescope plane (mm) 
-   * @param sensitiveResolutionY intrinsic resolution in Y of sensitive area of telescope plane (mm)
+   * @param sensitiveID          ID of sensitive volume of telescope plane
+   * @param sensitivePositionX   x position of sensitive volume of telescope plane (mm)
+   * @param sensitivePositionY   y position of sensitive volume of telescope plane (mm)
+   * @param sensitivePositionZ   z position of sensitive volume of telescope plane (mm)
+   * @param sensitiveThickness   the thickness of sensitive volume of telescope plane (mm)
+   * @param sensitiveRadLenght   the radiation lenght of sensitive volume of telescope plane (mm)
+   * @param sensitiveAtomicNum   the atomic number Z of sensitive volume of telescope plane 
+   * @param sensitiveAtomicMass  the atomic mass A of sensitive volume of telescope plane  
    * @param sensitiveEulerAlpha  Euler alpha angle of sensitive area of telescope plane (deg)
    * @param sensitiveEulerBeta   Euler beta angle of sensitive area of telescope plane (deg)
    * @param sensitiveEulerGamma  Euler gamma angle of sensitive area of telescope plane (deg)
-   * @param sensitiveRotation1 = cos(theta): element (11) of the rotation matrix of sensitive area of telescope plane
-   * @param sensitiveRotation2 = -sin(theta): element (12) of the rotation matrix of sensitive area of telescope plane
-   * @param sensitiveRotation3 = sin(theta): element (21) of the rotation matrix of sensitive area of telescope plane
-   * @param sensitiveRotation4 = cos(theta): element (22) of the rotation matrix of sensitive area of telescope plane
-   * @param sensitiveRadLenght the radiation lenght of sensitive area of telescope plane (mm)
+   * @param sensitiveRotation1   = cos(theta): element (11) of the rotation matrix of sensitive area of telescope plane
+   * @param sensitiveRotation2   = -sin(theta): element (12) of the rotation matrix of sensitive area of telescope plane
+   * @param sensitiveRotation3   = sin(theta): element (21) of the rotation matrix of sensitive area of telescope plane
+   * @param sensitiveRotation4   = cos(theta): element (22) of the rotation matrix of sensitive area of telescope plane
+   * @param sensitiveUCells      numbering and pitches for pixel cells along sensitive u axis   
+   * @param sensitiveVCells      numbering and pitches for pixel cells along sensitive v axis   
+   * @param layerSizeX          size in x direction of nonsensitive volume of telescope plane (mm)
+   * @param layerSizeY          size in y direction of nonsensitive volume of telescope plane (mm)
+   * @param layerThickness      the thickness of nonsensitive volume of telescope plane (mm)
+   * @param layerRadLenght      the radiation lenght of nonsensitive volume of telescope plane (mm)
+   * @param layerAtomicNum      the atomic number Z of ladder volume  of telescope plane 
+   * @param layerAtomicMass     the atomic mass A of ladder volume of telescope plane  
    */
-  virtual void addLayer(int layerID,
-                        double layerPositionX, double layerPositionY, double layerPositionZ,
-			double layerSizeX, double layerSizeY, double layerThickness,
-			double layerRadLength,
-			// sensitive
-			int sensitiveID, int sensitivePixType,
+  virtual void addLayer( 
+            int sensitiveID, 
 			double sensitivePositionX, double sensitivePositionY, double sensitivePositionZ,
-			double sensitiveSizeX, double sensitiveSizeY, double sensitiveThickness,
-			int sensitiveNpixelX, int sensitiveNpixelY,
-			double sensitivePitchX,double sensitivePitchY,
-			double sensitiveResolutionX, double sensitiveResolutionY,
-                        double sensitiveEulerAlpha,
-                        double sensitiveEulerBeta,
-                        double sensitiveEulerGamma,
+			double sensitiveThickness, double sensitiveRadLength,
+            double sensitiveAtomicNum, double sensitiveAtomicMass,
+            double sensitiveEulerAlpha,
+            double sensitiveEulerBeta,
+            double sensitiveEulerGamma,
 			double sensitiveRotation1,
 			double sensitiveRotation2,
 			double sensitiveRotation3,
 			double sensitiveRotation4,
-			double sensitiveRadLength)
+            std::vector< std::tuple<int,int,double> > sensitiveUCells,
+            std::vector< std::tuple<int,int,double> > sensitiveVCells, 
+			double layerSizeX, double layerSizeY, 
+            double layerThickness, double layerRadLength,
+			double layerAtomicNum, double layerAtomicMass
+			)
   {
-    _layer.addLayer( layerID,
-                     layerPositionX, layerPositionY, layerPositionZ,
-                     layerSizeX, layerSizeY, layerThickness,
-		     layerRadLength,
-		     sensitiveID, sensitivePixType,
-                     sensitivePositionX, sensitivePositionY, sensitivePositionZ,
-		     sensitiveSizeX, sensitiveSizeY, sensitiveThickness,
-		     sensitiveNpixelX, sensitiveNpixelY,
-		     sensitivePitchX, sensitivePitchY,
-		     sensitiveResolutionX, sensitiveResolutionY,
-                     sensitiveEulerAlpha,
-                     sensitiveEulerBeta,
-                     sensitiveEulerGamma,
-		     sensitiveRotation1,
-		     sensitiveRotation2,
-		     sensitiveRotation3,
-		     sensitiveRotation4,
-		     sensitiveRadLength ) ;
+    _layer.addLayer(
+            sensitiveID, 
+			sensitivePositionX, sensitivePositionY, sensitivePositionZ,
+			sensitiveThickness, sensitiveRadLength,
+            sensitiveAtomicNum, sensitiveAtomicMass,
+            sensitiveEulerAlpha,
+            sensitiveEulerBeta,
+            sensitiveEulerGamma,
+			sensitiveRotation1,
+			sensitiveRotation2,
+			sensitiveRotation3,
+			sensitiveRotation4,
+            sensitiveUCells,
+            sensitiveVCells, 
+			layerSizeX, layerSizeY, 
+            layerThickness, layerRadLength,
+			layerAtomicNum, layerAtomicMass ) ;
     return ;
   }
    

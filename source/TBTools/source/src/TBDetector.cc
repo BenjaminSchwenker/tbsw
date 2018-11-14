@@ -13,8 +13,10 @@
 #include <TH1F.h>
 #include <TFile.h>
 
-// Include CLHEP header files
+// Include CLHEP
 #include <CLHEP/Matrix/DiagMatrix.h>
+#include <CLHEP/Matrix/Matrix.h>
+#include <CLHEP/Matrix/Vector.h>
 
 // Include Gear header files
 #include <gear/GEAR.h>
@@ -95,14 +97,14 @@ void TBDetector::ReadGearConfiguration( )
   // Sorting all sensors according to position along beam 
   
   _numberOfSensors = siPlanesLayerLayout->getNLayers();    
-  int * planeSort = new int[_numberOfSensors];
-  double * planeZPosition = new double[_numberOfSensors];
+  std::vector<int> planeSort;  
+  std::vector<double> planeZPosition;
    
   for(int ipl=0; ipl < _numberOfSensors; ipl++) {
-    planeZPosition[ipl]=  siPlanesLayerLayout->getSensitivePositionZ(ipl);
-    planeSort[ipl]=ipl; 
+    planeZPosition.push_back( siPlanesLayerLayout->getSensitivePositionZ(ipl) );
+    planeSort.push_back( ipl ); 
   }
-   
+     
   bool sorted;
   do {
      sorted=false;
@@ -137,7 +139,7 @@ void TBDetector::ReadGearConfiguration( )
     int ilayer = planeSort[ipl];
     
     // Set device type 
-    int Type = siPlanesLayerLayout->getSensitivePixelType(ilayer);  
+    int Type = 0; //siPlanesLayerLayout->getSensitivePixelType(ilayer);  
     adet.SetDeviceType(Type);
      
     // Set DAQ ID   
@@ -145,23 +147,36 @@ void TBDetector::ReadGearConfiguration( )
     adet.SetDAQID(ID);
     _indexMap[ID] = ipl;
       
+    // NEW CODE NEEDED FOR PITCH CHANGES
+    for (auto cellGroup : siPlanesLayerLayout->getSensitiveVCells( ipl ) ) {
+      int sMinCell = std::get<0>(cellGroup);
+      int sMaxCell = std::get<1>(cellGroup);
+      double sPitch = std::get<2>(cellGroup);   
+    }
+    
+    for (auto cellGroup : siPlanesLayerLayout->getSensitiveUCells( ipl ) ) {
+      int sMinCell = std::get<0>(cellGroup);
+      int sMaxCell = std::get<1>(cellGroup);
+      double sPitch = std::get<2>(cellGroup);   
+    }
+
     // Set other stuff  
-    int NColumns = siPlanesLayerLayout->getSensitiveNpixelX(ilayer);
+    int NColumns = 100; //siPlanesLayerLayout->getSensitiveNpixelX(ilayer);
     adet.SetNColumns(NColumns); 
     
-    int NRows = siPlanesLayerLayout->getSensitiveNpixelY(ilayer); 
+    int NRows = 100; //siPlanesLayerLayout->getSensitiveNpixelY(ilayer); 
     adet.SetNRows(NRows);
       
-    double PitchU = siPlanesLayerLayout->getSensitivePitchX(ilayer);
+    double PitchU = 1; //siPlanesLayerLayout->getSensitivePitchX(ilayer);
     adet.SetPitchU(PitchU);
     
-    double PitchV = siPlanesLayerLayout->getSensitivePitchY(ilayer);
+    double PitchV = 1; //siPlanesLayerLayout->getSensitivePitchY(ilayer);
     adet.SetPitchV(PitchV);
     
-    double ResoU = siPlanesLayerLayout->getSensitiveResolutionX(ilayer);
+    double ResoU = 1; //siPlanesLayerLayout->getSensitiveResolutionX(ilayer);
     adet.SetResolutionU(ResoU);
     
-    double ResoV = siPlanesLayerLayout->getSensitiveResolutionY(ilayer);
+    double ResoV = 1; //siPlanesLayerLayout->getSensitiveResolutionY(ilayer);
     adet.SetResolutionV(ResoV);
      
     double SensThick = siPlanesLayerLayout->getSensitiveThickness(ilayer);
@@ -182,10 +197,10 @@ void TBDetector::ReadGearConfiguration( )
     double LadderSizeY = siPlanesLayerLayout->getLayerSizeY(ilayer); 
     adet.SetModuleBoxSizeV(LadderSizeY); 
     
-    double SensSizeX = siPlanesLayerLayout->getSensitiveSizeX(ilayer); 
+    double SensSizeX = 1; //siPlanesLayerLayout->getSensitiveSizeX(ilayer); 
     adet.SetSensitiveSizeU(SensSizeX); 
     
-    double SensSizeY = siPlanesLayerLayout->getSensitiveSizeY(ilayer); 
+    double SensSizeY = 1; //siPlanesLayerLayout->getSensitiveSizeY(ilayer); 
     adet.SetSensitiveSizeV(SensSizeY); 
        
     // Discrete rotation frame 
@@ -258,11 +273,7 @@ void TBDetector::ReadGearConfiguration( )
     _DetVec[ipl] = adet;
     
   }
-  
-  // Clean up 
-  delete [] planeSort ; 
-  delete [] planeZPosition ;   
-  
+    
 }
 
 // 
