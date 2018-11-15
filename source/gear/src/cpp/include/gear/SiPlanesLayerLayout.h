@@ -30,15 +30,15 @@ public:
      */
     virtual double getLayerRadLength(int layerIndex) const = 0;
     
-    /** Size in x direction of nonsensitive volume of layer layerIndex - layer indexing starts at 0
+    /** Size in u direction of nonsensitive volume of layer layerIndex - layer indexing starts at 0
      *  for the layer closest to the beam source. 
      */	
-    virtual double getLayerSizeX(int layerIndex) const = 0;
+    virtual double getLayerSizeU(int layerIndex) const = 0;
      
-    /** Size in y direction of nonsensitive volume of layer layerIndex - layer indexing starts at 0
+    /** Size in v direction of nonsensitive volume of layer layerIndex - layer indexing starts at 0
      *  for the layer closest to the beam source. 
      */	
-    virtual double getLayerSizeY(int layerIndex) const = 0;
+    virtual double getLayerSizeV(int layerIndex) const = 0;
     
     /** Atomic number of nonsensitive volume of layer layerIndex - layer indexing starts at 0
      *  for the layer closest to the beam source. 

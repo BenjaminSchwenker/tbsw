@@ -313,14 +313,14 @@ void RawHitDQM::bookHistos() {
                 
     histoName = "hsigma_hit_u_det"+to_string( ipl );
     histoTitle ="Cluster sigma u"; 
-    max = 10*adet.GetResolutionU();
+    max = 10*adet.GetSensitiveSizeU()/(adet.GetNCellsU()+1); 
     _histoMap[ histoName  ] = new TH1D(histoName.c_str(), histoTitle.c_str(), 400, 0, max); 
     _histoMap[ histoName  ]->SetXTitle("cluster sigma u [mm]"); 
     _histoMap[ histoName  ]->SetYTitle("number of cluster");
     
     histoName = "hsigma_hit_v_det"+to_string( ipl );
     histoTitle ="Cluster sigma v"; 
-    max = 10*adet.GetResolutionV();
+    max = 10*adet.GetSensitiveSizeV()/(adet.GetNCellsV()+1); 
     _histoMap[ histoName  ] = new TH1D(histoName.c_str(), histoTitle.c_str(), 400, 0, max);
     _histoMap[ histoName  ]->SetXTitle("cluster sigma v [mm]"); 
     _histoMap[ histoName  ]->SetYTitle("number of cluster"); 
@@ -331,7 +331,7 @@ void RawHitDQM::bookHistos() {
     _histoMap[ histoName  ]->SetXTitle("uv correlation coefficient"); 
     _histoMap[ histoName  ]->SetYTitle("number of cluster"); 
    
-    double  uBox = safetyFactor * 0.5 * adet.GetModuleBoxSizeU();  
+    double  uBox = safetyFactor * 0.5 * adet.GetLadderSizeU();  
     int uBins = adet.GetNColumns();             
     
     histoName = "hhit_u_det"+to_string( ipl );
@@ -339,7 +339,7 @@ void RawHitDQM::bookHistos() {
     _histoMap[ histoName ] = new TH1D(histoName.c_str(), histoTitle.c_str(), uBins , -uBox, +uBox); 
     _histoMap[ histoName ]->SetXTitle("cluster u [mm]"); 
     
-    double  vBox = safetyFactor * 0.5 * adet.GetModuleBoxSizeV();
+    double  vBox = safetyFactor * 0.5 * adet.GetLadderSizeV();
     int vBins = adet.GetNRows(); 
     
     histoName = "hhit_v_det"+to_string( ipl );

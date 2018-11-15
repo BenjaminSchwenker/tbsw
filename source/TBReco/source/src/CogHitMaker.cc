@@ -211,12 +211,12 @@ void CogHitMaker::processEvent(LCEvent * evt)
     if ( myCluster.getUSize() == 1) cov_u = pow(_SigmaU1,2);
     else if ( myCluster.getUSize() == 2) cov_u = pow(_SigmaU2,2); 
     else if ( myCluster.getUSize() == 3) cov_u = pow(_SigmaU3,2); 
-    else cov_u = pow(myCluster.getUSize()*Det.GetPitchU()/TMath::Sqrt(12),2);  
+    else cov_u = pow(myCluster.getUSize()*Det.GetPitchU(myCluster.getVStart(), myCluster.getUStart())/TMath::Sqrt(12),2);  
      
     if ( myCluster.getVSize() == 1) cov_v = pow(_SigmaV1,2);
     else if ( myCluster.getVSize() == 2) cov_v = pow(_SigmaV2,2);
     else if ( myCluster.getVSize() == 3) cov_v = pow(_SigmaV3,2);
-    else cov_v = pow(myCluster.getVSize()*Det.GetPitchV()/TMath::Sqrt(12),2);
+    else cov_v = pow(myCluster.getVSize()*Det.GetPitchV(myCluster.getVStart(), myCluster.getUStart())/TMath::Sqrt(12),2);
      
     // = 1 means the cluster is marked bad 
     unsigned short clsType = 0; 

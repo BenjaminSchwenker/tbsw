@@ -573,8 +573,8 @@ namespace depfet {
       
       // Local track parameters 
       
-      double  uBox = 1.1 * 0.5 * adet.GetModuleBoxSizeU();
-      double  vBox = 1.1 * 0.5 * adet.GetModuleBoxSizeV();
+      double  uBox = 1.1 * 0.5 * adet.GetLadderSizeU();
+      double  vBox = 1.1 * 0.5 * adet.GetLadderSizeV();
       
       histoName = "htrk_dir_truth_det"+to_string( ipl ); 
       _histoMap2D[ histoName  ] = new TH2D(histoName.c_str(), "",1000, -0.03, 0.03,1000, -0.03, 0.03); 
@@ -636,13 +636,13 @@ namespace depfet {
       // Local track parameter errors 
       
       histoName = "hsigma_u_det"+to_string( ipl ); 
-      max = 100*adet.GetResolutionU();
+      max = 100*adet.GetSensitiveSizeU()/(adet.GetNCellsU()+1); 
       _histoMap[ histoName  ] = new TH1D(histoName.c_str(), "", 8000, 0, max); 
       _histoMap[ histoName  ]->SetXTitle("sigma u [mm]"); 
       _histoMap[ histoName  ]->SetYTitle("tracks"); 
        
       histoName = "hsigma_v_det"+to_string( ipl );
-      max = 100*adet.GetResolutionV();
+      max = 100*adet.GetSensitiveSizeV()/(adet.GetNCellsV()+1); 
       _histoMap[ histoName  ] = new TH1D(histoName.c_str(), "", 8000, 0, max);
       _histoMap[ histoName  ]->SetXTitle("sigma v [mm]"); 
       _histoMap[ histoName  ]->SetYTitle("tracks"); 
@@ -701,15 +701,15 @@ namespace depfet {
       _histoMap[histoName]->SetYTitle("tracks");    
     
       histoName = "hresU_det"+to_string( ipl );
-      min = -10*adet.GetResolutionU();
-      max = +10*adet.GetResolutionU();
+      min = -10*adet.GetSensitiveSizeU()/(adet.GetNCellsU()+1); 
+      max = +10*adet.GetSensitiveSizeU()/(adet.GetNCellsU()+1); 
       _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, min, max);
       _histoMap[ histoName ]->SetXTitle("u residual [mm]"); 
       _histoMap[ histoName ]->SetYTitle("tracks"); 
       
       histoName = "hresV_det"+to_string( ipl );
-      min = -10*adet.GetResolutionV();
-      max = +10*adet.GetResolutionV();
+      min = -10*adet.GetSensitiveSizeV()/(adet.GetNCellsV()+1); 
+      max = +10*adet.GetSensitiveSizeV()/(adet.GetNCellsV()+1); 
       _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, min, max); 
       _histoMap[ histoName ]->SetXTitle("v residual [mm]"); 
       _histoMap[ histoName ]->SetYTitle("tracks"); 

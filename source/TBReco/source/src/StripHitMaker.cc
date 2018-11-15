@@ -63,6 +63,16 @@ StripHitMaker::StripHitMaker() : Processor("StripHitMaker")
                               "To use only kGoodQuality write 0 here",
                               _clusterQualitySelect, 
                               static_cast<int> ( 0 ));
+
+   registerProcessorParameter ("SigmaU", 
+                               "Spatial resolution (sigma) of detector along u [mm]",
+                               _SigmaU,  
+                               static_cast < double > (1)); 
+
+   registerProcessorParameter ("SigmaV", 
+                               "Spatial resolution (sigma) of detector along v [mm]",
+                               _SigmaV,  
+                               static_cast < double > (1)); 
    
 }
 
@@ -172,8 +182,8 @@ void StripHitMaker::processEvent(LCEvent * evt)
       v /= total; 
     } 
       
-    double cov_v = pow(Sensor.GetResolutionV(),2); 
-    double cov_u = pow(Sensor.GetResolutionU(),2);
+    double cov_v = pow(_SigmaV,2); 
+    double cov_u = pow(_SigmaU,2);
     double cov_uv = 0;         
 
     TBHit hit(sensorID, u, v, cov_u, cov_v, cov_uv, 0);

@@ -3,19 +3,17 @@
 
 // Include basic C
 #include <string>
+#include <vector>
+#include <tuple>
 
-// Include CLHEP classes
-#include <CLHEP/Matrix/Matrix.h>
-#include <CLHEP/Matrix/Vector.h>
-
-// DEPFETTrackTools include
+// Include TBTools 
 #include "ReferenceFrame.h"
 
 namespace depfet {
 	
 /** Class Det
  *  
- *  A pixel detector module in space.
+ *  A pixel detector module
  *  
  *  The Det class represents a pixel module in a pixel tracking telescope. Its 
  *  main purpose is to provide a functional interface to the detector data 
@@ -23,8 +21,9 @@ namespace depfet {
  *  gear layer in the gear file. Most fields are self explanatory. Some need a
  *  little bit of explanation
  * 
- *  a) DAQ ID: Unique index to match detector to event data
- *  b) Device Type: Unique index to represent sensor layout      
+ *  ID: Unique index to match geometry information to detector raw data 
+ *  UCellID: Index of readout cells along u axis, also called column. Column i neignbors columns i-1 and i+1  
+ *  VCellID: Index of readout cells along v axis, also called rows. Row i neignbors rows i-1 and i+1  
  *   
  *  The position and orientation of the detector is represented by an object
  *  of class ReferenceFrame called 'Nominal'. In short, the 'Nominal' reference 
@@ -45,13 +44,6 @@ namespace depfet {
  *  B) Position resolved detector material profile data  
  *  C) Boundary intersection tests for partical tracking 
  *  
- *  IMPORTANT NOTE TO DEVELOPERS
- *  
- *  Some member functions may be overwritten in daugther classes. This can be 
- *  used by sensor developers to adapt the class behavior to new designs. Their 
- *  must be unique 'DeviceType' for each daugther class. There should also 
- *  be some mechanism to register new Det implementations -> TODO 
- *  
  *  @Author B. Schwenker, University of Göttingen
  *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
  */
@@ -65,99 +57,114 @@ class Det {
    
   // Get/Set functions to implement interface to gear layer 
   // ------------------------------------------------------
-  
-  // Get/Set detecor device type
-  int GetDeviceType()  { return DeviceType; };
-  void SetDeviceType(int type)  { DeviceType = type; };
-  
-  // Get/Set detector Name 
-  std::string GetName() { return Name; };
-  
+ 
   // Get/Set detector DAQ ID
-  int GetDAQID(){ return DAQID; };
-  void SetDAQID (int ID){ DAQID = ID; };
+  int GetDAQID(){ return _ID; };
+  void SetDAQID (int ID){ _ID = ID; };
   
   // Get/Set plane number   
-  int GetPlaneNumber()  { return PlaneNumber; } ;
-  void SetPlaneNumber(int ipl)  { PlaneNumber = ipl; } ;
-  
-  //! Get/Set number of pixel columns  
-  double GetNColumns() { return NColumns; };
-  void SetNColumns(int cols) { NColumns = cols; };
-    
-  //! Get/Set number of pixel rows  
-  double GetNRows() { return NRows; };
-  void SetNRows(int rows )  { NRows = rows; };
-     
-  //! Get/Set column/u pixel pitch 
-  double GetPitchU()  { return PitchU; };
-  void SetPitchU(double pitch)  { PitchU = pitch; };
-  
-  //! Get/Set row/v pixel pitch  
-  double GetPitchV()  { return PitchV; };	
-  void SetPitchV(double pitch)  { PitchV=pitch; };
-  
-  // Get/Set thickness of active silicon 
-  double GetSensitiveThickness()  { return SensitiveThickness; };
-  void SetSensitiveThickness(double thickness)  { SensitiveThickness = thickness; };
-  
-  // Get/Set thickness of support module box    
-  double GetLadderThickness() { return LadderThickness; };
-  void SetLadderThickness(double thickness) { LadderThickness=thickness; };
-  
-  // Get/Set sensitive radiation length
-  double GetSensitiveRadLength() { return SensitiveRadLength; };
-  void SetSensitiveRadLength(double X0) { SensitiveRadLength=X0; };
-  
-  // Get/Set ladder radiation length
-  double GetLadderRadLength()  { return LadderRadLength; };
-  void SetLadderRadLength(double X0)  { LadderRadLength = X0; };
+  int GetPlaneNumber()  { return _PlaneNumber; } ;
+  void SetPlaneNumber(int ipl)  { _PlaneNumber = ipl; } ;
+
+  // Get/Set thickness in sensitive volume
+  double GetSensitiveThickness()  { return _SensitiveThickness; };
+  void SetSensitiveThickness(double thickness)  { _SensitiveThickness = thickness; };
+
+  // Get/Set radiation length in sensitive volume
+  double GetSensitiveRadLength() { return _SensitiveRadLength; };
+  void SetSensitiveRadLength(double X0) { _SensitiveRadLength=X0; };
+
+  // Get/Set atomic number in sensitive volume 
+  double GetSensitiveAtomicNumber() { return _SensitiveAtomicNumber; };
+  void SetSensitiveAtomicNumber(double Z) { _SensitiveAtomicNumber=Z; };
+
+  // Get/Set atomic mass in sensitive volume 
+  double GetSensitiveAtomicMass() { return _SensitiveAtomicMass; };
+  void SetSensitiveAtomicMass(double A) { _SensitiveAtomicMass=A; };
+
+  // Get/Set size u of ladder (sensitive + supports)  
+  double GetLadderSizeU()  { return _LadderSizeU; };
+  void SetLadderSizeU(double size)  { _LadderSizeU = size; };
    
-  // Get/Set resolution along columns, or U  
-  double GetResolutionU()  { return ResolutionU; };
-  void SetResolutionU(double res)  { ResolutionU = res; };
+  // Get/Set size V of ladder (sensitive + supports)  
+  double GetLadderSizeV()  { return _LadderSizeV; };
+  void SetLadderSizeV(double size)  { _LadderSizeV = size; };
+
+  // Get/Set thickness of ladder in nonsentive volume    
+  double GetLadderThickness() { return _LadderThickness; };
+  void SetLadderThickness(double thickness) { _LadderThickness=thickness; };
   
-  // Get/Set resolution along rows, or V  
-  double GetResolutionV()  { return ResolutionV; }; 
-  void SetResolutionV(double res)  { ResolutionV=res; }; 
-    
-  // Get/Set size u of module box  
-  double GetModuleBoxSizeU()  { return ModuleBoxSizeU; };
-  void SetModuleBoxSizeU(double size)  { ModuleBoxSizeU = size; };
+  // Get/Set radiation length in nonsentive volume    
+  double GetLadderRadLength()  { return _LadderRadLength; };
+  void SetLadderRadLength(double X0)  { _LadderRadLength = X0; };
    
-  // Get/Set size v of module box 
-  double GetModuleBoxSizeV()  { return ModuleBoxSizeV; };
-  void SetModuleBoxSizeV(double size)  { ModuleBoxSizeV = size; };
+  // Get/Set atomic number in nonsensitive volume 
+  double GetLadderAtomicNumber() { return _LadderAtomicNumber; };
+  void SetLadderAtomicNumber(double Z) { _LadderAtomicNumber=Z; };
+
+  // Get/Set atomic mass in nonsensitive volume 
+  double GetLadderAtomicMass() { return _LadderAtomicMass; };
+  void SetLadderAtomicMass(double A) { _LadderAtomicMass=A; };
   
-  // Get/Set size u of active area  
-  virtual double GetSensitiveSizeU()  { return NColumns*PitchU; };
-  void SetSensitiveSizeU(double size)  { SensitiveSizeU = size; };
+  // Set the u cells  
+  void SetCellsU( std::vector< std::tuple<int,int,double> > uCells); 
   
-  // Get/Set size v of active area  
-  double GetSensitiveSizeV()  { return NRows*PitchV; };
-  void SetSensitiveSizeV(double size)  { SensitiveSizeV = size; };	
-   
+  // Set the v cells  
+  void SetCellsV( std::vector< std::tuple<int,int,double> > vCells); 
+       
   // Get/Set nominal sensor frame (i.e. where the detector is supposed to be)
-  ReferenceFrame & GetNominal()  { return Nominal; };
-  void SetNominalFrame(ReferenceFrame nominal) { Nominal  = nominal; };   
+  ReferenceFrame & GetNominal()  { return _Nominal; };
+  void SetNominalFrame(ReferenceFrame nominal) { _Nominal  = nominal; };   
    	
   // Get/Set discrete rotation (mounting orientation of sensor) 
-  ReferenceFrame & GetDiscrete()  { return Discrete; }; 
-  void SetDiscreteFrame(ReferenceFrame discrete) {Discrete  = discrete;};   
+  ReferenceFrame & GetDiscrete()  { return _Discrete; }; 
+  void SetDiscreteFrame(ReferenceFrame discrete) {_Discrete  = discrete;};   
  
   // These functions are relevant for tracking and DUT analysis
   // ----------------------------------------------------------
   // Their implementation will typically depend on the actual 
-  // sensor design. These functions may be overwritten depending
-  // in the device type. 
+  // sensor design. 
  
   // Print methods 
   virtual void Print();
+
+  // Get pixel type u axis
+  virtual int GetPixelTypeU(int vcell, int ucell);  
+   
+  // Get pixel type v axis
+  virtual int GetPixelTypeV(int vcell, int ucell);  
+
+  // Get pixel type
+  virtual int GetPixelType(int vcell, int ucell);  
+
+  // Get number of ucells  
+  virtual int GetNCellsU();  
+
+  // Get number of vcells  
+  virtual int GetNCellsV();
+
+  // Get number of ucells  
+  virtual int GetNColumns() { return _nCellsU; }  
+
+  // Get number of vcells  
+  virtual int GetNRows() { return _nCellsV; }
+
+  // Get size u of active area  
+  virtual double GetSensitiveSizeU();  
+  
+  // Get size v of active area  
+  virtual double GetSensitiveSizeV(); 
+      
+  // Get column/u pixel pitch 
+  virtual double GetPitchU(int vcell, int ucell); 
+  
+  // Get row/v pixel pitch  
+  virtual double GetPitchV(int vcell, int ucell);  
    
   // Check if module box crossed
   virtual bool ModuleCrossed(double u, double v, double w = 0);
 
-  bool isPointOutOfSensor( double u , double v , double w = 0); 
+  virtual bool isPointOutOfSensor( double u , double v , double w = 0); 
   
   // Check if sensitive volume crossed
   virtual bool SensitiveCrossed(double u, double v, double w = 0);
@@ -170,68 +177,76 @@ class Det {
     
   // Get radlenght at coordinates (u,v) 
   virtual double GetRadLength(double u, double v);
+
+  // Get atomic number at coordinates (u,v)
+  virtual double GetAtomicNumber(double u, double v); 
+ 
+  // Get atomic mass at coordinates (u,v)
+  virtual double GetAtomicMass(double u, double v);   
   
   // Calculate pixel column from coord (u,v)   
-  virtual int GetColumnFromCoord( double u, double v );
+  virtual int GetUCellFromCoord( double u, double v );
   
-  // Calculate pixel row from coord (u,v)  
-  virtual int GetRowFromCoord( double u, double v ); 
+  // Calculate pixel vcell from coord (u,v)  
+  virtual int GetVCellFromCoord( double u, double v ); 
   
   // Get u coord of pixel center 
-  virtual double GetPixelCenterCoordU(int row, int column);
+  virtual double GetPixelCenterCoordU(int vcell, int ucell);
   
   // Get v coord of pixel center 
-  virtual double GetPixelCenterCoordV(int row, int column);
+  virtual double GetPixelCenterCoordV(int vcell, int ucell);
 
   // Encode pixelID
-  virtual int encodePixelID(int row, int col);
+  virtual int encodePixelID(int vcell, int ucell);
 
   // Decode pixelID
-  virtual void decodePixelID(int & row, int & col, int uniqPixelID);
+  virtual void decodePixelID(int vcell, int ucell, int uniqPixelID);
  
  private:
    
-  // Name of module: 'DEPFET', 'TAKI', 'MIMOSA', etc.  
-  std::string Name;
-  // DAQ module "ID"
-  int DAQID;
+  // ID
+  int _ID;
   // Plane number along beam line 
-  int PlaneNumber; 
-  // Type of sensor: '0' : non bricked; '1' : bricked pixels 
-  int DeviceType;
-  // Number of pixel columns  
-  double NColumns;
-  // Number of pixel rows 
-  double NRows;
-  // Column/U pixel pitch
-  double PitchU;
-  // Row/V pixel pitch  
-  double PitchV;
-  // Thickness in sensitive area   
-  double SensitiveThickness;
-  // Thickness outside active area
-  double LadderThickness;
-  // Rad. length in active area 
-  double SensitiveRadLength;
-  // Rad. length outside active area
-  double LadderRadLength;
-  // Module size along u  
-  double ModuleBoxSizeU; 
-  // Module size along v 
-  double ModuleBoxSizeV; 
-  // Sensitive size u
-  double SensitiveSizeU; 
-  // Sensitive size v 
-  double SensitiveSizeV; 
-  // Resolution in U    
-  double ResolutionU;
-  // Resolution in V  
-  double ResolutionV;        
+  int _PlaneNumber; 
+  // Cells along sensor u axis  
+  std::vector< std::tuple<int,int,double> > _uCells;
+  // Cells along sensor v axis   
+  std::vector< std::tuple<int,int,double> > _vCells ; 
+  // Thickness in sensitive volume
+  double _SensitiveThickness;
+  // Rad. length in sensitive volume
+  double _SensitiveRadLength;
+  // Atomic number in sensitive volume
+  double _SensitiveAtomicNumber;  
+  // Atomic mass in sensitive volume
+  double _SensitiveAtomicMass; 
+  // Size along u of sensitive + supports  
+  double _LadderSizeU; 
+  // Size along v of sensitive + supports 
+  double _LadderSizeV; 
+  // Thickness in nonsensitive volume
+  double _LadderThickness;
+  // Rad. length in nonsensitive volume
+  double _LadderRadLength;
+  // Atomic number in nonsensitive volume
+  double _LadderAtomicNumber;  
+  // Atomic mass in nonsensitive volume
+  double _LadderAtomicMass; 
+       
   // Nominal reference frame
-  ReferenceFrame Nominal;
+  ReferenceFrame _Nominal;
   // Mounting rotations  
-  ReferenceFrame Discrete; 
-  
+  ReferenceFrame _Discrete; 
+
+  // Some helper variables
+  int _nCellsU; 
+  int _nCellsV; 
+  int _minCellU;
+  int _minCellV; 
+  double _sensitiveSizeU;  
+  double _sensitiveSizeV; 
+  std::vector<double> _offsetsU;
+  std::vector<double> _offsetsV; 
 };
  
 } // Namespace

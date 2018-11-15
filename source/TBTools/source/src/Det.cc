@@ -3,15 +3,15 @@
 // Author: Benjamin Schwenker, University of Göttingen 
 // <mailto:benjamin.schwenker@phys.uni-goettingen.de>
 
-// DEPFETTrackTools includes 
+// TBTools includes 
 #include "Det.h"
 #include "MaterialEffect.h"
-
-// Include basic C header files
 
 // Include Marlin
 #include <marlin/Global.h>
 #include <streamlog/streamlog.h>
+
+#include <algorithm>
 
 // Namespaces
 using namespace CLHEP;
@@ -19,42 +19,196 @@ using namespace marlin;
 
 namespace depfet {
 
-// Define constants
-#define EPS 0.005           // mm
+
 
 /** Dummy constructor for pixel modules
  *
  * Creates a dummy pixel module. 
  */
-Det::Det() {Name = "DUMMY";}
+Det::Det() {}
 
 
+void Det::SetCellsU( std::vector< std::tuple<int,int,double> > uCells)
+{ 
+  _uCells = uCells;
+   
+  // First of all, sort the cell vector 
+  std::sort(std::begin(_uCells), std::end(_uCells), [](auto const &t1, auto const &t2) {
+    return std::get<0>(t1) < std::get<0>(t2); 
+  });
+  
+  // Secondly, avoid an empty cell vector 
+  if ( _uCells.size() == 0 ) { 
+    streamlog_out(ERROR) << "SensorID=" << _ID << "has no ucells! Add a default ucell"
+                         << std::endl;     
+    _uCells.push_back( std::tuple<int, int, double>(0, 0, 0) );
+  }
 
-int Det::encodePixelID(int row, int column)
-{
-  return (GetNColumns()*row + column);
+  _minCellU = std::get<0>(_uCells.at(0)); 
+  _nCellsU = 0;  
+  _sensitiveSizeU = 0;   
+  
+  for (auto group : _uCells ) {
+    int minCell = std::get<0>(group);
+    int maxCell = std::get<1>(group);
+    double pitch = std::get<2>(group);   
+     
+    if ( maxCell < minCell ) { 
+      streamlog_out(ERROR) << "SensorID=" << _ID << "has cell group with maxCell < minCell!"
+                           << std::endl;     
+    }
+     
+    if (pitch <= 0) {
+     streamlog_out(ERROR) << "SensorID=" << _ID << "has cell group with pitch <= 0!"
+                          << std::endl;
+    }
+    
+    // Add cells from group
+    _nCellsU += (maxCell - minCell + 1); 
+    
+    // Add offset for group
+    _offsetsU.push_back(_sensitiveSizeU);
+    
+    // Compute offset for next group
+    _sensitiveSizeU += (maxCell - minCell + 1)*pitch; 
+  }
+}
+
+void Det::SetCellsV( std::vector< std::tuple<int,int,double> > vCells)
+{ 
+  _vCells = vCells;
+   
+  // First of all, sort the cell vector 
+  std::sort(std::begin(_vCells), std::end(_vCells), [](auto const &t1, auto const &t2) {
+    return std::get<0>(t1) < std::get<0>(t2); 
+  });
+  
+  // Secondly, avoid an empty cell vector 
+  if ( _vCells.size() == 0 ) { 
+    streamlog_out(ERROR) << "SensorID=" << _ID << "has no vcells! Add a default ucell"
+                         << std::endl;     
+    _vCells.push_back( std::tuple<int, int, double>(0, 0, 0) );
+  }
+  
+  _minCellV = std::get<0>(_vCells.at(0)); 
+  _nCellsV = 0;  
+  _sensitiveSizeV = 0;   
+  
+  for (auto group : _vCells ) {
+    int minCell = std::get<0>(group);
+    int maxCell = std::get<1>(group);
+    double pitch = std::get<2>(group);   
+
+    if ( maxCell < minCell ) { 
+      streamlog_out(ERROR) << "SensorID=" << _ID << "has cell group with maxCell < minCell!"
+                           << std::endl;     
+    }
+     
+    if (pitch <= 0) {
+     streamlog_out(ERROR) << "SensorID=" << _ID << "has cell group with pitch <= 0!"
+                          << std::endl;
+    }
+
+    // Add cells from group
+    _nCellsV += (maxCell - minCell + 1); 
+    
+    // Add offset for group
+    _offsetsV.push_back(_sensitiveSizeV);
+  
+    // Compute offset for next group
+    _sensitiveSizeV += (maxCell - minCell + 1)*pitch; 
+  }
 }
 
 
-void Det::decodePixelID(int & row, int & column, int uniqPixelID)
+
+int Det::GetNCellsU()
 {
-  row    = uniqPixelID / GetNColumns();
-  column = uniqPixelID - row*GetNColumns();
+  return _nCellsU; 
+}  
+
+int Det::GetNCellsV()
+{
+  return _nCellsV; 
+}   
+
+double Det::GetSensitiveSizeU()
+{
+  return _sensitiveSizeU; 
+}  
+  
+double Det::GetSensitiveSizeV()
+{
+  return _sensitiveSizeV;  
+} 
+
+int Det::GetPixelTypeU(int vcell, int ucell)  
+{
+  int i = 0; 
+  for (auto group : _uCells ) {
+    int minCell = std::get<0>(group);
+    int maxCell = std::get<1>(group);
+    if (ucell >= minCell && ucell <= maxCell) 
+      break;     
+    i++;
+  }
+  return i; 
+}
+
+int Det::GetPixelTypeV(int vcell, int ucell)  
+{
+  int i = 0; 
+  for (auto group : _vCells ) {
+    int minCell = std::get<0>(group);
+    int maxCell = std::get<1>(group);
+    if (vcell >= minCell && vcell <= maxCell) 
+      break;     
+    i++;
+  }
+  return i; 
+} 
+
+int Det::GetPixelType(int vcell, int ucell)   
+{ 
+  int iu = GetPixelTypeU(vcell, ucell); 
+  int iv = GetPixelTypeV(vcell, ucell); 
+  int nGroupsU = _uCells.size();
+  return (nGroupsU*iv + iu);
+}
+
+double Det::GetPitchU(int vcell, int ucell)  
+{
+  auto group = _uCells.at(GetPixelTypeU(vcell, ucell));   
+  return std::get<2>(group); 
+} 
+  
+double Det::GetPitchV(int vcell, int ucell)
+{
+  auto group = _vCells.at(GetPixelTypeV(vcell, ucell));   
+  return std::get<2>(group); 
+}  
+
+int Det::encodePixelID(int vcell, int ucell)
+{
+  return (GetNCellsU()*vcell + ucell);
+}
+
+
+void Det::decodePixelID(int vcell, int ucell, int uniqPixelID)
+{
+  vcell    = uniqPixelID / GetNCellsU();
+  ucell = uniqPixelID - vcell*GetNCellsU();
 }
  
-
  	
 /**  Check if sensitive volume is crossed
  */
 bool Det::SensitiveCrossed(double u, double v, double w)
 {
-
-  // Smear the active area boundaries by half pixel pitch 
-
-  if (u < -(GetSensitiveSizeU()+GetPitchU())/2.  || u > (GetSensitiveSizeU()+GetPitchU())/2.) {
+  if (u < -(GetSensitiveSizeU())/2.  || u > (GetSensitiveSizeU())/2.) {
    return false;
   }
-  if (v < -(GetSensitiveSizeV()+GetPitchV())/2. || v > (GetSensitiveSizeV()+GetPitchV())/2.) {
+  if (v < -(GetSensitiveSizeV())/2. || v > (GetSensitiveSizeV())/2.) {
     return false;
   }
   if (w < -GetSensitiveThickness()/2. || w > GetSensitiveThickness()/2.) {
@@ -67,23 +221,24 @@ bool Det::SensitiveCrossed(double u, double v, double w)
 bool Det::isPointOutOfSensor( double u, double v, double w) 
 {
   bool isOut = false; 
+  
   // Boundary set +- epsilon
-  if ( (u < (-GetSensitiveSizeU()/2. -EPS)) || (u > (+GetSensitiveSizeU()/2. + EPS)) ||
-       (v < (-GetSensitiveSizeV()/2. -EPS)) || (v > (+GetSensitiveSizeV()/2. + EPS)) ||
-       (w < (-GetSensitiveThickness()/2. -EPS)) || (w > (+GetSensitiveThickness()/2. + EPS)) ) isOut = true;
+  if ( (u < (-GetSensitiveSizeU()/2. -0.005)) || (u > (+GetSensitiveSizeU()/2. + 0.005)) ||
+       (v < (-GetSensitiveSizeV()/2. -0.005)) || (v > (+GetSensitiveSizeV()/2. + 0.005)) ||
+       (w < (-GetSensitiveThickness()/2. -0.005)) || (w > (+GetSensitiveThickness()/2. + 0.005)) ) isOut = true;
 
    // Return if out or not
    return isOut;
 }
  	
-/**  Check if module box is crossed
+/**  Check if module is crossed (including supports)
  */
 bool Det::ModuleCrossed(double u, double v, double w)
 {  
-  if (u < -GetModuleBoxSizeU()/2.  || u > GetModuleBoxSizeU()/2.) {
+  if (u < -GetLadderSizeU()/2.  || u > GetLadderSizeU()/2.) {
    return false;
   }
-  if (v < -GetModuleBoxSizeV()/2. || v > GetModuleBoxSizeV()/2.) {
+  if (v < -GetLadderSizeV()/2. || v > GetLadderSizeV()/2.) {
     return false;
   }
   if (w < -GetLadderThickness()/2. || w > GetLadderThickness()/2.) {
@@ -92,8 +247,6 @@ bool Det::ModuleCrossed(double u, double v, double w)
   return true; 
 }
 
-/**  Check if module box is crossed
- */
 double Det::GetThickness(double u, double v)
 {
   if ( SensitiveCrossed(u, v) ) {
@@ -112,9 +265,6 @@ double Det::GetTrackLength(double u, double v, double dudw, double dvdw)
   return GetThickness(u,v)*std::sqrt(1 + dudw*dudw + dvdw*dvdw);  
 }
     
-  
-/**  Check if module box is crossed
- */
 double Det::GetRadLength(double u, double v)
 { 
   if ( SensitiveCrossed(u, v) ) {
@@ -126,123 +276,120 @@ double Det::GetRadLength(double u, double v)
   return materialeffect::X0_air; 
 } 
 
+double Det::GetAtomicNumber(double u, double v)
+{ 
+  if ( SensitiveCrossed(u, v) ) {
+    return GetSensitiveAtomicNumber(); 
+  } 
+  if ( ModuleCrossed(u, v) ) {
+    return GetLadderAtomicNumber(); 
+  }
+  return 8; 
+} 
+
+double Det::GetAtomicMass(double u, double v)
+{ 
+  if ( SensitiveCrossed(u, v) ) {
+    return GetSensitiveAtomicMass(); 
+  } 
+  if ( ModuleCrossed(u, v) ) {
+    return GetLadderAtomicMass(); 
+  }
+  return 16; 
+} 
+
 /**  Get v coord of pixel center 
  */
-double Det::GetPixelCenterCoordV(int row, int column)
-{  
-  
-  
-  // Get pitch
-  double sensPitch = GetPitchV();
+double Det::GetPixelCenterCoordV(int vcell, int ucell)
+{    
+  int i = GetPixelTypeV(vcell, ucell);   
+  double offset = _offsetsV.at(i);
+  auto group = _vCells.at(i);
+  int minCell = std::get<0>(group);  
+  double pitch = std::get<2>(group);  
   
   // V coord measured from lower feft corner
-  double v_coord = sensPitch*(row + 0.5);
+  double v_coord = offset + pitch*(vcell - minCell) + pitch*0.5;
   // Ok, shift coord to sensor center
-  v_coord -= 0.5*GetNRows()*sensPitch; 
+  v_coord -= 0.5*GetSensitiveSizeV();           
   
   return v_coord;
 }
  
 /**  Get u coord of pixel center 
  */
-double Det::GetPixelCenterCoordU(int row, int column)
+double Det::GetPixelCenterCoordU(int vcell, int ucell)
 {
-   
-  double u_coord;
-  // Get pitch
-  double sensPitch = GetPitchU();
-  if ( GetDeviceType() == 0 ){
-    // Non Bricked 
-    u_coord = sensPitch*(column + 0.5);
-  } 
-  else {
-    // Bricked pixels, every second row shifted
-    if (row%2 == 0) {
-      u_coord = sensPitch*column;
-    }
-    else {       
-      u_coord = sensPitch*(column + 0.5);
-    }
-  } 
+  int i = GetPixelTypeU(vcell, ucell);   
+  double offset = _offsetsU.at(i);
+  auto group = _uCells.at(i);
+  int minCell = std::get<0>(group);  
+  double pitch = std::get<2>(group);  
   
+  // U coord measured from lower feft corner
+  double u_coord = offset + pitch*(ucell - minCell) + pitch*0.5;
   // Ok, shift coord to sensor center
-  u_coord -= 0.5*GetNColumns()*sensPitch; 
+  u_coord -= 0.5*GetSensitiveSizeU();           
   
   return u_coord;
 }
 
 /**  Calculate pixel column from coord (u,v)
  */      
-int Det::GetColumnFromCoord( double u, double v )
+int Det::GetUCellFromCoord( double u, double v )
 {
-  
-  int column = -1;
-  double sensPitch = GetPitchU();
-  int sensNPixels = GetNColumns();   
-  
-  if (sensPitch == 0) {
-    streamlog_out(ERROR) << "GetColumnFromPoint - pitchU is zero!!!"
-                         << std::endl;
-  }
-  
-  // For convinience, measure point from lower left corner of sensor
-  u += 0.5*GetNColumns()*GetPitchU();
-  v += 0.5*GetNRows()*GetPitchV();
-  
-  if ( GetDeviceType() == 0 ){
-    // Non Bricked 
-    if (u <= 0.) column = -1;  // overflow
-    else {
-      column = floor( u / sensPitch );
-      if (column >= sensNPixels) column = sensNPixels; // overflow
-    }    
-  } else {
-    // Bricked Pixels, every second row shifted
-    if ( GetRowFromCoord(u,v)%2==0) {
-      if (u <= 0.) column = 0;
-      else {
-        column = floor( u / sensPitch );
-        if (column >= sensNPixels) column = sensNPixels - 1;
-      }    
-    }    
-    else {   
-      // First pixel
-      if (u <= sensPitch/2.) column = 0;
-      else {
-        column = floor( (u + sensPitch/2.) / sensPitch);      
-        if (column >= sensNPixels) column = sensNPixels - 1;
-      }
-    }
+  if (u < -GetSensitiveSizeU()/2.) {
+   return _minCellU;
+  } else if (u > GetSensitiveSizeU()/2.) {
+   return _nCellsU-1;
   } 
   
-  return column;  
+  int ucell = _minCellU;
+  double offset = -0.5*GetSensitiveSizeU();
+  for (auto group : _uCells ) {
+    int minCell = std::get<0>(group);
+    int maxCell = std::get<1>(group);
+    double pitch = std::get<2>(group);   
+    
+    if ( u >= offset && u <= (offset + (maxCell - minCell + 1)*pitch) ) {
+     ucell = floor( (u-offset) / pitch ) + minCell - 1; 
+     break;   
+    }
+
+    // Compute offset for next group
+    offset += (maxCell - minCell + 1)*pitch; 
+  }
+  
+  return ucell;  
 } 
    
 /**  Calculate pixel column from coord (u,v)
  */   
-int Det::GetRowFromCoord( double u, double v ) 
+int Det::GetVCellFromCoord( double u, double v ) 
 {
+  if (v < -GetSensitiveSizeV()/2.) {
+   return _minCellV;
+  } else if (v > GetSensitiveSizeV()/2.) {
+   return _nCellsV-1;
+  } 
   
-  int row = -1;
-  double sensPitch = GetPitchV();
-  int sensNPixels = GetNRows(); 
-  
-  if (sensPitch == 0) {
-    streamlog_out(ERROR) << "Det::GetPixelRow - pitchV is zero!!!"
-                         << std::endl;
-  }
-   
-  // For convinience, measure point from lower left corner of sensor
-  u += 0.5*GetNColumns()*GetPitchU();
-  v += 0.5*GetNRows()*GetPitchV();
+  int vcell = _minCellV;
+  double offset = -0.5*GetSensitiveSizeV();
+  for (auto group : _vCells ) {
+    int minCell = std::get<0>(group);
+    int maxCell = std::get<1>(group);
+    double pitch = std::get<2>(group);   
+    
+    if ( v >= offset && v <= (offset + (maxCell - minCell + 1)*pitch) ) {
+     vcell = floor( (v-offset) / pitch ) + minCell - 1; 
+     break;   
+    }
 
-  if (v <= 0.) row = -1; // overflow
-  else {   
-    row = floor( v / sensPitch );
-    if (row >= sensNPixels) row = sensNPixels; // overflow
+    // Compute offset for next group
+    offset += (maxCell - minCell + 1)*pitch; 
   }
   
-  return row;
+  return vcell;  
 }
 
 
@@ -251,13 +398,10 @@ int Det::GetRowFromCoord( double u, double v )
 void Det::Print()
 {
   streamlog_out(MESSAGE3) << std::endl;
-  streamlog_out(MESSAGE3) << "  Sensor Name:     " << GetName()           << std::endl;
   streamlog_out(MESSAGE3) << "  Plane Number:    " << GetPlaneNumber()    << std::endl;
   streamlog_out(MESSAGE3) << "  DAQ ID:          " << GetDAQID()          << std::endl;  
-  streamlog_out(MESSAGE3) << "  PitchU[um]:      " << GetPitchU()*1000    << std::endl;
-  streamlog_out(MESSAGE3) << "  PitchV[um]:      " << GetPitchV()*1000    << std::endl;
-  streamlog_out(MESSAGE3) << "  NColumns:        " << GetNColumns()       << std::endl;
-  streamlog_out(MESSAGE3) << "  NRows:           " << GetNRows()          << std::endl;  
+  streamlog_out(MESSAGE3) << "  NCellsU:        " << GetNCellsU()       << std::endl;
+  streamlog_out(MESSAGE3) << "  NCellsV:           " << GetNCellsV()          << std::endl;  
 }
  
 
