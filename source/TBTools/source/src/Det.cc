@@ -72,6 +72,7 @@ void Det::SetCellsU( std::vector< std::tuple<int,int,double> > uCells)
     // Compute offset for next group
     _sensitiveSizeU += (maxCell - minCell + 1)*pitch; 
   }
+  
 }
 
 void Det::SetCellsV( std::vector< std::tuple<int,int,double> > vCells)
@@ -118,6 +119,7 @@ void Det::SetCellsV( std::vector< std::tuple<int,int,double> > vCells)
     // Compute offset for next group
     _sensitiveSizeV += (maxCell - minCell + 1)*pitch; 
   }
+
 }
 
 
@@ -196,7 +198,7 @@ int Det::encodePixelID(int vcell, int ucell)
 
 void Det::decodePixelID(int vcell, int ucell, int uniqPixelID)
 {
-  vcell    = uniqPixelID / GetNCellsU();
+  vcell = uniqPixelID / GetNCellsU();
   ucell = uniqPixelID - vcell*GetNCellsU();
 }
  
@@ -352,7 +354,7 @@ int Det::GetUCellFromCoord( double u, double v )
     double pitch = std::get<2>(group);   
     
     if ( u >= offset && u <= (offset + (maxCell - minCell + 1)*pitch) ) {
-     ucell = floor( (u-offset) / pitch ) + minCell - 1; 
+     ucell = floor( (u-offset) / pitch ) + minCell; 
      break;   
     }
 
@@ -381,7 +383,7 @@ int Det::GetVCellFromCoord( double u, double v )
     double pitch = std::get<2>(group);   
     
     if ( v >= offset && v <= (offset + (maxCell - minCell + 1)*pitch) ) {
-     vcell = floor( (v-offset) / pitch ) + minCell - 1; 
+     vcell = floor( (v-offset) / pitch ) + minCell; 
      break;   
     }
 
@@ -400,8 +402,8 @@ void Det::Print()
   streamlog_out(MESSAGE3) << std::endl;
   streamlog_out(MESSAGE3) << "  Plane Number:    " << GetPlaneNumber()    << std::endl;
   streamlog_out(MESSAGE3) << "  DAQ ID:          " << GetDAQID()          << std::endl;  
-  streamlog_out(MESSAGE3) << "  NCellsU:        " << GetNCellsU()       << std::endl;
-  streamlog_out(MESSAGE3) << "  NCellsV:           " << GetNCellsV()          << std::endl;  
+  streamlog_out(MESSAGE3) << "  NCellsU:         " << GetNCellsU()        << std::endl;
+  streamlog_out(MESSAGE3) << "  NCellsV:         " << GetNCellsV()        << std::endl;  
 }
  
 

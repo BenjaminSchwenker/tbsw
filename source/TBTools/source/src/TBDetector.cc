@@ -144,10 +144,10 @@ void TBDetector::ReadGearConfiguration( )
     _indexMap[ID] = ipl;
 
     // Set u cells 
-    adet.SetCellsU( siPlanesLayerLayout->getSensitiveUCells( ipl ) );
+    adet.SetCellsU( siPlanesLayerLayout->getSensitiveUCells( ilayer ) );
       
     // Set v cells 
-    adet.SetCellsV( siPlanesLayerLayout->getSensitiveVCells( ipl ) );
+    adet.SetCellsV( siPlanesLayerLayout->getSensitiveVCells( ilayer ) );
          
     double SensThick = siPlanesLayerLayout->getSensitiveThickness(ilayer);
     adet.SetSensitiveThickness(SensThick);
