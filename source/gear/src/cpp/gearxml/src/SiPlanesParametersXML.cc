@@ -74,8 +74,8 @@ namespace gear {
       layer.InsertEndChild(sens) ;
       
       TiXmlElement ladder("ladder") ;
-      ladder.SetDoubleAttribute( "sizeX" , siplanesLayers.getLayerSizeX( i ) ) ;
-      ladder.SetDoubleAttribute( "sizeY" , siplanesLayers.getLayerSizeY( i ) ) ;
+      ladder.SetDoubleAttribute( "sizeU" , siplanesLayers.getLayerSizeU( i ) ) ;
+      ladder.SetDoubleAttribute( "sizeV" , siplanesLayers.getLayerSizeV( i ) ) ;
       ladder.SetDoubleAttribute( "thickness" , siplanesLayers.getLayerThickness( i ) ) ;
       ladder.SetDoubleAttribute( "radLength" , siplanesLayers.getLayerRadLength( i ) ) ;
       ladder.SetDoubleAttribute( "atomicNumber", siplanesLayers.getLayerAtomicNumber( i ) ) ;
@@ -167,8 +167,8 @@ namespace gear {
       double sRotat3 = atof(getXMLAttribute( xmlSensitive , "rotation3" ).c_str() ) ;
       double sRotat4 = atof(getXMLAttribute( xmlSensitive , "rotation4" ).c_str() ) ;
        
-      double lSizX   = atof( getXMLAttribute( xmlLadder , "sizeX" ).c_str() ) ;
-      double lSizY   = atof( getXMLAttribute( xmlLadder , "sizeY" ).c_str() ) ;
+      double lSizU   = atof( getXMLAttribute( xmlLadder , "sizeU" ).c_str() ) ;
+      double lSizV   = atof( getXMLAttribute( xmlLadder , "sizeV" ).c_str() ) ;
       double lThick   = atof( getXMLAttribute( xmlLadder , "thickness" ).c_str() ) ;
       double lRadLen = atof( getXMLAttribute( xmlLadder , "radLength" ).c_str() ) ;
       double lAtomicNum = atof( getXMLAttribute( xmlLadder , "atomicNumber" ).c_str() ) ;  
@@ -190,7 +190,7 @@ namespace gear {
         vCellGroupVec.push_back( std::tuple<int, int, double>(sMinCell, sMaxCell, sPitch) );
       }      
       
-      siplanesParam->addLayer(sID, sPosX, sPosY, sPosZ, sThick, sRadLen, sAtomicNum, sAtomicMass, sAlpha, sBeta, sGamma, sRotat1, sRotat2, sRotat3, sRotat4, uCellGroupVec, vCellGroupVec, lSizX, lSizY, lThick, lRadLen, lAtomicNum, lAtomicMass) ;
+      siplanesParam->addLayer(sID, sPosX, sPosY, sPosZ, sThick, sRadLen, sAtomicNum, sAtomicMass, sAlpha, sBeta, sGamma, sRotat1, sRotat2, sRotat3, sRotat4, uCellGroupVec, vCellGroupVec, lSizU, lSizV, lThick, lRadLen, lAtomicNum, lAtomicMass) ;
      
     } // end loop
 

@@ -17,7 +17,7 @@ namespace gear{
 			double sensitiveRotation4,
             std::vector< std::tuple<int,int,double> > sensitiveUCells,
             std::vector< std::tuple<int,int,double> > sensitiveVCells, 
-			double layerSizeX, double layerSizeY, 
+			double layerSizeU, double layerSizeV, 
             double layerThickness, double layerRadLength,
 			double layerAtomicNum, double layerAtomicMass)
   {
@@ -41,8 +41,8 @@ namespace gear{
     sL.vCells = sensitiveVCells;
 
     Layer lL ;
-    lL.SizeX      = layerSizeX ;
-    lL.SizeY      = layerSizeY ;
+    lL.SizeU      = layerSizeU ;
+    lL.SizeV      = layerSizeV ;
     lL.Thickness  = layerThickness ;
     lL.RadLength  = layerRadLength ;
     lL.AtomicNumber = layerAtomicNum; 

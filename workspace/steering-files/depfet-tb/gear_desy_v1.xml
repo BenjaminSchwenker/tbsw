@@ -39,8 +39,8 @@
 						pitch="0.018402778"
 			 		/>     
                 	<ladder 
-						sizeX="200"
-						sizeY="100"
+						sizeU="200"
+						sizeV="100"
 						thickness="0.07"
 						radLength="93.660734"
                         atomicNumber="14"
@@ -77,8 +77,8 @@
 						pitch="0.018402778"
 			 		/>     
                 	<ladder 
-						sizeX="200"
-						sizeY="100"
+						sizeU="200"
+						sizeV="100"
 						thickness="0.07"
 						radLength="93.660734"
                         atomicNumber="14"
@@ -115,8 +115,8 @@
 						pitch="0.018402778"
 			 		/>     
                 	<ladder 
-						sizeX="200"
-						sizeY="100"
+						sizeU="200"
+						sizeV="100"
 						thickness="0.07"
 						radLength="93.660734"
                         atomicNumber="14"
@@ -153,8 +153,8 @@
 						pitch="0.018402778"
 			 		/>     
                 	<ladder 
-						sizeX="200"
-						sizeY="100"
+						sizeU="200"
+						sizeV="100"
 						thickness="0.07"
 						radLength="93.660734"
                         atomicNumber="14"
@@ -191,8 +191,8 @@
 						pitch="0.018402778"
 			 		/>     
                 	<ladder 
-						sizeX="200"
-						sizeY="100"
+						sizeU="200"
+						sizeV="100"
 						thickness="0.07"
 						radLength="93.660734"
                         atomicNumber="14"
@@ -229,8 +229,8 @@
 						pitch="0.018402778"
 			 		/>     
                 	<ladder 
-						sizeX="200"
-						sizeY="100"
+						sizeU="200"
+						sizeV="100"
 						thickness="0.07"
 						radLength="93.660734"
                         atomicNumber="14"
@@ -267,8 +267,8 @@
 						pitch="0.05"
 			 		/>     
                 	<ladder 
-						sizeX="200"
-						sizeY="100"
+						sizeU="200"
+						sizeV="100"
 						thickness="1.0"
 						radLength="93.660734"
                         atomicNumber="14"
@@ -305,8 +305,8 @@
 						pitch="0.055"
 			 		/>     
                 	<ladder 
-						sizeX="200"
-						sizeY="100"
+						sizeU="200"
+						sizeV="100"
 						thickness="1.5"
 						radLength="93.660734"
                         atomicNumber="14"
@@ -348,8 +348,8 @@
 						pitch="0.070"
 					/>         
                 	<ladder 
-						sizeX="200"
-						sizeY="100"
+						sizeU="200"
+						sizeV="100"
 						thickness="1.5"
 						radLength="93.660734"
                         atomicNumber="14"

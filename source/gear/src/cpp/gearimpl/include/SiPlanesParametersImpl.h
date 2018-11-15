@@ -50,8 +50,8 @@ public:
    * @param sensitiveRotation4   = cos(theta): element (22) of the rotation matrix of sensitive area of telescope plane
    * @param sensitiveUCells      numbering and pitches for pixel cells along sensitive u axis   
    * @param sensitiveVCells      numbering and pitches for pixel cells along sensitive v axis   
-   * @param layerSizeX          size in x direction of nonsensitive volume of telescope plane (mm)
-   * @param layerSizeY          size in y direction of nonsensitive volume of telescope plane (mm)
+   * @param layerSizeU          size in u direction of nonsensitive volume of telescope plane (mm)
+   * @param layerSizeV          size in v direction of nonsensitive volume of telescope plane (mm)
    * @param layerThickness      the thickness of nonsensitive volume of telescope plane (mm)
    * @param layerRadLenght      the radiation lenght of nonsensitive volume of telescope plane (mm)
    * @param layerAtomicNum      the atomic number Z of ladder volume  of telescope plane 
@@ -71,7 +71,7 @@ public:
 			double sensitiveRotation4,
             std::vector< std::tuple<int,int,double> > sensitiveUCells,
             std::vector< std::tuple<int,int,double> > sensitiveVCells, 
-			double layerSizeX, double layerSizeY, 
+			double layerSizeU, double layerSizeV, 
             double layerThickness, double layerRadLength,
 			double layerAtomicNum, double layerAtomicMass
 			)
@@ -90,7 +90,7 @@ public:
 			sensitiveRotation4,
             sensitiveUCells,
             sensitiveVCells, 
-			layerSizeX, layerSizeY, 
+			layerSizeU, layerSizeV, 
             layerThickness, layerRadLength,
 			layerAtomicNum, layerAtomicMass ) ;
     return ;

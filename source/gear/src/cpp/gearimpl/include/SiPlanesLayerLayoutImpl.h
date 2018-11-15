@@ -39,8 +39,8 @@ public:
   } ;
   
   struct Layer {
-    double SizeX ;
-    double SizeY ;
+    double SizeU ;
+    double SizeV ;
     double Thickness ;
     double RadLength ;
     double AtomicNumber ;
@@ -73,8 +73,8 @@ public:
   virtual std::vector< std::tuple<int,int,double> > getSensitiveUCells(int layerIndex) const { return _sensVec.at( layerIndex ).uCells  ; }
   virtual std::vector< std::tuple<int,int,double> > getSensitiveVCells(int layerIndex) const { return _sensVec.at( layerIndex ).vCells  ; }
   
-  virtual double getLayerSizeX(int layerIndex) const { return _lVec.at( layerIndex ).SizeX  ; }
-  virtual double getLayerSizeY(int layerIndex) const { return _lVec.at( layerIndex ).SizeY  ; }
+  virtual double getLayerSizeU(int layerIndex) const { return _lVec.at( layerIndex ).SizeU  ; }
+  virtual double getLayerSizeV(int layerIndex) const { return _lVec.at( layerIndex ).SizeV  ; }
   virtual double getLayerThickness(int layerIndex) const { return _lVec.at( layerIndex ).Thickness  ; }
   virtual double getLayerRadLength(int layerIndex) const { return _lVec.at( layerIndex ).RadLength  ; }
   virtual double getLayerAtomicNumber(int layerIndex) const { return _lVec.at( layerIndex ).AtomicNumber  ; } 
@@ -96,7 +96,7 @@ public:
 			double sensitiveRotation4,
             std::vector< std::tuple<int,int,double> > sensitiveUCells,
             std::vector< std::tuple<int,int,double> > sensitiveVCells, 
-			double layerSizeX, double layerSizeY, 
+			double layerSizeU, double layerSizeV, 
             double layerThickness, double layerRadLength,
 			double layerAtomicNum, double layerAtomicMass
        );
