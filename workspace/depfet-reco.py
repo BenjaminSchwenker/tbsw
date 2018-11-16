@@ -393,7 +393,7 @@ if __name__ == '__main__':
   import argparse
   parser = argparse.ArgumentParser(description="Perform reconstruction of a test beam run")
   parser.add_argument('--rawfile', dest='rawfile', default='/home/benjamin/Desktop/run000020.raw', type=str, help='Location of rawfile to process')
-  parser.add_argument('--gearfile', dest='gearfile', default='gear_desy_v1.xml', type=str, help='Location of gearfile')
+  parser.add_argument('--gearfile', dest='gearfile', default='gear_desy_W11OF2.xml', type=str, help='Location of gearfile')
   parser.add_argument('--energy', dest='energy', default=5.0, type=float, help='Beam energy in GeV')
   parser.add_argument('--steerfiles', dest='steerfiles', default='steering-files/depfet-tb/', type=str, help='Path to steerfiles')
   parser.add_argument('--caltag', dest='caltag', default='', type=str, help='Name of calibration tag to use')

@@ -425,9 +425,9 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     
     _rootHitCellU= dut.GetUCellFromCoord( _rootHitU, _rootHitV );  
     _rootHitCellV = dut.GetVCellFromCoord( _rootHitU, _rootHitV );  
+    _rootHitPixelType = dut.GetPixelType(_rootHitCellV, _rootHitCellU);   
 
     // Cluster shape variables   
-    
     PixelCluster Cluster = hit.GetCluster();
        
     _rootHitQuality = 0; 
@@ -544,6 +544,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     int fitcellu = dut.GetUCellFromCoord( pu, pv );     
     int fitcellv = dut.GetVCellFromCoord( pu, pv );       
     
+    _rootTrackPixelType = dut.GetPixelType(fitcellv, fitcellu);  
     _rootTrackFitMomentum = trk.GetMomentum();      
     _rootTrackFitdUdW = p[0][0];     
     _rootTrackFitdVdW = p[1][0];    
@@ -708,9 +709,8 @@ void PixelDUTAnalyzer::bookHistos()
    _rootHitTree->Branch("trackNHits"      ,&_rootHitTrackNHits     ,"trackNHits/I");  
    _rootHitTree->Branch("momentum"        ,&_rootHitFitMomentum      ,"momentum/D");    
    _rootHitTree->Branch("localChi2"       ,&_rootHitLocalChi2       ,"localChi2/D"); 
-  
+   _rootHitTree->Branch("pixeltype"       ,&_rootHitPixelType     ,"pixeltype/I");  
     
-
    // 
    // Track Tree 
    _rootTrackTree = new TTree("Track","Track info");
@@ -735,7 +735,7 @@ void PixelDUTAnalyzer::bookHistos()
    _rootTrackTree->Branch("trackNHits"      ,&_rootTrackNHits          ,"trackNHits/I");  
    _rootTrackTree->Branch("seedCharge"      ,&_rootTrackSeedCharge     ,"seedCharge/D");  
    _rootTrackTree->Branch("localChi2"       ,&_rootTrackLocalChi2      ,"localChi2/D"); 
-     
+   _rootTrackTree->Branch("pixeltype"      ,&_rootTrackPixelType     ,"pixeltype/I");     
 
    // 
    // Event Summay Tree 

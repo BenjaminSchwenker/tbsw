@@ -169,9 +169,7 @@ def plot_unit(inputfilename = None, histofilename = "InpixHistos.root", upitch=0
   
   
   histofile.cd("")
-
   
-
   for event in tree: 
     if event.hasTrack == 0: 
       m_u = (event.u_fit - event.cellUCenter_fit) 
