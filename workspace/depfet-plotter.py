@@ -9,6 +9,7 @@ from tbsw import *
 import argparse
 parser = argparse.ArgumentParser(description="Perform plotting of a test beam runs")
 parser.add_argument('--pattern', dest='pattern', default='*', type=str, help='Pattern of run numbers to process')
+parser.add_argument('--mapping', dest='mapping', default='', type=str, help='IF, OF')
 args = parser.parse_args()
   
   
@@ -37,6 +38,26 @@ for trackfile in glob.glob('root-files/Histos-PXD-{}-reco.root'.format(args.patt
     #ofile = 'InpixMaps-' + os.path.basename(trackfile)  
     #inpixel.plot(inputfilename=trackfile, histofilename=ofile, uaxis=(100,-4,-2), vaxis=(150,7,10))
 
-    # Even a single run of 10min is enough to obtain a inpix plot for a generic cell of (ufold,vfold) superpixels. 
-    ofile = 'InpixUnitMaps-' + os.path.basename(trackfile)  
-    inpixel.plot_unit(inputfilename=trackfile, histofilename=ofile, upitch=0.05, vpitch=0.085, ubins=30, vbins=30, ufold=2, vfold=2)
+    if args.mapping == 'OF':
+
+      # Even a single run of 10min is enough to obtain a inpix plot for a generic cell of (ufold,vfold) superpixels. 
+      ofile = 'InpixUnitMaps-OF-LargePitch-' + os.path.basename(trackfile)  
+      inpixel.plot_unit(inputfilename=trackfile, histofilename=ofile, pixeltype=0, upitch=0.05, vpitch=0.085, ubins=30, vbins=30, ufold=2, vfold=2)             
+      
+      # Even a single run of 10min is enough to obtain a inpix plot for a generic cell of (ufold,vfold) superpixels. 
+      ofile = 'InpixUnitMaps-OF-SmallPitch' + os.path.basename(trackfile)  
+      inpixel.plot_unit(inputfilename=trackfile, histofilename=ofile, pixeltype=1, upitch=0.05, vpitch=0.070, ubins=30, vbins=30, ufold=2, vfold=2)         
+
+    elif args.mapping == 'IF':
+
+      # Even a single run of 10min is enough to obtain a inpix plot for a generic cell of (ufold,vfold) superpixels. 
+      ofile = 'InpixUnitMaps-IF-LargePitch' + os.path.basename(trackfile)  
+      inpixel.plot_unit(inputfilename=trackfile, histofilename=ofile, pixeltype=0, upitch=0.05, vpitch=0.060, ubins=30, vbins=30, ufold=2, vfold=2)             
+      
+      # Even a single run of 10min is enough to obtain a inpix plot for a generic cell of (ufold,vfold) superpixels. 
+      ofile = 'InpixUnitMaps-IF-SmallPitch' + os.path.basename(trackfile)  
+      inpixel.plot_unit(inputfilename=trackfile, histofilename=ofile, pixeltype=1, upitch=0.05, vpitch=0.055, ubins=30, vbins=30, ufold=2, vfold=2)      
+
+    else: 
+      
+      print("No inpixel maps for PXD matrix produced since no valid mapping was specified")      
