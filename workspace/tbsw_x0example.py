@@ -23,8 +23,11 @@ import tbsw.x0imaging.X0Calibration
 # or how M26 sensors are digitized. XML parameters can be adjusted using any test editor
 steerfiles = 'steering-files/x0-tb/'
 
-# Gearfile for runs 
+# Gearfile for alu runs 
 gearfile = 'gear.xml'
+
+# Gearfile for air runs 
+gearfile2 = 'gear_air.xml'
 
 # Tag for x0 calibration
 x0caltag='alutarget'
@@ -81,7 +84,7 @@ def simulate():
   SimObj.set_beam_momentum(beamenergy)
 
   # Create steerfiles for processing
-  simpath = create_x0sim_path_air(SimObj, rawfile_air, rawfile_alu, gearfile, nevents_air, nevents_alu)
+  simpath = create_x0sim_path(SimObj, rawfile_air, rawfile_alu, gearfile2, gearfile, nevents_air, nevents_alu, beamenergy)
 
   # Get gearfile
   localgearfile = SimObj.get_filename('gear.xml')
@@ -126,19 +129,16 @@ def calibrate():
   # containing all calibration data. 
   CalObj = Calibration(steerfiles=steerfiles, name=caltag + '-cal') 
 
-  # Set Beam energy
-  CalObj.set_beam_momentum(beamenergy)
-
   # Get gearfile and set air as DUT material
   localgearfile = CalObj.get_filename('gear.xml')
   set_parameter(gearfile=localgearfile, sensorID=11, parametername='thickness', value=0.0001)
   set_parameter(gearfile=localgearfile, sensorID=11, parametername='radLength', value=304000.0)
   
   # Create list of calibration steps 
-  calpath = create_mc_x0calibration_path(CalObj, rawfile_air, gearfile, nevents_air)
+  calpath = create_mc_x0calibration_path(CalObj, rawfile_air, gearfile, nevents_air, beamenergy)
 
   # Run the calibration steps 
-  CalObj.calibrate(path=calpath,ifile=rawfile_air,caltag=caltag)  
+  CalObj.calibrate(paths=calpath,ifile=rawfile_air,caltag=caltag)  
 
   # Run DQM scripts
   DQMplots.calibration_DQMPlots(caltag, Use_clusterDB)
@@ -150,11 +150,8 @@ def reconstruct():
   # written to folder root-files/
   RecObj = Reconstruction(steerfiles=steerfiles, name=caltag )
 
-  # Set Beam energy
-  RecObj.set_beam_momentum(beamenergy)
-
   # Create reconstuction path
-  recopath = create_mc_x0reco_path(RecObj, rawfile_alu, gearfile, nevents_alu, Use_SingleHitSeeding)  
+  recopath = create_mc_x0reco_path(RecObj, rawfile_alu, gearfile, nevents_alu, Use_SingleHitSeeding, beamenergy)  
 
   # Use caltag of the last target alignment iteration
   iteration_string='-target-alignment-it'+str(targetalignment_iterations-1)
