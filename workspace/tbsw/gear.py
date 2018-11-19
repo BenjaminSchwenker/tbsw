@@ -196,16 +196,17 @@ def set_parameter(gearfile=None, sensorID=None, parametername=None, value=None):
       for layers in detector.findall('layers'):
         for layer in layers.findall('layer'):
 
-          for ladder in layer.findall('ladder'):
-            ID=ladder.get('ID')
-            if ID==str(sensorID):
-              print('[INFO] Changing plane with ID '+ID)
-              ladder.set(parametername, str(value))
-
           for sensitive in layer.findall('sensitive'):
             ID=sensitive.get('ID')
             if ID==str(sensorID):
               sensitive.set(parametername, str(value))
+
+			# Also set the value for the corresponding ladder
+            for ladder in layer.findall('ladder'):
+              print('[INFO] Changing plane with ID '+ID)
+              ladder.set(parametername, str(value))
+
+
 
   tree.write(gearfile) 
 
