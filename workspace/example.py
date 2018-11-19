@@ -178,7 +178,7 @@ def create_sim_path(Env):
   
   gun = Processor(name="ParticleGun",proctype="ParticleGunGenerator")
   gun.param("BeamIntensity","2000")
-  gun.param("BeamMomentum","4.0")
+  gun.param("BeamMomentum",energy)
   gun.param("BeamVertexX","0")
   gun.param("BeamVertexY","0")
   gun.param("BeamVertexZ","-10")  
@@ -193,7 +193,7 @@ def create_sim_path(Env):
   fastsim.param("AlignmentDBFileName","localDB/alignmentDB.root")
   fastsim.param("ScatterModel","0")
   fastsim.param("DoEnergyLossStraggling","true")
-  fastsim.param("DoFractionalBetheHeitlerEnergyLoss","true")
+  fastsim.param("DoFractionalBetheHeitlerEnergyLoss","false")
   sim_path.add_processor(fastsim)
   
   tlu = Processor(name="TLU",proctype="TriggerGenerator")
@@ -426,7 +426,7 @@ def create_calibration_path(Env):
     
     # Creeate path for first iteration for computing clusterDBs for all sensors 
     preclustercal_path = Env.create_path('preclustercal_path')
-    preclustercal_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
+    preclustercal_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : -1, 'LCIOInputFiles': "tmp.slcio" })  
     preclustercal_path = add_hitmakers(preclustercal_path) 
     preclustercal_path.add_processor(trackfinder_tightcut)      
     preclustercal_path = add_clustercalibrators(preclustercal_path)
@@ -438,7 +438,7 @@ def create_calibration_path(Env):
     aligner_db_path = Env.create_path('aligner_db_path')
     aligner_db_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
     
-    aligner_db_path = add_hitmakers(aligner_db_path) 
+    aligner_db_path = add_hitmakersDB(aligner_db_path) 
     aligner_db_path.add_processor(trackfinder_tightcut) 
     aligner_db_path.add_processor(aligner)   
     
@@ -449,7 +449,7 @@ def create_calibration_path(Env):
     
     # Creeate path for next iterations for computing clusterDBs for all sensors 
     clustercal_path = Env.create_path('clustercal_path')
-    clustercal_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })   
+    clustercal_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : -1, 'LCIOInputFiles': "tmp.slcio" })   
     clustercal_path = add_hitmakersDB(clustercal_path) 
     clustercal_path.add_processor(trackfinder_tightcut) 
     clustercal_path = add_clustercalibrators(clustercal_path)
@@ -479,8 +479,12 @@ def create_reco_path(Env):
   reco_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents, 'LCIOInputFiles': rawfile  }) 
   
   # Create path for all reconstruction up to hits
-  reco_path = add_clusterizers(reco_path)    
-  reco_path = add_hitmakers(reco_path) 
+  reco_path = add_clusterizers(reco_path)   
+
+  if useClusterDB: 
+    reco_path = add_hitmakersDB(reco_path)   
+  else: 
+    reco_path = add_hitmakers(reco_path) 
   
   trackfinder = Processor(name="TrackFinder",proctype="FastTracker")
   trackfinder.param("InputHitCollectionNameVec","hit_m26 hit_fei4")
