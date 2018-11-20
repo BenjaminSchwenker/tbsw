@@ -7,34 +7,19 @@
 	<detectors>
 		<detector name="SiPlanes" geartype="SiPlanesParameters">
 			<siplanesID ID="250" />
-			<siplanesType type="TelescopeWithoutDUT" />
 			<siplanesNumber number="7" />
 			<layers>
-				<!--Eudet-Plane 0 - EUD0 -->
-				<layer>
-					<ladder ID="0"
+            	<!--Eudet-Plane 0 -->
+            	<layer>
+					<sensitive 
+                        ID="0"
 						positionX="0.00"
 						positionY="0.00"
-						positionZ="0.0"
-						sizeX="200"
-						sizeY="100"
+						positionZ="0.00"
 						thickness="0.07"
 						radLength="93.660734"
-					/>
-					<sensitive ID="0"
-                        PixType="0"
-						positionX="0.00"
-						positionY="0.00"
-						positionZ="0.0"
-						sizeX="21.2"
-						sizeY="10.6"
-						thickness="0.07"
-						npixelX="1152"
-						npixelY="576"
-						pitchX="0.018402778"
-						pitchY="0.018402778"
-						resolutionX="0.0032"
-                        resolutionY="0.0032"
+                        atomicNumber="14"
+                        atomicMass="28"
                         alpha="0"
                         beta="0"
                         gamma="0"
@@ -42,34 +27,37 @@
 						rotation2="0.0"
 						rotation3="0.0"
 						rotation4="-1.0"
-						radLength="93.660734"
 					/>
-				</layer>
-				<!--Eudet-Plane 1 - EUD1 -->
-				<layer>
-					<ladder ID="1"
+                	<uCellGroup
+						minCell="0"
+                        maxCell="1151"
+						pitch="0.018402778"
+					/>
+                	<vCellGroup
+						minCell="0"
+                        maxCell="575"
+						pitch="0.018402778"
+			 		/>     
+                	<ladder 
+						sizeU="200"
+						sizeV="100"
+						thickness="0.07"
+						radLength="93.660734"
+                        atomicNumber="14"
+                        atomicMass="28"
+					/>
+				</layer> 
+                <!--Eudet-Plane 1 -->
+            	<layer>
+					<sensitive 
+                        ID="1"
 						positionX="0.00"
 						positionY="0.00"
 						positionZ="40.0"
-						sizeX="200"
-						sizeY="100"
 						thickness="0.07"
 						radLength="93.660734"
-					/>
-					<sensitive ID="1"
-                        PixType="0"
-						positionX="0.00"
-						positionY="0.00"
-						positionZ="40.0"
-						sizeX="21.2"
-						sizeY="10.6"
-						thickness="0.07"
-						npixelX="1152"
-						npixelY="576"
-						pitchX="0.018402778"
-						pitchY="0.018402778"
-						resolutionX="0.0032"
-                        resolutionY="0.0032"
+                        atomicNumber="14"
+                        atomicMass="28"
                         alpha="0"
                         beta="0"
                         gamma="0"
@@ -77,184 +65,216 @@
 						rotation2="0.0"
 						rotation3="0.0"
 						rotation4="-1.0"
-						radLength="93.660734"
 					/>
-				</layer>
-				<!--Eudet-Plane 2 - EUD2 -->
-				<layer>
-					<ladder ID="2"
+                	<uCellGroup
+						minCell="0"
+                        maxCell="1151"
+						pitch="0.018402778"
+					/>
+                	<vCellGroup
+						minCell="0"
+                        maxCell="575"
+						pitch="0.018402778"
+			 		/>     
+                	<ladder 
+						sizeU="200"
+						sizeV="100"
+						thickness="0.07"
+						radLength="93.660734"
+                        atomicNumber="14"
+                        atomicMass="28"
+					/>
+				</layer> 
+                <!--Eudet-Plane 2 -->
+            	<layer>
+					<sensitive 
+                        ID="2"
 						positionX="0.00"
 						positionY="0.00"
 						positionZ="80.0"
-						sizeX="200"
-						sizeY="100"
 						thickness="0.07"
 						radLength="93.660734"
-					/>
-					<sensitive ID="2"
-                        PixType="0"
-						positionX="0.00"
-						positionY="0.00"
-						positionZ="80.0"
-						sizeX="21.2"
-						sizeY="10.6"
-						thickness="0.07"
-						npixelX="1152"
-						npixelY="576"
-						pitchX="0.018402778"
-						pitchY="0.018402778"
-						resolutionX="0.0032"
-                        resolutionY="0.0032"
+                        atomicNumber="14"
+                        atomicMass="28"
                         alpha="0"
                         beta="0"
                         gamma="0"
-						rotation1="-1.0"
+						rotation1="1.0"
 						rotation2="0.0"
 						rotation3="0.0"
-						rotation4="-1.0"
-						radLength="93.660734"
+						rotation4="1.0"
 					/>
-				</layer>
-				<!--Eudet-Plane 3 - EUD3 -->
-				<layer>
-					<ladder ID="3"
+                	<uCellGroup
+						minCell="0"
+                        maxCell="1151"
+						pitch="0.018402778"
+					/>
+                	<vCellGroup
+						minCell="0"
+                        maxCell="575"
+						pitch="0.018402778"
+			 		/>     
+                	<ladder 
+						sizeU="200"
+						sizeV="100"
+						thickness="0.07"
+						radLength="93.660734"
+                        atomicNumber="14"
+                        atomicMass="28"
+					/>
+				</layer> 
+                <!--Eudet-Plane 3 -->
+            	<layer>
+					<sensitive 
+                        ID="3"
 						positionX="0.00"
 						positionY="0.00"
 						positionZ="180.0"
-						sizeX="200"
-						sizeY="100"
 						thickness="0.07"
 						radLength="93.660734"
-					/>
-					<sensitive ID="3"
-                        PixType="0"
-						positionX="0.00"
-						positionY="0.00"
-						positionZ="180.0"
-						sizeX="21.2"
-						sizeY="10.6"
-						thickness="0.07"
-						npixelX="1152"
-						npixelY="576"
-						pitchX="0.018402778"
-						pitchY="0.018402778"
-						resolutionX="0.0032"
-                        resolutionY="0.0032"
+                        atomicNumber="14"
+                        atomicMass="28"
                         alpha="0"
                         beta="0"
                         gamma="0"
-						rotation1="-1.0"
+						rotation1="1.0"
 						rotation2="0.0"
 						rotation3="0.0"
-						rotation4="-1.0"
-						radLength="93.660734"
+						rotation4="1.0"
 					/>
-				</layer>
-				<!--Eudet-Plane 4 - EUD4 -->
-				<layer>
-					<ladder ID="4"
+                	<uCellGroup
+						minCell="0"
+                        maxCell="1151"
+						pitch="0.018402778"
+					/>
+                	<vCellGroup
+						minCell="0"
+                        maxCell="575"
+						pitch="0.018402778"
+			 		/>     
+                	<ladder 
+						sizeU="200"
+						sizeV="100"
+						thickness="0.07"
+						radLength="93.660734"
+                        atomicNumber="14"
+                        atomicMass="28"
+					/>
+				</layer> 
+                <!--Eudet-Plane 4 -->
+            	<layer>
+					<sensitive 
+                        ID="4"
 						positionX="0.00"
 						positionY="0.00"
 						positionZ="220.0"
-						sizeX="200"
-						sizeY="100"
 						thickness="0.07"
 						radLength="93.660734"
-					/>
-					<sensitive ID="4"
-                        PixType="0"  
-						positionX="0.00"
-						positionY="0.00"
-						positionZ="220.0"
-						sizeX="21.2"
-						sizeY="10.6"
-						thickness="0.07"
-						npixelX="1152"
-						npixelY="576"
-						pitchX="0.018402778"
-						pitchY="0.018402778"
-						resolutionX="0.0032"
-                        resolutionY="0.0032"
+                        atomicNumber="14"
+                        atomicMass="28"
                         alpha="0"
                         beta="0"
                         gamma="0"
-						rotation1="-1.0"
+						rotation1="1.0"
 						rotation2="0.0"
 						rotation3="0.0"
-						rotation4="-1.0"
-						radLength="93.660734"
+						rotation4="1.0"
 					/>
-				</layer>
-				<!--Eudet-Plane 5 - EUD5 -->
-				<layer>
-					<ladder ID="5"
+                	<uCellGroup
+						minCell="0"
+                        maxCell="1151"
+						pitch="0.018402778"
+					/>
+                	<vCellGroup
+						minCell="0"
+                        maxCell="575"
+						pitch="0.018402778"
+			 		/>     
+                	<ladder 
+						sizeU="200"
+						sizeV="100"
+						thickness="0.07"
+						radLength="93.660734"
+                        atomicNumber="14"
+                        atomicMass="28"
+					/>
+				</layer>  
+                <!--Eudet-Plane 5 -->
+            	<layer>
+					<sensitive 
+                        ID="5"
 						positionX="0.00"
 						positionY="0.00"
 						positionZ="260.0"
-						sizeX="200"
-						sizeY="100"
 						thickness="0.07"
 						radLength="93.660734"
-					/>
-					<sensitive ID="5"
-                        PixType="0"
-						positionX="0.00"
-						positionY="0.00"
-						positionZ="260.0"
-						sizeX="21.2"
-						sizeY="10.6"
-						thickness="0.07"
-						npixelX="1152"
-						npixelY="576"
-						pitchX="0.018402778"
-						pitchY="0.018402778"
-						resolutionX="0.0032"
-                        resolutionY="0.0032"
+                        atomicNumber="14"
+                        atomicMass="28"
                         alpha="0"
                         beta="0"
                         gamma="0"
-						rotation1="-1.0"
+						rotation1="1.0"
 						rotation2="0.0"
 						rotation3="0.0"
-						rotation4="-1.0"
-						radLength="93.660734"
+						rotation4="1.0"
 					/>
-				</layer>
-				<!--Target -->
-				<layer>
-					<ladder ID="11"
+                	<uCellGroup
+						minCell="0"
+                        maxCell="1151"
+						pitch="0.018402778"
+					/>
+                	<vCellGroup
+						minCell="0"
+                        maxCell="575"
+						pitch="0.018402778"
+			 		/>     
+                	<ladder 
+						sizeU="200"
+						sizeV="100"
+						thickness="0.07"
+						radLength="93.660734"
+                        atomicNumber="14"
+                        atomicMass="28"
+					/>
+				</layer> 
+                <!--Target-Plane -->
+            	<layer>
+					<sensitive 
+                        ID="11"
 						positionX="0.00"
 						positionY="0.00"
 						positionZ="130.0"
-						sizeX="8.0"
-						sizeY="8.0"
+						thickness="0.50"
+						radLength="89.0"
+                        atomicNumber="13"
+                        atomicMass="27"
+                        alpha="0"
+                        beta="0"
+                        gamma="0"
+						rotation1="-1.0"
+						rotation2="0.0"
+						rotation3="0.0"
+						rotation4="-1.0"
+					/>
+                	<uCellGroup
+						minCell="0"
+                        maxCell="100"
+						pitch="0.05"
+					/>
+                	<vCellGroup
+						minCell="0"
+                        maxCell="100"
+						pitch="0.05"
+			 		/>     
+                	<ladder 
+						sizeU="8"
+						sizeV="8"
 						thickness="1.0"
 						radLength="89.0"
+                        atomicNumber="13"
+                        atomicMass="27"
 					/>
-					<sensitive ID="11"
-                        PixType="0"
-						positionX="0.00"
-						positionY="0.00"
-						positionZ="130.0"
-						sizeX="5.0"
-						sizeY="5.0"
-						thickness="0.5"
-						npixelX="250"
-						npixelY="250"
-						pitchX="0.02"
-						pitchY="0.02"
-						resolutionX="0.010"
-                        resolutionY="0.018"
-                        alpha="0"
-                        beta="0"
-                        gamma="0"
-						rotation1="-1.0"
-						rotation2="0.0"
-						rotation3="0.0"
-						rotation4="-1.0"
-						radLength="89.0"
-					/>
-				</layer>
+				</layer> 
 			</layers>
 		</detector>
 	</detectors>
