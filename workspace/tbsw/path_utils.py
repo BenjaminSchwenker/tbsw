@@ -164,7 +164,6 @@ def add_clustercalibrator(path):
   cluster_calibrator.param("MinVarianceU", 2e-06)
   cluster_calibrator.param("MinVarianceV", 2e-06)
   cluster_calibrator.param("IgnoreIDs",11)
-  cluster_calibrator.param("SoftwareADC", "")
   path.add_processor(cluster_calibrator)
 
   return path 
@@ -854,7 +853,6 @@ def create_mc_x0calibration_path(Env, rawfile, gearfile, nevents_cali, beamenerg
   m26clustercalibrationformc.param("MaxResidualU", 0.1)
   m26clustercalibrationformc.param("MaxResidualV", 0.1)
   m26clustercalibrationformc.param("MinClusters", 500) 
-  m26clustercalibrationformc.param("SoftwareADC","")
   mc_clustercal_path.add_processor(m26clustercalibrationformc)  
 
   # Finished with mc cluster calibration
@@ -1084,15 +1082,6 @@ def create_x0sim_path(Env, rawfile_air, rawfile_alu, gearfile_air, gearfile,  ne
   fastsim.param("DoFractionalBetheHeitlerEnergyLoss","true")
   sim_air.add_processor(fastsim)
   sim_alu.add_processor(fastsim)
-
-  tlu = Processor(name="TLU",proctype="TriggerGenerator")
-  tlu.param("FakeTriggerPeriod","0")
-  tlu.param("ScinitNo1", "0 -5 -5 5 5")
-  tlu.param("ScinitNo2", "")
-  tlu.param("ScinitNo3", "")
-  tlu.param("ScinitNo4", "") 
-  sim_air.add_processor(tlu)
-  sim_alu.add_processor(tlu)
 
   m26digi = Processor(name="M26Digitizer",proctype="SiPixDigitizer")
   m26digi.param("DigitCollectionName","zsdata_m26")  
