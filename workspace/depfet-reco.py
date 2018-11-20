@@ -169,28 +169,28 @@ def add_clustercalibrators(path):
   m26clustdb = Processor(name="M26ClusterCalibrator",proctype="GoeClusterCalibrator")   
   m26clustdb.param("AlignmentDBFileName","localDB/alignmentDB.root")
   m26clustdb.param("ClusterDBFileName","localDB/clusterDB-M26.root")  
-  m26clustdb.param("MinClusters","500")
+  m26clustdb.param("MinClusters","200")
   m26clustdb.param("IgnoreIDs","6 7 21")
   path.add_processor(m26clustdb)  
     
   pxdclustdb = Processor(name="PXDClusterCalibrator",proctype="GoeClusterCalibrator")   
   pxdclustdb.param("AlignmentDBFileName","localDB/alignmentDB.root")
   pxdclustdb.param("ClusterDBFileName","localDB/clusterDB-PXD.root")  
-  pxdclustdb.param("MinClusters","500")
+  pxdclustdb.param("MinClusters","200")
   pxdclustdb.param("IgnoreIDs","0 1 2 3 4 5 7 21")
   path.add_processor(pxdclustdb)  
     
   h5clustdb = Processor(name="H5ClusterCalibrator",proctype="GoeClusterCalibrator")   
   h5clustdb.param("AlignmentDBFileName","localDB/alignmentDB.root")
   h5clustdb.param("ClusterDBFileName","localDB/clusterDB-H5.root")  
-  h5clustdb.param("MinClusters","500")
+  h5clustdb.param("MinClusters","200")
   h5clustdb.param("IgnoreIDs","0 1 2 3 4 5 6 21")
   path.add_processor(h5clustdb)  
 
   fei4clustdb = Processor(name="FEI4ClusterCalibrator",proctype="GoeClusterCalibrator")   
   fei4clustdb.param("AlignmentDBFileName","localDB/alignmentDB.root")
   fei4clustdb.param("ClusterDBFileName","localDB/clusterDB-FEI4.root")  
-  fei4clustdb.param("MinClusters","500")
+  fei4clustdb.param("MinClusters","200")
   fei4clustdb.param("IgnoreIDs","0 1 2 3 4 5 6 7")
   path.add_processor(fei4clustdb)  
   
@@ -248,7 +248,7 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB):
 
   # Create path for detector level creation of clusters
   clusterizer_path = Env.create_path('clusterizer_path')
-  clusterizer_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' :  400000}) 
+  clusterizer_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' :  -1}) 
   
   clusterizer_path.add_processor(rawinput)  
   clusterizer_path = add_unpackers(clusterizer_path) 
@@ -537,6 +537,7 @@ if __name__ == '__main__':
   parser.add_argument('--energy', dest='energy', default=5.0, type=float, help='Beam energy in GeV')
   parser.add_argument('--steerfiles', dest='steerfiles', default='steering-files/depfet-tb/', type=str, help='Path to steerfiles')
   parser.add_argument('--caltag', dest='caltag', default='', type=str, help='Name of calibration tag to use')
+  parser.add_argument('--special', dest='special', default='', type=str, help='Added to name of new caltag to distinguish different ways to process the same run')
   args = parser.parse_args()
   
   # Use cluster calibration
@@ -544,7 +545,7 @@ if __name__ == '__main__':
   
   if args.caltag=='':
     print("Compute a new calibration tag directly from the rawfile {}".format(args.rawfile))
-    args.caltag = os.path.splitext(os.path.basename(args.rawfile))[0] 
+    args.caltag = os.path.splitext(os.path.basename(args.rawfile))[0] + args.special
     calibrate( (args.rawfile, args.steerfiles, args.gearfile, args.energy, args.caltag, useClusterDB) )   
   else: 
     print("Use existing caltag {}".format(args.caltag))
