@@ -135,25 +135,25 @@ def add_hitmakersDB(path):
   Add cluster shape hitmakers to the path (requiring clusterDBs)
   """  
   
-  m26goehitmaker = Processor(name="M26GoeHitMaker",proctype="GoeClusterCalibrator")   
+  m26goehitmaker = Processor(name="M26GoeHitMaker",proctype="GoeHitMaker")   
   m26goehitmaker.param("ClusterCollection","zscluster_m26")
   m26goehitmaker.param("HitCollectionName","hit_m26")
   m26goehitmaker.param("ClusterDBFileName","localDB/clusterDB-M26.root")
   path.add_processor(m26goehitmaker)  
     
-  fei4goehitmaker = Processor(name="FEI4GoeHitMaker",proctype="GoeClusterCalibrator")   
+  fei4goehitmaker = Processor(name="FEI4GoeHitMaker",proctype="GoeHitMaker")   
   fei4goehitmaker.param("ClusterCollection","zscluster_fei4")
   fei4goehitmaker.param("HitCollectionName","hit_fei4")
   fei4goehitmaker.param("ClusterDBFileName","localDB/clusterDB-FEI4.root")
   path.add_processor(fei4goehitmaker) 
   
-  pxdgoehitmaker = Processor(name="PXDGoeHitMaker",proctype="GoeClusterCalibrator")   
+  pxdgoehitmaker = Processor(name="PXDGoeHitMaker",proctype="GoeHitMaker")   
   pxdgoehitmaker.param("ClusterCollection","zscluster_pxd")
   pxdgoehitmaker.param("HitCollectionName","hit_pxd")
   pxdgoehitmaker.param("ClusterDBFileName","localDB/clusterDB-PXD.root")
   path.add_processor(pxdgoehitmaker)   
   
-  h5goehitmaker = Processor(name="H5GoeHitMaker",proctype="GoeClusterCalibrator")   
+  h5goehitmaker = Processor(name="H5GoeHitMaker",proctype="GoeHitMaker")   
   h5goehitmaker.param("ClusterCollection","zscluster_h5")
   h5goehitmaker.param("HitCollectionName","hit_h5")
   h5goehitmaker.param("ClusterDBFileName","localDB/clusterDB-H5.root")
@@ -412,15 +412,27 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB):
     # Finished with path for pre cluster calibration
     # Repeat this 6x
     for i in range(6): 
-      calpaths.append(preclustercal_path)
+      calpaths.append(clustercal_path)
              
     # Finished with path for alignemnt with hits from final clusterDB 
     # Repeat this 2x
     for i in range(2):
       calpaths.append(aligner_db_path) 
     
-    # Repeat a final dqm with cluster calibrations
-    calpaths.append(dqm_path)
+    # Creeate path for dqm using cluster calibrations
+    dqm_db_path = Env.create_path('dqm_db_path')
+    dqm_db_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })
+    
+    dqm_db_path = add_hitmakersDB(dqm_db_path)   
+    dqm_db_path.add_processor(trackfinder_tightcut)  
+    
+    teldqm_db = Processor(name="TelescopeDQM_DB", proctype="TrackFitDQM") 
+    teldqm_db.param("AlignmentDBFileName","localDB/alignmentDB.root")
+    teldqm_db.param("RootFileName","TelescopeDQM_DB.root")
+    dqm_db_path.add_processor(teldqm_db)  
+    
+    # Finished with path for dqm with cluster calibration
+    calpaths.append(dqm_db_path)
     
   return calpaths
 

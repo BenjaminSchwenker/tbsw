@@ -116,19 +116,19 @@ def add_hitmakersDB(path):
   Add cluster shape hitmakers to the path (requiring clusterDBs)
   """  
   
-  m26goehitmaker = Processor(name="M26GoeHitMaker",proctype="GoeClusterCalibrator")   
+  m26goehitmaker = Processor(name="M26GoeHitMaker",proctype="GoeHitMaker")   
   m26goehitmaker.param("ClusterCollection","zscluster_m26")
   m26goehitmaker.param("HitCollectionName","hit_m26")
   m26goehitmaker.param("ClusterDBFileName","localDB/clusterDB-M26.root")
   path.add_processor(m26goehitmaker)  
     
-  fei4goehitmaker = Processor(name="FEI4GoeHitMaker",proctype="GoeClusterCalibrator")   
+  fei4goehitmaker = Processor(name="FEI4GoeHitMaker",proctype="GoeHitMaker")   
   fei4goehitmaker.param("ClusterCollection","zscluster_fei4")
   fei4goehitmaker.param("HitCollectionName","hit_fei4")
   fei4goehitmaker.param("ClusterDBFileName","localDB/clusterDB-FEI4.root")
   path.add_processor(fei4goehitmaker) 
   
-  pxdgoehitmaker = Processor(name="PXDGoeHitMaker",proctype="GoeClusterCalibrator")   
+  pxdgoehitmaker = Processor(name="PXDGoeHitMaker",proctype="GoeHitMaker")   
   pxdgoehitmaker.param("ClusterCollection","zscluster_pxd")
   pxdgoehitmaker.param("HitCollectionName","hit_pxd")
   pxdgoehitmaker.param("ClusterDBFileName","localDB/clusterDB-PXD.root")
@@ -404,7 +404,7 @@ def create_calibration_path(Env):
   calpaths.append(aligner_path)
   calpaths.append(aligner_path)
    
-  # Creeate path for some track based dqm using current calibrations
+  # Creeate path for some track based dqm using center of gravity hits
   dqm_path = Env.create_path('dqm_path')
   dqm_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })
   
@@ -426,7 +426,7 @@ def create_calibration_path(Env):
     
     # Creeate path for first iteration for computing clusterDBs for all sensors 
     preclustercal_path = Env.create_path('preclustercal_path')
-    preclustercal_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : -1, 'LCIOInputFiles': "tmp.slcio" })  
+    preclustercal_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : "-1", 'LCIOInputFiles': "tmp.slcio" })  
     preclustercal_path = add_hitmakers(preclustercal_path) 
     preclustercal_path.add_processor(trackfinder_tightcut)      
     preclustercal_path = add_clustercalibrators(preclustercal_path)
@@ -437,7 +437,6 @@ def create_calibration_path(Env):
     # Create path for alignment with tight cut track sample and cluster DB
     aligner_db_path = Env.create_path('aligner_db_path')
     aligner_db_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
-    
     aligner_db_path = add_hitmakersDB(aligner_db_path) 
     aligner_db_path.add_processor(trackfinder_tightcut) 
     aligner_db_path.add_processor(aligner)   
@@ -449,7 +448,7 @@ def create_calibration_path(Env):
     
     # Creeate path for next iterations for computing clusterDBs for all sensors 
     clustercal_path = Env.create_path('clustercal_path')
-    clustercal_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : -1, 'LCIOInputFiles': "tmp.slcio" })   
+    clustercal_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : "-1", 'LCIOInputFiles': "tmp.slcio" })   
     clustercal_path = add_hitmakersDB(clustercal_path) 
     clustercal_path.add_processor(trackfinder_tightcut) 
     clustercal_path = add_clustercalibrators(clustercal_path)
@@ -457,18 +456,30 @@ def create_calibration_path(Env):
     # Finished with path for pre cluster calibration
     # Repeat this 6x
     for i in range(6): 
-      calpaths.append(preclustercal_path)
+      calpaths.append(clustercal_path)
              
     # Finished with path for alignemnt with hits from final clusterDB 
     # Repeat this 2x
     for i in range(2):
       calpaths.append(aligner_db_path) 
+      
+    # Creeate path for dqm using cluster calibrations
+    dqm_db_path = Env.create_path('dqm_db_path')
+    dqm_db_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })
     
-    # Repeat a final dqm with cluster calibrations
-    calpaths.append(dqm_path)
-     
+    dqm_db_path = add_hitmakersDB(dqm_db_path)   
+    dqm_db_path.add_processor(trackfinder_tightcut)  
+    
+    teldqm_db = Processor(name="TelescopeDQM_DB", proctype="TrackFitDQM") 
+    teldqm_db.param("AlignmentDBFileName","localDB/alignmentDB.root")
+    teldqm_db.param("RootFileName","TelescopeDQM_DB.root")
+    dqm_db_path.add_processor(teldqm_db)  
+    
+    # Finished with path for dqm with cluster calibration
+    calpaths.append(dqm_db_path)
+    
   return calpaths
-
+  
 
 def create_reco_path(Env):
   """
