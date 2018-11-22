@@ -400,6 +400,8 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
                 
  	      // New accpeted cluster
           clusterID++; 
+            
+          streamlog_out(MESSAGE2) << " Stored cluster on sensor " << sensorID << " having total charge " << clusterSignal << std::endl;
           
           // Ok good cluster ... save it   
           originalDataEncoder["sensorID"] = sensorID;

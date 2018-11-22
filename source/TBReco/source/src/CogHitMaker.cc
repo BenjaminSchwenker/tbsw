@@ -153,97 +153,98 @@ void CogHitMaker::processEvent(LCEvent * evt)
    
   //
   // Open collections
-  LCCollectionVec* clusterCollection;
+  
   try {
-      clusterCollection = dynamic_cast < LCCollectionVec * >  ( evt->getCollection(_clusterCollectionName) );
-  } catch (DataNotAvailableException& e) {
-      throw SkipEventException(this);
-  }
-        
-  // Create hit collection  
-  LCCollectionVec * hitCollection = new LCCollectionVec(LCIO::TRACKERHIT) ;
+      LCCollectionVec* clusterCollection = dynamic_cast < LCCollectionVec * >  ( evt->getCollection(_clusterCollectionName) );
+      
+      // Create hit collection  
+      LCCollectionVec * hitCollection = new LCCollectionVec(LCIO::TRACKERHIT) ;
          
-  // Loop on all clusters 
-  for (unsigned int iClu = 0; iClu < clusterCollection->size(); iClu++) 
-  { 
-    
-    // Helper class for decoding cluster ID's 
-    CellIDDecoder<TrackerPulseImpl> clusterDecoder( clusterCollection ); 
-    
-    // Read cluster header
-    TrackerPulseImpl* cluster = dynamic_cast<TrackerPulseImpl* > ( clusterCollection->getElementAt(iClu) )  ;       
-    int sensorID = clusterDecoder(cluster)["sensorID"]; 
-    int ipl = _detector.GetPlaneNumber(sensorID);
-    Det& Det = _detector.GetDet(ipl);
-    
-    streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID  << endl; 
-    
-    PixelCluster myCluster(cluster->getTrackerData());  
-       
-    // Calculate hit coord in local frame in mm
-    float u = 0; 
-    float v = 0;  
-    float total = 0; 
-      
-    // Loop over digits and compute hit coordinates
-    TrackerData * clusterDigits =  cluster->getTrackerData();
-    FloatVec sparsePixels = clusterDigits->getChargeValues();
-    int nPixels = sparsePixels.size()/3; 
-       
-    for ( int index=0; index<nPixels;  index++) { 
-         
-      int col = static_cast<int> (sparsePixels[index * 3]);
-      int row = static_cast<int> (sparsePixels[index * 3 + 1]);
-      float chargeValue =  sparsePixels[index * 3 + 2];
+      // Loop on all clusters 
+      for (unsigned int iClu = 0; iClu < clusterCollection->size(); iClu++) 
+      { 
+        // Helper class for decoding cluster ID's 
+        CellIDDecoder<TrackerPulseImpl> clusterDecoder( clusterCollection ); 
         
-      total += chargeValue;
-      u += Det.GetPixelCenterCoordU(row, col)*chargeValue;
-      v += Det.GetPixelCenterCoordV(row, col)*chargeValue;       
-    }
-      
-    if ( total > 0)  {
-      u /= total;
-      v /= total; 
-    } 
-      
-    double cov_u{0.0} , cov_v {0.0}, cov_uv{0.0};    
-
-    if ( myCluster.getUSize() == 1) cov_u = pow(_SigmaU1,2);
-    else if ( myCluster.getUSize() == 2) cov_u = pow(_SigmaU2,2); 
-    else if ( myCluster.getUSize() == 3) cov_u = pow(_SigmaU3,2); 
-    else cov_u = pow(myCluster.getUSize()*Det.GetPitchU(myCluster.getVStart(), myCluster.getUStart())/TMath::Sqrt(12),2);  
-     
-    if ( myCluster.getVSize() == 1) cov_v = pow(_SigmaV1,2);
-    else if ( myCluster.getVSize() == 2) cov_v = pow(_SigmaV2,2);
-    else if ( myCluster.getVSize() == 3) cov_v = pow(_SigmaV3,2);
-    else cov_v = pow(myCluster.getVSize()*Det.GetPitchV(myCluster.getVStart(), myCluster.getUStart())/TMath::Sqrt(12),2);
-     
-    // = 1 means the cluster is marked bad 
-    unsigned short clsType = 0; 
-
-    if ( myCluster.getUSize() > _maxSizeU ) clsType = 1; 
-    if ( myCluster.getVSize() > _maxSizeV ) clsType = 1;        
-
-    TBHit hit(sensorID, u, v, cov_u, cov_v, cov_uv, clsType);
-      
-    // Make LCIO TrackerHit
-    TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
+        // Read cluster header
+        TrackerPulseImpl* cluster = dynamic_cast<TrackerPulseImpl* > ( clusterCollection->getElementAt(iClu) )  ;       
+        int sensorID = clusterDecoder(cluster)["sensorID"]; 
+        int ipl = _detector.GetPlaneNumber(sensorID);
+        Det& Det = _detector.GetDet(ipl);
+        
+        streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID  << endl; 
+        
+        PixelCluster myCluster(cluster->getTrackerData());  
+        
+        // Calculate hit coord in local frame in mm
+        float u = 0; 
+        float v = 0;  
+        float total = 0; 
+        
+        // Loop over digits and compute hit coordinates
+        TrackerData * clusterDigits =  cluster->getTrackerData();
+        FloatVec sparsePixels = clusterDigits->getChargeValues();
+        int nPixels = sparsePixels.size()/3; 
+        
+        for ( int index=0; index<nPixels;  index++) { 
+         
+          int col = static_cast<int> (sparsePixels[index * 3]);
+          int row = static_cast<int> (sparsePixels[index * 3 + 1]);
+          float chargeValue =  sparsePixels[index * 3 + 2];
+           
+          total += chargeValue;
+          u += Det.GetPixelCenterCoordU(row, col)*chargeValue;
+          v += Det.GetPixelCenterCoordV(row, col)*chargeValue;       
+        }
+        
+        if ( total > 0)  {
+          u /= total;
+          v /= total; 
+        } 
+        
+        double cov_u{0.0} , cov_v {0.0}, cov_uv{0.0};    
+        
+        if ( myCluster.getUSize() == 1) cov_u = pow(_SigmaU1,2);
+        else if ( myCluster.getUSize() == 2) cov_u = pow(_SigmaU2,2); 
+        else if ( myCluster.getUSize() == 3) cov_u = pow(_SigmaU3,2); 
+        else cov_u = pow(myCluster.getUSize()*Det.GetPitchU(myCluster.getVStart(), myCluster.getUStart())/TMath::Sqrt(12),2);  
+        
+        if ( myCluster.getVSize() == 1) cov_v = pow(_SigmaV1,2);
+        else if ( myCluster.getVSize() == 2) cov_v = pow(_SigmaV2,2);
+        else if ( myCluster.getVSize() == 3) cov_v = pow(_SigmaV3,2);
+        else cov_v = pow(myCluster.getVSize()*Det.GetPitchV(myCluster.getVStart(), myCluster.getUStart())/TMath::Sqrt(12),2);
+        
+        // = 1 means the cluster is marked bad 
+        unsigned short clsType = 0; 
+        
+        if ( myCluster.getUSize() > _maxSizeU ) clsType = 1; 
+        if ( myCluster.getVSize() > _maxSizeV ) clsType = 1;        
+        
+        streamlog_out(MESSAGE2) << "Stored cluster on sensorID " << sensorID << " at u=" << u << " v=" << v << endl; 
+        
+        TBHit hit(sensorID, u, v, cov_u, cov_v, cov_uv, clsType);
+        
+        // Make LCIO TrackerHit
+        TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
             
-    // Add link to full cluster data 
-    LCObjectVec clusterVec;
-    clusterVec.push_back( cluster->getTrackerData() );
-    trackerhit->rawHits() = clusterVec;
-      
-    // Add hit to the hit collection
-    hitCollection->push_back( trackerhit );
+        // Add link to full cluster data 
+        LCObjectVec clusterVec;
+        clusterVec.push_back( cluster->getTrackerData() );
+        trackerhit->rawHits() = clusterVec;
+        
+        // Add hit to the hit collection
+        hitCollection->push_back( trackerhit );
           
-  } // End cluster loop 
+      } // End cluster loop 
+      
+             
+    // Store hitCollection in LCIO file
+    evt->addCollection( hitCollection, _hitCollectionName );
+  
+  } catch(DataNotAvailableException &e){
+    streamlog_out(MESSAGE2) << "Missing cluster collection in event: " << evt->getEventNumber() << std::endl;
+  }   
    
-       
-  // Store hitCollection in LCIO file
-  evt->addCollection( hitCollection, _hitCollectionName );
-       
-     
 }
 
 

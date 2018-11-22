@@ -185,77 +185,78 @@ namespace depfet {
     
     //
     // Open collections
-    LCCollectionVec* clusterCollection;
     try {
-      clusterCollection = dynamic_cast < LCCollectionVec * >  ( evt->getCollection(_clusterCollectionName) );
-    } catch (DataNotAvailableException& e) {
-      throw SkipEventException(this);
-    }
-        
-    // Create hit collection  
-    LCCollectionVec * hitCollection = new LCCollectionVec(LCIO::TRACKERHIT) ;
+      LCCollectionVec* clusterCollection = dynamic_cast < LCCollectionVec * >  ( evt->getCollection(_clusterCollectionName) );
+      
+      // Create hit collection  
+      LCCollectionVec * hitCollection = new LCCollectionVec(LCIO::TRACKERHIT) ;
          
-    // Loop on all clusters 
-    for (unsigned int iClu = 0; iClu < clusterCollection->size(); iClu++) 
-    {
-      // Helper class for decoding cluster ID's 
-      CellIDDecoder<TrackerPulseImpl> clusterDecoder( clusterCollection ); 
-      
-      // Read cluster header
-      TrackerPulseImpl* cluster = dynamic_cast<TrackerPulseImpl* > ( clusterCollection->getElementAt(iClu) )  ;       
-      int sensorID = clusterDecoder(cluster)["sensorID"]; 
-      int ipl = _detector.GetPlaneNumber(sensorID);
-      Det& Det = _detector.GetDet(ipl);
-      
-      // Increment the cluster counter
-      _countAllMap[sensorID]++;
-      
-      // Compute the cluster ID string
-      PixelCluster aCluster(cluster->getTrackerData());   
-      string id = aCluster.getLabel(_swADCSteps,_vCellPeriod, _uCellPeriod); 
-      
-      streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID << " with label " << id << endl; 
-      
-      // Compute position measurement and its 2x2 covariance matrix   
-      double u{0.0}, v{0.0}, sig2_u{0.0}, sig2_v{0.0}, cov_uv{0.0};
-      int quality = 0; 
-       
-      bool found = searchDB(sensorID, id, u, v, sig2_u, sig2_v, cov_uv); 
-      if (found) {
-        // Count matched clusters
-        _countCalMap[sensorID]++; 
-        // Shift position into local sensor coordinates
-        u += Det.GetPixelCenterCoordU( aCluster.getVStart(), aCluster.getUStart()); 
-        v += Det.GetPixelCenterCoordV( aCluster.getVStart(), aCluster.getUStart()); 
+      // Loop on all clusters 
+      for (unsigned int iClu = 0; iClu < clusterCollection->size(); iClu++) 
+      {
+        // Helper class for decoding cluster ID's 
+        CellIDDecoder<TrackerPulseImpl> clusterDecoder( clusterCollection ); 
         
-        streamlog_out(MESSAGE2) << "  Label " << id << " found: " << endl
-                                << std::setiosflags(std::ios::fixed | std::ios::internal )
-                                << std::setprecision(8)
-                                << "  u: " << u << ", sigma: " << TMath::Sqrt(sig2_u) << endl
-                                << "  v: " << v << ", sigma: " << TMath::Sqrt(sig2_v) << endl
-                                << "  cov(u,v): " << cov_uv
-                                << std::setprecision(3)
-                                << endl; 
+        // Read cluster header
+        TrackerPulseImpl* cluster = dynamic_cast<TrackerPulseImpl* > ( clusterCollection->getElementAt(iClu) )  ;       
+        int sensorID = clusterDecoder(cluster)["sensorID"]; 
+        int ipl = _detector.GetPlaneNumber(sensorID);
+        Det& Det = _detector.GetDet(ipl);
         
-        // Make TBHit 
-        TBHit hit(sensorID, u, v, sig2_u, sig2_v, cov_uv, quality);
+        // Increment the cluster counter
+        _countAllMap[sensorID]++;
         
-        // Make LCIO TrackerHit
-        TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
+        // Compute the cluster ID string
+        PixelCluster aCluster(cluster->getTrackerData());   
+        string id = aCluster.getLabel(_swADCSteps,_vCellPeriod, _uCellPeriod); 
+         
+        streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID << " with label " << id << endl; 
+      
+        // Compute position measurement and its 2x2 covariance matrix   
+        double u{0.0}, v{0.0}, sig2_u{0.0}, sig2_v{0.0}, cov_uv{0.0};
+        int quality = 0; 
+        
+        bool found = searchDB(sensorID, id, u, v, sig2_u, sig2_v, cov_uv); 
+        if (found) {
+          // Count matched clusters
+          _countCalMap[sensorID]++; 
+          // Shift position into local sensor coordinates
+          u += Det.GetPixelCenterCoordU( aCluster.getVStart(), aCluster.getUStart()); 
+          v += Det.GetPixelCenterCoordV( aCluster.getVStart(), aCluster.getUStart()); 
+          
+          streamlog_out(MESSAGE2) << "  Label " << id << " found: " << endl
+                                  << std::setiosflags(std::ios::fixed | std::ios::internal )
+                                  << std::setprecision(8)
+                                  << "  u: " << u << ", sigma: " << TMath::Sqrt(sig2_u) << endl
+                                  << "  v: " << v << ", sigma: " << TMath::Sqrt(sig2_v) << endl
+                                  << "  cov(u,v): " << cov_uv
+                                  << std::setprecision(3)
+                                  << endl; 
+        
+          // Make TBHit 
+          TBHit hit(sensorID, u, v, sig2_u, sig2_v, cov_uv, quality);
+        
+          // Make LCIO TrackerHit
+          TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
             
-        // Add link to full cluster data 
-        LCObjectVec clusterVec;
-        clusterVec.push_back( cluster->getTrackerData() );
-        trackerhit->rawHits() = clusterVec;
-        
-        // Add hit to the hit collection
-        hitCollection->push_back( trackerhit ); 
-      } 
+          // Add link to full cluster data 
+          LCObjectVec clusterVec;
+          clusterVec.push_back( cluster->getTrackerData() );
+          trackerhit->rawHits() = clusterVec;
+          
+          //  Add hit to the hit collection
+          hitCollection->push_back( trackerhit ); 
+        } 
                
-    } // End cluster loop 
+      } // End cluster loop 
       
-    // Store hitCollection in LCIO file
-    evt->addCollection( hitCollection, _hitCollectionName );      
+      // Store hitCollection in LCIO file
+      evt->addCollection( hitCollection, _hitCollectionName );     
+       
+    } catch (DataNotAvailableException& e) {
+      streamlog_out(MESSAGE2) << "Missing cluster collection in event: " << evt->getEventNumber() << std::endl;
+    }
+    
   }
 
   //
