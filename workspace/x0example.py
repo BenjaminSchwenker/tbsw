@@ -70,6 +70,9 @@ Use_SingleHitSeeding=False
 # Determine cluster resolution and store in cluster DB?
 Use_clusterDB=True
 
+# Flag to indicate that mc data is used (slcio format)
+mcdata=True
+
 def simulate(): 
   """
   Simulates a rawfile from a simulated test beam experiment
@@ -135,7 +138,7 @@ def calibrate():
   set_parameter(gearfile=localgearfile, sensorID=11, parametername='radLength', value=304000.0)
   
   # Create list of calibration steps 
-  calpath = create_mc_x0calibration_path(CalObj, rawfile_air, gearfile, nevents_air, beamenergy)
+  calpath = create_x0analysis_calibration_path(CalObj, rawfile_air, gearfile, nevents_air, Use_clusterDB, beamenergy, mcdata)
 
   # Run the calibration steps 
   CalObj.calibrate(paths=calpath,ifile=rawfile_air,caltag=caltag)  
@@ -151,7 +154,7 @@ def reconstruct():
   RecObj = Reconstruction(steerfiles=steerfiles, name=caltag )
 
   # Create reconstuction path
-  recopath = create_mc_x0reco_path(RecObj, rawfile_alu, gearfile, nevents_alu, Use_SingleHitSeeding, beamenergy)  
+  recopath = create_anglereco_path(RecObj, rawfile_alu, gearfile, nevents_alu, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)  
 
   # Use caltag of the last target alignment iteration
   iteration_string='-target-alignment-it'+str(targetalignment_iterations-1)
