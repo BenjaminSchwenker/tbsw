@@ -92,3 +92,17 @@ echo "export PATH="${MARLIN}/bin:${PATH}"" >> workspace/init_tbsw.sh
 echo "export MARLIN_DLL="${TBSW_HOME}/TBReco/lib/libTBReco.so:${TBSW_HOME}/EudaqInput/lib/libEudaqInput.so:"" >> workspace/init_tbsw.sh
 echo "" >> workspace/init_tbsw.sh
 
+############################################################
+# Create some workspace folders with special meaning in tbsw
+
+# Folder to collect all calibration tags
+mkdir workspace/localDB
+
+# Folder to put logs for all processed runs
+mkdir workspace/tmp-runs
+
+# Folder to collect reconstructed DUT root files 
+mkdir workspace/root-files
+
+
+
