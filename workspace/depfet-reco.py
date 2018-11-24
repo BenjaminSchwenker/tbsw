@@ -210,7 +210,7 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB):
   mask_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : -1 })  
   
   rawinput = Processor(name="RawInputProcessor",proctype="EudaqInputProcessor")
-  rawinput.param('FileName', rawfile)
+  rawinput.param('FileNames', rawfile)
   mask_path.add_processor(rawinput)
   
   mask_path = add_unpackers(mask_path)
@@ -446,7 +446,7 @@ def create_reco_path(Env, rawfile, gearfile, energy, useClusterDB):
   reco_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : -1 }) 
   
   rawinput = Processor(name="RawInputProcessor",proctype="EudaqInputProcessor")
-  rawinput.param('FileName', rawfile) 
+  rawinput.param('FileNames', rawfile) 
   reco_path.add_processor(rawinput)
   
   # Create path for all reconstruction up to hits
