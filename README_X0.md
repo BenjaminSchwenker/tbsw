@@ -259,8 +259,17 @@ produces a calibration tag directory, that is written to workspace/local-DB/calt
 caltag='40mm-spacing-2GeV'
 ```
 
-so that you always know, which telescope setup, beam energy etc is covered by this tag. The telescope calibration has to be done only once for each beam energy, telescope setup and M26 threshold setting. Once you have the caltag directory you can comment out/remove the telescope calibration procedure from the testbeam_x0.py script.
+so that you always know, which telescope setup, beam energy etc is covered by this tag. The telescope calibration has to be done only once for each beam energy, telescope setup and M26 threshold setting. At the beginning of the script there is an option, which enables/disables the telescope calibration:
 
+```
+ # Script purpose option:
+ # 0: Script only processes imaging part
+ # 1: Script processes x0 calibration and imaging part
+ # Everything else: Script processes the whole chain: Telescope calibration, angle reconstruction, x0 calibration and x0 imaging 
+ Script_purpose_option=2
+```
+
+The data quality monitoring plots of the telescope calibration step can be found in workspace/results/telescopeDQM. It contains plots of track p values, alignment shifts and cluster resolutions. You should always check whether this step of the analysis worked, as a failure during this step will often cause the angle reconstruction to not work at all. 
 
 #2. Angle reconstruction
 
@@ -291,6 +300,7 @@ Of course, this list also has to be modified to match the runs you want to analy
 ```
 
 As you can see the angle reconstruction uses multiprocessing. In case you don't want to use all system ressources feel free to set the variable count to some number smaller than the number of processor cores of your maschine.
+Some DQM plots of the angle reconstruction such as a beamspot on the target plane and the angle resolution plots can be found in workspace/results/anglerecoDQM.
 
 #3. X/X0 calibration
 
@@ -319,27 +329,29 @@ The x0 calibration process is started via:
 
 The xx0calibration() functions performs the following steps:
 
-The root files with reconstructed angle information, that were reconstructed in the previous step are merged
+The root files with reconstructed angle information, that were reconstructed in the previous step are collected in a list
 
 ```
-   # Merge the root trees in the root files directory
-   tbsw.x0imaging.X0Calibration.merge_rootfile(filename=filename,RunList=RunList,caltag=caltag)
+   # Create list with input root files from list of input raw files
+   RootFileList_x0cali=[]
+   tbsw.x0imaging.X0Calibration.CreateRootFileList(rawlist=RunList,rootlist=RootFileList_x0cali, caltag=caltag)
 ```
-A uncalibrated image is generated from the merged root file. This image will be used to visualize the position of the measurement areas, which are employed during the x0 calibration.
+A uncalibrated image is generated from the first file in the root file list. This image will be used to visualize the position of the measurement areas, which are employed during the x0 calibration.
 
 ```
    # Generate a uncalibrated X/X0 image
-   tbsw.x0imaging.X0Calibration.x0imaging(filename=filename,caltag='',deletetag=deletetag,steerfiles=steerfiles,nametag='Uncalibrated')
+   imagenametag='X0image-calitarget-Uncalibrated'
+   tbsw.x0imaging.X0Calibration.x0imaging(filelist=[RootFileList_x0cali[0]],caltag='',steerfiles=steerfiles,nametag=imagenametag)
 ```
 
 Afterwards the x0 calibration itself is performed
 
 ```
    # Do a calibration of the angle resolution
-   tbsw.x0imaging.X0Calibration.x0calibration(filename=filename,imagefilename=imagefilename,caltag=x0tag,steerfiles=steerfiles)
+   tbsw.x0imaging.X0Calibration.x0calibration(filelist=RootFileList_x0cali,imagefilename=imagefilename,caltag=x0caltag,steerfiles=steerfiles)
 ```
 
-The x0 calibration creates a new caltag at localDB/x0tag. Just like the telescope calibration the x0 calibration step has to be done only once. Before proceeding with the x0imaging step one should check the quality of the calibration measurement. The fitted distributions can be found in workspace/tmp-runs/...-X0Calibration/X0calibration_results.root.
+The x0 calibration creates a new caltag at localDB/x0tag. Just like the telescope calibration the x0 calibration step has to be done only once. Before proceeding with the x0imaging step one should check the quality of the calibration measurement. The fitted distributions, a self-consistency check and a visualization of the measurement areas can be found in workspace/results/x0calibrationDQM. As the radiation length calibration is an essential part of the radiation length measurement, you should always check if the fits have succeeded and whether the determined radiation length values in the self consistency plot match the expected values. In case of a faulty x/x0 calibration the subsequent radiation length images will be flawed as well!   
 
 #5. X/X0 Images 
 
