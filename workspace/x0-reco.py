@@ -30,13 +30,13 @@ import tbsw.x0imaging.X0Calibration
 # or how M26 sensors are digitized. XML parameters can be adjusted using any test editor
 
 # Steerfiles for the telescope calibration
-steerfiles_cali = 'steering-files/x0-tb/'
+steerfiles_cali = 'steering-files/x0-tb-june17/'
 
 # Steerfiles for the angle reconstruction (can be the same directory as telescope calibration steerfiles)
-steerfiles_reco = 'steering-files/x0-tb/'
+steerfiles_reco = 'steering-files/x0-tb-june17/'
 
 # Steerfiles for the x0calibration/x0imaging (can be the same directory as telescope calibration steerfiles)
-steerfiles_x0 = 'steering-files/x0-tb/'
+steerfiles_x0 = 'steering-files/x0-tb-june17/'
 
 # Nominal Beam energy
 beamenergy=2.0
@@ -63,6 +63,9 @@ Use_SingleHitSeeding=True
 
 # Use Single Hit seeding to speed up track finding?
 Use_LongTelescopeCali=True
+
+# Flag to indicate that real EUTelescope data is used (raw format)
+mcdata=False
 
 # Script purpose option:
 # 0: Script only processes imaging part
@@ -165,16 +168,15 @@ def calibrate(params):
   # Calibrate of the run using beam data. Creates a folder cal-files/caltag 
   # containing all calibration data. 
   CalObj = Calibration(steerfiles=steerfiles, name=caltag + '-cal') 
-  CalObj.set_beam_momentum(beamenergy)
   
   # Create list of calibration steps 
   if Use_LongTelescopeCali:
-    calpath = create_x0calibration_longtelescope_path(CalObj, rawfile, gearfile_longtelescope, nevents_cali, Use_clusterDB)
+    calpath = create_x0analysis_calibration_longtelescope_path(CalObj, rawfile, gearfile_longtelescope, nevents_cali, Use_clusterDB, beamenergy, mcdata)
   else:
-    calpath = create_x0calibration_path(CalObj, rawfile, gearfile, nevents_cali, Use_clusterDB)
-  
+    calpath = create_x0analysis_calibration_path(CalObj, rawfile, gearfile, nevents_cali, Use_clusterDB, beamenergy, mcdata)
+
   # Run the calibration steps 
-  CalObj.calibrate(path=calpath,ifile=rawfile,caltag=caltag)
+  CalObj.calibrate(paths=calpath,ifile=rawfile,caltag=caltag)
 
   DQMplots.calibration_DQMPlots(caltag, Use_clusterDB)
 
@@ -194,10 +196,10 @@ def reconstruct(params):
 
   # Create reconstuction path
   if Use_LongTelescopeCali:
-    recopath = create_x0reco_path(RecObj, rawfile, gearfile_longtelescope, nevents_reco, Use_SingleHitSeeding)  
+    recopath = create_anglereco_path(RecObj, rawfile, gearfile_longtelescope, nevents_reco, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)
 
   else:
-    recopath = create_x0reco_path(RecObj, rawfile, gearfile, nevents_reco, Use_SingleHitSeeding)  
+    recopath = create_anglereco_path(RecObj, rawfile, gearfile, nevents_reco, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)   
 
   # Use caltag of the last target alignment iteration
   iteration_string='-target-alignment-it'+str(targetalignment_iterations-1)
