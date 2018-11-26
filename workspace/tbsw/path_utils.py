@@ -14,7 +14,7 @@ def add_rawinputprocessor(path,rawfile):
 
   rawinput_processor = Processor(name="rawinput_processor",proctype="EudaqInputProcessor")
   rawinput_processor.param("DetectorName","EUTelescope")
-  rawinput_processor.param("FileName",rawfile)
+  rawinput_processor.param("FileNames",rawfile)
   path.add_processor(rawinput_processor)
 
   return path 
@@ -212,12 +212,8 @@ def add_M26hitmaker(path, hitmakertype):
     m26coghitmaker = Processor(name="M26CogHitMaker",proctype="CogHitMaker")
     m26coghitmaker.param("ClusterCollection","zscluster_m26")
     m26coghitmaker.param("HitCollectionName","hit_m26")
-    m26coghitmaker.param("SigmaU1",0.0033)
-    m26coghitmaker.param("SigmaU2",0.0030)
-    m26coghitmaker.param("SigmaU3",0.0050)
-    m26coghitmaker.param("SigmaV1",0.0033)
-    m26coghitmaker.param("SigmaV2",0.0030)
-    m26coghitmaker.param("SigmaV3",0.0050)
+    m26coghitmaker.param("SigmaUCorrections", "0.698 0.31 0.315")  
+    m26coghitmaker.param("SigmaVCorrections", "0.698 0.31 0.315")
     path.add_processor(m26coghitmaker)  
     
   return path 

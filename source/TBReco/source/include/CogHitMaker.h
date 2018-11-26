@@ -17,8 +17,7 @@
 
 // Include basic C
 #include <string>
-
-
+#include <vector>
 
 namespace depfet {
 
@@ -36,50 +35,46 @@ class CogHitMaker : public marlin::Processor {
   
  public:
    
-//!Method that returns a new instance of this processor
+   //!Method that returns a new instance of this processor
    virtual Processor*  newProcessor() { return new CogHitMaker ; }
    
-//!Constructor - set processor description and register processor parameters
+   //!Constructor - set processor description and register processor parameters
    CogHitMaker();
    
-//!Method called at the beginning of data processing - used for initialization
+   //!Method called at the beginning of data processing - used for initialization
    virtual void init();
    
-//!Method called for each run - used for run header processing
+   //!Method called for each run - used for run header processing
    virtual void processRunHeader(LCRunHeader * run);
    
-//!Method called for each event - used for event data processing
+   //!Method called for each event - used for event data processing
    virtual void processEvent(LCEvent * evt);
    
-//!Method called after each event - used for data checking
+   //!Method called after each event - used for data checking
    virtual void check(LCEvent * evt);
    
-//!Method called after all data processing
+   //!Method called after all data processing
    virtual void end();
    
-//!Method printing processor parameters
+   //!Method printing processor parameters
    void printProcessorParams() const;
    
 protected:
       
-//! Input cluster collection name
+   //! Input cluster collection name
    std::string  _clusterCollectionName; 
    
-//! Output hit collection name
+   //! Output hit collection name
    std::string  _hitCollectionName;
-
-//! Sigma values for cluster shapes
-   double _SigmaU1;
-   double _SigmaU2;
-   double _SigmaU3;
-   double _SigmaV1;
-   double _SigmaV2;  
-   double _SigmaV3; 
-
-//! Clusters having more cells in u/v are considered bad
-   int _maxSizeU;
-   int _maxSizeV;
    
+   //! Sigma U correction factors
+   //! One value for sizeU = 1,2,3,... 
+   std::vector<float> _sigmaUCorrections;
+
+   //! Sigma V correction factors 
+   //! One value for sizeV = 1,2,3,... 
+   std::vector<float> _sigmaVCorrections; 
+    
  private:
    
    // Handle to detector data 
