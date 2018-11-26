@@ -180,13 +180,11 @@ void CogHitMaker::processEvent(LCEvent * evt)
         double cov_uv{0.0};   
         
         if ( myCluster.getUSize()-1 < _sigmaUCorrections.size() ) {
-          cov_u *= pow(_sigmaUCorrections[myCluster.getUSize()-1],2);
-          streamlog_out(MESSAGE3) << "SensorID " << sensorID << " uSize=" <<  myCluster.getUSize() << " sigmaU=" << TMath::Sqrt(cov_u) << endl;   
+          cov_u *= pow(_sigmaUCorrections[myCluster.getUSize()-1],2);  
         }
         
         if ( myCluster.getVSize()-1 < _sigmaVCorrections.size() ) {
-          cov_v *= pow(_sigmaVCorrections[myCluster.getVSize()-1],2);
-          streamlog_out(MESSAGE3) << "SensorID " << sensorID << " vSize=" <<  myCluster.getVSize() << " sigmaV=" << TMath::Sqrt(cov_v) << endl;   
+          cov_v *= pow(_sigmaVCorrections[myCluster.getVSize()-1],2); 
         }        
         
         // != 0 means the cluster is marked bad 
