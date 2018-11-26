@@ -2,8 +2,6 @@
 #include "gearimpl/GearMgrImpl.h"
 #include "gearimpl/GearParametersImpl.h"
 #include "gear/SiPlanesParameters.h"
-#include "gear/GearPointProperties.h"
-#include "gear/GearDistanceProperties.h"
 #include "gear/BField.h"
 
 namespace gear{
@@ -11,8 +9,6 @@ namespace gear{
 
   GearMgrImpl::GearMgrImpl() :
     _siplanesParameters(0) ,
-    _pointProperties(0) ,
-    _distanceProperties(0) ,
     _bField(0),
     _detectorName(""){
   }
@@ -21,8 +17,6 @@ namespace gear{
     
     // clean up all parameters
     if( _siplanesParameters ) delete _siplanesParameters ;
-    if( _pointProperties ) delete _pointProperties ;
-    if( _distanceProperties ) delete _distanceProperties ;
     if( _bField  ) delete  _bField ;
     
     
@@ -79,28 +73,6 @@ namespace gear{
 
   }
 
-  
-  const GearPointProperties & GearMgrImpl::getPointProperties() const 
-    throw (NotImplementedException, std::exception ) {
-
-    if( _pointProperties == 0 )
-      throw UnknownParameterException( "No PointProperties set or implemented ") ;
-    
-    return  *_pointProperties ;
-  }
-  
-  
-  
-  const GearDistanceProperties & GearMgrImpl::getDistanceProperties() const 
-    throw (NotImplementedException, std::exception ) {
-
-    if( _distanceProperties == 0 )
-      throw UnknownParameterException( "No DistanceProperties set or implemented ") ;
-    
-    return  *_distanceProperties ;
-
-  }
-
   void GearMgrImpl::setGearParameters( const std::string & key, GearParameters* parameters ) {
 
     if( parameters == 0 )   // don't allow  null pointers 
@@ -123,7 +95,6 @@ namespace gear{
   }
   
   
-
   void GearMgrImpl::setBField( BField* b){
     
     _bField = b ;
@@ -135,18 +106,6 @@ namespace gear{
     _siplanesParameters = siplanesParameters ;
   }
 
- 
-
-  void GearMgrImpl::setPointProperties( GearPointProperties* pointProperties) {
-    
-    _pointProperties = pointProperties ;
-  }
-
-  void GearMgrImpl::setDistanceProperties( GearDistanceProperties* distanceProperties) {
- 
-   _distanceProperties = distanceProperties ;
-  }
-  
   const std::vector<std::string>& GearMgrImpl::getGearParameterKeys() const {
 
     _keys.clear() ;

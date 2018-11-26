@@ -1,9 +1,10 @@
 """
-Some helper code to use TBSW with pyhton scripts 
+Some helper code to use Marlin with pyhton scripts 
 
 :author: benjamin.schwenker@phys.uni-goettinge.de  
 """
 
+import copy
 import os
 import shutil
 import subprocess
@@ -11,21 +12,85 @@ import glob
 import xml.etree.ElementTree
 
 
+class Processor(object):
+  """
+  Processor class implements an interface to create a <processor> node in a Marlin steer file. 
+  It is basically a simple container for the processor's name and type as well as all non default
+  parameter values.  
+   
+  :author: benjamin.schwenker@phys.uni-goettinge.de  
+  """
+  def __init__(self, name, proctype, params={}):
+    """  
+    :@name: processor name string
+    :@proctype: processor type string
+    :@params: parameter dictionary
+    """    
+    self.params = {}
+    self.params.update(params)
+    
+    self.name = name
+    self.proctype = proctype
 
+  def param(self, name, value):
+    """  
+    :@name: parameter name string
+    :@value: parameter value (must be convertible to string) 
+    """    
+    self.params[name] = value
+  
+  def params(self, params):
+    """  
+    :@params: parameter dictionary
+    """   
+    self.params.update(params)
+  
+  def __str__(self):
+    return "Processor name={} type={} override={}".format(self.name, self.proctype,str(self.params))
+  
 class Path(object):
   """
-  Class which implements an interface to create Marlin steer files. Templates for creating 
-  Marling processors taken from steerfiles/processors.xml. Path objects create ready to use
-  steerfiles. Template parameters can be locally modified on the fly.
-  
+  Path class implements an interface to create Marlin steer files. The command Marlin -x creates  
+  a xml file containing all available processor types and their steering parameters with default values.
+  Default values for processor parameters can be overriden.  
+   
   :author: benjamin.schwenker@phys.uni-goettinge.de  
   """
   def __init__(self, name='main', tmpdir=''):
+    """  
+    :@name: name of path 
+    :@tmpdir: name of folder to put the steerfile  
+    """   
     self.name = name
     self.tmpdir = tmpdir
+    self.globals = {}
+    self.processors = []      
+  
+  def set_globals(self, params):
+    """  
+    :@params: dictioanary for globals parameters of steerfile 
+    """   
+    self.globals.update(params)
+      
+  def add_processor(self, processor):
+    """  
+    :@processor: add processor to path
+    """    
+    self.processors.append(processor)    
+
+  def get_steerfile(self): 
+    """  
+    Create xml steerfile for Marlin 
+    """      
+     
+    # Create a xml tree from the template file processors.xml 
+    # Never change the variable basetree 
+    basetree = xml.etree.ElementTree.parse(os.path.join(self.tmpdir,'processors.xml'))
     
-    self.tree = xml.etree.ElementTree.parse(os.path.join(self.tmpdir,'processors.xml'))
-    root = self.tree.getroot() 
+    # Create a xml tree from the template file processors.xml 
+    # We will create the new steerfile from the variable tree
+    tree = xml.etree.ElementTree.parse(os.path.join(self.tmpdir,'processors.xml'))
+    root = tree.getroot() 
     
     # remove all processors from tree 
     for processor in root.findall( 'processor' ):
@@ -34,52 +99,52 @@ class Path(object):
     # add an empty execute tag
     root.append(xml.etree.ElementTree.Element("execute")) 
     
-    # write new steer file 
-    self.tree.write(os.path.join(self.tmpdir,self.name+'.xml'))
-  
-  def set_globals(self, params={}):
-    global_tag = self.tree.getroot().find("./global") 
-    
-    # override attributes 
-    for key, value in params.items():   
-      parameter = global_tag.find("./parameter[@name='%s']" % str(key))
+    # override global parameters as needed
+    global_node = root.find("./global")  
+    for key, value in self.globals.items():   
+      parameter = global_node.find("./parameter[@name='%s']" % str(key))
       parameter.set('value', str(value))      
+        
+    # create processor nodes   
+    for processor in self.processors:
+      # find processor node in basetree 
+      xpath="./processor[@type='%s']" % str(processor.proctype)
+      processor_node_base = basetree.getroot().find(xpath)
+      
+      # make a copy to insert into your new tree
+      processor_node = copy.deepcopy(processor_node_base)      
+      
+      # set the processors name
+      processor_node.set('name',str(processor.name))
+      
+      # find and remove all optional parameters 
+      for parameter in processor_node.findall( "./parameter[@isOptional]" ):
+        processor_node.remove(parameter)      
+      
+      # override processor parameter as needed 
+      for key, value in processor.params.items():   
+        parameter = processor_node.find("./parameter[@name='%s']" % str(key))
+        parameter.set('value', str(value)) 
+       
+      # add processor to xml tree
+      root.append(processor_node)
+      
+      # add processor to execute tag   
+      xml.etree.ElementTree.SubElement(root.find('execute'), tag='processor', attrib={'name' : str(processor.name) })
       
     # write new steer file 
-    self.tree.write(os.path.join(self.tmpdir,self.name+'.xml'))
+    tree.write(os.path.join(self.tmpdir,self.name+'.xml'))
     
-  def add_processor(self,name='',params={}):
-    # try to find processor with name in processor.xml
-    basetree = xml.etree.ElementTree.parse(os.path.join(self.tmpdir,'processors.xml'))
-    xpath="./processor[@name='%s']" % str(name)
-    new_processor = basetree.getroot().find(xpath)
-    
-    # override attributes on the fly  
-    for key, value in params.items():   
-      parameter = new_processor.find("./parameter[@name='%s']" % str(key))
-      parameter.set('value', str(value)) 
-       
-    # add processor to xml tree
-    root = self.tree.getroot()
-    root.append(new_processor)
-    
-    # add processor to execute tag   
-    xml.etree.ElementTree.SubElement(root.find('execute'), tag='processor', attrib={'name' : str(name) })
-    
-    # write new steer file 
-    self.tree.write(os.path.join(self.tmpdir,self.name+'.xml'))
-    
-  def get_steerfile(self): 
+    # return name of steering file 
     return self.name+'.xml'
-  
+    
   def get_name(self): 
     return self.name
-  
-
+   
 class Environment(object):
   """
   Class which implements an environment for executing Marlin with all needed 
-  steering and config files. 
+  steering files. 
   
   :author: benjamin.schwenker@phys.uni-goettinge.de  
   """
@@ -111,11 +176,14 @@ class Environment(object):
     if os.path.isdir(steerfiles):
       shutil.copytree(steerfiles,self.tmpdir)   
     else: 
-      raise ValueError('Steerfiles ', steerfiles, ' cannot be found. ', os.getcwd() )
+      raise ValueError('Steerfiles {} cannot be found.'.format(steerfiles) )
+    
+    # create file processors.xml 
+    subprocess.call('/$MARLIN/bin/Marlin -x > {}'.format(self.tmpdir+'/processors.xml'), shell=True)
     
     # create localDB folder 
     os.mkdir(self.tmpdir+'/localDB')
-     
+    
   def create_path(self, name='main'):
     return Path( name=name, tmpdir=self.tmpdir)
   
@@ -294,10 +362,10 @@ class Calibration(Environment):
   def __init__(self, steerfiles, name='cal'): 
     Environment.__init__(self, name=name, steerfiles=steerfiles)
   
-  def calibrate(self, path=[], caltag='default', ifile=''):
+  def calibrate(self, paths=[], caltag='default', ifile=''):
     """
     Calibrate beam telescope using a calibration run  
-    :@path: list containing Marlin xml files that will be executed 
+    :@paths: list containing Marlin xml files that will be executed 
     :@caltag:     name of calibration tag (optional)
     :@ifile:      name of input file with raw data
     
@@ -306,7 +374,7 @@ class Calibration(Environment):
       
     print ('[INFO] Starting to calibrate file ' + ifile + ' ...')    
     
-    self.run(path)
+    self.run(paths)
     self.export_caltag(caltag) 
     
     print ('[INFO] Done processing file ' + ifile)  

@@ -56,22 +56,6 @@ namespace gear {
       throw (UnknownParameterException, std::exception )  ;
 
     
-   /** Get the point properties object.
-     * 
-     *  @throws NotImplementedException
-     */
-    virtual const GearPointProperties & getPointProperties() const 
-      throw (NotImplementedException, std::exception ) ;
-    
-    
-    /** Get the distance properties object.
-     * 
-     *  @throws NotImplementedException
-     */
-    virtual const GearDistanceProperties & getDistanceProperties() const 
-      throw (NotImplementedException, std::exception ) ;
-
-
     /** Keys of all GearParameters. 
      */ 
     virtual const std::vector<std::string>  & getGearParameterKeys() const ;
@@ -89,14 +73,6 @@ namespace gear {
     virtual void setSiPlanesParameters( SiPlanesParameters * siplanesParameters ) ;
 
 
-    /** Set the point properties object 
-     */
-    virtual void  setPointProperties( GearPointProperties* pointProperties) ; 
-
-    /** Set the distance properties object 
-     */
-    virtual void  setDistanceProperties( GearDistanceProperties* distanceProperties) ; 
-    
     /** Set the b field object
      */
     virtual void setBField( BField* bField ) ;
@@ -108,8 +84,6 @@ namespace gear {
     
     ParameterMap _map ;
     SiPlanesParameters* _siplanesParameters ;
-    GearPointProperties*  _pointProperties ;
-    GearDistanceProperties*  _distanceProperties ;
     BField* _bField ;
     std::string _detectorName ;
 

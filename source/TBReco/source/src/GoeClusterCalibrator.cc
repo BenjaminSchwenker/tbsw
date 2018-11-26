@@ -350,257 +350,261 @@ namespace depfet {
     streamlog_out(MESSAGE3) << "Number of rejected clusters is: " 
                             << countReject << " (" << 100.0*countReject/countAll  << "%)"  << endl;
     
-    
-    streamlog_out(MESSAGE3) << "Create the clusterDB ... " << endl; 
-    
-    TFile * _rootFile = new TFile( _clusterDBFileName.c_str(),"recreate");
-    _rootFile->cd("");
-    
-    
     // Book histograms for clusterDB
     int NCLUSTERS = _sensorMap.size(); 
-    string histoName;  
+    
+    if (NCLUSTERS > 0) {
+      
+      streamlog_out(MESSAGE3) << "Create the clusterDB ... " << endl; 
+      
+      TFile * _rootFile = new TFile( _clusterDBFileName.c_str(),"recreate");
+      _rootFile->cd("");
+      
+      string histoName;  
        
-    _rootFile->cd("");
-    
-    histoName = "hDB_Coverage";
-    _histoMap[histoName] = new TH1F(histoName.c_str(),"",1,0,1);
-    _histoMap[histoName]->SetStats( false );
-    _histoMap[histoName]->SetYTitle("coverage [%]");
-    _histoMap[histoName]->SetBinContent( 1, 100.0 - 100.0*countReject/countAll );
-    _histoMap[histoName]->GetXaxis()->SetBinLabel( 1, "cluster found in clusterDB" );
-
-    histoName = "hDB_CoverageTypes";
-    _histoMap[histoName] = new TH1F(histoName.c_str(),"",countAllMap.size(),0,countAllMap.size());
-    _histoMap[histoName]->SetStats( false );
-    _histoMap[histoName]->SetYTitle("coverage [%]");
-    _histoMap[histoName]->SetXTitle("type");
-    
-    auto it1 = countAllMap.begin();
-    auto it2 = countRejectMap.begin();
-    for (int bin = 1; bin <= countAllMap.size(); ++bin)
-    {
-      string type = it1->first;
-      int all = it1->second;  
-      int reject = it2->second;  
+      _rootFile->cd("");
       
-      _histoMap[histoName]->SetBinContent( bin, 100.0 - 100.0*reject/all );
-      _histoMap[histoName]->GetXaxis()->SetBinLabel( bin, type.c_str() ); 
-      ++it1;
-      ++it2;
-    }
+      histoName = "hDB_Coverage";
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",1,0,1);
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("coverage [%]");
+      _histoMap[histoName]->SetBinContent( 1, 100.0 - 100.0*countReject/countAll );
+      _histoMap[histoName]->GetXaxis()->SetBinLabel( 1, "cluster found in clusterDB" );
+      
+      histoName = "hDB_CoverageTypes";
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",countAllMap.size(),0,countAllMap.size());
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("coverage [%]");
+      _histoMap[histoName]->SetXTitle("type");
+      
+      auto it1 = countAllMap.begin();
+      auto it2 = countRejectMap.begin();
+      for (int bin = 1; bin <= countAllMap.size(); ++bin)
+      {
+        string type = it1->first;
+        int all = it1->second;  
+        int reject = it2->second;  
+        
+        _histoMap[histoName]->SetBinContent( bin, 100.0 - 100.0*reject/all );
+        _histoMap[histoName]->GetXaxis()->SetBinLabel( bin, type.c_str() ); 
+        ++it1;
+        ++it2;
+      }
        
-    histoName = "hDB_Weight";
-    _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-    _histoMap[histoName]->SetStats( false );
-    _histoMap[histoName]->SetYTitle("label weight");  
-      
-    histoName = "hDB_U";
-    _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-    _histoMap[histoName]->SetStats( false );
-    _histoMap[histoName]->SetYTitle("offset u [mm]");  
-      
-    histoName = "hDB_V";
-    _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-    _histoMap[histoName]->SetStats( false );
-    _histoMap[histoName]->SetYTitle("offset v [mm]");  
-      
-    histoName = "hDB_Sigma2_U";
-    _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-    _histoMap[histoName]->SetStats( false );
-    _histoMap[histoName]->SetYTitle("sigma2 offset u [mm^2]");        
-
-    histoName = "hDB_Sigma2_V";
-    _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-    _histoMap[histoName]->SetStats( false );
-    _histoMap[histoName]->SetYTitle("sigma2 offset v [mm^2]"); 
-    
-    histoName = "hDB_Cov_UV";
-    _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-    _histoMap[histoName]->SetStats( false );
-    _histoMap[histoName]->SetYTitle("covariance u-v [mm^2]"); 
-      
-    // Compute the average 2x2 covariance matrix of reco tracks 
-    double var_u = _trackVarUMap->GetMean();
-    double var_u_error = _trackVarUMap->GetMeanError();      
-    
-    double var_v = _trackVarVMap->GetMean();  
-    double var_v_error = _trackVarVMap->GetMeanError();       
-        
-    double cov_uv = _trackCovUVMap->GetMean();   
-      
-    // The estimated track variances may be negative too large. This can 
-    // drive the cluster variance negative. To prevent this, we truncate
-    // the average track variance.     
-      
-    double clu_minU = numeric_limits< double >::max();
-    double clu_minV = numeric_limits< double >::max();
-      
-    for (auto iter =_sensorMap.begin(); iter!=_sensorMap.end(); iter++ ) {  
-      string id = iter->first;
-      
-      double clu_rms2_u = std::pow(_clusterUMap[id]->GetRMS(),2);
-      double clu_rms2_v = std::pow(_clusterVMap[id]->GetRMS(),2);
-      
-      if ( clu_rms2_u < clu_minU ) clu_minU = clu_rms2_u;
-      if ( clu_rms2_v < clu_minV ) clu_minV = clu_rms2_v;
-    }   
-    
-    streamlog_out(MESSAGE3) << std::endl
-                            << "Apply minVariance cut at:   "
-                            << std::setiosflags(std::ios::fixed | std::ios::internal )
-                            << std::setprecision(10)
-                            << _minVarianceU
-                            << std::setprecision(3)
-                            << std::endl;   
-      
-    if ( clu_minU - var_u < _minVarianceU ) {
-      streamlog_out(MESSAGE3) << std::endl
-                              << "original track variance is  "
-                              << std::setiosflags(std::ios::fixed | std::ios::internal )
-                              << std::setprecision(10)
-                              << var_u
-                              << std::setprecision(3)
-                              << std::endl;
-        
-      var_u = clu_minU - _minVarianceU;
-        
-      streamlog_out(MESSAGE3) << std::endl
-                              << "truncated track variance is  "
-                              << std::setiosflags(std::ios::fixed | std::ios::internal )
-                              << std::setprecision(10)
-                              << var_u
-                              << std::setprecision(3)
-                              << std::endl;
-    } 
-    
-    streamlog_out(MESSAGE3) << std::endl
-                            << "Apply minVariance cut at:   "
-                            << std::setiosflags(std::ios::fixed | std::ios::internal )
-                            << std::setprecision(10)
-                            << _minVarianceV
-                            << std::setprecision(3)
-                            << std::endl;   
-
-    if ( clu_minV - var_v < _minVarianceV ) {
-      streamlog_out(MESSAGE3) << std::endl
-                              << "original track variance is  "
-                              << std::setiosflags(std::ios::fixed | std::ios::internal )
-                              << std::setprecision(10)
-                              << var_v
-                              << std::setprecision(3)
-                              << std::endl;
-      
-      var_v = clu_minV - _minVarianceV;
-        
-      streamlog_out(MESSAGE3) << std::endl
-                              << "truncated track variance is  "
-                              << std::setiosflags(std::ios::fixed | std::ios::internal )
-                              << std::setprecision(10)
-                              << var_v
-                              << std::setprecision(3)
-                              << std::endl;
-    } 
-             
-    // Go through all cluster shapes
-    int i = 0; 
-    for (auto iter =_sensorMap.begin(); iter!=_sensorMap.end(); iter++ ) {
-      int counter = iter->second;  
-      string id = iter->first;
-      i++; 
-        
-      // Perform the calibration for u position 
-      double clu_mean_u = _clusterUMap[id]->GetMean();
-      double clu_mean_u_error = _clusterUMap[id]->GetMeanError();        
-      double clu_rms_u = _clusterUMap[id]->GetRMS();
-      double clu_rms_u_error = _clusterUMap[id]->GetRMSError();
-        
-      double clu_rms2_u = clu_rms_u*clu_rms_u;
-      double clu_rms2_u_error = 2*clu_rms_u*clu_rms_u_error;
-        
-      // Subtract track fit variance
-      clu_rms2_u -= var_u;
-      clu_rms2_u_error += var_u_error;  
-         
-      // Perform the calibration for v position  
-      double clu_mean_v = _clusterVMap[id]->GetMean();
-      double clu_mean_v_error = _clusterVMap[id]->GetMeanError();   
-      double clu_rms_v = _clusterVMap[id]->GetRMS();
-      double clu_rms_v_error = _clusterVMap[id]->GetRMSError();   
-        
-      double clu_rms2_v = clu_rms_v*clu_rms_v;  
-      double clu_rms2_v_error = 2*clu_rms_v*clu_rms_v_error;
-        
-      // Subtract track fit variance
-      clu_rms2_v -= var_v;
-      clu_rms2_v_error += var_v_error;  
-         
-      // Perform the calibration for uv covariance   
-      double clu_cov_uv = _clusterUVMap[id]->GetCovariance();
-      clu_cov_uv -= cov_uv;        
-         
-      // Store calibration result   
       histoName = "hDB_Weight";
-      _histoMap[histoName]->SetBinContent( i, counter );
-      _histoMap[histoName]->SetBinError( i, TMath::Sqrt(counter) );
-      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
-        
-      histoName = "hDB_U";
-      _histoMap[histoName]->SetBinContent( i, clu_mean_u );
-      _histoMap[histoName]->SetBinError( i, clu_mean_u_error );
-      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
-        
-      histoName = "hDB_V"; 
-      _histoMap[histoName]->SetBinContent( i, clu_mean_v );
-      _histoMap[histoName]->SetBinError( i, clu_mean_v_error );
-      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
-        
-      histoName = "hDB_Sigma2_U";
-      _histoMap[histoName]->SetBinContent( i, clu_rms2_u );
-      _histoMap[histoName]->SetBinError( i, clu_rms2_u_error );
-      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
-         
-      histoName = "hDB_Sigma2_V";
-      _histoMap[histoName]->SetBinContent( i, clu_rms2_v );
-      _histoMap[histoName]->SetBinError( i, clu_rms2_v_error );
-      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );  
-        
-      histoName = "hDB_Cov_UV";
-      _histoMap[histoName]->SetBinContent( i, clu_cov_uv );
-      _histoMap[histoName]->SetBinError( i, 0 );
-      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("label weight");  
       
-      streamlog_out(MESSAGE3) << "  Label:  " << id  << endl
-                              << std::setiosflags(std::ios::fixed | std::ios::internal )
-                              << std::setprecision(8)
-                              << "  u: " << clu_mean_u  << ", sigma2: " << clu_rms2_u << endl
-                              << "  v: " << clu_mean_v  << ", sigma2: " << clu_rms2_v << endl
-                              << "  cov: " << clu_cov_uv
-                              << std::setprecision(3)
-                              << endl;
+      histoName = "hDB_U";
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("offset u [mm]");  
+      
+      histoName = "hDB_V";
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("offset v [mm]");  
+      
+      histoName = "hDB_Sigma2_U";
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("sigma2 offset u [mm^2]");        
+      
+      histoName = "hDB_Sigma2_V";
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("sigma2 offset v [mm^2]"); 
+      
+      histoName = "hDB_Cov_UV";
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("covariance u-v [mm^2]"); 
+      
+      // Compute the average 2x2 covariance matrix of reco tracks 
+      double var_u = _trackVarUMap->GetMean();
+      double var_u_error = _trackVarUMap->GetMeanError();      
+      
+      double var_v = _trackVarVMap->GetMean();  
+      double var_v_error = _trackVarVMap->GetMeanError();       
+        
+      double cov_uv = _trackCovUVMap->GetMean();   
+      
+      // The estimated track variances may be negative too large. This can 
+      // drive the cluster variance negative. To prevent this, we truncate
+      // the average track variance.     
+      
+      double clu_minU = numeric_limits< double >::max();
+      double clu_minV = numeric_limits< double >::max();
+      
+      for (auto iter =_sensorMap.begin(); iter!=_sensorMap.end(); iter++ ) {  
+        string id = iter->first;
          
-    }  
+        double clu_rms2_u = std::pow(_clusterUMap[id]->GetRMS(),2);
+        double clu_rms2_v = std::pow(_clusterVMap[id]->GetRMS(),2);
+        
+        if ( clu_rms2_u < clu_minU ) clu_minU = clu_rms2_u;
+        if ( clu_rms2_v < clu_minV ) clu_minV = clu_rms2_v;
+      }   
     
-    // Finally, we must store the software ADC that was used to compute the 
-    // cluster labels 
-    TVectorD DB_swADCSteps(_swADCSteps.size());
-    for(auto i = 0; i < _swADCSteps.size(); i++ ) {
-      DB_swADCSteps[i] = _swADCSteps[i];
-    }
-    DB_swADCSteps.Write("DB_swADCSteps");
+      streamlog_out(MESSAGE3) << std::endl
+                              << "Apply minVariance cut at:   "
+                              << std::setiosflags(std::ios::fixed | std::ios::internal )
+                              << std::setprecision(10)
+                              << _minVarianceU
+                              << std::setprecision(3)
+                              << std::endl;   
+      
+      if ( clu_minU - var_u < _minVarianceU ) {
+        streamlog_out(MESSAGE3) << std::endl
+                                << "original track variance is  "
+                                << std::setiosflags(std::ios::fixed | std::ios::internal )
+                                << std::setprecision(10)
+                                << var_u
+                                << std::setprecision(3)
+                                << std::endl;
+        
+        var_u = clu_minU - _minVarianceU;
+        
+        streamlog_out(MESSAGE3) << std::endl
+                                << "truncated track variance is  "
+                                << std::setiosflags(std::ios::fixed | std::ios::internal )
+                                << std::setprecision(10)
+                                << var_u
+                                << std::setprecision(3)
+                                << std::endl;
+      } 
+    
+      streamlog_out(MESSAGE3) << std::endl
+                              << "Apply minVariance cut at:   "
+                              << std::setiosflags(std::ios::fixed | std::ios::internal )
+                              << std::setprecision(10)
+                              << _minVarianceV
+                              << std::setprecision(3)
+                              << std::endl;   
+
+      if ( clu_minV - var_v < _minVarianceV ) {
+        streamlog_out(MESSAGE3) << std::endl
+                                << "original track variance is  "
+                                << std::setiosflags(std::ios::fixed | std::ios::internal )
+                                << std::setprecision(10)
+                                << var_v
+                                << std::setprecision(3)
+                                << std::endl;
+      
+        var_v = clu_minV - _minVarianceV;
+        
+        streamlog_out(MESSAGE3) << std::endl
+                                << "truncated track variance is  "
+                                << std::setiosflags(std::ios::fixed | std::ios::internal )
+                                << std::setprecision(10)
+                                << var_v
+                                << std::setprecision(3)
+                                << std::endl;
+      } 
+             
+      // Go through all cluster shapes
+      int i = 0; 
+      for (auto iter =_sensorMap.begin(); iter!=_sensorMap.end(); iter++ ) {
+        int counter = iter->second;  
+        string id = iter->first;
+        i++; 
+        
+        // Perform the calibration for u position 
+        double clu_mean_u = _clusterUMap[id]->GetMean();
+        double clu_mean_u_error = _clusterUMap[id]->GetMeanError();        
+        double clu_rms_u = _clusterUMap[id]->GetRMS();
+        double clu_rms_u_error = _clusterUMap[id]->GetRMSError();
+        
+        double clu_rms2_u = clu_rms_u*clu_rms_u;
+        double clu_rms2_u_error = 2*clu_rms_u*clu_rms_u_error;
+        
+        // Subtract track fit variance
+        clu_rms2_u -= var_u;
+        clu_rms2_u_error += var_u_error;  
+         
+        // Perform the calibration for v position  
+        double clu_mean_v = _clusterVMap[id]->GetMean();
+        double clu_mean_v_error = _clusterVMap[id]->GetMeanError();   
+        double clu_rms_v = _clusterVMap[id]->GetRMS();
+        double clu_rms_v_error = _clusterVMap[id]->GetRMSError();   
+        
+        double clu_rms2_v = clu_rms_v*clu_rms_v;  
+        double clu_rms2_v_error = 2*clu_rms_v*clu_rms_v_error;
+        
+        // Subtract track fit variance
+        clu_rms2_v -= var_v;
+        clu_rms2_v_error += var_v_error;  
+         
+        // Perform the calibration for uv covariance   
+        double clu_cov_uv = _clusterUVMap[id]->GetCovariance();
+        clu_cov_uv -= cov_uv;        
+         
+        // Store calibration result   
+        histoName = "hDB_Weight";
+        _histoMap[histoName]->SetBinContent( i, counter );
+        _histoMap[histoName]->SetBinError( i, TMath::Sqrt(counter) );
+        _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
+        
+        histoName = "hDB_U";
+        _histoMap[histoName]->SetBinContent( i, clu_mean_u );
+        _histoMap[histoName]->SetBinError( i, clu_mean_u_error );
+        _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
+        
+        histoName = "hDB_V"; 
+        _histoMap[histoName]->SetBinContent( i, clu_mean_v );
+        _histoMap[histoName]->SetBinError( i, clu_mean_v_error );
+        _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
+        
+        histoName = "hDB_Sigma2_U";
+        _histoMap[histoName]->SetBinContent( i, clu_rms2_u );
+        _histoMap[histoName]->SetBinError( i, clu_rms2_u_error );
+        _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
+         
+        histoName = "hDB_Sigma2_V";
+        _histoMap[histoName]->SetBinContent( i, clu_rms2_v );
+        _histoMap[histoName]->SetBinError( i, clu_rms2_v_error );
+        _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );  
+        
+        histoName = "hDB_Cov_UV";
+        _histoMap[histoName]->SetBinContent( i, clu_cov_uv );
+        _histoMap[histoName]->SetBinError( i, 0 );
+        _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
+      
+        streamlog_out(MESSAGE3) << "  Label:  " << id  << endl
+                                << std::setiosflags(std::ios::fixed | std::ios::internal )
+                                << std::setprecision(8)
+                                << "  u: " << clu_mean_u  << ", sigma2: " << clu_rms2_u << endl
+                                << "  v: " << clu_mean_v  << ", sigma2: " << clu_rms2_v << endl
+                                << "  cov: " << clu_cov_uv
+                                << std::setprecision(3)
+                                << endl;
+         
+      }  
+    
+      // Finally, we must store the software ADC that was used to compute the 
+      // cluster labels 
+      TVectorD DB_swADCSteps(_swADCSteps.size());
+      for(auto i = 0; i < _swADCSteps.size(); i++ ) {
+        DB_swADCSteps[i] = _swADCSteps[i];
+      }
+      DB_swADCSteps.Write("DB_swADCSteps");
               
-    TVectorD DB_periods( 2 );
-    DB_periods[0] = _vCellPeriod;
-    DB_periods[1] = _uCellPeriod;
-    DB_periods.Write("DB_periods");
+      TVectorD DB_periods( 2 );
+      DB_periods[0] = _vCellPeriod;
+      DB_periods[1] = _uCellPeriod;
+      DB_periods.Write("DB_periods");
+
+      streamlog_out(MESSAGE3) << "ClusterDB written to file " << _clusterDBFileName 
+                              << endl; 
+      
+      // Close root  file
+      _rootFile->Write();
+      _rootFile->Close();
+      delete _rootFile;
+    }
+
     
-    streamlog_out(MESSAGE3) << "ClusterDB written to file " << _clusterDBFileName 
-                            << endl; 
-    
-    // Close root  file
-    _rootFile->Write();
-    _rootFile->Close();
-    delete _rootFile;
   }
 
   //

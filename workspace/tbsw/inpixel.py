@@ -134,7 +134,7 @@ def plot(inputfilename = None, histofilename = "InpixHistos.root", uaxis=(10,0,0
   rawfile.Close()
 
 
-def plot_unit(inputfilename = None, histofilename = "InpixHistos.root", upitch=0.0, vpitch=0.0, ubins=10, vbins=10, ufold=2, vfold=2):
+def plot_unit(inputfilename = None, histofilename = "InpixHistos.root", pixeltype=0, upitch=0.0, vpitch=0.0, ubins=10, vbins=10, ufold=2, vfold=2):
   
   if inputfilename == None:
     return None
@@ -169,11 +169,11 @@ def plot_unit(inputfilename = None, histofilename = "InpixHistos.root", upitch=0
   
   
   histofile.cd("")
-
   
-
   for event in tree: 
-    if event.hasTrack == 0: 
+    if event.hasTrack == 0 and event.pixeltype == pixeltype: 
+
+
       m_u = (event.u_fit - event.cellUCenter_fit) 
       m_v = (event.v_fit - event.cellVCenter_fit)
       

@@ -630,16 +630,7 @@ namespace depfet {
                               << std::setprecision(0)
                               << std::endl;
      
-    // Internal pixel borders   
-    double halfwidthU   = m_detector.GetDet(m_ipl).GetPitchU()/2. - m_uSideBorderLength;          
-    double halfwidthV   = m_detector.GetDet(m_ipl).GetPitchV()/2. - m_vSideBorderLength;         
-    
-    streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
-                            << std::setprecision(3)
-                            << "   u halfwidth [mm]: " <<  halfwidthU << ", v halfwidth [mm]: " << halfwidthV
-                            << std::setprecision(0)
-                            << std::endl;
-    
+     
     for (int i=0; i<numberOfSigPoints; ++i) {
       
       // Get current signal point
@@ -667,8 +658,18 @@ namespace depfet {
         double groupPosU = centreU + gRandom->Gaus(0, sigmaU);
         double groupPosV = centreV + gRandom->Gaus(0, sigmaV);
             
-        int iV = m_detector.GetDet(m_ipl).GetRowFromCoord( groupPosU, groupPosV );
-        int iU = m_detector.GetDet(m_ipl).GetColumnFromCoord( groupPosU, groupPosV ); 
+        int iV = m_detector.GetDet(m_ipl).GetVCellFromCoord( groupPosU, groupPosV );
+        int iU = m_detector.GetDet(m_ipl).GetUCellFromCoord( groupPosU, groupPosV ); 
+        
+        // Internal pixel borders   
+        double halfwidthU   = m_detector.GetDet(m_ipl).GetPitchU(iV,iU)/2. - m_uSideBorderLength;          
+        double halfwidthV   = m_detector.GetDet(m_ipl).GetPitchV(iV,iU)/2. - m_vSideBorderLength;         
+        
+        streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
+                                << std::setprecision(3)
+                                << "   u halfwidth [mm]: " <<  halfwidthU << ", v halfwidth [mm]: " << halfwidthV
+                                << std::setprecision(0)
+                                << std::endl;  
         
         double pixelPosV = m_detector.GetDet(m_ipl).GetPixelCenterCoordV(iV, iU); 
         double pixelPosU = m_detector.GetDet(m_ipl).GetPixelCenterCoordU(iV, iU); 
@@ -698,8 +699,8 @@ namespace depfet {
 
           
           // Update charge cloud posisiton 
-          iV = m_detector.GetDet(m_ipl).GetRowFromCoord( groupPosU, groupPosV );
-          iU = m_detector.GetDet(m_ipl).GetColumnFromCoord( groupPosU, groupPosV ); 
+          iV = m_detector.GetDet(m_ipl).GetVCellFromCoord( groupPosU, groupPosV );
+          iU = m_detector.GetDet(m_ipl).GetUCellFromCoord( groupPosU, groupPosV ); 
         
           pixelPosV = m_detector.GetDet(m_ipl).GetPixelCenterCoordV(iV, iU); 
           pixelPosU = m_detector.GetDet(m_ipl).GetPixelCenterCoordU(iV, iU); 
@@ -932,7 +933,7 @@ namespace depfet {
       }
       
       // Average number of noise pixels
-      double meanNoisePixels = m_noiseFraction * m_detector.GetDet(m_ipl).GetNColumns() * m_detector.GetDet(m_ipl).GetNRows();
+      double meanNoisePixels = m_noiseFraction * m_detector.GetDet(m_ipl).GetNCellsU() * m_detector.GetDet(m_ipl).GetNCellsV();
             
       // Total number of noise pixels has Poison distribution
       int fractionPixels = gRandom->Poisson(meanNoisePixels);  
@@ -940,8 +941,8 @@ namespace depfet {
       // Generate noise digits
       for (int iNoisePixel=0; iNoisePixel<fractionPixels; iNoisePixel++) {
                     
-        int iU  = int(gRandom->Uniform( m_detector.GetDet(m_ipl).GetNColumns() ));
-        int iV  = int(gRandom->Uniform( m_detector.GetDet(m_ipl).GetNRows() ));
+        int iU  = int(gRandom->Uniform( m_detector.GetDet(m_ipl).GetNCellsU() ));
+        int iV  = int(gRandom->Uniform( m_detector.GetDet(m_ipl).GetNCellsV() ));
                   
         // Describe pixel by unique ID
         int uniqPixelID  = m_detector.GetDet(m_ipl).encodePixelID(iV, iU);     

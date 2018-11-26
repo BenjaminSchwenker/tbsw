@@ -78,27 +78,6 @@ namespace gear {
 
   typedef Vector2D_T<double> Vector2D ;
   
-//   typedef Vector3D_T<double> Vector3D ;
-  
-  
-
-//   /** Defined for backward compatibility */
-//   struct Point2D : public Vector2D{
-    
-//     Point2D() : Vector2D( 0., 0. ) {}
-//     Point2D(double d0, double d1 ) : Vector2D( d0, d1 ) {}
-
-//   } ;
-
-//   /** Defined for backward compatibility */
-//   struct Point3D : public Vector3D{
-    
-//     Point3D() : Vector3D( 0., 0., 0.) {}
-//     Point3D(double d0, double d1, double d2 ) : Vector3D( d0, d1,d2 ) {}
-
-//   } ;
-
-
 } // namespace gear
 
 #endif /* ifndef GEAR_Vectors_H */

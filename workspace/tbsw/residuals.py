@@ -66,6 +66,13 @@ def plot(inputfilename = None, histofilename = "ResidualHistos.root" , basecut =
   hv.GetYaxis().SetTitle("number of hits")
   hv.GetYaxis().SetTitleOffset(1.2)
   
+  huv = TH2F("huv","",nbins,-urange,+urange, nbins,-vrange,+vrange )
+  hittree.Draw("(v_hit - v_fit)*1000:(u_hit - u_fit)*1000 >>+huv", hitcut,"goff")  
+  huv.SetTitle("")
+  huv.GetXaxis().SetTitle("residuals u [#mum]")
+  huv.GetYaxis().SetTitle("residuals v [#mum]")
+  huv.GetZaxis().SetTitle("number of hits")
+  huv.SetStats(0)
   
   hchisqundof = TH1F("hchisqundof","",100,0,0)
   hittree.Draw("trackChi2 / trackNdof >> +hchisqundof", hitcut,"goff")

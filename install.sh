@@ -63,40 +63,46 @@ cmake -C ../config/BuildSetup.cmake ..
 make install -j4
 cd ../../..         
 
+
 ############################################################
 # Create bash script to set env variables  
+echo "#!/bin/bash" > workspace/init_tbsw.sh
+echo "#--------------------------------------------------------------------------------" >> workspace/init_tbsw.sh
+echo "#    ROOT                                                                        " >> workspace/init_tbsw.sh
+echo "#--------------------------------------------------------------------------------" >> workspace/init_tbsw.sh
+echo "export ROOTSYS="${ROOTSYS}"" >> workspace/init_tbsw.sh
+echo "export PATH="${ROOTSYS}/bin:${PATH}"" >> workspace/init_tbsw.sh
+echo "export LD_LIBRARY_PATH="${ROOTSYS}/lib:${LD_LIBRARY_PATH}"" >> workspace/init_tbsw.sh
+echo "export PYTHONPATH="${ROOTSYS}/lib"" >> workspace/init_tbsw.sh
+echo "" >> workspace/init_tbsw.sh
 
-if [ -f "init_tbsw.sh" ]
-then
-	rm init_tbsw.sh
-fi
+echo "#--------------------------------------------------------------------------------" >> workspace/init_tbsw.sh
+echo "#    LCIO                                                                        " >> workspace/init_tbsw.sh
+echo "#--------------------------------------------------------------------------------" >> workspace/init_tbsw.sh
+echo "export LCIO="${TBSW_HOME}/lcio"" >> workspace/init_tbsw.sh
+echo "export PATH="$LCIO/tools:$LCIO/bin:$PATH"" >> workspace/init_tbsw.sh
+echo "export LD_LIBRARY_PATH="$LCIO/lib:$LD_LIBRARY_PATH"" >> workspace/init_tbsw.sh
+echo "" >> workspace/init_tbsw.sh
 
-echo "#--------------------------------------------------------------------------------" >> init_tbsw.sh
-echo "#    ROOT                                                                        " >> init_tbsw.sh
-echo "#--------------------------------------------------------------------------------" >> init_tbsw.sh
-echo "export ROOTSYS="${ROOTSYS}"" >> init_tbsw.sh
-echo "export PATH="${ROOTSYS}/bin:${PATH}"" >> init_tbsw.sh
-echo "export LD_LIBRARY_PATH="${ROOTSYS}/lib:${LD_LIBRARY_PATH}"" >> init_tbsw.sh
-echo "export PYTHONPATH="${ROOTSYS}/lib"" >> init_tbsw.sh
-echo "" >> init_tbsw.sh
+echo "#--------------------------------------------------------------------------------" >> workspace/init_tbsw.sh
+echo "#    Marlin                                                                      " >> workspace/init_tbsw.sh
+echo "#--------------------------------------------------------------------------------" >> workspace/init_tbsw.sh
+echo "export MARLIN="${TBSW_HOME}/Marlin"" >> workspace/init_tbsw.sh
+echo "export PATH="${MARLIN}/bin:${PATH}"" >> workspace/init_tbsw.sh
+echo "export MARLIN_DLL="${TBSW_HOME}/TBReco/lib/libTBReco.so:${TBSW_HOME}/EudaqInput/lib/libEudaqInput.so:"" >> workspace/init_tbsw.sh
+echo "" >> workspace/init_tbsw.sh
 
-echo "#--------------------------------------------------------------------------------" >> init_tbsw.sh
-echo "#    LCIO                                                                        " >> init_tbsw.sh
-echo "#--------------------------------------------------------------------------------" >> init_tbsw.sh
-echo "export LCIO="${TBSW_HOME}/lcio"" >> init_tbsw.sh
-echo "export PATH="$LCIO/tools:$LCIO/bin:$PATH"" >> init_tbsw.sh
-echo "export LD_LIBRARY_PATH="$LCIO/lib:$LD_LIBRARY_PATH"" >> init_tbsw.sh
-echo "" >> init_tbsw.sh
+############################################################
+# Create some workspace folders with special meaning in tbsw
 
-echo "#--------------------------------------------------------------------------------" >> init_tbsw.sh
-echo "#    Marlin                                                                      " >> init_tbsw.sh
-echo "#--------------------------------------------------------------------------------" >> init_tbsw.sh
-echo "export MARLIN="${TBSW_HOME}/Marlin"" >> init_tbsw.sh
-echo "export PATH="${MARLIN}/bin:${PATH}"" >> init_tbsw.sh
-echo "export MARLIN_DLL="${TBSW_HOME}/TBReco/lib/libTBReco.so:${TBSW_HOME}/EudaqInput/lib/libEudaqInput.so:"" >> init_tbsw.sh
-echo "" >> init_tbsw.sh
+# Folder to collect all calibration tags
+mkdir workspace/localDB
 
+# Folder to put logs for all processed runs
+mkdir workspace/tmp-runs
 
-cp init_tbsw.sh workspace
+# Folder to collect reconstructed DUT root files 
+mkdir workspace/root-files
+
 
 

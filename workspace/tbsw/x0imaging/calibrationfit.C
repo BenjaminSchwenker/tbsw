@@ -999,8 +999,11 @@ void savehisto(std::vector<TString> inputfiles, TFile* file2, TString histoname,
 	tmpfile->cd("");
 	TTree *tmp_tree = (TTree*)tmpfile->Get("MSCTree");
 
+	TString areacuts;
+    areacuts.Form("(u>%.2f)&&(u<%.2f)&&(v>%.2f)&&(v<%.2f)",cutparameters_position.at(0),cutparameters_position.at(1),cutparameters_position.at(2),cutparameters_position.at(3));
+
 	// Draw histogram of the first scattering angle in the given u and v range and save it
-	tmp_tree->Draw("theta1>>h_help","","");
+	tmp_tree->Draw("theta1>>h_help",areacuts,"");
 
 	// Get the histogram and save it in the raw folder
 	TH1 * h_help=tmp_tree->GetHistogram();
