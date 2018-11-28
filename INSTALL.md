@@ -119,6 +119,13 @@ Save the edits and close the file. Run the install script:
 $ . install.sh
 ```
 
+In case the building of tbsw needs to be repeated, clean the repository before installing: 
+
+```
+$ . make_clean.sh
+$ . install.sh
+```
+
 After the installation is done, you can test the software by running a small test beam simulation. All actuall work with tbsw is encapsulated in workspaces. The installation comes with a template workspace. The first two lines make a copy of the template workspace and cd into it. 
 
 ```

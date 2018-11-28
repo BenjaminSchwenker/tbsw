@@ -127,24 +127,37 @@ namespace depfet {
       m_DB_Cov_UV->SetDirectory(0);
     } 
     
-    histoName = "DB_swADCSteps";
-    if ((TVectorD*) clusterDBFile->Get(histoName.c_str()) != nullptr) {
-      TVectorD *DB_swADCSteps = (TVectorD*) clusterDBFile->Get( histoName.c_str() );
-      for(auto i = 0; i < DB_swADCSteps->GetNrows(); i++ ) {
-        _swADCSteps.push_back(  (*DB_swADCSteps)[i]  ); 
-      }  
-    } 
-    
-    for(auto step : _swADCSteps ) {
-      streamlog_out( MESSAGE2 ) << " adc step "  << step << endl;
-    }
-    
     histoName = "DB_periods";
     if ((TVectorD*) clusterDBFile->Get(histoName.c_str()) != nullptr) {
       TVectorD *DB_periods = (TVectorD*) clusterDBFile->Get( histoName.c_str() );
       _vCellPeriod  = (*DB_periods)[0] ; 
       _uCellPeriod  = (*DB_periods)[1] ; 
     } 
+
+    histoName = "DB_angles";
+    if ((TVectorD*) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+      TVectorD *DB_angles = (TVectorD*) clusterDBFile->Get( histoName.c_str() );
+      _thetaU  = (*DB_angles)[0]; 
+      _thetaV  = (*DB_angles)[1]; 
+    } 
+
+    histoName = "hDB_Types";
+    if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+      m_DB_Types = (TH1F *) clusterDBFile->Get(histoName.c_str());
+      m_DB_Types->SetDirectory(0);
+    } 
+    
+    // We need the eta bin edges for all cluster types  
+    for (auto i = 1; i <= m_DB_Types->GetXaxis()->GetNbins(); i++) {    
+      string typeName =  m_DB_Types->GetXaxis()->GetBinLabel(i);
+      histoName = "DB_etaBinEdges_" + typeName;
+      if ((TVectorD*) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+        TVectorD *DB_edges = (TVectorD*) clusterDBFile->Get( histoName.c_str() );
+        for(auto i = 0; i < DB_edges->GetNrows(); i++ ) {
+          m_etaBinEdgesMap[typeName].push_back( (*DB_edges)[i] ); 
+        }  
+      }    
+    }
          
     // Close root  file
     clusterDBFile->Close();
@@ -207,16 +220,20 @@ namespace depfet {
         _countAllMap[sensorID]++;
         
         // Compute the cluster ID string
-        PixelCluster aCluster(cluster->getTrackerData());   
-        string id = aCluster.getLabel(_swADCSteps,_vCellPeriod, _uCellPeriod); 
-         
-        streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID << " with label " << id << endl; 
-      
+        PixelCluster aCluster(cluster->getTrackerData());    
+        int pixeltype = Det.GetPixelType(aCluster.getVStart(), aCluster.getUStart()); 
+        string typeName = aCluster.getType(pixeltype, _vCellPeriod, _uCellPeriod); 
+        double eta = aCluster.computeEta(_thetaU, _thetaV);
+        int etaBin = aCluster.computeEtaBin(eta, m_etaBinEdgesMap[typeName]);
+        string shapeName = aCluster.getShape(pixeltype,_vCellPeriod, _uCellPeriod, etaBin);  
+        
+        streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID << " with shape " << shapeName << endl; 
+        
         // Compute position measurement and its 2x2 covariance matrix   
         double u{0.0}, v{0.0}, sig2_u{0.0}, sig2_v{0.0}, cov_uv{0.0};
         int quality = 0; 
         
-        bool found = searchDB(sensorID, id, u, v, sig2_u, sig2_v, cov_uv); 
+        bool found = searchDB(sensorID, shapeName, u, v, sig2_u, sig2_v, cov_uv); 
         if (found) {
           // Count matched clusters
           _countCalMap[sensorID]++; 
@@ -224,14 +241,13 @@ namespace depfet {
           u += Det.GetPixelCenterCoordU( aCluster.getVStart(), aCluster.getUStart()); 
           v += Det.GetPixelCenterCoordV( aCluster.getVStart(), aCluster.getUStart()); 
           
-          streamlog_out(MESSAGE2) << "  Label " << id << " found: " << endl
-                                  << std::setiosflags(std::ios::fixed | std::ios::internal )
-                                  << std::setprecision(8)
-                                  << "  u: " << u << ", sigma: " << TMath::Sqrt(sig2_u) << endl
-                                  << "  v: " << v << ", sigma: " << TMath::Sqrt(sig2_v) << endl
-                                  << "  cov(u,v): " << cov_uv
-                                  << std::setprecision(3)
-                                  << endl; 
+          streamlog_out(MESSAGE2) << "  Shape " << shapeName << " found: " << endl
+                                << std::setprecision(8)
+                                << "  u: " << u << ", sigmaU: " << TMath::Sqrt(sig2_u) << endl
+                                << "  v: " << v << ", sigmaV: " << TMath::Sqrt(sig2_v) << endl
+                                << "  corr(u,v): " << cov_uv/TMath::Sqrt(sig2_u)/TMath::Sqrt(sig2_v)
+                                << std::setprecision(3)
+                                << endl; 
         
           // Make TBHit 
           TBHit hit(sensorID, u, v, sig2_u, sig2_v, cov_uv, quality);
@@ -309,11 +325,10 @@ namespace depfet {
   
   bool GoeHitMaker::searchDB(int sensorID, string id, double& u, double& v, double& sig2_u, double& sig2_v, double& cov_uv)
   {
-    
     if ( m_DB_Weight == nullptr ) {
       return false;  
     }
-    
+     
     int bin = m_DB_Weight->GetXaxis()->FindFixBin(id.c_str());
     if (bin == -1) {
       return false;

@@ -2,9 +2,6 @@
 
 #include "Utilities.h"
 
-// C++ includes
-#include <assert.h>
-#include <iostream>
  	
 // ROOT includes
 #include <TMath.h>
@@ -25,7 +22,32 @@ std::string to_string( int key ) {
 
 }
  	
-
+std::vector<std::string> splitpath( const std::string& str, const std::set<char> delimiters)
+{
+  std::vector<std::string> result;
+  
+  char const* pch = str.c_str();
+  char const* start = pch;
+  for(; *pch; ++pch)
+  {
+    if (delimiters.find(*pch) != delimiters.end())
+    {
+      if (start != pch)
+      {
+        std::string str(start, pch);
+        result.push_back(str);
+      }
+      else
+      {
+        result.push_back("");
+      }
+      start = pch + 1;
+    }
+  }
+  result.push_back(start);
+  
+  return result;
+}
  	
 /** Test if two values are equal within a certain precision. */
 bool equal( double val1, double val2, double precision)

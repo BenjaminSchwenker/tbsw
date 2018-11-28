@@ -20,15 +20,17 @@
 #include "marlin/Exceptions.h"
 
 // Include ROOT classes
+#include <TFile.h>
 #include <TH1F.h>
 #include <TH2F.h>
+#include <TTree.h>
 
 
 namespace depfet {
 
   //! GoeClusterCalibrator  
   /*! 
-   *  The task of this processor is to create a clusterDB for all clusters
+   *  The task of this processor is to create a clusterDB for clusters
    *  contained in the input cluster collection. After calibration, the 
    *  clusterDB will be used by the GoeHitMaker processor to compute a 2D 
    *  position measurement (hit) in local sensor coordinates together with
@@ -65,10 +67,7 @@ namespace depfet {
     
     //!Method called after all data processing
     virtual void end();
-
-    //!Get cluster type from cluster label 
-    std::string getClusterType(std::string & label);
-     
+      
    protected:
     
     //!Method printing processor parameters
@@ -81,21 +80,21 @@ namespace depfet {
     
     //! AlignmentDB file name 
     std::string _alignmentDBFileName;
-       
-    //! ROOT output file name  
+
+    //! Name of clusterDB output file   
     std::string _clusterDBFileName;   
-    
+       
     //! Minimum number of clusters occurances 
     int _minClusters; 
     
     //! Periodicity for vCells used for clusterDB
     int _vCellPeriod;
-
+     
     //! Periodicity for uCells used for clusterDB
     int _uCellPeriod; 
-
-    //! Position of steps for software ADC 
-    std::vector<int> _swADCSteps; 
+    
+    //! Max number of eta bins  
+    int _maxEtaBins; 
     
     //! Minimum variance of clusters covariance matrix
     float _minVarianceU; 
@@ -103,31 +102,50 @@ namespace depfet {
     
     //! Ignore clusters from these sensorIDs 
     std::vector<int >  _ignoreIDVec;
-        
+       
+    //! Name of temporary file for collector output
+    std::string _collectorOutputFileName;   
+ 
    private:
     
-    // Intermediate histos to compute averaged covariance matrix
-    // Key is sensorID 
-    TH1F * _trackVarUMap;
-    TH1F * _trackVarVMap;
-    TH1F * _trackCovUVMap;
-    
-    // Intermediate histos to compute calibrated measurements 
-    // Outer key is sensorID, inner key is cluster label
-    std::map<std::string, int>    _sensorMap;  
-    std::map<std::string, TH1F *> _clusterUMap;
-    std::map<std::string, TH1F *> _clusterVMap;
-    std::map<std::string, TH2F *> _clusterUVMap;
-    
+    /** Collector output file */ 
+    TFile * _rootCollectorOutputFile;
+    /** Histogram for track covariance matrix element UU */
+    TH1F * _trackVarUHisto;
+    /** Histogram for track covariance matrix element VV */
+    TH1F * _trackVarVHisto;
+    /** Histogram for track covariance matrix element UV */
+    TH1F * _trackCovUVHisto;
+    /** Histograms for track incident angle DuDw */
+    TH1F * _trackDuDwHisto;
+    /**Histograms for track incident angle DvDw */
+    TH1F * _trackDvDwHisto;
+    /**Container for histos*/
     std::map< std::string, TH1F *> _histoMap;
-          
+    /** Name of cluster tree */
+    TTree * m_rootTree; 
+    /** Name of cluster type */
+    std::string m_typeName;
+    /** Eta value of cluster for sector (+,+)*/
+    float m_clusterEtaPP;
+    /** Eta value of cluster for sector (-,+)*/
+    float m_clusterEtaNP;
+    /** Eta value of cluster for sector (+,-)*/
+    float m_clusterEtaPN;
+    /** Eta value of cluster for sector (-,-)*/
+    float m_clusterEtaNN; 
+    /** Position offset u of cluster */
+    float m_positionOffsetU;
+    /** Position offset v of cluster */
+    float m_positionOffsetV;
+           
     // Handle to detector data 
     TBDetector  _detector;    
      
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number
     int    _nEvt ;   //!< Event number
-     
+ 
   }; // Class
 
 } // Namespace

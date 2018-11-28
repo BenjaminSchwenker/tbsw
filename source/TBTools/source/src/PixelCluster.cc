@@ -55,32 +55,113 @@ namespace depfet {
     std::sort(m_sortedDigits.begin(), m_sortedDigits.end());
   }
   
-  std::string PixelCluster::getLabel(const std::vector<int>& jumps, int vCellPeriod, int uCellPeriod) const 
+  std::string PixelCluster::getShape(int pixeltype, int vCellPeriod, int uCellPeriod, int etaBin) const 
   {
     // Compute cluster label string
     stringstream streamLabel;  
-    streamLabel << "H" << m_clsSize << "." << m_vStart % vCellPeriod << "." <<  m_uStart % uCellPeriod;       
-     
+    streamLabel << "E" << etaBin << "P" << m_vStart % vCellPeriod << "." <<  m_uStart % uCellPeriod  
+                << "." << pixeltype; 
+    
     for (auto digit : m_sortedDigits ) {
-      int mapped_charge = std::distance(jumps.cbegin(), std::upper_bound(jumps.begin(), jumps.end(), digit.m_charge) );
-      streamLabel << "D" << digit.m_cellIDV - m_vStart  <<  "." << digit.m_cellIDU - m_uStart << "." << mapped_charge;  
+      streamLabel << "D" << digit.m_cellIDV - m_vStart  <<  "." << digit.m_cellIDU - m_uStart;  
     } 
     return streamLabel.str();   
   }
-  
-
-    
-  std::string PixelCluster::getType() const 
+   
+  std::string PixelCluster::getType(int pixeltype, int vCellPeriod, int uCellPeriod) const 
   { 
     // Compute cluster type string
     stringstream streamType;    
-    streamType << m_clsSize;     
+    streamType << "P" << m_vStart % vCellPeriod << "." <<  m_uStart % uCellPeriod << "." << pixeltype;   
     
     for (auto digit : m_sortedDigits ) { 
       streamType << "D" << digit.m_cellIDV - m_vStart  <<  "." << digit.m_cellIDU - m_uStart;  
     } 
     return streamType.str();  
+  }  
+  
+  double PixelCluster::computeEta(double thetaU, double thetaV) const
+  {
+    auto headPixelIndex = getHeadPixelIndex(thetaU, thetaV);
+    auto tailPixelIndex = getTailPixelIndex(thetaU, thetaV);
+    float eta = 0;
+    if (headPixelIndex != tailPixelIndex) {
+      eta = m_sortedDigits[tailPixelIndex].m_charge;
+      eta /= (m_sortedDigits[tailPixelIndex].m_charge + m_sortedDigits[headPixelIndex].m_charge);
+    } else {
+      eta = 0.5;
+    }
+    return eta;
   }
-
+  
+  int PixelCluster::computeEtaBin(double eta, const vector<double>& etaBinEdges) const
+  {
+    for (int i = etaBinEdges.size() - 1; i >= 0; --i) {
+      if (eta >= etaBinEdges[i])
+        return i;
+    }
+    return 0;
+  }
+  
+  int PixelCluster::getHeadPixelIndex(double thetaU, double thetaV) const
+  {
+    if (thetaV >= 0) {
+      if (thetaU >= 0) {
+        return getLastPixelWithVOffset(m_vSize - 1);
+      } else {
+        return getFirstPixelWithVOffset(m_vSize - 1);
+      }
+    } else {
+      if (thetaU >= 0) {
+        return getLastPixelWithVOffset(0);
+      } else {
+        return getFirstPixelWithVOffset(0);
+      }
+    }
+  }
+  
+  int PixelCluster::getTailPixelIndex(double thetaU, double thetaV) const
+  {
+    if (thetaV >= 0) {
+      if (thetaU >= 0) {
+        return getFirstPixelWithVOffset(0);
+      } else {
+        return getLastPixelWithVOffset(0);
+      }
+    } else {
+      if (thetaU >= 0) {
+        return getFirstPixelWithVOffset(m_vSize - 1);
+      } else {
+        return getLastPixelWithVOffset(m_vSize - 1);
+      }
+    }
+  }
+  
+  int PixelCluster::getLastPixelWithVOffset(int vOffset) const
+  {
+    for (auto index = 0; index < m_sortedDigits.size(); ++index) {
+      int v = m_sortedDigits[index].m_cellIDV - m_vStart;
+      if (vOffset < v) {
+        if (index == 0) {
+          return 0; 
+        } else {
+          return index-1;
+        }
+      }
+    }
+    return 0;
+  }
+  
+  int PixelCluster::getFirstPixelWithVOffset(int vOffset) const
+  {
+    for (auto index = 0; index < m_sortedDigits.size(); ++index) {
+      int v = m_sortedDigits[index].m_cellIDV - m_vStart;
+      if (vOffset == v) {
+        return index;
+      }
+    }
+    return 0;
+  }
+  
 }
 

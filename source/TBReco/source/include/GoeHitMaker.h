@@ -97,15 +97,22 @@ namespace depfet {
     TH1F * m_DB_Sigma2_U;
     TH1F * m_DB_Sigma2_V; 
     TH1F * m_DB_Cov_UV;
+    TH1F * m_DB_Types;  
     
-    //! Position of steps for software ADC 
-    std::vector<int> _swADCSteps;  
-     
+    // Map for eta bin edges stored by type name 
+    std::map<std::string, std::vector<double> > m_etaBinEdgesMap;
+    
     //! Periodicity for vCells used for clusterDB
     int _vCellPeriod;
     
     //! Periodicity for uCells used for clusterDB
     int _uCellPeriod; 
+    
+    //! Incident angles into sensor DuDw
+    double _thetaU; 
+    
+    //! Incident angles into sensor DvDw
+    double _thetaV;
     
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number

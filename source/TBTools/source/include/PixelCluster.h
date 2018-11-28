@@ -110,20 +110,44 @@ namespace depfet {
      */
     unsigned short getVStart() const { return m_vStart; }
     
-    /** Get cluster label string 
-     * @return cluster label used for cluster calibration 
+    /** Get cluster shape string 
+     * @return shape string containing all features of cluster used for position reconstruction 
      */
-    std::string getLabel(const std::vector<int>& jumps, int vCellPeriod = 1, int uCellPeriod = 1) const; 
+    std::string getShape(int pixeltype=0, int vCellPeriod = 1, int uCellPeriod = 1, int etaBin=0) const; 
      
     /** Get cluster type string. 
-     * @return type string
+     * @return type string, same as shape but without eta information
      */
-    std::string getType() const;
+    std::string getType(int pixeltype=0, int vCellPeriod = 1, int uCellPeriod = 1) const;
     
     /** Get sorted vector of raw digits 
      */
     const std::vector<RawDigit>& getRawDigits() const { return m_sortedDigits; }
+
+    /** Get cluster eta
+    */
+    double computeEta(double thetaU, double thetaV) const; 
     
+    /** Get cluster eta bin  
+    */
+    int computeEtaBin(double eta, const std::vector<double>& etaBinEdges) const; 
+    
+    /** Get index of head pixel in cluster
+    */
+    int getHeadPixelIndex(double thetaU, double thetaV) const; 
+    
+    /** Get index of tail pixel in cluster
+    */
+    int getTailPixelIndex(double thetaU, double thetaV) const;
+    
+    /** Get indes of last pixel of local row vOffset  
+    */
+    int getLastPixelWithVOffset(int vOffset) const; 
+
+    /** Get index of first pixel of local row vOffset 
+    */
+    int getFirstPixelWithVOffset(int vOffset) const; 
+
   protected:
      
     // SensorID 
