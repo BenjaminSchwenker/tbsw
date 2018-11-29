@@ -172,10 +172,10 @@ def calibrate(params):
   # Create list of calibration steps 
   if Use_LongTelescopeCali:
     calpath = create_x0analysis_calibration_longtelescope_path(CalObj, rawfile, gearfile_longtelescope, nevents_cali, Use_clusterDB, beamenergy, mcdata)
-	gear_object = CalObj.get_filename(gearfile_longtelescope)
+    gear_object = CalObj.get_filename(gearfile_longtelescope)
   else:
     calpath = create_x0analysis_calibration_path(CalObj, rawfile, gearfile, nevents_cali, Use_clusterDB, beamenergy, mcdata)
-	gear_object = CalObj.get_filename(gearfile)
+    gear_object = CalObj.get_filename(gearfile)
 
   set_parameter(gearfile=gearfile_object, sensorID=11, parametername='thickness', value=0.0001)
   set_parameter(gearfile=gearfile_object, sensorID=11, parametername='radLength', value=304000.0)  
