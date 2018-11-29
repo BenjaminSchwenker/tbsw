@@ -118,6 +118,7 @@ def add_prealigner(path):
   prealigner.param('ErrorsAlpha'  , '0 0 0 0 0 0 0')
   prealigner.param('ErrorsBeta'   , '0 0 0 0 0 0 0')
   prealigner.param('ErrorsGamma'  , '0 0.01 0.01 0 0.01 0.01 0')
+  prealigner.param('pValueCut'  , "0.0005")
   path.add_processor(prealigner) 
 
   return path 
@@ -132,7 +133,7 @@ def add_trackfinder_tightcut(path, beamenergy):
   trackfinder_tightcut.param("InputHitCollectionNameVec","hit_m26")
   trackfinder_tightcut.param("AlignmentDBFileName","localDB/alignmentDB.root")
   trackfinder_tightcut.param("ExcludeDetector", "3")
-  trackfinder_tightcut.param("MaxTrackChi2", 50)
+  trackfinder_tightcut.param("MaxTrackChi2", 100)
   trackfinder_tightcut.param("MaximumGap", 0)
   trackfinder_tightcut.param("MinimumHits",6)
   trackfinder_tightcut.param("OutlierChi2Cut", 10)
@@ -191,6 +192,7 @@ def add_aligner(path):
   aligner.param('ErrorsAlpha'  , '0 0 0 0 0 0 0')
   aligner.param('ErrorsBeta'   , '0 0 0 0 0 0 0')
   aligner.param('ErrorsGamma'  , '0 0.01 0.01 0 0.01 0.01 0')
+  aligner.param('pValueCut'  , "0.0005")
   path.add_processor(aligner) 
 
   return path 
@@ -212,8 +214,8 @@ def add_M26hitmaker(path, hitmakertype):
     m26coghitmaker = Processor(name="M26CogHitMaker",proctype="CogHitMaker")
     m26coghitmaker.param("ClusterCollection","zscluster_m26")
     m26coghitmaker.param("HitCollectionName","hit_m26")
-    m26coghitmaker.param("SigmaUCorrections", "0.698 0.31 0.315")
-    m26coghitmaker.param("SigmaVCorrections", "0.698 0.31 0.315")
+    m26coghitmaker.param("SigmaUCorrections", "0.62118 0.28235 0.31373")
+    m26coghitmaker.param("SigmaVCorrections", "0.62118 0.28235 0.31373")
     path.add_processor(m26coghitmaker)  
     
   return path 
@@ -390,8 +392,8 @@ def create_anglereco_path(Env, rawfile, gearfile, numberofevents, usesinglehitse
   downstream_TF.param("MaxResidualV","0.4")
 
   if usesinglehitseeding:
-    downstream_TF.param("BackwardPass_FirstPlane","-1")
-    downstream_TF.param("BackwardPass_SecondPlane","-1")
+    downstream_TF.param("BackwardPass_FirstPlane","5")
+    downstream_TF.param("BackwardPass_SecondPlane","6")
     downstream_TF.param("ForwardPass_FirstPlane","-1")
     downstream_TF.param("ForwardPass_SecondPlane","-1")
     downstream_TF.param("SingleHitSeeding", "6")
@@ -466,7 +468,7 @@ def create_x0analysis_calibration_longtelescope_path(Env, rawfile, gearfile, nev
   mask_path = Env.create_path('mask_path')
 
   if not mcdata:
-    mask_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 1000000 }) 
+    mask_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 1000000, 'Verbosity': "MESSAGE3" }) 
     mask_path=add_rawinputprocessor(mask_path, rawfile) 
     mask_path=add_M26unpacker(mask_path) 
 
@@ -488,7 +490,7 @@ def create_x0analysis_calibration_longtelescope_path(Env, rawfile, gearfile, nev
 
 
   if not mcdata:
-    clusterizer_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_cali }) 
+    clusterizer_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents_cali, 'Verbosity': "MESSAGE3" }) 
     clusterizer_path=add_rawinputprocessor(clusterizer_path,rawfile) 
     clusterizer_path=add_M26unpacker(clusterizer_path) 
 
@@ -528,7 +530,7 @@ def create_x0analysis_calibration_longtelescope_path(Env, rawfile, gearfile, nev
 
   # Create path for correlator
   correlator_path = Env.create_path('correlator_path')
-  correlator_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' :  nevents_cali, 'LCIOInputFiles': "tmp.slcio"  }) 
+  correlator_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' :  nevents_cali, 'LCIOInputFiles': "tmp.slcio", 'Verbosity': "MESSAGE3"  }) 
 
   correlator_path=add_M26hitmaker(correlator_path,"cog") 
   
@@ -625,13 +627,9 @@ def create_x0analysis_calibration_longtelescope_path(Env, rawfile, gearfile, nev
   cluster_calibration1_path=add_trackfinder_tightcut(cluster_calibration1_path, beamenergy)
   cluster_calibration1_path=add_clustercalibrator(cluster_calibration1_path)
 
-  print(calpath)
-
   # Finished with first part of cluster calibration
   if useclusterdb:
     calpath.append(cluster_calibration1_path)
-
-  print(calpath)
 
 
   # Create path for 6 hit pre alignment with loose cut track sample 
@@ -658,15 +656,12 @@ def create_x0analysis_calibration_longtelescope_path(Env, rawfile, gearfile, nev
   # Repeat this 7x
   if useclusterdb:
     calpath.append(cluster_calibration2_path)
-    print(calpath)
-    calpath.append(cluster_calibration2_path)
-    print(calpath)
     calpath.append(cluster_calibration2_path)
     calpath.append(cluster_calibration2_path)
     calpath.append(cluster_calibration2_path)
     calpath.append(cluster_calibration2_path)
     calpath.append(cluster_calibration2_path)
-    print(calpath)
+    calpath.append(cluster_calibration2_path)
 
   # Create path for correlator
   correlator2_path = Env.create_path('correlator2_path')
