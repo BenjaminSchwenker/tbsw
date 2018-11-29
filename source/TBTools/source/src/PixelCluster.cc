@@ -72,7 +72,7 @@ namespace depfet {
   { 
     // Compute cluster type string
     stringstream streamType;    
-    streamType << "P" << m_vStart % vCellPeriod << "." <<  m_uStart % uCellPeriod << "." << pixeltype;   
+    streamType << "P" << int(m_vStart % vCellPeriod) << "." <<  int(m_uStart % uCellPeriod) << "." << pixeltype;   
     
     for (auto digit : m_sortedDigits ) { 
       streamType << "D" << digit.m_cellIDV - m_vStart  <<  "." << digit.m_cellIDU - m_uStart;  

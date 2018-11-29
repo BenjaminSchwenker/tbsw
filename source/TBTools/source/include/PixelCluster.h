@@ -113,12 +113,12 @@ namespace depfet {
     /** Get cluster shape string 
      * @return shape string containing all features of cluster used for position reconstruction 
      */
-    std::string getShape(int pixeltype=0, int vCellPeriod = 1, int uCellPeriod = 1, int etaBin=0) const; 
+    std::string getShape(int pixeltype = 1, int vCellPeriod = 1, int uCellPeriod = 1, int etaBin=0) const; 
      
     /** Get cluster type string. 
      * @return type string, same as shape but without eta information
      */
-    std::string getType(int pixeltype=0, int vCellPeriod = 1, int uCellPeriod = 1) const;
+    std::string getType(int pixeltype = 1, int vCellPeriod = 1, int uCellPeriod = 1) const;
     
     /** Get sorted vector of raw digits 
      */

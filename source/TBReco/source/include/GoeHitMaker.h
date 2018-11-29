@@ -103,16 +103,16 @@ namespace depfet {
     std::map<std::string, std::vector<double> > m_etaBinEdgesMap;
     
     //! Periodicity for vCells used for clusterDB
-    int _vCellPeriod;
+    int _vCellPeriod {1};
     
     //! Periodicity for uCells used for clusterDB
-    int _uCellPeriod; 
+    int _uCellPeriod {1}; 
     
-    //! Incident angles into sensor DuDw
-    double _thetaU; 
+    //! Incident angle into sensor DuDw
+    double _thetaU {0}; 
     
-    //! Incident angles into sensor DvDw
-    double _thetaV;
+    //! Incident angle into sensor DvDw
+    double _thetaV {0};
     
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number

@@ -88,79 +88,82 @@ namespace depfet {
     // Open clusterDB file 
     TFile * clusterDBFile = new TFile(_clusterDBFileName.c_str(), "READ");
     
-    // Read calibration data  
-    string histoName;
-
-    histoName = "hDB_Weight";
-    if ( (TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
-      m_DB_Weight = (TH1F *) clusterDBFile->Get(histoName.c_str());  
-      m_DB_Weight->SetDirectory(0);
-    } 
+    if (clusterDBFile->IsOpen()) {  
+      // Read calibration data  
+      string histoName;
+      
+      histoName = "hDB_Weight";
+      if ( (TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+        m_DB_Weight = (TH1F *) clusterDBFile->Get(histoName.c_str());  
+        m_DB_Weight->SetDirectory(0);
+      } 
        
-    histoName = "hDB_U";
-    if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
-      m_DB_U = (TH1F *) clusterDBFile->Get(histoName.c_str());
-      m_DB_U->SetDirectory(0);
-    } 
+      histoName = "hDB_U";
+      if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+        m_DB_U = (TH1F *) clusterDBFile->Get(histoName.c_str());
+        m_DB_U->SetDirectory(0);
+      } 
       
-    histoName = "hDB_V"; 
-    if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
-      m_DB_V = (TH1F *) clusterDBFile->Get(histoName.c_str());
-      m_DB_V->SetDirectory(0);
-    } 
+      histoName = "hDB_V"; 
+      if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+        m_DB_V = (TH1F *) clusterDBFile->Get(histoName.c_str());
+        m_DB_V->SetDirectory(0);
+      } 
       
-    histoName = "hDB_Sigma2_U";
-    if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
-      m_DB_Sigma2_U = (TH1F *) clusterDBFile->Get(histoName.c_str());
-      m_DB_Sigma2_U->SetDirectory(0);
-    } 
+      histoName = "hDB_Sigma2_U";
+      if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+        m_DB_Sigma2_U = (TH1F *) clusterDBFile->Get(histoName.c_str());
+        m_DB_Sigma2_U->SetDirectory(0);
+      } 
       
-    histoName = "hDB_Sigma2_V";
-    if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
-      m_DB_Sigma2_V = (TH1F *) clusterDBFile->Get(histoName.c_str());
-      m_DB_Sigma2_V->SetDirectory(0);
-    } 
+      histoName = "hDB_Sigma2_V";
+      if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+        m_DB_Sigma2_V = (TH1F *) clusterDBFile->Get(histoName.c_str());
+        m_DB_Sigma2_V->SetDirectory(0);
+      } 
       
-    histoName = "hDB_Cov_UV";
-    if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
-      m_DB_Cov_UV = (TH1F *) clusterDBFile->Get(histoName.c_str());
-      m_DB_Cov_UV->SetDirectory(0);
-    } 
+      histoName = "hDB_Cov_UV";
+      if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+        m_DB_Cov_UV = (TH1F *) clusterDBFile->Get(histoName.c_str());
+        m_DB_Cov_UV->SetDirectory(0);
+      } 
     
-    histoName = "DB_periods";
-    if ((TVectorD*) clusterDBFile->Get(histoName.c_str()) != nullptr) {
-      TVectorD *DB_periods = (TVectorD*) clusterDBFile->Get( histoName.c_str() );
-      _vCellPeriod  = (*DB_periods)[0] ; 
-      _uCellPeriod  = (*DB_periods)[1] ; 
-    } 
-
-    histoName = "DB_angles";
-    if ((TVectorD*) clusterDBFile->Get(histoName.c_str()) != nullptr) {
-      TVectorD *DB_angles = (TVectorD*) clusterDBFile->Get( histoName.c_str() );
-      _thetaU  = (*DB_angles)[0]; 
-      _thetaV  = (*DB_angles)[1]; 
-    } 
-
-    histoName = "hDB_Types";
-    if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
-      m_DB_Types = (TH1F *) clusterDBFile->Get(histoName.c_str());
-      m_DB_Types->SetDirectory(0);
-    } 
-    
-    // We need the eta bin edges for all cluster types  
-    for (auto i = 1; i <= m_DB_Types->GetXaxis()->GetNbins(); i++) {    
-      string typeName =  m_DB_Types->GetXaxis()->GetBinLabel(i);
-      histoName = "DB_etaBinEdges_" + typeName;
+      histoName = "DB_periods";
       if ((TVectorD*) clusterDBFile->Get(histoName.c_str()) != nullptr) {
-        TVectorD *DB_edges = (TVectorD*) clusterDBFile->Get( histoName.c_str() );
-        for(auto i = 0; i < DB_edges->GetNrows(); i++ ) {
-          m_etaBinEdgesMap[typeName].push_back( (*DB_edges)[i] ); 
-        }  
-      }    
+        TVectorD *DB_periods = (TVectorD*) clusterDBFile->Get( histoName.c_str() );
+        _vCellPeriod  = (*DB_periods)[0] ; 
+        _uCellPeriod  = (*DB_periods)[1] ; 
+      } 
+      
+      histoName = "DB_angles";
+      if ((TVectorD*) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+        TVectorD *DB_angles = (TVectorD*) clusterDBFile->Get( histoName.c_str() );
+        _thetaU  = (*DB_angles)[0]; 
+        _thetaV  = (*DB_angles)[1]; 
+      } 
+
+      histoName = "hDB_Types";
+      if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+        m_DB_Types = (TH1F *) clusterDBFile->Get(histoName.c_str());
+        m_DB_Types->SetDirectory(0);
+      } 
+    
+      // We need the eta bin edges for all cluster types  
+      for (auto i = 1; i <= m_DB_Types->GetXaxis()->GetNbins(); i++) {    
+        string typeName =  m_DB_Types->GetXaxis()->GetBinLabel(i);
+        histoName = "DB_etaBinEdges_" + typeName;
+        if ((TVectorD*) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+          TVectorD *DB_edges = (TVectorD*) clusterDBFile->Get( histoName.c_str() );
+          for(auto i = 0; i < DB_edges->GetNrows(); i++ ) {
+            m_etaBinEdgesMap[typeName].push_back( (*DB_edges)[i] ); 
+          }  
+        }    
+      }
     }
-         
+    
     // Close root  file
     clusterDBFile->Close();
+    // delete pointer
     delete clusterDBFile;
     
     for(int ipl=0;ipl<_detector.GetNSensors();ipl++)  { 
@@ -188,7 +191,7 @@ namespace depfet {
   //
   void GoeHitMaker::processEvent(LCEvent * evt)
   {
-    
+
     _nEvt ++ ;
     
     // Print event number
@@ -196,9 +199,12 @@ namespace depfet {
                                                                 << (evt->getEventNumber())
                                                                 << std::endl << std::endl;
     
+    
+
     //
     // Open collections
     try {
+
       LCCollectionVec* clusterCollection = dynamic_cast < LCCollectionVec * >  ( evt->getCollection(_clusterCollectionName) );
       
       // Create hit collection  
@@ -218,7 +224,7 @@ namespace depfet {
         
         // Increment the cluster counter
         _countAllMap[sensorID]++;
-        
+       
         // Compute the cluster ID string
         PixelCluster aCluster(cluster->getTrackerData());    
         int pixeltype = Det.GetPixelType(aCluster.getVStart(), aCluster.getUStart()); 
@@ -261,18 +267,17 @@ namespace depfet {
           trackerhit->rawHits() = clusterVec;
           
           //  Add hit to the hit collection
-          hitCollection->push_back( trackerhit ); 
+          hitCollection->push_back( trackerhit );
         } 
                
       } // End cluster loop 
-      
+       
       // Store hitCollection in LCIO file
       evt->addCollection( hitCollection, _hitCollectionName );     
        
     } catch (DataNotAvailableException& e) {
       streamlog_out(MESSAGE2) << "Missing cluster collection in event: " << evt->getEventNumber() << std::endl;
     }
-    
   }
 
   //
@@ -325,6 +330,7 @@ namespace depfet {
   
   bool GoeHitMaker::searchDB(int sensorID, string id, double& u, double& v, double& sig2_u, double& sig2_v, double& cov_uv)
   {
+   
     if ( m_DB_Weight == nullptr ) {
       return false;  
     }
