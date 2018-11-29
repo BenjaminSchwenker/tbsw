@@ -149,7 +149,7 @@ namespace depfet {
         }
       }
     }
-    return 0;
+    return m_clsSize-1;
   }
   
   int PixelCluster::getFirstPixelWithVOffset(int vOffset) const
