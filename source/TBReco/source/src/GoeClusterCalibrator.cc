@@ -403,8 +403,19 @@ namespace depfet {
       
       // Try to split clusters into n bins with _minClusters clusters
       int nEtaBins  = std::max(int(nClusters / _minClusters), 1);
-      nEtaBins =  std::min(nEtaBins, _maxEtaBins);      
-       
+      nEtaBins =  std::min(nEtaBins, _maxEtaBins);  
+      
+      // We have to check for singular cases where eta distribution is concentrated is concentrated in 
+      // less bins than required number of eta bins 
+      int nFilledBins = 0;  
+      for (auto ibin = 1; ibin <= histo.GetXaxis()->GetNbins(); ibin++) {  
+        if (histo.GetBinContent(ibin) > 0) nFilledBins++;  
+      }
+      if (nFilledBins <= nEtaBins) {
+        nEtaBins = 1; 
+        streamlog_out(MESSAGE3) << "Eta histogram " << name << " is a delta spike" << std::endl;   
+      }
+      
       vector<double> etaBinEdges;
       vector< TH2D > offsetHistos;
       
@@ -477,15 +488,15 @@ namespace depfet {
     }
        
     if ( min_covU - trk_covU < _minVarianceU ) {
-      streamlog_out(MESSAGE3) << "Original track covarianceU is  " << trk_covU  << std::endl;
+      streamlog_out(MESSAGE3) << "Original track sigmaU is  " << sqrt(trk_covU)  << std::endl;
       trk_covU = min_covU - _minVarianceU;
-      streamlog_out(MESSAGE3) << "Truncated track covarianceU is  " << trk_covU  << std::endl;  
+      streamlog_out(MESSAGE3) << "Truncated track sigmaU is  " << sqrt(trk_covU)  << std::endl;  
     } 
 
     if ( min_covV - trk_covV < _minVarianceV ) {
-      streamlog_out(MESSAGE3) << "Original track covarianceV is  " << trk_covV  << std::endl;
+      streamlog_out(MESSAGE3) << "Original track sigmaV is  " << sqrt(trk_covV)  << std::endl;
       trk_covV = min_covV - _minVarianceV;
-      streamlog_out(MESSAGE3) << "Truncated track covarianceV is  " << trk_covV  << std::endl;  
+      streamlog_out(MESSAGE3) << "Truncated track sigmaV is  " << sqrt(trk_covV)  << std::endl;  
     }  
     
     if (nShapes > 0) {
@@ -571,7 +582,7 @@ namespace depfet {
           covV -= trk_covV;     
           covUV -= trk_covUV;   
           
-          streamlog_out(MESSAGE3) << "Name " << shapeName  << ", posU=" << offsetU << ", posV=" << offsetV 
+          streamlog_out(MESSAGE3) << "Name " << shapeName  << " entries=" << counter << ", posU=" << offsetU << ", posV=" << offsetV 
                                   << ", sigmaU=" << sqrt(covU) << ", sigmaV=" << sqrt(covV) << ", corrUV=" << covUV/sqrt(covU)/sqrt(covV) << std::endl;
           
           TMatrixDSym HitCov(2);
