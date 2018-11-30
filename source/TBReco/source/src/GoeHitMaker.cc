@@ -66,6 +66,22 @@ namespace depfet {
     registerProcessorParameter("ClusterDBFileName",
                                "This is the name of the ROOT file with the cluster constants (add .root)",
                                _clusterDBFileName, static_cast< string > ( "ClusterDB.root" ) ); 
+    
+    registerProcessorParameter("UseCenterOfGravityFallback",
+                               "Set true to use center of gravity hit when no correction available from clusterDB",
+                               _useCoGFallback, static_cast< bool > ( false ) ); 
+     
+    std::vector<float> initSigmaUCorrrections;
+    initSigmaUCorrrections.push_back(1.0);
+    registerProcessorParameter ("SigmaUCorrections", 
+                                "List of correction factors for sigma U for sizeU=1,2,... . Sigma U will be computed as factor*uLength/sqrt(12). Defaults to factor=1.",
+                                _sigmaUCorrections, initSigmaUCorrrections); 
+    
+    std::vector<float> initSigmaVCorrections;
+    initSigmaVCorrections.push_back(1.0);
+    registerProcessorParameter ("SigmaVCorrections", 
+                                "List of correction factors for sigma V for sizeV=1,2,... . Sigma V will be computed as factor*vLength/sqrt(12). Defaults to factor=1.",
+                                _sigmaVCorrections, initSigmaVCorrections); 
      
   }
   
@@ -268,7 +284,38 @@ namespace depfet {
           
           //  Add hit to the hit collection
           hitCollection->push_back( trackerhit );
-        } 
+             
+        } else if (_useCoGFallback)  {
+           
+          aCluster.getCenterOfGravity(Det, u, v, sig2_u, sig2_v, cov_uv); 
+          
+          // Override sigma u from user input
+          if ( aCluster.getUSize()-1 < _sigmaUCorrections.size() ) {
+            sig2_u *= pow(_sigmaUCorrections[aCluster.getUSize()-1],2);  
+          }
+           
+          // Override sigma v from user input    
+          if ( aCluster.getVSize()-1 < _sigmaVCorrections.size() ) {
+            sig2_v *= pow(_sigmaVCorrections[aCluster.getVSize()-1],2); 
+          }        
+          
+          // Mark as fallback
+          quality = 1;  
+          
+          // Make TBHit 
+          TBHit hit(sensorID, u, v, sig2_u, sig2_v, cov_uv, quality);
+          
+          // Make LCIO TrackerHit
+          TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
+            
+          // Add link to full cluster data 
+          LCObjectVec clusterVec;
+          clusterVec.push_back( cluster->getTrackerData() );
+          trackerhit->rawHits() = clusterVec;
+          
+          //  Add hit to the hit collection
+          hitCollection->push_back( trackerhit );
+        }
                
       } // End cluster loop 
        

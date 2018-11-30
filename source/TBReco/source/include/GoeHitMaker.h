@@ -72,10 +72,7 @@ namespace depfet {
     void printProcessorParams() const;
     
    protected:
-    
-    //!Method searching for clusterID id on sensor sensorID in clusterDB. Returns success.  
-    bool searchDB(int sensorID, std::string id, double& u, double& v, double& sig2_u, double& sig2_v, double& cov_uv);
-      
+     
     //! Input cluster collection name
     std::string  _clusterCollectionName; 
      
@@ -84,9 +81,24 @@ namespace depfet {
      
     //! Name of clusterDB file 
     std::string  _clusterDBFileName;
+
+    //! Sigma U correction factors
+    //! One value for sizeU = 1,2,3,... 
+    std::vector<float> _sigmaUCorrections;
     
+    //! Sigma V correction factors 
+    //! One value for sizeV = 1,2,3,... 
+    std::vector<float> _sigmaVCorrections; 
+    
+    //! Use Center of Gravity in case position is 
+    //! not available from clusterDB. 
+    bool _useCoGFallback; 
+
    private:
-    
+   
+    //!Method searching for clusterID id on sensor sensorID in clusterDB. Returns success.  
+    bool searchDB(int sensorID, std::string id, double& u, double& v, double& sig2_u, double& sig2_v, double& cov_uv);
+     
     // Handle to detector data 
     TBDetector _detector;  
 

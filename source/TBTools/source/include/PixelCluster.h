@@ -1,6 +1,7 @@
 #ifndef PixelCluster_H
 #define PixelCluster_H
 
+#include "Det.h"
 
 // Include LCIO header files 
 #include "lcio.h"
@@ -147,6 +148,10 @@ namespace depfet {
     /** Get index of first pixel of local row vOffset 
     */
     int getFirstPixelWithVOffset(int vOffset) const; 
+    
+    /** Compute center of gravity hit position and covariance matrix
+    */
+    void getCenterOfGravity(Det& Sensor, double& u, double& v, double& cov_u, double& cov_v, double& cov_uv) const;
 
   protected:
      

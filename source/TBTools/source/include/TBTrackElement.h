@@ -1,7 +1,7 @@
 #ifndef TBTrackElement_H
 #define TBTrackElement_H 1
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "Det.h"
 #include "TBHit.h"
 #include "TBTrackState.h"

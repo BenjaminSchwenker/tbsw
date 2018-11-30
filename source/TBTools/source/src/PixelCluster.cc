@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <limits>
 #include <iterator>
+#include <cmath>
 
 using namespace std;
 using namespace lcio; 
@@ -163,5 +164,25 @@ namespace depfet {
     return 0;
   }
   
+  void PixelCluster::getCenterOfGravity(Det& Sensor, double& u, double& v, double& cov_u, double& cov_v, double& cov_uv) const { 
+    // Calculate hit coord in local frame in mm
+    u = 0; 
+    v = 0;  
+     
+    for (const auto&  digit: m_sortedDigits) {
+      u += Sensor.GetPixelCenterCoordU(digit.m_cellIDV, digit.m_cellIDU)*digit.m_charge;
+      v += Sensor.GetPixelCenterCoordV(digit.m_cellIDV, digit.m_cellIDU)*digit.m_charge;     
+    }
+       
+    if ( m_clsCharge > 0)  {
+      u /= m_clsCharge;
+      v /= m_clsCharge; 
+    } 
+        
+    // Compute the diagonal elements of the hit covariance matrix in mm2
+    cov_u = pow(getUSize()*Sensor.GetPitchU(getVStart(), getUStart())/sqrt(12),2);
+    cov_v = pow(getVSize()*Sensor.GetPitchV(getVStart(), getUStart())/sqrt(12),2); 
+    cov_uv = 0.0;   
+  }
 }
 
