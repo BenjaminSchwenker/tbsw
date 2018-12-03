@@ -627,11 +627,11 @@ double DetermineFitrange(TH1* histo,double rangevalue)
 		chi2ndof2=fit2->GetChisquare()/(fit2->GetNDF()*1.0);
 		chi2ndofsum=fitsum->GetChisquare()/(fitsum->GetNDF()*1.0);	
 
-		// define chi2 cut
+		// define chi2 cut, if the cut value is below 0 the cut is deactivated
 		double chi2_cut=maxchi2ndof_fit;
 
 		// Use the chi2 values for quality cuts
-		if((fittype==0)&&((chi2ndof1+chi2ndof2)>chi2_cut*2.0))
+		if((fittype==0)&&(chi2_cut > 0)&&((chi2ndof1+chi2ndof2)>chi2_cut*2.0))
 		{
 			// The fit didn't work: Dont trust this X/X0 and theta mean value
 			XX01=0.0;
@@ -652,7 +652,7 @@ double DetermineFitrange(TH1* histo,double rangevalue)
 
 		}
 
-		else if ((fittype==1)&&(chi2ndofsum>chi2_cut))
+		else if ((fittype==1)&&(chi2_cut > 0)&&(chi2ndofsum>chi2_cut))
 		{
 			// The fit didn't work: Dont trust this X/X0 and theta mean value
 			XX0sum=0.0;
@@ -712,22 +712,22 @@ double DetermineFitrange(TH1* histo,double rangevalue)
 	else
 	{
 
-		XX01=0.0;
+		XX01=-1.0;
 		XX0err1=99.0;
-		mean1=0.0;
-		chi2ndof1=100.0;
+		mean1=99.0;
+		chi2ndof1=-99.0;
 		prob1=-1.0;
 
-		XX02=0.0;
+		XX02=-1.0;
 		XX0err2=99.0;
-		mean2=0.0;
-		chi2ndof2=100.0;
+		mean2=99.0;
+		chi2ndof2=-99.0;
 		prob2=-1.0;
 
-		XX0sum=0.0;
+		XX0sum=-1.0;
 		XX0errsum=99.0;
-		meansum=0.0;
-		chi2ndofsum=100.0;
+		meansum=99.0;
+		chi2ndofsum=-99.0;
 		probsum=-1.0;
 
 
