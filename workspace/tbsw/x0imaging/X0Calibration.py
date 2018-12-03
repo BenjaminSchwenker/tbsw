@@ -1,4 +1,3 @@
-
 import os
 import shutil
 import subprocess
@@ -33,7 +32,7 @@ def x0imaging(filelist=None,caltag='',steerfiles=None,nametag=''):
 
   print(nametag)
 
-  imageflags='./tbsw/x0imaging/GenerateImage.py'
+  imageflags='python tbsw/x0imaging/GenerateImage.py'
 
   for filename in filelist:
     imageflags= imageflags+ ' -i '+str(filename)
@@ -72,7 +71,7 @@ def x0calibration(filelist=None,imagefilename='',caltag='default',steerfiles=Non
   if steerfiles == None:
     return None
 
-  califlags='./tbsw/x0imaging/X0Calibration.py'
+  califlags='python tbsw/x0imaging/X0Calibration.py'
 
   for filename in filelist:
     califlags= califlags+ ' -i '+str(filename)
