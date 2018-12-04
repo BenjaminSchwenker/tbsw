@@ -97,6 +97,15 @@ using namespace std ;
 	TH1F *histo_theta1[numcol][numrow];
 	TH1F *histo_theta2[numcol][numrow];
 
+	for (int i=0; i<numcol; i++)
+	{
+		for (int j=0; j<numrow; j++)
+		{
+			 	histo_theta1[i][j] = new TH1F("","",numberofbins,means.at(0)-1.0*plotranges.at(0),means.at(0)+plotranges.at(0));
+			 	histo_theta2[i][j] = new TH1F("","",numberofbins,means.at(1)-1.0*plotranges.at(1),means.at(1)+plotranges.at(1));
+		}
+	}
+
 	cout<<endl<<"Selecting raw angle distributions"<<endl;
 
 
@@ -112,15 +121,6 @@ using namespace std ;
 		msc_tree->SetBranchAddress("u",&u);
 		msc_tree->SetBranchAddress("v",&v);
 		int test=msc_tree->SetBranchAddress("vertex_multiplicity",&vertex_multiplicity);
-
-		for (int i=0; i<numcol; i++)
-		{
-			for (int j=0; j<numrow; j++)
-			{
-			 	histo_theta1[i][j] = new TH1F("","",numberofbins,means.at(0)-1.0*plotranges.at(0),means.at(0)+plotranges.at(0));
-			 	histo_theta2[i][j] = new TH1F("","",numberofbins,means.at(1)-1.0*plotranges.at(1),means.at(1)+plotranges.at(1));
-			}
-		}
 
 		// Loop over all events
 		for(int i=0; i< msc_tree->GetEntries(); i++)
