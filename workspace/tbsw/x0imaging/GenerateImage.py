@@ -1,4 +1,3 @@
-
 import os
 import shutil
 import subprocess
@@ -7,7 +6,26 @@ import glob
 import math
 import fileinput
 import argparse
-from configparser import ConfigParser
+import ConfigParser
+
+class MyConfigParser(ConfigParser.ConfigParser):
+
+    def write(self, fp):
+        """Write an .ini-format representation of the configuration state."""
+        if self._defaults:
+            fp.write("[%s]\n" % DEFAULTSECT)
+            for (key, value) in self._defaults.items():
+                fp.write("%s = %s\n" % (key, str(value).replace('\n', '\n\t')))
+            fp.write("\n")
+        for section in self._sections:
+            fp.write("[%s]\n" % section)
+            for (key, value) in self._sections[section].items():
+                if key == "__name__":
+                    continue
+                if (value is not None) or (self._optcre == self.OPTCRE):
+                    key = ": ".join((key, str(value).replace('\n', '\n\t')))
+                fp.write("%s\n" % (key))
+            fp.write("\n")
 
 if __name__ == '__main__':
   
@@ -69,7 +87,8 @@ if __name__ == '__main__':
   shutil.copy(fullpath+'/'+cfgfile,default_cfg_file_name)
 
   # Read config txt file
-  config = ConfigParser(delimiters=(':'))
+  #config = ConfigParser.ConfigParser(delimiters=(':'))
+  config = MyConfigParser()
   fp = open(default_cfg_file_name)
   config.readfp(fp)
 
@@ -225,7 +244,8 @@ if __name__ == '__main__':
 
       # Writing the configuration file
       with open('x0image-partial.cfg', 'w') as configfile:
-         config.write(configfile,space_around_delimiters=False)
+         #config.write(configfile,space_around_delimiters=False)
+         config.write(configfile)
   
       subprocess.call('root -q -b '+scriptname, shell=True)
       print ('[Print] One part done ...')
@@ -277,7 +297,8 @@ if __name__ == '__main__':
 
   # Writing the configuration file
   with open('x0merge.cfg', 'w') as configfile:
-    config.write(configfile,space_around_delimiters=False)
+    #config.write(configfile,space_around_delimiters=False)
+    config.write(configfile)
    
   subprocess.call('root -q -b '+scriptname, shell=True)            
   print ('[Print] All partial images created and merged... ')  

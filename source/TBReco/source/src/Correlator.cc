@@ -447,7 +447,7 @@ void Correlator::bookHistos() {
          
     double  uMin = - safetyFactor * 0.5 * det.GetSensitiveSizeU();               
     double  uMax = + safetyFactor * 0.5 * det.GetSensitiveSizeU(); 
-    double  PitchU = det.GetSensitiveSizeU()/(det.GetNCellsU()+1); 
+    double  PitchU = det.GetSensitiveSizeU()/(det.GetNCellsU()); 
     int     uBins = static_cast<int>( (uMax - uMin)/(2*PitchU) );     
     
     // avoid too many bins 
@@ -455,7 +455,7 @@ void Correlator::bookHistos() {
     
     double  uMinRef = - safetyFactor * 0.5 * refdet.GetSensitiveSizeU();               
     double  uMaxRef = + safetyFactor * 0.5 * refdet.GetSensitiveSizeU(); 
-    double  refPitchU = refdet.GetSensitiveSizeU()/(refdet.GetNCellsU()+1); 
+    double  refPitchU = refdet.GetSensitiveSizeU()/(refdet.GetNCellsU()); 
     int     uBinsRef = static_cast<int>( (uMax - uMin)/(2*refPitchU) );    
     
     // avoid too many bins 

@@ -93,9 +93,18 @@ using namespace std ;
 
 	// arrays of msc angle histograms
 	file2->cd("");
-	file2->cd("mapping/raw");
+	file2->cd("raw");
 	TH1F *histo_theta1[numcol][numrow];
 	TH1F *histo_theta2[numcol][numrow];
+
+	for (int i=0; i<numcol; i++)
+	{
+		for (int j=0; j<numrow; j++)
+		{
+			 	histo_theta1[i][j] = new TH1F("","",numberofbins,means.at(0)-1.0*plotranges.at(0),means.at(0)+plotranges.at(0));
+			 	histo_theta2[i][j] = new TH1F("","",numberofbins,means.at(1)-1.0*plotranges.at(1),means.at(1)+plotranges.at(1));
+		}
+	}
 
 	cout<<endl<<"Selecting raw angle distributions"<<endl;
 
@@ -112,15 +121,6 @@ using namespace std ;
 		msc_tree->SetBranchAddress("u",&u);
 		msc_tree->SetBranchAddress("v",&v);
 		int test=msc_tree->SetBranchAddress("vertex_multiplicity",&vertex_multiplicity);
-
-		for (int i=0; i<numcol; i++)
-		{
-			for (int j=0; j<numrow; j++)
-			{
-			 	histo_theta1[i][j] = new TH1F("","",numberofbins,means.at(0)-1.0*plotranges.at(0),means.at(0)+plotranges.at(0));
-			 	histo_theta2[i][j] = new TH1F("","",numberofbins,means.at(1)-1.0*plotranges.at(1),means.at(1)+plotranges.at(1));
-			}
-		}
 
 		// Loop over all events
 		for(int i=0; i< msc_tree->GetEntries(); i++)
@@ -159,7 +159,7 @@ using namespace std ;
 	cout<<"Writing raw angle histograms "<<endl;
 
 	file2->cd("");
-	file2->cd("mapping/raw");
+	file2->cd("raw");
 
 	for (int i=0; i<numcol; i++)
 	{
@@ -203,7 +203,7 @@ using namespace std ;
 	double mean2[numcol][numrow];
 
 	file2->cd("");
-	file2->cd("mapping/raw");
+	file2->cd("raw");
 
 	// arrays of msc angle histograms
 	TH1F *histo_theta1[numcol][numrow];
@@ -233,8 +233,8 @@ using namespace std ;
 				aidhistoname.Form("area(%i,%i)",i,j);
 
 				// Get histogram
-				TH1* histogram1=(TH1*)file2->Get("mapping/raw/theta1_uncorrected_"+aidhistoname);
-				TH1* histogram2=(TH1*)file2->Get("mapping/raw/theta2_uncorrected_"+aidhistoname);
+				TH1* histogram1=(TH1*)file2->Get("raw/theta1_uncorrected_"+aidhistoname);
+				TH1* histogram2=(TH1*)file2->Get("raw/theta2_uncorrected_"+aidhistoname);
 			
 				// Determine plot range from uncorrected histograms
 				double limits=histo_range/2.0*(histogram1->GetRMS()+histogram2->GetRMS());
@@ -294,7 +294,7 @@ using namespace std ;
 
 
 		file2->cd("");
-		file2->cd("mapping/raw");
+		file2->cd("raw");
 
 		// Loop over all events, find the corresponding image pixel from the u,v values and fill the histograms
 		for(int i=0; i< msc_tree->GetEntries(); i++)
@@ -350,7 +350,7 @@ using namespace std ;
 	cout<<"Write histograms "<<endl;
 
 	file2->cd("");
-	file2->cd("mapping/raw");
+	file2->cd("raw");
 
 	for (int i=0; i<numcol; i++)
 	{
@@ -441,29 +441,29 @@ double DetermineFitrange(TH1* histo,double rangevalue)
 	TString histoname;
 	histoname.Form("area(%i,%i)",col,row);
 	file->cd("");
-	TH1* histogram1=(TH1*)file->Get("mapping/raw/theta1_"+histoname);
-	TH1* histogram2=(TH1*)file->Get("mapping/raw/theta2_"+histoname);
-	TH1* histogramu=(TH1*)file->Get("mapping/raw/uresidual_"+histoname);
-	TH1* histogramv=(TH1*)file->Get("mapping/raw/vresidual_"+histoname);
-	TH1* histogramsum=(TH1*)file->Get("mapping/raw/sumhisto_"+histoname);
+	TH1* histogram1=(TH1*)file->Get("raw/theta1_"+histoname);
+	TH1* histogram2=(TH1*)file->Get("raw/theta2_"+histoname);
+	TH1* histogramu=(TH1*)file->Get("raw/uresidual_"+histoname);
+	TH1* histogramv=(TH1*)file->Get("raw/vresidual_"+histoname);
+	TH1* histogramsum=(TH1*)file->Get("raw/sumhisto_"+histoname);
 
 	// Get vertex histos
-	TH1* histogram_vertex_w=(TH1*)file->Get("mapping/raw/vertex_w_"+histoname);
-	TH1* histogram_vertex_chi2=(TH1*)file->Get("mapping/raw/vertex_chi2_"+histoname);
-	TH1* histogram_vertex_multiplicity=(TH1*)file->Get("mapping/raw/vertex_multiplicity_"+histoname);
+	TH1* histogram_vertex_w=(TH1*)file->Get("raw/vertex_w_"+histoname);
+	TH1* histogram_vertex_chi2=(TH1*)file->Get("raw/vertex_chi2_"+histoname);
+	TH1* histogram_vertex_multiplicity=(TH1*)file->Get("raw/vertex_multiplicity_"+histoname);
 
-	TH1* histogram_resu_vtx_trk=(TH1*)file->Get("mapping/raw/res_u_vtx_trk_"+histoname);
-	TH1* histogram_resv_vtx_trk=(TH1*)file->Get("mapping/raw/res_v_vtx_trk_"+histoname);
+	TH1* histogram_resu_vtx_trk=(TH1*)file->Get("raw/res_u_vtx_trk_"+histoname);
+	TH1* histogram_resv_vtx_trk=(TH1*)file->Get("raw/res_v_vtx_trk_"+histoname);
 
 
 	double uncorrected_mean1=histogram1->GetMean();
 	double uncorrected_mean2=histogram1->GetMean();
 
-    if((file->Get("mapping/raw/theta1_uncorrected_"+histoname)!=NULL)&&(file->Get("mapping/raw/theta2_uncorrected_"+histoname)!=NULL))
+    if((file->Get("raw/theta1_uncorrected_"+histoname)!=NULL)&&(file->Get("raw/theta2_uncorrected_"+histoname)!=NULL))
 	{
 
-		TH1* histogram_uncorrected1=(TH1*)file->Get("mapping/raw/theta1_uncorrected_"+histoname);
-		TH1* histogram_uncorrected2=(TH1*)file->Get("mapping/raw/theta2_uncorrected_"+histoname);
+		TH1* histogram_uncorrected1=(TH1*)file->Get("raw/theta1_uncorrected_"+histoname);
+		TH1* histogram_uncorrected2=(TH1*)file->Get("raw/theta2_uncorrected_"+histoname);
 
 		if((histogram_uncorrected1->GetEntries()>0)&&(histogram_uncorrected2->GetEntries()>0))
 		{
@@ -482,7 +482,7 @@ double DetermineFitrange(TH1* histo,double rangevalue)
 	}
 
 	file->cd("");
-	file->cd("mapping/fit");
+	file->cd("fit");
 
 	// Make a copy of the histogram
 	TH1* fithistogram1=(TH1*)histogram1->Clone("fithisto");
@@ -627,11 +627,11 @@ double DetermineFitrange(TH1* histo,double rangevalue)
 		chi2ndof2=fit2->GetChisquare()/(fit2->GetNDF()*1.0);
 		chi2ndofsum=fitsum->GetChisquare()/(fitsum->GetNDF()*1.0);	
 
-		// define chi2 cut
+		// define chi2 cut, if the cut value is below 0 the cut is deactivated
 		double chi2_cut=maxchi2ndof_fit;
 
 		// Use the chi2 values for quality cuts
-		if((fittype==0)&&((chi2ndof1+chi2ndof2)>chi2_cut*2.0))
+		if((fittype==0)&&(chi2_cut > 0)&&((chi2ndof1+chi2ndof2)>chi2_cut*2.0))
 		{
 			// The fit didn't work: Dont trust this X/X0 and theta mean value
 			XX01=0.0;
@@ -642,7 +642,7 @@ double DetermineFitrange(TH1* histo,double rangevalue)
 			mean2=0;
 			// save the fitted histograms
 			file->cd("");
-			file->cd("mapping/badfit");
+			file->cd("badfit");
 			fithistogram1->GetListOfFunctions()->Add(fit1);
 			fithistogram1->Write("theta1_"+histoname+"_fit");
 			fithistogram2->GetListOfFunctions()->Add(fit2);
@@ -652,7 +652,7 @@ double DetermineFitrange(TH1* histo,double rangevalue)
 
 		}
 
-		else if ((fittype==1)&&(chi2ndofsum>chi2_cut))
+		else if ((fittype==1)&&(chi2_cut > 0)&&(chi2ndofsum>chi2_cut))
 		{
 			// The fit didn't work: Dont trust this X/X0 and theta mean value
 			XX0sum=0.0;
@@ -662,7 +662,7 @@ double DetermineFitrange(TH1* histo,double rangevalue)
 
 			// save the fitted histograms
 			file->cd("");
-			file->cd("mapping/badfit");
+			file->cd("badfit");
 			fithistogram1->GetListOfFunctions()->Add(fit1);
 			fithistogram1->Write("theta1_"+histoname+"_fit");
 			fithistogram2->GetListOfFunctions()->Add(fit2);
@@ -695,7 +695,7 @@ double DetermineFitrange(TH1* histo,double rangevalue)
 
 			// save the fitted histograms
 			file->cd("");
-			file->cd("mapping/fit");
+			file->cd("fit");
 			fithistogram1->GetListOfFunctions()->Add(fit1);
 			fithistogram1->Write("theta1_"+histoname+"_fit");
 			fithistogram2->GetListOfFunctions()->Add(fit2);
@@ -712,22 +712,22 @@ double DetermineFitrange(TH1* histo,double rangevalue)
 	else
 	{
 
-		XX01=0.0;
+		XX01=-1.0;
 		XX0err1=99.0;
-		mean1=0.0;
-		chi2ndof1=100.0;
+		mean1=99.0;
+		chi2ndof1=-99.0;
 		prob1=-1.0;
 
-		XX02=0.0;
+		XX02=-1.0;
 		XX0err2=99.0;
-		mean2=0.0;
-		chi2ndof2=100.0;
+		mean2=99.0;
+		chi2ndof2=-99.0;
 		prob2=-1.0;
 
-		XX0sum=0.0;
+		XX0sum=-1.0;
 		XX0errsum=99.0;
-		meansum=0.0;
-		chi2ndofsum=100.0;
+		meansum=99.0;
+		chi2ndofsum=-99.0;
 		probsum=-1.0;
 
 
@@ -736,61 +736,48 @@ double DetermineFitrange(TH1* histo,double rangevalue)
 
 	// Go to results directory
 	file->cd("");
-	file->cd("mapping/result");
+	file->cd("result");
 
-	// Get the chi2 of the fit of the merged distribution
-	TH2* chi2ndofsummap=(TH2*)file->Get("mapping/result/fitsumchi2ndof_image");
+	// Get the chi2 histos
+	TH2* chi2ndofsummap=(TH2*)file->Get("result/fitDQM/fitsumchi2ndof_image");
+	TH2* chi2ndof1map=(TH2*)file->Get("result/fitDQM/fit1chi2ndof_image");
+	TH2* chi2ndof2map=(TH2*)file->Get("result/fitDQM/fit2chi2ndof_image");
+	TH1* chi2ndofsumhisto=(TH2*)file->Get("result/fitDQM/fitsumchi2ndof_histo");
+	TH1* chi2ndof1histo=(TH2*)file->Get("result/fitDQM/fit1chi2ndof_histo");
+	TH1* chi2ndof2histo=(TH2*)file->Get("result/fitDQM/fit2chi2ndof_histo");
 
-	// Get the chi2 of the fit of the theta1 distribution
-	TH2* chi2ndof1map=(TH2*)file->Get("mapping/result/fit1chi2ndof_image");
+	// Get the mean histogram
+	TH2* meanmap1=(TH2*)file->Get("result/theta1mean_image");
+	TH2* meanmap2=(TH2*)file->Get("result/theta2mean_image");
+	TH2* correctedmeanmap1=(TH2*)file->Get("result/correctedtheta1mean_image");
+	TH2* correctedmeanmap2=(TH2*)file->Get("result/correctedtheta2mean_image");
 
-	// Get the chi2 of the fit of the theta2 distribution
-	TH2* chi2ndof2map=(TH2*)file->Get("mapping/result/fit2chi2ndof_image");
-
-	// Get the mean1 histogram
-	TH2* meanmap1=(TH2*)file->Get("mapping/result/theta1mean_image");
-
-	// Get the mean2 histogram
-	TH2* meanmap2=(TH2*)file->Get("mapping/result/theta2mean_image");
-
-	// Get the mean1 histogram
-	TH2* correctedmeanmap1=(TH2*)file->Get("mapping/result/correctedtheta1mean_image");
-
-	// Get the mean2 histogram
-	TH2* correctedmeanmap2=(TH2*)file->Get("mapping/result/correctedtheta2mean_image");
-
-	// Get the mean u residual histogram
-	TH2* uresidual_meanmap=(TH2*)file->Get("mapping/result/uresidualmean_image");
-
-	// Get the mean v residual histogram
-	TH2* vresidual_meanmap=(TH2*)file->Get("mapping/result/vresidualmean_image");
+	// Get the mean residual histograms
+	TH2* uresidual_meanmap=(TH2*)file->Get("result/uresidualmean_image");
+	TH2* vresidual_meanmap=(TH2*)file->Get("result/vresidualmean_image");
 
     // Get the momentum 2D histogram
-	TH2* mommap=(TH2*)file->Get("mapping/result/BE_image");
+	TH2* mommap=(TH2*)file->Get("result/BE_image");
 
-    // Get the vertex w mean 2D histogram
-	TH2* vertex_w_mean_map=(TH2*)file->Get("mapping/result/vertex_w_image");
+    // Get the vertex coordiante mean histograms
+	TH2* vertex_w_mean_map=(TH2*)file->Get("result/vertex/vertex_w_image");
+	TH2* vertex_w_rms_map=(TH2*)file->Get("result/vertex/vertex_w_rms_image");
+	TH2* vertex_chi2_map=(TH2*)file->Get("result/vertex/vertex_chi2_image");
 
-    // Get the vertex w rms 2D histogram
-	TH2* vertex_w_rms_map=(TH2*)file->Get("mapping/result/vertex_w_rms_image");
-
-    // Get the vertex chi2 2D histogram
-	TH2* vertex_chi2_map=(TH2*)file->Get("mapping/result/vertex_chi2_image");
-
-    // Get the vertex multiplicity 2D histogram
-	TH2* vertex_multiplicity_map=(TH2*)file->Get("mapping/result/vertex_multiplicity_image");
+    // Get the vertex multiplicity histogram
+	TH2* vertex_multiplicity_map=(TH2*)file->Get("result/vertex/vertex_multiplicity_image");
 
 	// Get the mean u residual (vertex  vs track) histogram
-	TH2* u_res_mean_vtx_trk_map=(TH2*)file->Get("mapping/result/u_res_mean_vtx_trk_image");
+	TH2* u_res_mean_vtx_trk_map=(TH2*)file->Get("result/vertex/u_res_mean_vtx_trk_image");
 
 	// Get the mean u residual (vertex  vs track) histogram
-	TH2* v_res_mean_vtx_trk_map=(TH2*)file->Get("mapping/result/v_res_mean_vtx_trk_image");
+	TH2* v_res_mean_vtx_trk_map=(TH2*)file->Get("result/vertex/v_res_mean_vtx_trk_image");
 
 	// Get the u residual rms (vertex  vs track) histogram
-	TH2* u_res_rms_vtx_trk_map=(TH2*)file->Get("mapping/result/u_res_rms_vtx_trk_image");
+	TH2* u_res_rms_vtx_trk_map=(TH2*)file->Get("result/vertex/u_res_rms_vtx_trk_image");
 
 	// Get the u residual rms (vertex  vs track) histogram
-	TH2* v_res_rms_vtx_trk_map=(TH2*)file->Get("mapping/result/v_res_rms_vtx_trk_image");
+	TH2* v_res_rms_vtx_trk_map=(TH2*)file->Get("result/vertex/v_res_rms_vtx_trk_image");
 
 	// Fill both maps containing the theta means
 	meanmap1->SetBinContent(col+1,row+1,uncorrected_mean1);
@@ -805,8 +792,11 @@ double DetermineFitrange(TH1* histo,double rangevalue)
 	vresidual_meanmap->SetBinContent(col+1,row+1,vresidual_mean*1E3);
 
     chi2ndof1map->SetBinContent(col+1,row+1,chi2ndof1);
+    chi2ndof1histo->Fill(chi2ndof1);
 	chi2ndof2map->SetBinContent(col+1,row+1,chi2ndof2);
+    chi2ndof2histo->Fill(chi2ndof2);
 	chi2ndofsummap->SetBinContent(col+1,row+1,chi2ndofsum);
+    chi2ndofsumhisto->Fill(chi2ndofsum);
 
     // Fill the momentum image
 	mommap->SetBinContent(col+1,row+1,parameters[0]);
@@ -849,17 +839,17 @@ double DetermineFitrange(TH1* histo,double rangevalue)
 	}
 
 	// Get the X0 histogram
-	TH2* X0map=(TH2*)file->Get("mapping/result/x0_image");
+	TH2* X0map=(TH2*)file->Get("result/x0_image");
 	cout<<"X0 in area "<<col<<","<<row<<" is: "<<X0<<"%"<<endl;
 	X0map->SetBinContent(col+1,row+1,X0);
 
 	// Get the X0 fit error histogram
-	TH2* X0errmap=(TH2*)file->Get("mapping/result/x0err_image");
+	TH2* X0errmap=(TH2*)file->Get("result/x0err_image");
 	cout<<"X0 error in area "<<col<<","<<row<<" is: "<<X0err<<"%"<<endl;
 	X0errmap->SetBinContent(col+1,row+1,X0err);
 
 	// Get the relative X0 fit error histogram
-	TH2* X0relerrmap=(TH2*)file->Get("mapping/result/x0relerr_image");
+	TH2* X0relerrmap=(TH2*)file->Get("result/x0relerr_image");
 
 	double X0relerr;
 
@@ -876,34 +866,34 @@ double DetermineFitrange(TH1* histo,double rangevalue)
 	X0relerrmap->SetBinContent(col+1,row+1,X0relerr);
 
 	// Get the # tracks map
-	TH2* nummap=(TH2*)file->Get("mapping/result/beamspot");
+	TH2* nummap=(TH2*)file->Get("result/beamspot");
 
 	// Fill it with mean prob of both fits
 	nummap->SetBinContent(col+1,row+1,NumberOfTracks);
 
 	// Get the prob map (2D) histogram (theta1)
-	TH2* probmap1=(TH2*)file->Get("mapping/result/fit1prob_image");
+	TH2* probmap1=(TH2*)file->Get("result/fitDQM/fit1prob_image");
 
 	// Get the prob histogram (theta1)
-	TH1* probhisto1=(TH1*)file->Get("mapping/result/fit1prob_histo");
+	TH1* probhisto1=(TH1*)file->Get("result/fitDQM/fit1prob_histo");
 
 	probmap1->SetBinContent(col+1,row+1,prob1);
 	probhisto1->Fill(prob1);
 
 	// Get the prob map (2D) histogram (theta2)
-	TH2* probmap2=(TH2*)file->Get("mapping/result/fit2prob_image");
+	TH2* probmap2=(TH2*)file->Get("result/fitDQM/fit2prob_image");
 
 	// Get the prob histogram (theta2)
-	TH1* probhisto2=(TH1*)file->Get("mapping/result/fit2prob_histo");
+	TH1* probhisto2=(TH1*)file->Get("result/fitDQM/fit2prob_histo");
 
 	probmap2->SetBinContent(col+1,row+1,prob2);
 	probhisto2->Fill(prob2);
 
 	// Get the prob map (2D) histogram (sum)
-	TH2* probmapsum=(TH2*)file->Get("mapping/result/fitsumprob_image");
+	TH2* probmapsum=(TH2*)file->Get("result/fitDQM/fitsumprob_image");
 
 	// Get the prob histogram (sum)
-	TH1* probhistosum=(TH1*)file->Get("mapping/result/fitsumprob_histo");
+	TH1* probhistosum=(TH1*)file->Get("result/fitDQM/fitsumprob_histo");
 
 	probmapsum->SetBinContent(col+1,row+1,probsum);
 	probhistosum->Fill(probsum);
@@ -912,9 +902,16 @@ double DetermineFitrange(TH1* histo,double rangevalue)
 	if(col==numcol-1&&row==numrow-1)
 	{
 
+	    file->cd("");
+	    file->cd("result/fitDQM");
+
 		chi2ndof1map->Write();
 		chi2ndof2map->Write();
 		chi2ndofsummap->Write();
+
+        chi2ndof1histo->Write();
+        chi2ndof2histo->Write();
+        chi2ndofsumhisto->Write();
 
 		probmap1->Write();
 		probmap2->Write();
@@ -923,6 +920,9 @@ double DetermineFitrange(TH1* histo,double rangevalue)
 		probhisto1->Write();
 		probhisto2->Write();
 		probhistosum->Write();
+
+	    file->cd("");
+	    file->cd("result");
 
 		X0map->Write();
 		X0errmap->Write();
@@ -938,6 +938,9 @@ double DetermineFitrange(TH1* histo,double rangevalue)
 
 		nummap->Write();
 		mommap->Write();
+
+	    file->cd("");
+	    file->cd("result/vertex");
 
 		vertex_w_mean_map->Write();
 		vertex_w_rms_map->Write();
@@ -1047,11 +1050,12 @@ int x0imaging()
 	TFile *imagefile = new TFile(imagename, "RECREATE");
 
 	// Create directories containing map histograms, fits and results
-	imagefile->mkdir("mapping");
-	imagefile->mkdir("mapping/raw");
-	imagefile->mkdir("mapping/fit");
-	imagefile->mkdir("mapping/badfit");
-	imagefile->mkdir("mapping/result");
+	imagefile->mkdir("raw");
+	imagefile->mkdir("fit");
+	imagefile->mkdir("badfit");
+	imagefile->mkdir("result");
+	imagefile->mkdir("result/vertex");
+	imagefile->mkdir("result/fitDQM");
 
 	// Number of Rows and Columns of the sensor map
 	int numcol = mEnv.GetValue("maxupixels", 100);
@@ -1174,7 +1178,7 @@ int x0imaging()
 	double mass=0.000511;
 
 	imagefile->cd("");
-	imagefile->cd("mapping/result");
+	imagefile->cd("result");
 
 	// Scatter theta1 vs residual u
 	TH2F * hscatt_theta1_vs_resu = new TH2F("hscatt_theta1_vs_resu","hscatt_theta1_vs_resu",100,-0.1,0.1,150,means.at(0)-plotranges.at(0),means.at(0)+plotranges.at(0));
@@ -1235,7 +1239,7 @@ int x0imaging()
 	savehistos(filenames, imagefile, numberofbins, histo_range, numcol, numrow, umin, vmin, umax, vmax, vertex_multiplicity_min, vertex_multiplicity_max);
 
 	imagefile->cd("");
-	imagefile->cd("mapping/result");
+	imagefile->cd("result");
 
 	// X0 map
 	TH2F * x0_image = new TH2F("x0_image","x0_image",numcol,umin,umax,numrow,vmin,vmax);
@@ -1268,6 +1272,9 @@ int x0imaging()
     x0relerr_image->GetZaxis()->SetTitleSize(0.02);
     x0relerr_image->GetZaxis()->SetLabelSize(0.02);
 
+	imagefile->cd("");
+	imagefile->cd("result/fitDQM");
+
 	// Fit Chi2 image of the merged angle distribution
 	TH2F * fitsumchi2ndof_image = new TH2F("fitsumchi2ndof_image","fitsumchi2ndof_image",numcol,umin,umax,numrow,vmin,vmax);
     fitsumchi2ndof_image->SetStats(kFALSE);
@@ -1277,28 +1284,42 @@ int x0imaging()
     fitsumchi2ndof_image->GetZaxis()->SetTitleSize(0.02);
     fitsumchi2ndof_image->GetZaxis()->SetLabelSize(0.02);
 
-	// Fit Chi2 image of the merged angle distribution
+    // Fit chi2 distribution of merged angle dist
+	TH1F * fitsumchi2ndof_histo = new TH1F("fitsumchi2ndof_histo","fitsumchi2ndof_histo",100,0.0,20.0);
+    fitsumchi2ndof_histo->GetXaxis()->SetTitle("#chi^{2}_{ndof}");
+    fitsumchi2ndof_histo->GetYaxis()->SetTitle("number of fits");
+
+	// Fit Chi2 image of the first angle distribution
 	TH2F * fit1chi2ndof_image = new TH2F("fit1chi2ndof_image","fit1chi2ndof_image",numcol,umin,umax,numrow,vmin,vmax);
     fit1chi2ndof_image->SetStats(kFALSE);
     fit1chi2ndof_image->GetXaxis()->SetTitle("u [mm]");
     fit1chi2ndof_image->GetYaxis()->SetTitle("v [mm]");
-    fit1chi2ndof_image->GetZaxis()->SetTitle("fit1 chi2");
+    fit1chi2ndof_image->GetZaxis()->SetTitle("#{chi^2}_{ndof}");
     fit1chi2ndof_image->GetZaxis()->SetTitleSize(0.02);
     fit1chi2ndof_image->GetZaxis()->SetLabelSize(0.02);
 
-	// Fit Chi2 image of the merged angle distribution
+    // Fit chi2 distribution of first angle dist
+	TH1F * fit1chi2ndof_histo = new TH1F("fit1chi2ndof_histo","fit1chi2ndof_histo",100,0.0,20.0);
+    fit1chi2ndof_histo->GetXaxis()->SetTitle("#chi^{2}_{ndof}");
+    fit1chi2ndof_histo->GetYaxis()->SetTitle("number of fits");
+
+	// Fit Chi2 image of the second angle distribution
 	TH2F * fit2chi2ndof_image = new TH2F("fit2chi2ndof_image","fit2chi2ndof_image",numcol,umin,umax,numrow,vmin,vmax);
     fit2chi2ndof_image->SetStats(kFALSE);
     fit2chi2ndof_image->GetXaxis()->SetTitle("u [mm]");
     fit2chi2ndof_image->GetYaxis()->SetTitle("v [mm]");
-    fit2chi2ndof_image->GetZaxis()->SetTitle("fit2 chi2");
+    fit2chi2ndof_image->GetZaxis()->SetTitle("#{chi^2}_{ndof}");
     fit2chi2ndof_image->GetZaxis()->SetTitleSize(0.02);
     fit2chi2ndof_image->GetZaxis()->SetLabelSize(0.02);
 
+    // Fit chi2 distribution of second angle dist
+	TH1F * fit2chi2ndof_histo = new TH1F("fit2chi2ndof_histo","fit2chi2ndof_histo",100,0.0,20.0);
+    fit2chi2ndof_histo->GetXaxis()->SetTitle("#chi^{2}_{ndof}");
+    fit2chi2ndof_histo->GetYaxis()->SetTitle("number of fits");
+
     // Fit Probability distribution for first angle dist
 	TH1F * fit1prob_histo = new TH1F("fit1prob_histo","fit1prob_histo",50,0.0,1.0);
-	fit1prob_histo->SetStats(kFALSE);
-    fit1prob_histo->GetXaxis()->SetTitle("fit1 p value");
+    fit1prob_histo->GetXaxis()->SetTitle("p value");
     fit1prob_histo->GetYaxis()->SetTitle("number of fits");
 
 	// Fit probability map for first angle dist
@@ -1307,15 +1328,13 @@ int x0imaging()
     fit1prob_image->GetXaxis()->SetTitle("u [mm]");
     fit1prob_image->GetYaxis()->SetTitle("v [mm]");
     fit1prob_image->SetMinimum(-0.1);
-    fit1prob_image->GetZaxis()->SetTitle("fit1 p value");
+    fit1prob_image->GetZaxis()->SetTitle("p value");
     fit1prob_image->GetZaxis()->SetTitleSize(0.02);
     fit1prob_image->GetZaxis()->SetLabelSize(0.02);
 
-
 	// Fit Probability distribution for second angle dist
 	TH1F * fit2prob_histo = new TH1F("fit2prob_histo","fit2prob_histo",50,0.0,1.0);
-	fit2prob_histo->SetStats(kFALSE);
-    fit2prob_histo->GetXaxis()->SetTitle("fit2 p value");
+    fit2prob_histo->GetXaxis()->SetTitle("p value");
     fit2prob_histo->GetYaxis()->SetTitle("number of fits");
 
 	// Fit probability map for second angle dist
@@ -1324,14 +1343,14 @@ int x0imaging()
     fit2prob_image->GetXaxis()->SetTitle("u [mm]");
     fit2prob_image->GetYaxis()->SetTitle("v [mm]");
     fit2prob_image->SetMinimum(-0.1);
-    fit2prob_image->GetZaxis()->SetTitle("fit2 p value");
+    fit2prob_image->GetZaxis()->SetTitle("p value");
     fit2prob_image->GetZaxis()->SetTitleSize(0.02);
     fit2prob_image->GetZaxis()->SetLabelSize(0.02);
 
 	// Fit Probability distribution for merged angle dist
 	TH1F * fitsumprob_histo = new TH1F("fitsumprob_histo","fitsumprob_histo",50,0.0,1.0);
 	fitsumprob_histo->SetStats(kFALSE);
-    fitsumprob_histo->GetXaxis()->SetTitle("fitsum p value");
+    fitsumprob_histo->GetXaxis()->SetTitle("p value");
     fitsumprob_histo->GetYaxis()->SetTitle("number of fits");
 
 	// Fit probability map for merged angle dist
@@ -1340,17 +1359,19 @@ int x0imaging()
     fitsumprob_image->GetXaxis()->SetTitle("u [mm]");
     fitsumprob_image->GetYaxis()->SetTitle("v [mm]");
     fitsumprob_image->SetMinimum(-0.1);
-    fitsumprob_image->GetZaxis()->SetTitle("fitsum p value");
+    fitsumprob_image->GetZaxis()->SetTitle("fitsump value");
     fitsumprob_image->GetZaxis()->SetTitleSize(0.02);
     fitsumprob_image->GetZaxis()->SetLabelSize(0.02);
 
+	imagefile->cd("");
+	imagefile->cd("result");
 
 	// Fit mean value of first scattering angle distribution
 	TH2F * theta1mean_image = new TH2F("theta1mean_image","theta1mean_image",numcol,umin,umax,numrow,vmin,vmax);
 	theta1mean_image->SetStats(kFALSE);
     theta1mean_image->GetXaxis()->SetTitle("u [mm]");
     theta1mean_image->GetYaxis()->SetTitle("v [mm]");
-    theta1mean_image->GetZaxis()->SetTitle("theta1 mean value[rad]");
+    theta1mean_image->GetZaxis()->SetTitle("#theta_{u} mean value[rad]");
     theta1mean_image->GetZaxis()->SetTitleSize(0.02);
     theta1mean_image->GetZaxis()->SetLabelSize(0.02);
 
@@ -1360,7 +1381,7 @@ int x0imaging()
 	theta2mean_image->SetStats(kFALSE);
     theta2mean_image->GetXaxis()->SetTitle("u [mm]");
     theta2mean_image->GetYaxis()->SetTitle("v [mm]");
-    theta2mean_image->GetZaxis()->SetTitle("theta2 mean value[rad]");
+    theta2mean_image->GetZaxis()->SetTitle("#theta_{v} mean value[rad]");
     theta2mean_image->GetZaxis()->SetTitleSize(0.02);
     theta2mean_image->GetZaxis()->SetLabelSize(0.02);
 
@@ -1369,7 +1390,7 @@ int x0imaging()
 	correctedtheta1mean_image->SetStats(kFALSE);
     correctedtheta1mean_image->GetXaxis()->SetTitle("u [mm]");
     correctedtheta1mean_image->GetYaxis()->SetTitle("v [mm]");
-    correctedtheta1mean_image->GetZaxis()->SetTitle("theta1 mean value[rad]");
+    correctedtheta1mean_image->GetZaxis()->SetTitle("#theta_{u} mean value[rad]");
     correctedtheta1mean_image->GetZaxis()->SetTitleSize(0.02);
     correctedtheta1mean_image->GetZaxis()->SetLabelSize(0.02);
 
@@ -1378,7 +1399,7 @@ int x0imaging()
 	correctedtheta2mean_image->SetStats(kFALSE);
     correctedtheta2mean_image->GetXaxis()->SetTitle("u [mm]");
     correctedtheta2mean_image->GetYaxis()->SetTitle("v [mm]");
-    correctedtheta2mean_image->GetZaxis()->SetTitle("theta2 mean value[rad]");
+    correctedtheta2mean_image->GetZaxis()->SetTitle("#theta_{v} mean value[rad]");
     correctedtheta2mean_image->GetZaxis()->SetTitleSize(0.02);
     correctedtheta2mean_image->GetZaxis()->SetLabelSize(0.02);
 
@@ -1420,6 +1441,9 @@ int x0imaging()
     BE_image->GetZaxis()->SetTitleOffset(1.4);
     BE_image->GetZaxis()->SetTitleSize(0.02);
     BE_image->GetZaxis()->SetLabelSize(0.02);
+
+	imagefile->cd("");
+	imagefile->cd("result/vertex");
 
 	// Mean Vertex w position image
 	TH2F * vertex_w_image = new TH2F("vertex_w_image","vertex_w_image",numcol,umin,umax,numrow,vmin,vmax);

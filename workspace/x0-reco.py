@@ -172,8 +172,13 @@ def calibrate(params):
   # Create list of calibration steps 
   if Use_LongTelescopeCali:
     calpath = create_x0analysis_calibration_longtelescope_path(CalObj, rawfile, gearfile_longtelescope, nevents_cali, Use_clusterDB, beamenergy, mcdata)
+    gearfile_object = CalObj.get_filename(gearfile_longtelescope)
   else:
     calpath = create_x0analysis_calibration_path(CalObj, rawfile, gearfile, nevents_cali, Use_clusterDB, beamenergy, mcdata)
+    gearfile_object = CalObj.get_filename(gearfile)
+
+  set_parameter(gearfile=gearfile_object, sensorID=11, parametername='thickness', value=0.0001)
+  set_parameter(gearfile=gearfile_object, sensorID=11, parametername='radLength', value=304000.0)  
 
   # Run the calibration steps 
   CalObj.calibrate(paths=calpath,ifile=rawfile,caltag=caltag)
@@ -199,7 +204,7 @@ def reconstruct(params):
     recopath = create_anglereco_path(RecObj, rawfile, gearfile_longtelescope, nevents_reco, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)
 
   else:
-    recopath = create_anglereco_path(RecObj, rawfile, gearfile, nevents_reco, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)   
+    recopath = create_anglereco_path(RecObj, rawfile, gearfile, nevents_reco, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata) 
 
   # Use caltag of the last target alignment iteration
   iteration_string='-target-alignment-it'+str(targetalignment_iterations-1)
