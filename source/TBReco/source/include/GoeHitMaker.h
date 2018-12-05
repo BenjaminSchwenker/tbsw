@@ -72,10 +72,7 @@ namespace depfet {
     void printProcessorParams() const;
     
    protected:
-    
-    //!Method searching for clusterID id on sensor sensorID in clusterDB. Returns success.  
-    bool searchDB(int sensorID, std::string id, double& u, double& v, double& sig2_u, double& sig2_v, double& cov_uv);
-      
+     
     //! Input cluster collection name
     std::string  _clusterCollectionName; 
      
@@ -84,9 +81,24 @@ namespace depfet {
      
     //! Name of clusterDB file 
     std::string  _clusterDBFileName;
+
+    //! Sigma U correction factors
+    //! One value for sizeU = 1,2,3,... 
+    std::vector<float> _sigmaUCorrections;
     
+    //! Sigma V correction factors 
+    //! One value for sizeV = 1,2,3,... 
+    std::vector<float> _sigmaVCorrections; 
+    
+    //! Use Center of Gravity in case position is 
+    //! not available from clusterDB. 
+    bool _useCoGFallback; 
+
    private:
-    
+   
+    //!Method searching for clusterID id on sensor sensorID in clusterDB. Returns success.  
+    bool searchDB(int sensorID, std::string id, double& u, double& v, double& sig2_u, double& sig2_v, double& cov_uv);
+     
     // Handle to detector data 
     TBDetector _detector;  
 
@@ -97,15 +109,22 @@ namespace depfet {
     TH1F * m_DB_Sigma2_U;
     TH1F * m_DB_Sigma2_V; 
     TH1F * m_DB_Cov_UV;
+    TH1F * m_DB_Types;  
     
-    //! Position of steps for software ADC 
-    std::vector<int> _swADCSteps;  
-     
+    // Map for eta bin edges stored by type name 
+    std::map<std::string, std::vector<double> > m_etaBinEdgesMap;
+    
     //! Periodicity for vCells used for clusterDB
-    int _vCellPeriod;
+    int _vCellPeriod {1};
     
     //! Periodicity for uCells used for clusterDB
-    int _uCellPeriod; 
+    int _uCellPeriod {1}; 
+    
+    //! Incident angle into sensor DuDw
+    double _thetaU {0}; 
+    
+    //! Incident angle into sensor DvDw
+    double _thetaV {0};
     
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number

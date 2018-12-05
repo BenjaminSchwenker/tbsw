@@ -120,6 +120,9 @@ def add_hitmakersDB(path):
   pxdgoehitmaker.param("ClusterCollection","zscluster_pxd")
   pxdgoehitmaker.param("HitCollectionName","hit_pxd")
   pxdgoehitmaker.param("ClusterDBFileName","localDB/clusterDB-PXD.root")
+  pxdgoehitmaker.param("UseCenterOfGravityFallback","true")
+  pxdgoehitmaker.param("SigmaUCorrections", "0.8 0.3 0.3")  
+  pxdgoehitmaker.param("SigmaVCorrections", "0.8 0.3 0.3")
   path.add_processor(pxdgoehitmaker)   
   
   return path
@@ -140,6 +143,7 @@ def add_clustercalibrators(path):
   pxdclustdb.param("AlignmentDBFileName","localDB/alignmentDB.root")
   pxdclustdb.param("ClusterDBFileName","localDB/clusterDB-PXD.root")  
   pxdclustdb.param("MinClusters","500")
+  pxdclustdb.param("MaxEtaBins","7")
   pxdclustdb.param("IgnoreIDs","0 1 2 3 4 5 7 21")
   path.add_processor(pxdclustdb)  
     

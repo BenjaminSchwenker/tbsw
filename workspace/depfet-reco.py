@@ -135,12 +135,18 @@ def add_hitmakersDB(path):
   pxdgoehitmaker.param("ClusterCollection","zscluster_pxd")
   pxdgoehitmaker.param("HitCollectionName","hit_pxd")
   pxdgoehitmaker.param("ClusterDBFileName","localDB/clusterDB-PXD.root")
+  pxdgoehitmaker.param("UseCenterOfGravityFallback","true")
+  pxdgoehitmaker.param("SigmaUCorrections", "0.8 0.3 0.3")  
+  pxdgoehitmaker.param("SigmaVCorrections", "0.8 0.3 0.3")
   path.add_processor(pxdgoehitmaker)   
   
   h5goehitmaker = Processor(name="H5GoeHitMaker",proctype="GoeHitMaker")   
   h5goehitmaker.param("ClusterCollection","zscluster_h5")
   h5goehitmaker.param("HitCollectionName","hit_h5")
   h5goehitmaker.param("ClusterDBFileName","localDB/clusterDB-H5.root")
+  h5goehitmaker.param("UseCenterOfGravityFallback","true")
+  h5goehitmaker.param("SigmaUCorrections", "0.8 0.3 0.3")  
+  h5goehitmaker.param("SigmaVCorrections", "0.8 0.3 0.3")
   path.add_processor(h5goehitmaker)   
 
   return path
@@ -161,6 +167,7 @@ def add_clustercalibrators(path):
   pxdclustdb.param("AlignmentDBFileName","localDB/alignmentDB.root")
   pxdclustdb.param("ClusterDBFileName","localDB/clusterDB-PXD.root")  
   pxdclustdb.param("MinClusters","200")
+  pxdclustdb.param("MaxEtaBins","7")
   pxdclustdb.param("IgnoreIDs","0 1 2 3 4 5 7 21")
   path.add_processor(pxdclustdb)  
     
@@ -169,6 +176,7 @@ def add_clustercalibrators(path):
   h5clustdb.param("ClusterDBFileName","localDB/clusterDB-H5.root")  
   h5clustdb.param("MinClusters","200")
   h5clustdb.param("IgnoreIDs","0 1 2 3 4 5 6 21")
+  h5clustdb.param("MaxEtaBins","7")
   path.add_processor(h5clustdb)  
 
   fei4clustdb = Processor(name="FEI4ClusterCalibrator",proctype="GoeClusterCalibrator")   

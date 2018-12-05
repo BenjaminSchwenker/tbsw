@@ -87,8 +87,8 @@ namespace depfet {
     //! Minimum number of clusters occurances 
     int _minClusters; 
       
-    //! Position of steps for software ADC 
-    std::vector<int> _swADCSteps; 
+    //! Max number of eta bins  
+    int _maxEtaBins; 
 
     //! Max residual for hit-track matching in mm
     double _maxResidualU; 

@@ -148,51 +148,25 @@ void CogHitMaker::processEvent(LCEvent * evt)
         
         PixelCluster myCluster(cluster->getTrackerData());  
         
-        // Calculate hit coord in local frame in mm
-        float u = 0; 
-        float v = 0;  
-        float total = 0; 
+        // Calculate center of gravity hit coord in local frame in mm
+        double u{0.0}, v{0.0}, sig2_u{0.0}, sig2_v{0.0}, cov_uv{0.0};
+        myCluster.getCenterOfGravity(Det, u, v, sig2_u, sig2_v, cov_uv); 
         
-        // Loop over digits and compute hit coordinates
-        TrackerData * clusterDigits =  cluster->getTrackerData();
-        FloatVec sparsePixels = clusterDigits->getChargeValues();
-        int nPixels = sparsePixels.size()/3; 
-        
-        for ( int index=0; index<nPixels;  index++) { 
-          
-          int ucell = static_cast<int> (sparsePixels[index * 3]);
-          int vcell = static_cast<int> (sparsePixels[index * 3 + 1]);
-          float chargeValue =  sparsePixels[index * 3 + 2];
-          
-          total += chargeValue;
-          u += Det.GetPixelCenterCoordU(vcell, ucell)*chargeValue;
-          v += Det.GetPixelCenterCoordV(vcell, ucell)*chargeValue;    
-        }
-        
-        if ( total > 0)  {
-          u /= total;
-          v /= total; 
-        } 
-        
-        // Compute the diagonal elements of the hit covariance matrix in mm2
-        double cov_u = pow(myCluster.getUSize()*Det.GetPitchU(myCluster.getVStart(), myCluster.getUStart())/TMath::Sqrt(12),2);
-        double cov_v = pow(myCluster.getVSize()*Det.GetPitchV(myCluster.getVStart(), myCluster.getUStart())/TMath::Sqrt(12),2); 
-        double cov_uv{0.0};   
-        
+        // Override sigmas from user input
         if ( myCluster.getUSize()-1 < _sigmaUCorrections.size() ) {
-          cov_u *= pow(_sigmaUCorrections[myCluster.getUSize()-1],2);  
+          sig2_u *= pow(_sigmaUCorrections[myCluster.getUSize()-1],2);  
         }
         
         if ( myCluster.getVSize()-1 < _sigmaVCorrections.size() ) {
-          cov_v *= pow(_sigmaVCorrections[myCluster.getVSize()-1],2); 
+          sig2_v *= pow(_sigmaVCorrections[myCluster.getVSize()-1],2); 
         }        
         
         // != 0 means the cluster is marked bad 
-        unsigned short clsType = 0; 
+        int clsType = 0; 
                        
         streamlog_out(MESSAGE2) << "Stored cluster on sensorID " << sensorID << " at u=" << u << " v=" << v << endl; 
         
-        TBHit hit(sensorID, u, v, cov_u, cov_v, cov_uv, clsType);
+        TBHit hit(sensorID, u, v, sig2_u, sig2_v, cov_uv, clsType);
         
         // Make LCIO TrackerHit
         TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
