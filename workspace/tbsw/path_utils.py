@@ -139,21 +139,21 @@ def append_tracklett_aligner(Env, paths, gearfile, nevents, beamenergy, hitmaker
   if trackletttype=="triplet":
     xerrors="0 10 0 0 0 0 0"
     yerrors="0 10 0 0 0 0 0"
-    zerrors="0 10 0 0 0 0 0"
+    zerrors="0 0 0 0 0 0 0"
     gammaerrors="0 0.01 0 0 0 0 0"
     minhits=3
     excludeplanes="3 4 5 6"
   elif trackletttype=="quadruplet":
     xerrors="0 10 10 0 0 0 0"
     yerrors="0 10 10 0 0 0 0"
-    zerrors="0 10 10 0 0 0 0"
+    zerrors="0 0 0 0 0 0 0"
     gammaerrors="0 0.01 0.01 0 0 0 0"
     minhits=4
     excludeplanes="3 5 6"
   elif trackletttype=="quintet":
     xerrors="0 10 10 0 10 0 0"
     yerrors="0 10 10 0 10 0 0"
-    zerrors="0 10 10 0 10 0 0"
+    zerrors="0 0 0 0 0 0 0"
     gammaerrors="0 0.01 0.01 0 0.01 0 0"
     minhits=5
     excludeplanes="3 6"
