@@ -457,7 +457,7 @@ double DetermineFitrange(TH1* histo,double rangevalue)
 
 
 	double uncorrected_mean1=histogram1->GetMean();
-	double uncorrected_mean2=histogram1->GetMean();
+	double uncorrected_mean2=histogram2->GetMean();
 
     if((file->Get("raw/theta1_uncorrected_"+histoname)!=NULL)&&(file->Get("raw/theta2_uncorrected_"+histoname)!=NULL))
 	{
