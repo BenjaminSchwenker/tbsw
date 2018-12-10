@@ -139,21 +139,21 @@ def append_tracklett_aligner(Env, paths, gearfile, nevents, beamenergy, hitmaker
   if trackletttype=="triplet":
     xerrors="0 10 0 0 0 0 0"
     yerrors="0 10 0 0 0 0 0"
-    zerrors="0 0 0 0 0 0 0"
+    zerrors="0 10 0 0 0 0 0"
     gammaerrors="0 0.01 0 0 0 0 0"
     minhits=3
     excludeplanes="3 4 5 6"
   elif trackletttype=="quadruplet":
     xerrors="0 10 10 0 0 0 0"
     yerrors="0 10 10 0 0 0 0"
-    zerrors="0 0 0 0 0 0 0"
+    zerrors="0 10 10 0 0 0 0"
     gammaerrors="0 0.01 0.01 0 0 0 0"
     minhits=4
     excludeplanes="3 5 6"
   elif trackletttype=="quintet":
     xerrors="0 10 10 0 10 0 0"
     yerrors="0 10 10 0 10 0 0"
-    zerrors="0 0 0 0 0 0 0"
+    zerrors="0 10 10 0 10 0 0"
     gammaerrors="0 0.01 0.01 0 0.01 0 0"
     minhits=5
     excludeplanes="3 6"
@@ -482,16 +482,17 @@ def create_x0sim_path(Env, name, rawfile, gearfile, nevents, beamenergy):
   x0sim.add_processor(infosetter)
    
   gun = tbsw.Processor(name="ParticleGun",proctype="ParticleGunGenerator")
-  gun.param("BeamIntensity","60000")
+  gun.param("BeamIntensity","20000")
   gun.param("BeamMomentum", str(beamenergy))
   gun.param("BeamMomentumSigma", 0.001)
   gun.param("BeamTimeWindow", 0.0001)
   gun.param("BeamVertexX","0")
   gun.param("BeamVertexY","0")
   gun.param("BeamVertexZ","-10")  
-  gun.param("BeamVertexXSigma","20")
-  gun.param("BeamVertexYSigma","10")  
+  gun.param("BeamVertexXSigma","10")
+  gun.param("BeamVertexYSigma","5")  
   gun.param("BeamSlopeXSigma","0.0035") 
+  gun.param("BeamSlopeYSigma","0.0035") 
   gun.param("CorrelationVertexXvsMomentum","0.005")  
   gun.param("CorrelationVertexXvsSlopeX","0.1") 
   gun.param("CorrelationVertexYvsMomentum","0.005") 
