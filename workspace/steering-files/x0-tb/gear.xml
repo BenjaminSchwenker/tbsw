@@ -244,10 +244,10 @@
 						positionX="0.00"
 						positionY="0.00"
 						positionZ="130.0"
-						thickness="0.50"
-						radLength="89.0"
-                        atomicNumber="13"
-                        atomicMass="27"
+						thickness="0.0001"
+						radLength="304000.0"
+                        atomicNumber="8"
+                        atomicMass="16"
                         alpha="0"
                         beta="0"
                         gamma="0"
@@ -269,10 +269,10 @@
                 	<ladder 
 						sizeU="8"
 						sizeV="8"
-						thickness="1.0"
-						radLength="89.0"
-                        atomicNumber="13"
-                        atomicMass="27"
+						thickness="0.0001"
+						radLength="304000.0"
+                        atomicNumber="8"
+                        atomicMass="16"
 					/>
 				</layer> 
 			</layers>

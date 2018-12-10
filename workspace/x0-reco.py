@@ -12,22 +12,21 @@ correlation algorithm and iteratively add hits from the second telescope arm to 
 Two data sets are simulated. A first 'air' run is done with no additional scatterer between the 
 telescope arms. The 'air' run is used to calibrate the telescope. In a second 'aluminium' run, a 
 aluminium plate with a well known thickness profile is inserted in between the telescope arms. 
-This second run is used to compute a X0 image from the reconstructed scattering angles. The known 
-comparison between the reconstructed X0 image and the a priori known image is used to calibrate
-the beam energy and the angular resolution of the telescope. This second step completes the 
-calibration of the telescope for X0 imaging. 
+This second run is used to compute a X0 image from the reconstructed scattering angles. The known
+X/X0 of the Al plate is used to calibrate the beam energy and the angular resolution of the telescope. 
+This second step completes the calibration of the telescope for X0 imaging. 
 
 Author: Ulf Stolzenberg <ulf.stolzenberg@phys.uni-goettingen.de>  
 """
 
-from tbsw import *
+import tbsw 
+import os
 import multiprocessing
 
-import tbsw.x0imaging.X0Calibration
 
 # Path to steering files 
-# Steeringfiles are xml files and define details of the simulation like how many events are produced
-# or how M26 sensors are digitized. XML parameters can be adjusted using any test editor
+# Folder contains a gear file detailing the detector geometry and a config file
+# for x0 calibration.
 
 # Steerfiles for the telescope calibration
 steerfiles_cali = 'steering-files/x0-tb-june17/'
@@ -49,6 +48,7 @@ caltag='tb2017_PB'
 x0caltag='air-alu-2GeV'
 
 # Name of the gearfile, which describes the telescope setup 
+# Must be placed in the steerfiles folder
 gearfile = 'gear.xml'
 gearfile_longtelescope = 'gear_long_telescope.xml'
 
@@ -59,7 +59,7 @@ alignmentdb_filename='alignmentDB.root'
 Use_clusterDB=True
 
 # Use Single Hit seeding to speed up track finding?
-Use_SingleHitSeeding=True
+Use_SingleHitSeeding=False
 
 # Use Single Hit seeding to speed up track finding?
 Use_LongTelescopeCali=True
@@ -82,7 +82,10 @@ targetalignment_iterations=0
 # global path to raw files
 rawfile_path='/work1/rawdata/luise/'
 
-# raw file used during telescope calibration (best use data with scattering target)
+# Raw files used during telescope calibration. Telescope calibration 
+# includes the alignment of the reference telescope and the calibration
+# of its spation resolution. 
+# Best use a run without a scattering target in between the telescope arms.
 # The calibration has to be done for every telescope setup, beam energy and m26 threshold settings
 cali_run='run000210.raw'
 rawfile_cali = rawfile_path + cali_run
@@ -167,23 +170,23 @@ def calibrate(params):
   
   # Calibrate of the run using beam data. Creates a folder cal-files/caltag 
   # containing all calibration data. 
-  CalObj = Calibration(steerfiles=steerfiles, name=caltag + '-cal') 
+  CalObj = tbsw.Calibration(steerfiles=steerfiles, name=caltag + '-cal') 
   
   # Create list of calibration steps 
   if Use_LongTelescopeCali:
-    calpath = create_x0analysis_calibration_longtelescope_path(CalObj, rawfile, gearfile_longtelescope, nevents_cali, Use_clusterDB, beamenergy, mcdata)
+    calpath = tbsw.path_utils.create_x0analysis_calibration_longtelescope_paths(CalObj, rawfile, gearfile_longtelescope, nevents_cali, Use_clusterDB, beamenergy, mcdata)
     gearfile_object = CalObj.get_filename(gearfile_longtelescope)
   else:
-    calpath = create_x0analysis_calibration_path(CalObj, rawfile, gearfile, nevents_cali, Use_clusterDB, beamenergy, mcdata)
+    calpath = tbsw.path_utils.create_x0analysis_calibration_paths(CalObj, rawfile, gearfile, nevents_cali, Use_clusterDB, beamenergy, mcdata)
     gearfile_object = CalObj.get_filename(gearfile)
 
-  set_parameter(gearfile=gearfile_object, sensorID=11, parametername='thickness', value=0.0001)
-  set_parameter(gearfile=gearfile_object, sensorID=11, parametername='radLength', value=304000.0)  
+  tbsw.gear.set_parameter(gearfile=gearfile_object, sensorID=11, parametername='thickness', value=0.0001)
+  tbsw.gear.set_parameter(gearfile=gearfile_object, sensorID=11, parametername='radLength', value=304000.0)  
 
   # Run the calibration steps 
   CalObj.calibrate(paths=calpath,ifile=rawfile,caltag=caltag)
 
-  DQMplots.calibration_DQMPlots(caltag, Use_clusterDB)
+  tbsw.DQMplots.calibration_DQMPlots(caltag, Use_clusterDB)
 
 
 # Perform the angle reconstruction of a single run
@@ -196,15 +199,15 @@ def reconstruct(params):
   
   # Reconsruct the rawfile using the caltag. Resulting root files are 
   # written to folder root-files/
-  RecObj = Reconstruction(steerfiles=steerfiles, name=name )
+  RecObj = tbsw.Reconstruction(steerfiles=steerfiles, name=name )
   RecObj.set_beam_momentum(beamenergy)
 
   # Create reconstuction path
   if Use_LongTelescopeCali:
-    recopath = create_anglereco_path(RecObj, rawfile, gearfile_longtelescope, nevents_reco, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)
+    recopath = tbsw.path_utils.create_anglereco_path(RecObj, rawfile, gearfile_longtelescope, nevents_reco, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)
 
   else:
-    recopath = create_anglereco_path(RecObj, rawfile, gearfile, nevents_reco, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata) 
+    recopath = tbsw.path_utils.create_anglereco_path(RecObj, rawfile, gearfile, nevents_reco, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata) 
 
   # Use caltag of the last target alignment iteration
   iteration_string='-target-alignment-it'+str(targetalignment_iterations-1)
@@ -253,13 +256,10 @@ def targetalignment(params):
 
   # Reconsruct the rawfile using the caltag. Resulting root files are 
   # written to folder root-files/
-  RecObj = Reconstruction(steerfiles=steerfiles, name=newcaltag )
-
-  # Set Beam energy
-  RecObj.set_beam_momentum(beamenergy)
+  RecObj = tbsw.Reconstruction(steerfiles=steerfiles, name=newcaltag )
   
   # Create reconstuction path
-  recopath = create_x0reco_path(RecObj, rawfile, gearfile, nevents_TA, Use_SingleHitSeeding)  
+  recopath = tbsw.path_utils.create_x0reco_path(RecObj, rawfile, gearfile, nevents_TA, Use_SingleHitSeeding)  
 
   # Run the reconstuction  
   RecObj.reconstruct(path=reco,ifile=rawfile,caltag=localcaltag) 
@@ -267,7 +267,7 @@ def targetalignment(params):
   # Read the vertex position and save it in the alignmentDB
   dbname=RecObj.create_dbfilename("alignmentDB.root")
   treename=RecObj.get_rootfilename('X0')
-  save_targetpos(treename,dbname)
+  tbsw.gear.save_targetpos(treename,dbname)
   RecObj.export_caltag(newcaltag)
 
 # Perform x0 calibration
@@ -290,7 +290,7 @@ def xx0calibration(params):
   tbsw.x0imaging.X0Calibration.x0calibration(filelist=RootFileList_x0cali,imagefilename=imagefilename,caltag=x0caltag,steerfiles=steerfiles)
 
   nametag='X0Calibration-'+x0caltag
-  DQMplots.x0calibration_DQMPlots(nametag=nametag)
+  tbsw.DQMplots.x0calibration_DQMPlots(nametag=nametag)
 
 
 # Generate x0 image
@@ -314,7 +314,7 @@ def xx0image(params):
   # Do a calibration of the angle resolution
   tbsw.x0imaging.X0Calibration.x0imaging(filelist=RootFileList_x0image,caltag=x0caltag,steerfiles=steerfiles,nametag=nametag)
 
-  DQMplots.x0image_Plots(nametag=nametag)
+  tbsw.DQMplots.x0image_Plots(nametag=nametag)
     
   
 if __name__ == '__main__':
@@ -364,7 +364,7 @@ if __name__ == '__main__':
       runspec = os.path.splitext(os.path.basename(rawfile))[0] + '-'
       DQMplots.anglereco_DQMPlots(runspec,caltag)
 
-  # start x0 calibration
+  # Start x0 calibration
   # In case you already have the x0 calibration DB file from a previous x0 calibration 
   # and want to reuse it, just switch to Script_purpose_option 0
   #

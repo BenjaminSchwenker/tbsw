@@ -30,9 +30,9 @@ energy = 4
 useClusterDB = True
 
 #Parameters x,y,z,alpha,beta,gamma for simulation of misalignment
-#Position parameters in mm
+#Position parameters in mm and degree for rotations
 mean_list=[0.0,0.0,0.0,0.0,0.0,0.0] 
-sigma_list=[0.1,0.1,0.1,0.1,0.1,0.1]
+sigma_list=[0.1,0.1,0.1,0.3,0.3,1.5]
 
 # List of sensor ids and modes, which are excluded during misalignment
 sensorexception_list=[] 

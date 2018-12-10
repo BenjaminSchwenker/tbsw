@@ -104,7 +104,9 @@ def plot_clusterDB_parameters(inputfilename = None):
   if inputfilename == None:
     return None
 
-  oldlabels=["H1.0.0D0.0.0","H2.0.0D0.0.0D0.1.0","H2.0.0D0.0.0D1.0.0","H3.0.0D0.0.0D0.1.0D1.0.0","H3.0.0D0.0.0D0.1.0D1.1.0","H3.0.0D0.0.0D1.0.0D1.1.0","H3.0.0D0.1.0D1.0.0D1.1.0","H4.0.0D0.0.0D0.1.0D1.0.0D1.1.0"]
+  oldlabels=["E0P0.0.0D0.0.0","E0P0.0.0D0.0.0D0.1.0","E0P0.0.0D0.0.0D1.0.0",
+             "E0P0.0.0D0.0.0D0.1.0D1.0.0","E0P0.0.0D0.0.0D0.1.0D1.1.0",
+             "E0P0.0.0D0.0.0D1.0.0D1.1.0","E0P0.0.0D0.1.0D1.0.0D1.1.0","E0P0.0.0D0.0.0D0.1.0D1.0.0D1.1.0"]
   newlabels=["1p","2pu","2pv","3p1","3p2","3p3","3p4","4p"]
 
   rawfile = ROOT.gROOT.FindObject( inputfilename )

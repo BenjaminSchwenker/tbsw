@@ -22,25 +22,20 @@ import os
 # for x0 calibration.
 steerfiles = 'steering-files/x0-tb/'
 
-# Gearfile for alu runs 
+# Name of gearfile
+# This file describes the nominal geometry of a telescope 
+# with two arms having three M26 planes each.  
 gearfile = 'gear.xml'
-
-# Gearfile for air runs 
-gearfile2 = 'gear_air.xml'
 
 # Tag for x0 calibration
 x0caltag='alutarget'
-
-# Name of the truth db file
-truthdb_filename='alignmentDB_truth.root'
-alignmentdb_filename='alignmentDB.root'
 
 # File name for raw data 
 rawfile_air = os.getcwd()+'/mc-air.slcio'
 rawfile_alu = os.getcwd()+'/mc-alu.slcio'
 
 # Tag for calibration data
-caltag = os.path.splitext(os.path.basename(rawfile_air))[0]
+caltag = 'airtarget'
 
 # Number of events to simulate 
 nevents_air = 1000000
@@ -48,12 +43,12 @@ nevents_TA = 1000000
 nevents_alu = 6000000
 
 #Parameters for simulation of misalignment
-#Position parameters in mm
+#Position parameters in mm and degree for rotations
 mean_list=[0.0,0.0,0.0,0.0,0.0,0.0] 
-sigma_list=[0.1,0.1,1.0,0.1,0.1,0.1]
+sigma_list=[0.5,0.5,1.0,0.3,0.3,1.5]
 
 # List of sensor ids and modes, which are excluded during misalignment
-sensorexception_list=[5,0] 
+sensorexception_list=[5,0,11] 
 modeexception_list=['']
 
 # Number of iterations during target alignment
@@ -72,99 +67,89 @@ Use_clusterDB=True
 # Flag to indicate that mc data is used (slcio format)
 mcdata=True
 
+
 def simulate(): 
   """
-  Simulates a rawfile from a simulated test beam experiment
-  Creates a folder tmp-runs/name-sim/ and populates it with 
+  Simulates a rawfiles from a simulated test beam experiment
+  Creates a folder in tmp-runs/ and populates it with 
   Marlin steering and logfiles.  
   """ 
   
   # Create tmpdir to hold all steerfiles and log files 
-  SimObj = tbsw.Simulation(steerfiles=steerfiles, name=os.path.splitext(os.path.basename(rawfile_alu))[0] + '-sim' )
+  SimObj = tbsw.Simulation(steerfiles=steerfiles, name='x0-sim' )
   
-  # Create steerfiles for processing
-  simpath = tbsw.path_utils.create_x0sim_path(SimObj, rawfile_air, rawfile_alu, gearfile2, gearfile, nevents_air, nevents_alu, beamenergy)
-
-  # Get gearfile
-  localgearfile = SimObj.get_filename('gear.xml')
-
-  # Misalign gear file
+  # Get path to gearfile in simulation environment
+  localgearfile = SimObj.get_filename(gearfile)
+  
+  # Misalign the telescope by applying random shifts to constants in local gearfile
   tbsw.gear.randomize_telescope(gearfile=localgearfile, mean_list=mean_list, sigma_list=sigma_list, sensorexception_list=sensorexception_list, modeexception_list=modeexception_list)
-
-  localtruthdb_filename=SimObj.create_dbfilename(truthdb_filename)
-
-  # Convert gear file to alignmentDB root file, which will be stored in the sim folder
-  tbsw.gear.Create_AlignmentDBFile_From_Gear(gearfile=SimObj.get_filename('gear.xml'), truthdbfilename=localtruthdb_filename)
-
-  # Copy gearfile
-  SimObj.copy_file('gear.xml','gear_air.xml')
-
-  # Get air gearfile
-  gearfile_air = SimObj.get_filename('gear_air.xml')
-
-  # Change DUT in copied gearfile
-  tbsw.gear.set_parameter(gearfile=gearfile_air, sensorID=11, parametername='thickness', value=0.0001)
-  tbsw.gear.set_parameter(gearfile=gearfile_air, sensorID=11, parametername='radLength', value=304000.0)
-
-
-  # Create caltag for the truthdb
-  caltag = os.path.splitext(os.path.basename(rawfile_air))[0] + '-test'
-  simcaltag=caltag+ '-truthdb'
-
+  
+  # Create a gearfile for the run with an Al plate 
+  # Only the Al plate is added in between the telescope arms
+  # The misaligned positions of the telescope planes remain
+  # the same. 
+  gearfile_alu = "gear_alu.xml"
+  localgearfile_alu = SimObj.copy_file(gearfile, gearfile_alu)
+  
+  # Replace the air layer  by a Al plate with 0.5mm thickness 
+  tbsw.gear.set_parameter(gearfile=localgearfile_alu, sensorID=11, parametername='thickness', value=0.50)
+  tbsw.gear.set_parameter(gearfile=localgearfile_alu, sensorID=11, parametername='radLength', value=89.0)
+  tbsw.gear.set_parameter(gearfile=localgearfile_alu, sensorID=11, parametername='atomicNumber', value=13)
+  tbsw.gear.set_parameter(gearfile=localgearfile_alu, sensorID=11, parametername='atomicMass', value=27)  
+  
+  # List to populate with simulation pathes (=jobs)
+  simpaths = []
+   
+  # Create path to simulate air run (just air between telescope arms) 
+  simpath_air = tbsw.path_utils.create_x0sim_path(SimObj, 'sim_air', rawfile_air, gearfile, nevents_air,  beamenergy)
+  simpaths.append(simpath_air)
+  
+  # Create path to simulate alu run (Al plate between telescope arms)
+  simpath_alu = tbsw.path_utils.create_x0sim_path(SimObj, 'sim_alu', rawfile_alu, gearfile_alu, nevents_alu, beamenergy)
+  simpaths.append(simpath_alu)   
+  
   # Run simulation to create rawfile with simulated digits 
-  SimObj.simulate(path=simpath,caltag=simcaltag)  
-
+  SimObj.simulate(paths=simpaths,caltag='x0-sim-truthdb')  
+  
 
 def calibrate():
   """
-  Calibrates an misaligned tracking telescope from run data. 
+  Calibrates an misaligned tracking telescope from air run. 
   Creates a folder localDB/caltag in workspace containing 
   calibration results. 
-  Creates a folder tmp-runs/name-sim/ and populates it with 
+  Creates a folder tmp-runs/ and populates it with 
   Marlin steering and logfiles.  
   """ 
   
   # Calibrate of the run using beam data. Creates a folder cal-files/caltag 
   # containing all calibration data. 
-  CalObj = tbsw.Calibration(steerfiles=steerfiles, name=caltag + '-cal') 
-
-  # Get gearfile and set air as DUT material
-  localgearfile = CalObj.get_filename('gear.xml')
-  tbsw.gear.set_parameter(gearfile=localgearfile, sensorID=11, parametername='thickness', value=0.0001)
-  tbsw.gear.set_parameter(gearfile=localgearfile, sensorID=11, parametername='radLength', value=304000.0)
+  CalObj = tbsw.Calibration(steerfiles=steerfiles, name='x0-cal') 
   
   # Create list of calibration steps 
-  calpath = tbsw.path_utils.create_x0analysis_calibration_path(CalObj, rawfile_air, gearfile, nevents_air, Use_clusterDB, beamenergy, mcdata)
-
+  calpaths = tbsw.path_utils.create_x0analysis_calibration_paths(CalObj, rawfile_air, gearfile, nevents_air, Use_clusterDB, beamenergy, mcdata)
+  
   # Run the calibration steps 
-  CalObj.calibrate(paths=calpath,ifile=rawfile_air,caltag=caltag)  
-
+  CalObj.calibrate(paths=calpaths,ifile=rawfile_air,caltag=caltag)  
+  
   # Run DQM scripts
-  tbsw.DQMplots.calibration_DQMPlots(caltag, Use_clusterDB)
+  #tbsw.DQMplots.calibration_DQMPlots(caltag, Use_clusterDB)
 
 
 def reconstruct():
-
+  
   # Reconsruct the rawfile using the caltag. Resulting root files are 
   # written to folder root-files/
-  RecObj = tbsw.Reconstruction(steerfiles=steerfiles, name=caltag )
-
+  RecObj = tbsw.Reconstruction(steerfiles=steerfiles, name='x0-reco')
+  
   # Create reconstuction path
   recopath = tbsw.path_utils.create_anglereco_path(RecObj, rawfile_alu, gearfile, nevents_alu, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)  
-
-  # Use caltag of the last target alignment iteration
-  iteration_string='-target-alignment-it'+str(targetalignment_iterations-1)
-  localcaltag=caltag+iteration_string 
-
-  if targetalignment_iterations < 1:
-    localcaltag=caltag
-
+  
   # Run the reconstuction  
-  RecObj.reconstruct(path=recopath,ifile=rawfile_alu,caltag=localcaltag)  
-
+  RecObj.reconstruct(paths=recopath,ifile=rawfile_alu,caltag=caltag)  
+  
   # Run DQM scripts
   tbsw.DQMplots.anglereco_DQMPlots('',caltag) 
-
+  
 
 def targetalignment(params):
   """
@@ -181,57 +166,45 @@ def targetalignment(params):
     :@iteration:    Target alignment iteration counter  
     :author: benjamin.schwenker@phys.uni-goettinge.de  
   """ 
-
-  rawfile, steerfiles, calibrationtag, iteration = params
-
-  if rawfile == None:
-    return None
-
-  if iteration == None:
-    return None
-
-  prev_iteration_string='-target-alignment-it'+str(iteration-1)
-  curr_iteration_string='-target-alignment-it'+str(iteration)
-
-  localcaltag=caltag+prev_iteration_string
-
+   
+  rawfile, steerfiles, caltag, iteration = params
+  
   if iteration == 0:
-    localcaltag=calibrationtag
-
-  newcaltag=calibrationtag+curr_iteration_string
-
+    oldcaltag=caltag
+  else: 
+    oldcaltag=caltag+'-target-align-it-{:d}'.format(iteration-1)
+     
+  newcaltag=caltag+'-target-align-it-{:d}'.format(iteration)
+  
   # Reconsruct the rawfile using the caltag. Resulting root files are 
   # written to folder root-files/
-  RecObj = tbsw.Reconstruction(steerfiles=steerfiles, name=newcaltag )
-
-  
+  RecObj = tbsw.Reconstruction(steerfiles=steerfiles, name='x0-reco-targetalign-it-{:d}'.format(iteration) )
   
   # Create reconstuction path
-  recopath = tbsw.path_utils.create_mc_x0reco_path(RecObj, rawfile_alu, gearfile, nevents_TA, Use_SingleHitSeeding)  
-
+  recopath = tbsw.path_utils.create_anglereco_path(RecObj, rawfile, gearfile, nevents_TA, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)  
+  
   # Run the reconstuction  
-  RecObj.reconstruct(path=recopath,ifile=rawfile,caltag=localcaltag)  
-
+  RecObj.reconstruct(path=recopath,ifile=rawfile,caltag=oldcaltag)  
+  
   # Read the vertex position and save it in the alignmentDB
   dbname=RecObj.create_dbfilename("alignmentDB.root")
   treename=RecObj.get_rootfilename('X0')
   tbsw.gear.save_targetpos(treename,dbname)
   RecObj.export_caltag(newcaltag)
-
+  
   
 if __name__ == '__main__':
 
-
+  
   # Get current directory
   cwdir = os.getcwd()
-
-  # Create a simulated rawfile with air data 
+  
+  # Create a simulated rawfiles for run with no target (air run) and Al plate 
   simulate( )
-
-  # Calibrate the telescope 
+  
+  # Calibrate the telescope using air run  
   calibrate( )
-
-
+   
   for it in range(0,targetalignment_iterations):
     params_TA = (rawfile_alu, steerfiles, caltag, it)
     print "The parameters for the target alignment are: " 
@@ -243,12 +216,12 @@ if __name__ == '__main__':
 
   # Base filename of the X0 root file
   basefilename='X0-'+caltag
-
+  
   # create root file list as input for x0 analysis scripts
   rawlist=[caltag]
   rootlist=[]
   tbsw.x0imaging.X0Calibration.CreateRootFileList(rawlist=rawlist,rootlist=rootlist, caltag='')
-
+  
   # Generate a uncalibrated X/X0 image
   nametag='X0image-Uncalibrated'
   tbsw.x0imaging.X0Calibration.x0imaging(filelist=rootlist,caltag='',steerfiles=steerfiles,nametag=nametag)
