@@ -117,7 +117,7 @@ def merge_rootfile(filename=None,RunList='',caltag=None):
   return None
 
 # Create List with filenames of root tree files from raw file list
-def CreateRootFileList(rawlist,rootlist=[], caltag=None):
+def CreateRootFileList(rawlist,rootlist=[], caltag=''):
   """
   Creates a list with filenames of root tree files from a similar raw file list
     :@rawlist:    List of raw file names

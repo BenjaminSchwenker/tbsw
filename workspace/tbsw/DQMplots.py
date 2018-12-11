@@ -6,23 +6,11 @@ import math
 import ROOT
 import math
 
-
-canvases = {}
-def plot_align_parameter(histoname, paramname, unit, scale,uselatex, inputfilename = None):
-
-  if inputfilename == None:
-    return None
-
-  ROOT.gROOT.Reset()
-
-  rawfile = ROOT.gROOT.FindObject( inputfilename )
-  if rawfile:
-    rawfile.Close()
-  rawfile = ROOT.TFile( inputfilename, 'READ' )
-
-  diffhisto_tmp = rawfile.Get(histoname)
-
-  diffhisto = ROOT.TH1F("h{:s}shift", "h{:s}shift", diffhisto_tmp.GetNbinsX(), 0.5, diffhisto_tmp.GetNbinsX()+0.5)
+def plot_align_parameter(histoname, paramname, unit, scale, uselatex, rootfile):
+   
+  diffhisto_tmp = rootfile.Get(histoname)
+  
+  diffhisto = ROOT.TH1F("h{:s}shift", "h{:s}shift".format(paramname,paramname), diffhisto_tmp.GetNbinsX(), 0.5, diffhisto_tmp.GetNbinsX()+0.5)
   for i in range(0,diffhisto_tmp.GetNbinsX()):
     diffhisto.SetBinContent(i,diffhisto_tmp.GetBinContent(i))
   diffhisto.SetTitle("")
@@ -35,45 +23,50 @@ def plot_align_parameter(histoname, paramname, unit, scale,uselatex, inputfilena
   diffhisto.SetXTitle("sensor position")
   diffhisto.Scale(scale)
   diffhisto.SetNdivisions(diffhisto.GetNbinsX())
-
+  
+  canvases = {}
   canvases[histoname] = ROOT.TCanvas( '{:s}'.format(histoname), '{:s}'.format(histoname), 200, 10, 700, 500 )
-  diffhisto.Draw("hist")
+  diffhisto.Draw("hist goff")
   diffhisto.SetStats(False)
   canvases[histoname].Update()
   canvases[histoname].SaveAs("alignment_shift_{:s}.pdf".format(paramname))
-
-
-def plot_alignment_parameters(inputfilename = None):
-
-  if inputfilename == None:
-    return None
-
+  
+  
+def plot_alignment_parameters(inputfilename):
+  
   ROOT.gROOT.Reset()
-
-  histoname="alignment/hxshift_diff"
-  plot_align_parameter(histoname,'x','mm',1,False,inputfilename)
-
-  histoname="alignment/hyshift_diff"
-  plot_align_parameter(histoname,'y','mm',1,False,inputfilename)
-
-  histoname="alignment/hzshift_diff"
-  plot_align_parameter(histoname,'z','mm',1,False,inputfilename)
-
-  histoname="alignment/hzrot_diff"
-  plot_align_parameter(histoname,'gamma','mrad',1E3,True,inputfilename)
-
-
+  
+  rootfile = ROOT.TFile( inputfilename, 'READ' )
+  if rootfile:   
+    histoname="alignment/hxshift_diff"
+    plot_align_parameter(histoname,'x','mm',1,False,rootfile)
+    
+    histoname="alignment/hyshift_diff"
+    plot_align_parameter(histoname,'y','mm',1,False,rootfile)
+    
+    histoname="alignment/hzshift_diff"
+    plot_align_parameter(histoname,'z','mm',1,False,rootfile)
+  
+    histoname="alignment/hzrot_diff"
+    plot_align_parameter(histoname,'gamma','mrad',1E3,True,rootfile)
+  
+  rootfile.Close()
+  
 def select_labels(histo, tmphisto, calculateSigma, oldlabels, newlabels):
   for ilabel,label in enumerate(oldlabels):
     histo.GetXaxis().SetBinLabel( ilabel+1, newlabels[ilabel] )
-
-    if calculateSigma:
-      histo.SetBinContent(ilabel+1,1000*math.sqrt(tmphisto.GetBinContent(tmphisto.GetXaxis().FindBin(label))))
-      histo.SetBinError(ilabel+1,1000*tmphisto.GetBinError(tmphisto.GetXaxis().FindBin(label))/math.sqrt(tmphisto.GetBinContent(tmphisto.GetXaxis().FindBin(label))))
-
-    else:
-      histo.SetBinContent(ilabel+1,tmphisto.GetBinContent(tmphisto.GetXaxis().FindBin(label)))
-      histo.SetBinError(ilabel+1,tmphisto.GetBinError(tmphisto.GetXaxis().FindBin(label)))
+    
+    if tmphisto.GetXaxis().FindFixBin(label) == -1:
+      print("cannot find label {}".format(label))
+      histo.SetBinContent(ilabel+1,0)
+      histo.SetBinError(ilabel+1,0)  
+    else: 
+      if calculateSigma:
+        histo.SetBinContent(ilabel+1,1000*math.sqrt(tmphisto.GetBinContent(tmphisto.GetXaxis().FindBin(label))))
+        histo.SetBinError(ilabel+1,1000*tmphisto.GetBinError(tmphisto.GetXaxis().FindBin(label))/math.sqrt(tmphisto.GetBinContent(tmphisto.GetXaxis().FindBin(label))))  
+      else:
+        histo.SetBinContent(ilabel+1,tmphisto.GetBinContent(tmphisto.GetXaxis().FindBin(label)))
+        histo.SetBinError(ilabel+1,tmphisto.GetBinError(tmphisto.GetXaxis().FindBin(label)))
 
 
 def plot_clusterDB_parameter(histo, paramname, ytitle):
@@ -90,42 +83,35 @@ def plot_clusterDB_parameter(histo, paramname, ytitle):
   histo.GetYaxis().SetTitleOffset(0.80)
   histo.GetYaxis().SetTitleSize(0.055)
   histo.GetYaxis().SetLabelSize(0.05)
-
+   
+  canvases = {}
   canvases[paramname] = ROOT.TCanvas( '{:s}'.format(paramname), '{:s}'.format(paramname), 200, 10, 700, 500 )
-  histo.Draw("HE")
+  histo.Draw("HE goff")
   histo.SetStats(False)
   canvases[paramname].Update()
   canvases[paramname].SaveAs("cluster_{:s}.pdf".format(paramname))
-
-
-
-def plot_clusterDB_parameters(inputfilename = None):
-
-  if inputfilename == None:
-    return None
-
-  oldlabels=["E0P0.0.0D0.0.0","E0P0.0.0D0.0.0D0.1.0","E0P0.0.0D0.0.0D1.0.0",
-             "E0P0.0.0D0.0.0D0.1.0D1.0.0","E0P0.0.0D0.0.0D0.1.0D1.1.0",
-             "E0P0.0.0D0.0.0D1.0.0D1.1.0","E0P0.0.0D0.1.0D1.0.0D1.1.0","E0P0.0.0D0.0.0D0.1.0D1.0.0D1.1.0"]
+  
+def plot_clusterDB_parameters(inputfilename):
+  
+  oldlabels=["E0P0.0.0D0.0","E0P0.0.0D0.0D0.1","E0P0.0.0D0.0D1.0",
+             "E0P0.0.0D0.0D0.1D1.0","E0P0.0.0D0.0D0.1D1.1",
+             "E0P0.0.0D0.0D1.0D1.1","E0P0.0.0D0.1D1.0D1.1","E0P0.0.0D0.0D0.1D1.0D1.1"]
   newlabels=["1p","2pu","2pv","3p1","3p2","3p3","3p4","4p"]
-
-  rawfile = ROOT.gROOT.FindObject( inputfilename )
-  if rawfile:
-    rawfile.Close()
-  rawfile = ROOT.TFile( inputfilename, 'READ' )
-
+  
+  rootfile = ROOT.TFile( inputfilename, 'READ' )
+  
   histoname="hDB_Weight"
-  hfractions_tmp = rawfile.Get(histoname)
+  hfractions_tmp = rootfile.Get(histoname)
   integral =  hfractions_tmp.Integral()
   hfractions_tmp.Scale(100.0/integral)
   hfractions = ROOT.TH1F("hfractions", "cluster type fractions", len(oldlabels),0.5,len(oldlabels)+0.5)
-
+  
   histoname="hDB_Sigma2_U"
-  hsigma2_u_tmp = rawfile.Get(histoname)
+  hsigma2_u_tmp = rootfile.Get(histoname)
   hsigma_u = ROOT.TH1F("hsigma_u", "cluster u resolution ", len(oldlabels),0.5,len(oldlabels)+0.5)
 
   histoname="hDB_Sigma2_V"
-  hsigma2_v_tmp = rawfile.Get(histoname)
+  hsigma2_v_tmp = rootfile.Get(histoname)
   hsigma_v = ROOT.TH1F("hsigma_v", "cluster v resolution ", len(oldlabels),0.5,len(oldlabels)+0.5)
 
   select_labels(hfractions, hfractions_tmp, False, oldlabels, newlabels)
@@ -135,25 +121,19 @@ def plot_clusterDB_parameters(inputfilename = None):
   plot_clusterDB_parameter(hfractions, 'fractions', 'fraction')
   plot_clusterDB_parameter(hsigma_u, 'sigma_u', '#sigma_{u}[#mum]')
   plot_clusterDB_parameter(hsigma_v, 'sigma_v', '#sigma_{v}[#mum]')
+  
+  rootfile.Close()
 
-
-
-def plot_pulls(inputfilename = None):
-
-  if inputfilename == None:
-    return None
+def plot_pulls(inputfilename):
 
   ROOT.gROOT.Reset()
-
-  rawfile = ROOT.gROOT.FindObject( inputfilename )
-  if rawfile:
-    rawfile.Close()
-  rawfile = ROOT.TFile( inputfilename, 'READ' )
-
+  
+  rootfile = ROOT.TFile( inputfilename, 'READ' )
+   
   nsensors=6
   sensorIDs=[0,1,2,4,5,6]
   colors=[1,2,4,6,7,8]
-
+   
   leg_u = ROOT.TLegend(.82,.35,.97,.97)
   leg_u.SetTextSize(.03)
   c_pullu = ROOT.TCanvas( 'c_pullu', 'c_pullu', 200, 10, 700, 500 )
@@ -162,27 +142,27 @@ def plot_pulls(inputfilename = None):
 
     sensorname='Sensor'+str(sensorIDs[isens])
     histoname=sensorname+"/hpull_resU_sensor"+str(sensorIDs[isens])
-    hpullu = rawfile.Get(histoname)
+    hpullu = rootfile.Get(histoname)
 
     hpullu.GetXaxis().SetTitle("track pull")
     hpullu.GetYaxis().SetTitle("number of tracks[10^{3}]")
     hpullu.SetTitle("track pull (u direction)")
-
+    
     hpullu.Scale(1E-3)
-
+    
     hpullu.SetLineColor(colors[isens])
-
+    
     if isens > 0:
-      hpullu.Draw("Hsame")
+      hpullu.Draw("Hsame goff")
     else:
-      hpullu.Draw()
-
+      hpullu.Draw("goff")
+    
     hpullu.SetStats(False)
     entry='#splitline{#splitline{'+sensorname+'}{mean: '+str(round(hpullu.GetMean(),2))+'}}{RMS: '+str(round(hpullu.GetRMS(),2))+'}'
     leg_u.AddEntry(hpullu,entry,"L")
     c_pullu.Update()
 
-  leg_u.Draw()
+  leg_u.Draw("goff")
   c_pullu.SaveAs("trackpulls_u.pdf")
 
 
@@ -195,7 +175,7 @@ def plot_pulls(inputfilename = None):
     sensorname='Sensor'+str(sensorIDs[isens])
 
     histoname=sensorname+"/hpull_resV_sensor"+str(sensorIDs[isens])
-    hpullv = rawfile.Get(histoname)
+    hpullv = rootfile.Get(histoname)
 
     hpullv.GetXaxis().SetTitle("track pull")
     hpullv.GetYaxis().SetTitle("number of tracks[10^{3}]")
@@ -206,37 +186,31 @@ def plot_pulls(inputfilename = None):
     hpullv.SetLineColor(colors[isens])
 
     if isens > 0:
-      hpullv.Draw("Hsame")
+      hpullv.Draw("Hsame goff")
     else:
-      hpullv.Draw()
+      hpullv.Draw("goff")
 
     hpullv.SetStats(False)
     entry='#splitline{#splitline{'+sensorname+'}{mean: '+str(round(hpullv.GetMean(),2))+'}}{RMS: '+str(round(hpullv.GetRMS(),2))+'}'
     leg_v.AddEntry(hpullv,entry,"L")
     c_pullv.Update()
 
-  leg_v.Draw()
+  leg_v.Draw("goff")
   c_pullv.SaveAs("trackpulls_v.pdf")
+  
+  rootfile.Close()
 
-
-
-def plot_trackDQM(inputfilename = None):
-
-  if inputfilename == None:
-    return None
-
+def plot_trackDQM(inputfilename ):
+  
   ROOT.gROOT.Reset()
 
-  rawfile = ROOT.gROOT.FindObject( inputfilename )
-  if rawfile:
-    rawfile.Close()
-  rawfile = ROOT.TFile( inputfilename, 'READ' )
+  rootfile = ROOT.TFile( inputfilename, 'READ' )
 
   histoname="hchi2prob"
-  hpvalues = rawfile.Get(histoname)
+  hpvalues = rootfile.Get(histoname)
 
   histoname="hntracks"
-  hntracks = rawfile.Get(histoname)
+  hntracks = rootfile.Get(histoname)
 
   hpvalues.Scale(1E-3)
   hpvalues.GetXaxis().SetTitle("track p value")
@@ -247,34 +221,29 @@ def plot_trackDQM(inputfilename = None):
 
 
   c_pvalues = ROOT.TCanvas( 'c_pvalues', 'c_pvalues', 200, 10, 700, 500 )
-  hpvalues.Draw("hist")
+  hpvalues.Draw("hist goff")
   hpvalues.SetStats(False)
   c_pvalues.Update()
   c_pvalues.SaveAs("track_pvalues.pdf")
 
   c_ntracks = ROOT.TCanvas( 'c_ntracks', 'c_ntracks', 200, 10, 700, 500 )
-  hntracks.Draw("hist")
+  hntracks.Draw("hist goff")
   hntracks.SetStats(False)
   c_ntracks.Update()
   c_ntracks.SaveAs("ntracks.pdf")
+  
+  rootfile.Close()
 
-
-def plot_anglereco_DQM(inputfilename = None):
-
-  if inputfilename == None:
-    return None
+def plot_anglereco_DQM(inputfilename):
 
   ROOT.gROOT.Reset()
+  
+  rootfile = ROOT.TFile( inputfilename, 'READ' )
 
-  rawfile = ROOT.gROOT.FindObject( inputfilename )
-  if rawfile:
-    rawfile.Close()
-  rawfile = ROOT.TFile( inputfilename, 'READ' )
-
-  tree = rawfile.Get("MSCTree")
-
+  tree = rootfile.Get("MSCTree")
+  
   h_theta_u_reso = ROOT.TH1F()
-  tree.Draw("1E6*sqrt(theta1_var) >>h_theta_u_reso")
+  tree.Draw("1E6*sqrt(theta1_var) >>h_theta_u_reso", "" ,"goff")
   h_theta_u_reso= tree.GetHistogram()
   h_theta_u_reso.Scale(1E-3)
   h_theta_u_reso.GetXaxis().SetTitle("#theta_{u} reconstruction error[#murad]")
@@ -283,7 +252,7 @@ def plot_anglereco_DQM(inputfilename = None):
   h_theta_u_reso.SetStats(False)
 
   h_theta_v_reso = ROOT.TH1F()
-  tree.Draw("1E6*sqrt(theta2_var) >>h_theta_v_reso")
+  tree.Draw("1E6*sqrt(theta2_var) >>h_theta_v_reso","","goff")
   h_theta_v_reso= tree.GetHistogram()
   h_theta_v_reso.Scale(1E-3)
   h_theta_v_reso.GetXaxis().SetTitle("Angle reconstruction error[#murad]")
@@ -293,7 +262,7 @@ def plot_anglereco_DQM(inputfilename = None):
   h_theta_v_reso.SetStats(False)
 
   h_trackmap = ROOT.TH2F()
-  tree.Draw("v:u >>h_trackmap")
+  tree.Draw("v:u >>h_trackmap","","goff")
   h_trackmap= tree.GetHistogram()
   h_trackmap.GetXaxis().SetTitle("u[mm]") 
   h_trackmap.GetYaxis().SetTitle("v[mm]")
@@ -308,8 +277,8 @@ def plot_anglereco_DQM(inputfilename = None):
   leg.SetTextSize(.038)
 
   c_theta_reso.SetRightMargin(0.13)
-  h_theta_u_reso.Draw("hist")
-  h_theta_v_reso.Draw("histsame")
+  h_theta_u_reso.Draw("hist goff")
+  h_theta_v_reso.Draw("histsame goff")
   h_theta_u_reso.SetStats(False)
 
   description='#splitline{#theta_{u} resolution}{#splitline{mean: '+str(round(h_theta_u_reso.GetMean(),1))+' #murad}{RMS: '+str(round(h_theta_u_reso.GetRMS(),1))+' #murad}}'
@@ -319,121 +288,140 @@ def plot_anglereco_DQM(inputfilename = None):
   leg.AddEntry(h_theta_v_reso,description,"L")
   c_theta_reso.Update()
 
-  leg.Draw()
+  leg.Draw("goff")
   c_theta_reso.SaveAs("theta_reso.pdf")
 
   c_trackmap = ROOT.TCanvas( 'c_trackmap', 'c_trackmap', 200, 10, 700, 500 )
   c_trackmap.SetRightMargin(0.13)
-  h_trackmap.Draw("colz")
+  h_trackmap.Draw("colz goff")
   c_trackmap.SaveAs("beamspot.pdf")
 	
+  rootfile.Close()
 
-def plot_x0image_DQM(inputfilename = None):
-
-  if inputfilename == None:
-    return None
-
+def plot_x0image_DQM(inputfilename):
+  
   ROOT.gROOT.Reset()
-
-  rawfile = ROOT.gROOT.FindObject( inputfilename )
-  if rawfile:
-    rawfile.Close()
-  rawfile = ROOT.TFile( inputfilename, 'READ' )
-
+  
+  rootfile = ROOT.TFile( inputfilename, 'READ' )
+  
   histoname="x0_image"
-  hx0 = rawfile.Get(histoname)
-
+  hx0 = rootfile.Get(histoname)
+  
   c_x0 = ROOT.TCanvas( 'c_x0', 'c_x0', 200, 10, 700, 500 )
   maxbin=hx0.GetMaximumBin()
   maxvalue=hx0.GetBinContent(maxbin)
   hx0.SetMaximum(1.2*maxvalue)
   hx0.Draw("colz")
   hx0.SetStats(False)
-
+  
   c_x0.Update()
   c_x0.SaveAs("x0image.pdf")
+  
+  rootfile.Close()
 
-
-def calibration_DQMPlots(caltag,UseclusterDB):
-
-  caldir='tmp-runs/'+caltag+'-cal'
-
-  DQMfilename=caldir+'/TelescopeDQM2.root'
-  clusterDBfilename=caldir+'/localDB/clusterDB-M26.root'
-
-  # remember current working dir 
+def calibration_DQMPlots(name):
+  
+  # Remember current working dir 
+  fullpath = os.getcwd() 
+   
+  # Create results dir if not exist
+  if not os.path.isdir(fullpath+'/results'):
+    os.mkdir(fullpath+'/results')
+  
+  # Make list of all TelescopeDQM root files
+  DQMfilenames = glob.glob('tmp-runs/' + name + '/TelescopeDQM*.root')
+  
+  for DQMfilename in DQMfilenames:       
+    DQMname = os.path.splitext(os.path.basename(DQMfilename))[0]
+    
+    # Create telescopeDQM dir if not exist
+    if not os.path.isdir(fullpath+'/results/'+DQMname):
+      os.mkdir(fullpath+'/results/'+DQMname)
+    
+    # Name of directory
+    workdir = fullpath+'/results/'+DQMname+'/'+name   
+    
+    # Remove workdir if exists 
+    if os.path.isdir(workdir):
+      shutil.rmtree(workdir)
+    
+    # Create workdir and change directory
+    os.mkdir(workdir) 
+    os.chdir(workdir)
+      
+    if os.path.isfile(fullpath+'/'+DQMfilename):
+      # Create file links in the current work dir
+      os.symlink(fullpath+'/'+DQMfilename,DQMname)
+      
+      # Generate DQM plots
+      plot_alignment_parameters(inputfilename=DQMname) 
+      plot_pulls(inputfilename=DQMname) 
+      plot_trackDQM(inputfilename=DQMname) 
+       
+    os.chdir(fullpath)
+     
+  # Make list of all ClusterDB files 
+  ClusterDBfilenames = glob.glob('tmp-runs/' + name + '/localDB/clusterDB-M26.root')
+    
+  for ClusterDBfilename in ClusterDBfilenames:  
+    ClusterDBname = os.path.splitext(os.path.basename(ClusterDBfilename))[0]
+    
+    # Create telescopeDQM dir if not exist
+    if not os.path.isdir(fullpath+'/results/'+ClusterDBname):
+      os.mkdir(fullpath+'/results/'+ClusterDBname)
+    
+    # Name of directory
+    workdir = fullpath+'/results/'+ClusterDBname+'/'+name   
+    
+    # Remove workdir if exists 
+    if os.path.isdir(workdir):
+      shutil.rmtree(workdir)
+    
+    # Create workdir and change directory
+    os.mkdir(workdir) 
+    os.chdir(workdir)
+      
+    if os.path.isfile(fullpath+'/'+ClusterDBfilename):  
+      # Create file links in the current work dir
+      os.symlink(fullpath+'/'+ClusterDBfilename,'clusterDB')
+      plot_clusterDB_parameters(inputfilename='clusterDB')
+       
+    os.chdir(fullpath)
+  
+def anglereco_DQMPlots(filepath):
+  
+  # Remember current working dir 
   fullpath = os.getcwd() 
     
-  # create results dir if not exist
+  # Create results dir if not exist
   if not os.path.isdir(fullpath+'/results'):
-      os.mkdir(fullpath+'/results')
-
-  # create telescopeDQM dir if not exist
-  if not os.path.isdir(fullpath+'/results/telescopeDQM'):
-      os.mkdir(fullpath+'/results/telescopeDQM')
-
-  # Name of directory
-  workdir = 'results/telescopeDQM/'+caltag+'-cal'
-
-  # remove olddir if exists 
-  if os.path.isdir(workdir):
-    shutil.rmtree(workdir)
-    
-  # create dir and change directory
-  os.mkdir(workdir) 
-  os.chdir(workdir)
-
-  if os.path.isfile(fullpath+'/'+DQMfilename):
-
-    # Create file links in the current work dir
-    os.symlink(fullpath+'/'+DQMfilename,'TelescopeDQM')
-    os.symlink(fullpath+'/'+clusterDBfilename,'clusterDB')
-
-  # Generate DQM plots
-  plot_alignment_parameters(inputfilename = 'TelescopeDQM') 
-  if UseclusterDB:
-    plot_clusterDB_parameters(inputfilename = 'clusterDB') 
-  plot_pulls(inputfilename = 'TelescopeDQM') 
-  plot_trackDQM(inputfilename = 'TelescopeDQM') 
-
-  os.chdir(fullpath)
-
-def anglereco_DQMPlots(runspec,caltag):
-
-  recofile='root-files/X0-'+runspec+caltag+'.root'
-  paramsDQM = (caltag,recofile)
-
-  # remember current working dir 
-  fullpath = os.getcwd() 
-    
-  # create results dir if not exist
-  if not os.path.isdir(fullpath+'/results'):
-      os.mkdir(fullpath+'/results')
-
-  # create telescopeDQM dir if not exist
+    os.mkdir(fullpath+'/results')
+  
+  # Create telescopeDQM dir if not exist
   if not os.path.isdir(fullpath+'/results/anglerecoDQM'):
-      os.mkdir(fullpath+'/results/anglerecoDQM')
-
-  # Name of directory
-  workdir = 'results/anglerecoDQM/'+runspec+caltag
-
-  # remove olddir if exists 
+    os.mkdir(fullpath+'/results/anglerecoDQM')
+  
+  # Name of directory for the recofile
+  basename = os.path.splitext(os.path.basename(filepath))[0]
+  
+  workdir = 'results/anglerecoDQM/'+basename
+  
+  # Remove workdir if existing 
   if os.path.isdir(workdir):
     shutil.rmtree(workdir)
     
-  # create dir and change directory
+  # Create fresh workdir and change directory
   os.mkdir(workdir) 
   os.chdir(workdir)
-
-  if os.path.isfile(fullpath+'/'+recofile):
-
+  
+  if os.path.isfile(fullpath+'/'+filepath):
     # Create file link in the current work dir
-    os.symlink(fullpath+'/'+recofile,'anglereco')
-
+    os.symlink(fullpath+'/'+filepath,'anglereco')
+  
   plot_anglereco_DQM(inputfilename = 'anglereco') 
-
+  
   os.chdir(fullpath)
-
+  
 
 def x0image_Plots(nametag):
 

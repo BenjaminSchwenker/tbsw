@@ -131,10 +131,9 @@ def calibrate():
   # Run the calibration steps 
   CalObj.calibrate(paths=calpaths,ifile=rawfile_air,caltag=caltag)  
   
-  # Run DQM scripts
-  #tbsw.DQMplots.calibration_DQMPlots(caltag, Use_clusterDB)
-
-
+  # Create DQM plots 
+  tbsw.DQMplots.calibration_DQMPlots(name='x0-cal')
+  
 def reconstruct():
   
   # Reconsruct the rawfile using the caltag. Resulting root files are 
@@ -147,8 +146,8 @@ def reconstruct():
   # Run the reconstuction  
   RecObj.reconstruct(paths=recopath,ifile=rawfile_alu,caltag=caltag)  
   
-  # Run DQM scripts
-  tbsw.DQMplots.anglereco_DQMPlots('',caltag) 
+  # Create DQM plots
+  tbsw.DQMplots.anglereco_DQMPlots(filepath='root-files/X0-x0-reco.root') 
   
 
 def targetalignment(params):
@@ -194,33 +193,27 @@ def targetalignment(params):
   
   
 if __name__ == '__main__':
-
-  
+   
   # Get current directory
   cwdir = os.getcwd()
   
   # Create a simulated rawfiles for run with no target (air run) and Al plate 
-  simulate( )
+  #simulate( )
   
   # Calibrate the telescope using air run  
-  calibrate( )
+  #calibrate( )
    
   for it in range(0,targetalignment_iterations):
     params_TA = (rawfile_alu, steerfiles, caltag, it)
     print "The parameters for the target alignment are: " 
     print params_TA
     targetalignment(params_TA)
-
-  # Reconstruct the alu rawfile 
-  reconstruct( )
-
-  # Base filename of the X0 root file
-  basefilename='X0-'+caltag
   
-  # create root file list as input for x0 analysis scripts
-  rawlist=[caltag]
-  rootlist=[]
-  tbsw.x0imaging.X0Calibration.CreateRootFileList(rawlist=rawlist,rootlist=rootlist, caltag='')
+  # Reconstruct the alu rawfile 
+  #reconstruct( )
+   
+  # Create root file list as input for x0 analysis 
+  rootlist=['root-files/X0-x0-reco.root']
   
   # Generate a uncalibrated X/X0 image
   nametag='X0image-Uncalibrated'
