@@ -16,7 +16,7 @@ def x0imaging(filelist=None,caltag='',steerfiles=None,nametag=''):
     :@nametag:     Name tag, that is used to modify the output filename 
     :author: ulf.stolzenberg@phys.uni-goettingen.de  
   """   
-
+  
   cfgfilename=steerfiles+'x0.cfg'
 
   if len(filelist) == 0:
@@ -41,8 +41,7 @@ def x0imaging(filelist=None,caltag='',steerfiles=None,nametag=''):
     imageflags=imageflags+' -f '+cfgfilename+' -t '+nametag
   else:
     imageflags=imageflags+' -f '+cfgfilename+' -c '+caltag+' -t '+nametag
-  print('Starting X0 imaging')
-  print(imageflags)
+  print('[INFO] Executing {}'.format(imageflags))
   subprocess.call(imageflags, shell=True)
 
   return None
@@ -78,8 +77,7 @@ def x0calibration(filelist=None,imagefilename='',caltag='default',steerfiles=Non
 
   califlags=califlags+' -f '+cfgfilename+' -m '+imagefilename+' -c '+caltag
 
-  print('Starting X0 calibration')
-  print(califlags)
+  print('[INFO] Executing {}'.format(califlags))
   subprocess.call(califlags, shell=True)
 
   return None
@@ -227,7 +225,8 @@ if __name__ == '__main__':
     scriptname="DrawBoxes.C"
     shutil.copy(scriptsfolder+'/DrawBoxes.C', scriptname)
   
-    subprocess.call('root -q -b '+scriptname, shell=True)
+    action = 'root -q -b ' + scriptname + ' > ' + log-x0-drawboxes.txt + ' 2>&1'
+    subprocess.call(action, shell=True)    
     print ('[Print] Marking of measurement areas done... ')
 
     # remove DrawBoxes.C script
@@ -246,8 +245,10 @@ if __name__ == '__main__':
   cfgfile=fullpath+'/localDB/'+caltag+'/'+cfgfilename
   if os.path.isfile(cfgfile):
     shutil.copy(cfgfile, cfgfilename)
-   
-  subprocess.call('root -x -b '+scriptname+' | tee log-x0cal.txt', shell=True)            
+  
+  action = 'root -x -b ' + scriptname + ' > ' + log-x0cal.txt + ' 2>&1'
+  print('[INFO] Executing {}'.format(action))
+  subprocess.call(action, shell=True)            
   print ('[Print] Calibration done... ')  
 
   # remove calibrationfit.C script
