@@ -1,87 +1,11 @@
 import os
 import shutil
 import subprocess
-import sys, getopt 
+import sys
 import glob
 import math
 import fileinput
 import re
-
-def x0imaging(filelist=None,caltag='',steerfiles=None,nametag=''):
-  """
-  Performs radiation length imaging of the angle data provided by the file
-    :@filelist:    List of input root files with TTree of scattering angles
-    :@caltag:      Use x0 calibration parameters from cfg files in the caltag subdirectory    
-    :@steerfiles:  Directory, where the image cfg file lies
-    :@nametag:     Name tag, that is used to modify the output filename 
-    :author: ulf.stolzenberg@phys.uni-goettingen.de  
-  """   
-  
-  cfgfilename=steerfiles+'x0.cfg'
-
-  if len(filelist) == 0:
-    print('The file list is empty!') 
-    return None
-  
-  for filename in filelist:
-    if filename == None:
-      return None
-
-  if steerfiles == None:
-    return None
-
-  print(nametag)
-
-  imageflags='python tbsw/x0imaging/GenerateImage.py'
-
-  for filename in filelist:
-    imageflags= imageflags+ ' -i '+str(filename)
-
-  if caltag=='':
-    imageflags=imageflags+' -f '+cfgfilename+' -t '+nametag
-  else:
-    imageflags=imageflags+' -f '+cfgfilename+' -c '+caltag+' -t '+nametag
-  print('[INFO] Executing {}'.format(imageflags))
-  subprocess.call(imageflags, shell=True)
-
-  return None
-
-
-# Function which starts the x0 calibration script
-def x0calibration(filelist=None,imagefilename='',caltag='default',steerfiles=None):
-  """
-  Performs radiation length calibration on well known material target
-    :@filename:    List of input root file with calibration data 
-    :@caltag:      Use x0 calibration parameters from cfg files in the caltag subdirectory and save results there    
-    :@steerfiles:  Directory, where the image cfg file lies
-    :author: ulf.stolzenberg@phys.uni-goettingen.de  
-  """   
-
-  cfgfilename=steerfiles+'x0.cfg'
-
-  if len(filelist) == 0:
-    print('The file list is empty!') 
-    return None
-  
-  for filename in filelist:
-    if filename == None:
-      return None
-
-  if steerfiles == None:
-    return None
-
-  califlags='python tbsw/x0imaging/X0Calibration.py'
-
-  for filename in filelist:
-    califlags= califlags+ ' -i '+str(filename)
-
-  califlags=califlags+' -f '+cfgfilename+' -m '+imagefilename+' -c '+caltag
-
-  print('[INFO] Executing {}'.format(califlags))
-  subprocess.call(califlags, shell=True)
-
-  return None
-
 
 # Function which merges the result root files
 def merge_rootfile(filename=None,RunList='',caltag=None):
@@ -131,41 +55,18 @@ def CreateRootFileList(rawlist,rootlist=[], caltag=''):
       rootlist.append('root-files/X0-'+name+'-'+caltag+'.root')
 
 
-if __name__ == '__main__':
+def x0calibration(rootfilelist=[],imagefile='',caltag='',steerfiles=''):
+  """
+  Performs radiation length calibration on well known material target
+    :@filename:    List of input root file with calibration data 
+    :@caltag:      Use x0 calibration parameters from cfg files in the caltag subdirectory and save results there    
+    :@steerfiles:  Directory, where the image cfg file lies
+    :author: ulf.stolzenberg@phys.uni-goettingen.de  
+  """   
   
-  rootfilelist = []
-  cfgfile = ''
-  imagefile = ''
-  caltag=''
+  cfgfile=steerfiles+'x0.cfg'
 
-  try:
-    opts, args = getopt.getopt(sys.argv[1:],"hi:f:m:c:",["ifile=","cfgfile=","mfile=","caltag="])
-  except getopt.GetoptError:
-    print ('X0Calibration.py -i <inputfile> -f <cfgfile> -m <imagefile> -c <cal-tag>' )
-    sys.exit(2)
-
-  for opt, arg in opts:
-    if opt == '-h':
-      print ('X0Calibration.py -i <inputfile> -f <cfgfile> -m <imagefile> -c <cal-tag>')
-      sys.exit()
-    elif opt in ("-i", "--ifile"):
-      rootfilelist.append(arg)
-    elif opt in ("-f", "--cfgfile"):
-      cfgfile = arg
-    elif opt in ("-m", "--mfile"):
-      imagefile = arg
-    elif opt in ("-c", "--caltag"):
-      caltag = arg
-
-  if len(rootfilelist) == 0:
-    print ('missing option: -i inputfilelist')
-    sys.exit(2) 
-
-  if cfgfile == '':
-    print ('missing option: -i path/to/cfgfilename.cfg')
-    sys.exit(2)   
-
-  # remember current working dir 
+  # Remember current working dir 
   fullpath = os.getcwd() 
 
   # Path to work directory
@@ -225,7 +126,7 @@ if __name__ == '__main__':
     scriptname="DrawBoxes.C"
     shutil.copy(scriptsfolder+'/DrawBoxes.C', scriptname)
   
-    action = 'root -q -b ' + scriptname + ' > ' + log-x0-drawboxes.txt + ' 2>&1'
+    action = 'root -q -b ' + scriptname + ' > x0-drawboxes.log  2>&1'
     subprocess.call(action, shell=True)    
     print ('[Print] Marking of measurement areas done... ')
 
@@ -246,7 +147,7 @@ if __name__ == '__main__':
   if os.path.isfile(cfgfile):
     shutil.copy(cfgfile, cfgfilename)
   
-  action = 'root -x -b ' + scriptname + ' > ' + log-x0cal.txt + ' 2>&1'
+  action = 'root -q -b ' + scriptname + ' > x0cal.log  2>&1'
   print('[INFO] Executing {}'.format(action))
   subprocess.call(action, shell=True)            
   print ('[Print] Calibration done... ')  
@@ -260,16 +161,19 @@ if __name__ == '__main__':
     os.mkdir(caldir)
     
   print ('[Print] Copy cfg file ') 
-
+  
   # save all interesting files to common folder   
   for cfgfile in glob.glob('*.cfg'): 
     shutil.copy(cfgfile, os.path.join(caldir,cfgfile))  
-
+  
   # Remove files
   for file in glob.glob('*.cfg'):
     os.remove(file) 
   for file in glob.glob('*.cfg.bak'):
     os.remove(file) 
+  
+  # Go back to workspace
+  os.chdir(fullpath) 
 
                    
                 

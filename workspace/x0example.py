@@ -217,7 +217,7 @@ if __name__ == '__main__':
   
   # Generate a uncalibrated X/X0 image
   nametag='X0image-Uncalibrated'
-  tbsw.x0imaging.X0Calibration.x0imaging(filelist=rootlist,caltag='',steerfiles=steerfiles,nametag=nametag)
+  tbsw.x0imaging.GenerateImage.x0imaging(rootfilelist=rootlist,caltag='',steerfiles=steerfiles,nametag=nametag)
   tbsw.DQMplots.x0image_Plots(nametag=nametag)
 
   # Path to uncalibrated X0 image file
@@ -225,11 +225,11 @@ if __name__ == '__main__':
 
   # Do a calibration of the angle resolution
   nametag='X0Calibration-'+x0caltag
-  tbsw.x0imaging.X0Calibration.x0calibration(filelist=rootlist,imagefilename=imagefilename,caltag=x0caltag,steerfiles=steerfiles)
+  tbsw.x0imaging.X0Calibration.x0calibration(rootfilelist=rootlist,imagefile=imagefilename,caltag=x0caltag,steerfiles=steerfiles)
   tbsw.DQMplots.x0calibration_DQMPlots(nametag=nametag)
 
   # Generate a calibrated X/X0 image
   nametag='X0image-Calibrated-'+x0caltag
-  tbsw.x0imaging.X0Calibration.x0imaging(filelist=rootlist,caltag=x0caltag,steerfiles=steerfiles,nametag=nametag)
+  tbsw.x0imaging.GenerateImage.x0imaging(rootfilelist=rootlist,caltag=x0caltag,steerfiles=steerfiles,nametag=nametag)
   tbsw.DQMplots.x0image_Plots(nametag=nametag)
 

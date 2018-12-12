@@ -4,21 +4,15 @@ using namespace std ;
 
 
 
-  // Highland model of a MSC angle distribution, the parameters are:
-
-  /*
-	* par[0]:  Expected beam energy at u,v=0;
-	* par[1]:  Beam particle charge
-	* par[2]:  Beam particle mass
-	* par[3]:  Radiation length X/X0
-	* par[4]:  Expected angle reconstruction error
-	* par[5]:  Normalization
-	* par[6]:  mean value
-
-*/
-  
-  // Highland model of multiple scattering: Simple gaussian with a well defined standard deviation depending on X/X0 and the beam energy.
-  // The overall function describing the kink angle distributions is the Highland function convoluted with a gaussian function due to the finite angle resolution on the target plane. 
+  /** Highland model of a MSC angle distribution, the parameters are: 
+   * par[0]:  Expected beam energy at u,v=0;
+   * par[1]:  Beam particle charge
+   * par[2]:  Beam particle mass
+   * par[3]:  Radiation length X/X0
+   * par[4]:  Expected angle reconstruction error
+   * par[5]:  Normalization
+   * par[6]:  mean value
+   */
   Double_t highlandfunction(Double_t *x, Double_t *par)
   { 
 
@@ -1046,7 +1040,7 @@ int x0imaging()
 		std::cout << filenames.at(i) << endl;
 	}
 
-	//Create and open image file file
+	//Create and open image file 
 	TFile *imagefile = new TFile(imagename, "RECREATE");
 
 	// Create directories containing map histograms, fits and results

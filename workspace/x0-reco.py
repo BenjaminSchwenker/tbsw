@@ -34,15 +34,7 @@ import multiprocessing
 # Path to steering files 
 # Folder contains a gear file detailing the detector geometry and a config file
 # for x0 calibration. Users will likely want to rename this folder. 
-
-# Steerfiles for the telescope calibration
-steerfiles_cali = 'steering-files/x0-tb-june17/'
-
-# Steerfiles for the angle reconstruction (can be the same directory as telescope calibration steerfiles)
-steerfiles_reco = 'steering-files/x0-tb-june17/'
-
-# Steerfiles for the x0calibration/x0imaging (can be the same directory as telescope calibration steerfiles)
-steerfiles_x0 = 'steering-files/x0-tb-june17/'
+steerfiles = 'steering-files/x0-tb-june17/'
 
 # Nominal Beam energy
 beamenergy=2.0
@@ -258,13 +250,13 @@ def xx0calibration(params):
 
   # Generate a uncalibrated X/X0 image
   imagenametag='X0image-calitarget-Uncalibrated'
-  tbsw.x0imaging.X0Calibration.x0imaging(filelist=[RootFileList_x0cali[0]],caltag='',steerfiles=steerfiles,nametag=imagenametag)
+  tbsw.x0imaging.GenerateImage.x0imaging(rootfilelist=[RootFileList_x0cali[0]],caltag='',steerfiles=steerfiles,nametag=imagenametag)
 
   # Path to uncalibrated X0 image file
   imagefilename='/root-files/'+imagenametag+'.root'
 
   # Do a calibration of the angle resolution
-  tbsw.x0imaging.X0Calibration.x0calibration(filelist=RootFileList_x0cali,imagefilename=imagefilename,caltag=x0caltag,steerfiles=steerfiles)
+  tbsw.x0imaging.X0Calibration.x0calibration(rootfilelist=RootFileList_x0cali,imagefile=imagefilename,caltag=x0caltag,steerfiles=steerfiles)
 
   nametag='X0Calibration-'+x0caltag
   tbsw.DQMplots.x0calibration_DQMPlots(nametag=nametag)
@@ -289,7 +281,7 @@ def xx0image(params):
     nametag=listnametag+'-Calibrated-'+x0caltag
 
   # Do a calibration of the angle resolution
-  tbsw.x0imaging.X0Calibration.x0imaging(filelist=RootFileList_x0image,caltag=x0caltag,steerfiles=steerfiles,nametag=nametag)
+  tbsw.x0imaging.GenerateImage.x0imaging(rootfilelist=RootFileList_x0image,caltag=x0caltag,steerfiles=steerfiles,nametag=nametag)
 
   tbsw.DQMplots.x0image_Plots(nametag=nametag)
     
@@ -306,13 +298,13 @@ if __name__ == '__main__':
   # workspace/results/telescopeDQM
   
   if Script_purpose_option !=0 and Script_purpose_option !=1:
-    params_cali = ( rawfile_cali, steerfiles_cali, caltag)
+    params_cali = ( rawfile_cali, steerfiles, caltag)
     calibrate( params_cali )
 
   # Target alignment
   if Script_purpose_option !=0 and Script_purpose_option !=1:
     for it in range(0,targetalignment_iterations):
-      params_TA = (rawfile_TA, steerfiles_reco, caltag, it)
+      params_TA = (rawfile_TA, steerfiles, caltag, it)
       print "The parameters for the target alignment are: " 
       print params_TA
 
@@ -329,7 +321,7 @@ if __name__ == '__main__':
   # The histmap and angle resolution for every single run can be found in 
   # workspace/results/anglerecoDQM/
   if Script_purpose_option !=0 and Script_purpose_option !=1:
-    params_reco=[(x, steerfiles_reco, caltag) for x in RawfileList_reco]
+    params_reco=[(x, steerfiles, caltag) for x in RawfileList_reco]
     print "The parameters for the reconstruction are: " 
     print params_reco
 
@@ -348,19 +340,19 @@ if __name__ == '__main__':
   # The fitted distributions and self-consistency plots in pdf format from this 
   # x0 calibration can be found in the workspace/tmp-runs/*X0Calibration/ directory
   if Script_purpose_option !=0:
-    params_x0cali = ( x0caltag, RawfileList_x0cali, steerfiles_x0, caltag)
+    params_x0cali = ( x0caltag, RawfileList_x0cali, steerfiles, caltag)
     xx0calibration(params_x0cali)
 
   # Generate a calibrated X/X0 image
   #
   # The calibrated radiation length image and other images, such as the beamspot
   # etc can be found in the workspace/root-files/*CalibratedX0Image.root
-  params_x0image = ( x0caltag, RawfileList_x0image, steerfiles_x0, caltag, name_image1)
+  params_x0image = ( x0caltag, RawfileList_x0image, steerfiles, caltag, name_image1)
   xx0image(params_x0image)
 
   # Generate another calibrated X/X0 image
   # The X/X0 image step can be repeated multiple times to generate a set of images
   # Just remove the comment and add a run list for each image
-  #params_x0image = ( x0caltag, RawfileList_x0image2, steerfiles_x0, caltag, name_image2)
+  #params_x0image = ( x0caltag, RawfileList_x0image2, steerfiles, caltag, name_image2)
   #xx0image(params_x0image)
 
