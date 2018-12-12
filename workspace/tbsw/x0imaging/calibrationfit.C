@@ -312,13 +312,13 @@ Grid::Grid(TEnv* mEnv)
 }
 
 // Functions used in this script
-double DetermineFitrange(TH1*,double);
+double DetermineFitrange(TH1F*,double);
 double calculateB(double);
 double getrecoerror(TFile*);
 void savehisto(TFile*,TFile*,TString,TString, double, double, double, double, int );
 void correcthisto(TFile*,TFile*, TString , double , double , double , double );
 double* fit(TFile*,TString, Grid, std::vector<double>, double, TString, std::vector<bool>);
-void shiftbins(TH1*, double);
+void shiftbins(TH1F*, double);
 void calibrationfit();
 int** GetParameterMapping(int);
 
@@ -862,7 +862,7 @@ double calculateB(double log_omega_b)
 // Determine fit range for a kink angle histogram
 // This is done by finding the first and last bin above a certain threshold.
 // The fit range is half of the distance between these two bins in rad
-double DetermineFitrange(TH1* histo,double rangevalue)
+double DetermineFitrange(TH1F* histo,double rangevalue)
 {
 
     // Clone histo
@@ -931,7 +931,7 @@ double getanglerecovar(TFile* file)
 
 
 // Shift a decentralized angle distribution in order to get a mean value of 0
-void shiftbins(TH1* histogram, double mean1)
+void shiftbins(TH1F* histogram, double mean1)
 {
 	// The mean offset has to be corrected before merging the two histograms
 	// First the bin value of the offset has to be found out
@@ -1006,7 +1006,7 @@ void savehisto(std::vector<TString> inputfiles, TFile* file2, TString histoname,
 	tmp_tree->Draw("theta1>>h_help",areacuts,"");
 
 	// Get the histogram and save it in the raw folder
-	TH1 * h_help=tmp_tree->GetHistogram();
+	TH1F * h_help=tmp_tree->GetHistogram();
 
 	double limits=histo_range*(h_help->GetRMS());
 
@@ -1052,8 +1052,8 @@ void savehisto(std::vector<TString> inputfiles, TFile* file2, TString histoname,
 		if(correctmean==1)
 		{
 			// Get histogram
-			TH1* histogram1=(TH1*)file2->Get("grid/raw/theta1_uncorrected_"+histoname);
-			TH1* histogram2=(TH1*)file2->Get("grid/raw/theta2_uncorrected_"+histoname);
+			TH1F* histogram1=(TH1F*)file2->Get("grid/raw/theta1_uncorrected_"+histoname);
+			TH1F* histogram2=(TH1F*)file2->Get("grid/raw/theta2_uncorrected_"+histoname);
 
 			// Save mean of both distributions in arrays
 			mean1=histogram1->GetMean();
@@ -1208,8 +1208,8 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	double *fitresults = new double[8];
 
 	// Fit and raw angle histograms
-	std::vector<TH1 *> histo_vec;
-	TH1 * histogramsum;
+	std::vector<TH1F *> histo_vec;
+	TH1F * histogramsum;
 
 	// Copy raw histograms
 	for(int i=0; i< num_fitfunctions; i++)
@@ -1218,11 +1218,11 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		histoname.Form("measurementarea%i",i+1);
 		file->cd("");
 
-		histogramsum=(TH1*)file->Get("grid/raw/sumhisto_"+histoname);
+		histogramsum=(TH1F*)file->Get("grid/raw/sumhisto_"+histoname);
 
 		// Make a copy of the histogram
-		TH1* fithistogramsum;
-		fithistogramsum=(TH1*)histogramsum->Clone("sumhisto_"+histoname+"_fit");
+		TH1F* fithistogramsum;
+		fithistogramsum=(TH1F*)histogramsum->Clone("sumhisto_"+histoname+"_fit");
 		histo_vec.push_back(fithistogramsum);
 
 		file->cd("grid/fit/");

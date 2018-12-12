@@ -492,7 +492,7 @@ int MergeImages()
 			fit1prob_image_tmp=(TH2F*)X0file->Get("result/fitDQM/fit1prob_image");
 			fit2prob_image_tmp=(TH2F*)X0file->Get("result/fitDQM/fit2prob_image");
 			fitsumprob_image_tmp=(TH2F*)X0file->Get("result/fitDQM/fitsumprob_image");
-			theta1mean_image_tmp=(TH2F*)X0file->Get("result/theta2mean_image");
+			theta1mean_image_tmp=(TH2F*)X0file->Get("result/theta1mean_image");
 			theta2mean_image_tmp=(TH2F*)X0file->Get("result/theta2mean_image");
 			correctedtheta1mean_image_tmp=(TH2F*)X0file->Get("result/correctedtheta1mean_image");
 			correctedtheta2mean_image_tmp=(TH2F*)X0file->Get("result/correctedtheta2mean_image");
