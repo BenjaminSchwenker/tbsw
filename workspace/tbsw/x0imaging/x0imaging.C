@@ -1097,7 +1097,7 @@ int x0imaging()
 	double maxchi2ndof_fit=mEnv.GetValue("maxchi2ndof", 10.0);
 
     // Fit range parameter
-	double rangevalue=mEnv.GetValue("fitrange_parameter", 2.0);
+	double rangevalue=mEnv.GetValue("fitrange_parameter", 1.0);
 
     // Fit options
 	TString fitoptions=mEnv.GetValue("fit_options", "RMELS");

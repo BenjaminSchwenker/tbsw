@@ -217,8 +217,8 @@ if __name__ == '__main__':
   
   # Generate a uncalibrated X/X0 image
   nametag='X0image-Uncalibrated'
-  tbsw.x0imaging.GenerateImage.x0imaging(rootfilelist=rootlist,caltag='',steerfiles=steerfiles,nametag=nametag)
-  tbsw.DQMplots.x0image_Plots(nametag=nametag)
+  #tbsw.x0imaging.GenerateImage.x0imaging(rootfilelist=rootlist,caltag='',steerfiles=steerfiles,nametag=nametag)
+  #tbsw.DQMplots.x0image_Plots(nametag=nametag)
 
   # Path to uncalibrated X0 image file
   imagefilename='/root-files/'+nametag+'.root'
@@ -230,6 +230,6 @@ if __name__ == '__main__':
 
   # Generate a calibrated X/X0 image
   nametag='X0image-Calibrated-'+x0caltag
-  tbsw.x0imaging.GenerateImage.x0imaging(rootfilelist=rootlist,caltag=x0caltag,steerfiles=steerfiles,nametag=nametag)
-  tbsw.DQMplots.x0image_Plots(nametag=nametag)
+  #tbsw.x0imaging.GenerateImage.x0imaging(rootfilelist=rootlist,caltag=x0caltag,steerfiles=steerfiles,nametag=nametag)
+  #tbsw.DQMplots.x0image_Plots(nametag=nametag)
 

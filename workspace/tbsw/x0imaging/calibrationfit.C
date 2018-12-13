@@ -1,38 +1,35 @@
-#include <iostream>
 #include <cmath>
-#include <fstream>
-#include "TSystem.h"
-#include "TApplication.h"
-#include "TFile.h"
-#include "TTree.h"
-#include "TCut.h"
-#include "TString.h"
-#include "TMath.h"
-#include "TROOT.h"
-#include "Fit/Fitter.h"
-#include "Fit/BinData.h"
-#include "Fit/Chi2FCN.h"
-#include "TH1.h"
-#include "TList.h"
-#include "Math/WrappedMultiTF1.h"
-#include "HFitInterface.h"
-#include "TCanvas.h"
-#include "TStyle.h"
+#include <iostream>
 #include <cstdlib>
 #include <map>
 #include <string>
 #include <fstream>
 #include <vector>
 #include <sstream>
-#include "TChain.h"
-#include "TCanvas.h"
-#include "TObjString.h"
+
+
+#include "Fit/Fitter.h"
+#include "Fit/BinData.h"
+#include "Fit/Chi2FCN.h"
 #include "TH1.h"
-#include "TH2.h"
-#include "THStack.h"
-#include "TKey.h"
-#include "TFractionFitter.h"
+#include "TH1F.h"
+#include "TList.h"
+#include "Math/WrappedMultiTF1.h"
+#include "TCanvas.h"
+#include "TStyle.h"
 #include "TLegend.h"
+
+#include "TSystem.h"
+//#include "TApplication.h"
+#include "TFile.h"
+#include "TTree.h"
+#include "TCut.h"
+#include "TString.h"
+#include "TMath.h"
+#include "TROOT.h"
+
+
+
 
 // The purpose of this script is to do a simultaneous fit of a set of angle distributions, which are taken from the X0_merge.root input file. Each of these distributions 
 // should come from an area with a homogenious thickness and material composition. The hole class defined in this script can be used to select the area and give them some attributes
@@ -741,40 +738,35 @@ const int num_localparameters=15;
 // Number of new parameters per fit function
 const int newparsperfunction=8;
 
-// Global estimator object, will be used in fit
+// Create the GlobalCHi2 structure
 struct GlobalEstimator { 
-    std::vector< ROOT::Math::IMultiGenFunction * >& getEstimatorVec() {return fEstimatorVec;}
-	void SetArray() {ipar=GetParameterMapping(fEstimatorVec.size());}
-
-    double operator() (const double *par) const {
-
-      double ret =0;
-	  
-	  for(int j=0;j<fEstimatorVec.size();j++)
-	  {
-        // read function args
-        double p1[num_localparameters];
-        for (int i = 0; i < num_localparameters; ++i) 
-		{
-				p1[i] = par[ipar[j][i] ];
-		}
-        // evaluate function and sum up
-        ROOT::Math::IMultiGenFunction * func  =  fEstimatorVec.at(j);
-
-		// Add up all local estimator values of the single fit functions
-		ret += (*func)(p1);
-       
-      }
-	  // return global estimator value
-	  return ret;
-}
-
-
- 
-    std::vector< ROOT::Math::IMultiGenFunction * > fEstimatorVec;
-	int ** ipar;
-  };
-
+  std::vector< ROOT::Math::IMultiGenFunction * >& getEstimatorVec() {return fEstimatorVec;}
+  void SetArray() {ipar=GetParameterMapping(fEstimatorVec.size());}
+  
+  double operator() (const double *par) const {
+    double ret =0;
+      
+	for(int j=0;j<fEstimatorVec.size();j++)
+	{
+      // read function args
+      double p1[num_localparameters];
+      for (int i = 0; i < num_localparameters; ++i) 
+      {
+        p1[i] = par[ipar[j][i] ];
+	  }
+      // evaluate function and sum up
+      ROOT::Math::IMultiGenFunction * func  =  fEstimatorVec.at(j);
+      
+      // Add up all local estimator values of the single fit functions
+	  ret += (*func)(p1); 
+    }
+	// return global estimator value
+    return ret;
+  }
+  
+  std::vector< ROOT::Math::IMultiGenFunction * > fEstimatorVec;
+  int ** ipar;
+};
 
 // Get Relation between global fit parameters and local fit parameters
 // Parameter mapping
@@ -902,22 +894,24 @@ double getanglerecovar(TFile* file)
 	TTree *msc_tree = (TTree*)file->Get("MSCTree");
 
 	// Draw reconstruction error 1 histogram
-	msc_tree->Draw("theta1_var", "", "P*");
-
+	msc_tree->Draw("theta1_var>>h_help_theta1_var", "", "P*");
+    TH1F *h_help_theta1_var = (TH1F*)gDirectory->Get("h_help_theta1_var");
+    
 	// Get mean value 1
-	double recovar1 = msc_tree->GetHistogram()->GetMean();
+	double recovar1 = h_help_theta1_var->GetMean();
 
-	// Get error 1
-	double recovar1_error = msc_tree->GetHistogram()->GetMeanError();
+	// Get mean error 1
+	double recovar1_error = h_help_theta1_var->GetMeanError();
 
 	// Draw reconstruction error 1 histogram
-	msc_tree->Draw("theta2_var", "", "P*");
+	msc_tree->Draw("theta2_var>>h_help_theta2_var", "", "P*");
+    TH1F *h_help_theta2_var = (TH1F*)gDirectory->Get("h_help_theta2_var");
 
 	// Get mean value 2
-	double recovar2 = msc_tree->GetHistogram()->GetMean();
+	double recovar2 = h_help_theta2_var->GetMean();
 
-	// Get error 2
-	double recovar2_error = msc_tree->GetHistogram()->GetMeanError();
+	// Get mean error 2
+	double recovar2_error = h_help_theta2_var->GetMeanError();
 
 	// Calculate mean value
 	double recovar=(recovar1+recovar2)/2.0;
@@ -1001,20 +995,19 @@ void savehisto(std::vector<TString> inputfiles, TFile* file2, TString histoname,
 
 	TString areacuts;
     areacuts.Form("(u>%.2f)&&(u<%.2f)&&(v>%.2f)&&(v<%.2f)",cutparameters_position.at(0),cutparameters_position.at(1),cutparameters_position.at(2),cutparameters_position.at(3));
-
+    
 	// Draw histogram of the first scattering angle in the given u and v range and save it
 	tmp_tree->Draw("theta1>>h_help",areacuts,"");
-
-	// Get the histogram and save it in the raw folder
-	TH1F * h_help=tmp_tree->GetHistogram();
-
+    TH1F *h_help = (TH1F*)gDirectory->Get("h_help");
+    
 	double limits=histo_range*(h_help->GetRMS());
-
+    
+    cout << "Helper histogram RMS: " << h_help->GetRMS()  << endl; 
+    
 	tmpfile->Close();
-
+    
 	// Temporary histos with angle distributions fulfilling the cut conditions
 	TH1F * tmp_anglehisto[2];
-
 	tmp_anglehisto[0]=new TH1F("theta1_histo","theta1_histo",numbins,-limits,limits);
 	tmp_anglehisto[1]=new TH1F("theta2_histo","theta2_histo",numbins,-limits,limits);
 
@@ -1174,7 +1167,7 @@ void savehisto(std::vector<TString> inputfiles, TFile* file2, TString histoname,
 // Function to fit the MSC angle histograms simultaneously, it returns a pointer to the fit results
 double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double recoerr, TString model, std::vector<bool> fitoptions, double rangevalue)
 { 
-
+    
 	// Read out the parameters from the beamoptions vector
 	double z=beamoptions.at(0);
 	double mass=beamoptions.at(1);
@@ -1234,7 +1227,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	TF1* fitFcn;
 	TString fctname;
 
-	ROOT::Fit::DataOptions opt; 
+	//ROOT::Fit::DataOptions opt; 
 	std::vector<ROOT::Fit::DataRange> range_vec;
 
 	// loop for definition of the fit functions, the fitrange is determined for every one of them
@@ -1248,7 +1241,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		{
 			// Use Gaussian function with width corresponding to the calibrated angle resolution, if material is only air or extremely thin
 			// Also in this case the fit range is set to be a little smaller
-			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0001) fitFcn = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13]+[14],[7]*[8])",-fitrange,fitrange);
+			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0002) fitFcn = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13]+[14],[7]*[8])",-fitrange,fitrange);
 
 
 			// Use Moliere model in case the material is not just air
@@ -1258,23 +1251,24 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		else
 		{
 			// Use Gaussian function with width corresponding to the calibrated angle resolution, if material is only air or extremely thin
-			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0001) fitFcn = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13]+[14],[7]*[8])",-fitrange,fitrange);
+			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0002) fitFcn = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13]+[14],[7]*[8])",-fitrange,fitrange);
 			// Use Highland model in case the material is not just air
 			else fitFcn = new TF1(fctname,highlandfunction,-fitrange,fitrange,num_localparameters);
 		}
 
-
 		// Fill vector with pointers to fit functions
 		fitFcn_vec.push_back(fitFcn);
-
+        
 		// set the data range
+        cout<<"Fit function number: "<<i<<endl;
 		cout<<"The range value from the cfg file is "<<rangevalue<<endl;	
 		cout<<"Fitrange at d="<<grid.GetMeasurementAreas().at(i).Get_thickness()<<" mm: "<<fitrange<<" rad"<<endl<<endl;
-		ROOT::Fit::DataRange range;
-		range.SetRange(-fitrange,fitrange);
-		range_vec.push_back(range);
+		
+        range_vec.emplace_back(ROOT::Fit::DataRange(-fitrange,fitrange));
 	}
-
+    
+    cout<<"Done reading definition of fitfunctions"<< endl;
+    
     // Vector of wrapped multi tf1
     std::vector<ROOT::Math::WrappedMultiTF1> wf;
 
@@ -1289,29 +1283,45 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	if(Use_LogLikelihoodfit) loglikelihood.reserve(3*num_fitfunctions);
 	else chi2.reserve(3*num_fitfunctions);
 
+    cout<<"benni debug 1"<< endl;
+    
 	// data size definition 
 	// needed during the fit
-	int datasize;
+	int datasize = 0;
 	
-    // Create globalChi2 object, which will be used during the fitting to return fit chi2 values and update the global parameters
-	GlobalEstimator globalestimator;
-
     for(int i=0;i<num_fitfunctions;i++) 
 	{
+        
 		// Create wrapped multi function entry
 		ROOT::Math::WrappedMultiTF1 wf_entry(*fitFcn_vec.at(i),1);
 		wf.push_back(wf_entry);
-		
+        
 		// Create data entry and fill data store and increase data size variable
-		ROOT::Fit::BinData data_entry(opt,range_vec.at(i));
-		data.push_back(data_entry);
-		ROOT::Fit::FillData(data.at(i), histo_vec.at(i));
-		datasize+=data.at(i).Size();
+        ROOT::Fit::DataOptions optB;
+        ROOT::Fit::DataRange range(range_vec.at(i));
+        ROOT::Fit::DataRange rangeB;
+        
+        TH1F * histoptr =  histo_vec.at(i);
+        
+        cout << "ranges " << range(0).first << ", " << range(0).second << endl;
+        rangeB.SetRange(range(0).first, range(0).second);
+        ROOT::Fit::BinData dataB(optB,rangeB);
+        cout << "test benni size dataB before fill: " <<dataB.Size() << endl; 
+        ROOT::Fit::FillData(dataB, histoptr);
+        datasize+=dataB.Size();
+        cout << "test benni size dataB after fill: " <<dataB.Size() << " i " << i << endl; 
+        
+		//data.push_back(dataB);
 	}
-
+    
+    cout<<"benni debug 2"<< endl;
+    
+    // Create globalChi2 object, which will be used during the fitting to return fit chi2 values and update the global parameters
+	GlobalEstimator globalestimator;
 
 	for(int i=0;i<num_fitfunctions;i++)
 	{
+        cout<<"benni debug 2: " << i << endl;
 		// Create estimator function entry and fill global estimator 
 		if(Use_LogLikelihoodfit) 
 		{
@@ -1326,8 +1336,11 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 	}
 
+    cout<<"benni debug 3"  << endl;
 	// Set parameter mapping array in the global chi2 object
 	globalestimator.SetArray();
+    
+    cout<<"Prepare the fitter for the calibration fit"<< endl;
     
 	ROOT::Fit::Fitter fitter;
 
@@ -1410,11 +1423,15 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 	fitter.Config().MinimizerOptions().SetPrintLevel(1);
 	fitter.Config().SetMinimizer("Minuit2","Migrad"); 
-
+    
+    cout<<"Perform the actual fit of calibration data"<< endl;
+    
 	// fit FCN function directly 
 	// (specify optionally data size and flag to indicate that is a chi2 fit)
 	fitter.FitFCN(num_globalparameters,globalestimator,0,datasize,!Use_LogLikelihoodfit);
-
+    
+    cout<<"Done with fitting. Read back the fit results"<< endl;
+    
 	ROOT::Fit::FitResult result = fitter.Result();
 	result.Print(std::cout);
 
@@ -1463,7 +1480,9 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 		for(int iname=0;iname<num_localparameters;iname++) fitfunc->SetParName(iname,name[iname]);
 	}
-
+    
+    cout<<"Plot the fit results, print them in terminal and save them to histogram"<< endl;
+    
 	// Plot the fit results, print them in terminal and save them to histogram
 		
 	// Save lambda value and error as result
@@ -1534,10 +1553,11 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 		c->SaveAs(pdfname); 
 	}
-
+      
 	// Do a self consistency check:
 	// Check whether a fit with the determined calibration parameters yields the correct radiation length value for all the
     // angle distributions used in the calibration fit
+    cout <<"Start self consistency fit"<< endl;
 
 	TString fitoption;
 	if(model=="moliere") fitoption="RMELS";
@@ -1681,7 +1701,6 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	resultshist->Write("results");
 	resultsfile->Close();
 	
-
 	// Return pointer to fitresults
 	return fitresults;
 } // End of fit function
@@ -1712,20 +1731,7 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
   // measurement data of a plane with a precisely known material distribution ( for example a aluminum grid with a set 
   // of holes with different thicknesses.
   void calibrationfit()
-  { 
-
-	#if defined(__CINT__) && !defined(__MAKECINT__) 
-   	cout << "ERROR: This script can run only using ACliC, you must run it by doing: " << endl;
-   	cout << "\t .x $ROOTSYS/tutorials/fit/combinedFit.C+" << endl;
-   	return;
-	#endif
-
-	gSystem->Load("libProof.so");
-	gSystem->Load("libTreePlayer.so");
-
-	gROOT->Reset(); 
-	gROOT->SetStyle("Plain"); 	
-
+  {     
     // Read config file
     //------------------
     TEnv *mEnv=new TEnv("x0.cfg");
@@ -1753,7 +1759,7 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
 	double histo_range=mEnv->GetValue("cali_histo_range", 5.0);
 
 	// Read out the parameter that determines the range of the fit
-	double rangevalue=mEnv->GetValue("fitrange_parameter", 2.0);
+	double rangevalue=mEnv->GetValue("fitrange_parameter", 1.0);
 
 	// Integer determining, whether a offset correction is applied to the angular distributions
 	// 1: correction
@@ -1822,17 +1828,14 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
 	// Open the first input file
 	// This is needed to determine the angle resolution
 	TFile *Inputfile = new TFile(inputfiles.at(0), "READ");
-
+	recoerr=sqrt(getanglerecovar(Inputfile));
+	cout<<"Angle reconstruction error: 	"<<recoerr<<" rad"<<endl;
+	Inputfile->Close();
+    
 	//Open the x0 calibration file
 	TString filename="X0Calibration-"+model+"fit";
 	TFile *rootfile = new TFile(filename+".root", "RECREATE");
-
-	// Set number of layers of target	
-	recoerr=sqrt(getanglerecovar(Inputfile));
-	cout<<"Angle reconstruction error: 	"<<recoerr<<" rad"<<endl;
-
-	Inputfile->Close();
-
+     
 	// Create directories containing angle histograms and fits
 	rootfile->mkdir("grid");
 	rootfile->mkdir("grid/raw");
@@ -1954,6 +1957,6 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
 
 	rootfile->Close();
 
-  gApplication->Terminate();
+  
   }
 

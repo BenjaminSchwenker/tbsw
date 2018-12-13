@@ -128,7 +128,7 @@ def x0calibration(rootfilelist=[],imagefile='',caltag='',steerfiles=''):
   
     action = 'root -q -b ' + scriptname + ' > x0-drawboxes.log  2>&1'
     subprocess.call(action, shell=True)    
-    print ('[Print] Marking of measurement areas done... ')
+    print ('[INFO] Marking of measurement areas done... ')
 
     # remove DrawBoxes.C script
     os.remove(scriptname) 
@@ -150,7 +150,7 @@ def x0calibration(rootfilelist=[],imagefile='',caltag='',steerfiles=''):
   action = 'root -q -b ' + scriptname + ' > x0cal.log  2>&1'
   print('[INFO] Executing {}'.format(action))
   subprocess.call(action, shell=True)            
-  print ('[Print] Calibration done... ')  
+  print ('[INFO] Calibration done... ')  
 
   # remove calibrationfit.C script
   os.remove(scriptname) 
@@ -160,7 +160,7 @@ def x0calibration(rootfilelist=[],imagefile='',caltag='',steerfiles=''):
   if not os.path.isdir(caldir):
     os.mkdir(caldir)
     
-  print ('[Print] Copy cfg file ') 
+  print ('[INFO] Copy cfg file ') 
   
   # save all interesting files to common folder   
   for cfgfile in glob.glob('*.cfg'): 
