@@ -1,4 +1,3 @@
-//#include <iostream.h>
 #include <fstream>
 using namespace std ;
 
@@ -393,33 +392,34 @@ using namespace std ;
 // The fit range is half of the distance between these two bins in rad
 double DetermineFitrange(TH1F* histo,double rangevalue)
 {
+  // Clone histo
+  TH1F *h2 = (TH1F*) histo->Clone();
+  
+  cout<<"RMS value of distribution: "<<histo->GetRMS()<<endl;
+  cout<<"Selected range parameter: "<<rangevalue<<" -> Fit range up to y=1/("<<rangevalue<<"*e)"<<endl;
+  double fitrange = sqrt(2.0*rangevalue)*histo->GetRMS();
 
-    // Clone histo
-	TH1F *h2 = (TH1F*) histo->Clone();
+  // Use RMS value as a rough measure of the fit range for a gaussian fit
+  TF1 *f1 = new TF1("f1","gaus(x)",-fitrange,fitrange);
+  f1->SetLineStyle(2);
+  TFitResultPtr fitr=h2->Fit("f1","RS");
 
-	cout<<"RMS value of distribution: "<<histo->GetRMS()<<endl;
-	cout<<"Selected range parameter: "<<rangevalue<<" -> Fit range up to y=1/("<<rangevalue<<"*e)"<<endl;
-	double fitrange = sqrt(2.0*rangevalue)*histo->GetRMS();
+  // Repeat fit in case it failed
+  if(fitr!=0)
+  {
+    cout<<"Fit of angle distribution failed with status: "<<fitr<<endl;
+    cout<<"Repeat fit "<<endl;
+    h2->Fit("f1","RM");
+  }
 
-	// Use RMS value as a rough measure of the fit range for a gaussian fit
-	TF1 *f1 = new TF1("f1","gaus(x)",-fitrange,fitrange);
-	f1->SetLineStyle(2);
-	TFitResultPtr fitr=h2->Fit("f1","RS");
+  // Use the determined sigma value to calculate the fit range
+  double sigma = f1->GetParameter(2);
+  fitrange=sqrt(2.0*rangevalue)*sigma;
+  cout<<"Determined fit range: " << fitrange<<endl<<endl;
 
-	// Repeat fit in case it failed
-	if(fitr!=0)
-	{
-		cout<<"Fit of angle distribution failed with status: "<<fitr<<endl;
-		cout<<"Repeat fit "<<endl;
-		h2->Fit("f1","RM");
-	}
-
-	// Use the determined sigma value to calculate the fit range
-	double sigma = f1->GetParameter(2);
-	fitrange=sqrt(2.0*rangevalue)*sigma;
-	cout<<"Determined fit range: " << fitrange<<endl<<endl;
-
-	return fitrange;
+  delete h2;
+  delete f1;
+  return fitrange;
 }
 
   // Function to fit the MSC angle histograms and fill the map histograms

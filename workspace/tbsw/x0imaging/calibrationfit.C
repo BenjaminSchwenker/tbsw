@@ -1,11 +1,18 @@
+/// The purpose of this script is to do a simultaneous fit of a set of angle distributions, which are taken from the X0_merge.root input file. Each of these distributions 
+/// should come from an area with a homogenious thickness and material composition. The hole class defined in this script can be used to select the area and give them some attributes
+/// like for example the thickness, position and the X0 value in this area. The angle distributions are then fitted by a function which corresponds to the convolution 
+/// between a function given by a theoretical model for the multiple scattering (highland or moliere model) and a gaussian error function, which depends on the expected telescope angular resolution
+/// and a calibration factor. The fit estimates an optimal value for the calibration factor.
+///
+/// This script can be used by starting root and afterwards typing the command .x calibrationfit.C+.
+///
+/// \author Ulf Stolzenberg 
+/// \author Benjamin Schwenker
+
 #include <cmath>
-#include <iostream>
 #include <cstdlib>
-#include <map>
 #include <string>
-#include <fstream>
 #include <vector>
-#include <sstream>
 
 
 #include "Fit/Fitter.h"
@@ -20,24 +27,14 @@
 #include "TLegend.h"
 
 #include "TSystem.h"
-//#include "TApplication.h"
 #include "TFile.h"
 #include "TTree.h"
-#include "TCut.h"
 #include "TString.h"
 #include "TMath.h"
 #include "TROOT.h"
 
 
 
-
-// The purpose of this script is to do a simultaneous fit of a set of angle distributions, which are taken from the X0_merge.root input file. Each of these distributions 
-// should come from an area with a homogenious thickness and material composition. The hole class defined in this script can be used to select the area and give them some attributes
-// like for example the thickness, position and the X0 value in this area. The angle distributions are then fitted by a function which corresponds to the convolution 
-// between a function given by a theoretical model for the multiple scattering (highland or moliere model) and a gaussian error function, which depends on the expected telescope angular resolution
-// and a calibration factor. The fit estimates an optimal value for the calibration factor.
-
-// This script can be used by starting root and afterwards typing the command .x calibration.C+.
 
 using namespace std;
 
@@ -856,33 +853,34 @@ double calculateB(double log_omega_b)
 // The fit range is half of the distance between these two bins in rad
 double DetermineFitrange(TH1F* histo,double rangevalue)
 {
+  // Clone histo
+  TH1F *h2 = (TH1F*) histo->Clone();
 
-    // Clone histo
-	TH1F *h2 = (TH1F*) histo->Clone();
+  cout<<"RMS value of distribution: "<<histo->GetRMS()<<endl;
+  cout<<"Selected range parameter: "<<rangevalue<<" -> Fit range up to y=1/("<<rangevalue<<"*e)"<<endl;
+  double fitrange = sqrt(2.0*rangevalue)*histo->GetRMS();
+  
+  // Use RMS value as a rough measure of the fit range for a gaussian fit
+  TF1 *f1 = new TF1("f1","gaus(x)",-fitrange,fitrange);
+  f1->SetLineStyle(2);
+  TFitResultPtr fitr=h2->Fit("f1","RS");
+  
+  // Repeat fit in case it failed
+  if(fitr!=0)
+  {
+    cout<<"Fit of angle distribution failed with status: "<<fitr<<endl;
+    cout<<"Repeat fit "<<endl;
+    h2->Fit("f1","RM");
+  }
 
-	cout<<"RMS value of distribution: "<<histo->GetRMS()<<endl;
-	cout<<"Selected range parameter: "<<rangevalue<<" -> Fit range up to y=1/("<<rangevalue<<"*e)"<<endl;
-	double fitrange = sqrt(2.0*rangevalue)*histo->GetRMS();
+  // Use the determined sigma value to calculate the fit range
+  double sigma = f1->GetParameter(2);
+  fitrange=sqrt(2.0*rangevalue)*sigma;
+  cout<<"Determined fit range: " << fitrange<<endl<<endl;
 
-	// Use RMS value as a rough measure of the fit range for a gaussian fit
-	TF1 *f1 = new TF1("f1","gaus(x)",-fitrange,fitrange);
-	f1->SetLineStyle(2);
-	TFitResultPtr fitr=h2->Fit("f1","RS");
-
-	// Repeat fit in case it failed
-	if(fitr!=0)
-	{
-		cout<<"Fit of angle distribution failed with status: "<<fitr<<endl;
-		cout<<"Repeat fit "<<endl;
-		h2->Fit("f1","RM");
-	}
-
-	// Use the determined sigma value to calculate the fit range
-	double sigma = f1->GetParameter(2);
-	fitrange=sqrt(2.0*rangevalue)*sigma;
-	cout<<"Determined fit range: " << fitrange<<endl<<endl;
-
-	return fitrange;
+  delete h2;
+  delete f1;
+  return fitrange;
 }
 
 
@@ -1226,9 +1224,8 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	std::vector<TF1 *> fitFcn_vec;
 	TF1* fitFcn;
 	TString fctname;
-
-	//ROOT::Fit::DataOptions opt; 
-	std::vector<ROOT::Fit::DataRange> range_vec;
+    
+	std::vector<double> range_vec;
 
 	// loop for definition of the fit functions, the fitrange is determined for every one of them
 	for(int i=0;i<num_fitfunctions;i++)
@@ -1264,79 +1261,45 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		cout<<"The range value from the cfg file is "<<rangevalue<<endl;	
 		cout<<"Fitrange at d="<<grid.GetMeasurementAreas().at(i).Get_thickness()<<" mm: "<<fitrange<<" rad"<<endl<<endl;
 		
-        range_vec.emplace_back(ROOT::Fit::DataRange(-fitrange,fitrange));
+        range_vec.push_back(fitrange);
 	}
     
     cout<<"Done reading definition of fitfunctions"<< endl;
     
-    // Vector of wrapped multi tf1
-    std::vector<ROOT::Math::WrappedMultiTF1> wf;
-
-	// Vector of bin data
-	std::vector<ROOT::Fit::BinData> data;
-
-	// Vector of chi2/loglikelihood functions
-    std::vector<ROOT::Fit::PoissonLLFunction> loglikelihood;
-    std::vector<ROOT::Fit::Chi2Function> chi2;
-	// The stored chi2/log likelihood functions mustn't be reallocated, else there will be a crash.
-	// Therefore reserve enough space for the vector
-	if(Use_LogLikelihoodfit) loglikelihood.reserve(3*num_fitfunctions);
-	else chi2.reserve(3*num_fitfunctions);
-
-    cout<<"benni debug 1"<< endl;
-    
-	// data size definition 
-	// needed during the fit
-	int datasize = 0;
-	
-    for(int i=0;i<num_fitfunctions;i++) 
-	{
-        
-		// Create wrapped multi function entry
-		ROOT::Math::WrappedMultiTF1 wf_entry(*fitFcn_vec.at(i),1);
-		wf.push_back(wf_entry);
-        
-		// Create data entry and fill data store and increase data size variable
-        ROOT::Fit::DataOptions optB;
-        ROOT::Fit::DataRange range(range_vec.at(i));
-        ROOT::Fit::DataRange rangeB;
-        
-        TH1F * histoptr =  histo_vec.at(i);
-        
-        cout << "ranges " << range(0).first << ", " << range(0).second << endl;
-        rangeB.SetRange(range(0).first, range(0).second);
-        ROOT::Fit::BinData dataB(optB,rangeB);
-        cout << "test benni size dataB before fill: " <<dataB.Size() << endl; 
-        ROOT::Fit::FillData(dataB, histoptr);
-        datasize+=dataB.Size();
-        cout << "test benni size dataB after fill: " <<dataB.Size() << " i " << i << endl; 
-        
-		//data.push_back(dataB);
-	}
-    
-    cout<<"benni debug 2"<< endl;
-    
-    // Create globalChi2 object, which will be used during the fitting to return fit chi2 values and update the global parameters
+    // Create globalChi2 object
 	GlobalEstimator globalestimator;
-
-	for(int i=0;i<num_fitfunctions;i++)
-	{
-        cout<<"benni debug 2: " << i << endl;
-		// Create estimator function entry and fill global estimator 
-		if(Use_LogLikelihoodfit) 
-		{
-			loglikelihood.push_back(ROOT::Fit::PoissonLLFunction(data[i], wf[i]));
-			globalestimator.getEstimatorVec().push_back(&(loglikelihood.at(i))); 
-		}
-		else 
-		{
-			chi2.push_back(ROOT::Fit::Chi2Function(data[i], wf[i]));
-			globalestimator.getEstimatorVec().push_back(&(chi2.at(i))); 
-		}
-
-	}
-
-    cout<<"benni debug 3"  << endl;
+    // Total datasize
+	int datasize = 0;
+     
+    for(int i=0;i<num_fitfunctions;i++) 
+	{ 
+      // Create wrapped multi function entry
+	  ROOT::Math::WrappedMultiTF1 * wf_entry = new ROOT::Math::WrappedMultiTF1(*fitFcn_vec.at(i),1);
+      
+      // Create data entry and fill fit data 
+      ROOT::Fit::DataOptions opt;
+      ROOT::Fit::DataRange range;
+      range.SetRange(-range_vec.at(i), range_vec.at(i));
+        
+      TH1F * histoptr =  histo_vec.at(i);
+        
+      ROOT::Fit::BinData * data_entry = new ROOT::Fit::BinData(opt,range); 
+      ROOT::Fit::FillData(*data_entry, histoptr);
+      datasize+=data_entry->Size();
+       
+      // Create estimator function entry and fill global estimator 
+      if(Use_LogLikelihoodfit) 
+      {
+        ROOT::Fit::PoissonLLFunction* log_entry = new ROOT::Fit::PoissonLLFunction(*data_entry, *wf_entry);
+        globalestimator.getEstimatorVec().push_back(log_entry); 
+      }
+      else 
+      {
+        ROOT::Fit::Chi2Function* chi2_entry = new ROOT::Fit::Chi2Function(*data_entry, *wf_entry);
+        globalestimator.getEstimatorVec().push_back(chi2_entry); 
+      }       
+    } 
+     
 	// Set parameter mapping array in the global chi2 object
 	globalestimator.SetArray();
     
@@ -1467,7 +1430,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 		fitFcn_vec.at(i)->SetFitResult( result, parameters);
 	
-		fitrange=DetermineFitrange(histo_vec.at(i),rangevalue);
+		fitrange=range_vec.at(i);  
 		TF1 * fitfunc=fitFcn_vec.at(i);
 		fitfunc->SetRange(-fitrange,fitrange);  
 		fitfunc->SetLineColor(kRed);
@@ -1521,7 +1484,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	for(int i=0;i<TMath::Ceil(double(num_fitfunctions)/4.0);i++)
 	{
 		TString canvasname;
-		canvasname.Form("c%i",i);
+		canvasname.Form("cfits_%i",i);
 		TCanvas *c = new TCanvas(canvasname,canvasname,900,1000);
 		std::vector<TPad*> pads;
 		TPad *pad1 = new TPad("pad1","pad1",0.01,0.51,0.49,0.99);
@@ -1580,17 +1543,20 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	}
 	h_d_true->GetYaxis()->SetTitle("Thickness [mm]");
 	h_d_true->SetTitle("Self-consistency check");
-
+    
 	// loop for definition of the fit functions, the fitrange is determined for every one of them
 	for(int i=0;i<num_fitfunctions;i++)
 	{
 
-		fitrange=DetermineFitrange(histo_vec.at(i),rangevalue);
+		fitrange=range_vec.at(i);
 		fctname.Form("fitFcn%i",i);
-
-		if(model=="moliere") fitFcn = new TF1(fctname,molierefunction,-fitrange,fitrange,num_localparameters);
-		else fitFcn = new TF1(fctname,highlandfunction,-fitrange,fitrange,num_localparameters);
-
+        
+		if(model=="moliere") {
+          fitFcn = new TF1(fctname,molierefunction,-fitrange,fitrange,num_localparameters);
+        } else {
+          fitFcn = new TF1(fctname,highlandfunction,-fitrange,fitrange,num_localparameters);              
+        }
+         
 		// Set starting values
 		double lambda=fitresults[0];
 		double BE_mean=fitresults[2];
@@ -1608,13 +1574,15 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
    				fitFcn->FixParameter(i,parameters_temp[i]);
 			}
 		}	
-
+ 
    		fitFcn->SetParLimits(6,1E-8,200.0);
    		fitFcn->SetParLimits(14,-1E-4,+1E-4);
 
 		// Fill vector with pointers to fit functions
 		fitFcn_vec2.push_back(fitFcn);
 	}
+
+    
 
 	for(int i=0;i<TMath::Ceil(double(num_fitfunctions)/4.0);i++)
 	{
@@ -1690,7 +1658,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
     resultshist->GetXaxis()->SetBinLabel( 2, "E_{mean}[GeV]" );
     resultshist->GetXaxis()->SetBinLabel( 3, "#nablaE_{u}[GeV/mm]" );
     resultshist->GetXaxis()->SetBinLabel( 4, "#nablaE_{v}[GeV/mm]" );
-
+    
 	// Save the results to histogram
 	for(int i=0;i<4;i++)
 	{

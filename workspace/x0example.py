@@ -198,10 +198,10 @@ if __name__ == '__main__':
   cwdir = os.getcwd()
   
   # Create a simulated rawfiles for run with no target (air run) and Al plate 
-  #simulate( )
+  simulate( )
   
   # Calibrate the telescope using air run  
-  #calibrate( )
+  calibrate( )
    
   for it in range(0,targetalignment_iterations):
     params_TA = (rawfile_alu, steerfiles, caltag, it)
@@ -210,15 +210,15 @@ if __name__ == '__main__':
     targetalignment(params_TA)
   
   # Reconstruct the alu rawfile 
-  #reconstruct( )
+  reconstruct( )
    
   # Create root file list as input for x0 analysis 
   rootlist=['root-files/X0-x0-reco.root']
   
   # Generate a uncalibrated X/X0 image
   nametag='X0image-Uncalibrated'
-  #tbsw.x0imaging.GenerateImage.x0imaging(rootfilelist=rootlist,caltag='',steerfiles=steerfiles,nametag=nametag)
-  #tbsw.DQMplots.x0image_Plots(nametag=nametag)
+  tbsw.x0imaging.GenerateImage.x0imaging(rootfilelist=rootlist,caltag='',steerfiles=steerfiles,nametag=nametag)
+  tbsw.DQMplots.x0image_Plots(nametag=nametag)
 
   # Path to uncalibrated X0 image file
   imagefilename='/root-files/'+nametag+'.root'
@@ -230,6 +230,6 @@ if __name__ == '__main__':
 
   # Generate a calibrated X/X0 image
   nametag='X0image-Calibrated-'+x0caltag
-  #tbsw.x0imaging.GenerateImage.x0imaging(rootfilelist=rootlist,caltag=x0caltag,steerfiles=steerfiles,nametag=nametag)
-  #tbsw.DQMplots.x0image_Plots(nametag=nametag)
+  tbsw.x0imaging.GenerateImage.x0imaging(rootfilelist=rootlist,caltag=x0caltag,steerfiles=steerfiles,nametag=nametag)
+  tbsw.DQMplots.x0image_Plots(nametag=nametag)
 
