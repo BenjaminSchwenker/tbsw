@@ -750,6 +750,10 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 	TH2F* uresidual_meanmap=(TH2F*)file->Get("result/uresidualmean_image");
 	TH2F* vresidual_meanmap=(TH2F*)file->Get("result/vresidualmean_image");
 
+	// Get the residual rms histogram
+	TH2F* uresidual_rmsmap=(TH2F*)file->Get("result/uresidualrms_image");
+	TH2F* vresidual_rmsmap=(TH2F*)file->Get("result/vresidualrms_image");
+
     // Get the momentum 2D histogram
 	TH2F* mommap=(TH2F*)file->Get("result/BE_image");
 
@@ -784,6 +788,8 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 	// Fill both maps containing the residual means
 	uresidual_meanmap->SetBinContent(col+1,row+1,uresidual_mean*1E3);
 	vresidual_meanmap->SetBinContent(col+1,row+1,vresidual_mean*1E3);
+	uresidual_rmsmap->SetBinContent(col+1,row+1,uresidual_rms*1E3);
+	vresidual_rmsmap->SetBinContent(col+1,row+1,vresidual_rms*1E3);
 
     chi2ndof1map->SetBinContent(col+1,row+1,chi2ndof1);
     chi2ndof1histo->Fill(chi2ndof1);
@@ -929,6 +935,8 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 
 		uresidual_meanmap->Write();
 		vresidual_meanmap->Write();
+		uresidual_rmsmap->Write();
+		vresidual_rmsmap->Write();
 
 		nummap->Write();
 		mommap->Write();
@@ -1415,6 +1423,24 @@ int x0imaging()
     vresidualmean_image->GetZaxis()->SetTitle("v residual[µm]");
     vresidualmean_image->GetZaxis()->SetTitleSize(0.02);
     vresidualmean_image->GetZaxis()->SetLabelSize(0.02);
+
+	// u residual rms of downstream and upstream estimation
+	TH2F * uresidualrms_image = new TH2F("uresidualrms_image","uresidualrms_image",numcol,umin,umax,numrow,vmin,vmax);
+	uresidualrms_image->SetStats(kFALSE);
+    uresidualrms_image->GetXaxis()->SetTitle("u [mm]");
+    uresidualrms_image->GetYaxis()->SetTitle("v [mm]");
+    uresidualrms_image->GetZaxis()->SetTitle("u residual rms[µm]");
+    uresidualrms_image->GetZaxis()->SetTitleSize(0.02);
+    uresidualrms_image->GetZaxis()->SetLabelSize(0.02);
+
+	// v residual rms of downstream and upstream estimation
+	TH2F * vresidualrms_image = new TH2F("vresidualrms_image","vresidualrms_image",numcol,umin,umax,numrow,vmin,vmax);
+	vresidualrms_image->SetStats(kFALSE);
+    vresidualrms_image->GetXaxis()->SetTitle("u [mm]");
+    vresidualrms_image->GetYaxis()->SetTitle("v [mm]");
+    vresidualrms_image->GetZaxis()->SetTitle("v residual rms[µm]");
+    vresidualrms_image->GetZaxis()->SetTitleSize(0.02);
+    vresidualrms_image->GetZaxis()->SetLabelSize(0.02);
 	
 	// Beam spot image from track intersections
 	TH2F * beamspot = new TH2F("beamspot","beamspot",numcol,umin,umax,numrow,vmin,vmax);

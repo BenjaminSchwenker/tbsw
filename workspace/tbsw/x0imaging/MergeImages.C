@@ -55,6 +55,8 @@ int MergeImages()
 	TH2F * correctedtheta2mean_image_tmp;	        // images of mean value of second scattering angle distribution
 	TH2F * uresidualmean_image_tmp;		            // u residual images
 	TH2F * vresidualmean_image_tmp;		            // v residual images
+	TH2F * uresidualrms_image_tmp;		            // u residual rms images
+	TH2F * vresidualrms_image_tmp;		            // v residual rms images
 	TH2F * htrackchi2map_tmp;			            // track chi2 images
 	TH2F * beamspot_tmp;				            // hit map
 	TH2F * BE_image_tmp;				            // Momentum images
@@ -66,12 +68,12 @@ int MergeImages()
 
 	TH2F * res_u_vtx_trk_image_tmp;					// Vertex trk u mean residual images
 	TH2F * res_v_vtx_trk_image_tmp;					// Vertex trk v mean residual images
-	TH2F * res_u_rms_vtx_trk_image_tmp;					// Vertex trk u residual rms images
-	TH2F * res_v_rms_vtx_trk_image_tmp;					// Vertex trk v residual rms images
+	TH2F * res_u_rms_vtx_trk_image_tmp;				// Vertex trk u residual rms images
+	TH2F * res_v_rms_vtx_trk_image_tmp;				// Vertex trk v residual rms images
 
-	TH1F * fit1chi2ndof_histo_tmp;	    	            // fit chi2 histo of first scattering angle
-	TH1F * fit2chi2ndof_histo_tmp;			            // fit chi2 histo of second scattering angle
-	TH1F * fitsumchi2ndof_histo_tmp;			        // fit chi2 histo of merged scattering angle distribution
+	TH1F * fit1chi2ndof_histo_tmp;	    	        // fit chi2 histo of first scattering angle
+	TH1F * fit2chi2ndof_histo_tmp;			        // fit chi2 histo of second scattering angle
+	TH1F * fitsumchi2ndof_histo_tmp;			    // fit chi2 histo of merged scattering angle distribution
 
 	TH1F * fit1prob_histo_tmp;	    	            // fit prob histo of first scattering angle
 	TH1F * fit2prob_histo_tmp;			            // fit prob histo of second scattering angle
@@ -354,7 +356,7 @@ int MergeImages()
     correctedtheta2mean_image->GetZaxis()->SetLabelSize(0.02);
 
 
-	// Fit mean value of u residuals
+	// Mean value of u residuals
 	TH2F * uresidualmean_image = new TH2F("uresidualmean_image","uresidualmean_image",numcol,umin,umax,numrow,vmin,vmax);
 	uresidualmean_image->SetStats(kFALSE);
     uresidualmean_image->GetXaxis()->SetTitle("u [mm]");
@@ -363,7 +365,7 @@ int MergeImages()
     uresidualmean_image->GetZaxis()->SetTitleSize(0.02);
     uresidualmean_image->GetZaxis()->SetLabelSize(0.02);
 
-	// Fit mean value of v residuals
+	// Mean value of v residuals
 	TH2F * vresidualmean_image = new TH2F("vresidualmean_image","vresidualmean_image",numcol,umin,umax,numrow,vmin,vmax);
 	vresidualmean_image->SetStats(kFALSE);
     vresidualmean_image->GetXaxis()->SetTitle("u [mm]");
@@ -371,6 +373,24 @@ int MergeImages()
     vresidualmean_image->GetZaxis()->SetTitle("v residual[µm]");
     vresidualmean_image->GetZaxis()->SetTitleSize(0.02);
     vresidualmean_image->GetZaxis()->SetLabelSize(0.02);
+
+	// RMS value of u residuals
+	TH2F * uresidualrms_image = new TH2F("uresidualrms_image","uresidualrms_image",numcol,umin,umax,numrow,vmin,vmax);
+	uresidualrms_image->SetStats(kFALSE);
+    uresidualrms_image->GetXaxis()->SetTitle("u [mm]");
+    uresidualrms_image->GetYaxis()->SetTitle("v [mm]");
+    uresidualrms_image->GetZaxis()->SetTitle("u residual rms[µm]");
+    uresidualrms_image->GetZaxis()->SetTitleSize(0.02);
+    uresidualrms_image->GetZaxis()->SetLabelSize(0.02);
+
+	// RMS value of v residuals
+	TH2F * vresidualrms_image = new TH2F("vresidualrms_image","vresidualrms_image",numcol,umin,umax,numrow,vmin,vmax);
+	vresidualrms_image->SetStats(kFALSE);
+    vresidualrms_image->GetXaxis()->SetTitle("u [mm]");
+    vresidualrms_image->GetYaxis()->SetTitle("v [mm]");
+    vresidualrms_image->GetZaxis()->SetTitle("v residual rms[µm]");
+    vresidualrms_image->GetZaxis()->SetTitleSize(0.02);
+    vresidualrms_image->GetZaxis()->SetLabelSize(0.02);
 	
 	// #Tracks map
 	TH2F * beamspot = new TH2F("beamspot","beamspot",numcol,umin,umax,numrow,vmin,vmax);
@@ -498,6 +518,8 @@ int MergeImages()
 			correctedtheta2mean_image_tmp=(TH2F*)X0file->Get("result/correctedtheta2mean_image");
 			uresidualmean_image_tmp=(TH2F*)X0file->Get("result/uresidualmean_image");
 			vresidualmean_image_tmp=(TH2F*)X0file->Get("result/vresidualmean_image");
+			uresidualrms_image_tmp=(TH2F*)X0file->Get("result/uresidualrms_image");
+			vresidualrms_image_tmp=(TH2F*)X0file->Get("result/vresidualrms_image");
 			beamspot_tmp=(TH2F*)X0file->Get("result/beamspot");
 			BE_image_tmp=(TH2F*)X0file->Get("result/BE_image");
 
@@ -545,6 +567,8 @@ int MergeImages()
 			correctedtheta2mean_image->SetBinContent(col+1,row+1,correctedtheta2mean_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 			uresidualmean_image->SetBinContent(col+1,row+1,uresidualmean_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 			vresidualmean_image->SetBinContent(col+1,row+1,vresidualmean_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			uresidualrms_image->SetBinContent(col+1,row+1,uresidualrms_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			vresidualrms_image->SetBinContent(col+1,row+1,vresidualrms_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 			beamspot->SetBinContent(col+1,row+1,beamspot_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 			BE_image->SetBinContent(col+1,row+1,BE_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 
@@ -578,6 +602,8 @@ int MergeImages()
 	correctedtheta2mean_image->Write();
 	uresidualmean_image->Write();
 	vresidualmean_image->Write();
+	uresidualrms_image->Write();
+	vresidualrms_image->Write();
 	beamspot->Write();
 	BE_image->Write();
 	hscatt_theta1_vs_resu->Write();
