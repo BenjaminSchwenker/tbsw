@@ -53,10 +53,10 @@ int MergeImages()
 	TH2F * theta2mean_image_tmp;				    // images of mean value of second scattering angle distribution
 	TH2F * correctedtheta1mean_image_tmp;	        // images of mean value of first scattering angle distribution
 	TH2F * correctedtheta2mean_image_tmp;	        // images of mean value of second scattering angle distribution
-	TH2F * uresidualmean_image_tmp;		            // u residual images
-	TH2F * vresidualmean_image_tmp;		            // v residual images
-	TH2F * uresidualrms_image_tmp;		            // u residual rms images
-	TH2F * vresidualrms_image_tmp;		            // v residual rms images
+	TH2F * scatteroffset_umean_image_tmp;		    // mean scatter offset images
+	TH2F * scatteroffset_vmean_image_tmp;		    // mean scatter offset images
+	TH2F * scatteroffset_urms_image_tmp;		    // RMS scatter offset images
+	TH2F * scatteroffset_vrms_image_tmp;		    // RMS scatter offset images
 	TH2F * htrackchi2map_tmp;			            // track chi2 images
 	TH2F * beamspot_tmp;				            // hit map
 	TH2F * BE_image_tmp;				            // Momentum images
@@ -357,40 +357,40 @@ int MergeImages()
 
 
 	// Mean value of u residuals
-	TH2F * uresidualmean_image = new TH2F("uresidualmean_image","uresidualmean_image",numcol,umin,umax,numrow,vmin,vmax);
-	uresidualmean_image->SetStats(kFALSE);
-    uresidualmean_image->GetXaxis()->SetTitle("u [mm]");
-    uresidualmean_image->GetYaxis()->SetTitle("v [mm]");
-    uresidualmean_image->GetZaxis()->SetTitle("u residual[µm]");
-    uresidualmean_image->GetZaxis()->SetTitleSize(0.02);
-    uresidualmean_image->GetZaxis()->SetLabelSize(0.02);
+	TH2F * scatteroffset_umean_image = new TH2F("scatteroffset_umean_image","scatteroffset_umean_image",numcol,umin,umax,numrow,vmin,vmax);
+	scatteroffset_umean_image->SetStats(kFALSE);
+    scatteroffset_umean_image->GetXaxis()->SetTitle("u [mm]");
+    scatteroffset_umean_image->GetYaxis()->SetTitle("v [mm]");
+    scatteroffset_umean_image->GetZaxis()->SetTitle("Mean scatter offset u[µm]");
+    scatteroffset_umean_image->GetZaxis()->SetTitleSize(0.02);
+    scatteroffset_umean_image->GetZaxis()->SetLabelSize(0.02);
 
 	// Mean value of v residuals
-	TH2F * vresidualmean_image = new TH2F("vresidualmean_image","vresidualmean_image",numcol,umin,umax,numrow,vmin,vmax);
-	vresidualmean_image->SetStats(kFALSE);
-    vresidualmean_image->GetXaxis()->SetTitle("u [mm]");
-    vresidualmean_image->GetYaxis()->SetTitle("v [mm]");
-    vresidualmean_image->GetZaxis()->SetTitle("v residual[µm]");
-    vresidualmean_image->GetZaxis()->SetTitleSize(0.02);
-    vresidualmean_image->GetZaxis()->SetLabelSize(0.02);
+	TH2F * scatteroffset_vmean_image = new TH2F("scatteroffset_vmean_image","scatteroffset_vmean_image",numcol,umin,umax,numrow,vmin,vmax);
+	scatteroffset_vmean_image->SetStats(kFALSE);
+    scatteroffset_vmean_image->GetXaxis()->SetTitle("u [mm]");
+    scatteroffset_vmean_image->GetYaxis()->SetTitle("v [mm]");
+    scatteroffset_vmean_image->GetZaxis()->SetTitle("Mean scatter offset v[µm]");
+    scatteroffset_vmean_image->GetZaxis()->SetTitleSize(0.02);
+    scatteroffset_vmean_image->GetZaxis()->SetLabelSize(0.02);
 
 	// RMS value of u residuals
-	TH2F * uresidualrms_image = new TH2F("uresidualrms_image","uresidualrms_image",numcol,umin,umax,numrow,vmin,vmax);
-	uresidualrms_image->SetStats(kFALSE);
-    uresidualrms_image->GetXaxis()->SetTitle("u [mm]");
-    uresidualrms_image->GetYaxis()->SetTitle("v [mm]");
-    uresidualrms_image->GetZaxis()->SetTitle("u residual rms[µm]");
-    uresidualrms_image->GetZaxis()->SetTitleSize(0.02);
-    uresidualrms_image->GetZaxis()->SetLabelSize(0.02);
+	TH2F * scatteroffset_urms_image = new TH2F("scatteroffset_urms_image","scatteroffset_urms_image",numcol,umin,umax,numrow,vmin,vmax);
+	scatteroffset_urms_image->SetStats(kFALSE);
+    scatteroffset_urms_image->GetXaxis()->SetTitle("u [mm]");
+    scatteroffset_urms_image->GetYaxis()->SetTitle("v [mm]");
+    scatteroffset_urms_image->GetZaxis()->SetTitle("RMS scatter offset u[µm]");
+    scatteroffset_urms_image->GetZaxis()->SetTitleSize(0.02);
+    scatteroffset_urms_image->GetZaxis()->SetLabelSize(0.02);
 
 	// RMS value of v residuals
-	TH2F * vresidualrms_image = new TH2F("vresidualrms_image","vresidualrms_image",numcol,umin,umax,numrow,vmin,vmax);
-	vresidualrms_image->SetStats(kFALSE);
-    vresidualrms_image->GetXaxis()->SetTitle("u [mm]");
-    vresidualrms_image->GetYaxis()->SetTitle("v [mm]");
-    vresidualrms_image->GetZaxis()->SetTitle("v residual rms[µm]");
-    vresidualrms_image->GetZaxis()->SetTitleSize(0.02);
-    vresidualrms_image->GetZaxis()->SetLabelSize(0.02);
+	TH2F * scatteroffset_vrms_image = new TH2F("scatteroffset_vrms_image","scatteroffset_vrms_image",numcol,umin,umax,numrow,vmin,vmax);
+	scatteroffset_vrms_image->SetStats(kFALSE);
+    scatteroffset_vrms_image->GetXaxis()->SetTitle("u [mm]");
+    scatteroffset_vrms_image->GetYaxis()->SetTitle("v [mm]");
+    scatteroffset_vrms_image->GetZaxis()->SetTitle("RMS scatter offset v[µm]");
+    scatteroffset_vrms_image->GetZaxis()->SetTitleSize(0.02);
+    scatteroffset_vrms_image->GetZaxis()->SetLabelSize(0.02);
 	
 	// #Tracks map
 	TH2F * beamspot = new TH2F("beamspot","beamspot",numcol,umin,umax,numrow,vmin,vmax);
@@ -516,10 +516,10 @@ int MergeImages()
 			theta2mean_image_tmp=(TH2F*)X0file->Get("result/theta2mean_image");
 			correctedtheta1mean_image_tmp=(TH2F*)X0file->Get("result/correctedtheta1mean_image");
 			correctedtheta2mean_image_tmp=(TH2F*)X0file->Get("result/correctedtheta2mean_image");
-			uresidualmean_image_tmp=(TH2F*)X0file->Get("result/uresidualmean_image");
-			vresidualmean_image_tmp=(TH2F*)X0file->Get("result/vresidualmean_image");
-			uresidualrms_image_tmp=(TH2F*)X0file->Get("result/uresidualrms_image");
-			vresidualrms_image_tmp=(TH2F*)X0file->Get("result/vresidualrms_image");
+			scatteroffset_umean_image_tmp=(TH2F*)X0file->Get("result/scatteroffset_umean_image");
+			scatteroffset_vmean_image_tmp=(TH2F*)X0file->Get("result/scatteroffset_vmean_image");
+			scatteroffset_urms_image_tmp=(TH2F*)X0file->Get("result/scatteroffset_urms_image");
+			scatteroffset_vrms_image_tmp=(TH2F*)X0file->Get("result/scatteroffset_vrms_image");
 			beamspot_tmp=(TH2F*)X0file->Get("result/beamspot");
 			BE_image_tmp=(TH2F*)X0file->Get("result/BE_image");
 
@@ -565,10 +565,10 @@ int MergeImages()
 			theta2mean_image->SetBinContent(col+1,row+1,theta2mean_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 			correctedtheta1mean_image->SetBinContent(col+1,row+1,correctedtheta1mean_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 			correctedtheta2mean_image->SetBinContent(col+1,row+1,correctedtheta2mean_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			uresidualmean_image->SetBinContent(col+1,row+1,uresidualmean_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			vresidualmean_image->SetBinContent(col+1,row+1,vresidualmean_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			uresidualrms_image->SetBinContent(col+1,row+1,uresidualrms_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			vresidualrms_image->SetBinContent(col+1,row+1,vresidualrms_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			scatteroffset_umean_image->SetBinContent(col+1,row+1,scatteroffset_umean_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			scatteroffset_vmean_image->SetBinContent(col+1,row+1,scatteroffset_vmean_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			scatteroffset_urms_image->SetBinContent(col+1,row+1,scatteroffset_urms_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			scatteroffset_vrms_image->SetBinContent(col+1,row+1,scatteroffset_vrms_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 			beamspot->SetBinContent(col+1,row+1,beamspot_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 			BE_image->SetBinContent(col+1,row+1,BE_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 
@@ -600,10 +600,10 @@ int MergeImages()
 	theta2mean_image->Write();
 	correctedtheta1mean_image->Write();
 	correctedtheta2mean_image->Write();
-	uresidualmean_image->Write();
-	vresidualmean_image->Write();
-	uresidualrms_image->Write();
-	vresidualrms_image->Write();
+	scatteroffset_umean_image->Write();
+	scatteroffset_vmean_image->Write();
+	scatteroffset_urms_image->Write();
+	scatteroffset_vrms_image->Write();
 	beamspot->Write();
 	BE_image->Write();
 	hscatt_theta1_vs_resu->Write();

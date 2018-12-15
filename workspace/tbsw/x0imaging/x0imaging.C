@@ -201,8 +201,8 @@ using namespace std ;
 	// arrays of msc angle histograms
 	TH1F *histo_theta1[numcol][numrow];
 	TH1F *histo_theta2[numcol][numrow];
-	TH1F *histo_uresidual[numcol][numrow];
-	TH1F *histo_vresidual[numcol][numrow];
+	TH1F *histo_scatteroffset_u[numcol][numrow];
+	TH1F *histo_scatteroffset_v[numcol][numrow];
 	TH1F *histo_thetasum[numcol][numrow];
 	TH2F *histo_2d[numcol][numrow];
 
@@ -234,8 +234,8 @@ using namespace std ;
 
 			 	histo_theta1[i][j] = new TH1F("","",numberofbins,-limits,limits);
 			 	histo_theta2[i][j] = new TH1F("","",numberofbins,-limits,limits);
-			 	histo_uresidual[i][j] = new TH1F("","",1000,-1.0,1.0);
-			 	histo_vresidual[i][j] = new TH1F("","",1000,-1.0,1.0);
+			 	histo_scatteroffset_u[i][j] = new TH1F("","",1000,-1.0,1.0);
+			 	histo_scatteroffset_v[i][j] = new TH1F("","",1000,-1.0,1.0);
 			 	histo_thetasum[i][j] = new TH1F("","",numberofbins,-limits,limits);
 				histo_2d[i][j] = new TH2F("","",numberofbins,-limits,limits,numberofbins,-limits,limits);
 
@@ -328,8 +328,8 @@ using namespace std ;
 			histo_thetasum[col][row]->Fill(theta2);
 			histo_2d[col][row]->Fill(theta1,theta2);
 
-			histo_uresidual[col][row]->Fill(u_in-u_out);
-			histo_vresidual[col][row]->Fill(v_in-v_out);
+			histo_scatteroffset_u[col][row]->Fill(u_in-u_out);
+			histo_scatteroffset_v[col][row]->Fill(v_in-v_out);
 
 			histo_vertex_w[col][row]->Fill(vertex_w);
 			histo_vertex_chi2[col][row]->Fill(vertex_chi2);
@@ -357,10 +357,10 @@ using namespace std ;
 			histo_theta1[i][j]->Delete();
 			histo_theta2[i][j]->Write("theta2_"+histoname);
 			histo_theta2[i][j]->Delete();
-			histo_uresidual[i][j]->Write("uresidual_"+histoname);
-			histo_uresidual[i][j]->Delete();
-			histo_vresidual[i][j]->Write("vresidual_"+histoname);
-			histo_vresidual[i][j]->Delete();
+			histo_scatteroffset_u[i][j]->Write("scatteroffset_u_"+histoname);
+			histo_scatteroffset_u[i][j]->Delete();
+			histo_scatteroffset_v[i][j]->Write("scatteroffset_v_"+histoname);
+			histo_scatteroffset_v[i][j]->Delete();
 			histo_thetasum[i][j]->Write("sumhisto_"+histoname);
 			histo_thetasum[i][j]->Delete();
 			histo_2d[i][j]->Write("2Dhisto_"+histoname);
@@ -437,8 +437,8 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 	file->cd("");
 	TH1F* histogram1=(TH1F*)file->Get("raw/theta1_"+histoname);
 	TH1F* histogram2=(TH1F*)file->Get("raw/theta2_"+histoname);
-	TH1F* histogramu=(TH1F*)file->Get("raw/uresidual_"+histoname);
-	TH1F* histogramv=(TH1F*)file->Get("raw/vresidual_"+histoname);
+	TH1F* histogramu=(TH1F*)file->Get("raw/scatteroffset_u_"+histoname);
+	TH1F* histogramv=(TH1F*)file->Get("raw/scatteroffset_v_"+histoname);
 	TH1F* histogramsum=(TH1F*)file->Get("raw/sumhisto_"+histoname);
 
 	// Get vertex histos
@@ -508,16 +508,16 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 	int bin2;
 	double fitrange;
 
-	double uresidual_mean;
-	double vresidual_mean;
+	double scatteroffset_u_mean;
+	double scatteroffset_v_mean;
 
 	double minvalue=1.0/(rangevalue*2.7);
 
 	int NumberOfTracks=fithistogram1->GetEntries();
 
 	// Get residual values for this image bin from histogram
-	uresidual_mean=histogramu->GetMean();
-	vresidual_mean=histogramv->GetMean();
+	scatteroffset_u_mean=histogramu->GetMean();
+	scatteroffset_v_mean=histogramv->GetMean();
 
 	// Get vertex values for this image bin from histogram
 	vertex_w_mean=histogram_vertex_w->GetMean();
@@ -747,12 +747,12 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 	TH2F* correctedmeanmap2=(TH2F*)file->Get("result/correctedtheta2mean_image");
 
 	// Get the mean residual histograms
-	TH2F* uresidual_meanmap=(TH2F*)file->Get("result/uresidualmean_image");
-	TH2F* vresidual_meanmap=(TH2F*)file->Get("result/vresidualmean_image");
+	TH2F* scatteroffset_u_meanmap=(TH2F*)file->Get("result/scatteroffset_umean_image");
+	TH2F* scatteroffset_v_meanmap=(TH2F*)file->Get("result/scatteroffset_vmean_image");
 
 	// Get the residual rms histogram
-	TH2F* uresidual_rmsmap=(TH2F*)file->Get("result/uresidualrms_image");
-	TH2F* vresidual_rmsmap=(TH2F*)file->Get("result/vresidualrms_image");
+	TH2F* scatteroffset_u_rmsmap=(TH2F*)file->Get("result/scatteroffset_urms_image");
+	TH2F* scatteroffset_v_rmsmap=(TH2F*)file->Get("result/scatteroffset_vrms_image");
 
     // Get the momentum 2D histogram
 	TH2F* mommap=(TH2F*)file->Get("result/BE_image");
@@ -786,10 +786,10 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 	correctedmeanmap2->SetBinContent(col+1,row+1,mean2);
 
 	// Fill both maps containing the residual means
-	uresidual_meanmap->SetBinContent(col+1,row+1,uresidual_mean*1E3);
-	vresidual_meanmap->SetBinContent(col+1,row+1,vresidual_mean*1E3);
-	uresidual_rmsmap->SetBinContent(col+1,row+1,uresidual_rms*1E3);
-	vresidual_rmsmap->SetBinContent(col+1,row+1,vresidual_rms*1E3);
+	scatteroffset_u_meanmap->SetBinContent(col+1,row+1,scatteroffset_u_mean*1E3);
+	scatteroffset_v_meanmap->SetBinContent(col+1,row+1,scatteroffset_v_mean*1E3);
+	scatteroffset_u_rmsmap->SetBinContent(col+1,row+1,scatteroffset_u_rms*1E3);
+	scatteroffset_v_rmsmap->SetBinContent(col+1,row+1,scatteroffset_v_rms*1E3);
 
     chi2ndof1map->SetBinContent(col+1,row+1,chi2ndof1);
     chi2ndof1histo->Fill(chi2ndof1);
@@ -933,10 +933,10 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 		correctedmeanmap1->Write();
 		correctedmeanmap2->Write();
 
-		uresidual_meanmap->Write();
-		vresidual_meanmap->Write();
-		uresidual_rmsmap->Write();
-		vresidual_rmsmap->Write();
+		scatteroffset_u_meanmap->Write();
+		scatteroffset_v_meanmap->Write();
+		scatteroffset_u_rmsmap->Write();
+		scatteroffset_v_rmsmap->Write();
 
 		nummap->Write();
 		mommap->Write();
@@ -1407,40 +1407,40 @@ int x0imaging()
 
 
 	// u residuals of downstream and upstream estimation
-	TH2F * uresidualmean_image = new TH2F("uresidualmean_image","uresidualmean_image",numcol,umin,umax,numrow,vmin,vmax);
-	uresidualmean_image->SetStats(kFALSE);
-    uresidualmean_image->GetXaxis()->SetTitle("u [mm]");
-    uresidualmean_image->GetYaxis()->SetTitle("v [mm]");
-    uresidualmean_image->GetZaxis()->SetTitle("u residual[µm]");
-    uresidualmean_image->GetZaxis()->SetTitleSize(0.02);
-    uresidualmean_image->GetZaxis()->SetLabelSize(0.02);
+	TH2F * scatteroffset_umean_image = new TH2F("scatteroffset_umean_image","scatteroffset_umean_image",numcol,umin,umax,numrow,vmin,vmax);
+	scatteroffset_umean_image->SetStats(kFALSE);
+    scatteroffset_umean_image->GetXaxis()->SetTitle("u [mm]");
+    scatteroffset_umean_image->GetYaxis()->SetTitle("v [mm]");
+    scatteroffset_umean_image->GetZaxis()->SetTitle("mean scatter offset u[µm]");
+    scatteroffset_umean_image->GetZaxis()->SetTitleSize(0.02);
+    scatteroffset_umean_image->GetZaxis()->SetLabelSize(0.02);
 
 	// v residuals of downstream and upstream estimation
-	TH2F * vresidualmean_image = new TH2F("vresidualmean_image","vresidualmean_image",numcol,umin,umax,numrow,vmin,vmax);
-	vresidualmean_image->SetStats(kFALSE);
-    vresidualmean_image->GetXaxis()->SetTitle("u [mm]");
-    vresidualmean_image->GetYaxis()->SetTitle("v [mm]");
-    vresidualmean_image->GetZaxis()->SetTitle("v residual[µm]");
-    vresidualmean_image->GetZaxis()->SetTitleSize(0.02);
-    vresidualmean_image->GetZaxis()->SetLabelSize(0.02);
+	TH2F * scatteroffset_vmean_image = new TH2F("scatteroffset_vmean_image","scatteroffset_vmean_image",numcol,umin,umax,numrow,vmin,vmax);
+	scatteroffset_vmean_image->SetStats(kFALSE);
+    scatteroffset_vmean_image->GetXaxis()->SetTitle("u [mm]");
+    scatteroffset_vmean_image->GetYaxis()->SetTitle("v [mm]");
+    scatteroffset_vmean_image->GetZaxis()->SetTitle("mean scatter offset v[µm]");
+    scatteroffset_vmean_image->GetZaxis()->SetTitleSize(0.02);
+    scatteroffset_vmean_image->GetZaxis()->SetLabelSize(0.02);
 
 	// u residual rms of downstream and upstream estimation
-	TH2F * uresidualrms_image = new TH2F("uresidualrms_image","uresidualrms_image",numcol,umin,umax,numrow,vmin,vmax);
-	uresidualrms_image->SetStats(kFALSE);
-    uresidualrms_image->GetXaxis()->SetTitle("u [mm]");
-    uresidualrms_image->GetYaxis()->SetTitle("v [mm]");
-    uresidualrms_image->GetZaxis()->SetTitle("u residual rms[µm]");
-    uresidualrms_image->GetZaxis()->SetTitleSize(0.02);
-    uresidualrms_image->GetZaxis()->SetLabelSize(0.02);
+	TH2F * scatteroffset_urms_image = new TH2F("scatteroffset_urms_image","scatteroffset_urms_image",numcol,umin,umax,numrow,vmin,vmax);
+	scatteroffset_urms_image->SetStats(kFALSE);
+    scatteroffset_urms_image->GetXaxis()->SetTitle("u [mm]");
+    scatteroffset_urms_image->GetYaxis()->SetTitle("v [mm]");
+    scatteroffset_urms_image->GetZaxis()->SetTitle("RMS scatter offset u[µm]");
+    scatteroffset_urms_image->GetZaxis()->SetTitleSize(0.02);
+    scatteroffset_urms_image->GetZaxis()->SetLabelSize(0.02);
 
 	// v residual rms of downstream and upstream estimation
-	TH2F * vresidualrms_image = new TH2F("vresidualrms_image","vresidualrms_image",numcol,umin,umax,numrow,vmin,vmax);
-	vresidualrms_image->SetStats(kFALSE);
-    vresidualrms_image->GetXaxis()->SetTitle("u [mm]");
-    vresidualrms_image->GetYaxis()->SetTitle("v [mm]");
-    vresidualrms_image->GetZaxis()->SetTitle("v residual rms[µm]");
-    vresidualrms_image->GetZaxis()->SetTitleSize(0.02);
-    vresidualrms_image->GetZaxis()->SetLabelSize(0.02);
+	TH2F * scatteroffset_vrms_image = new TH2F("scatteroffset_vrms_image","scatteroffset_vrms_image",numcol,umin,umax,numrow,vmin,vmax);
+	scatteroffset_vrms_image->SetStats(kFALSE);
+    scatteroffset_vrms_image->GetXaxis()->SetTitle("u [mm]");
+    scatteroffset_vrms_image->GetYaxis()->SetTitle("v [mm]");
+    scatteroffset_vrms_image->GetZaxis()->SetTitle("RMS scatter offset v[µm]");
+    scatteroffset_vrms_image->GetZaxis()->SetTitleSize(0.02);
+    scatteroffset_vrms_image->GetZaxis()->SetLabelSize(0.02);
 	
 	// Beam spot image from track intersections
 	TH2F * beamspot = new TH2F("beamspot","beamspot",numcol,umin,umax,numrow,vmin,vmax);
