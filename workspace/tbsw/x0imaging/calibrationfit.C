@@ -1622,7 +1622,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 				
 				
 				histo_vec.at((4*i)+j)->Draw();
-                cout<<"fitfunction "<<(4*i)+j<<" of "<<num_fitfunctions<<endl;
+                cout<<"fitfunction "<<(4*i)+j+1<<" of "<<num_fitfunctions<<endl;
 
 				h_d->SetBinContent((4*i)+j+1,fitFcn_vec2.at((4*i)+j)->GetParameter(6));
 				h_d->SetBinError((4*i)+j+1,fitFcn_vec2.at((4*i)+j)->GetParError(6));
