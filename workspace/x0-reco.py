@@ -171,7 +171,7 @@ def calibrate(params):
   calpaths = tbsw.path_utils.create_x0analysis_calibration_paths(CalObj, rawfile, gearfile, nevents_cali, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali)
   
   # Run the calibration steps 
-  CalObj.calibrate(paths=calpath,ifile=rawfile,caltag=caltag)
+  CalObj.calibrate(paths=calpaths,ifile=rawfile,caltag=caltag)
 
   # Create DQM plots 
   tbsw.DQMplots.calibration_DQMPlots(name=caltag + '-cal')
