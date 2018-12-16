@@ -189,7 +189,7 @@ def reconstruct(params):
   RecObj = tbsw.Reconstruction(steerfiles=steerfiles, name=name )
   
   # Create reconstuction path
-  recopath = tbsw.path_utils.create_anglereco_path(RecObj, rawfile_alu, gearfile, nevents_reco, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)  
+  recopath = tbsw.path_utils.create_anglereco_path(RecObj, rawfile, gearfile, nevents_reco, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)  
   
   # Run the reconstuction  
   RecObj.reconstruct(path=recopath,ifile=rawfile,caltag=caltag) 
