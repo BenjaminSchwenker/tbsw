@@ -192,7 +192,7 @@ def reconstruct(params):
   recopath = tbsw.path_utils.create_anglereco_path(RecObj, rawfile, gearfile, nevents_reco, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)  
   
   # Run the reconstuction  
-  RecObj.reconstruct(path=recopath,ifile=rawfile,caltag=caltag) 
+  RecObj.reconstruct(paths=recopath,ifile=rawfile,caltag=caltag) 
   
   # Create DQM plots
   tbsw.DQMplots.anglereco_DQMPlots(filepath='root-files/X0-{}.root'.format(name)) 
