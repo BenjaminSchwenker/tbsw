@@ -230,7 +230,7 @@ def targetalignment(params):
   recopath = tbsw.path_utils.create_anglereco_path(RecObj, rawfile, gearfile, nevents_TA, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)  
   
   # Run the reconstuction  
-  RecObj.reconstruct(path=recopath,ifile=rawfile,caltag=oldcaltag)  
+  RecObj.reconstruct(paths=recopath,ifile=rawfile,caltag=oldcaltag)  
   
   # Read the vertex position and save it in the alignmentDB
   dbname=RecObj.create_dbfilename("alignmentDB.root")
