@@ -329,10 +329,6 @@ if __name__ == '__main__':
     pool = multiprocessing.Pool(processes=count)
     pool.map(reconstruct, params_reco)
 
-    for rawfile in RawfileList_reco:
-      runspec = os.path.splitext(os.path.basename(rawfile))[0] + '-'
-      DQMplots.anglereco_DQMPlots(runspec,caltag)
-
   # Start x0 calibration
   # In case you already have the x0 calibration DB file from a previous x0 calibration 
   # and want to reuse it, just switch to Script_purpose_option 0

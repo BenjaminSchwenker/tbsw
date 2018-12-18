@@ -862,6 +862,7 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
   
   // Use RMS value as a rough measure of the fit range for a gaussian fit
   TF1 *f1 = new TF1("f1","gaus(x)",-fitrange,fitrange);
+  f1->SetParameter(2,histo->GetRMS());
   f1->SetLineStyle(2);
   TFitResultPtr fitr=h2->Fit("f1","RS");
   
