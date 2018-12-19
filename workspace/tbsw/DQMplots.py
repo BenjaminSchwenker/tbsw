@@ -90,6 +90,41 @@ def plot_clusterDB_parameter(histo, paramname, ytitle):
   histo.SetStats(False)
   canvases[paramname].Update()
   canvases[paramname].SaveAs("cluster_{:s}.pdf".format(paramname))
+
+
+def plot_clusterDB_sigmas(histo1, histo2, entry1, entry2, paramname, ytitle):
+
+  ROOT.gROOT.Reset()
+
+  histo1.SetStats(False)
+  histo1.GetXaxis().SetTitle("cluster type")
+  histo1.GetXaxis().SetTitleOffset(0.88)
+
+  histo1.GetXaxis().SetTitleSize(0.055)
+  histo1.GetXaxis().SetLabelSize(0.07)
+  histo1.GetYaxis().SetTitle(ytitle)
+  histo1.GetYaxis().SetTitleOffset(0.80)
+  histo1.GetYaxis().SetTitleSize(0.055)
+  histo1.GetYaxis().SetLabelSize(0.05)
+  #histo1.SetLineColor(1)
+  histo2.SetLineColor(2)
+
+  canvases[paramname] = ROOT.TCanvas( '{:s}'.format(paramname), '{:s}'.format(paramname), 200, 10, 700, 500 )
+  histo1.Draw("HE")
+  histo2.Draw("HEsame")
+
+  leg = ROOT.TLegend(.72,.82,.97,.97)
+  leg.SetTextSize(.03)
+  leg.AddEntry(histo1,entry1,"LE")
+  leg.AddEntry(histo2,entry2,"LE")
+  canvases[paramname].Update()
+
+  leg.Draw()
+
+  histo1.SetStats(False)
+  canvases[paramname].Update()
+  canvases[paramname].SaveAs("cluster_{:s}.pdf".format(paramname))
+
   
 def plot_clusterDB_parameters(inputfilename):
   
@@ -121,6 +156,7 @@ def plot_clusterDB_parameters(inputfilename):
   plot_clusterDB_parameter(hfractions, 'fractions', 'fraction')
   plot_clusterDB_parameter(hsigma_u, 'sigma_u', '#sigma_{u}[#mum]')
   plot_clusterDB_parameter(hsigma_v, 'sigma_v', '#sigma_{v}[#mum]')
+  plot_clusterDB_sigmas(hsigma_u, hsigma_v, 'cluster u resolution', 'cluster v resolution',  'sigma', '#sigma[#mum]')
   
   rootfile.Close()
 
@@ -251,7 +287,7 @@ def plot_anglereco_DQM(inputfilename):
   h_theta_u_reso.SetTitle("")
   h_theta_u_reso.SetStats(False)
 
-  h_theta_v_reso = ROOT.TH1F()
+  h_theta_v_reso = ROOT.TH1F('h_theta_v_reso', 'h_theta_v_reso', h_theta_u_reso.GetXaxis().GetNbins(), h_theta_u_reso.GetXaxis().GetXmin(), h_theta_u_reso.GetXaxis().GetXmax())
   tree.Draw("1E6*sqrt(theta2_var) >>h_theta_v_reso","","goff")
   h_theta_v_reso= tree.GetHistogram()
   h_theta_v_reso.Scale(1E-3)
@@ -260,6 +296,24 @@ def plot_anglereco_DQM(inputfilename):
   h_theta_v_reso.SetTitle("")
   h_theta_v_reso.SetLineColor(2)
   h_theta_v_reso.SetStats(False)
+
+  h_u_reso = ROOT.TH1F()
+  tree.Draw("1E3*sqrt(u_var) >>h_u_reso")
+  h_u_reso= tree.GetHistogram()
+  h_u_reso.Scale(1E-3)
+  h_u_reso.GetXaxis().SetTitle("position reconstruction error[#mum]")
+  h_u_reso.GetYaxis().SetTitle("reconstructed tracks[10^{3}]")
+  h_u_reso.SetTitle("")
+  h_u_reso.SetStats(False)
+
+  h_v_reso = ROOT.TH1F( 'h_v_reso', 'h_v_reso', h_u_reso.GetXaxis().GetNbins(), h_u_reso.GetXaxis().GetXmin(), h_u_reso.GetXaxis().GetXmax() )
+  tree.Draw("1E3*sqrt(v_var) >>h_v_reso")
+  #h_v_reso= tree.GetHistogram()
+  h_v_reso.Scale(1E-3)
+  h_v_reso.GetXaxis().SetTitle("position reconstruction error[#mum]")
+  h_v_reso.GetYaxis().SetTitle("reconstructed tracks[10^{3}]")
+  h_v_reso.SetTitle("")
+  h_v_reso.SetLineColor(2)
 
   h_trackmap = ROOT.TH2F()
   tree.Draw("v:u >>h_trackmap","","goff")
@@ -290,6 +344,25 @@ def plot_anglereco_DQM(inputfilename):
 
   leg.Draw("goff")
   c_theta_reso.SaveAs("theta_reso.pdf")
+
+  c_reso = ROOT.TCanvas( 'c_reso', 'c_reso', 200, 10, 700, 500 )
+  leg2 = ROOT.TLegend(.63,.57,.93,.93)
+  leg2.SetTextSize(.038)
+
+  c_reso.SetRightMargin(0.13)
+  h_u_reso.Draw("hist")
+  h_v_reso.Draw("histsame")
+  h_u_reso.SetStats(False)
+
+  description='#splitline{u resolution}{#splitline{mean: '+str(round(h_u_reso.GetMean(),1))+' #mum}{RMS: '+str(round(h_u_reso.GetRMS(),1))+' #mum}}'
+  leg2.AddEntry(h_u_reso,description,"L")
+
+  description='#splitline{v resolution}{#splitline{mean: '+str(round(h_v_reso.GetMean(),1))+' #mum}{RMS: '+str(round(h_v_reso.GetRMS(),1))+' #mum}}'
+  leg2.AddEntry(h_v_reso,description,"L")
+  c_reso.Update()
+
+  leg2.Draw()
+  c_reso.SaveAs("reso.pdf")
 
   c_trackmap = ROOT.TCanvas( 'c_trackmap', 'c_trackmap', 200, 10, 700, 500 )
   c_trackmap.SetRightMargin(0.13)
