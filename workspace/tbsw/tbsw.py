@@ -193,32 +193,7 @@ class Environment(object):
   
   def set_gearfile(self, name=''): 
     self.override(xpath="./global/parameter[@name='GearXMLFile']", value=name)  
-
-  def set_beam_momentum(self, momentum):
-    """
-    Set momentum in processors.xml file  
-    :@momentum:      momentum to be set
-    
-    :author: benjamin.schwenker@phys.uni-goettinge.de  
-    """    
-    xmlfile = self.get_filename('processors.xml')
-    tree = xml.etree.ElementTree.parse(xmlfile)
-    root = tree.getroot()
-
-    print(' Changed beam energy to: ', momentum)
-    
-
-    for processor in root.findall('processor'): 
-      for parameter in processor.findall('parameter'):
-        name = parameter.get('name')
-        value = parameter.get('value')
-        if name=='ParticleMomentum':
-		  parameter.set('value', str(momentum))
-        if name=='BeamMomentum':
-		  parameter.set('value', str(momentum))
-
-    tree.write(xmlfile) 
-    
+  
   def run(self,pathlist):
     # run Marlin in tmpdir  
     os.chdir(self.tmpdir)
@@ -271,6 +246,8 @@ class Environment(object):
     else: 
       raise ValueError('No file found')  
 
+    return self.tmpdir + '/' + copy_filename
+
   def create_dbfilename(self, filename):
     localdbfilename = os.path.join(self.tmpdir + '/localDB/',filename)
     return localdbfilename
@@ -312,10 +289,10 @@ class Simulation(Environment):
   def __init__(self, steerfiles, name='sim'): 
     Environment.__init__(self, name=name, steerfiles=steerfiles)
     
-  def simulate(self, path=[], caltag='default'):
+  def simulate(self, paths=[], caltag='default'):
     """
     Creates a lcio file(s) with simulated events. 
-    :@path:       list of path objects 
+    :@paths:      list of path objects 
     :@caltag:     name of calibration tag (optional)
     
     :author: benjamin.schwenker@phys.uni-goettinge.de  
@@ -324,7 +301,7 @@ class Simulation(Environment):
     print ('[INFO] Starting to simulate a test beam run ...') 
      
     self.import_caltag(caltag)
-    self.run(path)
+    self.run(paths)
     self.export_caltag(caltag)
    
 class Reconstruction(Environment):
@@ -335,10 +312,10 @@ class Reconstruction(Environment):
   def __init__(self, steerfiles, name='reco'): 
     Environment.__init__(self, name=name, steerfiles=steerfiles)
   
-  def reconstruct(self, path=[], caltag='default', ifile=''):
+  def reconstruct(self, paths=[], caltag='default', ifile=''):
     """
     Reconstructs an input file with raw data using a caltag for calibration. 
-    :@path:       list of path objects
+    :@paths:      list of path objects
     :@caltag:     name of calibration tag (optional)
     :@ifile:      name of input file with raw data
     
@@ -348,7 +325,7 @@ class Reconstruction(Environment):
     print ('[INFO] Starting to reconstruct file ' + ifile + ' ...')  
      
     self.import_caltag(caltag)
-    self.run(path)
+    self.run(paths)
     self.copy_rootfiles()
     
     print ('[INFO] Done processing file ' + ifile)  
@@ -365,7 +342,7 @@ class Calibration(Environment):
   def calibrate(self, paths=[], caltag='default', ifile=''):
     """
     Calibrate beam telescope using a calibration run  
-    :@paths: list containing Marlin xml files that will be executed 
+    :@paths:      list containing Marlin xml files that will be executed 
     :@caltag:     name of calibration tag (optional)
     :@ifile:      name of input file with raw data
     

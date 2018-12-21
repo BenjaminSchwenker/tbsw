@@ -125,7 +125,7 @@ void DrawBoxes()
     gStyle->SetPalette(1,0);
 
 	// X0 map
-	hX0map = (TH2*)rootFile->Get("x0_image");
+	TH2F* hX0map = (TH2F*)rootFile->Get("x0_image");
 
 	// Create a new canvas
 	TCanvas * c = new TCanvas("c", "c", 1400, 1000);

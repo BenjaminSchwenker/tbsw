@@ -11,7 +11,8 @@ as a timing plane.
 Author: Benjamin Schwenker <benjamin.schwenker@phys.uni-goettingen.de>  
 """
 
-from tbsw import *
+import tbsw 
+import os
 
 # Path to steering files 
 # The folder steerfiles contains one or more gear file describing the 
@@ -29,9 +30,9 @@ energy = 4
 useClusterDB = True
 
 #Parameters x,y,z,alpha,beta,gamma for simulation of misalignment
-#Position parameters in mm
+#Position parameters in mm and degree for rotations
 mean_list=[0.0,0.0,0.0,0.0,0.0,0.0] 
-sigma_list=[0.1,0.1,0.1,0.1,0.1,0.1]
+sigma_list=[0.1,0.1,0.1,0.3,0.3,1.5]
 
 # List of sensor ids and modes, which are excluded during misalignment
 sensorexception_list=[] 
@@ -42,7 +43,7 @@ def add_clusterizers(path):
   Adds clusterizers to the path
   """  
     
-  m26clust = Processor(name="M26Clusterizer",proctype="PixelClusterizer")   
+  m26clust = tbsw.Processor(name="M26Clusterizer",proctype="PixelClusterizer")   
   m26clust.param("NoiseDBFileName","localDB/NoiseDB-M26.root")
   m26clust.param("SparseDataCollectionName","zsdata_m26")
   m26clust.param("ClusterCollectionName","zscluster_m26")
@@ -51,7 +52,7 @@ def add_clusterizers(path):
   m26clust.param("SparseZSCut", 0)   
   path.add_processor(m26clust)  
 
-  fei4clust = Processor(name="FEI4Clusterizer",proctype="PixelClusterizer")   
+  fei4clust = tbsw.Processor(name="FEI4Clusterizer",proctype="PixelClusterizer")   
   fei4clust.param("NoiseDBFileName","localDB/NoiseDB-FEI4.root")
   fei4clust.param("SparseDataCollectionName","zsdata_fei4")
   fei4clust.param("ClusterCollectionName","zscluster_fei4")
@@ -60,7 +61,7 @@ def add_clusterizers(path):
   fei4clust.param("SparseZSCut", 0)   
   path.add_processor(fei4clust)  
 
-  pxdclust = Processor(name="PXDClusterizer",proctype="PixelClusterizer")   
+  pxdclust = tbsw.Processor(name="PXDClusterizer",proctype="PixelClusterizer")   
   pxdclust.param("NoiseDBFileName","localDB/NoiseDB-PXD.root")
   pxdclust.param("SparseDataCollectionName","zsdata_pxd")
   pxdclust.param("ClusterCollectionName","zscluster_pxd")
@@ -76,21 +77,21 @@ def add_hitmakers(path):
   Add CoG hitmakers to the path
   """  
   
-  m26hitmaker = Processor(name="M26CogHitMaker",proctype="CogHitMaker")
+  m26hitmaker = tbsw.Processor(name="M26CogHitMaker",proctype="CogHitMaker")
   m26hitmaker.param("ClusterCollection","zscluster_m26")
   m26hitmaker.param("HitCollectionName","hit_m26")
   m26hitmaker.param("SigmaUCorrections", "0.698 0.31 0.315")  
   m26hitmaker.param("SigmaVCorrections", "0.698 0.31 0.315")
   path.add_processor(m26hitmaker)
   
-  fei4hitmaker = Processor(name="FEI4CogHitMaker",proctype="CogHitMaker")
+  fei4hitmaker = tbsw.Processor(name="FEI4CogHitMaker",proctype="CogHitMaker")
   fei4hitmaker.param("ClusterCollection","zscluster_fei4")
   fei4hitmaker.param("HitCollectionName","hit_fei4")
   fei4hitmaker.param("SigmaUCorrections", "1.0 0.5 0.3")  
   fei4hitmaker.param("SigmaVCorrections", "1.0 0.5 0.3")
   path.add_processor(fei4hitmaker)
 
-  pxdhitmaker = Processor(name="PXDCogHitMaker",proctype="CogHitMaker")
+  pxdhitmaker = tbsw.Processor(name="PXDCogHitMaker",proctype="CogHitMaker")
   pxdhitmaker.param("ClusterCollection","zscluster_pxd")
   pxdhitmaker.param("HitCollectionName","hit_pxd")
   pxdhitmaker.param("SigmaUCorrections", "0.8 0.3 0.3")  
@@ -104,19 +105,19 @@ def add_hitmakersDB(path):
   Add cluster shape hitmakers to the path (requiring clusterDBs)
   """  
   
-  m26goehitmaker = Processor(name="M26GoeHitMaker",proctype="GoeHitMaker")   
+  m26goehitmaker = tbsw.Processor(name="M26GoeHitMaker",proctype="GoeHitMaker")   
   m26goehitmaker.param("ClusterCollection","zscluster_m26")
   m26goehitmaker.param("HitCollectionName","hit_m26")
   m26goehitmaker.param("ClusterDBFileName","localDB/clusterDB-M26.root")
   path.add_processor(m26goehitmaker)  
     
-  fei4goehitmaker = Processor(name="FEI4GoeHitMaker",proctype="GoeHitMaker")   
+  fei4goehitmaker = tbsw.Processor(name="FEI4GoeHitMaker",proctype="GoeHitMaker")   
   fei4goehitmaker.param("ClusterCollection","zscluster_fei4")
   fei4goehitmaker.param("HitCollectionName","hit_fei4")
   fei4goehitmaker.param("ClusterDBFileName","localDB/clusterDB-FEI4.root")
   path.add_processor(fei4goehitmaker) 
   
-  pxdgoehitmaker = Processor(name="PXDGoeHitMaker",proctype="GoeHitMaker")   
+  pxdgoehitmaker = tbsw.Processor(name="PXDGoeHitMaker",proctype="GoeHitMaker")   
   pxdgoehitmaker.param("ClusterCollection","zscluster_pxd")
   pxdgoehitmaker.param("HitCollectionName","hit_pxd")
   pxdgoehitmaker.param("ClusterDBFileName","localDB/clusterDB-PXD.root")
@@ -132,14 +133,14 @@ def add_clustercalibrators(path):
   Add cluster calibration processors to create clusterDB's
   """
   
-  m26clustdb = Processor(name="M26ClusterCalibrator",proctype="GoeClusterCalibrator")   
+  m26clustdb = tbsw.Processor(name="M26ClusterCalibrator",proctype="GoeClusterCalibrator")   
   m26clustdb.param("AlignmentDBFileName","localDB/alignmentDB.root")
   m26clustdb.param("ClusterDBFileName","localDB/clusterDB-M26.root")  
   m26clustdb.param("MinClusters","500")
   m26clustdb.param("IgnoreIDs","6 7 21")
   path.add_processor(m26clustdb)  
     
-  pxdclustdb = Processor(name="PXDClusterCalibrator",proctype="GoeClusterCalibrator")   
+  pxdclustdb = tbsw.Processor(name="PXDClusterCalibrator",proctype="GoeClusterCalibrator")   
   pxdclustdb.param("AlignmentDBFileName","localDB/alignmentDB.root")
   pxdclustdb.param("ClusterDBFileName","localDB/clusterDB-PXD.root")  
   pxdclustdb.param("MinClusters","500")
@@ -147,7 +148,7 @@ def add_clustercalibrators(path):
   pxdclustdb.param("IgnoreIDs","0 1 2 3 4 5 7 21")
   path.add_processor(pxdclustdb)  
     
-  fei4clustdb = Processor(name="FEI4ClusterCalibrator",proctype="GoeClusterCalibrator")   
+  fei4clustdb = tbsw.Processor(name="FEI4ClusterCalibrator",proctype="GoeClusterCalibrator")   
   fei4clustdb.param("AlignmentDBFileName","localDB/alignmentDB.root")
   fei4clustdb.param("ClusterDBFileName","localDB/clusterDB-FEI4.root")  
   fei4clustdb.param("MinClusters","500")
@@ -163,12 +164,12 @@ def create_sim_path(Env):
   
   sim_path = Env.create_path('sim')
   sim_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents})   
-  infosetter = Processor(name="InfoSetter", proctype='EventInfoSetter')
+  infosetter = tbsw.Processor(name="InfoSetter", proctype='EventInfoSetter')
   infosetter.param("RunNumber","0")
   infosetter.param("DetectorName","EUTelescope")
   sim_path.add_processor(infosetter)
   
-  gun = Processor(name="ParticleGun",proctype="ParticleGunGenerator")
+  gun = tbsw.Processor(name="ParticleGun",proctype="ParticleGunGenerator")
   gun.param("BeamIntensity","2000")
   gun.param("BeamMomentum",energy)
   gun.param("BeamVertexX","0")
@@ -181,14 +182,14 @@ def create_sim_path(Env):
   gun.param("ParticleMass","0.000511")
   sim_path.add_processor(gun)
   
-  fastsim = Processor(name="FastSim",proctype="FastSimulation")
+  fastsim = tbsw.Processor(name="FastSim",proctype="FastSimulation")
   fastsim.param("AlignmentDBFileName","localDB/alignmentDB.root")
   fastsim.param("ScatterModel","0")
   fastsim.param("DoEnergyLossStraggling","true")
   fastsim.param("DoFractionalBetheHeitlerEnergyLoss","false")
   sim_path.add_processor(fastsim)
   
-  tlu = Processor(name="TLU",proctype="TriggerGenerator")
+  tlu = tbsw.Processor(name="TLU",proctype="TriggerGenerator")
   tlu.param("FakeTriggerPeriod","0")
   tlu.param("ScinitNo1", "0 -5 -5 5 5")
   tlu.param("ScinitNo2", "")
@@ -196,7 +197,7 @@ def create_sim_path(Env):
   tlu.param("ScinitNo4", "") 
   sim_path.add_processor(tlu)
    
-  m26digi = Processor(name="M26Digitizer",proctype="SiPixDigitizer")
+  m26digi = tbsw.Processor(name="M26Digitizer",proctype="SiPixDigitizer")
   m26digi.param("DigitCollectionName","zsdata_m26")  
   m26digi.param("NoiseFraction","0.00001")
   m26digi.param("FrontEndType","1") 
@@ -210,7 +211,7 @@ def create_sim_path(Env):
   m26digi.param("vSideBorderLength","4")
   sim_path.add_processor(m26digi)
   
-  pxddigi = Processor(name="DEPFETDigitizer",proctype="SiPixDigitizer")
+  pxddigi = tbsw.Processor(name="DEPFETDigitizer",proctype="SiPixDigitizer")
   pxddigi.param("DigitCollectionName","zsdata_pxd")
   pxddigi.param("NoiseFraction","0.00001")  
   pxddigi.param("FrontEndType","0")
@@ -226,7 +227,7 @@ def create_sim_path(Env):
   pxddigi.param("ZSThreshold", "5")
   sim_path.add_processor(pxddigi)
   
-  fei4digi = Processor(name="FEI4Digitizer",proctype="SiPixDigitizer")
+  fei4digi = tbsw.Processor(name="FEI4Digitizer",proctype="SiPixDigitizer")
   fei4digi.param("DigitCollectionName","zsdata_fei4")
   fei4digi.param("NoiseFraction","0.00001")  
   fei4digi.param("FrontEndType","1") 
@@ -241,7 +242,7 @@ def create_sim_path(Env):
   fei4digi.param("ZSThreshold", "0")
   sim_path.add_processor(fei4digi)
    
-  lciooutput = Processor(name="LCIOOutput",proctype="LCIOOutputProcessor")
+  lciooutput = tbsw.Processor(name="LCIOOutput",proctype="LCIOOutputProcessor")
   lciooutput.param("LCIOOutputFile",rawfile)
   lciooutput.param("LCIOWriteMode","WRITE_NEW")  
   sim_path.add_processor(lciooutput)
@@ -261,21 +262,21 @@ def create_calibration_path(Env):
   mask_path = Env.create_path('mask_path')
   mask_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : -1, 'LCIOInputFiles': rawfile }) 
    
-  m26hotpixelkiller = Processor(name="M26HotPixelKiller",proctype="HotPixelKiller",)
+  m26hotpixelkiller = tbsw.Processor(name="M26HotPixelKiller",proctype="HotPixelKiller",)
   m26hotpixelkiller.param("InputCollectionName", "zsdata_m26")
   m26hotpixelkiller.param("MaxOccupancy", 0.001)
   m26hotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-M26.root")
   m26hotpixelkiller.param("OfflineZSThreshold", 0)
   mask_path.add_processor(m26hotpixelkiller)
    
-  fei4hotpixelkiller = Processor(name="FEI4HotPixelKiller", proctype="HotPixelKiller")
+  fei4hotpixelkiller = tbsw.Processor(name="FEI4HotPixelKiller", proctype="HotPixelKiller")
   fei4hotpixelkiller.param("InputCollectionName", "zsdata_fei4")
   fei4hotpixelkiller.param("MaxOccupancy", 0.001)
   fei4hotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-FEI4.root")
   fei4hotpixelkiller.param("OfflineZSThreshold", 0)
   mask_path.add_processor(fei4hotpixelkiller)
    
-  pxdhotpixelkiller = Processor(name="PXDHotPixelKiller", proctype="HotPixelKiller")
+  pxdhotpixelkiller = tbsw.Processor(name="PXDHotPixelKiller", proctype="HotPixelKiller")
   pxdhotpixelkiller.param("InputCollectionName", "zsdata_pxd")
   pxdhotpixelkiller.param("MaxOccupancy", 0.001)
   pxdhotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-PXD.root")
@@ -291,7 +292,7 @@ def create_calibration_path(Env):
    
   clusterizer_path = add_clusterizers(clusterizer_path)    
    
-  lciooutput = Processor(name="LCIOOutput",proctype="LCIOOutputProcessor")
+  lciooutput = tbsw.Processor(name="LCIOOutput",proctype="LCIOOutputProcessor")
   lciooutput.param("LCIOOutputFile","tmp.slcio")
   lciooutput.param("LCIOWriteMode","WRITE_NEW")
   clusterizer_path.add_processor(lciooutput)  
@@ -305,12 +306,12 @@ def create_calibration_path(Env):
 
   correlator_path = add_hitmakers(correlator_path) 
   
-  hitdqm = Processor(name="RawDQM",proctype="RawHitDQM")
+  hitdqm = tbsw.Processor(name="RawDQM",proctype="RawHitDQM")
   hitdqm.param("InputHitCollectionNameVec","hit_m26 hit_fei4 hit_pxd")  
   hitdqm.param("RootFileName","RawDQM.root")
   correlator_path.add_processor(hitdqm)  
   
-  correlator = Processor(name="TelCorrelator", proctype="Correlator")
+  correlator = tbsw.Processor(name="TelCorrelator", proctype="Correlator")
   correlator.param("InputHitCollectionNameVec","hit_m26 hit_fei4 hit_pxd hit_h5")
   correlator.param("AlignmentDBFileName", "localDB/alignmentDB.root")
   correlator.param("OutputRootFileName","XCorrelator.root")
@@ -329,7 +330,7 @@ def create_calibration_path(Env):
   
   prealigner_path = add_hitmakers(prealigner_path) 
 
-  trackfinder_loosecut = Processor(name="AlignTF_LC",proctype="FastTracker")
+  trackfinder_loosecut = tbsw.Processor(name="AlignTF_LC",proctype="FastTracker")
   trackfinder_loosecut.param("InputHitCollectionNameVec","hit_m26 hit_fei4 hit_pxd hit_h5")
   trackfinder_loosecut.param("AlignmentDBFileName","localDB/alignmentDB.root")
   trackfinder_loosecut.param("ExcludeDetector", "")
@@ -345,7 +346,7 @@ def create_calibration_path(Env):
   trackfinder_loosecut.param("MaxResidualV","0.5")
   prealigner_path.add_processor(trackfinder_loosecut)
   
-  prealigner = Processor(name="PreAligner",proctype="KalmanAligner")
+  prealigner = tbsw.Processor(name="PreAligner",proctype="KalmanAligner")
   prealigner.param("AlignmentDBFileName","localDB/alignmentDB.root")
   prealigner.param('ErrorsShiftX' , '0 10 10 10 10 10 0 10 10')
   prealigner.param('ErrorsShiftY' , '0 10 10 10 10 10 0 10 10')
@@ -364,7 +365,7 @@ def create_calibration_path(Env):
   
   aligner_path = add_hitmakers(aligner_path) 
 
-  trackfinder_tightcut = Processor(name="AlignTF_TC",proctype="FastTracker")
+  trackfinder_tightcut = tbsw.Processor(name="AlignTF_TC",proctype="FastTracker")
   trackfinder_tightcut.param("InputHitCollectionNameVec","hit_m26 hit_fei4 hit_pxd hit_h5")
   trackfinder_tightcut.param("AlignmentDBFileName","localDB/alignmentDB.root")
   trackfinder_tightcut.param("ExcludeDetector", "")
@@ -380,7 +381,7 @@ def create_calibration_path(Env):
   trackfinder_tightcut.param("MaxResidualV","0.4")
   aligner_path.add_processor(trackfinder_tightcut)
    
-  aligner = Processor(name="Aligner",proctype="KalmanAligner")
+  aligner = tbsw.Processor(name="Aligner",proctype="KalmanAligner")
   aligner.param("AlignmentDBFileName","localDB/alignmentDB.root")
   aligner.param('ErrorsShiftX' , '0 10 10 10 10 10 0 10 10' )
   aligner.param('ErrorsShiftY' , '0 10 10 10 10 10 0 10 10')
@@ -403,7 +404,7 @@ def create_calibration_path(Env):
   dqm_path = add_hitmakers(dqm_path)   
   dqm_path.add_processor(trackfinder_tightcut)  
    
-  teldqm = Processor(name="TelescopeDQM", proctype="TrackFitDQM") 
+  teldqm = tbsw.Processor(name="TelescopeDQM", proctype="TrackFitDQM") 
   teldqm.param("AlignmentDBFileName","localDB/alignmentDB.root")
   teldqm.param("RootFileName","TelescopeDQM.root")
   dqm_path.add_processor(teldqm)  
@@ -462,7 +463,7 @@ def create_calibration_path(Env):
     dqm_db_path = add_hitmakersDB(dqm_db_path)   
     dqm_db_path.add_processor(trackfinder_tightcut)  
     
-    teldqm_db = Processor(name="TelescopeDQM_DB", proctype="TrackFitDQM") 
+    teldqm_db = tbsw.Processor(name="TelescopeDQM_DB", proctype="TrackFitDQM") 
     teldqm_db.param("AlignmentDBFileName","localDB/alignmentDB.root")
     teldqm_db.param("RootFileName","TelescopeDQM_DB.root")
     dqm_db_path.add_processor(teldqm_db)  
@@ -489,7 +490,7 @@ def create_reco_path(Env):
   else: 
     reco_path = add_hitmakers(reco_path) 
   
-  trackfinder = Processor(name="TrackFinder",proctype="FastTracker")
+  trackfinder = tbsw.Processor(name="TrackFinder",proctype="FastTracker")
   trackfinder.param("InputHitCollectionNameVec","hit_m26 hit_fei4")
   trackfinder.param("AlignmentDBFileName","localDB/alignmentDB.root")
   trackfinder.param("ExcludeDetector", "3 8")
@@ -505,7 +506,7 @@ def create_reco_path(Env):
   trackfinder.param("MaxResidualV","0.4")
   reco_path.add_processor(trackfinder)  
 
-  pxd_analyzer = Processor(name="PXDAnalyzer",proctype="PixelDUTAnalyzer")
+  pxd_analyzer = tbsw.Processor(name="PXDAnalyzer",proctype="PixelDUTAnalyzer")
   pxd_analyzer.param("HitCollection","hit_pxd")  
   pxd_analyzer.param("DigitCollection","zsdata_pxd")
   pxd_analyzer.param("AlignmentDBFileName","localDB/alignmentDB.root")
@@ -528,13 +529,13 @@ def simulate(params):
   rawfile, steerfiles, gearfile, caltag = params
   
   # Create tmpdir to hold all steerfiles and log files 
-  SimObj = Simulation(steerfiles=steerfiles, name=os.path.splitext(os.path.basename(rawfile))[0] + '-sim' )
+  SimObj = tbsw.Simulation(steerfiles=steerfiles, name=os.path.splitext(os.path.basename(rawfile))[0] + '-sim' )
 
   # Create steerfiles for processing
   simpath = create_sim_path(SimObj)
 
   # Misalign gear file
-  randomize_telescope(gearfile=SimObj.get_filename(gearfile), mean_list=mean_list, sigma_list=sigma_list, sensorexception_list=sensorexception_list, modeexception_list=modeexception_list)
+  tbsw.gear.randomize_telescope(gearfile=SimObj.get_filename(gearfile), mean_list=mean_list, sigma_list=sigma_list, sensorexception_list=sensorexception_list, modeexception_list=modeexception_list)
    
   # Run simulation to create rawfile with simulated digits 
   SimObj.simulate(path=simpath)  
@@ -554,7 +555,7 @@ def calibrate(params):
   
   # Calibrate of the run using beam data. Creates a folder cal-files/caltag 
   # containing all calibration data. 
-  CalObj = Calibration(steerfiles=steerfiles, name=caltag + '-cal') 
+  CalObj = tbsw.Calibration(steerfiles=steerfiles, name=caltag + '-cal') 
   
   # Create list of calibration steps 
   calpaths = create_calibration_path(CalObj)
@@ -572,7 +573,7 @@ def reconstruct(params):
    
   # Reconsruct the rawfile using the caltag. Resulting root files are 
   # written to folder root-files/
-  RecObj = Reconstruction(steerfiles=steerfiles, name=caltag + '-reco' )
+  RecObj = tbsw.Reconstruction(steerfiles=steerfiles, name=caltag + '-reco' )
 
   # Create reconstuction path
   recopath = create_reco_path(RecObj)  
@@ -603,12 +604,12 @@ if __name__ == '__main__':
   # Plot DUT residuals and cluster signal histograms from the 'Hit'
   # tree in the workspace. 
   ofile = 'Example-Residuals.root'
-  residuals.plot(inputfilename=trackfile, histofilename=ofile, basecut = "hasTrack==0", nbins=201, urange=400, vrange=400)
+  tbsw.residuals.plot(inputfilename=trackfile, histofilename=ofile, basecut = "hasTrack==0", nbins=501, urange=400, vrange=400)
       
   # Plot DUT hit efficiency histograms from the 'Track' tree 
   # in the workspace. 
   ofile = 'Example-Efficiency.root' 
-  efficiency.plot(inputfilename=trackfile, histofilename=ofile, basecut="trackNHits==7 && nDutDigits>=0", matchcut="hasHit==0", uaxis=(250,0,250), vaxis=(768,0,768))
+  tbsw.efficiency.plot(inputfilename=trackfile, histofilename=ofile, basecut="trackNHits==7 && nDutDigits>=0", matchcut="hasHit==0", uaxis=(250,0,250), vaxis=(768,0,768))
     
     
     

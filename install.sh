@@ -104,5 +104,6 @@ mkdir workspace/tmp-runs
 # Folder to collect reconstructed DUT root files 
 mkdir workspace/root-files
 
-
+# Folder to collect DQM pdfs 
+mkdir workspace/results
 

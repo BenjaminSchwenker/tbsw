@@ -82,8 +82,8 @@ namespace depfet {
                                 m_doFractionalBetheHeitlerEnergyLoss,  static_cast < bool > (false));
     
     registerProcessorParameter ("AlignmentDBFileName",
-                             "This is the name of the LCIO file with the alignment constants (add .slcio)",
-                             _alignmentDBFileName, static_cast< string > ( "eudet-alignmentDB.slcio" ) );  
+                             "This is the name of the file with the alignment constants (add .root)",
+                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) );  
     
     
                                  
@@ -364,7 +364,18 @@ namespace depfet {
   //
   void FastSimulation::end()
   {
-   
+    
+    ////////////////////////////////////////////////////////////
+    // Print detector geometrie used for simulation    
+       
+    streamlog_out ( MESSAGE3 ) << "Detector geometry in simulation: " << endl;   
+    m_detector.Print();   
+       
+    //////////////////////////////////////////////////////////////////////  
+    // Save alignment DB used for simulation 
+    
+    m_detector.WriteAlignmentDB( ); 
+     
     streamlog_out ( MESSAGE3 ) << endl;
     streamlog_out ( MESSAGE3 ) << "Successfully finished" << endl;
     

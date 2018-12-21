@@ -115,10 +115,10 @@ using namespace std ;
 	TString histoname;
 	histoname.Form("area(%i,%i)",col,row);
 	rootfile->cd("");
-	histo=(TH1*)rootfile->Get("raw/sumhisto_"+histoname);
+	histo=(TH1F*)rootfile->Get("raw/sumhisto_"+histoname);
 
 	// Clone the current histogram
-	TH1* testedhistogram=(TH1*)histo->Clone("testedhistogram");
+	TH1F* testedhistogram=(TH1F*)histo->Clone("testedhistogram");
 
 	// Get maximum of histogram, the test of the distributions starts there
 	double maxvalue=histo->GetMaximum();
