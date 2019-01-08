@@ -364,8 +364,14 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, c
         if(hasCRC){
             unsigned crc_val=crc32_dhe_shift( (const unsigned char *)frame,4*(frame_size-1),0);
             unsigned crc_calc= ((frame[frame_size-1] &0xFFFF)<<16) +  ( (frame[frame_size-1] &0xFFFF0000)>>16); 
+            dhh_hdr=reinterpret_cast<const DHH_new_Header_t *>(frame);
+            unsigned dheID=0;
+            if(dhh_hdr->DataType!=DHHC_END_OF_EVENT){
+                const DHE_Start_Frame_t * dhe_hdr=reinterpret_cast<const DHE_Start_Frame_t *>(frame);
+                dheID=dhe_hdr->DheId;
+            }
             if(crc_calc!=crc_val){
-                std::cout<<"Bad CRC observed. calculated "<<std::hex<<crc_val<<" but data got "<<std::hex<<crc_calc<< std::dec<<std::endl;
+                if(dheID!=63) std::cout<<"Bad CRC observed. calculated "<<std::hex<<crc_val<<" but data got "<<std::hex<<crc_calc<< std::dec<<std::endl;
                 crc_good=false;
             }
             frame_size-=1;
@@ -401,11 +407,13 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, c
             if(!isFirst && !has_end_of_dhe){
                 dhc_words+=4;
             }
-            if (finished_data && !dhe_crc_good){
-                if(debug>=DEBUG_LVL_ERROR)printf("Frame had bad CRC values! It will be ignored!\n");
-            }
-            if(dhe_crc_good&&finished_data){
+            //if (finished_data && !dhe_crc_good){
+            //    if(debug>=DEBUG_LVL_ERROR)printf("Frame had bad CRC values! It will be ignored!\n");
+            //}
+            if(finished_data){
                 evt.isRaw=gotRawData;
+
+                evt.badCRC=!dhe_crc_good;
                 return_data.push_back(std::move(evt));
                 evt=depfet_event();
 
@@ -435,6 +443,9 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, c
             evt.dhc_triggerNr=dhcTrigger;
             evt.triggerOffset=dhe_hdr->TriggerOffset;
             evt.isGood=63!=dhe_hdr->DheId;
+            evt.isDummy= (63==dhe_hdr->DheId);
+            evt.badPadding = false;
+            evt.badCRC = false;
             evt.dheID=dhe_hdr->DheId;
             has_end_of_dhe=false;
             gotRawData=false;
@@ -625,7 +636,7 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, c
                 if(dhpData[(frame_size-2)*2 -1]==0  ){
                     printf("Unwanted padding in data! SHOULD NOT HAPPEN! Ignoring event\n");
                     if (fill_info) info_map["ERROR,"+dhc_prefix+dhe_prefix + fr_prefix+"ERROR_INVALID_PADDING"]+=1;
-                    continue;
+                    evt.badPadding=true;
                 }
                 if(((dhpData[(frame_size-2)*2 -1]) >> 15) == 0 ){
 
@@ -828,11 +839,12 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, c
         gotZSData=true;
     }
 
-    if (!dhe_crc_good){
-        if(debug>=DEBUG_LVL_ERROR)printf("Frame had bad CRC values! It will be ignored!\n");
-    }
-    if(dhe_crc_good&&finished_data){
+    //if (!dhe_crc_good){
+    //    if(debug>=DEBUG_LVL_ERROR)printf("Frame had bad CRC values! It will be ignored!\n");
+    //}
+    if(finished_data){
         evt.isRaw=gotRawData;
+        evt.badCRC=!dhe_crc_good;
         return_data.push_back(std::move(evt));
 
         if((gotRawData && gotZSData)){

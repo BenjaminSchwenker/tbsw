@@ -66,65 +66,71 @@ class PixelDUTAnalyzer : public marlin::Processor {
    
  public:
    
-//!Method that returns a new instance of this processor
+   //!Method that returns a new instance of this processor
    virtual Processor*  newProcessor() { return new PixelDUTAnalyzer ; }
     
-//!Constructor - set processor description and register processor parameters
+   //!Constructor - set processor description and register processor parameters
    PixelDUTAnalyzer();
    
-//!Method called at the beginning of data processing - used for initialization
+   //!Method called at the beginning of data processing - used for initialization
    virtual void init();
     
-//!Method called for each run - used for run header processing
+   //!Method called for each run - used for run header processing
    virtual void processRunHeader(LCRunHeader * run);
    
-//!Method called for each event - used for event data processing
+   //!Method called for each event - used for event data processing
    virtual void processEvent(LCEvent * evt);
    
-//!Method called after each event - used for data checking
+   //!Method called after each event - used for data checking
    virtual void check(LCEvent * evt);
    
-//!Method called after all data processing
+   //!Method called after all data processing
    virtual void end();
    
-protected:
+ protected:
    
-//! Histogram booking
+   //! Histogram booking
    void bookHistos();
    
-//!Method printing processor parameters
+   //!Method printing processor parameters
    void printProcessorParams() const;
    
-// Processor Parameters
+   // Processor Parameters
    
-//! Input Track collection name
+   //! Input Track collection name
    std::string _trackColName;
    
-//! Input DUT TrackerHit collection name
+   //! Input DUT TrackerHit collection name
    std::string _hitColName;   
 
-//! Input digit collection name
+   //! Input digit collection name
    std::string _digitColName;
    
-//! Alignment DB file name 
+   //! Alignment DB file name 
    std::string _alignmentDBFileName;
    
-//! ROOT output file name  
+   //! ROOT output file name  
    std::string _rootFileName;  
+
+   //! Input meta data collection name  
+   std::string _metaDataColName;
    
-//! DUT plane number, counting sensors in gear file along the beam line starting at zero 
+   //! DUT plane number, counting sensors in gear file along the beam line starting at zero 
    int _idut; 
 
-//! Reference plane number, a track is required to have a hit on the reference plane 
+   //! Reference plane number, a track is required to have a hit on the reference plane 
    int _iref; 
+
+   //! List of test pixels  
+   std::vector<std::string> _testPixels; 
       
-//! Max residual for hit-track matching in 
+   //! Max residual for hit-track matching 
    double _maxResidualU;  // in mm, local DUT uvw coordinate frame 
    double _maxResidualV;  // in mm, local DUT uvw coordinate frame 
      
-// ROOT_OUTPUT 
+   // ROOT_OUTPUT 
    TFile * _rootFile;
-
+   
    /** One entry per cluster on the DUT */
    TTree * _rootHitTree;
    /** One entry per track in the reference telescope */
@@ -138,7 +144,9 @@ protected:
    int _rootSensorID;                // SensorID from lcio file (this is typically NOT the plane number!!)
    int _rootNTelTracks;              // Number of tracks in reference telescope in same event 
    int _rootNDUTDigits;              // Number of DUT digits in the same event  
+   bool _rootDUTGoodEvent;           // Flag for events without format errors during unpacking 
    int _rootHitQuality;              // GoodCluster == 0, BadCluster != 0
+   bool _rootDUTHasTestPixels;       // Checks if test pixels are found in the event 
    double _rootHitU;                 // Hit coordinate u reconstructed from DUT cluster in mm, in local DUT uvw coordinates       
    double _rootHitV;                 // Hit coordinate v reconstructed from DUT cluster in mm, in local DUT uvw coordinates     
    double _rootHitClusterCharge;     // Sum over all charges in the cluster 

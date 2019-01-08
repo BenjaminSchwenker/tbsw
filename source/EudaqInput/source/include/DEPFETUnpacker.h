@@ -70,6 +70,9 @@ namespace eudaqinput {
     //! Input data collection name  
     std::string _inputCollectionName;
 
+    //! Metadata output collection name  
+    std::string _outputMetaDataCollectionName;
+
     //! Reset the sensorID to this number
     int _resetSensorID; 
     

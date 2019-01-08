@@ -63,6 +63,9 @@ struct depfet_event{
     bool isRaw;
     bool isGood;
     short modID;
+    bool isDummy;
+    bool badCRC;
+    bool badPadding;
 };
 
 int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, const unsigned char * inputBuffer,unsigned int buffer_size, const int dhpNR, const int requested_DHE,
