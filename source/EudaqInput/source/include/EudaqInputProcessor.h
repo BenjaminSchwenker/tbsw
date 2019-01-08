@@ -10,6 +10,7 @@
 // lcio includes <.h>
 
 // system includes <>
+#include <vector>
 
 
 namespace eudaqinput
@@ -17,7 +18,7 @@ namespace eudaqinput
   
   /** The EudaqInputProcessor Processor
    *
-   * The input processor reads .raw files produced by EUDAQ event by 
+   * The input processor reads one or more .raw files produced by EUDAQ event by 
    * event. A new lcio::LCEvent is created and the detector raw data
    * gets written into lcio::LCCollection objects. Subsquent processors
    * can be used to unpack and reconstruct the raw data collections. 
@@ -40,7 +41,7 @@ namespace eudaqinput
    protected:
      
     // Processor parameters 
-    std::string m_filename;
+    std::vector< std::string >  m_fileNameVec;  
     std::string m_detectorName;
     
     

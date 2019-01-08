@@ -49,10 +49,10 @@ PixelClusterizer::PixelClusterizer() : Processor("PixelClusterizer")
                                _sparseZSCut, static_cast<float > (0));
 
    registerProcessorParameter( "SparseSeedCut","Threshold for seed pixel signal",
-                               _sparseSeedCut, static_cast<float > (5));
+                               _sparseSeedCut, static_cast<float > (0));
    
    registerProcessorParameter( "SparseClusterCut","Threshold for cluster signal",
-                               _sparseClusterCut, static_cast<float > (7) ); 
+                               _sparseClusterCut, static_cast<float > (0) ); 
    
    registerProcessorParameter( "AcceptDiagonalCluster","0: common side; 1: common corner; 3: max. one missing pixel",
                                m_acceptDiagonalClusters , static_cast<int > (1) ); 
@@ -400,6 +400,8 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
                 
  	      // New accpeted cluster
           clusterID++; 
+            
+          streamlog_out(MESSAGE2) << " Stored cluster on sensor " << sensorID << " having total charge " << clusterSignal << std::endl;
           
           // Ok good cluster ... save it   
           originalDataEncoder["sensorID"] = sensorID;

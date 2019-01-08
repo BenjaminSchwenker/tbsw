@@ -9,9 +9,7 @@
 #include <map>
 #include <math.h>
 
-// Include CLHEP classes
-#include <CLHEP/Matrix/Matrix.h>
-#include <CLHEP/Matrix/Vector.h>
+
 
 namespace depfet {
 

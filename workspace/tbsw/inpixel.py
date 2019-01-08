@@ -4,7 +4,7 @@ import numpy
 import math
 
 
-def plot(inputfilename = None, histofilename = "InpixHistos.root", usize=0.0, vsize=0.0, ubins=10, vbins=10):
+def plot(inputfilename = None, histofilename = "InpixHistos.root", uaxis=(10,0,0), vaxis=(10,0,0) ):
     
   if inputfilename == None:
     return None
@@ -25,36 +25,39 @@ def plot(inputfilename = None, histofilename = "InpixHistos.root", usize=0.0, vs
   # Temporary data objects   
   histofile.mkdir("tmp")
   histofile.cd("tmp")
+
+  ubins = uaxis[0]
+  vbins = vaxis[0]
   
   counter = numpy.zeros(shape=(ubins,vbins))  
-  h2_cs = [[TH1F("hcs_%d_%d" % (iv,iu),"",400,0,400) for iv in range(vbins)] for iu in range(ubins)]
-  h2_ss = [[TH1F("hss_%d_%d" % (iv,iu),"",400,0,400) for iv in range(vbins)] for iu in range(ubins)]
-  h2_uu = [[TH1F("huu_%d_%d" % (iv,iu),"",10,0,10) for iv in range(vbins)] for iu in range(ubins)]
-  h2_vv = [[TH1F("hvv_%d_%d" % (iv,iu),"",10,0,10) for iv in range(vbins)] for iu in range(ubins)]
-  h2_px = [[TH1F("hpx_%d_%d" % (iv,iu),"",10,0,10) for iv in range(vbins)] for iu in range(ubins)]
+  h2_cs = [[TH1F("hcs_%d_%d" % (iv,iu),"",255,0,255) for iv in range(vbins)] for iu in range(ubins)]
+  h2_ss = [[TH1F("hss_%d_%d" % (iv,iu),"",255,0,255) for iv in range(vbins)] for iu in range(ubins)]
+  h2_uu = [[TH1F("huu_%d_%d" % (iv,iu),"",20,0,20) for iv in range(vbins)] for iu in range(ubins)]
+  h2_vv = [[TH1F("hvv_%d_%d" % (iv,iu),"",20,0,20) for iv in range(vbins)] for iu in range(ubins)]
+  h2_px = [[TH1F("hpx_%d_%d" % (iv,iu),"",20,0,20) for iv in range(vbins)] for iu in range(ubins)]
     
   histofile.cd("")
   
   # Final histos 
-  h2c = TH2F("h2c","h2c",ubins,-usize,usize,vbins,-vsize,+vsize)
-  h2cs = TH2F("h2cs","h2cs",ubins,-usize,usize,vbins,-vsize,+vsize)
-  h2ss = TH2F("h2ss","h2ss",ubins,-usize,usize,vbins,-vsize,+vsize)
-  h2uu = TH2F("h2uu","h2uu",ubins,-usize,usize,vbins,-vsize,vsize)
-  h2vv = TH2F("h2vv","h2vv",ubins,-usize,usize,vbins,-vsize,vsize)
-  h2px = TH2F("h2px","h2px",ubins,-usize,usize,vbins,-vsize,vsize)
+  h2c = TH2F("h2c","h2c",uaxis[0],uaxis[1],uaxis[2],vaxis[0],vaxis[1],vaxis[2])
+  h2cs = TH2F("h2cs","h2cs",uaxis[0],uaxis[1],uaxis[2],vaxis[0],vaxis[1],vaxis[2])
+  h2ss = TH2F("h2ss","h2ss",uaxis[0],uaxis[1],uaxis[2],vaxis[0],vaxis[1],vaxis[2])
+  h2uu = TH2F("h2uu","h2uu",uaxis[0],uaxis[1],uaxis[2],vaxis[0],vaxis[1],vaxis[2])
+  h2vv = TH2F("h2vv","h2vv",uaxis[0],uaxis[1],uaxis[2],vaxis[0],vaxis[1],vaxis[2])
+  h2px = TH2F("h2px","h2px",uaxis[0],uaxis[1],uaxis[2],vaxis[0],vaxis[1],vaxis[2])
   
   for event in tree: 
     if event.hasTrack == 0: 
       m_u = event.u_fit  
       m_v = event.v_fit
       
-      if m_u<-usize:
+      if m_u<uaxis[1]:
         continue
-      if m_u>+usize:
+      if m_u>uaxis[2]:
         continue
-      if m_v<-vsize:
+      if m_v<vaxis[1]:
         continue
-      if m_v>+vsize:
+      if m_v>vaxis[2]:
         continue
         
       # Note: This must be c-style index 
@@ -131,7 +134,7 @@ def plot(inputfilename = None, histofilename = "InpixHistos.root", usize=0.0, vs
   rawfile.Close()
 
 
-def plot_unit(inputfilename = None, histofilename = "InpixHistos.root", upitch=0.0, vpitch=0.0, ubins=10, vbins=10):
+def plot_unit(inputfilename = None, histofilename = "InpixHistos.root", pixeltype=0, upitch=0.0, vpitch=0.0, ubins=10, vbins=10, ufold=2, vfold=2):
   
   if inputfilename == None:
     return None
@@ -150,8 +153,8 @@ def plot_unit(inputfilename = None, histofilename = "InpixHistos.root", upitch=0
   tree = rawfile.Get("Hit")
  
   # Super pixel contains upix x vpix cells  
-  upix = 2  
-  vpix = 1 
+  upix = ufold 
+  vpix = vfold 
 
   counter = numpy.zeros(shape=(ubins,vbins))
   
@@ -166,9 +169,11 @@ def plot_unit(inputfilename = None, histofilename = "InpixHistos.root", upitch=0
   
   
   histofile.cd("")
-
+  
   for event in tree: 
-    if event.hasTrack == 0: 
+    if event.hasTrack == 0 and event.pixeltype == pixeltype: 
+
+
       m_u = (event.u_fit - event.cellUCenter_fit) 
       m_v = (event.v_fit - event.cellVCenter_fit)
       
@@ -237,49 +242,49 @@ def plot_unit(inputfilename = None, histofilename = "InpixHistos.root", upitch=0
   # plot histograms    
        
   h2c.SetTitle("")
-  h2c.GetXaxis().SetTitle("u_{m} [#mum]")
-  h2c.GetYaxis().SetTitle("v_{m} [#mum]")
+  h2c.GetXaxis().SetTitle("u_{m} [mm]")
+  h2c.GetYaxis().SetTitle("v_{m} [mm]")
   h2c.GetZaxis().SetTitle("Number of tracks")
   h2c.SetStats(0)   
 
   h2ss.SetTitle("")
-  h2ss.GetXaxis().SetTitle("u_{m} [#mum]")
-  h2ss.GetYaxis().SetTitle("v_{m} [#mum]")
+  h2ss.GetXaxis().SetTitle("u_{m} [mm]")
+  h2ss.GetYaxis().SetTitle("v_{m} [mm]")
   h2ss.GetZaxis().SetTitle("Mean Seed Signal [LSB]")
   h2ss.SetStats(0)  
 
   h2cs.SetTitle("")
-  h2cs.GetXaxis().SetTitle("u_{m} [#mum]")
-  h2cs.GetYaxis().SetTitle("v_{m} [#mum]")
+  h2cs.GetXaxis().SetTitle("u_{m} [mm]")
+  h2cs.GetYaxis().SetTitle("v_{m} [mm]")
   h2cs.GetZaxis().SetTitle("Mean Cluster Signal [LSB]")
   h2cs.SetStats(0)
 
   h2ss_x = h2ss.ProjectionX("h2ss_x")
   h2ss_x.SetTitle("")
-  h2ss_x.GetXaxis().SetTitle("u_{m} [#mum]")
+  h2ss_x.GetXaxis().SetTitle("u_{m} [mm]")
   h2ss_x.GetYaxis().SetTitle("Mean Seed Signal [LSB]")
 
   h2ss_y = h2ss.ProjectionY("h2ss_y")
   h2ss_y.SetTitle("")
-  h2ss_y.GetXaxis().SetTitle("v_{m} [#mum]")
+  h2ss_y.GetXaxis().SetTitle("v_{m} [mm]")
   h2ss_y.GetYaxis().SetTitle("Mean Seed Signal [LSB]")
   
 
   h2uu.SetTitle("")
-  h2uu.GetXaxis().SetTitle("u_{m} [#mum]")
-  h2uu.GetYaxis().SetTitle("v_{m} [#mum]")
+  h2uu.GetXaxis().SetTitle("u_{m} [mm]")
+  h2uu.GetYaxis().SetTitle("v_{m} [mm]")
   h2uu.GetZaxis().SetTitle("Mean sizeU [uCells]")
   h2uu.SetStats(0)
 
   h2vv.SetTitle("")
-  h2vv.GetXaxis().SetTitle("u_{m} [#mum]")
-  h2vv.GetYaxis().SetTitle("v_{m} [#mum]")
+  h2vv.GetXaxis().SetTitle("u_{m} [mm]")
+  h2vv.GetYaxis().SetTitle("v_{m} [mm]")
   h2vv.GetZaxis().SetTitle("Mean sizeV [vCells]")
   h2vv.SetStats(0)
 
   h2px.SetTitle("")
-  h2px.GetXaxis().SetTitle("u_{m} [#mum]")
-  h2px.GetYaxis().SetTitle("v_{m} [#mum]")
+  h2px.GetXaxis().SetTitle("u_{m} [mm]")
+  h2px.GetYaxis().SetTitle("v_{m} [mm]")
   h2px.GetZaxis().SetTitle("Mean size [Pixel]")
   h2px.SetStats(0)
 

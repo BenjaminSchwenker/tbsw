@@ -1,10 +1,10 @@
 from tbsw import *
-from gear import *
-from path_utils import *
 
+import x0imaging
+import path_utils
+import gear 
 import residuals
 import resolution
-import occupancy
 import efficiency
 import inpixel
 import DQMplots

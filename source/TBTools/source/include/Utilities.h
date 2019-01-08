@@ -6,7 +6,8 @@
 #include <iostream>
 #include <sstream>
 #include <assert.h>
- 	
+#include <vector> 	
+
 // ROOT includes
 #include "TString.h" // for char *Form(...)
 #include "TVectorD.h"
@@ -46,6 +47,12 @@ void CLHEPtoROOT( CLHEP::HepVector & oldV, TVectorD * newV);
 TObject * get_object( const char * objectname, const char * filename);
 TTree * get_tree( const char * treename, const char * filename);
 TTree * init_align_tree( const char * filename);
+
+//////////////////////////////////////////////////////////////////////
+// Split a string into using char delimiter
+
+std::vector<std::string> splitpath( const std::string& str, const std::set<char> delimiters);
+
 
 } // Namespace 
 	

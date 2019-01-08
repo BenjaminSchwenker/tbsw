@@ -2,7 +2,7 @@ from ROOT import TFile, TH1F, TH2F
 from ROOT import gROOT, Double, TCut
 
 
-def plot(inputfilename = None, histofilename = "ResidualHistos.root" , basecut = "hasTrack==0", urange=200, vrange=200):
+def plot(inputfilename = None, histofilename = "ResidualHistos.root" , basecut = "hasTrack==0", nbins=101, urange=200, vrange=200):
   
   # Analysis cuts 
   hitcut = TCut(basecut)
@@ -24,7 +24,7 @@ def plot(inputfilename = None, histofilename = "ResidualHistos.root" , basecut =
   # Get access to tracks 
   tracktree = rawfile.Get("Track")
   
-  htrackspot = TH2F("htrackspot","",20,0,0,20,0,0)
+  htrackspot = TH2F("htrackspot","",40,0,0,40,0,0)
   tracktree.Draw("cellV_fit:cellU_fit>>+htrackspot", "", "goff")
   #htrackspot.SetTitle("") 
   htrackspot.GetXaxis().SetTitle("cellU_fit [cell ID]")
@@ -32,7 +32,7 @@ def plot(inputfilename = None, histofilename = "ResidualHistos.root" , basecut =
   htrackspot.GetZaxis().SetTitle("number of tracks")
   htrackspot.SetStats(0)
 
-  hbeamspot = TH2F("hbeamspot","",20,0,0,20,0,0)
+  hbeamspot = TH2F("hbeamspot","",40,0,0,40,0,0)
   tracktree.Draw("v_fit:u_fit>>+hbeamspot", "","goff")
   hbeamspot.SetTitle("")
   hbeamspot.GetXaxis().SetTitle("u_fit [mm]")
@@ -44,7 +44,7 @@ def plot(inputfilename = None, histofilename = "ResidualHistos.root" , basecut =
   #Get access to hits
   hittree = rawfile.Get("Hit")
 
-  hspot = TH2F("hspot","",20,0,0,20,0,0)
+  hspot = TH2F("hspot","",40,0,0,40,0,0)
   hittree.Draw("cellV_hit:cellU_hit>>hspot", hitcut,"goff")
   hspot.SetTitle("")
   hspot.GetXaxis().SetTitle("cellU_hit [cell ID]")
@@ -52,20 +52,27 @@ def plot(inputfilename = None, histofilename = "ResidualHistos.root" , basecut =
   hspot.GetZaxis().SetTitle("number of clusters")
   hspot.SetStats(0)
 
-  hu = TH1F("hu","",101,-urange,+urange)
+  hu = TH1F("hu","",nbins,-urange,+urange)
   hittree.Draw("(u_hit - u_fit)*1000 >>+hu", hitcut,"goff")
   hu.SetTitle("")
   hu.GetXaxis().SetTitle("residuals u [#mum]")
   hu.GetYaxis().SetTitle("number of hits")
   hu.GetYaxis().SetTitleOffset(1.2)
 
-  hv = TH1F("hv","",101,-vrange,+vrange)
+  hv = TH1F("hv","",nbins,-vrange,+vrange)
   hittree.Draw("(v_hit - v_fit)*1000 >>+hv", hitcut,"goff")
   hv.SetTitle("")
   hv.GetXaxis().SetTitle("residuals v [#mum]")
   hv.GetYaxis().SetTitle("number of hits")
   hv.GetYaxis().SetTitleOffset(1.2)
   
+  huv = TH2F("huv","",nbins,-urange,+urange, nbins,-vrange,+vrange )
+  hittree.Draw("(v_hit - v_fit)*1000:(u_hit - u_fit)*1000 >>+huv", hitcut,"goff")  
+  huv.SetTitle("")
+  huv.GetXaxis().SetTitle("residuals u [#mum]")
+  huv.GetYaxis().SetTitle("residuals v [#mum]")
+  huv.GetZaxis().SetTitle("number of hits")
+  huv.SetStats(0)
   
   hchisqundof = TH1F("hchisqundof","",100,0,0)
   hittree.Draw("trackChi2 / trackNdof >> +hchisqundof", hitcut,"goff")
@@ -75,14 +82,14 @@ def plot(inputfilename = None, histofilename = "ResidualHistos.root" , basecut =
   hchisqundof.GetYaxis().SetTitleOffset(1.2)
   
   
-  hCharge = TH1F("hCharge","",101,0,0)
+  hCharge = TH1F("hCharge","",255,0,255)
   hittree.Draw("seedCharge >>+hCharge", hitcut,"goff")
   hCharge.SetTitle("")
   hCharge.GetXaxis().SetTitle("seed charge [ADU]")
   hCharge.GetYaxis().SetTitle("number of hits")
   hCharge.GetYaxis().SetTitleOffset(1.2)
 
-  hCCharge = TH1F("hCCharge","",101,0,0)
+  hCCharge = TH1F("hCCharge","",255,0,255)
   hittree.Draw("clusterCharge >>+hCCharge", hitcut,"goff")
   hCCharge.SetTitle("")
   hCCharge.GetXaxis().SetTitle("cluster charge [ADU]")

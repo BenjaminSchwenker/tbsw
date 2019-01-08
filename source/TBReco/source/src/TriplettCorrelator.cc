@@ -72,7 +72,7 @@ TriplettCorrelator::TriplettCorrelator() : Processor("TriplettCorrelator")
                    
    registerProcessorParameter ("UpdateAlignment",
                               "Update alignment DB using offset corrections (true/false)?",
-                              _updateAlignment, static_cast <bool> (false) ); 
+                              _updateAlignment, static_cast <bool> (true) ); 
  
    registerProcessorParameter ("NewAlignment",
                               "Start alignment from scratch (true/false)?",
@@ -432,7 +432,8 @@ void TriplettCorrelator::bookHistos() {
          
     double  uMin = - safetyFactor * 0.5 * det.GetSensitiveSizeU();               
     double  uMax = + safetyFactor * 0.5 * det.GetSensitiveSizeU(); 
-    int     uBins = static_cast<int>( (uMax - uMin)/(2*det.GetPitchU()) );     
+    double  PitchU = det.GetSensitiveSizeU()/(det.GetNCellsU()+1); 
+    int     uBins = static_cast<int>( (uMax - uMin)/(2*PitchU) );     
     
     // avoid too many bins 
     if (uBins > 2000 ) uBins = 2000;            
@@ -455,7 +456,8 @@ void TriplettCorrelator::bookHistos() {
      
     double  vMin = - safetyFactor * 0.5 * det.GetSensitiveSizeV();               
     double  vMax = + safetyFactor * 0.5 * det.GetSensitiveSizeV(); 
-    int     vBins = static_cast<int>( (vMax - vMin)/(2*det.GetPitchV()) );     
+    double  PitchV = det.GetSensitiveSizeV()/(det.GetNCellsV()+1); 
+    int     vBins = static_cast<int>( (vMax - vMin)/(2*PitchV) );     
         
     // avoid too many bins 
     if (vBins > 2000 ) vBins = 2000;   

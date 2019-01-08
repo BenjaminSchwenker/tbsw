@@ -54,7 +54,7 @@ KalmanAligner::KalmanAligner() : Processor("KalmanAligner")
 // Input collections  
   registerInputCollection(LCIO::TRACK,"TrackCollectionName",
                           "Track collection for alignment",
-                          _trackCollectionName,std::string("aligntracks"));
+                          _trackCollectionName,std::string("tracks"));
    
 // 
 // Processor parameters
@@ -117,7 +117,7 @@ KalmanAligner::KalmanAligner() : Processor("KalmanAligner")
 
   registerProcessorParameter ("UpdateAlignment",
                               "Update lcio alignmentDB using alignment results (true/false)?",
-                              _updateAlignment, static_cast <bool> (false) ); 
+                              _updateAlignment, static_cast <bool> (true) ); 
 
   registerProcessorParameter ("NewAlignment",
                               "Start alignment from scratch (true/false)?",

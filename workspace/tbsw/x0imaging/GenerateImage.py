@@ -1,76 +1,67 @@
-#!/usr/bin/python3
-
 import os
 import shutil
 import subprocess
-import sys, getopt 
+import sys
 import glob
 import math
 import fileinput
 import argparse
-from configparser import ConfigParser
+import ConfigParser
 
-if __name__ == '__main__':
+class MyConfigParser(ConfigParser.ConfigParser):
+
+    def write(self, fp):
+        """Write an .ini-format representation of the configuration state."""
+        if self._defaults:
+            fp.write("[%s]\n" % DEFAULTSECT)
+            for (key, value) in self._defaults.items():
+                fp.write("%s = %s\n" % (key, str(value).replace('\n', '\n\t')))
+            fp.write("\n")
+        for section in self._sections:
+            fp.write("[%s]\n" % section)
+            for (key, value) in self._sections[section].items():
+                if key == "__name__":
+                    continue
+                if (value is not None) or (self._optcre == self.OPTCRE):
+                    key = ": ".join((key, str(value).replace('\n', '\n\t')))
+                fp.write("%s\n" % (key))
+            fp.write("\n")
+
+def x0imaging(rootfilelist=[],caltag='',steerfiles='',nametag=''):
+  """
+  Performs radiation length imaging from reconstructed root files in filelist
+    :@rootlist:    List of input root files with TTree of scattering angles
+    :@caltag:      Use x0 calibration parameters from cfg files in the caltag subdirectory    
+    :@steerfiles:  Directory, where the image cfg file lies
+    :@nametag:     Name tag, that is used to modify the output filename 
+    :author: ulf.stolzenberg@phys.uni-goettingen.de  
+  """   
   
-  rootfilelist = []
-  cfgfile = ''
-  caltag=''
-  nametag=''
-
-  try:
-    opts, args = getopt.getopt(sys.argv[1:],"hi:f:c:t:",["ifile=","cfgfile=","caltag=","nametag="])
-  except getopt.GetoptError:
-    print ('GenerateImage.py -i <inputfile> -f <cfgfile> -c <cal-tag> -t <nametag>')
-    print ('-t is optional and defaults to: ' + nametag )
-    sys.exit(2)
-
-  for opt, arg in opts:
-    if opt == '-h':
-      print ('GenerateImage.py -i <inputfile> -f <cfgfile> -c <cal-tag> -t <nametag>')
-      sys.exit()
-    elif opt in ("-i", "--ifile"):
-      rootfilelist.append(arg)
-    elif opt in ("-f", "--cfgfile"):
-      cfgfile = arg
-    elif opt in ("-c", "--caltag"):
-      caltag = arg
-    elif opt in ("-t", "--tag"):
-      nametag = arg
-
-  if len(rootfilelist) == 0:
-    print ('missing option: -i inputfilelist')
-    sys.exit(2)  
-
-  if cfgfile == '':
-    print ('missing option: -f path/to/cfgfile.cfg')
-    sys.exit(2)  
-
-  if nametag == '':
-    print ('missing option: -t nametag')
-    sys.exit(2)  
-
-  # remember current working dir 
+  cfgfile=steerfiles+'x0.cfg'
+   
+  # Remember current working dir 
   fullpath = os.getcwd() 
-
+  
   # Change to work directory
   workdir = 'tmp-runs/'+ nametag
-
-  # remove old workdir if exists 
+  
+  # Remove old workdir if exists 
   if os.path.isdir(workdir):
     shutil.rmtree(workdir)
     
-  # create workdir and change directory
+  # Create workdir and change directory
   os.mkdir(workdir) 
   os.chdir(workdir)
-
+  
   scriptsfolder = fullpath+'/tbsw/x0imaging'
 
-  # copy cfg text file to current work directory
+  # Copy cfg text file to current work directory
   default_cfg_file_name='x0.cfg'
   shutil.copy(fullpath+'/'+cfgfile,default_cfg_file_name)
 
   # Read config txt file
-  config = ConfigParser(delimiters=(':'))
+  #config = ConfigParser.ConfigParser(delimiters=(':'))
+  config = MyConfigParser()
   fp = open(default_cfg_file_name)
   config.readfp(fp)
 
@@ -226,10 +217,12 @@ if __name__ == '__main__':
 
       # Writing the configuration file
       with open('x0image-partial.cfg', 'w') as configfile:
-         config.write(configfile,space_around_delimiters=False)
+         #config.write(configfile,space_around_delimiters=False)
+         config.write(configfile)
   
-      subprocess.call('root -q -b '+scriptname, shell=True)
-      print ('[Print] One part done ...')
+      print ('[INFO] Create x0image for image part {} {}'.format(i,j)) 
+      subprocess.call('root -q -b '+scriptname+ ' > x0-imaging_{}_{}.log'.format(i,j) + ' 2>&1', shell=True)
+      
 
   # Modify the merging script
   scriptname="MergeImages.C"
@@ -278,9 +271,10 @@ if __name__ == '__main__':
 
   # Writing the configuration file
   with open('x0merge.cfg', 'w') as configfile:
-    config.write(configfile,space_around_delimiters=False)
+    #config.write(configfile,space_around_delimiters=False)
+    config.write(configfile)
    
-  subprocess.call('root -q -b '+scriptname, shell=True)            
+  subprocess.call('root -q -b '+scriptname + ' > merger.log 2>&1', shell=True)            
   print ('[Print] All partial images created and merged... ')  
 
   # clean up partial image scripts 
@@ -295,9 +289,9 @@ if __name__ == '__main__':
 
   # Copy complete image file to root-files directory
   shutil.copy(this_resultsfilename+'.root', fullpath+'/root-files/'+this_x0filename+'.root')
-  		           
-                
-
+  		                      
+  # Go back to workspace
+  os.chdir(fullpath) 
 
  	
 

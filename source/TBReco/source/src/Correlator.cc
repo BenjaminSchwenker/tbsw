@@ -72,7 +72,7 @@ Correlator::Correlator() : Processor("Correlator")
                    
    registerProcessorParameter ("UpdateAlignment",
                               "Update alignment DB using offset corrections (true/false)?",
-                              _updateAlignment, static_cast <bool> (false) ); 
+                              _updateAlignment, static_cast <bool> (true) ); 
 
    registerProcessorParameter ("NewAlignment",
                               "Start alignment from scratch (true/false)?",
@@ -447,14 +447,16 @@ void Correlator::bookHistos() {
          
     double  uMin = - safetyFactor * 0.5 * det.GetSensitiveSizeU();               
     double  uMax = + safetyFactor * 0.5 * det.GetSensitiveSizeU(); 
-    int     uBins = static_cast<int>( (uMax - uMin)/(2*det.GetPitchU()) );     
+    double  PitchU = det.GetSensitiveSizeU()/(det.GetNCellsU()); 
+    int     uBins = static_cast<int>( (uMax - uMin)/(2*PitchU) );     
     
     // avoid too many bins 
     if (uBins > 2000 ) uBins = 2000;            
     
     double  uMinRef = - safetyFactor * 0.5 * refdet.GetSensitiveSizeU();               
     double  uMaxRef = + safetyFactor * 0.5 * refdet.GetSensitiveSizeU(); 
-    int     uBinsRef = static_cast<int>( (uMax - uMin)/(2*refdet.GetPitchU()) );   
+    double  refPitchU = refdet.GetSensitiveSizeU()/(refdet.GetNCellsU()); 
+    int     uBinsRef = static_cast<int>( (uMax - uMin)/(2*refPitchU) );    
     
     // avoid too many bins 
     if (uBinsRef > 2000 ) uBinsRef = 2000;   
@@ -480,14 +482,16 @@ void Correlator::bookHistos() {
      
     double  vMin = - safetyFactor * 0.5 * det.GetSensitiveSizeV();               
     double  vMax = + safetyFactor * 0.5 * det.GetSensitiveSizeV(); 
-    int     vBins = static_cast<int>( (vMax - vMin)/(2*det.GetPitchV()) );     
+    double  PitchV = det.GetSensitiveSizeV()/(det.GetNCellsV()+1); 
+    int     vBins = static_cast<int>( (vMax - vMin)/(2*PitchV) );     
         
     // avoid too many bins 
     if (vBins > 2000 ) vBins = 2000;   
 
     double  vMinRef = - safetyFactor * 0.5 * refdet.GetSensitiveSizeV();               
     double  vMaxRef = + safetyFactor * 0.5 * refdet.GetSensitiveSizeV(); 
-    int     vBinsRef = static_cast<int>( (vMax - vMin)/(2*refdet.GetPitchV()) );     
+    double  refPitchV = refdet.GetSensitiveSizeV()/(refdet.GetNCellsV()+1); 
+    int     vBinsRef = static_cast<int>( (vMax - vMin)/(2*refPitchV) );     
         
     // avoid too many bins 
     if (vBinsRef > 2000 ) vBinsRef = 2000;   

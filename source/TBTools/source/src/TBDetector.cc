@@ -13,8 +13,10 @@
 #include <TH1F.h>
 #include <TFile.h>
 
-// Include CLHEP header files
+// Include CLHEP
 #include <CLHEP/Matrix/DiagMatrix.h>
+#include <CLHEP/Matrix/Matrix.h>
+#include <CLHEP/Matrix/Vector.h>
 
 // Include Gear header files
 #include <gear/GEAR.h>
@@ -95,14 +97,14 @@ void TBDetector::ReadGearConfiguration( )
   // Sorting all sensors according to position along beam 
   
   _numberOfSensors = siPlanesLayerLayout->getNLayers();    
-  int * planeSort = new int[_numberOfSensors];
-  double * planeZPosition = new double[_numberOfSensors];
+  std::vector<int> planeSort;  
+  std::vector<double> planeZPosition;
    
   for(int ipl=0; ipl < _numberOfSensors; ipl++) {
-    planeZPosition[ipl]=  siPlanesLayerLayout->getSensitivePositionZ(ipl);
-    planeSort[ipl]=ipl; 
+    planeZPosition.push_back( siPlanesLayerLayout->getSensitivePositionZ(ipl) );
+    planeSort.push_back( ipl ); 
   }
-   
+     
   bool sorted;
   do {
      sorted=false;
@@ -135,58 +137,47 @@ void TBDetector::ReadGearConfiguration( )
 
     // Gear layer number is needed to read the layout data  
     int ilayer = planeSort[ipl];
-    
-    // Set device type 
-    int Type = siPlanesLayerLayout->getSensitivePixelType(ilayer);  
-    adet.SetDeviceType(Type);
      
-    // Set DAQ ID   
+    // Set ID   
     int ID = siPlanesLayerLayout->getSensitiveID(ilayer);
     adet.SetDAQID(ID);
     _indexMap[ID] = ipl;
+
+    // Set u cells 
+    adet.SetCellsU( siPlanesLayerLayout->getSensitiveUCells( ilayer ) );
       
-    // Set other stuff  
-    int NColumns = siPlanesLayerLayout->getSensitiveNpixelX(ilayer);
-    adet.SetNColumns(NColumns); 
-    
-    int NRows = siPlanesLayerLayout->getSensitiveNpixelY(ilayer); 
-    adet.SetNRows(NRows);
-      
-    double PitchU = siPlanesLayerLayout->getSensitivePitchX(ilayer);
-    adet.SetPitchU(PitchU);
-    
-    double PitchV = siPlanesLayerLayout->getSensitivePitchY(ilayer);
-    adet.SetPitchV(PitchV);
-    
-    double ResoU = siPlanesLayerLayout->getSensitiveResolutionX(ilayer);
-    adet.SetResolutionU(ResoU);
-    
-    double ResoV = siPlanesLayerLayout->getSensitiveResolutionY(ilayer);
-    adet.SetResolutionV(ResoV);
-     
+    // Set v cells 
+    adet.SetCellsV( siPlanesLayerLayout->getSensitiveVCells( ilayer ) );
+         
     double SensThick = siPlanesLayerLayout->getSensitiveThickness(ilayer);
     adet.SetSensitiveThickness(SensThick);
-    
-    double LadderThick = siPlanesLayerLayout->getLayerThickness(ilayer);
-    adet.SetLadderThickness(LadderThick);
-        
+
     double SensRadLength = siPlanesLayerLayout->getSensitiveRadLength(ilayer);
     adet.SetSensitiveRadLength(SensRadLength);
+    
+    double SensAtomicNumber = siPlanesLayerLayout->getSensitiveAtomicNumber(ilayer);
+    adet.SetSensitiveAtomicNumber(SensAtomicNumber);
+
+    double SensAtomicMass = siPlanesLayerLayout->getSensitiveAtomicMass(ilayer);
+    adet.SetSensitiveAtomicMass(SensAtomicMass);
+        
+    double LadderThick = siPlanesLayerLayout->getLayerThickness(ilayer);
+    adet.SetLadderThickness(LadderThick);
        
     double LadderRadLength = siPlanesLayerLayout->getLayerRadLength(ilayer);
     adet.SetLadderRadLength(LadderRadLength);
       
-    double LadderSizeX= siPlanesLayerLayout->getLayerSizeX(ilayer);
-    adet.SetModuleBoxSizeU(LadderSizeX); 
+    double LadderSizeU= siPlanesLayerLayout->getLayerSizeU(ilayer);
+    adet.SetLadderSizeU(LadderSizeU); 
          
-    double LadderSizeY = siPlanesLayerLayout->getLayerSizeY(ilayer); 
-    adet.SetModuleBoxSizeV(LadderSizeY); 
+    double LadderSizeV = siPlanesLayerLayout->getLayerSizeV(ilayer); 
+    adet.SetLadderSizeV(LadderSizeV); 
     
-    double SensSizeX = siPlanesLayerLayout->getSensitiveSizeX(ilayer); 
-    adet.SetSensitiveSizeU(SensSizeX); 
-    
-    double SensSizeY = siPlanesLayerLayout->getSensitiveSizeY(ilayer); 
-    adet.SetSensitiveSizeV(SensSizeY); 
+    double LadderAtomicNumber = siPlanesLayerLayout->getLayerAtomicNumber(ilayer);
+    adet.SetLadderAtomicNumber(LadderAtomicNumber);
+
+    double LadderAtomicMass = siPlanesLayerLayout->getLayerAtomicMass(ilayer);
+    adet.SetLadderAtomicMass(LadderAtomicMass);
        
     // Discrete rotation frame 
     ReferenceFrame discrete;
@@ -258,11 +249,7 @@ void TBDetector::ReadGearConfiguration( )
     _DetVec[ipl] = adet;
     
   }
-  
-  // Clean up 
-  delete [] planeSort ; 
-  delete [] planeZPosition ;   
-  
+    
 }
 
 // 

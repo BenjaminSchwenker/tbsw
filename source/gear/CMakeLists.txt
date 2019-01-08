@@ -106,8 +106,7 @@ MARK_AS_ADVANCED( EXECUTABLE_OUTPUT_PATH LIBRARY_OUTPUT_PATH )
 ADD_CUSTOM_TARGET( lib )
 
 # FIXME: check for 32/64 bit
-ADD_DEFINITIONS( "-Wno-long-long" )
-ADD_DEFINITIONS( "-Wall -ansi -pedantic" )
+ADD_DEFINITIONS( "-Wall -Wno-long-long -ansi -pedantic -std=c++1y" )
 
 INCLUDE_DIRECTORIES( "src/cpp/include" )
 

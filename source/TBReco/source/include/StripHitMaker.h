@@ -72,6 +72,10 @@ protected:
 //! Cluster quality selection - use only good clusters
    int _clusterQualitySelect;
    
+
+   double _SigmaU; 
+   double _SigmaV; 
+
  private:
    
    // Handle to detector data 

@@ -391,8 +391,8 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
     _rootHitSigmaU = hit.GetCov()[0][0]; 
     _rootHitSigmaV = hit.GetCov()[1][1]; 
 
-    _rootHitCellU = dut.GetColumnFromCoord( _rootHitU, _rootHitV );  
-    _rootHitCellV = dut.GetRowFromCoord( _rootHitU, _rootHitV );  
+    _rootHitCellU = dut.GetUCellFromCoord( _rootHitU, _rootHitV );  
+    _rootHitCellV = dut.GetVCellFromCoord( _rootHitU, _rootHitV );  
 
     // Cluster shape variables   
     
@@ -435,8 +435,8 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
       _rootHitPullResidualU = (hit.GetCoord()[0][0] - p[2][0]) / TMath::Sqrt( C[2][2] + hit.GetCov()[0][0] ) ;   
       _rootHitPullResidualV = (hit.GetCoord()[1][0] - p[3][0]) / TMath::Sqrt( C[3][3] + hit.GetCov()[1][1] ) ;  
                                  
-      _rootHitFitCellU = dut.GetColumnFromCoord( pu, pv );        
-      _rootHitFitCellV = dut.GetRowFromCoord( pu, pv );       
+      _rootHitFitCellU = dut.GetUCellFromCoord( pu, pv );        
+      _rootHitFitCellV = dut.GetVCellFromCoord( pu, pv );       
       _rootHitFitCellCenterU = dut.GetPixelCenterCoordU( _rootHitFitCellV, _rootHitFitCellU ); 
       _rootHitFitCellCenterV = dut.GetPixelCenterCoordV( _rootHitFitCellV, _rootHitFitCellU );                                        
       _rootHitTrackChi2 = trk.GetChiSqu(); 
@@ -502,8 +502,8 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
     _rootTrackFitdVdW = p[1][0];    
     _rootTrackFitU = p[2][0];           
     _rootTrackFitV = p[3][0];    
-    _rootTrackFitCellU = dut.GetColumnFromCoord( pu, pv );      
-    _rootTrackFitCellV = dut.GetRowFromCoord( pu, pv );      
+    _rootTrackFitCellU = dut.GetUCellFromCoord( pu, pv );      
+    _rootTrackFitCellV = dut.GetVCellFromCoord( pu, pv );      
     _rootTrackFitCellCenterU = dut.GetPixelCenterCoordU( _rootTrackFitCellV, _rootTrackFitCellU ); 
     _rootTrackFitCellCenterV = dut.GetPixelCenterCoordV( _rootTrackFitCellV, _rootTrackFitCellU );                                        
     _rootTrackChi2 = trk.GetChiSqu(); 

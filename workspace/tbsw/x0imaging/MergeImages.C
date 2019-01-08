@@ -39,69 +39,89 @@ int MergeImages()
 	TString filenameA;
 	filenameA=mEnv.GetValue("x0filename", "X0-merge");
 
-	// Aid Histograms from the X0 image parts
-	TH2F * x0_image_aid;		   		            // X0 images
-	TH2F * x0err_image_aid;				            // statistical error images
-	TH2F * x0relerr_image_aid;			            // relative X0 error images
-	TH2F * fit1chi2ndof_image_aid;				    // fit chi2 images
-	TH2F * fit2chi2ndof_image_aid;				    // fit chi2 images
-	TH2F * fitsumchi2ndof_image_aid;			    // fit chi2 images
-	TH2F * fit1prob_image_aid;				        // fit prob images of first scattering angle
-	TH2F * fit2prob_image_aid;				        // fit prob images of second scattering angle
-	TH2F * fitsumprob_image_aid;			        // fit prob images of merged scattering angle distribution
-	TH2F * theta1mean_image_aid;				    // images of mean value of first scattering angle distribution
-	TH2F * theta2mean_image_aid;				    // images of mean value of second scattering angle distribution
-	TH2F * correctedtheta1mean_image_aid;	        // images of mean value of first scattering angle distribution
-	TH2F * correctedtheta2mean_image_aid;	        // images of mean value of second scattering angle distribution
-	TH2F * uresidualmean_image_aid;		            // u residual images
-	TH2F * vresidualmean_image_aid;		            // v residual images
-	TH2F * htrackchi2map_aid;			            // track chi2 images
-	TH2F * beamspot_aid;				            // hit map
-	TH2F * BE_image_aid;				            // Momentum images
+	// Tmp Histograms from the X0 image parts
+	TH2F * x0_image_tmp;		   		            // X0 images
+	TH2F * x0err_image_tmp;				            // statistical error images
+	TH2F * x0relerr_image_tmp;			            // relative X0 error images
+	TH2F * fit1chi2ndof_image_tmp;				    // fit chi2 images
+	TH2F * fit2chi2ndof_image_tmp;				    // fit chi2 images
+	TH2F * fitsumchi2ndof_image_tmp;			    // fit chi2 images
+	TH2F * fit1prob_image_tmp;				        // fit prob images of first scattering angle
+	TH2F * fit2prob_image_tmp;				        // fit prob images of second scattering angle
+	TH2F * fitsumprob_image_tmp;			        // fit prob images of merged scattering angle distribution
+	TH2F * theta1mean_image_tmp;				    // images of mean value of first scattering angle distribution
+	TH2F * theta2mean_image_tmp;				    // images of mean value of second scattering angle distribution
+	TH2F * correctedtheta1mean_image_tmp;	        // images of mean value of first scattering angle distribution
+	TH2F * correctedtheta2mean_image_tmp;	        // images of mean value of second scattering angle distribution
+	TH2F * scatteroffset_umean_image_tmp;		    // mean scatter offset images
+	TH2F * scatteroffset_vmean_image_tmp;		    // mean scatter offset images
+	TH2F * scatteroffset_urms_image_tmp;		    // RMS scatter offset images
+	TH2F * scatteroffset_vrms_image_tmp;		    // RMS scatter offset images
+	TH2F * htrackchi2map_tmp;			            // track chi2 images
+	TH2F * beamspot_tmp;				            // hit map
+	TH2F * BE_image_tmp;				            // Momentum images
 
-	TH2F * vertex_w_mean_image_aid;				    // Vertex w mean images
-	TH2F * vertex_w_rms_image_aid;				    // Vertex w RMS images
-	TH2F * vertex_chi2_image_aid;				    // Vertex chi2 images
-	TH2F * vertex_multiplicity_image_aid;			// Vertex multiplicity images
+	TH2F * vertex_w_mean_image_tmp;				    // Vertex w mean images
+	TH2F * vertex_w_rms_image_tmp;				    // Vertex w RMS images
+	TH2F * vertex_chi2_image_tmp;				    // Vertex chi2 images
+	TH2F * vertex_multiplicity_image_tmp;			// Vertex multiplicity images
 
-	TH2F * res_u_vtx_trk_image_aid;					// Vertex trk u mean residual images
-	TH2F * res_v_vtx_trk_image_aid;					// Vertex trk v mean residual images
-	TH2F * res_u_rms_vtx_trk_image_aid;					// Vertex trk u residual rms images
-	TH2F * res_v_rms_vtx_trk_image_aid;					// Vertex trk v residual rms images
+	TH2F * res_u_vtx_trk_image_tmp;					// Vertex trk u mean residual images
+	TH2F * res_v_vtx_trk_image_tmp;					// Vertex trk v mean residual images
+	TH2F * res_u_rms_vtx_trk_image_tmp;				// Vertex trk u residual rms images
+	TH2F * res_v_rms_vtx_trk_image_tmp;				// Vertex trk v residual rms images
 
-	TH1F * fit1prob_histo_aid;	    	            // fit prob histo of first scattering angle
-	TH1F * fit2prob_histo_aid;			            // fit prob histo of second scattering angle
-	TH1F * fitsumprob_histo_aid;			        // fit prob histo of merged scattering angle distribution
+	TH1F * fit1chi2ndof_histo_tmp;	    	        // fit chi2 histo of first scattering angle
+	TH1F * fit2chi2ndof_histo_tmp;			        // fit chi2 histo of second scattering angle
+	TH1F * fitsumchi2ndof_histo_tmp;			    // fit chi2 histo of merged scattering angle distribution
 
-	TH2F * hscatt_theta1_vs_resu_aid;	            // theta vs residual scatter plot
-	TH2F * hscatt_theta1_vs_resv_aid;	            // theta vs residual scatter plot
-	TH2F * hscatt_theta2_vs_resu_aid;	            // theta vs residual scatter plot
-	TH2F * hscatt_theta2_vs_resv_aid;	            // theta vs residual scatter plot
+	TH1F * fit1prob_histo_tmp;	    	            // fit prob histo of first scattering angle
+	TH1F * fit2prob_histo_tmp;			            // fit prob histo of second scattering angle
+	TH1F * fitsumprob_histo_tmp;			        // fit prob histo of merged scattering angle distribution
+
+	TH2F * hscatt_theta1_vs_resu_tmp;	            // theta vs residual scatter plot
+	TH2F * hscatt_theta1_vs_resv_tmp;	            // theta vs residual scatter plot
+	TH2F * hscatt_theta2_vs_resu_tmp;	            // theta vs residual scatter plot
+	TH2F * hscatt_theta2_vs_resv_tmp;	            // theta vs residual scatter plot
 
 
     // Fit Probability distribution for first angle dist
 	TH1F * fit1prob_histo = new TH1F("fit1prob_histo","fit1prob_histo",50,0.0,1.0);
-	fit1prob_histo->SetStats(kFALSE);
     fit1prob_histo->GetXaxis()->SetTitle("fit1 p value");
     fit1prob_histo->GetYaxis()->SetTitle("number of fits");
 
 	// Fit Probability distribution for second angle dist
 	TH1F * fit2prob_histo = new TH1F("fit2prob_histo","fit2prob_histo",50,0.0,1.0);
-	fit2prob_histo->SetStats(kFALSE);
     fit2prob_histo->GetXaxis()->SetTitle("fit2 p value");
     fit2prob_histo->GetYaxis()->SetTitle("number of fits");
 
 	// Fit Probability distribution for merged angle dist
 	TH1F * fitsumprob_histo = new TH1F("fitsumprob_histo","fitsumprob_histo",50,0.0,1.0);
-	fitsumprob_histo->SetStats(kFALSE);
     fitsumprob_histo->GetXaxis()->SetTitle("fitsum p value");
     fitsumprob_histo->GetYaxis()->SetTitle("number of fits");
+
+
+    // Fit chi2ndof distribution for first angle dist
+	TH1F * fit1chi2ndof_histo = new TH1F("fit1chi2ndof_histo","fit1chi2ndof_histo",100,0.0,20.0);
+    fit1chi2ndof_histo->GetXaxis()->SetTitle("#chi^{2}_{ndof}");
+    fit1chi2ndof_histo->GetYaxis()->SetTitle("number of fits");
+
+	// Fit Probability distribution for second angle dist
+	TH1F * fit2chi2ndof_histo = new TH1F("fit2chi2ndof_histo","fit2chi2ndof_histo",100,0.0,20.0);
+    fit2chi2ndof_histo->GetXaxis()->SetTitle("#chi^{2}_{ndof}");
+    fit2chi2ndof_histo->GetYaxis()->SetTitle("number of fits");
+
+	// Fit Probability distribution for merged angle dist
+	TH1F * fitsumchi2ndof_histo = new TH1F("fitsumchi2ndof_histo","fitsumchi2ndof_histo",100,0.0,20.0);
+    fitsumchi2ndof_histo->GetXaxis()->SetTitle("#chi^{2}_{ndof}");
+    fitsumchi2ndof_histo->GetYaxis()->SetTitle("number of fits");
+
 
 	// Scatter theta1 vs residual u
 	TH2F * hscatt_theta1_vs_resu = new TH2F("hscatt_theta1_vs_resu","hscatt_theta1_vs_resu",100,-0.1,0.1,150,-0.005,0.005);
     hscatt_theta1_vs_resu->SetStats(kFALSE);
     hscatt_theta1_vs_resu->GetXaxis()->SetTitle("u residual[mm]");
-    hscatt_theta1_vs_resu->GetYaxis()->SetTitle("theta1[rad]");
+    hscatt_theta1_vs_resu->GetYaxis()->SetTitle("#theta_{u}[rad]");
     hscatt_theta1_vs_resu->GetZaxis()->SetTitle("Number of tracks");
     hscatt_theta1_vs_resu->GetZaxis()->SetTitleOffset(1.4);
     hscatt_theta1_vs_resu->GetZaxis()->SetTitleSize(0.02);
@@ -111,7 +131,7 @@ int MergeImages()
 	TH2F * hscatt_theta2_vs_resu = new TH2F("hscatt_theta2_vs_resu","hscatt_theta2_vs_resu",100,-0.1,0.1,150,-0.005,0.005);
     hscatt_theta2_vs_resu->SetStats(kFALSE);
     hscatt_theta2_vs_resu->GetXaxis()->SetTitle("u residual[mm]");
-    hscatt_theta2_vs_resu->GetYaxis()->SetTitle("theta2[rad]");
+    hscatt_theta2_vs_resu->GetYaxis()->SetTitle("#theta_{v}[rad]");
     hscatt_theta2_vs_resu->GetZaxis()->SetTitle("Number of tracks");
     hscatt_theta2_vs_resu->GetZaxis()->SetTitleOffset(1.4);
     hscatt_theta2_vs_resu->GetZaxis()->SetTitleSize(0.02);
@@ -121,7 +141,7 @@ int MergeImages()
 	TH2F * hscatt_theta1_vs_resv = new TH2F("hscatt_theta1_vs_resv","hscatt_theta1_vs_resv",100,-0.1,0.1,150,-0.005,0.005);
     hscatt_theta1_vs_resv->SetStats(kFALSE);
     hscatt_theta1_vs_resv->GetXaxis()->SetTitle("u residual[mm]");
-    hscatt_theta1_vs_resv->GetYaxis()->SetTitle("theta1[rad]");
+    hscatt_theta1_vs_resv->GetYaxis()->SetTitle("#theta_{u}[rad]");
     hscatt_theta1_vs_resv->GetZaxis()->SetTitle("Number of tracks");
     hscatt_theta1_vs_resv->GetZaxis()->SetTitleOffset(1.4);
     hscatt_theta1_vs_resv->GetZaxis()->SetTitleSize(0.02);
@@ -131,7 +151,7 @@ int MergeImages()
 	TH2F * hscatt_theta2_vs_resv = new TH2F("hscatt_theta2_vs_resv","hscatt_theta2_vs_resv",100,-0.1,0.1,150,-0.005,0.005);
     hscatt_theta2_vs_resv->SetStats(kFALSE);
     hscatt_theta2_vs_resv->GetXaxis()->SetTitle("u residual[mm]");
-    hscatt_theta2_vs_resv->GetYaxis()->SetTitle("theta2[rad]");
+    hscatt_theta2_vs_resv->GetYaxis()->SetTitle("#theta_{v}[rad]");
     hscatt_theta2_vs_resv->GetZaxis()->SetTitle("Number of tracks");
     hscatt_theta2_vs_resv->GetZaxis()->SetTitleOffset(1.4);
     hscatt_theta2_vs_resv->GetZaxis()->SetTitleSize(0.02);
@@ -146,15 +166,15 @@ int MergeImages()
 	TString filename=filenameA+filenameB;
     X0file = new TFile(filename, "READ");
 
-	hscatt_theta1_vs_resu_aid=(TH2F*)X0file->Get("mapping/result/hscatt_theta1_vs_resu");
-	hscatt_theta1_vs_resv_aid=(TH2F*)X0file->Get("mapping/result/hscatt_theta1_vs_resv");
-	hscatt_theta2_vs_resu_aid=(TH2F*)X0file->Get("mapping/result/hscatt_theta2_vs_resu");
-	hscatt_theta2_vs_resv_aid=(TH2F*)X0file->Get("mapping/result/hscatt_theta2_vs_resv");
+	hscatt_theta1_vs_resu_tmp=(TH2F*)X0file->Get("result/hscatt_theta1_vs_resu");
+	hscatt_theta1_vs_resv_tmp=(TH2F*)X0file->Get("result/hscatt_theta1_vs_resv");
+	hscatt_theta2_vs_resu_tmp=(TH2F*)X0file->Get("result/hscatt_theta2_vs_resu");
+	hscatt_theta2_vs_resv_tmp=(TH2F*)X0file->Get("result/hscatt_theta2_vs_resv");
 
-	hscatt_theta1_vs_resu=hscatt_theta1_vs_resu_aid;
-	hscatt_theta1_vs_resv=hscatt_theta1_vs_resv_aid;
-	hscatt_theta2_vs_resu=hscatt_theta2_vs_resu_aid;
-	hscatt_theta2_vs_resv=hscatt_theta2_vs_resv_aid;
+	hscatt_theta1_vs_resu=hscatt_theta1_vs_resu_tmp;
+	hscatt_theta1_vs_resv=hscatt_theta1_vs_resv_tmp;
+	hscatt_theta2_vs_resu=hscatt_theta2_vs_resu_tmp;
+	hscatt_theta2_vs_resv=hscatt_theta2_vs_resv_tmp;
 
 	// Results file
 	TString resultsfilename=mEnv.GetValue("resultsfilename", "X0-completeimage");
@@ -248,7 +268,7 @@ int MergeImages()
     fitsumchi2ndof_image->SetStats(kFALSE);
     fitsumchi2ndof_image->GetXaxis()->SetTitle("u [mm]");
     fitsumchi2ndof_image->GetYaxis()->SetTitle("v [mm]");
-    fitsumchi2ndof_image->GetZaxis()->SetTitle("fitsum chi2");
+    fitsumchi2ndof_image->GetZaxis()->SetTitle("{#chi^2}_{ndof}");
     fitsumchi2ndof_image->GetZaxis()->SetTitleSize(0.02);
     fitsumchi2ndof_image->GetZaxis()->SetLabelSize(0.02);
 
@@ -257,7 +277,7 @@ int MergeImages()
     fit1chi2ndof_image->SetStats(kFALSE);
     fit1chi2ndof_image->GetXaxis()->SetTitle("u [mm]");
     fit1chi2ndof_image->GetYaxis()->SetTitle("v [mm]");
-    fit1chi2ndof_image->GetZaxis()->SetTitle("fit1 chi2");
+    fit1chi2ndof_image->GetZaxis()->SetTitle("{#chi^2}_{ndof}");
     fit1chi2ndof_image->GetZaxis()->SetTitleSize(0.02);
     fit1chi2ndof_image->GetZaxis()->SetLabelSize(0.02);
 
@@ -266,7 +286,7 @@ int MergeImages()
     fit2chi2ndof_image->SetStats(kFALSE);
     fit2chi2ndof_image->GetXaxis()->SetTitle("u [mm]");
     fit2chi2ndof_image->GetYaxis()->SetTitle("v [mm]");
-    fit2chi2ndof_image->GetZaxis()->SetTitle("fit2 chi2");
+    fit2chi2ndof_image->GetZaxis()->SetTitle("{#chi^2}_{ndof}");
     fit2chi2ndof_image->GetZaxis()->SetTitleSize(0.02);
     fit2chi2ndof_image->GetZaxis()->SetLabelSize(0.02);
 
@@ -275,7 +295,7 @@ int MergeImages()
 	fit1prob_image->SetStats(kFALSE);
     fit1prob_image->GetXaxis()->SetTitle("u [mm]");
     fit1prob_image->GetYaxis()->SetTitle("v [mm]");
-    fit1prob_image->GetZaxis()->SetTitle("fit1 p value");
+    fit1prob_image->GetZaxis()->SetTitle("p value");
     fit1prob_image->GetZaxis()->SetTitleSize(0.02);
     fit1prob_image->GetZaxis()->SetLabelSize(0.02);
 
@@ -284,7 +304,7 @@ int MergeImages()
 	fit2prob_image->SetStats(kFALSE);
     fit2prob_image->GetXaxis()->SetTitle("u [mm]");
     fit2prob_image->GetYaxis()->SetTitle("v [mm]");
-    fit2prob_image->GetZaxis()->SetTitle("fit2 p value");
+    fit2prob_image->GetZaxis()->SetTitle("p value");
     fit2prob_image->GetZaxis()->SetTitleSize(0.02);
     fit2prob_image->GetZaxis()->SetLabelSize(0.02);
 
@@ -293,7 +313,7 @@ int MergeImages()
 	fitsumprob_image->SetStats(kFALSE);
     fitsumprob_image->GetXaxis()->SetTitle("u [mm]");
     fitsumprob_image->GetYaxis()->SetTitle("v [mm]");
-    fitsumprob_image->GetZaxis()->SetTitle("fitsum p value");
+    fitsumprob_image->GetZaxis()->SetTitle("p value");
     fitsumprob_image->GetZaxis()->SetTitleSize(0.02);
     fitsumprob_image->GetZaxis()->SetLabelSize(0.02);
 
@@ -336,23 +356,41 @@ int MergeImages()
     correctedtheta2mean_image->GetZaxis()->SetLabelSize(0.02);
 
 
-	// Fit mean value of u residuals
-	TH2F * uresidualmean_image = new TH2F("uresidualmean_image","uresidualmean_image",numcol,umin,umax,numrow,vmin,vmax);
-	uresidualmean_image->SetStats(kFALSE);
-    uresidualmean_image->GetXaxis()->SetTitle("u [mm]");
-    uresidualmean_image->GetYaxis()->SetTitle("v [mm]");
-    uresidualmean_image->GetZaxis()->SetTitle("u residual[µm]");
-    uresidualmean_image->GetZaxis()->SetTitleSize(0.02);
-    uresidualmean_image->GetZaxis()->SetLabelSize(0.02);
+	// Mean value of u residuals
+	TH2F * scatteroffset_umean_image = new TH2F("scatteroffset_umean_image","scatteroffset_umean_image",numcol,umin,umax,numrow,vmin,vmax);
+	scatteroffset_umean_image->SetStats(kFALSE);
+    scatteroffset_umean_image->GetXaxis()->SetTitle("u [mm]");
+    scatteroffset_umean_image->GetYaxis()->SetTitle("v [mm]");
+    scatteroffset_umean_image->GetZaxis()->SetTitle("Mean scatter offset u[µm]");
+    scatteroffset_umean_image->GetZaxis()->SetTitleSize(0.02);
+    scatteroffset_umean_image->GetZaxis()->SetLabelSize(0.02);
 
-	// Fit mean value of v residuals
-	TH2F * vresidualmean_image = new TH2F("vresidualmean_image","vresidualmean_image",numcol,umin,umax,numrow,vmin,vmax);
-	vresidualmean_image->SetStats(kFALSE);
-    vresidualmean_image->GetXaxis()->SetTitle("u [mm]");
-    vresidualmean_image->GetYaxis()->SetTitle("v [mm]");
-    vresidualmean_image->GetZaxis()->SetTitle("v residual[µm]");
-    vresidualmean_image->GetZaxis()->SetTitleSize(0.02);
-    vresidualmean_image->GetZaxis()->SetLabelSize(0.02);
+	// Mean value of v residuals
+	TH2F * scatteroffset_vmean_image = new TH2F("scatteroffset_vmean_image","scatteroffset_vmean_image",numcol,umin,umax,numrow,vmin,vmax);
+	scatteroffset_vmean_image->SetStats(kFALSE);
+    scatteroffset_vmean_image->GetXaxis()->SetTitle("u [mm]");
+    scatteroffset_vmean_image->GetYaxis()->SetTitle("v [mm]");
+    scatteroffset_vmean_image->GetZaxis()->SetTitle("Mean scatter offset v[µm]");
+    scatteroffset_vmean_image->GetZaxis()->SetTitleSize(0.02);
+    scatteroffset_vmean_image->GetZaxis()->SetLabelSize(0.02);
+
+	// RMS value of u residuals
+	TH2F * scatteroffset_urms_image = new TH2F("scatteroffset_urms_image","scatteroffset_urms_image",numcol,umin,umax,numrow,vmin,vmax);
+	scatteroffset_urms_image->SetStats(kFALSE);
+    scatteroffset_urms_image->GetXaxis()->SetTitle("u [mm]");
+    scatteroffset_urms_image->GetYaxis()->SetTitle("v [mm]");
+    scatteroffset_urms_image->GetZaxis()->SetTitle("RMS scatter offset u[µm]");
+    scatteroffset_urms_image->GetZaxis()->SetTitleSize(0.02);
+    scatteroffset_urms_image->GetZaxis()->SetLabelSize(0.02);
+
+	// RMS value of v residuals
+	TH2F * scatteroffset_vrms_image = new TH2F("scatteroffset_vrms_image","scatteroffset_vrms_image",numcol,umin,umax,numrow,vmin,vmax);
+	scatteroffset_vrms_image->SetStats(kFALSE);
+    scatteroffset_vrms_image->GetXaxis()->SetTitle("u [mm]");
+    scatteroffset_vrms_image->GetYaxis()->SetTitle("v [mm]");
+    scatteroffset_vrms_image->GetZaxis()->SetTitle("RMS scatter offset v[µm]");
+    scatteroffset_vrms_image->GetZaxis()->SetTitleSize(0.02);
+    scatteroffset_vrms_image->GetZaxis()->SetLabelSize(0.02);
 	
 	// #Tracks map
 	TH2F * beamspot = new TH2F("beamspot","beamspot",numcol,umin,umax,numrow,vmin,vmax);
@@ -465,70 +503,83 @@ int MergeImages()
 			filename=filenameA+filenameB;
 			X0file = new TFile(filename, "READ");
 
-			x0_image_aid=(TH2F*)X0file->Get("mapping/result/x0_image");
-			x0err_image_aid=(TH2F*)X0file->Get("mapping/result/x0err_image");
-			x0relerr_image_aid=(TH2F*)X0file->Get("mapping/result/x0relerr_image");
-			fit1chi2ndof_image_aid=(TH2F*)X0file->Get("mapping/result/fit1chi2ndof_image");
-			fit2chi2ndof_image_aid=(TH2F*)X0file->Get("mapping/result/fit2chi2ndof_image");
-			fitsumchi2ndof_image_aid=(TH2F*)X0file->Get("mapping/result/fitsumchi2ndof_image");
-			fit1prob_image_aid=(TH2F*)X0file->Get("mapping/result/fit1prob_image");
-			fit2prob_image_aid=(TH2F*)X0file->Get("mapping/result/fit2prob_image");
-			fitsumprob_image_aid=(TH2F*)X0file->Get("mapping/result/fitsumprob_image");
-			theta1mean_image_aid=(TH2F*)X0file->Get("mapping/result/theta2mean_image");
-			theta2mean_image_aid=(TH2F*)X0file->Get("mapping/result/theta2mean_image");
-			correctedtheta1mean_image_aid=(TH2F*)X0file->Get("mapping/result/correctedtheta1mean_image");
-			correctedtheta2mean_image_aid=(TH2F*)X0file->Get("mapping/result/correctedtheta2mean_image");
-			uresidualmean_image_aid=(TH2F*)X0file->Get("mapping/result/uresidualmean_image");
-			vresidualmean_image_aid=(TH2F*)X0file->Get("mapping/result/vresidualmean_image");
-			beamspot_aid=(TH2F*)X0file->Get("mapping/result/beamspot");
-			BE_image_aid=(TH2F*)X0file->Get("mapping/result/BE_image");
+			x0_image_tmp=(TH2F*)X0file->Get("result/x0_image");
+			x0err_image_tmp=(TH2F*)X0file->Get("result/x0err_image");
+			x0relerr_image_tmp=(TH2F*)X0file->Get("result/x0relerr_image");
+			fit1chi2ndof_image_tmp=(TH2F*)X0file->Get("result/fitDQM/fit1chi2ndof_image");
+			fit2chi2ndof_image_tmp=(TH2F*)X0file->Get("result/fitDQM/fit2chi2ndof_image");
+			fitsumchi2ndof_image_tmp=(TH2F*)X0file->Get("result/fitDQM/fitsumchi2ndof_image");
+			fit1prob_image_tmp=(TH2F*)X0file->Get("result/fitDQM/fit1prob_image");
+			fit2prob_image_tmp=(TH2F*)X0file->Get("result/fitDQM/fit2prob_image");
+			fitsumprob_image_tmp=(TH2F*)X0file->Get("result/fitDQM/fitsumprob_image");
+			theta1mean_image_tmp=(TH2F*)X0file->Get("result/theta1mean_image");
+			theta2mean_image_tmp=(TH2F*)X0file->Get("result/theta2mean_image");
+			correctedtheta1mean_image_tmp=(TH2F*)X0file->Get("result/correctedtheta1mean_image");
+			correctedtheta2mean_image_tmp=(TH2F*)X0file->Get("result/correctedtheta2mean_image");
+			scatteroffset_umean_image_tmp=(TH2F*)X0file->Get("result/scatteroffset_umean_image");
+			scatteroffset_vmean_image_tmp=(TH2F*)X0file->Get("result/scatteroffset_vmean_image");
+			scatteroffset_urms_image_tmp=(TH2F*)X0file->Get("result/scatteroffset_urms_image");
+			scatteroffset_vrms_image_tmp=(TH2F*)X0file->Get("result/scatteroffset_vrms_image");
+			beamspot_tmp=(TH2F*)X0file->Get("result/beamspot");
+			BE_image_tmp=(TH2F*)X0file->Get("result/BE_image");
 
-			vertex_w_mean_image_aid=(TH2F*)X0file->Get("mapping/result/vertex_w_image");				    
-			vertex_w_rms_image_aid=(TH2F*)X0file->Get("mapping/result/vertex_w_rms_image");
-			vertex_chi2_image_aid=(TH2F*)X0file->Get("mapping/result/vertex_chi2_image");
-			vertex_multiplicity_image_aid=(TH2F*)X0file->Get("mapping/result/vertex_multiplicity_image");
+			vertex_w_mean_image_tmp=(TH2F*)X0file->Get("result/vertex/vertex_w_image");				    
+			vertex_w_rms_image_tmp=(TH2F*)X0file->Get("result/vertex/vertex_w_rms_image");
+			vertex_chi2_image_tmp=(TH2F*)X0file->Get("result/vertex/vertex_chi2_image");
+			vertex_multiplicity_image_tmp=(TH2F*)X0file->Get("result/vertex/vertex_multiplicity_image");
 
-			res_u_vtx_trk_image_aid=(TH2F*)X0file->Get("mapping/result/u_res_mean_vtx_trk_image");
-			res_v_vtx_trk_image_aid=(TH2F*)X0file->Get("mapping/result/v_res_mean_vtx_trk_image");
-			res_u_rms_vtx_trk_image_aid=(TH2F*)X0file->Get("mapping/result/u_res_rms_vtx_trk_image");
-			res_v_rms_vtx_trk_image_aid=(TH2F*)X0file->Get("mapping/result/v_res_rms_vtx_trk_image");
+			res_u_vtx_trk_image_tmp=(TH2F*)X0file->Get("result/vertex/u_res_mean_vtx_trk_image");
+			res_v_vtx_trk_image_tmp=(TH2F*)X0file->Get("result/vertex/v_res_mean_vtx_trk_image");
+			res_u_rms_vtx_trk_image_tmp=(TH2F*)X0file->Get("result/vertex/u_res_rms_vtx_trk_image");
+			res_v_rms_vtx_trk_image_tmp=(TH2F*)X0file->Get("result/vertex/v_res_rms_vtx_trk_image");
 
-			fit1prob_histo_aid=(TH1F*)X0file->Get("mapping/result/fit1prob_histo");
-			fit2prob_histo_aid=(TH1F*)X0file->Get("mapping/result/fit2prob_histo");
-			fitsumprob_histo_aid=(TH1F*)X0file->Get("mapping/result/fitsumprob_histo");
+			fit1prob_histo_tmp=(TH1F*)X0file->Get("result/fitDQM/fit1prob_histo");
+			fit2prob_histo_tmp=(TH1F*)X0file->Get("result/fitDQM/fit2prob_histo");
+			fitsumprob_histo_tmp=(TH1F*)X0file->Get("result/fitDQM/fitsumprob_histo");
 
-			fit1prob_histo->Add(fit1prob_histo_aid);
-			fit2prob_histo->Add(fit2prob_histo_aid);
-			fitsumprob_histo->Add(fitsumprob_histo_aid);
+			fit1prob_histo->Add(fit1prob_histo_tmp);
+			fit2prob_histo->Add(fit2prob_histo_tmp);
+			fitsumprob_histo->Add(fitsumprob_histo_tmp);
+
+
+			fit1chi2ndof_histo_tmp=(TH1F*)X0file->Get("result/fitDQM/fit1chi2ndof_histo");
+			fit2chi2ndof_histo_tmp=(TH1F*)X0file->Get("result/fitDQM/fit2chi2ndof_histo");
+			fitsumchi2ndof_histo_tmp=(TH1F*)X0file->Get("result/fitDQM/fitsumchi2ndof_histo");
+
+			fit1chi2ndof_histo->Add(fit1chi2ndof_histo_tmp);
+			fit2chi2ndof_histo->Add(fit2chi2ndof_histo_tmp);
+			fitsumchi2ndof_histo->Add(fitsumchi2ndof_histo_tmp);
 
 			// Copy entries of first images
-			x0_image->SetBinContent(col+1,row+1,x0_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			x0_image->SetBinError(col+1,row+1,x0err_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			x0err_image->SetBinContent(col+1,row+1,x0err_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			x0relerr_image->SetBinContent(col+1,row+1,x0relerr_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			fit1chi2ndof_image->SetBinContent(col+1,row+1,fit1chi2ndof_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			fit2chi2ndof_image->SetBinContent(col+1,row+1,fit2chi2ndof_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			fitsumchi2ndof_image->SetBinContent(col+1,row+1,fitsumchi2ndof_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			fit1prob_image->SetBinContent(col+1,row+1,fit1prob_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			fit2prob_image->SetBinContent(col+1,row+1,fit2prob_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			fitsumprob_image->SetBinContent(col+1,row+1,fitsumprob_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			theta1mean_image->SetBinContent(col+1,row+1,theta1mean_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			theta2mean_image->SetBinContent(col+1,row+1,theta2mean_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			correctedtheta1mean_image->SetBinContent(col+1,row+1,correctedtheta1mean_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			correctedtheta2mean_image->SetBinContent(col+1,row+1,correctedtheta2mean_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			uresidualmean_image->SetBinContent(col+1,row+1,uresidualmean_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			vresidualmean_image->SetBinContent(col+1,row+1,vresidualmean_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			beamspot->SetBinContent(col+1,row+1,beamspot_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			BE_image->SetBinContent(col+1,row+1,BE_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			x0_image->SetBinContent(col+1,row+1,x0_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			x0_image->SetBinError(col+1,row+1,x0err_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			x0err_image->SetBinContent(col+1,row+1,x0err_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			x0relerr_image->SetBinContent(col+1,row+1,x0relerr_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			fit1chi2ndof_image->SetBinContent(col+1,row+1,fit1chi2ndof_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			fit2chi2ndof_image->SetBinContent(col+1,row+1,fit2chi2ndof_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			fitsumchi2ndof_image->SetBinContent(col+1,row+1,fitsumchi2ndof_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			fit1prob_image->SetBinContent(col+1,row+1,fit1prob_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			fit2prob_image->SetBinContent(col+1,row+1,fit2prob_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			fitsumprob_image->SetBinContent(col+1,row+1,fitsumprob_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			theta1mean_image->SetBinContent(col+1,row+1,theta1mean_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			theta2mean_image->SetBinContent(col+1,row+1,theta2mean_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			correctedtheta1mean_image->SetBinContent(col+1,row+1,correctedtheta1mean_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			correctedtheta2mean_image->SetBinContent(col+1,row+1,correctedtheta2mean_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			scatteroffset_umean_image->SetBinContent(col+1,row+1,scatteroffset_umean_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			scatteroffset_vmean_image->SetBinContent(col+1,row+1,scatteroffset_vmean_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			scatteroffset_urms_image->SetBinContent(col+1,row+1,scatteroffset_urms_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			scatteroffset_vrms_image->SetBinContent(col+1,row+1,scatteroffset_vrms_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			beamspot->SetBinContent(col+1,row+1,beamspot_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			BE_image->SetBinContent(col+1,row+1,BE_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 
-			vertex_w_mean_image->SetBinContent(col+1,row+1,vertex_w_mean_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			vertex_w_rms_image->SetBinContent(col+1,row+1,vertex_w_rms_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			vertex_chi2_image->SetBinContent(col+1,row+1,vertex_chi2_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			vertex_multiplicity_image->SetBinContent(col+1,row+1,vertex_multiplicity_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-    		res_u_vtx_trk_image->SetBinContent(col+1,row+1,res_u_vtx_trk_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			res_v_vtx_trk_image->SetBinContent(col+1,row+1,res_v_vtx_trk_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-    		res_u_rms_vtx_trk_image->SetBinContent(col+1,row+1,res_u_rms_vtx_trk_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
-			res_v_rms_vtx_trk_image->SetBinContent(col+1,row+1,res_v_rms_vtx_trk_image_aid->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			vertex_w_mean_image->SetBinContent(col+1,row+1,vertex_w_mean_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			vertex_w_rms_image->SetBinContent(col+1,row+1,vertex_w_rms_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			vertex_chi2_image->SetBinContent(col+1,row+1,vertex_chi2_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			vertex_multiplicity_image->SetBinContent(col+1,row+1,vertex_multiplicity_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+    		res_u_vtx_trk_image->SetBinContent(col+1,row+1,res_u_vtx_trk_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			res_v_vtx_trk_image->SetBinContent(col+1,row+1,res_v_vtx_trk_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+    		res_u_rms_vtx_trk_image->SetBinContent(col+1,row+1,res_u_rms_vtx_trk_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			res_v_rms_vtx_trk_image->SetBinContent(col+1,row+1,res_v_rms_vtx_trk_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 
 			delete X0file;
 			X0file = ((TFile *)0);
@@ -538,40 +589,47 @@ int MergeImages()
 	}
 
 	Resultsfile->cd("");
+	Resultsfile->mkdir("vertex");
+	Resultsfile->mkdir("fitDQM");
 	
 	x0_image->Write();
 	x0err_image->Write();
 	x0relerr_image->Write();
-	fit1chi2ndof_image->Write();
-	fit2chi2ndof_image->Write();
-	fitsumchi2ndof_image->Write();
-	fit1prob_image->Write();
-	fit2prob_image->Write();
-	fitsumprob_image->Write();
+
 	theta1mean_image->Write();
 	theta2mean_image->Write();
 	correctedtheta1mean_image->Write();
 	correctedtheta2mean_image->Write();
-	uresidualmean_image->Write();
-	vresidualmean_image->Write();
-
+	scatteroffset_umean_image->Write();
+	scatteroffset_vmean_image->Write();
+	scatteroffset_urms_image->Write();
+	scatteroffset_vrms_image->Write();
 	beamspot->Write();
 	BE_image->Write();
-
-	fit1prob_histo->Write();
-	fit2prob_histo->Write();
-	fitsumprob_histo->Write();
-
 	hscatt_theta1_vs_resu->Write();
 	hscatt_theta1_vs_resv->Write();
 	hscatt_theta2_vs_resu->Write();
 	hscatt_theta2_vs_resv->Write();
 
+	Resultsfile->cd("fitDQM");
+	fit1chi2ndof_image->Write();
+	fit2chi2ndof_image->Write();
+	fitsumchi2ndof_image->Write();
+	fit1chi2ndof_histo->Write();
+	fit2chi2ndof_histo->Write();
+	fitsumchi2ndof_histo->Write();
+	fit1prob_image->Write();
+	fit2prob_image->Write();
+	fitsumprob_image->Write();	
+    fit1prob_histo->Write();
+	fit2prob_histo->Write();
+	fitsumprob_histo->Write();
+
+	Resultsfile->cd("vertex");
 	vertex_w_mean_image->Write();
 	vertex_w_rms_image->Write();
 	vertex_chi2_image->Write();
 	vertex_multiplicity_image->Write();
-
 	res_u_vtx_trk_image->Write();
 	res_v_vtx_trk_image->Write();
 	res_u_rms_vtx_trk_image->Write();

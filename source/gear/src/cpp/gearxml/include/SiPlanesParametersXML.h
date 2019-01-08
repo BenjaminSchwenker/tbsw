@@ -12,7 +12,7 @@ namespace gear {
   /** XML handler for SiPlanesParameters.
    *
    * @author T. Klimkovich, DESY
-   * @version $Id $
+   * @author B. Schwenker, Uni Göttingen
    */
   class SiPlanesParametersXML : public XMLHandler {
 

@@ -7,7 +7,7 @@
 #define PixelDUTAnalyzer_H 1
 
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "TBDetector.h"
 
 
@@ -102,6 +102,9 @@ protected:
    
 //! Input DUT TrackerHit collection name
    std::string _hitColName;   
+
+//! Input digit collection name
+   std::string _digitColName;
    
 //! Alignment DB file name 
    std::string _alignmentDBFileName;
@@ -132,11 +135,9 @@ protected:
    // Variables in hit tree       
    int _rootEventNumber;             // Event number from lcio file
    int _rootRunNumber;               // Run number from lcio file 
-   int _rootDEPFETGoodEvent;         // DEPFET good event flag
-   int _rootDEPFETStartGate;         // DEPFET startgate
    int _rootSensorID;                // SensorID from lcio file (this is typically NOT the plane number!!)
-   int _rootNTelTracks;              // Number of tracks in reference telescope in same event as hit
-   int _rootNDUTHits;                // Number of DUT hits in the same event as hit   
+   int _rootNTelTracks;              // Number of tracks in reference telescope in same event 
+   int _rootNDUTDigits;              // Number of DUT digits in the same event  
    int _rootHitQuality;              // GoodCluster == 0, BadCluster != 0
    double _rootHitU;                 // Hit coordinate u reconstructed from DUT cluster in mm, in local DUT uvw coordinates       
    double _rootHitV;                 // Hit coordinate v reconstructed from DUT cluster in mm, in local DUT uvw coordinates     
@@ -149,8 +150,8 @@ protected:
    int _rootHitCellV;                // Hit v coordinate lies on this v cell
    int _rootClusterStartCellU;       // Smallest uCell of cluster related to Hit 
    int _rootClusterStartCellV;       // Smallest vCell of cluster related to Hit 
-
    int _rootHitHasTrack;             // Hit can be matched to track (== 0)     
+   int _rootHitHasTrackWithRefHit;   // Hit can be matched to track which has a hit on the reference plane (== 0)     
    double _rootHitFitMomentum;       // Estimated track momentum from fit, only filled in case HasTrack==0            
    double _rootHitFitU;              // Estimated track intersection u coordimate in mm, in local DUT uvw coordinates        
    double _rootHitFitV;              // Estimated track intersection v coordimate in mm, in local DUT uvw coordinates                  
@@ -168,10 +169,12 @@ protected:
    double _rootHitLocalChi2;         // Chi2 value from hit-track residual on device under test 
    int _rootHitTrackNDF;             // Number of degrees of freedom of track fit
    int _rootHitTrackNHits;           // Number of telescope hits used for track fitting 
+   int _rootHitPixelType;            // PixelType of seed pixel cell 
    
    
    // Variables in track tree  
    int _rootTrackHasHit;             // Track can be matched to a DUT hit (== 0) 
+   int _rootTrackWithRefHit;     // Track has hit on reference plane (== 0) 
    double _rootTrackFitMomentum;     // Estimated track momentum from fit    
    int _rootTrackNDF;                // Number of degrees of freedom of track fit
    double _rootTrackChi2;            // Chi2 value from fit of reference track
@@ -186,6 +189,7 @@ protected:
    double _rootTrackFitCellUCenter;  // Central coordinate of cell 'FitCellU' in mm 
    double _rootTrackFitCellVCenter;  // Central coordinate of cell 'FitCellV' in mm 
    double _rootTrackSeedCharge;      // Highest charge in cluster, only filled if cluster matched
+   int _rootTrackPixelType;          // PixelType of hit pixel cell 
    
    
    
