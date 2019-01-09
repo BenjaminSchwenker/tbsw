@@ -52,8 +52,6 @@ def x0imaging(rootfilelist=[],caltag='',steerfiles='',nametag=''):
   # Create workdir and change directory
   os.mkdir(workdir) 
   os.chdir(workdir)
-  
-  scriptsfolder = fullpath+'/tbsw/x0imaging'
 
   # Copy cfg text file to current work directory
   default_cfg_file_name='x0.cfg'
@@ -79,17 +77,17 @@ def x0imaging(rootfilelist=[],caltag='',steerfiles='',nametag=''):
   momentumvgradient = config.getfloat('general', 'momentumvgradient')
 
   # Name of the results file
-  this_resultsfilename = config.get('x0image', 'resultsfilename')
+  resultsfilename = config.get('x0image', 'resultsfilename')
 
   # Max fit chi2ndof value
-  this_maxchi2ndof = config.get('x0image', 'maxchi2ndof')
+  maxchi2ndof = config.get('x0image', 'maxchi2ndof')
 
   # fit range parameter value
-  this_fitrangeparameter = config.get('general', 'fitrange_parameter')
+  fitrangeparameter = config.get('general', 'fitrange_parameter')
 
   # Vertex multiplicity cut parameters
-  this_vertex_multiplicity_min = config.get('general', 'vertex_multiplicity_min')
-  this_vertex_multiplicity_max = config.get('general', 'vertex_multiplicity_max')
+  vertex_multiplicity_min = config.get('general', 'vertex_multiplicity_min')
+  vertex_multiplicity_max = config.get('general', 'vertex_multiplicity_max')
 
   # u and v length of complete X0 image 
   u_length = config.getfloat('x0image', 'u_length')
@@ -125,10 +123,6 @@ def x0imaging(rootfilelist=[],caltag='',steerfiles='',nametag=''):
   max_u_pixels = 50
   max_v_pixels = 50
 
-  # Convert the number to a string
-  this_maxupixels=str(max_u_pixels)
-  this_maxvpixels=str(max_v_pixels)
-
   # How many x0image parts are required in each direction?
   u_splits=math.ceil(num_u_pixels/max_u_pixels)
   v_splits=math.ceil(num_v_pixels/max_v_pixels)
@@ -139,8 +133,8 @@ def x0imaging(rootfilelist=[],caltag='',steerfiles='',nametag=''):
   if os.path.isfile(calicfgfile):
     shutil.copy(calicfgfile, calicfgfilename)
 
-  scriptname="x0imaging.C"
-
+  scriptname="/$X0TOOLS/source/src/x0imaging.C"
+  
   # copy x0image files 
   for i in range(0,int(u_splits)):
     for j in range(0,int(v_splits)):
@@ -151,8 +145,7 @@ def x0imaging(rootfilelist=[],caltag='',steerfiles='',nametag=''):
           this_inputfiles=os.path.splitext(os.path.basename(rootfile))[0]
         else:
           this_inputfiles=this_inputfiles+","+os.path.splitext(os.path.basename(rootfile))[0]
-      # Function name for this x0image script
-      this_functionname="x0imaging-part-"+str(i+1)+"-"+str(j+1)
+      
       # fileidentifier for this x0image
       this_x0imagename=nametag+"-part-"+str(i+1)+"-"+str(j+1)+".root"
       # umin for this x0image
@@ -163,27 +156,7 @@ def x0imaging(rootfilelist=[],caltag='',steerfiles='',nametag=''):
       this_ulength=str(max_u_pixels * u_pixel_size / 1000.0)
       # vlength for this x0image
       this_vlength=str(max_v_pixels * v_pixel_size / 1000.0)
-      # calibrationfactor
-      this_calibrationfactor=str(calibrationfactor)
-      # mean momentum
-      this_momentumoffset=str(momentumoffset)
-      # momentum u gradient
-      this_momentumugradient=str(momentumugradient)
-      # momentum v gradient
-      this_momentumvgradient=str(momentumvgradient)
-
-      # Angle histo range
-      this_histo_range=str(histo_range)
-
-      # fit options
-      this_fit_options=str(fit_options)
-
-      # Number of angle histo bins
-      this_num_bins=str(num_bins)
-      
-      # Copy placeholder x0image and change it
-      shutil.copy(scriptsfolder+'/'+scriptname, scriptname)
-
+        
       # Open new cfg txt file
       open('x0image-partial.cfg', 'a').close()
       fp = open('x0image-partial.cfg','r+')
@@ -197,23 +170,23 @@ def x0imaging(rootfilelist=[],caltag='',steerfiles='',nametag=''):
       config.add_section('image')
       config.set('image', 'inputfile', this_inputfiles)
       config.set('image', 'x0imagename', this_x0imagename)
-      config.set('image', 'maxchi2ndof', this_maxchi2ndof)
-      config.set('image', 'fitrange_parameter', this_fitrangeparameter)
+      config.set('image', 'maxchi2ndof', maxchi2ndof)
+      config.set('image', 'fitrange_parameter', fitrangeparameter)
       config.set('image', 'umin', this_umin)
       config.set('image', 'vmax', this_vmax)
-      config.set('image', 'maxupixels', this_maxupixels)
-      config.set('image', 'maxvpixels', this_maxvpixels)
+      config.set('image', 'maxupixels', str(max_u_pixels))
+      config.set('image', 'maxvpixels', str(max_v_pixels))
       config.set('image', 'ulength', this_ulength)
       config.set('image', 'vlength', this_vlength)
-      config.set('image', 'lambda', this_calibrationfactor)
-      config.set('image', 'momentumoffset', this_momentumoffset)
-      config.set('image', 'momentumugradient', this_momentumugradient)
-      config.set('image', 'momentumvgradient', this_momentumvgradient)
-      config.set('image', 'vertexmultiplicitymin', this_vertex_multiplicity_min)
-      config.set('image', 'vertexmultiplicitymax', this_vertex_multiplicity_max)
-      config.set('image', 'num_bins', this_num_bins)
-      config.set('image', 'histo_range', this_histo_range)
-      config.set('image', 'fit_options', this_fit_options)
+      config.set('image', 'lambda', str(calibrationfactor))
+      config.set('image', 'momentumoffset', str(momentumoffset))
+      config.set('image', 'momentumugradient', str(momentumugradient))
+      config.set('image', 'momentumvgradient', str(momentumvgradient))
+      config.set('image', 'vertexmultiplicitymin', vertex_multiplicity_min)
+      config.set('image', 'vertexmultiplicitymax', vertex_multiplicity_max)
+      config.set('image', 'num_bins', str(num_bins))
+      config.set('image', 'histo_range', str(histo_range))
+      config.set('image', 'fit_options', str(fit_options))
 
       # Writing the configuration file
       with open('x0image-partial.cfg', 'w') as configfile:
@@ -223,30 +196,7 @@ def x0imaging(rootfilelist=[],caltag='',steerfiles='',nametag=''):
       print ('[INFO] Create x0image for image part {} {}'.format(i,j)) 
       subprocess.call('root -q -b '+scriptname+ ' > x0-imaging_{}_{}.log'.format(i,j) + ' 2>&1', shell=True)
       
-
-  # Modify the merging script
-  scriptname="MergeImages.C"
-
-  # Copy placeholder x0image and change it
-  shutil.copy(scriptsfolder+'/MergeImages.C', scriptname)
-
-  # Open the x0imaging script of this x0image part
-  tempFile = None
-
-  with open(scriptname, 'r') as file:
-    tempFile = file.read()
-
-  # Create strings, which will replace the placeholder strings
-  this_usplits=str(u_splits)
-  this_vsplits=str(v_splits)
-  this_upixelsize=str(u_pixel_size)
-  this_vpixelsize=str(v_pixel_size)
-  this_umin=str(umin)
-  this_vmax=str(vmax)
-  this_ulength=str(u_length)
-  this_vlength=str(v_length)
-
-  this_x0filename=nametag
+  scriptname="/$X0TOOLS/source/src/MergeImages.C"
 
   # Open new cfg txt file
   open('x0merge.cfg', 'a').close()
@@ -258,16 +208,16 @@ def x0imaging(rootfilelist=[],caltag='',steerfiles='',nametag=''):
 
   # fill a temporary cfg file with the parameters relevant for the current partial x0image
   config.add_section('merge')
-  config.set('merge', 'x0filename', this_x0filename)
-  config.set('merge', 'resultsfilename', this_resultsfilename)
-  config.set('merge', 'usplits', this_usplits)
-  config.set('merge', 'vsplits', this_vsplits)
-  config.set('merge', 'upixelsize', this_upixelsize)
-  config.set('merge', 'vpixelsize', this_vpixelsize)
-  config.set('merge', 'maxupixels', this_maxupixels)
-  config.set('merge', 'maxvpixels', this_maxvpixels)
-  config.set('merge', 'umin', this_umin)
-  config.set('merge', 'vmax', this_vmax)
+  config.set('merge', 'x0filename', nametag)
+  config.set('merge', 'resultsfilename', resultsfilename)
+  config.set('merge', 'usplits', str(u_splits))
+  config.set('merge', 'vsplits', str(v_splits))
+  config.set('merge', 'upixelsize', str(u_pixel_size))
+  config.set('merge', 'vpixelsize', str(v_pixel_size))
+  config.set('merge', 'maxupixels', str(max_u_pixels))
+  config.set('merge', 'maxvpixels', str(max_v_pixels))
+  config.set('merge', 'umin', str(umin))
+  config.set('merge', 'vmax', str(vmax))
 
   # Writing the configuration file
   with open('x0merge.cfg', 'w') as configfile:
@@ -288,7 +238,7 @@ def x0imaging(rootfilelist=[],caltag='',steerfiles='',nametag=''):
     os.remove(file) 
 
   # Copy complete image file to root-files directory
-  shutil.copy(this_resultsfilename+'.root', fullpath+'/root-files/'+this_x0filename+'.root')
+  shutil.copy(resultsfilename+'.root', fullpath+'/root-files/'+nametag+'.root')
   		                      
   # Go back to workspace
   os.chdir(fullpath) 

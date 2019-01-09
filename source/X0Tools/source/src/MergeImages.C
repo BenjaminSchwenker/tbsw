@@ -3,12 +3,8 @@
 using namespace std ;
 
 
-// This script is used to create a map of a plane in a test beam telescope. The input is a TTree including 
-// MSC projected scattering angle distributions and reconstruction errors.
 int MergeImages()
 {
-	gSystem->Load("libProof.so");
-	gSystem->Load("libTreePlayer.so");
 
 	gROOT->Reset(); 
 	//gROOT->SetStyle("Plain"); 
