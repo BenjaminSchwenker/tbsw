@@ -118,7 +118,7 @@ def x0calibration(rootfilelist=[],imagefile='',caltag='',steerfiles=''):
     # Create X0image root file link in the current work dir
     os.symlink(fullpath+'/'+imagefile,'X0image')
 
-    scriptname="/$X0TOOLS/source/src/DrawBoxes.C"
+    scriptname="$X0TOOLS/source/src/DrawBoxes.C"
     action = 'root -q -b ' + scriptname + ' > x0-drawboxes.log  2>&1'
     subprocess.call(action, shell=True)    
     print ('[INFO] Marking of measurement areas done... ')
@@ -126,7 +126,7 @@ def x0calibration(rootfilelist=[],imagefile='',caltag='',steerfiles=''):
     print ('[Print] No Image file found... Skip marking measurement areas! ')
   
   
-  scriptname="/$X0TOOLS/source/src/calibrationfit.C"
+  scriptname="$X0TOOLS/source/src/calibrationfit.C"
   
   # Copy the results cfg file from previous calibrations, if it exists
   cfgfilename="x0cal_result.cfg"

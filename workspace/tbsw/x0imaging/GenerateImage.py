@@ -133,7 +133,7 @@ def x0imaging(rootfilelist=[],caltag='',steerfiles='',nametag=''):
   if os.path.isfile(calicfgfile):
     shutil.copy(calicfgfile, calicfgfilename)
 
-  scriptname="/$X0TOOLS/source/src/x0imaging.C"
+  scriptname="$X0TOOLS/source/src/x0imaging.C"
   
   # copy x0image files 
   for i in range(0,int(u_splits)):
@@ -196,7 +196,7 @@ def x0imaging(rootfilelist=[],caltag='',steerfiles='',nametag=''):
       print ('[INFO] Create x0image for image part {} {}'.format(i,j)) 
       subprocess.call('root -q -b '+scriptname+ ' > x0-imaging_{}_{}.log'.format(i,j) + ' 2>&1', shell=True)
       
-  scriptname="/$X0TOOLS/source/src/MergeImages.C"
+  scriptname="$X0TOOLS/source/src/MergeImages.C"
 
   # Open new cfg txt file
   open('x0merge.cfg', 'a').close()
