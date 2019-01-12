@@ -132,10 +132,8 @@ def x0imaging(rootfilelist=[],caltag='',steerfiles='',nametag=''):
   calicfgfile=fullpath+'/localDB/'+caltag+'/'+calicfgfilename
   if os.path.isfile(calicfgfile):
     shutil.copy(calicfgfile, calicfgfilename)
-
-  scriptname="$X0TOOLS/source/src/x0imaging.C"
   
-  # copy x0image files 
+  # Copy x0image files 
   for i in range(0,int(u_splits)):
     for j in range(0,int(v_splits)):
 
@@ -193,11 +191,9 @@ def x0imaging(rootfilelist=[],caltag='',steerfiles='',nametag=''):
          #config.write(configfile,space_around_delimiters=False)
          config.write(configfile)
   
-      print ('[INFO] Create x0image for image part {} {}'.format(i,j)) 
-      subprocess.call('root -q -b '+scriptname+ ' > x0-imaging_{}_{}.log'.format(i,j) + ' 2>&1', shell=True)
+      print ('[INFO] Create x0image for image part {} {}'.format(i,j))    
+      subprocess.call( "$X0TOOLS/bin/x0imaging > x0-imaging_{}_{}.log 2>&1".format(i,j), shell=True)
       
-  scriptname="$X0TOOLS/source/src/MergeImages.C"
-
   # Open new cfg txt file
   open('x0merge.cfg', 'a').close()
   fp = open('x0merge.cfg','r+')
@@ -224,7 +220,7 @@ def x0imaging(rootfilelist=[],caltag='',steerfiles='',nametag=''):
     #config.write(configfile,space_around_delimiters=False)
     config.write(configfile)
    
-  subprocess.call('root -q -b '+scriptname + ' > merger.log 2>&1', shell=True)            
+  subprocess.call( "$X0TOOLS/bin/MergeImages > merger.log 2>&1", shell=True)            
   print ('[Print] All partial images created and merged... ')  
 
   # clean up partial image scripts 

@@ -29,12 +29,12 @@ cd ../..
 
 ############################################################
 # Install X0Tools  
-#cd X0Tools
-#mkdir build
-#cd build 
-#cmake -C ../BuildSetup.cmake ..
-#make install -j4
-#cd ../.. 
+cd X0Tools
+mkdir build
+cd build 
+cmake -C ../config/BuildSetup.cmake ..
+make install -j4
+cd ../.. 
 
 ############################################################
 # Install Marlin  

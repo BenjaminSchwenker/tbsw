@@ -114,33 +114,30 @@ IF( DEFINED ${PROJECT_NAME}_DEPENDS OR DEFINED BUILD_WITH OR DEFINED LINK_WITH )
 ENDIF()
 
 
-### INCLUDE, SOURCE, LIB ####################################################
+####################################################################################################
+### BINS
+####################################################################################################
 
 # Compiler flags
 ADD_DEFINITIONS( "-Wall -Wno-long-long -ansi -pedantic -std=c++1y" )
 
-# Include directories
-INCLUDE_DIRECTORIES( source/include )
+# Create symbolic target for calling targets bin_XXX
+ADD_CUSTOM_TARGET( bin )
+ 
+# ==== a macro for adding binaries =====
+MACRO( ADD_X0TOOLS_BIN file )
+  ADD_EXECUTABLE( bin_${file} ./source/src/${file}.C )
+  ADD_DEPENDENCIES( bin bin_${file} )
+  SET_TARGET_PROPERTIES( bin_${file} PROPERTIES OUTPUT_NAME ${file} )
+  TARGET_LINK_LIBRARIES( bin_${file} ${ROOT_LIBRARIES} )
+  INSTALL( TARGETS bin_${file} DESTINATION bin )
+ENDMACRO()
+#===================================================================
 
-
-# Set list of sources
-AUX_SOURCE_DIRECTORY( source/src lib_srcs)
-
-IF( COMMAND cmake_policy )
-  cmake_policy(SET CMP0003 NEW)
-ENDIF( COMMAND cmake_policy )
-
-# Create library with the list of library sources
-ADD_LIBRARY( ${PROJECT_NAME} ${lib_srcs} )
-
-# Create target for libraries
-ADD_CUSTOM_TARGET( lib DEPENDS ${PROJECT_NAME} )
-
-# Install libraries
-INSTALL( TARGETS ${PROJECT_NAME} DESTINATION lib PERMISSIONS
-        OWNER_READ OWNER_WRITE OWNER_EXECUTE
-        GROUP_READ GROUP_EXECUTE
-        WORLD_READ WORLD_EXECUTE )
+ADD_X0TOOLS_BIN( calibrationfit ) 
+ADD_X0TOOLS_BIN( DrawBoxes ) 
+ADD_X0TOOLS_BIN( MergeImages ) 
+ADD_X0TOOLS_BIN( x0imaging ) 
 
 # Create configuration file from .in file
 CONFIGURE_FILE( "${PROJECT_SOURCE_DIR}/config/${PROJECT_NAME}.cmake.in"
@@ -159,66 +156,6 @@ CONFIGURE_FILE( "${CMAKE_SOURCE_DIR}/config/cmake_uninstall.cmake.in"
 ADD_CUSTOM_TARGET( uninstall
   "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/cmake_uninstall.cmake" )
 
-
-####################################################################################################
-### BINS
-####################################################################################################
-
-# check if we are on a *nix system
-IF( NOT UNIX OR APPLE )
-    IF( DEFINED LINK_STATIC_WHOLE_LIBS )
-        MESSAGE( FATAL_ERROR "The LINK_STATIC_WHOLE_LIBS option is only avaliabe for *nix systems" )
-    ENDIF()
-    IF( NOT BUILD_SHARED_LIBS )
-        MESSAGE( FATAL_ERROR "You can only build Marlin statically under *nix systems" )
-    ENDIF()
-ENDIF()
-
-# create symbolic bin target for calling targets bin_XXX
-ADD_CUSTOM_TARGET( bin )
-
-IF( NOT MARLIN_NO_DLL )
-    FIND_LIBRARY( DL_LIB NAMES ${CMAKE_DL_LIBS} dl )
-    IF( NOT DL_LIB )
-        MESSAGE( FATAL_ERROR "failed to find libdl.so" )
-    ELSE()
-        MESSAGE( STATUS "using dl library: ${DL_LIB}" )
-    ENDIF()
-    LINK_LIBRARIES( ${DL_LIB} )
-ENDIF()
-
-# whole archive libraries
-IF( DEFINED LINK_STATIC_WHOLE_LIBS )
-    SEPARATE_ARGUMENTS( LINK_STATIC_WHOLE_LIBS )
-    SET( LINK_STATIC_WHOLE_LIBS "${LINK_STATIC_WHOLE_LIBS}" CACHE STRING
-            "Link Marlin with these static libs" FORCE )
-    MESSAGE( STATUS "Following static libraries are going to be linked to the binaries with the" )
-    MESSAGE( STATUS "-Wl,--whole-archive linker flag:" )
-    FOREACH( lib ${LINK_STATIC_WHOLE_LIBS} )
-         MESSAGE( STATUS "${lib}" )
-    ENDFOREACH()
-ENDIF()
-
-
-# ----- Marlin binary --------------------------------------------------------
-ADD_EXECUTABLE( Marlin Marlin.cc ProcessorLoader.cc )
-ADD_DEPENDENCIES( bin Marlin )
-
-# link against library
-IF( BUILD_SHARED_LIBS )
-    TARGET_LINK_LIBRARIES( Marlin lib_Marlin )
-ELSE()
-    TARGET_LINK_LIBRARIES( Marlin -Wl,--whole-archive lib_Marlin -Wl,--no-whole-archive )
-ENDIF()
-
-# whole archive libraries
-IF( DEFINED LINK_STATIC_WHOLE_LIBS )
-    FOREACH( lib ${LINK_STATIC_WHOLE_LIBS} )
-        TARGET_LINK_LIBRARIES( Marlin -Wl,--whole-archive ${lib} -Wl,--no-whole-archive )
-    ENDFOREACH()
-ENDIF()
-
-INSTALL( TARGETS Marlin DESTINATION bin )
 
 ### FINAL STATUS ############################################################
 

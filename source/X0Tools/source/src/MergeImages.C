@@ -1,9 +1,19 @@
 #include <fstream>
 #include <algorithm>
+#include <iostream>
+
+#include "TROOT.h"
+#include "TStyle.h"
+#include "TEnv.h"
+#include "TH2F.h"
+#include "TH1F.h"
+#include "TFile.h"
+#include "TString.h"
+
 using namespace std ;
 
-
-int MergeImages()
+int main(int argc, char **argv)
+//int MergeImages()
 {
 
 	gROOT->Reset(); 
@@ -53,7 +63,6 @@ int MergeImages()
 	TH2F * scatteroffset_vmean_image_tmp;		    // mean scatter offset images
 	TH2F * scatteroffset_urms_image_tmp;		    // RMS scatter offset images
 	TH2F * scatteroffset_vrms_image_tmp;		    // RMS scatter offset images
-	TH2F * htrackchi2map_tmp;			            // track chi2 images
 	TH2F * beamspot_tmp;				            // hit map
 	TH2F * BE_image_tmp;				            // Momentum images
 
@@ -634,6 +643,4 @@ int MergeImages()
 	Resultsfile->Close();
 
     return 0;
-
-	
 }

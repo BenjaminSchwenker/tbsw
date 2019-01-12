@@ -117,16 +117,11 @@ def x0calibration(rootfilelist=[],imagefile='',caltag='',steerfiles=''):
     
     # Create X0image root file link in the current work dir
     os.symlink(fullpath+'/'+imagefile,'X0image')
-
-    scriptname="$X0TOOLS/source/src/DrawBoxes.C"
-    action = 'root -q -b ' + scriptname + ' > x0-drawboxes.log  2>&1'
-    subprocess.call(action, shell=True)    
+     
+    subprocess.call( "$X0TOOLS/bin/DrawBoxes > x0-drawboxes.log  2>&1", shell=True)   
     print ('[INFO] Marking of measurement areas done... ')
   else:
     print ('[Print] No Image file found... Skip marking measurement areas! ')
-  
-  
-  scriptname="$X0TOOLS/source/src/calibrationfit.C"
   
   # Copy the results cfg file from previous calibrations, if it exists
   cfgfilename="x0cal_result.cfg"
@@ -134,13 +129,12 @@ def x0calibration(rootfilelist=[],imagefile='',caltag='',steerfiles=''):
   if os.path.isfile(cfgfile):
     shutil.copy(cfgfile, cfgfilename)
   
-  action = 'root -q -b ' + scriptname + ' > x0cal.log  2>&1'
-  print('[INFO] Executing {}'.format(action))
-  subprocess.call(action, shell=True)            
-  print ('[INFO] Calibration done... ')  
-
+  print ('[INFO] Start X0 Calibration fit ... ')  
+  subprocess.call( "$X0TOOLS/bin/calibrationfit > x0cal.log  2>&1", shell=True)            
+  print ('[INFO] X0 Calibration fit done! ')  
+  
   caldir=fullpath+'/localDB/'+caltag
-
+  
   if not os.path.isdir(caldir):
     os.mkdir(caldir)
     

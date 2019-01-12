@@ -16,6 +16,10 @@
 # Setup path variables
 #############################################################################
 
+# CMake Modules Path
+SET( CMAKE_MODULE_PATH "$ENV{TBSW_HOME}/CMakeModules"
+    CACHE PATH "Path to CMake Modules" FORCE )
+
 # Path to ROOT
 SET( ROOT_HOME "$ENV{ROOTSYS}"
     CACHE PATH "Path to ROOT " FORCE )
