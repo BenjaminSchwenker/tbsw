@@ -82,7 +82,7 @@ echo "#-------------------------------------------------------------------------
 echo "export ROOTSYS="${ROOTSYS}"" >> workspace/init_tbsw.sh
 echo "export PATH="${ROOTSYS}/bin:${PATH}"" >> workspace/init_tbsw.sh
 echo "export LD_LIBRARY_PATH="${ROOTSYS}/lib:${LD_LIBRARY_PATH}"" >> workspace/init_tbsw.sh
-echo "export PYTHONPATH="${ROOTSYS}/lib"" >> workspace/init_tbsw.sh
+echo "export PYTHONPATH="${ROOTSYS}/lib:${PWD}/source"" >> workspace/init_tbsw.sh
 echo "" >> workspace/init_tbsw.sh
 
 echo "#--------------------------------------------------------------------------------" >> workspace/init_tbsw.sh
