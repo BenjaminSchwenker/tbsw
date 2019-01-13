@@ -549,7 +549,7 @@ if __name__ == '__main__':
   args = parser.parse_args()
   
   if args.caltag=='':
-    args.caltag = os.path.splitext(os.path.basename(args.rawfile))[0] + args.special
+    args.caltag = os.path.splitext(os.path.basename(args.rawfile))[0]
     
   if not args.skip_calibration: 
     print("Creating new calibration tag {} from run {}".format(args.caltag, args.rawfile))
