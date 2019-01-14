@@ -1,7 +1,7 @@
 
 # INSTALL test beam software (tbsw) 
 
-The installation procedure is tested on ubuntu 16.04. 
+The installation procedure is tested on ubuntu 16.04. The requirements for an installation on Scientific Linux 7 is explained below.
 
 
 # Prerequisites 
@@ -72,7 +72,7 @@ The release specific tag can be obtained using for example:
 
 ```
 $ cd root
-$ git checkout -b v6-10-08 v6-10-08  
+$ git checkout -b v6-17-01 v6-17-01  
 $ cd ..
 ```
 
@@ -139,6 +139,28 @@ The script init_tbsw.sh sets all needed environment variables. The script tbsw_e
 $ . init_tbsw.sh 
 $ python tbsw_example.py
 ```
+
+# INSTALL test beam software on Scientific Linux 7
+
+For Scientific Linux 7 only GCC 4.8 is installed, but tbsw uses c++14 features (lambda function parameter type capture with auto), so a newer version is needed. 
+It can be obtained with the devtoolset:
+
+```
+# Install Software Collections in Scientific Linux 7
+$ sudo yum install yum-conf-repos
+$ sudo yum install yum-conf-softwarecollections
+
+# Install Developer Toolset 6
+$ sudo yum install devtoolset-7
+
+# Enter Developer Toolset 7 Environment
+$ scl enable devtoolset-7 bash
+
+# Check your gcc version
+$ gcc --version
+```
+Afterwards just follow the instructions for the installation on Ubuntu.
+
 
 In case the script is working, your console should display the following: 
 
