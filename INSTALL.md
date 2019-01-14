@@ -1,7 +1,7 @@
 
 # INSTALL test beam software (tbsw) 
 
-The installation procedure is tested on ubuntu 16.04. The requirements for an installation on Scientific Linux 7 is explained below.
+The installation procedure is tested on ubuntu 16.04. The requirements for an installation on Scientific Linux 7 are explained below.
 
 
 # Prerequisites 
