@@ -79,7 +79,11 @@ PixelDUTAnalyzer::PixelDUTAnalyzer() : Processor("PixelDUTAnalyzer")
                            _digitColName ,
                            std::string("zsdata_dut") ) ;
   
-  // Processor parameters:
+  // Processor parameters
+  
+  registerProcessorParameter ("MetaInfoCollection",
+                             "Name of optional unpacker meta info collection for DUT. Set empty string if it does not exist",
+                             _metaDataColName  , static_cast< string > ( "" ) );  
   
   registerProcessorParameter ("AlignmentDBFileName",
                              "This is the name of the file with the alignment constants (add .root)",
@@ -104,6 +108,13 @@ PixelDUTAnalyzer::PixelDUTAnalyzer() : Processor("PixelDUTAnalyzer")
   registerProcessorParameter( "RootFileName",
                                "Output root file name",
                                _rootFileName, std::string("histos.root"));
+   
+   std::vector<std::string> initTestPixels;
+   registerProcessorParameter ("DUTTestPixels", 
+                               "List of pixels in format 'row1:col1 row2:col2 ...'. A flag 'hasTestPixels' is written to output tree if these pixels are found in an event",
+                               _testPixels, initTestPixels); 
+   
+   
    
 }
 
@@ -186,21 +197,60 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
   // Load DUT module    
   Det & dut = _detector.GetDet(_idut);   
   
+  // 
+  //  Get DUT unpacker meta info, if exists
+  //   
+  bool isGoodEvent = true;    
+  try {
+    LCCollectionVec* metainfo = dynamic_cast < LCCollectionVec * > (evt->getCollection( _metaDataColName )) ;
+    LCGenericObjectImpl* metaobj = dynamic_cast<LCGenericObjectImpl* > ( metainfo->getElementAt(0) );
+    isGoodEvent = metaobj->getIntVal(0);            
+  } catch (lcio::DataNotAvailableException& e) {
+    streamlog_out(MESSAGE2) << " Meta info not available "
+                            << endl << endl;
+  }     
+  
+  streamlog_out(MESSAGE2) << "Unpacker flags isGoodEvent= " << isGoodEvent << endl; 
+  
   //
   // Get digit collection 
   //
-  
-  LCCollection* digitcol = NULL;
   int nDUTDigits = 0;   
+  bool hasTestPixels = true;
+  
   try {
-    digitcol = evt->getCollection( _digitColName ) ;
+    LCCollection* digitcol = evt->getCollection( _digitColName ) ;
     CellIDDecoder<TrackerDataImpl> DigitDecoder(digitcol);  
     // Search for digits from DUT 
     for (unsigned int iDet = 0; iDet < digitcol->getNumberOfElements(); iDet++) {    
       TrackerDataImpl * digits = dynamic_cast<TrackerDataImpl* > ( digitcol->getElementAt(iDet) );
       int sensorID = DigitDecoder( digits ) ["sensorID"];
-      if ( sensorID ==  dut.GetDAQID() ) {
-        nDUTDigits = digits->getChargeValues().size()/3;
+      if ( sensorID ==  dut.GetDAQID() ) { 
+        FloatVec pixVector = digits->getChargeValues();
+         
+        // Read the number of pixels on DUT in the event
+        nDUTDigits = pixVector.size()/3;
+               
+        std::set<char> delims{':'};
+        for (auto pixelstr: _testPixels) {
+          auto tokens = splitpath(pixelstr, delims);   
+          int test_col = std::stoi(tokens.at(1));
+          int test_row = std::stoi(tokens.at(0));
+          bool flag = false; 
+          
+          for (int iPix = 0; iPix < nDUTDigits; iPix++) {   
+            int col = static_cast<int> (pixVector[iPix * 3]);
+            int row = static_cast<int> (pixVector[iPix * 3 + 1]);
+            if (col == test_col and row == test_row) {
+              flag = true;
+              break;
+            } 
+          }
+          if (not flag) {
+            hasTestPixels = false;
+            break;
+          }
+        }
       }
     }
   } catch (lcio::DataNotAvailableException& e) {
@@ -407,6 +457,8 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
   _rootSensorID = dut.GetDAQID();       
   _rootNTelTracks = nTrack; 
   _rootNDUTDigits = nDUTDigits;
+  _rootDUTHasTestPixels = hasTestPixels;
+  _rootDUTGoodEvent = isGoodEvent; 
   
   _rootFile->cd("");
   _rootEventTree->Fill();  
@@ -677,7 +729,9 @@ void PixelDUTAnalyzer::bookHistos()
    _rootHitTree->Branch("iEvt"            ,&_rootEventNumber      ,"iEvt/I");
    _rootHitTree->Branch("sensorID"        ,&_rootSensorID       ,"sensorID/I");
    _rootHitTree->Branch("nTelTracks"      ,&_rootNTelTracks       ,"nTelTracks/I"); 
-   _rootHitTree->Branch("nDutDigits"        ,&_rootNDUTDigits          ,"nDutDigits/I");
+   _rootHitTree->Branch("nDutDigits"      ,&_rootNDUTDigits          ,"nDutDigits/I");
+   _rootHitTree->Branch("hasTestPixels"   ,&_rootDUTHasTestPixels, "hasTestPixels/O");
+   _rootHitTree->Branch("isGoodEvent"     ,&_rootDUTGoodEvent,  "isGoodEvent/O");
    _rootHitTree->Branch("clusterQuality"  ,&_rootHitQuality   ,"clusterQuality/I");
    _rootHitTree->Branch("u_hit"           ,&_rootHitU             ,"u_hit/D");
    _rootHitTree->Branch("v_hit"           ,&_rootHitV             ,"v_hit/D");     
@@ -718,7 +772,9 @@ void PixelDUTAnalyzer::bookHistos()
    _rootTrackTree->Branch("iEvt"            ,&_rootEventNumber    ,"iEvt/I");
    _rootTrackTree->Branch("sensorID"        ,&_rootSensorID        ,"sensorID/I");
    _rootTrackTree->Branch("nTelTracks"      ,&_rootNTelTracks     ,"nTelTracks/I"); 
-   _rootTrackTree->Branch("nDutDigits"        ,&_rootNDUTDigits       ,"nDutDigits/I");
+   _rootTrackTree->Branch("nDutDigits"      ,&_rootNDUTDigits       ,"nDutDigits/I");
+   _rootTrackTree->Branch("isGoodEvent"     ,&_rootDUTGoodEvent,  "isGoodEvent/O");
+   _rootTrackTree->Branch("hasTestPixels"   ,&_rootDUTHasTestPixels, "hasTestPixels/O");
    _rootTrackTree->Branch("hasHit"          ,&_rootTrackHasHit         ,"hasHit/I");
    _rootTrackTree->Branch("hasRefHit"       ,&_rootTrackWithRefHit     ,"hasRefHit/I");
    _rootTrackTree->Branch("momentum"        ,&_rootTrackFitMomentum    ,"momentum/D");                                                           
@@ -744,7 +800,9 @@ void PixelDUTAnalyzer::bookHistos()
    _rootEventTree->Branch("iEvt"            ,&_rootEventNumber    ,"iEvt/I");
    _rootEventTree->Branch("sensorID"        ,&_rootSensorID       ,"sensorID/I");   
    _rootEventTree->Branch("nTelTracks"      ,&_rootNTelTracks     ,"nTelTracks/I"); 
-   _rootEventTree->Branch("nDutDigits"        ,&_rootNDUTDigits       ,"nDutDigits/I");
+   _rootEventTree->Branch("nDutDigits"      ,&_rootNDUTDigits       ,"nDutDigits/I");
+   _rootEventTree->Branch("hasTestPixels"   ,&_rootDUTHasTestPixels, "hasTestPixels/O");
+   _rootEventTree->Branch("isGoodEvent"     ,&_rootDUTGoodEvent,  "isGoodEvent/O");
    
 }
 

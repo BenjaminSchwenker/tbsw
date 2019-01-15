@@ -1,7 +1,7 @@
 #!/bin/bash
 
-export CLHEP_HOME=/home/benjamin/work/CLHEP-2-3-4-5/lib/CLHEP-2.3.4.5
-export ROOTSYS=/home/benjamin/work/root-v6-10-08
+export ROOTSYS="${ROOTSYS:-/home/benjamin/work/root-v6-10-08}"
+export CLHEP_HOME="${CLHEP_HOME:-/home/benjamin/work/CLHEP-2-3-4-5/lib/CLHEP-2.3.4.5}"
 
 ############################################################
 # Please do not edit stuff below here !!!!!!!!!!!!!!!!!!!!!!
@@ -26,6 +26,15 @@ cd build
 cmake ..
 make install  -j4
 cd ../..
+
+############################################################
+# Install X0Tools  
+cd X0Tools
+mkdir build
+cd build 
+cmake -C ../config/BuildSetup.cmake ..
+make install -j4
+cd ../.. 
 
 ############################################################
 # Install Marlin  
@@ -73,7 +82,7 @@ echo "#-------------------------------------------------------------------------
 echo "export ROOTSYS="${ROOTSYS}"" >> workspace/init_tbsw.sh
 echo "export PATH="${ROOTSYS}/bin:${PATH}"" >> workspace/init_tbsw.sh
 echo "export LD_LIBRARY_PATH="${ROOTSYS}/lib:${LD_LIBRARY_PATH}"" >> workspace/init_tbsw.sh
-echo "export PYTHONPATH="${ROOTSYS}/lib"" >> workspace/init_tbsw.sh
+echo "export PYTHONPATH="${ROOTSYS}/lib:${PWD}/source"" >> workspace/init_tbsw.sh
 echo "" >> workspace/init_tbsw.sh
 
 echo "#--------------------------------------------------------------------------------" >> workspace/init_tbsw.sh
@@ -90,6 +99,9 @@ echo "#-------------------------------------------------------------------------
 echo "export MARLIN="${TBSW_HOME}/Marlin"" >> workspace/init_tbsw.sh
 echo "export PATH="${MARLIN}/bin:${PATH}"" >> workspace/init_tbsw.sh
 echo "export MARLIN_DLL="${TBSW_HOME}/TBReco/lib/libTBReco.so:${TBSW_HOME}/EudaqInput/lib/libEudaqInput.so:"" >> workspace/init_tbsw.sh
+echo "" >> workspace/init_tbsw.sh
+
+echo "export X0TOOLS="${TBSW_HOME}/X0Tools"" >> workspace/init_tbsw.sh
 echo "" >> workspace/init_tbsw.sh
 
 ############################################################

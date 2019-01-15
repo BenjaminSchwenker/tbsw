@@ -24,12 +24,12 @@ def plot_align_parameter(histoname, paramname, unit, scale, uselatex, rootfile):
   diffhisto.Scale(scale)
   diffhisto.SetNdivisions(diffhisto.GetNbinsX())
   
-  canvases = {}
-  canvases[histoname] = ROOT.TCanvas( '{:s}'.format(histoname), '{:s}'.format(histoname), 200, 10, 700, 500 )
+  
+  canvas = ROOT.TCanvas( '{:s}'.format(histoname), '{:s}'.format(histoname), 200, 10, 700, 500 )
   diffhisto.Draw("hist goff")
   diffhisto.SetStats(False)
-  canvases[histoname].Update()
-  canvases[histoname].SaveAs("alignment_shift_{:s}.pdf".format(paramname))
+  canvas.Update()
+  canvas.SaveAs("alignment_shift_{:s}.pdf".format(paramname))
   
   
 def plot_alignment_parameters(inputfilename):
@@ -84,12 +84,12 @@ def plot_clusterDB_parameter(histo, paramname, ytitle):
   histo.GetYaxis().SetTitleSize(0.055)
   histo.GetYaxis().SetLabelSize(0.05)
    
-  canvases = {}
-  canvases[paramname] = ROOT.TCanvas( '{:s}'.format(paramname), '{:s}'.format(paramname), 200, 10, 700, 500 )
+ 
+  canvas = ROOT.TCanvas( '{:s}'.format(paramname), '{:s}'.format(paramname), 200, 10, 700, 500 )
   histo.Draw("HE goff")
   histo.SetStats(False)
-  canvases[paramname].Update()
-  canvases[paramname].SaveAs("cluster_{:s}.pdf".format(paramname))
+  canvas.Update()
+  canvas.SaveAs("cluster_{:s}.pdf".format(paramname))
 
 
 def plot_clusterDB_sigmas(histo1, histo2, entry1, entry2, paramname, ytitle):
@@ -109,7 +109,7 @@ def plot_clusterDB_sigmas(histo1, histo2, entry1, entry2, paramname, ytitle):
   #histo1.SetLineColor(1)
   histo2.SetLineColor(2)
 
-  canvases[paramname] = ROOT.TCanvas( '{:s}'.format(paramname), '{:s}'.format(paramname), 200, 10, 700, 500 )
+  canvas = ROOT.TCanvas( '{:s}'.format(paramname), '{:s}'.format(paramname), 200, 10, 700, 500 )
   histo1.Draw("HE")
   histo2.Draw("HEsame")
 
@@ -117,13 +117,13 @@ def plot_clusterDB_sigmas(histo1, histo2, entry1, entry2, paramname, ytitle):
   leg.SetTextSize(.03)
   leg.AddEntry(histo1,entry1,"LE")
   leg.AddEntry(histo2,entry2,"LE")
-  canvases[paramname].Update()
+  canvas.Update()
 
   leg.Draw()
 
   histo1.SetStats(False)
-  canvases[paramname].Update()
-  canvases[paramname].SaveAs("cluster_{:s}.pdf".format(paramname))
+  canvas.Update()
+  canvas.SaveAs("cluster_{:s}.pdf".format(paramname))
 
   
 def plot_clusterDB_parameters(inputfilename):

@@ -1,12 +1,22 @@
 #include <fstream>
+#include <vector>
+
+#include "TROOT.h"
+#include "TStyle.h"
+#include "TEnv.h"
+#include "TString.h"
+#include "TFile.h"
+#include "TCanvas.h"
+#include "TH2F.h"
+#include "TText.h"
+#include "TBox.h"
+#include "TPaletteAxis.h"
+
 using namespace std ;
 
-// This script is used to create a map of a plane in a test beam telescope. The input is a TTree including 
-// MSC projected scattering angle distributions and reconstruction errors.
-void DrawBoxes()
+int main(int argc, char **argv)
+//void DrawBoxes()
 {
-	gSystem->Load("libProof.so");
-	gSystem->Load("libTreePlayer.so");
 
 	gROOT->Reset(); 
 	gROOT->SetStyle("Plain"); 
@@ -182,6 +192,8 @@ void DrawBoxes()
     palette->SetX2NDC(0.925);
 
 	c->SaveAs(filename+"_Boxes.pdf");
+
+    return 0;
 }
 
 

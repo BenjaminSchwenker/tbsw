@@ -1,6 +1,6 @@
 #############################################################################
 #
-# CMAKE file for building TBTools
+# CMAKE file for building X0Tools
 # 
 # @author Benjamin Schwenker, Uni Göttingen
 #
@@ -12,7 +12,7 @@ SET( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 ### PROJECT #################################################################
 
 # Project name
-PROJECT( TBTools )
+PROJECT( X0Tools )
 
 # Project version
 SET( ${PROJECT_NAME}_MAJOR_VERSION 1 )
@@ -31,7 +31,7 @@ OPTION( INSTALL_DOC "Set to OFF to skip build/install Documentation" OFF )
 IF( PROJECT_DEPENDS )
     SET( ${PROJECT_NAME}_DEPENDS "${PROJECT_DEPENDS}" )
 ELSE()
-    SET( ${PROJECT_NAME}_DEPENDS "CLHEP GEAR LCIO Marlin ROOT")
+    SET( ${PROJECT_NAME}_DEPENDS "ROOT")
 ENDIF()    
 
 # Set CMAKE build type (None Debug Release RelWithDebInfo MinSizeRel)
@@ -114,68 +114,30 @@ IF( DEFINED ${PROJECT_NAME}_DEPENDS OR DEFINED BUILD_WITH OR DEFINED LINK_WITH )
 ENDIF()
 
 
-### create root dictionary #################################################
-
-# create a new dictionary for class AlignEvent
-IF( NOT EXISTS "${PROJECT_SOURCE_DIR}/source/include/AlignEventDict.h" )
-    MESSAGE( STATUS "Creating root dictionary for class AlignEvent" )
-    
-    EXEC_PROGRAM( rootcint "${PROJECT_SOURCE_DIR}/source/include"
-            ARGS -f AlignEventDict.C 
-            ARGS -c AlignEvent.h LinkDef.h
-            OUTPUT_VARIABLE out_tmp
-            RETURN_VALUE out_ret )
-    IF( out_ret )
-        MESSAGE( STATUS "Error executing rootcint!!" )
-    ENDIF()
-    
-ENDIF()
-
-# move dictionary file to other sources 
-IF( EXISTS "${PROJECT_SOURCE_DIR}/source/include/AlignEventDict.C" )
-    MESSAGE( STATUS "Created dictionary for class AlignEvent" )
-    
-    EXEC_PROGRAM( mv "${PROJECT_SOURCE_DIR}/source/include"
-            ARGS AlignEventDict.C 
-            ARGS ${PROJECT_SOURCE_DIR}/source/src
-            OUTPUT_VARIABLE out_tmp
-            RETURN_VALUE out_ret )
-    IF( out_ret )
-        MESSAGE( STATUS "Error moving dictionary!!" )
-    ENDIF()
-    
-ENDIF()
-
-### INCLUDE, SOURCE, LIB ####################################################
+####################################################################################################
+### BINS
+####################################################################################################
 
 # Compiler flags
-#ADD_DEFINITIONS( "-Wall -Wno-long-long -ansi -pedantic -std=c++11" )
 ADD_DEFINITIONS( "-Wall -Wno-long-long -ansi -pedantic -std=c++1y" )
 
+# Create symbolic target for calling targets bin_XXX
+ADD_CUSTOM_TARGET( bin )
+ 
+# ==== a macro for adding binaries =====
+MACRO( ADD_X0TOOLS_BIN file )
+  ADD_EXECUTABLE( bin_${file} ./source/src/${file}.C )
+  ADD_DEPENDENCIES( bin bin_${file} )
+  SET_TARGET_PROPERTIES( bin_${file} PROPERTIES OUTPUT_NAME ${file} )
+  TARGET_LINK_LIBRARIES( bin_${file} ${ROOT_LIBRARIES} )
+  INSTALL( TARGETS bin_${file} DESTINATION bin )
+ENDMACRO()
+#===================================================================
 
-# Include directories
-INCLUDE_DIRECTORIES( source/include )
-
-# Set list of sources
-AUX_SOURCE_DIRECTORY( source/src lib_srcs)
-
-IF( COMMAND cmake_policy )
-  cmake_policy(SET CMP0003 NEW)
-ENDIF( COMMAND cmake_policy )
-
-
-# Create library with the list of library sources
-ADD_LIBRARY( ${PROJECT_NAME} ${lib_srcs} )
-#ADD_LIBRARY( ${PROJECT_NAME} source/src/RombIntSolver.cc )
-
-# Create target for libraries
-ADD_CUSTOM_TARGET( lib DEPENDS ${PROJECT_NAME} )
-
-# Install libraries
-INSTALL( TARGETS ${PROJECT_NAME} DESTINATION lib PERMISSIONS
-        OWNER_READ OWNER_WRITE OWNER_EXECUTE
-        GROUP_READ GROUP_EXECUTE
-        WORLD_READ WORLD_EXECUTE )
+ADD_X0TOOLS_BIN( calibrationfit ) 
+ADD_X0TOOLS_BIN( DrawBoxes ) 
+ADD_X0TOOLS_BIN( MergeImages ) 
+ADD_X0TOOLS_BIN( x0imaging ) 
 
 # Create configuration file from .in file
 CONFIGURE_FILE( "${PROJECT_SOURCE_DIR}/config/${PROJECT_NAME}.cmake.in"
@@ -193,6 +155,7 @@ CONFIGURE_FILE( "${CMAKE_SOURCE_DIR}/config/cmake_uninstall.cmake.in"
 # Create uninstall target
 ADD_CUSTOM_TARGET( uninstall
   "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/cmake_uninstall.cmake" )
+
 
 ### FINAL STATUS ############################################################
 

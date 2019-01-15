@@ -19,7 +19,7 @@ import os
 # nominal telescope geometry. 
 steerfiles = 'steering-files/depfet-tb/'
 # Select the name of a gearfile to use from the steerfiles folder  
-gearfile = 'gear_desy_W11OF2.xml'
+gearfile = 'gear_desy_W11OF2_perp_geoid2.xml'
 # Select filename for the simulated test beam run  
 rawfile = os.getcwd() + '/simrun.slcio'
 # Number of events to simulate 
@@ -538,7 +538,7 @@ def simulate(params):
   tbsw.gear.randomize_telescope(gearfile=SimObj.get_filename(gearfile), mean_list=mean_list, sigma_list=sigma_list, sensorexception_list=sensorexception_list, modeexception_list=modeexception_list)
    
   # Run simulation to create rawfile with simulated digits 
-  SimObj.simulate(path=simpath)  
+  SimObj.simulate(paths=simpath)  
 
   # Export clusterDB created from truth hits
   SimObj.export_caltag(caltag='simulation')
@@ -579,7 +579,7 @@ def reconstruct(params):
   recopath = create_reco_path(RecObj)  
   
   # Run the reconstuction  
-  RecObj.reconstruct(path=recopath,ifile=rawfile,caltag=caltag) 
+  RecObj.reconstruct(paths=recopath,ifile=rawfile,caltag=caltag) 
 
 if __name__ == '__main__':
   

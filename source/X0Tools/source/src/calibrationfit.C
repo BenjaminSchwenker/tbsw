@@ -14,10 +14,12 @@
 #include <string>
 #include <vector>
 
-
+#include "TROOT.h"
 #include "Fit/Fitter.h"
 #include "Fit/BinData.h"
 #include "Fit/Chi2FCN.h"
+#include "Fit/PoissonLikelihoodFCN.h"
+#include "HFitInterface.h"
 #include "TH1.h"
 #include "TH1F.h"
 #include "TList.h"
@@ -26,12 +28,13 @@
 #include "TStyle.h"
 #include "TLegend.h"
 
-#include "TSystem.h"
+#include "TSystemDirectory.h"
+#include "TSystemFile.h"
 #include "TFile.h"
 #include "TTree.h"
 #include "TString.h"
 #include "TMath.h"
-#include "TROOT.h"
+#include "TEnv.h"
 
 
 
@@ -313,7 +316,7 @@ void savehisto(TFile*,TFile*,TString,TString, double, double, double, double, in
 void correcthisto(TFile*,TFile*, TString , double , double , double , double );
 double* fit(TFile*,TString, Grid, std::vector<double>, double, TString, std::vector<bool>);
 void shiftbins(TH1F*, double);
-void calibrationfit();
+//void calibrationfit();
 int** GetParameterMapping(int);
 
   // Highland model of a MSC angle distribution, the parameters are:
@@ -1699,7 +1702,8 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
   // perform a moliere fit on the distributions to estimate the calibrationfactors mu and lambda. Usually this script is used on 
   // measurement data of a plane with a precisely known material distribution ( for example a aluminum grid with a set 
   // of holes with different thicknesses.
-  void calibrationfit()
+  int main(int argc, char **argv)
+  //void calibrationfit()
   {     
     // Read config file
     //------------------
@@ -1925,7 +1929,7 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
 	mEnv_res->SaveLevel(kEnvLocal);
 
 	rootfile->Close();
-
+    return 0;
   
   }
 

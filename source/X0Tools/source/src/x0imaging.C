@@ -1,4 +1,18 @@
 #include <fstream>
+#include <iostream>
+
+#include "TROOT.h"
+#include "TMath.h"
+#include "TFile.h"
+#include "TTree.h"
+#include "TH1F.h"
+#include "TH2F.h"
+#include "TF1.h"
+#include "TStyle.h"
+#include "TList.h"
+#include "TEnv.h"
+
+
 using namespace std ;
 
 
@@ -113,7 +127,6 @@ using namespace std ;
 		msc_tree->SetBranchAddress("theta2",&theta2);
 		msc_tree->SetBranchAddress("u",&u);
 		msc_tree->SetBranchAddress("v",&v);
-		int test=msc_tree->SetBranchAddress("vertex_multiplicity",&vertex_multiplicity);
 
 		// Loop over all events
 		for(int i=0; i< msc_tree->GetEntries(); i++)
@@ -1013,10 +1026,9 @@ Double_t GetMomentum(double meanvalue,double ugrad,double vgrad, double u, doubl
 
 // This script is used to create a map of a plane in a test beam telescope. The input is a TTree including 
 // MSC projected scattering angle distributions and reconstruction errors.
-int x0imaging()
+int main(int argc, char **argv)
+//int x0imaging()
 {
-	gSystem->Load("libProof.so");
-	gSystem->Load("libTreePlayer.so");
 
 	gROOT->Reset(); 
 
