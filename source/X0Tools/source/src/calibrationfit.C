@@ -891,9 +891,15 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
   // Use the determined sigma value to calculate the fit range
   double sigma = f1->GetParameter(2);
 
-  // In case the second fit failed as well, simply use the RMS of the histo
+  // In case the second fit failed as well, simply use the RMS of the histo in the 3 sigma range
   if(!fitr->IsValid()) 
   {
+	double corerange=3*histo->GetRMS();
+
+	// Limit histo range to core of distribution
+	histo->GetXaxis()->SetRangeUser(-corerange,corerange);
+
+	// Get RMS of core distribution without outliers
 	sigma = histo->GetRMS();
     cout<<"Fall back fit of angle distribution failed with status: "<<fitr<<"! Just use RMS of histogram."<<endl;
   }
