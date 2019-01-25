@@ -16,8 +16,6 @@
 #include <string>
 #include <map>
 
-// Include CLHEP classes
-#include <CLHEP/Vector/Rotation.h>
 
 // Include LCIO classes
 #include <lcio.h>
@@ -30,7 +28,6 @@
 #include <UTIL/CellIDEncoder.h>
 
 // Used namespaces
-using namespace CLHEP;
 using namespace lcio ;
 using namespace marlin ;
 

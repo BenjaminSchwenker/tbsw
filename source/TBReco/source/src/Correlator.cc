@@ -28,13 +28,15 @@
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerHitImpl.h>
 
-// Include CLHEP classes
-#include <CLHEP/Matrix/Vector.h>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+Eigen::Transform a;
+
+using Eigen::Vector3d;
 
 // Used namespaces
 using namespace std; 
 using namespace lcio;
-using namespace CLHEP; 
 using namespace marlin;
 
 namespace depfet {
@@ -248,7 +250,7 @@ void Correlator::processEvent(LCEvent * evt)
         TBHit & anyhit = HitStore.GetRecoHitFromID(ihit, ipl);
            
         // Measured hit coordinates
-        HepVector anypos = anyhit.GetLocalSpacePoint();
+        Vector3d anypos = anyhit.GetLocalSpacePoint();
         double um = anypos[0]; 
         double vm = anypos[1];   
         
@@ -342,13 +344,11 @@ void Correlator::end()
     Det & adet = tmp_detector.GetDet(ipl);
       
     // We have calculated offset in local coord.
-    HepVector local_offset(3);
-    local_offset[0] = -offsetU; 
-    local_offset[1] = -offsetV;      
-    local_offset[2] = 0;  
+    Vector3d local_offset;
+    local_offset << -offsetU, -offsetV, 0;
       
     // And transform to offsets in global coord.  
-    HepVector global_offset = adet.GetNominal().GetRotation().T() * local_offset ;  
+    Vector3d global_offset = adet.GetNominal().GetRotation().transpose() * local_offset ;
     double dx = global_offset[0]; 
     double dy = global_offset[1];      
     double dz = global_offset[2];    

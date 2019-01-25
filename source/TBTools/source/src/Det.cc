@@ -14,7 +14,6 @@
 #include <algorithm>
 
 // Namespaces
-using namespace CLHEP;
 using namespace marlin;
 
 namespace depfet {

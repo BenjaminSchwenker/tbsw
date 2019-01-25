@@ -30,13 +30,10 @@
 #include <IMPL/SimTrackerHitImpl.h>
 #include <UTIL/CellIDDecoder.h>
 
-// Include CLHEP classes
-#include <CLHEP/Matrix/Vector.h>
-#include <CLHEP/Vector/ThreeVector.h>
+
 
 // Used namespaces
 using namespace std; 
-using namespace CLHEP; 
 using namespace lcio ;
 using namespace marlin ;
 

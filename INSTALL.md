@@ -44,6 +44,21 @@ $ cmake --build . --target install
 
 The folder <clhep-builddir> may be deleted afterwards. In the end, the folder <clhep-installdir> should contain bin/ include/ and lib/ subfolders. 
 
+# Eigen 
+
+Eigen is a C++ template library for linear algebra. The project home page can be found at this URL https://eigen.tuxfamily.org. For tbsw, we will 
+download the stable release 3.3.7:
+
+```
+$ wget http://bitbucket.org/eigen/eigen/get/3.3.7.tar.bz2 
+$ tar -xjf 3.3.7.tar.bz2
+$ mv eigen-eigen-323c052e1731/ eigen_v3.3.7
+```
+
+This creates a folder `eigen_v3.3.7` in your current working directory. Eigen consists only of header files, hence there is nothing to compile before 
+you can use it.
+
+
 # Python 
 
 You should use your default system version of Python. Check that library python-dev is installed on your system to work with PyRoot. You can install by typing: 
@@ -111,6 +126,7 @@ For example:
 ```
 export CLHEP_HOME=<absolute-path-to-clhep-installdir>/lib/CLHEP-2.3.4.3         # See CLHEP section above, points to folder containing CLHEPConfig.cmake
 export ROOTSYS=<absolute-path-to-root-installdir>                               # See Root section above
+export EIGEN3_INCLUDE_DIR=/home/benjamin/eigen_v3.3.7                           # See Eigen section above
 ```
 
 Save the edits and close the file. Run the install script: 

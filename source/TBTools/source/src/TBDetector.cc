@@ -13,11 +13,6 @@
 #include <TH1F.h>
 #include <TFile.h>
 
-// Include CLHEP
-#include <CLHEP/Matrix/DiagMatrix.h>
-#include <CLHEP/Matrix/Matrix.h>
-#include <CLHEP/Matrix/Vector.h>
-
 // Include Gear header files
 #include <gear/GEAR.h>
 #include <gear/GearParameters.h>

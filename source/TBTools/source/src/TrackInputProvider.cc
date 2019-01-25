@@ -3,7 +3,7 @@
 // Author: Benjamin Schwenker, University of Göttingen 
 // <mailto:benjamin.schwenker@phys.uni-goettingen.de>
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "TrackInputProvider.h"
 
 // LCIO includes

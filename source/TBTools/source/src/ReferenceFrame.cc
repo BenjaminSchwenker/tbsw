@@ -7,7 +7,6 @@
 #include <streamlog/streamlog.h>
 
 // Namespaces
-using namespace CLHEP;
 using namespace marlin;
 
 
@@ -18,14 +17,14 @@ namespace depfet {
 // 
 // Default Constructor - Identity Transformation 
 // 
-ReferenceFrame::ReferenceFrame() : fPosition(3, 0), fRotation(3, 3, 1)
+ReferenceFrame::ReferenceFrame() : fPosition(Eigen::Vector3d::Zero()), fRotation(Eigen::Matrix3d::Identity())
 {
 }
 
 // 
 // Constructur - Define Local Sensor Reference Frame 
 //  	
-ReferenceFrame::ReferenceFrame(HepVector& position, HepMatrix& rotation) : fPosition(position), fRotation(rotation)
+ReferenceFrame::ReferenceFrame(Vector3d& position, Matrix3d& rotation) : fPosition(position), fRotation(rotation)
 {
 }
 
@@ -40,26 +39,26 @@ bool ReferenceFrame::operator==(const ReferenceFrame& other) const
 // 
 // Get direction cosines of local ref. unit vectors
 //  
-CLHEP::HepVector ReferenceFrame::GetU() 
+Vector3d ReferenceFrame::GetU()
 {
-  CLHEP::HepVector localU(3,0);
-  localU[0] = 1;
-  return  fRotation.T() * localU;       
+  Vector3d  localU;
+  localU << 1, 0, 0;
+  return  fRotation.transpose() * localU;
 }
 
 
-CLHEP::HepVector ReferenceFrame::GetV() 
+Vector3d ReferenceFrame::GetV()
 {
-  CLHEP::HepVector localV(3,0);
-  localV[1] = 1;
-  return  fRotation.T() * localV;       
+  Vector3d  localV;
+  localV << 0, 1, 0;
+  return  fRotation.transpose() * localV;
 }
 
-CLHEP::HepVector ReferenceFrame::GetW() 
+Vector3d ReferenceFrame::GetW()
 {
-  CLHEP::HepVector localW(3,0);
-  localW[1] = 1;
-  return  fRotation.T() * localW;  
+  Vector3d localW;
+  localW << 0, 0, 1;
+  return  fRotation.transpose() * localW;
 }
 
 ReferenceFrame ReferenceFrame::combine_karimaki(ReferenceFrame& first, ReferenceFrame& delta)
@@ -78,16 +77,15 @@ ReferenceFrame ReferenceFrame::create_karimaki_delta(double dx, double dy, doubl
   // Small rotation by dalpha, dbeta, dgamma around
   // local sensor u-axis, (new) v-axis and (new) w- 
   // axis respectively. 
-  HepMatrix deltaRot;
+  Matrix3d deltaRot;
   FillRotMatrixKarimaki(deltaRot, dalpha, dbeta, dgamma); 
   deltaFrame.SetRotation(deltaRot);       
        
   // Shift of sensor center by dx,dy,dz in global 
   // coord. system. 
-  HepVector global_offset(3);
-  global_offset[0] = dx; 
-  global_offset[1] = dy;      
-  global_offset[2] = dz; 
+  Vector3d global_offset;
+  global_offset << dx, dy, dz;
+
   deltaFrame.SetPosition(global_offset);
   
   return deltaFrame;
@@ -106,7 +104,7 @@ void ReferenceFrame::PrintHepMatrix()
 void ReferenceFrame::PrintParams() 
 {
 
-  HepMatrix rot = GetRotation(); 
+  Matrix3d rot = GetRotation();
   double alpha, beta, gamma; 
   GetAnglesKarimaki(rot, alpha, beta, gamma); 
   streamlog_out(MESSAGE3) << " Frame Position [mm]:   "    << std::endl

@@ -35,7 +35,6 @@
 using namespace std; 
 using namespace lcio;
 using namespace marlin;
-using namespace CLHEP;
 
 namespace depfet {
 
@@ -769,15 +768,14 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
   int nAmbiguousHits = 0;   
          
   // This is the initial track state vector
-  HepMatrix x0(5,1,0);
+  TrackState x0;
          
   // This is the initial covariance matrix 
-  HepSymMatrix C0(5,0);
-  for (int i = 0; i < 2; i++) {
-    C0[i][i] = 1E-2;
-    C0[i+2][i+2] = 1E1; 
-  } 
-  C0[4][4] = 1;  
+  TrackStateCovariance C0;
+  TrackState diag;
+  diag<<1e-2,1e-2,1e1,1e1,1;
+  C0.diagonal() = diag;
+
           
   double finderChi2 = 0; 
   
@@ -794,18 +792,18 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
   for(int ipl=istart; ipl!=istop; ipl+=idir) { 
             
     // This is the reference state on the current track element
-    HepMatrix& xref = trk.GetTE(ipl).GetState().GetPars();
+    TrackState& xref = trk.GetTE(ipl).GetState().GetPars();
                      
     // Skip passive sensors    
     if( _isActive[ipl] && trk.GetTE(ipl).IsCrossed() ) { 
                   
       // This is the filtered local track state using all hits 
       // encountered so far 
-      HepMatrix x = xref + x0;
+      TrackState x = xref + x0;
              
       // Get extrapolated intersection coordinates
-      double u = x[2][0]; 
-      double v = x[3][0]; 
+      double u = x[2];
+      double v = x[3];
              
       // Fast preselection of hit candidates compatible to   
       // predicted intersection coordinates. 
@@ -821,8 +819,8 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
         // Get reco hit at plane ipl 
         int hitid = HitIdVec[icand];
         TBHit & RecoHit = HitStore.GetRecoHitFromID(hitid, ipl);   
-        double uhit = RecoHit.GetCoord()[0][0];              
-        double vhit = RecoHit.GetCoord()[1][0]; 
+        double uhit = RecoHit.GetCoord()[0];
+        double vhit = RecoHit.GetCoord()[1];
        
         // Discard hits with too large residuals
         if ( std::abs(u - uhit) >= _maxResidualU[ipl] && _maxResidualU[ipl] > 0) continue; 

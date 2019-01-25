@@ -33,7 +33,6 @@
 
 
 // Used namespaces
-using namespace CLHEP;
 using namespace lcio ;
 using namespace marlin ;
 

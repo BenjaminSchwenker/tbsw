@@ -117,12 +117,10 @@ ENDIF()
 ### INCLUDE, SOURCE, LIB ####################################################
 
 # Compiler flags
-#ADD_DEFINITIONS( "-Wall -Wno-long-long -ansi -pedantic -std=c++11" )
 ADD_DEFINITIONS( "-Wall -Wno-long-long -ansi -pedantic -std=c++1y" )
 
 # Include directories
-INCLUDE_DIRECTORIES( source/include )
-
+INCLUDE_DIRECTORIES( source/include "$ENV{EIGEN3_INCLUDE_DIR}" )
 
 # Set list of sources
 AUX_SOURCE_DIRECTORY( source/src lib_srcs)

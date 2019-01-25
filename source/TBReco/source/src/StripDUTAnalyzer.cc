@@ -8,7 +8,7 @@
 
 #include "StripDUTAnalyzer.h"
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "TBTrack.h"
 #include "TBHit.h"
 #include "StripCluster.h"
@@ -31,12 +31,8 @@
 #include <UTIL/CellIDDecoder.h>
 #include <IMPL/LCFlagImpl.h>
 
-// Include CLHEP classes
-#include <CLHEP/Matrix/Vector.h>
-
 // Used namespaces
 using namespace std; 
-using namespace CLHEP; 
 using namespace lcio ;
 using namespace marlin ;
 
