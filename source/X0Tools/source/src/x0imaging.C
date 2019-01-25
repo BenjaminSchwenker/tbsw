@@ -1,4 +1,19 @@
 #include <fstream>
+#include <iostream>
+
+#include "TROOT.h"
+#include "TMath.h"
+#include "TFile.h"
+#include "TTree.h"
+#include "TH1F.h"
+#include "TH2F.h"
+#include "TF1.h"
+#include "TStyle.h"
+#include "TList.h"
+#include "TEnv.h"
+#include "TFitResult.h"
+
+
 using namespace std ;
 
 
@@ -113,7 +128,6 @@ using namespace std ;
 		msc_tree->SetBranchAddress("theta2",&theta2);
 		msc_tree->SetBranchAddress("u",&u);
 		msc_tree->SetBranchAddress("v",&v);
-		int test=msc_tree->SetBranchAddress("vertex_multiplicity",&vertex_multiplicity);
 
 		// Loop over all events
 		for(int i=0; i< msc_tree->GetEntries(); i++)
@@ -402,21 +416,48 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
   // Use RMS value as a rough measure of the fit range for a gaussian fit
   TF1 *f1 = new TF1("f1","gaus(x)",-fitrange,fitrange);
   f1->SetParameter(2,histo->GetRMS());
+  f1->FixParameter(1,0);
+  f1->SetParLimits(2,0.0,2*histo->GetRMS());
   f1->SetLineStyle(2);
   TFitResultPtr fitr=h2->Fit("f1","RS");
 
+  cout<<endl<<"Fit results:  "<<endl;
+  cout<<"Fit status: "<<fitr<<endl;
+  cout<<"Fit status, is valid: "<<fitr->IsValid()<<endl;
+  cout<<"Fit status, Status: "<<fitr->Status()<<endl;
+
   // Repeat fit in case it failed
-  if(fitr!=0)
+  if(!fitr->IsValid())
   {
-    cout<<"Fit of angle distribution failed with status: "<<fitr<<endl;
+    cout<<endl<<"Fit of angle distribution failed with status: "<<fitr<<endl;
     cout<<"Repeat fit "<<endl;
-    h2->Fit("f1","RM");
+    fitr=h2->Fit("f1","RM");
+
+	cout<<endl<<"Second Fit results: "<<endl;
+	cout<<"Fit status: "<<fitr<<endl;
+	cout<<"Fit status, is valid: "<<fitr->IsValid()<<endl;
+	cout<<"Fit status, Status: "<<fitr->Status()<<endl;
   }
 
   // Use the determined sigma value to calculate the fit range
   double sigma = f1->GetParameter(2);
+
+  // In case the second fit failed as well, simply use the RMS of the histo
+  if(!fitr->IsValid()) 
+  {
+
+	double corerange=3*histo->GetRMS();
+
+	// Limit histo range to core of distribution
+	histo->GetXaxis()->SetRangeUser(-corerange,corerange);
+
+	// Get RMS of core distribution without outliers
+	sigma = histo->GetRMS();
+    cout<<"Fall back fit of angle distribution failed with status: "<<fitr<<"! Just use RMS of histogram."<<endl;
+  }
+
   fitrange=sqrt(2.0*rangevalue)*sigma;
-  cout<<"Determined fit range: " << fitrange<<endl<<endl;
+  cout<<endl<<"Determined fit range: " << fitrange<<endl<<endl;
 
   delete h2;
   delete f1;
@@ -570,35 +611,67 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 		}	
 
 		// The mean value of the distribution should not be shifted more than 100 µrad -> limit parameter 6
-		// --> Just don't fit the mean, just fix it at 0.0
-   		//fit1->SetParLimits(6,-0.0001,0.0001);
-   		//fit2->SetParLimits(6,-0.0001,0.0001);
-   		//fitsum->SetParLimits(6,-0.0001,0.0001);
+		// Fix mean value
+/*   		fit1->SetParLimits(6,-0.0001,0.0001);
+   		fit2->SetParLimits(6,-0.0001,0.0001);
+   		fitsum->SetParLimits(6,-0.0001,0.0001);
+   		fit1->SetParError(6,0.00001);
+   		fit2->SetParError(6,0.00001);
+   		fitsum->SetParError(6,0.00001);*/
 
+		// The Starting step size and limits of X/X0
    		fit1->SetParLimits(3,0.00001,200.0);
    		fit2->SetParLimits(3,0.00001,200.0);
    		fitsum->SetParLimits(3,0.00001,200.0);
+   		fit1->SetParError(3,0.001);
+   		fit2->SetParError(3,0.001);
+   		fitsum->SetParError(3,0.001);
 
-		TFitResultPtr fitr=fithistogram1->Fit("theta1_fit",fitoptions);
-		if(fitr!=0)
+		// Step size of norm
+   		fit1->SetParError(5,10.0);
+   		fit2->SetParError(5,10.0);
+   		fitsum->SetParError(5,10.0);
+
+		TFitResultPtr fitr1=fithistogram1->Fit("theta1_fit",fitoptions);
+		cout<<endl<<endl<<"Fit of first angle distribution! "<<endl;
+		cout<<"Fit is valid: "<<fitr1->IsValid()<<endl;
+		cout<<"Fit status: "<<fitr1->Status()<<endl;
+		if(!fitr1->IsValid())
 		{
-			cout<<"Fit of first angle distribution failed with status: "<<fitr<<endl;
+			cout<<endl<<"Fit of first angle distribution failed with status: "<<fitr1<<endl;
 			cout<<"Repeat fit "<<endl;
-			fithistogram1->Fit("theta1_fit",fitoptions);
+			fitr1=fithistogram1->Fit("theta1_fit",fitoptions);
+		    cout<<endl<<"Fit is valid: "<<fitr1->IsValid()<<endl;
+		    cout<<"Fit status: "<<fitr1->Status()<<endl;
+			if(!fitr1->IsValid()&&fittype==0) cout<<"Fit of second angle distribution failed a second time with status: "<<fitr1<<" !"<< " X/X0 cannot be calculated!"<<endl<<endl<<endl;
 		}
-		fitr=fithistogram2->Fit("theta2_fit",fitoptions);
-		if(fitr!=0)
+
+		TFitResultPtr fitr2=fithistogram2->Fit("theta2_fit",fitoptions);
+		cout<<endl<<endl<<"Fit of second angle distribution! "<<endl;
+		cout<<"Fit is valid: "<<fitr2->IsValid()<<endl;
+		cout<<"Fit status: "<<fitr2->Status()<<endl;
+		if(!fitr2->IsValid())
 		{
-			cout<<"Fit of second angle distribution failed with status: "<<fitr<<endl;
+			cout<<"Fit of second angle distribution failed with status: "<<fitr2<<endl;
 			cout<<"Repeat fit "<<endl;
-			fithistogram2->Fit("theta2_fit",fitoptions);
+			fitr2=fithistogram2->Fit("theta2_fit",fitoptions);
+		    cout<<endl<<"Fit is valid: "<<fitr2->IsValid()<<endl;
+		    cout<<"Fit status: "<<fitr2->Status()<<endl;
+			if(!fitr2->IsValid()&&fittype==0) cout<<"Fit of second angle distribution failed a second time with status: "<<fitr2<<" !"<< " X/X0 cannot be calculated!"<<endl<<endl<<endl;
 		}
-		fitr=fithistogramsum->Fit("thetasum_fit",fitoptions);
-		if(fitr!=0)
+
+		TFitResultPtr fitrsum=fithistogramsum->Fit("thetasum_fit",fitoptions);
+		cout<<endl<<endl<<"Fit of combined angle distribution! "<<endl;
+		cout<<"Fit is valid: "<<fitrsum->IsValid()<<endl;
+		cout<<"Fit statuss: "<<fitrsum->Status()<<endl;
+		if(!fitrsum->IsValid())
 		{
-			cout<<"Fit of combined angle distribution failed with status: "<<fitr<<endl;
+			cout<<"Fit of combined angle distribution failed with status: "<<fitrsum<<endl;
 			cout<<"Repeat fit "<<endl;
-			fithistogramsum->Fit("thetasum_fit",fitoptions);
+			fitrsum=fithistogramsum->Fit("thetasum_fit",fitoptions);
+		    cout<<endl<<"Fit is valid: "<<fitrsum->IsValid()<<endl;
+		    cout<<"Fit status: "<<fitrsum->Status()<<endl;
+			if(!fitrsum->IsValid()&&fittype==1) cout<<"Fit of combined angle distribution failed a second time with status: "<<fitrsum<<" !"<< " X/X0 cannot be calculated!"<<endl<<endl<<endl;
 		}
 
 		// Names of the 14 local parameters
@@ -630,8 +703,9 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 		double chi2_cut=maxchi2ndof_fit;
 
 		// Use the chi2 values for quality cuts
-		if((fittype==0)&&(chi2_cut > 0)&&((chi2ndof1+chi2ndof2)>chi2_cut*2.0))
+		if(((fittype==0)&&(chi2_cut > 0)&&((chi2ndof1+chi2ndof2)>chi2_cut*2.0))||(!fitr1->IsValid())||(!fitr2->IsValid()))
 		{
+			cout<<endl<<"Something went wrong with fit (fittype: "<<fittype<<" ), X/X0 could not be determined!"<<endl;
 			// The fit didn't work: Dont trust this X/X0 and theta mean value
 			XX01=0.0;
 			XX0err1=99.0;
@@ -651,8 +725,9 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 
 		}
 
-		else if ((fittype==1)&&(chi2_cut > 0)&&(chi2ndofsum>chi2_cut))
+		else if (((fittype==1)&&(chi2_cut > 0)&&(chi2ndofsum>chi2_cut))||((!fitrsum->IsValid())))
 		{
+			cout<<endl<<"Something went wrong with fit (fittype: "<<fittype<<" ), X/X0 could not be determined!"<<endl;
 			// The fit didn't work: Dont trust this X/X0 and theta mean value
 			XX0sum=0.0;
 			XX0errsum=99.0;
@@ -674,6 +749,7 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 		else
 		{
 
+			cout<<endl<<"Determine X/X0!"<<endl;
 			// Extract Fit parameters of the first distribution
 			XX01=fit1->GetParameter(3);
 			XX0err1=fit1->GetParError(3);
@@ -1013,10 +1089,9 @@ Double_t GetMomentum(double meanvalue,double ugrad,double vgrad, double u, doubl
 
 // This script is used to create a map of a plane in a test beam telescope. The input is a TTree including 
 // MSC projected scattering angle distributions and reconstruction errors.
-int x0imaging()
+int main(int argc, char **argv)
+//int x0imaging()
 {
-	gSystem->Load("libProof.so");
-	gSystem->Load("libTreePlayer.so");
 
 	gROOT->Reset(); 
 

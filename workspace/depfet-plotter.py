@@ -19,7 +19,7 @@ for trackfile in glob.glob('root-files/Histos-H5-{}-reco.root'.format(args.patte
     residuals.plot(inputfilename = trackfile, histofilename = ofile, basecut = "hasTrack==0", nbins=501, urange=400, vrange=400)
     
     ofile = 'Efficiency-' + os.path.basename(trackfile)  
-    efficiency.plot(inputfilename=trackfile, histofilename=ofile, basecut="trackNHits==7 && iEvt>=0 && nDutDigits>2", matchcut="hasHit==0", uaxis=(16,0,64), vaxis=(16,0,64))
+    efficiency.plot(inputfilename=trackfile, histofilename=ofile, basecut="hasRefHit==0 && hasTestPixels==1", matchcut="hasHit==0", uaxis=(64,0,64), vaxis=(64,0,64))
     
   
 for trackfile in glob.glob('root-files/Histos-PXD-{}-reco.root'.format(args.pattern)): 
@@ -31,8 +31,8 @@ for trackfile in glob.glob('root-files/Histos-PXD-{}-reco.root'.format(args.patt
     residuals.plot(inputfilename=trackfile, histofilename=ofile, basecut="hasTrack==0 && cellV_hit>=512", nbins=501, urange=400, vrange=400)
     
     ofile = 'Efficiency-' + os.path.basename(trackfile)  
-    efficiency.plot(inputfilename=trackfile, histofilename=ofile, basecut="trackNHits==7 && iEvt>=0 && nDutDigits>4", matchcut="hasHit==0", uaxis=(250,0,250), vaxis=(768,0,768))
-    
+    efficiency.plot(inputfilename=trackfile, histofilename=ofile, basecut="hasRefHit==0 && hasTestPixels==1", matchcut="hasHit==0", uaxis=(250,0,250), vaxis=(768,0,768))
+
     # A single run will not give enough statistic for such a plot, you will need to chain tree from many runs for this
     # Anyway, here is the commond to obtain inpixel plots for the complete sensor area
     #ofile = 'InpixMaps-' + os.path.basename(trackfile)  

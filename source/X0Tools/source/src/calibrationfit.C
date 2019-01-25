@@ -14,10 +14,12 @@
 #include <string>
 #include <vector>
 
-
+#include "TROOT.h"
 #include "Fit/Fitter.h"
 #include "Fit/BinData.h"
 #include "Fit/Chi2FCN.h"
+#include "Fit/PoissonLikelihoodFCN.h"
+#include "HFitInterface.h"
 #include "TH1.h"
 #include "TH1F.h"
 #include "TList.h"
@@ -26,12 +28,14 @@
 #include "TStyle.h"
 #include "TLegend.h"
 
-#include "TSystem.h"
+#include "TSystemDirectory.h"
+#include "TSystemFile.h"
 #include "TFile.h"
 #include "TTree.h"
 #include "TString.h"
 #include "TMath.h"
-#include "TROOT.h"
+#include "TEnv.h"
+#include "TFitResult.h"
 
 
 
@@ -313,7 +317,7 @@ void savehisto(TFile*,TFile*,TString,TString, double, double, double, double, in
 void correcthisto(TFile*,TFile*, TString , double , double , double , double );
 double* fit(TFile*,TString, Grid, std::vector<double>, double, TString, std::vector<bool>);
 void shiftbins(TH1F*, double);
-void calibrationfit();
+//void calibrationfit();
 int** GetParameterMapping(int);
 
   // Highland model of a MSC angle distribution, the parameters are:
@@ -863,19 +867,43 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
   // Use RMS value as a rough measure of the fit range for a gaussian fit
   TF1 *f1 = new TF1("f1","gaus(x)",-fitrange,fitrange);
   f1->SetParameter(2,histo->GetRMS());
+  f1->FixParameter(1,0);
+  f1->SetParLimits(2,0.0,2*histo->GetRMS());
   f1->SetLineStyle(2);
   TFitResultPtr fitr=h2->Fit("f1","RS");
+
+  cout<<endl<<"Fit results:  "<<endl;
+  cout<<"Fit is valid: "<<fitr->IsValid()<<endl;
+  cout<<"Fit status: "<<fitr->Status()<<endl;
   
   // Repeat fit in case it failed
-  if(fitr!=0)
+  if(!fitr->IsValid())
   {
     cout<<"Fit of angle distribution failed with status: "<<fitr<<endl;
     cout<<"Repeat fit "<<endl;
     h2->Fit("f1","RM");
+
+	cout<<endl<<"Fall back Fit results: "<<endl;
+	cout<<"Fit is valid: "<<fitr->IsValid()<<endl;
+	cout<<"Fit status: "<<fitr->Status()<<endl;
   }
 
   // Use the determined sigma value to calculate the fit range
   double sigma = f1->GetParameter(2);
+
+  // In case the second fit failed as well, simply use the RMS of the histo in the 3 sigma range
+  if(!fitr->IsValid()) 
+  {
+	double corerange=3*histo->GetRMS();
+
+	// Limit histo range to core of distribution
+	histo->GetXaxis()->SetRangeUser(-corerange,corerange);
+
+	// Get RMS of core distribution without outliers
+	sigma = histo->GetRMS();
+    cout<<"Fall back fit of angle distribution failed with status: "<<fitr<<"! Just use RMS of histogram."<<endl;
+  }
+
   fitrange=sqrt(2.0*rangevalue)*sigma;
   cout<<"Determined fit range: " << fitrange<<endl<<endl;
 
@@ -1699,7 +1727,8 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
   // perform a moliere fit on the distributions to estimate the calibrationfactors mu and lambda. Usually this script is used on 
   // measurement data of a plane with a precisely known material distribution ( for example a aluminum grid with a set 
   // of holes with different thicknesses.
-  void calibrationfit()
+  int main(int argc, char **argv)
+  //void calibrationfit()
   {     
     // Read config file
     //------------------
@@ -1925,7 +1954,7 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
 	mEnv_res->SaveLevel(kEnvLocal);
 
 	rootfile->Close();
-
+    return 0;
   
   }
 

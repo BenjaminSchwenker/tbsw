@@ -50,6 +50,8 @@ namespace eudaqinput {
                               "Name of the output digit collection",
                               _outputCollectionName, string("zsdata_dep"));
     
+    registerProcessorParameter ("MetaDataCollectionName", "Provide a non default name to store some DEPFET meta info",
+                                _outputMetaDataCollectionName,  static_cast < string > (""));
     
     registerProcessorParameter ("OverrideSensorID", "Override sensorID. Put -1 to keep sensorID from rawdata",
                                 _resetSensorID,  static_cast < int > (-1));
@@ -154,22 +156,30 @@ namespace eudaqinput {
 		}
       }
       
-      // Create DEPFET_EVENT_INFO if it does not exist
-      try {
-        LCCollectionVec* eventinfo = dynamic_cast < LCCollectionVec * > (evt->getCollection( "DEPFET_EVENT_INFO" )) ;
-      } catch (lcio::DataNotAvailableException& e) {
+      if (_outputMetaDataCollectionName!= "") {  
+        streamlog_out(MESSAGE2) << " Create META_INFO collection named " << _outputMetaDataCollectionName << "." << std::endl;
+        
+        // Write error flags from unpacker in an info event for later use
         LCCollectionVec* depfet_info = new LCCollectionVec( LCIO::LCGENERICOBJECT )  ;
         
-        // Decode DEPFET event info to LCIO format      
         for(const auto & event:all_events){
-            LCGenericObjectImpl* metaobj = new LCGenericObjectImpl(2,0,0);
-            metaobj->setIntVal(0,event.isGood);
-            metaobj->setIntVal(1,event.triggerOffset);
+          // isGood flags an event w/o a serious format error found during unpacking
+          bool isGood = not (event.isDummy or event.badPadding or event.badCRC);
+          
+          streamlog_out(MESSAGE2) << "Unpacker flags are isGood=" << isGood << " isDummy=" << event.isDummy << " isBadPadding=" << event.badPadding
+                                  << " badCRC=" << event.badCRC << std::endl;
+            
+          // Unfortunately there is no boolean type, so i store flags as integer
+          LCGenericObjectImpl* metaobj = new LCGenericObjectImpl(4,0,0);
+          metaobj->setIntVal(0,isGood);
+          metaobj->setIntVal(1,event.isDummy);
+          metaobj->setIntVal(2,event.badPadding);
+          metaobj->setIntVal(3,event.badCRC);
+
+          depfet_info->push_back(metaobj);
         }
-        evt->addCollection( depfet_info , "DEPFET_EVENT_INFO" ) ;
-      }   
-      
-      streamlog_out(MESSAGE2) << "Create LCIO::TrackerData collection for DEPFET." << std::endl;
+        evt->addCollection( depfet_info , _outputMetaDataCollectionName ) ;
+      }
       
       // Prepare collection for unpacked digits 
       LCCollectionVec * result = new LCCollectionVec(LCIO::TRACKERDATA);

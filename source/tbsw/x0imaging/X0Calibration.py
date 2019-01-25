@@ -80,9 +80,6 @@ def x0calibration(rootfilelist=[],imagefile='',caltag='',steerfiles=''):
   os.mkdir(workdir) 
   os.chdir(workdir)
   
-  # Find directory with scripts
-  scriptsfolder = fullpath+'/tbsw/x0imaging'
-
   # Create Links of input root files
   for ifile,rootfile in enumerate(rootfilelist):
     this_x0filename = os.path.splitext(os.path.basename(rootfile))[0]
@@ -115,48 +112,29 @@ def x0calibration(rootfilelist=[],imagefile='',caltag='',steerfiles=''):
   shutil.copy(fullpath+'/'+cfgfile, cfgname)
     
   if os.path.isfile(fullpath+'/'+imagefile):
-
     #get X0 filename filename without path
     this_imagefilename = os.path.splitext(os.path.basename(imagefile))[0]
     
     # Create X0image root file link in the current work dir
     os.symlink(fullpath+'/'+imagefile,'X0image')
-
-    # Copy placeholder x0image and change it
-    scriptname="DrawBoxes.C"
-    shutil.copy(scriptsfolder+'/DrawBoxes.C', scriptname)
-  
-    action = 'root -q -b ' + scriptname + ' > x0-drawboxes.log  2>&1'
-    subprocess.call(action, shell=True)    
+     
+    subprocess.call( "$X0TOOLS/bin/DrawBoxes > x0-drawboxes.log  2>&1", shell=True)   
     print ('[INFO] Marking of measurement areas done... ')
-
-    # remove DrawBoxes.C script
-    os.remove(scriptname) 
-
   else:
     print ('[Print] No Image file found... Skip marking measurement areas! ')
-
   
-  # Copy the calibration fit script
-  scriptname="calibrationfit.C"
-  shutil.copy(scriptsfolder+'/'+scriptname, scriptname)
-
   # Copy the results cfg file from previous calibrations, if it exists
   cfgfilename="x0cal_result.cfg"
   cfgfile=fullpath+'/localDB/'+caltag+'/'+cfgfilename
   if os.path.isfile(cfgfile):
     shutil.copy(cfgfile, cfgfilename)
   
-  action = 'root -q -b ' + scriptname + ' > x0cal.log  2>&1'
-  print('[INFO] Executing {}'.format(action))
-  subprocess.call(action, shell=True)            
-  print ('[INFO] Calibration done... ')  
-
-  # remove calibrationfit.C script
-  os.remove(scriptname) 
-
+  print ('[INFO] Start X0 Calibration fit ... ')  
+  subprocess.call( "$X0TOOLS/bin/calibrationfit > x0cal.log  2>&1", shell=True)            
+  print ('[INFO] X0 Calibration fit done! ')  
+  
   caldir=fullpath+'/localDB/'+caltag
-
+  
   if not os.path.isdir(caldir):
     os.mkdir(caldir)
     
@@ -174,11 +152,4 @@ def x0calibration(rootfilelist=[],imagefile='',caltag='',steerfiles=''):
   
   # Go back to workspace
   os.chdir(fullpath) 
-
-                   
-                
-
-
-     
-
 

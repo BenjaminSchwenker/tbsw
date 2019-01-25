@@ -26,12 +26,14 @@ def add_unpackers(path):
   pxdunpacker = tbsw.Processor(name="PXDUnpacker",proctype="DEPFETUnpacker")
   pxdunpacker.param('InputCollectionName', 'DEPFET')
   pxdunpacker.param('OutputCollectionName','zsdata_pxd')
+  pxdunpacker.param("MetaDataCollectionName","pxd_meta_info")
   path.add_processor(pxdunpacker)
   
   h5unpacker = tbsw.Processor(name="H5Unpacker",proctype="DEPFETUnpacker")
   h5unpacker.param('InputCollectionName','DEPFE5')
   h5unpacker.param('OutputCollectionName','zsdata_h5')
   h5unpacker.param("Mapping","Hybrid5")  
+  h5unpacker.param("MetaDataCollectionName","h5_meta_info")
   path.add_processor(h5unpacker)   
   
   return path
@@ -189,7 +191,7 @@ def add_clustercalibrators(path):
   
   return path
 
-def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB):
+def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB, mapping):
   """
   Returns a list of tbsw path objects needed to calibrate the tracking telescope
   """
@@ -208,7 +210,7 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB):
   
   mask_path = add_unpackers(mask_path)
    
-  m26hotpixelkiller = tbsw.Processor(name="M26HotPixelKiller",proctype="HotPixelKiller",)
+  m26hotpixelkiller = tbsw.Processor(name="M26HotPixelKiller",proctype="HotPixelKiller")
   m26hotpixelkiller.param("InputCollectionName", "zsdata_m26")
   m26hotpixelkiller.param("MaxOccupancy", 0.001)
   m26hotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-M26.root")
@@ -430,10 +432,16 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB):
   return calpaths
 
 
-def create_reco_path(Env, rawfile, gearfile, energy, useClusterDB):
+def create_reco_path(Env, rawfile, gearfile, energy, useClusterDB, mapping):
   """
   Returns a list of tbsw path objects for reconstruciton of a test beam run 
   """
+  
+  linkpixel = dict()
+  linkpixel["OF"] = "765:123 765:248 767:61 767:186"
+  linkpixel["OB"] = "0:61 0:186 2:123 2:248"
+  linkpixel["IF"] = "0:61 0:186 2:123 2:248"
+  linkpixel["IB"] = "765:123 765:248 767:61 767:186"
   
   reco_path = Env.create_path('reco_path')
   reco_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : -1 }) 
@@ -476,6 +484,8 @@ def create_reco_path(Env, rawfile, gearfile, energy, useClusterDB):
   hybrid_analyzer.param("MaxResidualU","0.2")
   hybrid_analyzer.param("MaxResidualU","0.2")
   hybrid_analyzer.param("RootFileName","Histos-H5.root")
+  hybrid_analyzer.param("DUTTestPixels","2:8 2:56")
+  hybrid_analyzer.param("MetaInfoCollection", "h5_meta_info")
   reco_path.add_processor(hybrid_analyzer)  
 
   pxd_analyzer = tbsw.Processor(name="PXDAnalyzer",proctype="PixelDUTAnalyzer")
@@ -487,6 +497,8 @@ def create_reco_path(Env, rawfile, gearfile, energy, useClusterDB):
   pxd_analyzer.param("MaxResidualU","0.2")
   pxd_analyzer.param("MaxResidualU","0.2")
   pxd_analyzer.param("RootFileName","Histos-PXD.root")
+  pxd_analyzer.param("DUTTestPixels",linkpixel[mapping])
+  pxd_analyzer.param("MetaInfoCollection", "pxd_meta_info")
   reco_path.add_processor(pxd_analyzer)   
   
   return [ reco_path ]  
@@ -494,14 +506,14 @@ def create_reco_path(Env, rawfile, gearfile, energy, useClusterDB):
   
 def calibrate(params):
   
-  rawfile, steerfiles, gearfile, energy, caltag, useClusterDB = params
+  rawfile, steerfiles, gearfile, energy, caltag, useClusterDB, mapping = params
    
   # Calibrate of the run using beam data. Creates a folder cal-files/caltag 
   # containing all calibration data. 
-  CalObj = tbsw.Calibration(steerfiles=steerfiles, name=caltag + '-cal') 
+  CalObj = tbsw.Calibration(steerfiles=steerfiles, name=os.path.splitext(os.path.basename(rawfile))[0] + '-cal') 
   
   # Create list of calibration paths
-  calpaths = create_calibration_path(CalObj, rawfile, gearfile, energy, useClusterDB)
+  calpaths = create_calibration_path(CalObj, rawfile, gearfile, energy, useClusterDB, mapping)
   
   # Run the calibration steps 
   CalObj.calibrate(paths=calpaths,ifile=rawfile,caltag=caltag)  
@@ -509,42 +521,41 @@ def calibrate(params):
   
 def reconstruct(params):
   
-  rawfile, steerfiles, gearfile, energy, caltag, useClusterDB = params 
+  rawfile, steerfiles, gearfile, energy, caltag, useClusterDB, mapping = params 
    
   # Reconsruct the rawfile using caltag. Resulting root files are 
   # written to folder root-files/
-  RecObj = tbsw.Reconstruction(steerfiles=steerfiles, name=caltag + '-reco' )
+  RecObj = tbsw.Reconstruction(steerfiles=steerfiles, name=os.path.splitext(os.path.basename(rawfile))[0] + '-reco' )
   
   # Create reconstuction path
-  recopath = create_reco_path(RecObj, rawfile, gearfile, energy, useClusterDB)  
+  recopath = create_reco_path(RecObj, rawfile, gearfile, energy, useClusterDB, mapping)  
   
   # Run the reconstuction  
-  RecObj.reconstruct(path=recopath,ifile=rawfile,caltag=caltag) 
+  RecObj.reconstruct(paths=recopath,ifile=rawfile,caltag=caltag) 
 
 if __name__ == '__main__':
   
   import argparse
-  parser = argparse.ArgumentParser(description="Perform reconstruction of a test beam run")
+  parser = argparse.ArgumentParser(description="Perform calibration and reconstruction of a test beam run")
   parser.add_argument('--rawfile', dest='rawfile', default='/home/benjamin/Desktop/run000020.raw', type=str, help='Location of rawfile to process')
-  parser.add_argument('--gearfile', dest='gearfile', default='gear_desy_W11OF2.xml', type=str, help='Location of gearfile')
+  parser.add_argument('--gearfile', dest='gearfile', default='gear_desy_W11OF2_perp_geoid2.xml', type=str, help='Location of gearfile')
   parser.add_argument('--energy', dest='energy', default=5.0, type=float, help='Beam energy in GeV')
   parser.add_argument('--steerfiles', dest='steerfiles', default='steering-files/depfet-tb/', type=str, help='Path to steerfiles')
   parser.add_argument('--caltag', dest='caltag', default='', type=str, help='Name of calibration tag to use')
-  parser.add_argument('--special', dest='special', default='', type=str, help='Added to name of new caltag to distinguish different ways to process the same run')
+  parser.add_argument('--mapping', dest='mapping', default='OF', type=str, help='OF,OB,IF,IB')
+  parser.add_argument('--useClusterDB', dest='use_cluster_db', default=True, type=bool, help="Use cluster database")
+  parser.add_argument('--skipCalibration', dest='skip_calibration', default=False, type=bool, help="Skip creating a new calibration tag")
+  parser.add_argument('--skipReconstruction', dest='skip_reco', default=False, type=bool, help="Skip reconstruction of run")
   args = parser.parse_args()
   
-  # Use cluster calibration
-  useClusterDB = True
-  
   if args.caltag=='':
-    print("Compute a new calibration tag directly from the rawfile {}".format(args.rawfile))
-    args.caltag = os.path.splitext(os.path.basename(args.rawfile))[0] + args.special
-    calibrate( (args.rawfile, args.steerfiles, args.gearfile, args.energy, args.caltag, useClusterDB) )   
-  else: 
-    print("Use existing caltag {}".format(args.caltag))
+    args.caltag = os.path.splitext(os.path.basename(args.rawfile))[0]
+    
+  if not args.skip_calibration: 
+    print("Creating new calibration tag {} from run {}".format(args.caltag, args.rawfile))
+    calibrate((args.rawfile, args.steerfiles, args.gearfile, args.energy, args.caltag, args.use_cluster_db, args.mapping))
   
-  reconstruct( (args.rawfile, args.steerfiles, args.gearfile, args.energy, args.caltag, useClusterDB) ) 
+  if not args.skip_reco: 
+    print("Reconstruct run {} using caltag {}".format(args.rawfile, args.caltag))
+    reconstruct((args.rawfile, args.steerfiles, args.gearfile, args.energy, args.caltag, args.use_cluster_db, args.mapping))
   
-
-
-
