@@ -1,9 +1,10 @@
 #ifndef _AlignableDet_h
 #define _AlignableDet_h
 
-// CLHEP includes 
-#include <CLHEP/Matrix/Vector.h>
-#include <CLHEP/Matrix/SymMatrix.h>
+#include <vector>
+
+typedef Eigen::Matrix<double,6,1> SensorAlignmentParameters;
+typedef Eigen::Matrix<double,6,6> SensorAlignmentCovariance;
  	
 namespace depfet {
  	
@@ -22,25 +23,25 @@ class AlignableDet
   
   /** Constructor  
    */
-  AlignableDet(int nAlignables, int nParameters);
+  AlignableDet(int nAlignables);
   
   /** Getter
    */
-  CLHEP::HepVector GetAlignState(int i);
-  CLHEP::HepSymMatrix GetAlignCovariance(int i); 
+  SensorAlignmentParameters GetAlignState(int i);
+  SensorAlignmentCovariance GetAlignCovariance(int i); 
   
   /** Setter
    */
-  void SetAlignState(int i, CLHEP::HepVector a);
-  void SetAlignCovariance(int i, CLHEP::HepSymMatrix E);  
+  void SetAlignState(int i, SensorAlignmentParameters a);
+  void SetAlignCovariance(int i, SensorAlignmentCovariance E);  
    
   /* Alignment parameters (all alignables) 
    */
-  CLHEP::HepVector alignmentParameters;    
+  std::vector< SensorAlignmentParameters > alignmentParametersVec;    
 
   /* Alignment covariance (all alignables)   
    */  
-  CLHEP::HepSymMatrix alignmentCovariance;      
+  std::vector<SensorAlignmentCovariance> alignmentCovarianceVec;      
 };
 
 } // Namespace

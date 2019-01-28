@@ -1,10 +1,9 @@
 #ifndef GenericTrackFitter_H
 #define GenericTrackFitter_H 1
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "TBTrack.h"
 #include "TBHit.h"
-#include "TBKalmanSRIF.h"
 #include "TBKalmanB.h"
 
 namespace depfet {
@@ -77,11 +76,14 @@ class GenericTrackFitter {
    */
   void SetBeamCorrelationY(double corr){m_TrackFitter->SetBeamCorrelationY(corr);}
 
-  CLHEP::HepMatrix& GetHMatrix() {return  m_TrackFitter->GetHMatrix();} 
+  /** Get the projector matrix to exract the position from track state
+   */ 
+  const StateHitProjector& GetHMatrix(){return  m_TrackFitter->GetHMatrix();} 
+
 
   /** Returns the predicted local chi2 for the given hit and track parameter estimate
    */
-  double GetPredictedChi2(CLHEP::HepMatrix& p, CLHEP::HepSymMatrix& C, TBHit& hit) {return m_TrackFitter->GetPredictedChi2(p,C,hit); } 
+  double GetPredictedChi2(const TrackState& p, const TrackStateCovariance& C, const TBHit& hit) {return m_TrackFitter->GetPredictedChi2(p,C,hit); } 
   
  private:
   
