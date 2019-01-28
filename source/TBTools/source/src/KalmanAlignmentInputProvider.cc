@@ -8,12 +8,11 @@
 // C++ includes
 //#include <iostream>
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "KalmanAlignmentInputProvider.h"
 #include "Utilities.h"
 
 using namespace std;
-using namespace CLHEP;
 
 namespace depfet {
 

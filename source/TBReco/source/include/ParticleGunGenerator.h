@@ -13,15 +13,15 @@
 #include <marlin/ProcessorMgr.h>
 #include <marlin/Exceptions.h>
 
-#include "CLHEP/Matrix/Vector.h"
-#include "CLHEP/Matrix/Matrix.h"
-#include "CLHEP/Matrix/SymMatrix.h"
-
 // lcio includes <.h>
 
 // system includes <>
 #include <string>
 #include <vector>
+
+#include <Eigen/Core>
+
+typedef Eigen::Matrix<double,5,1> TrackState;
 
 namespace depfet
 {
@@ -66,7 +66,7 @@ namespace depfet
     
     //!Method returns vector of gaussian randoms based on sigmas, rotated by U,
     // with means of 0. 
-    CLHEP::HepVector deviates() const;
+    TrackState deviates() const;
      
     //! Output MCParticle collection name
     std::string m_MCParticleCollectionName;
@@ -95,9 +95,9 @@ namespace depfet
     
     // Vector of sigmas and rotation matrix U for computing 
     // random deviates
-    CLHEP::HepMatrix m_U;
-    CLHEP::HepVector m_Sigmas;	
-    CLHEP::HepVector m_Mean;
+    Eigen::Matrix<double,5,5> m_U;
+    Eigen::Matrix<double,5,1> m_Sigmas;	
+    Eigen::Matrix<double,5,1> m_Mean;
     
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number

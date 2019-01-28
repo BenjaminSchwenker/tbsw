@@ -31,7 +31,7 @@ OPTION( INSTALL_DOC "Set to OFF to skip build/install Documentation" OFF )
 IF( PROJECT_DEPENDS )
     SET( ${PROJECT_NAME}_DEPENDS "${PROJECT_DEPENDS}" )
 ELSE()
-    SET( ${PROJECT_NAME}_DEPENDS "CLHEP GEAR LCIO Marlin ROOT")
+    SET( ${PROJECT_NAME}_DEPENDS "GEAR LCIO Marlin ROOT")
 ENDIF()    
 
 # Set CMAKE build type (None Debug Release RelWithDebInfo MinSizeRel)

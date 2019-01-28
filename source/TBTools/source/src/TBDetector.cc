@@ -26,7 +26,6 @@
 #include <streamlog/streamlog.h>
 
 // Namespaces
-using namespace CLHEP;
 using namespace marlin;
 
 

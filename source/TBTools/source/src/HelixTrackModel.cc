@@ -7,7 +7,6 @@
 #include "HelixTrackModel.h"
 #include "MaterialEffect.h"
 
-#include "CLHEP/Vector/ThreeVector.h"
 
 #include "TMath.h"
 
@@ -310,7 +309,7 @@ int HelixTrackModel::TrackJacobian( const TrackState& State, const ReferenceFram
  */
 
 /*
-void HelixTrackModel::GetScatterGain(const HepMatrix& State, CLHEP::HepMatrix& G)
+void HelixTrackModel::GetScatterGain(const TrackState& State, TrackStateGain& G)
 {
    
   // The two independent scattering angles are called 
@@ -318,7 +317,7 @@ void HelixTrackModel::GetScatterGain(const HepMatrix& State, CLHEP::HepMatrix& G
   // the scattered track parameters ...
    
   // To hold the scattered state 
-  HepMatrix difPred = State;
+  TrackState difPred = State;
    
   // The scattering angle in rad
   double h=1.e-5;

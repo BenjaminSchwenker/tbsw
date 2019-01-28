@@ -13,9 +13,6 @@
 // Include basic C
 #include <vector>
 
-// Include CLHEP classes
-#include <CLHEP/Vector/ThreeVector.h>
-
 // Include LCIO classes
 #include <lcio.h>
 #include <IMPL/SimTrackerHitImpl.h>
@@ -43,21 +40,21 @@ namespace depfet {
 
   struct IonisationPoint
   {
-    CLHEP::Hep3Vector position;
+    Vector3d position;
     double eLoss;
   };
 
   struct SignalPoint
   {
-    CLHEP::Hep3Vector position;
-    CLHEP::Hep3Vector sigma;
+    Vector3d position;
+    Vector3d sigma;
     double charge;
   };
 
   struct SpacePoint
   {
-    CLHEP::Hep3Vector position;
-    CLHEP::Hep3Vector direction;  
+    Vector3d position;
+    Vector3d direction;  
   };
 
 
@@ -174,7 +171,7 @@ namespace depfet {
     double m_stopIntegration;                    //!< Stop time of integration of the sensors in ns(everything after this value will not be digitized)
     
     // Magnetic field - obtained from Gear xml file and transformed into local system
-    CLHEP::Hep3Vector m_magField;    //!< Magnetic field in T in detector reference system
+    Vector3d m_magField;    //!< Magnetic field in T in detector reference system
     
     // Handle to detector data sheets 
     TBDetector m_detector;  

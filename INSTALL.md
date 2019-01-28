@@ -18,32 +18,6 @@ In case you are working with Ubuntu, the following recipe may work for you as we
 $ sudo apt install cmake
 ```
 
-
-# CLHEP 
-
-The project home page can be found at this URL http://proj-clhep.web.cern.ch/proj-clhep/. It is most convinient to install CLHEP from the git 
-repository. 
-
-```
-$ git clone https://gitlab.cern.ch/CLHEP/CLHEP.git
-```
-
-This create a folder CLHEP in your current working directory containing the CLHEP repository. Now create two further directories <installdir> and <builddir>
-and build the software.  
-
-
-```
-$ mkdir <clhep-installdir> 
-$ mkdir <clhep-builddir> 
-$ cd <clhep-builddir> 
-$ cmake -DCMAKE_INSTALL_PREFIX=<clhep-installdir>  ../CLHEP
-$ cmake --build . 
-$ ctest
-$ cmake --build . --target install
-```
-
-The folder <clhep-builddir> may be deleted afterwards. In the end, the folder <clhep-installdir> should contain bin/ include/ and lib/ subfolders. 
-
 # Eigen 
 
 Eigen is a C++ template library for linear algebra. The project home page can be found at this URL https://eigen.tuxfamily.org. For tbsw, we will 
@@ -120,11 +94,10 @@ $ git clone https://BenjaminSchwenker@bitbucket.org/BenjaminSchwenker/tbsw.git
 $ cd tbsw
 ```
 
-Open the script install.sh and edit the two first lines with exports for ROOTSYS and CLHEP_HOME to the locations on your local machine. 
+Open the script install.sh and edit the two first lines with exports for ROOTSYS and EIGEN3_INCLUDE_DIR to the locations on your local machine. 
 For example: 
 
 ```
-export CLHEP_HOME=<absolute-path-to-clhep-installdir>/lib/CLHEP-2.3.4.3         # See CLHEP section above, points to folder containing CLHEPConfig.cmake
 export ROOTSYS=<absolute-path-to-root-installdir>                               # See Root section above
 export EIGEN3_INCLUDE_DIR=/home/benjamin/eigen_v3.3.7                           # See Eigen section above
 ```

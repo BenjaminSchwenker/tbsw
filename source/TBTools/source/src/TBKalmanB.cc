@@ -459,7 +459,7 @@ int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, TrackStat
 
 /** Runs filter. Returns fit chi2. 
  */
-double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::vector<CLHEP::HepMatrix>& RefStateVec, int idir, FilterStateVec& Result) 
+double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::vector<TBTrackState>& RefStateVec, int idir, FilterStateVec& Result) 
 { 
     
   // To start ierr is set to 0 (= OK)

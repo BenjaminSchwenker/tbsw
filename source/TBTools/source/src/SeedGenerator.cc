@@ -13,11 +13,9 @@
 #include <cassert>
 #include <cstdlib>
 
-// CLHEP includes 
-#include <CLHEP/Matrix/Matrix.h>
+
 
 using namespace std;
-using namespace CLHEP;
 
 namespace depfet {
 

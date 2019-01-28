@@ -7,7 +7,7 @@
 #include <marlin/Global.h>
 #include <streamlog/streamlog.h>
   
-// DEPFETTrackTool includes
+// TBTool includes
 #include "TBVertexFitter.h"
 
 // C++ STL includes 
@@ -16,7 +16,6 @@
 #include <vector>
 
 // Namespaces
-using namespace CLHEP;
 using namespace marlin;
 using namespace std; 
 

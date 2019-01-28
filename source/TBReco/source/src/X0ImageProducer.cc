@@ -36,12 +36,9 @@
 #include <TRandom.h>
 #include <TRandom3.h>
 
-// Include CLHEP classes
-#include <CLHEP/Matrix/Vector.h>
 
 // Used namespaces
 using namespace std; 
-using namespace CLHEP; 
 using namespace lcio ;
 using namespace marlin ;
 

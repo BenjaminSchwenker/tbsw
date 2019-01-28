@@ -11,7 +11,6 @@
 #include <IMPL/TrackerHitImpl.h>
 	
 using namespace lcio;	
-using namespace CLHEP;
 using namespace std;
 
 namespace depfet {

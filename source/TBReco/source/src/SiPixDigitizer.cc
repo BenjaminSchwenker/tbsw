@@ -428,8 +428,10 @@ namespace depfet {
   //
   void SiPixDigitizer::TransformToLocal(const SimTrackerHit * simTrkHit, SpacePoint & hitLocal)
   {
-    Hep3Vector position(simTrkHit->getPosition()[0]*mm ,simTrkHit->getPosition()[1]*mm ,simTrkHit->getPosition()[2]*mm );
-    Hep3Vector momentum(simTrkHit->getMomentum()[0],simTrkHit->getMomentum()[1],simTrkHit->getMomentum()[2]);
+    Vector3d position
+    position << simTrkHit->getPosition()[0]*mm << simTrkHit->getPosition()[1]*mm << simTrkHit->getPosition()[2]*mm ;
+    Vector3d momentum
+    momentum << simTrkHit->getMomentum()[0] << simTrkHit->getMomentum()[1] << simTrkHit->getMomentum()[2];
     
     // Save final results
     hitLocal.position  = position;
@@ -467,8 +469,8 @@ namespace depfet {
     // Calculate entryPoint and exitPoint (in mm)
     double trackLength  = simTrkHit->getPathLength()*mm;
     
-    Hep3Vector entryPoint = hitLocal.position - hitLocal.direction*trackLength/2.;
-    Hep3Vector exitPoint  = hitLocal.position + hitLocal.direction*trackLength/2.;
+    Vector3d entryPoint = hitLocal.position - hitLocal.direction*trackLength/2.;
+    Vector3d exitPoint  = hitLocal.position + hitLocal.direction*trackLength/2.;
       
     // Check entry and exit point are within sensor boundaries  
     if (  m_detector.GetDet(m_ipl).isPointOutOfSensor( entryPoint.getX(), entryPoint.getY() , entryPoint.getZ() ) ) {

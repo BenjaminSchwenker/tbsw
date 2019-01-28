@@ -29,8 +29,6 @@
 #include <IMPL/TrackerHitImpl.h>
 
 #include <Eigen/Core>
-#include <Eigen/Geometry>
-Eigen::Transform a;
 
 using Eigen::Vector3d;
 
