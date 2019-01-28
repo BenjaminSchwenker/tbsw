@@ -7,7 +7,7 @@
 #include <marlin/Global.h>
 #include <streamlog/streamlog.h>
   
-// DEPFETTrackTool includes
+// TBTool includes
 #include "TBKalmanMSC.h"
 #include "MaterialEffect.h"
 #include "StraightLineTrackModel.h"
@@ -18,7 +18,6 @@
 #include <limits>
 
 // Namespaces
-using namespace CLHEP;
 using namespace marlin;
 using namespace std; 
 
@@ -32,24 +31,39 @@ TBKalmanMSC::TBKalmanMSC(TBDetector& detector)
   ndim = 5; // dimension of state vector
 
   // Project hit coord out of track state
-  H = HepMatrix(2,ndim,0);
-  H[0][2] = 1.;
-  H[1][3] = 1.;
+  H = StateHitProjector::Zero();
+  H(0,2) = 1.;
+  H(1,3) = 1.;
 
-  mom = 0; 
-  mass = 0;
-  charge = 0;
-
-  HepVector field(3,0);
-  field[0] = detector.GetBx();
-  field[1] = detector.GetBy();
-  field[2] = detector.GetBz(); 
+  // Set the initial track state vector
+  x0 = TrackState::Zero();
+    
+  // Set the initial track state covariance matrix
+  C0 = TrackStateCovariance::Zero();
+    
+  for (int i = 0; i < 2; i++) {
+    // There is a tradeoff between choosing large values (which makes the
+    // tracking numerically unstable) and choosing small values (which biases
+    // the track from the seed). I found 1E4 working for this model, but this
+    // might need to get tuned.
+    C0(i,i) = 1E-2;
+    C0(i+2,i+2) = 1E2; 
+  } 
+  C0(4,4) = 1;  
+    
+ 
+  mass = 0.000511;
+  charge = -1;
+  
+  Vector3d field;
+  field<< detector.GetBx(),detector.GetBy(),detector.GetBz();
   
   if ( field.norm() == 0 ) {
     TrackModel = new StraightLineTrackModel();     
   } else {
     TrackModel = new HelixTrackModel(field); 
   }
+
 }
 
 TBKalmanMSC::~TBKalmanMSC()
@@ -82,7 +96,6 @@ bool TBKalmanMSC::ProcessTrack(TBTrack& trk, int dir, bool biased)
 {
   
   // Get particle hypothesis 
-  mom = trk.GetMomentum(); 
   mass = trk.GetMass();
   charge = trk.GetCharge();
    
@@ -115,8 +128,8 @@ bool TBKalmanMSC::ProcessTrack(TBTrack& trk, int dir, bool biased)
     // Compute intersections of the reference trajectory
     // with sub detectors.  
      
-    // Get paramters of reference trajectory   
-    HepMatrix RTrkState = trk.GetReferenceState().GetPars();      
+    // Get paramters of reference trajectory  
+    TrackState RTrkState = trk.GetReferenceState().GetPars();       
     ReferenceFrame RTrkSurf = trk.GetTE( trk.GetReferenceState().GetPlane() ).GetDet().GetNominal();
      
     REFTrack RefStateVec(nTE);
@@ -138,25 +151,6 @@ bool TBKalmanMSC::ProcessTrack(TBTrack& trk, int dir, bool biased)
     } 
     
     // Initialize Kalman filter 
-    
-    // This is the initial deviation between track state and 
-    // reference track   
-    HepMatrix x0(ndim,1,0);
-     
-    // This is the covariance matrix of the above 
-    // deviation vector 
-    HepSymMatrix C0(ndim,0);
-    
-    for (int i = 0; i < 2; i++) {
-      // There is a tradeoff between choosing large values (which makes the
-      // tracking numerically unstable) and choosing small values (which biases
-      // the track from the seed). I found 1E4 working for this model, but this
-      // might need to get tuned.
-      C0[i][i] = 1E-2;
-      C0[i+2][i+2] = 1E1; 
-    } 
-    //C0[4][4] = 100;  
-    C0[4][4] = 1;  
     
     // Store for filter outputs 
     KalFilterVecMSC KalmanFilterData(nTE);
@@ -223,17 +217,17 @@ bool TBKalmanMSC::ProcessTrack(TBTrack& trk, int dir, bool biased)
   return false;
 }
 
-CLHEP::HepMatrix TBKalmanMSC::GetScatterKinks(Det& DetUnit, TBTrackState& InState, TBTrackState& OutState)
+TrackScatterKinks TBKalmanMSC::GetScatterKinks(Det& DetUnit, TBTrackState& InState, TBTrackState& OutState)
 {
   double slopes[4];
-  slopes[0]=InState.GetPars()[0][0];
-  slopes[1]=InState.GetPars()[1][0];
-  slopes[2]=OutState.GetPars()[0][0];
-  slopes[3]=OutState.GetPars()[1][0]; 
+  slopes[0]=InState.GetPars()(0);
+  slopes[1]=InState.GetPars()(1);
+  slopes[2]=OutState.GetPars()(0);
+  slopes[3]=OutState.GetPars()(1); 
   return slopestotheta(slopes);  
 } 
 
-CLHEP::HepSymMatrix TBKalmanMSC::GetScatterKinkCov(Det& DetUnit, TBTrackState& InState, TBTrackState& OutState)
+TrackScatterKinksCovariance TBKalmanMSC::GetScatterKinkCov(Det& DetUnit, TBTrackState& InState, TBTrackState& OutState)
 {
 
   //define aid varibales
@@ -248,7 +242,8 @@ CLHEP::HepSymMatrix TBKalmanMSC::GetScatterKinkCov(Det& DetUnit, TBTrackState& I
   double Sigmapoint[9][4];
   
   //Theta values of the Sigmapoints
-  HepMatrix Theta(2,9,0);
+  Eigen::Matrix<double,2,9> Theta;
+  Theta = Eigen::Matrix<double,2,9>::Zeros();
 
   //reseting the mean of the unscented transform
   double mean1=0;
@@ -266,20 +261,20 @@ CLHEP::HepSymMatrix TBKalmanMSC::GetScatterKinkCov(Det& DetUnit, TBTrackState& I
   double n=4;                    //dimensionality
   
   //Get the Slopes and Covs from the In and OutState
-  HepMatrix State_in_pars = InState.GetPars();
-  HepMatrix State_out_pars = OutState.GetPars();
-  HepMatrix State_in_covs = InState.GetCov();
-  HepMatrix State_out_covs = OutState.GetCov();
+  auto State_in_pars = InState.GetPars();
+  auto State_out_pars = OutState.GetPars();
+  auto State_in_covs = InState.GetCov();
+  auto State_out_covs = OutState.GetCov();
 
-  Slope[0]=State_in_pars[0][0];
-  Slope[1]=State_in_pars[1][0];
-  Slope[2]=State_out_pars[0][0];
-  Slope[3]=State_out_pars[1][0];
+  Slope[0]=State_in_pars(0);
+  Slope[1]=State_in_pars(1);
+  Slope[2]=State_out_pars(0);
+  Slope[3]=State_out_pars(1);
   
-  Cov[0]=State_in_covs[0][0];
-  Cov[1]=State_in_covs[1][1];
-  Cov[2]=State_out_covs[0][0];
-  Cov[3]=State_out_covs[1][1];
+  Cov[0]=State_in_covs(0,0);
+  Cov[1]=State_in_covs(1,1);
+  Cov[2]=State_out_covs(0,0);
+  Cov[3]=State_out_covs(1,1);
   
   //Compute first Sigmapoint
   for(int i=0;i<4;i++) {
@@ -355,7 +350,6 @@ CLHEP::HepSymMatrix TBKalmanMSC::GetScatterKinkCov(Det& DetUnit, TBTrackState& I
   //Compute the thetas for each sigma point
   for(int i=0;i<9;i++)   {
   
-    HepMatrix helptheta(2,1,0);
     double help[4];
     for(int j=0;j<4;j++){
       help[j]=Sigmapoint[i][j];
@@ -363,7 +357,7 @@ CLHEP::HepSymMatrix TBKalmanMSC::GetScatterKinkCov(Det& DetUnit, TBTrackState& I
       
     //for the thetas
     //Fehler liegt hier ich muss für jeden slope aus den sigmapoints die thetas bestimmen
-    helptheta=slopestotheta(help);
+    auto helptheta=slopestotheta(help);
     Theta[0][i]=helptheta[0][0];
     Theta[1][i]=helptheta[1][0];	
   }
@@ -380,67 +374,55 @@ CLHEP::HepSymMatrix TBKalmanMSC::GetScatterKinkCov(Det& DetUnit, TBTrackState& I
     cov2=cov2+covweight[i]*(Theta[1][i]-mean2)*(Theta[1][i]-mean2);
     cov12=cov12+covweight[i]*(Theta[0][i]-mean1)*(Theta[1][i]-mean2);
   }
-  HepSymMatrix Covariance(2,0);
-  Covariance[0][0]=cov1;
-  Covariance[1][0]=cov12;
-  Covariance[1][1]=cov2;
+  TrackScatterKinksCovariance Covariance = TrackScatterKinksCovariance::Zeros();
+  Covariance(0,0)=cov1;
+  Covariance(1,0)=cov12;
+  Covariance(1,1)=cov2;
 
   return Covariance;
 }
 
-
-
-
-
 //Function for getting the thetas from the slopes
-CLHEP::HepMatrix TBKalmanMSC::slopestotheta(double slopes[4]){
+TrackScatterKink TBKalmanMSC::slopestotheta(double slopes[4]){
      
   //Scatter direction in the detector frame
-  Hep3Vector scatdir;
-  scatdir[0] = slopes[2];
-  scatdir[1] = slopes[3];
-  scatdir[2] = 1;
-  scatdir /= scatdir.mag(); //Change vector to unit length
+  Vector3d scatdir;
+  scatdir << slopes[2] << slopes[3] << 1;
+  scatdir = scatdir.normalized(); //Change vector to unit length
   
   // Now, we construct a basis for the comoving frame
   // basis vectors are u_trk, v_trk, n_trk
    
   // n_trk is parallel to unscattered track direction
-  Hep3Vector n_trk;  
-  n_trk[0] = slopes[0];    
-  n_trk[1] = slopes[1];    
-  n_trk[2] = 1;  
-  n_trk /= n_trk.mag(); // Change vector to unit length
+  Vector3d n_trk;  
+  n_trk << slopes[0] << slopes[1] << 1;  
+  n_trk = n_trk.normalized(); // Change vector to unit length
   
   // v_trk is orthogonal to track dir and detector u axis  
-  Hep3Vector u_hat(1,0,0);
-  Hep3Vector v_trk = n_trk.cross(u_hat);
-  v_trk /= v_trk.mag();
+  auto u_hat = Vector3d::UnitX();
+  auto v_trk = n_trk.cross(u_hat).normalized();
   
   // u_trk completes rigth handed system  
-  Hep3Vector u_trk = v_trk.cross(n_trk);   
-  
-  // Now, we construct rotation matrix from comoving 
-  // frame to detector frame 
-  HepRotation CoRot; 
-  CoRot.rotateAxes(u_trk, v_trk, n_trk); 
-  
+  auto u_trk = v_trk.cross(n_trk);  
+
+  // Now, we construct rotation matrix from comoving
+  // frame to detector frame
+  Matrix3d CoRot;
+  CoRot<< u_trk, v_trk, n_trk;
+
   //Determine the inverese matrix for the transformation from the detector to the comoving frame
-  HepRotation CoRot_inv;
-  CoRot_inv = CoRot.inverse();
-  
+  Matrix3d CoRot_inv = CoRot.inverse();
+   
   //Get the old scatter direction in the comoving frame again by using the inverse matrix
-  Hep3Vector xvec_a;
-  xvec_a = CoRot_inv * scatdir;
+  Vector3d xvec_a = CoRot_inv * scatdir;
   
   //compute the slopes from the scattering direction in the comoving frame
-  double Slopex = xvec_a[0]/xvec_a[2];
-  double Slopey = xvec_a[1]/xvec_a[2];
-  
+  double Slopex = xvec_a(0)/xvec_a(2);
+  double Slopey = xvec_a(1)/xvec_a(2);
+    
   //compute the angles by applying ArcusTangens on the slopes
-  HepMatrix theta(2,1,0);
-  theta[0][0] = TMath::ATan(Slopex);
-  theta[1][0] = TMath::ATan(Slopey);
+  TrackScatterKinks theta;
+  theta << TMath::ATan(Slopex) << TMath::ATan(Slopey);
      
   return theta;
 }
@@ -475,12 +457,12 @@ double TBKalmanMSC::KalmanFilter(TBTrack& trk, int idir, int istart, int istop, 
     ReferenceFrame& Surf = te.GetDet().GetNominal();  
     
     // Get current reference state xref
-    HepMatrix& xref = RStateVec[is];    
+    TrackState& xref = RStateVec[is];    
     
     
     // Copy predicted [x0,C0]
-    HepMatrix x0 = result[is].Pr_x;  
-    HepSymMatrix C0 = result[is].Pr_C;
+    auto x0 = result[is].Pr_x;  
+    auto C0 = result[is].Pr_C;
      
     //cout << "Predicted x0 " << x0 << endl;
     //cout << "Predicted C0 " << C0 << endl;
@@ -491,17 +473,17 @@ double TBKalmanMSC::KalmanFilter(TBTrack& trk, int idir, int istart, int istop, 
     if (te.HasHit()) {
              
       // Measured hit coordinates, 2x1 matrix 
-      HepMatrix m = te.GetHit().GetCoord();
+      auto m = te.GetHit().GetCoord();
       
       // Covariance for hit coordinates, 2x2 matrix 
-      HepSymMatrix V = te.GetHit().GetCov();
+      auto V = te.GetHit().GetCov();
       
       // Measured deviation from the 
       // reference trajectory
       m -= H*xref;
                
       // Weigth matrix of measurment 
-      HepSymMatrix W = (V + C0.similarity(H)).inverse(ierr);
+      auto W = (V + C0.similarity(H)).inverse(ierr);
       if (ierr != 0) {
         streamlog_out(ERROR) << "ERR: Matrix inversion failed. Quit fitting!"
                              << std::endl;
@@ -509,14 +491,14 @@ double TBKalmanMSC::KalmanFilter(TBTrack& trk, int idir, int istart, int istop, 
       }	
        
       // This is the predicted residual 
-      HepMatrix r = m - H*x0; 
+      auto r = m - H*x0; 
       
       // This is the predicted chi2 
-      HepMatrix chi2mat = r.T()*W*r;
+      auto chi2mat = r.T()*W*r;
       predchi2 = chi2mat[0][0];   
       
       // Kalman gain matrix K 
-      HepMatrix K = C0 * H.T() * W; 
+      auto K = C0 * H.T() * W; 
        
       // This is the filtered deviation from the 
       // reference trajectory.  
@@ -580,7 +562,7 @@ double TBKalmanMSC::KalmanFilter(TBTrack& trk, int idir, int istart, int istop, 
       ReferenceFrame& nSurf = nte.GetDet().GetNominal();
       
       // Transport matrix
-      HepMatrix J(ndim, ndim);
+      TrackStateJacobian J;
       ierr = TrackModel->TrackJacobian( xref, Surf, nSurf, J);
       if (ierr != 0) {
         streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
@@ -589,7 +571,7 @@ double TBKalmanMSC::KalmanFilter(TBTrack& trk, int idir, int istart, int istop, 
       }	
       
       // Time update of state    
-      HepMatrix x1 = J*x0; 
+      auto x1 = J*x0; 
       
       // Time update of covariance 
       // 
@@ -603,13 +585,13 @@ double TBKalmanMSC::KalmanFilter(TBTrack& trk, int idir, int istart, int istop, 
       double length = TrackModel->GetSignedStepLength(xref, Surf, nSurf);
       
       // And extrapolate reference track to air scatter surface
-      HepMatrix xref_air = xref; 
+      auto xref_air = xref; 
       ReferenceFrame Surf_air = Surf; 
       TrackModel->Extrapolate(xref_air, Surf_air, length/2);
             
       // Extrap covariance to air surface
       // -------------------------------- 
-      HepMatrix J_det2air(ndim, ndim);
+      TrackStateJacobian J_det2air;
       ierr = TrackModel->TrackJacobian( xref, Surf, Surf_air, J_det2air);
       if (ierr != 0) {
         streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
@@ -617,20 +599,20 @@ double TBKalmanMSC::KalmanFilter(TBTrack& trk, int idir, int istart, int istop, 
         return -1;
       }	
       
-      HepSymMatrix C1 = C0.similarity(J_det2air);
+      auto C1 = C0.similarity(J_det2air);
       
       // Add scatter noise from last detector
       // -----------------------------------
       
       // Local Scatter gain matrix  
-      HepMatrix Gl_det(ndim, 2);    
+      TrackStateGain Gl_det;    
       TrackModel->GetScatterGain(xref, Gl_det);
           
       // General Scatter gain matrix 
-      HepMatrix G_det = J_det2air*Gl_det;   
+      auto G_det = J_det2air*Gl_det;   
         
       // Variance of projected scatter angles   
-      HepSymMatrix Q_det(2, 1);    
+      TrackScatterKinksCovariance Q_det;    
 
       double l0 = te.GetDet().GetTrackLength(xref[2][0], xref[3][0], xref[0][0], xref[1][0]);
       double X0 = te.GetDet().GetRadLength(xref[2][0],xref[3][0]);    
@@ -641,7 +623,7 @@ double TBKalmanMSC::KalmanFilter(TBTrack& trk, int idir, int istart, int istop, 
        
       // Extrap covariance to next detector
       // ----------------------------------    
-      HepMatrix J_air2det(ndim, ndim);
+      TrackStateJacobian J_air2det(ndim, ndim);
       ierr = TrackModel->TrackJacobian( xref_air, Surf_air, nSurf, J_air2det);
       if (ierr != 0) {
         streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
@@ -655,14 +637,14 @@ double TBKalmanMSC::KalmanFilter(TBTrack& trk, int idir, int istart, int istop, 
       //---------------------------   
       
       // Local Scatter gain matrix  
-      HepMatrix Gl_air(ndim, 2);    
+      TrackStateGain Gl_air;    
       TrackModel->GetScatterGain(xref_air, Gl_air);
           
       // General Scatter gain matrix 
-      HepMatrix G_air = J_air2det*Gl_air;   
+      auto G_air = J_air2det*Gl_air;   
         
       // Variance of projected scatter angles   
-      HepSymMatrix Q_air(2, 1);     
+      TrackScatterKinksCovariance Q_air;     
       double theta2_air = materialeffect::GetScatterTheta2(xref_air, length, materialeffect::X0_air, mass, charge );   
       Q_air *= theta2_air;
             

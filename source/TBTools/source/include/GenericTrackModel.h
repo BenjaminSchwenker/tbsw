@@ -6,9 +6,13 @@
 
 
 typedef Eigen::Matrix<double,5,1> TrackState;
-typedef Eigen::Matrix<double,5,2> TrackStateGain;
-typedef Eigen::Matrix<double,5,5> TrackStateJacobian;
 typedef Eigen::Matrix<double,5,5> TrackStateCovariance;
+
+typedef Eigen::Matrix<double,5,5> TrackStateJacobian;
+typedef Eigen::Matrix<double,5,2> TrackStateGain;
+typedef Eigen::Matrix<double,2,1> TrackScatterKinks;
+typedef Eigen::Matrix<double,2,2> TrackScatterKinksCovariance;
+
 
 namespace depfet {
 
