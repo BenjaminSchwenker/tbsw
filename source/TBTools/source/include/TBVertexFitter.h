@@ -1,7 +1,7 @@
 #ifndef TBVertexFitter_H
 #define TBVertexFitter_H 1
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "TBTrack.h"
 #include "TBVertex.h"
 #include "TBDetector.h"
@@ -9,10 +9,6 @@
 //other includes includes
 #include <TMath.h>
 
-// CLHEP includes 
-#include <CLHEP/Matrix/Vector.h>
-#include <CLHEP/Matrix/Matrix.h>
-#include <CLHEP/Matrix/SymMatrix.h>
 
 namespace depfet {
 
@@ -45,9 +41,9 @@ class TBVertexFitter {
   
  // Public Members -----------------
 
-  CLHEP::HepMatrix B; //Jacobian B = dh/dq for slope states q = (a,b)
+  VertexJacobian B; //Jacobian B = dh/dq for slope states q = (a,b)
 
-  CLHEP::HepMatrix A; //Jacobian A = dh/dr for vertex state r = (x,y,z)  
+  VertexJacobian A; //Jacobian A = dh/dr for vertex state r = (x,y,z)  
 
  // Private Members -----------------
  private:
