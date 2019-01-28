@@ -22,7 +22,6 @@
 #include "TRandom.h"
 
 // Namespaces
-using namespace CLHEP;
 using namespace std; 
 
 namespace depfet {
@@ -38,7 +37,7 @@ KalmanAlignmentAlgorithm2::KalmanAlignmentAlgorithm2() {}
  *  The Jacobian matrix is evaluated for track parematers p0=(tu, tv, u, v)
  *  and for given sensor position and rotation.   
  */
-HepMatrix KalmanAlignmentAlgorithm2::Jacobian_Alignment(const HepMatrix & p0, const HepMatrix & Rot,const HepVector & Pos ) const
+SensorAlignmentJacobian KalmanAlignmentAlgorithm2::Jacobian_Alignment(const TrackState & p0, const Matrix3d & Rot ) const
 {
   
   // First, we build the derivatives wrt. the alignment 
@@ -47,26 +46,26 @@ HepMatrix KalmanAlignmentAlgorithm2::Jacobian_Alignment(const HepMatrix & p0, co
   // Reference: see V. Karimäki's HIP paper
      
   // Local track parameters  
-  double tu = p0[0][0];
-  double tv = p0[1][0];
-  double u  = p0[2][0];
-  double v  = p0[3][0]; 
+  double tu = p0[0];
+  double tv = p0[1];
+  double u  = p0[2];
+  double v  = p0[3]; 
   
   // The jacobian matrix
-  HepMatrix Jaq(2, 6);
+  SensorAlignmentJacobian Jaq;
   
-  Jaq[0][0] = -1;      // dfu / ddu
-  Jaq[1][0] = 0;       // dfv / ddu
-  Jaq[0][1] = 0;       // dfu / ddv
-  Jaq[1][1] = -1;      // dfv / ddv
-  Jaq[0][2] = +tu;     // dfu / ddw
-  Jaq[1][2] = +tv;     // dfv / ddw
-  Jaq[0][3] = -v*tu;   // dfu / ddalpha
-  Jaq[1][3] = -v*tv;   // dfv / ddalpha
-  Jaq[0][4] = u*tu;    // dfu / ddbeta
-  Jaq[1][4] = u*tv;    // dfv / ddbeta
-  Jaq[0][5] = -v;      // dfu / ddgamma
-  Jaq[1][5] = u;       // dfv / ddgamma
+  Jaq(0,0) = -1;      // dfu / ddu
+  Jaq(1,0) = 0;       // dfv / ddu
+  Jaq(0,1) = 0;       // dfu / ddv
+  Jaq(1,1) = -1;      // dfv / ddv
+  Jaq(0,2) = +tu;     // dfu / ddw
+  Jaq(1,2) = +tv;     // dfv / ddw
+  Jaq(0,3) = -v*tu;   // dfu / ddalpha
+  Jaq(1,3) = -v*tv;   // dfv / ddalpha
+  Jaq(0,4) = u*tu;    // dfu / ddbeta
+  Jaq(1,4) = u*tv;    // dfv / ddbeta
+  Jaq(0,5) = -v;      // dfu / ddgamma
+  Jaq(1,5) = u;       // dfv / ddgamma
    
   //cout << "Jaq " << Jaq << endl; 
   
@@ -80,7 +79,7 @@ HepMatrix KalmanAlignmentAlgorithm2::Jacobian_Alignment(const HepMatrix & p0, co
   //cout << "A " << A << endl; 
    
   // Apply chain rule 
-  HepMatrix Ja=Jaq*A; 
+  auto Ja=Jaq*A; 
   
   //cout << "Ja " << Ja << endl; 
   

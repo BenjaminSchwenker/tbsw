@@ -5,11 +5,6 @@
 #include "TBDetector.h"
 #include "AlignableDet.h"
 
-// CLHEP includes 
-#include <CLHEP/Matrix/Vector.h>
-#include <CLHEP/Matrix/Matrix.h>
-#include <CLHEP/Matrix/SymMatrix.h>
-
 // ROOT includes
 #include "TFile.h"
 
@@ -59,7 +54,7 @@ class KalmanAlignmentAlgorithm2 {
    *  The Jacobian matrix is evaluated for track parematers p0=(tu, tv, u, v)
    *  at given sensor position and rotation.   
    */
-  CLHEP::HepMatrix Jacobian_Alignment(const CLHEP::HepMatrix & p0, const CLHEP::HepMatrix & Rot, const CLHEP::HepVector & Pos ) const;
+  SensorAlignmentJacobian Jacobian_Alignment(const TrackState & p0, const Matrix3d & Rot ) const;
    
 };
  
