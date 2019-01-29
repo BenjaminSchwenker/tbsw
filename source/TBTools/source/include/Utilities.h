@@ -10,17 +10,9 @@
 
 // ROOT includes
 #include "TString.h" // for char *Form(...)
-#include "TVectorD.h"
-#include "TMatrixD.h"
-#include "TMatrixDSym.h"
 #include "TObject.h"
 #include "TTree.h"
  	
-// CLHEP includes
-#include <CLHEP/Matrix/Vector.h>
-#include <CLHEP/Matrix/Matrix.h>
-#include <CLHEP/Matrix/SymMatrix.h>
-
 namespace depfet {
 
 /** Utilities.h
@@ -34,13 +26,7 @@ std::string to_string( int key );
  	 
 bool equal(double val1, double val2, double precision);
  	
-//////////////////////////////////////////////////////////////////////
-// Conversion of matrices
- 	
-void CLHEPtoROOT( CLHEP::HepMatrix & oldM, TMatrixD * newM);
-void CLHEPtoROOT( CLHEP::HepSymMatrix & oldM, TMatrixDSym * newM);
-void CLHEPtoROOT( CLHEP::HepVector & oldV, TVectorD * newV);
- 	
+
 //////////////////////////////////////////////////////////////////////
 // Find objects from ROOT files
  	

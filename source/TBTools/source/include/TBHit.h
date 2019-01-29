@@ -20,8 +20,8 @@ namespace depfet {
  *  A reco hit in a pixel detector. The following data 
  *  is persistently stored in the LCIO file
  *  
- *  - Measured hit coordinates (u,v) as HepMatrix
- *  - Measurement covariance matrix as HepSymMatrix
+ *  - Measured hit coordinates (u,v)
+ *  - Measurement covariance matrix 
  *  - Hit quality flag 
  *  - DAQ ID of detector owning the hit
  * 

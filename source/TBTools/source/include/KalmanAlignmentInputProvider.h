@@ -1,7 +1,7 @@
 #ifndef _KalmanAlignmentInputProvider_h
 #define _KalmanAlignmentInputProvider_h
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "AlignEvent.h"
 #include "TBTrack.h"
 #include "TBDetector.h"

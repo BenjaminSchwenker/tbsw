@@ -41,34 +41,31 @@ void KalmanAlignmentInputProvider::FillEvent(TBTrack& trk, AlignEvent& event)
   // Track has nHits hits  
   const int nHits = trk.GetNumHits();
   
-  // Number of track parameters
-  const int nTrackParam = 5;
-  
   // Maps daqid of hit to index
   int * ids = new int[nHits];
   
   ////////////////////////////////////////////////////////
   // Create and initialize vectors and matrices to be used 
    
-  // This is m, the actual detector measurements
-  HepVector Measurement(2*nHits, 0);
+  TVectorD * newMeasurement =  event.GetMeasurements()
+  newMeasurement->ResizeTo(2*nHits);
         
-  // This is V, the measurement covariance matrix
-  HepSymMatrix MeasuredCovariance(2*nHits, 0);
+  TMatrixD * newMeasuredCovariance = event.GetMeasuredCovariance();
+  newMeasuredCovariance->ResizeTo(2*nHits, 2);
   
-  // This is p0, the reference track parameters 
-  HepVector RefTrackParameters(nTrackParam, 0);
+  TMatrixD * newRefTrackParameters = event.GetRefTrackParameters();
+  newRefTrackParameters->ResizeTo(5);   
   
   ////////////////////////////////////////////////////////
   // Fill vectors and matrices  
   
   // Reference track parameters 
-  HepMatrix refstate = trk.GetReferenceState().GetPars(); 
-  RefTrackParameters[0] = refstate[0][0];  
-  RefTrackParameters[1] = refstate[1][0];    
-  RefTrackParameters[2] = refstate[2][0];          
-  RefTrackParameters[3] = refstate[3][0];   
-  RefTrackParameters[4] = refstate[4][0];           
+  auto refstate = trk.GetReferenceState().GetPars(); 
+  (*newRefTrackParameters)[0] = refstate(0);     
+  (*newRefTrackParameters)[1] = refstate(1);  
+  (*newRefTrackParameters)[2] = refstate(2);  
+  (*newRefTrackParameters)[3] = refstate(3);  
+  (*newRefTrackParameters)[4] = refstate(4);    
   
   // Fill index, measurments and measured cov      
   int index = 0;  
@@ -85,11 +82,12 @@ void KalmanAlignmentInputProvider::FillEvent(TBTrack& trk, AlignEvent& event)
     ids[index] = TE.GetDet().GetDAQID(); 
     
     // Fill measurments + cov 
-    TBHit& Hit = TE.GetHit();
-    for (int k=1; k<=2; ++k) {
-      Measurement(index*2+k) = Hit.GetCoord()(k,1); 
-      for (int l=k; l<=2; ++l) {     
-        MeasuredCovariance(index*2+k,index*2+l) = Hit.GetCov()(k,l);
+    auto hitCoord = TE.GetHit().GetCoord();
+    auto hitCov = TE.GetHit().GetCov();
+    for (int k=0; k<=1; ++k) {
+      (*newMeasurement)[index*2+k] = hitCoord(k); 
+      for (int l=0; l<=1; ++l) {     
+        (*newMeasuredCovariance)[index*2+k][l] = hitCov(k,l);
       }
     }
        	
@@ -99,10 +97,7 @@ void KalmanAlignmentInputProvider::FillEvent(TBTrack& trk, AlignEvent& event)
   ////////////////////////////////////////////////////////
   // Save all vectors/matrices in event
   event.GetIndex()->Adopt(nHits, ids);
-  CLHEPtoROOT(Measurement, event.GetMeasurements());
-  CLHEPtoROOT(MeasuredCovariance, event.GetMeasuredCovariance());
-  CLHEPtoROOT(RefTrackParameters, event.GetRefTrackParameters());
-  
+
   return; 
 }
 
@@ -116,7 +111,7 @@ TBTrack KalmanAlignmentInputProvider::MakeTBTrack( AlignEvent& event, TBDetector
   TVectorD & RefTrackParameters = *event.GetRefTrackParameters();     
   TArrayI & ids = *event.GetIndex();
   TVectorD & Measurements = *event.GetMeasurements();   
-  TMatrixDSym & MeasuredCovariance = *event.GetMeasuredCovariance();    
+  TMatrixD & MeasuredCovariance = *event.GetMeasuredCovariance();    
    
   ////////////////////////////////////////////////////////
   // Create and fill TBTrack object  
@@ -133,12 +128,12 @@ TBTrack KalmanAlignmentInputProvider::MakeTBTrack( AlignEvent& event, TBDetector
   trk.SetChiSqu(event.GetChi2());
 
   // Create reference track state (seed)
-  HepMatrix Pars(5,1,0); 
-  Pars[0][0] = RefTrackParameters[0];    // This is u'
-  Pars[1][0] = RefTrackParameters[1];    // This is v' 
-  Pars[2][0] = RefTrackParameters[2];    // This is u 
-  Pars[3][0] = RefTrackParameters[3];    // This is v  
-  Pars[4][0] = RefTrackParameters[4];    // This is q/p 
+  TrackState Pars; 
+  Pars(0) = RefTrackParameters[0];    // This is u'
+  Pars(1) = RefTrackParameters[1];    // This is v' 
+  Pars(2) = RefTrackParameters[2];    // This is u 
+  Pars(3) = RefTrackParameters[3];    // This is v  
+  Pars(4) = RefTrackParameters[4];    // This is q/p 
 
         
   TBTrackState Seed;
@@ -153,14 +148,14 @@ TBTrack KalmanAlignmentInputProvider::MakeTBTrack( AlignEvent& event, TBDetector
     // Create a TBHit 
     int daqid = ids[ihit]; 
     int ipl = detector.GetPlaneNumber(daqid); 
-    HepMatrix mCoord(2, 1);
-    mCoord[0][0] = Measurements[ihit*2+0];
-    mCoord[1][0] = Measurements[ihit*2+1]; 
-    HepSymMatrix mCov(2,1);
-    mCov[0][0] = MeasuredCovariance[ihit*2+0][ihit*2+0];
-    mCov[1][1] = MeasuredCovariance[ihit*2+1][ihit*2+1]; 
-    mCov[0][1] = MeasuredCovariance[ihit*2+0][ihit*2+1];  
-
+    Vector2d mCoord;
+    mCoord << Measurements[ihit*2+0] << Measurements[ihit*2+1]; 
+    Matrix2d mCov;
+    mCov(0,0) = MeasuredCovariance[ihit*2+0][0];
+    mCov(0,1) = MeasuredCovariance[ihit*2+0][1];  
+    mCov(1,0) = MeasuredCovariance[ihit*2+1][0]; 
+    mCov(1,1) = MeasuredCovariance[ihit*2+1][1];  
+    
     // Add hit to track 
     TBHit Hit(daqid, mCoord, mCov);    
     trk.GetTE(ipl).SetHit(Hit);     

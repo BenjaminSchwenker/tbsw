@@ -10,7 +10,7 @@ AlignEvent::AlignEvent()
 {
   fIndex = new TArrayI;
   fMeasurements = new TVectorD;
-  fMeasuredCovariance = new TMatrixDSym;
+  fMeasuredCovariance = new TMatrixD;
   fRefTrackParameters = new TVectorD;
 }
  	
