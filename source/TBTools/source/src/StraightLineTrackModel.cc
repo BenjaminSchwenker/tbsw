@@ -3,15 +3,13 @@
 // Author: Benjamin Schwenker, University of Göttingen 
 // <mailto:benjamin.schwenker@phys.uni-goettingen.de>
 
-// DEPFETTrackTool includes
+// TBTool includes
 #include "StraightLineTrackModel.h"
 
-#include "CLHEP/Vector/ThreeVector.h"
 
 #include <cmath>
 
 // Namespaces
-using namespace CLHEP;
 using namespace std; 
 
 namespace depfet {
@@ -267,33 +265,31 @@ int StraightLineTrackModel::TrackJacobian( const TrackState& State, const Refere
 /** Numerical computation of track derivatives for extrapolation from Surf to fSurf. 
  *  Linearization point is State at Surf.  
  */
-
-/*
-
-int StraightLineTrackModel::TrackJacobian( const HepMatrix& State, const ReferenceFrame& Surf, const ReferenceFrame& fSurf, HepMatrix& J)
+int StraightLineTrackModel::TrackJacobian( const TrackState& State, const ReferenceFrame& Surf, const ReferenceFrame& fSurf, TrackStateJacobian& J)
 {
  
-  int ndim = 5; 
-  HepMatrix j(ndim,ndim); 
-  HepMatrix tmpState = State;
+
+  TrackState  tmpState = State;
   bool error = false; 
    
   // Extrapolate track along helix to next detector plane 
-  HepMatrix statePred = Extrapolate(tmpState, Surf, fSurf,  error);
+  TrackState statePred = Extrapolate(tmpState, Surf, fSurf,  error);
   if (error) {
     std::cout << "ERR: Propagation to next detector failed. Quit fitting!" << std::endl;
     return 1;   
   }   
 
-  HepMatrix difPred = statePred;
-   
+  TrackState difPred = statePred;
+
+  J= TrackStateJacobian::Zero();
+
   // do column wise differntiation:
   for(int icol=0;icol<ndim;++icol){
     // choose step
-    double h=std::fabs(tmpState[icol][0])*1.e-4;
+    double h=std::fabs(tmpState[icol])*1.e-4;
     if(h<1e-8)h=1.e-8;
     // vary the state
-    tmpState[icol][0]+=h;
+    tmpState[icol]+=h;
     // extrap state 
     difPred = Extrapolate(tmpState, Surf, fSurf,  error); 
     if (error) {
@@ -303,21 +299,17 @@ int StraightLineTrackModel::TrackJacobian( const HepMatrix& State, const Referen
     // difference
     difPred-=statePred;
     // remove variation from state
-    tmpState[icol][0]-=h;
+    tmpState[icol]-=h;
     // fill jacobian with difference quotient
-    for(int irow=0;irow<ndim;++irow)j[irow][icol]=difPred[irow][0]/h;
+    for(int irow=0;irow<ndim;++irow)
+        J(irow,icol)=difPred[irow]/h;
   }
-  
-  // The final track jacobian 
-  J = j; 
-
   
       
   // Everything ok
   return 0;
-} 
-
-*/
+}
+ 
 
 /** Get local scatter gain matrix
  *  It calculates the derivates of track parameters State on 

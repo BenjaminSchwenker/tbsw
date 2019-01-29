@@ -145,7 +145,7 @@ class TBKalmanB {
    *  Input: IDIR           : -1 for backward filter, 1 for forward filter 
    *  Output : RESULT       : Estimated [x,C] pairss for all detectors 
    */
-  double FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::vector<CLHEP::HepMatrix>& RefStateVec ,int idir, FilterStateVec& Result); 
+  double FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::vector<TBTrackState>& RefStateVec ,int idir, FilterStateVec& Result); 
   
   /** Compute the weighted means of forward and backward filter estimated. In a 
    *  numerically robust way. Returns error flag.
