@@ -871,7 +871,7 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
     // Extrapolate filtered state to next track element 
     int inext = ipl+idir;
     if (inext!=istop)  {
-      HepMatrix& nxref = trk.GetTE(inext).GetState().GetPars();
+      auto nxref = trk.GetTE(inext).GetState().GetPars();
       exerr = TrackFitter.PropagateState(trk.GetTE(ipl), trk.GetTE(inext), xref, nxref, x0, C0); 
       if ( exerr ) { // just skip the track 
         _noOfFailedFits++;

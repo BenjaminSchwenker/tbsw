@@ -36,13 +36,13 @@ TrackImpl * TrackInputProvider::MakeLCIOTrack( TBTrack& trk )
   fittrack->setNdf( trk.GetReferenceState().GetPlane()  );           
   
   // Copy reference track 
-  HepMatrix refstate = trk.GetReferenceState().GetPars();
+  auto refstate = trk.GetReferenceState().GetPars();
    
-  fittrack->setTanLambda(refstate[0][0]);    // This is u'
-  fittrack->setPhi(refstate[1][0]);          // This is v' 
-  fittrack->setD0(refstate[2][0]);           // This is u 
-  fittrack->setZ0(refstate[3][0]);           // This is v                                   
-  fittrack->setOmega(refstate[4][0]);        // This is q/p
+  fittrack->setTanLambda(refstate[0]);    // This is u'
+  fittrack->setPhi(refstate[1]);          // This is v' 
+  fittrack->setD0(refstate[2]);           // This is u 
+  fittrack->setZ0(refstate[3]);           // This is v                                   
+  fittrack->setOmega(refstate[4]);        // This is q/p
    
   // Store hits in lcio track  
   int nTE = trk.GetNumTEs(); 
@@ -79,12 +79,12 @@ TBTrack TrackInputProvider::MakeTBTrack( lcio::Track * lciotrk, TBDetector& dete
   trk.SetChiSqu(lciotrk->getChi2());
   
   // Create reference track state (seed)
-  HepMatrix Pars(5,1,0); 
-  Pars[0][0] = lciotrk->getTanLambda();    // This is u'
-  Pars[1][0] = lciotrk->getPhi();          // This is v' 
-  Pars[2][0] = lciotrk->getD0();           // This is u 
-  Pars[3][0] = lciotrk->getZ0();           // This is v
-  Pars[4][0] = lciotrk->getOmega();        // This is q/p
+  TrackState Pars(5,1,0); 
+  Pars[0] = lciotrk->getTanLambda();    // This is u'
+  Pars[1] = lciotrk->getPhi();          // This is v' 
+  Pars[2] = lciotrk->getD0();           // This is u 
+  Pars[3] = lciotrk->getZ0();           // This is v
+  Pars[4] = lciotrk->getOmega();        // This is q/p
   
   TBTrackState Seed;
   Seed.Pars = Pars;

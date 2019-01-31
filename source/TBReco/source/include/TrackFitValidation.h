@@ -6,7 +6,7 @@
 #ifndef TrackFitValidation_H
 #define TrackFitValidation_H 1
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "TBDetector.h"
 
 // Include basic C

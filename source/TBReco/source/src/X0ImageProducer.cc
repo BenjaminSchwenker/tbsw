@@ -457,18 +457,18 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 	// Calculate vertex parameters
 	// In case the vertex multiplicity is larger than 1, these values will be set for every upstream downstream track combination 
 	bool vfiterr = VertexFitter.FitVertex(Vertex);
-	HepMatrix vertexpos = Vertex.GetPos();
-	HepMatrix vertexcov = Vertex.GetCov();
-	HepMatrix vertexglobalpos = Vertex.GetGlobalPos();
-	HepMatrix vertexglobalcov = Vertex.GetGlobalCov();
-	HepMatrix vertexres = Vertex.GetRes();
+	auto vertexpos = Vertex.GetPos();
+	auto vertexcov = Vertex.GetCov();
+	auto vertexglobalpos = Vertex.GetGlobalPos();
+	auto vertexglobalcov = Vertex.GetGlobalCov();
+	auto vertexres = Vertex.GetRes();
 
-	_root_vertex_u = vertexpos[0][0];
-	_root_vertex_v = vertexpos[1][0];
-	_root_vertex_w = vertexpos[2][0];
-	_root_vertex_x = vertexglobalpos[0][0];
-	_root_vertex_y = vertexglobalpos[1][0];
-	_root_vertex_z = vertexglobalpos[2][0];
+	_root_vertex_u = vertexpos[0];
+	_root_vertex_v = vertexpos[1];
+	_root_vertex_w = vertexpos[2];
+	_root_vertex_x = vertexglobalpos[0];
+	_root_vertex_y = vertexglobalpos[1];
+	_root_vertex_z = vertexglobalpos[2];
 
 	_root_vertex_u_var = vertexcov[0][0];
 	_root_vertex_v_var = vertexcov[1][1];
@@ -479,8 +479,8 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 
 	_root_vertex_chi2ndf = Vertex.GetChi2Ndof();
 	_root_vertex_prob = TMath::Prob(Vertex.GetChi2(),Vertex.GetNdf());
-	_root_vertex_u_res = vertexres[2][0];
-	_root_vertex_v_res = vertexres[3][0];
+	_root_vertex_u_res = vertexres[2];
+	_root_vertex_v_res = vertexres[3];
     
     for(int idown=0;idown<up2down[iup].size();idown++)
 	{
@@ -497,19 +497,17 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		//Here we use the In and Out State and the GetScatterKinks function of the TBKalmanMSC Class
 		
 		//Angles and angle errors
-		HepMatrix theta(2,1,0);
-		HepSymMatrix Cov(2,0);
-		theta = TrackFitterMSC.GetScatterKinks(dut, InState, OutState); 
-		Cov = TrackFitterMSC.GetScatterKinkCov(dut, InState, OutState);
+		auto theta = TrackFitterMSC.GetScatterKinks(dut, InState, OutState); 
+		auto Cov = TrackFitterMSC.GetScatterKinkCov(dut, InState, OutState);
 		
 		// Get the track parameters of the fitted track on the current sensor
 		// The u and v positions are needed for a position-resolved measurement
-		HepMatrix p_in = InState.GetPars();
-		HepMatrix p_out = OutState.GetPars();
+		auto p_in = InState.GetPars();
+		auto p_out = OutState.GetPars();
 
 		// Get the covariance entries of the intersection coordinates
-		HepSymMatrix instate_covs=InState.GetCov();
-		HepSymMatrix outstate_covs=OutState.GetCov();
+		auto instate_covs=InState.GetCov();
+		auto outstate_covs=OutState.GetCov();
 	 
 		_root_u_var=1.0/(1.0/instate_covs[2][2]+1.0/outstate_covs[2][2]);  // weighted mean
 		_root_v_var=1.0/(1.0/instate_covs[3][3]+1.0/outstate_covs[3][3]);  // weighted mean
@@ -523,42 +521,42 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		_rootTrackProbCombo = TMath::Prob( comboChi2 ,uptrack.GetNDF()+downtrack.GetNDF());
 
  
-		_root_u_in = p_in[2][0]; 
-		_root_v_in = p_in[3][0];
-		_root_u_out = p_out[2][0]; 
-		_root_v_out = p_out[3][0];
-		_root_u = (instate_covs[2][2]*p_in[2][0] + outstate_covs[2][2]*p_out[2][0])/(instate_covs[2][2]+outstate_covs[2][2]); // weighted mean
-		_root_v = (instate_covs[3][3]*p_in[3][0] + outstate_covs[3][3]*p_out[3][0])/(instate_covs[3][3]+outstate_covs[3][3]); // weightes mean 
+		_root_u_in = p_in[2]; 
+		_root_v_in = p_in[3];
+		_root_u_out = p_out[2]; 
+		_root_v_out = p_out[3];
+		_root_u = (instate_covs[2][2]*p_in[2] + outstate_covs[2][2]*p_out[2])/(instate_covs[2][2]+outstate_covs[2][2]); // weighted mean
+		_root_v = (instate_covs[3][3]*p_in[3] + outstate_covs[3][3]*p_out[3])/(instate_covs[3][3]+outstate_covs[3][3]); // weightes mean 
 	   
-		_root_angle1 = theta[0][0];
-		_root_angle2 = theta[1][0];
+		_root_angle1 = theta[0];
+		_root_angle2 = theta[1];
 		_root_angle1_var = Cov[0][0];
 		_root_angle2_var = Cov[1][1];
 
-		_root_u_in = p_in[2][0]; 
-		_root_v_in = p_in[3][0];
-		_root_u_out = p_out[2][0]; 
-		_root_v_out = p_out[3][0];
-		_root_u = (instate_covs[2][2]*p_in[2][0] + outstate_covs[2][2]*p_out[2][0])/(instate_covs[2][2]+outstate_covs[2][2]); // weighted mean
-		_root_v = (instate_covs[3][3]*p_in[3][0] + outstate_covs[3][3]*p_out[3][0])/(instate_covs[3][3]+outstate_covs[3][3]); // weightes mean 
+		_root_u_in = p_in[2]; 
+		_root_v_in = p_in[3];
+		_root_u_out = p_out[2]; 
+		_root_v_out = p_out[3];
+		_root_u = (instate_covs[2][2]*p_in[2] + outstate_covs[2][2]*p_out[2])/(instate_covs[2][2]+outstate_covs[2][2]); // weighted mean
+		_root_v = (instate_covs[3][3]*p_in[3] + outstate_covs[3][3]*p_out[3])/(instate_covs[3][3]+outstate_covs[3][3]); // weightes mean 
 	   
 
 		_root_angle1_var = Cov[0][0];
 		_root_angle2_var = Cov[1][1];
 
 		// Construct the u and v residuals and calculate a chi2 value from them
-		HepMatrix res=p_in-p_out;
-		HepSymMatrix res_covs=instate_covs+outstate_covs;
+		auto res=p_in-p_out;
+		auto res_covs=instate_covs+outstate_covs;
 
-		int ierr; 
+		bool invertible;
 		// Use only the sub matrices, which describe the spatial coordinates of the trackstate
-		HepMatrix jchisq = res.sub(3,4,1,1).T()*res_covs.sub(3,4).inverse(ierr)*res.sub(3,4,1,1);
+		auto jchisq = res.block<2,1>(2,0).transpose()*res_covs.block<2,2>(3,3).inverse()*res.block<2,1>(2,0);
 
 		streamlog_out(MESSAGE1) << "Complete Covariance matrix: "<<res_covs.sub(1,4)<<endl;
 		streamlog_out(MESSAGE1) << "Part of Covariance matrix used here: "<<res_covs.sub(3,4)<<endl;
 
-		_root_chi2=jchisq[0][0];
-		_root_prob=TMath::Prob(jchisq[0][0], 2);
+		_root_chi2=jchisq[0];
+		_root_prob=TMath::Prob(jchisq[0], 2);
 
         if (_m_toy) 
 		{
@@ -585,7 +583,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		  double kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 ));    
 	  
 		  // Scatter track ('in' state -> 'out' state)
-		  HepMatrix toystate=p_in;
+		  auto toystate=p_in;
 		  materialeffect::ScatterTrack(toystate, kink_u, kink_v); 
 
 		  TBTrackState outstate_toy;

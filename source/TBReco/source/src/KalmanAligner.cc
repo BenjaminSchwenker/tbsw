@@ -289,26 +289,23 @@ void KalmanAligner::end()
   
   int nSensors = _detector.GetNSensors();
   int nParameters = 6;  
-  AlignableDet AlignState(nSensors,nParameters);
+  AlignableDet AlignState(nSensors);
   
-  for (int iSensor=0; iSensor < nSensors; iSensor++){       
-    AlignState.alignmentParameters[iSensor*nParameters + 0] = 0;
-    AlignState.alignmentCovariance[iSensor*nParameters + 0][iSensor*nParameters + 0] = _errorsShiftX[iSensor]*_errorsShiftX[iSensor];
-    
-    AlignState.alignmentParameters[iSensor*nParameters + 1] = 0;
-    AlignState.alignmentCovariance[iSensor*nParameters + 1][iSensor*nParameters + 1] = _errorsShiftY[iSensor]*_errorsShiftY[iSensor];
-    
-    AlignState.alignmentParameters[iSensor*nParameters + 2] = 0;
-    AlignState.alignmentCovariance[iSensor*nParameters + 2][iSensor*nParameters + 2] = _errorsShiftZ[iSensor]*_errorsShiftZ[iSensor];
-    
-    AlignState.alignmentParameters[iSensor*nParameters + 3] = 0;
-    AlignState.alignmentCovariance[iSensor*nParameters + 3][iSensor*nParameters + 3] = _errorsAlpha[iSensor]*_errorsAlpha[iSensor];
-    
-    AlignState.alignmentParameters[iSensor*nParameters + 4] = 0;
-    AlignState.alignmentCovariance[iSensor*nParameters + 4][iSensor*nParameters + 4] = _errorsBeta[iSensor]*_errorsBeta[iSensor];
-    
-    AlignState.alignmentParameters[iSensor*nParameters + 5] = 0;
-    AlignState.alignmentCovariance[iSensor*nParameters + 5][iSensor*nParameters + 5] = _errorsGamma[iSensor]*_errorsGamma[iSensor];
+  for (int iSensor=0; iSensor < nSensors; iSensor++){     
+
+    SensorAlignmentParameters params;
+    alignParams << 0, 0, 0 , 0, 0, 0;
+
+    SensorAlignmentCovariance alignCov = SensorAlignmentCovariance::Zeros();   
+    alignCov(0,0) = _errorsShiftX[iSensor]*_errorsShiftX[iSensor];
+    alignCov(1,1) = _errorsShiftY[iSensor]*_errorsShiftY[iSensor];
+    alignCov(2,2) = _errorsShiftZ[iSensor]*_errorsShiftZ[iSensor];
+    alignCov(3,3) = _errorsAlpha[iSensor]*_errorsAlpha[iSensor]; 
+    alignCov(4,4) = _errorsBeta[iSensor]*_errorsBeta[iSensor];
+    alignCov(5,5) = _errorsGamma[iSensor]*_errorsGamma[iSensor];
+   
+    AlignState.SetAlignState(iSensor, alignParams);
+    AlignState.SetAlignCovariance(iSensor, alignCov);     
   }
    
   ////////////////////////////////////////////////////////////
@@ -337,25 +334,23 @@ void KalmanAligner::end()
   
   streamlog_out ( MESSAGE3 )  << endl << "Alignment constants:" << endl << endl; 
     
-  HepSymMatrix reco_cov = reco_const.alignmentCovariance;
-  
   for ( int ipl = 0; ipl < _detector.GetNSensors(); ipl++ ) {
     
     // Print final geometry constants 
     // ------------------------------  
     
     // This is the position vector of the sensor
-    HepVector pos_f = tmp_detector.GetDet(ipl).GetNominal().GetPosition(); 
+    auto pos_f = tmp_detector.GetDet(ipl).GetNominal().GetPosition(); 
     
     // This is the rotation matrix of the sensor; it 
     // contains a discrete and a continuous factor. 
-    HepMatrix Rot_f = tmp_detector.GetDet(ipl).GetNominal().GetRotation();
+    auto Rot_f = tmp_detector.GetDet(ipl).GetNominal().GetRotation();
 
     // This is the discrete factor of sensor rotation. 
-    HepMatrix DRot = tmp_detector.GetDet(ipl).GetDiscrete().GetRotation();
+    auto DRot = tmp_detector.GetDet(ipl).GetDiscrete().GetRotation();
     
     // This is finally the continous factor of the rotation
-    HepMatrix CRot_f = Rot_f*DRot.T(); 
+    auto CRot_f = Rot_f*DRot.transpose(); 
     
     // Euler angles are defined wrt. the continous rotation 
     double alpha_f, beta_f, gamma_f; 
@@ -363,36 +358,36 @@ void KalmanAligner::end()
     
     // Print 
     streamlog_out ( MESSAGE3 ) << endl << "Sensor plane " << ipl << endl << endl;  
-    streamlog_out ( MESSAGE3 ) << endl << "  final x [mm] " << pos_f[0] << " +/- " << std::sqrt(reco_cov[ipl*6+0][ipl*6+0]) << endl; 
-    streamlog_out ( MESSAGE3 ) << endl << "  final y [mm] " << pos_f[1] << " +/- " << std::sqrt(reco_cov[ipl*6+1][ipl*6+1]) << endl; 
-    streamlog_out ( MESSAGE3 ) << endl << "  final z [mm] " << pos_f[2] << " +/- " << std::sqrt(reco_cov[ipl*6+2][ipl*6+2]) << endl; 
-    streamlog_out ( MESSAGE3 ) << endl << "  final alpha [rad] " << alpha_f << " +/- " << std::sqrt(reco_cov[ipl*6+3][ipl*6+3]) << endl; 
-    streamlog_out ( MESSAGE3 ) << endl << "  final beta  [rad] " << beta_f << " +/- " << std::sqrt(reco_cov[ipl*6+4][ipl*6+4]) << endl; 
-    streamlog_out ( MESSAGE3 ) << endl << "  final gamma [rad] " << gamma_f << " +/- " << std::sqrt(reco_cov[ipl*6+5][ipl*6+5]) << endl; 
+    streamlog_out ( MESSAGE3 ) << endl << "  final x [mm] " << pos_f[0] << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(0,0) )  << endl; 
+    streamlog_out ( MESSAGE3 ) << endl << "  final y [mm] " << pos_f[1] << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(1,1) ) << endl; 
+    streamlog_out ( MESSAGE3 ) << endl << "  final z [mm] " << pos_f[2] << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(2,2) ) << endl; 
+    streamlog_out ( MESSAGE3 ) << endl << "  final alpha [rad] " << alpha_f << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(3,3) ) << endl; 
+    streamlog_out ( MESSAGE3 ) << endl << "  final beta  [rad] " << beta_f << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(4,4) ) << endl; 
+    streamlog_out ( MESSAGE3 ) << endl << "  final gamma [rad] " << gamma_f << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(5,5) ) << endl; 
 
     // Print incremental alignment corrections 
     // ---------------------------------------  
     
     // Initial alignment 
-    HepMatrix Rot_i = _detector.GetDet(ipl).GetNominal().GetRotation(); 
-    HepVector pos_i = _detector.GetDet(ipl).GetNominal().GetPosition(); 
+    auto Rot_i = _detector.GetDet(ipl).GetNominal().GetRotation(); 
+    auto pos_i = _detector.GetDet(ipl).GetNominal().GetPosition(); 
 
     // Diff rotation  
-    HepMatrix diffRot = Rot_f*Rot_i.T();
+    auto diffRot = Rot_f*Rot_i.transpose();
     double dalpha, dbeta, dgamma; 
     GetAnglesKarimaki(diffRot, dalpha, dbeta, dgamma);
        
     // Diff shift   
-    HepVector dr = pos_f - pos_i;
+    auto dr = pos_f - pos_i;
      
     // Print 
     streamlog_out ( MESSAGE3 ) << endl << "Sensor plane " << ipl << endl << endl;  
-    streamlog_out ( MESSAGE3 ) << endl << "  correction dx [mm] " << dr[0] << " +/- " << std::sqrt(reco_cov[ipl*6+0][ipl*6+0]) << endl; 
-    streamlog_out ( MESSAGE3 ) << endl << "  correction dy [mm] " << dr[1] << " +/- " << std::sqrt(reco_cov[ipl*6+1][ipl*6+1]) << endl; 
-    streamlog_out ( MESSAGE3 ) << endl << "  correction dz [mm] " << dr[2] << " +/- " << std::sqrt(reco_cov[ipl*6+2][ipl*6+2]) << endl; 
-    streamlog_out ( MESSAGE3 ) << endl << "  correction dalpha [rad] " << dalpha << " +/- " << std::sqrt(reco_cov[ipl*6+3][ipl*6+3]) << endl; 
-    streamlog_out ( MESSAGE3 ) << endl << "  correction dbeta [rad] " << dbeta << " +/- " << std::sqrt(reco_cov[ipl*6+4][ipl*6+4]) << endl; 
-    streamlog_out ( MESSAGE3 ) << endl << "  correction dgamma [rad] " << dgamma << " +/- " << std::sqrt(reco_cov[ipl*6+5][ipl*6+5]) << endl; 
+    streamlog_out ( MESSAGE3 ) << endl << "  correction dx [mm] " << dr[0] << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(0,0) ) << endl; 
+    streamlog_out ( MESSAGE3 ) << endl << "  correction dy [mm] " << dr[1] << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(1,1) ) << endl; 
+    streamlog_out ( MESSAGE3 ) << endl << "  correction dz [mm] " << dr[2] << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(2,2) ) << endl; 
+    streamlog_out ( MESSAGE3 ) << endl << "  correction dalpha [rad] " << dalpha << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(3,3) ) << endl; 
+    streamlog_out ( MESSAGE3 ) << endl << "  correction dbeta [rad] " << dbeta << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(4,4) ) << endl; 
+    streamlog_out ( MESSAGE3 ) << endl << "  correction dgamma [rad] " << dgamma << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(5,5) ) << endl; 
       
   }
        

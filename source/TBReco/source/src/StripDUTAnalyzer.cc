@@ -267,8 +267,8 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
     if( dut.GetPlaneNumber() == ipl )
     {         
       streamlog_out(MESSAGE2) << " DUT hit at plane " << ipl 
-                              << "   U [mm]= " << RecoHit.GetCoord()[0][0]
-                              << "   V [mm]= " << RecoHit.GetCoord()[1][0] 
+                              << "   U [mm]= " << RecoHit.GetCoord()[0]
+                              << "   V [mm]= " << RecoHit.GetCoord()[1] 
                               << endl;
       
       HitStore.push_back( RecoHit );  
@@ -318,12 +318,12 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
         if (hit2track[ihit] >= 0) continue;   
         
         TBHit& RecoHit = HitStore[ihit];
-        double uhit = RecoHit.GetCoord()[0][0];
-        double vhit = RecoHit.GetCoord()[1][0];
+        double uhit = RecoHit.GetCoord()[0];
+        double vhit = RecoHit.GetCoord()[1];
 
         TBTrack& trk = TrackStore[itrk]; 
-        double utrk = trk.GetTE(_idut).GetState().GetPars()[2][0];
-        double vtrk = trk.GetTE(_idut).GetState().GetPars()[3][0];
+        double utrk = trk.GetTE(_idut).GetState().GetPars()[2];
+        double vtrk = trk.GetTE(_idut).GetState().GetPars()[3];
         
         double hitdist = std::abs(utrk-uhit) + std::abs(vtrk-vhit);
                       
@@ -381,8 +381,8 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
     
     TBHit& hit = HitStore[ihit];
     
-    _rootHitU = hit.GetCoord()[0][0];         
-    _rootHitV = hit.GetCoord()[1][0];   
+    _rootHitU = hit.GetCoord()[0];         
+    _rootHitV = hit.GetCoord()[1];   
     
     _rootHitSigmaU = hit.GetCov()[0][0]; 
     _rootHitSigmaV = hit.GetCov()[1][1]; 
@@ -411,25 +411,25 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
       _rootHitHasTrack = 0;  // matched         
        
       TBTrack& trk = TrackStore[hit2track[ihit]];      
-      HepMatrix p = trk.GetTE(_idut).GetState().GetPars();
-      HepSymMatrix C = trk.GetTE(_idut).GetState().GetCov();  
+      auto p = trk.GetTE(_idut).GetState().GetPars();
+      auto C = trk.GetTE(_idut).GetState().GetCov();  
       double hitchi2 = TrackFitter.GetPredictedChi2(p, C, hit);
 
       _rootHitFitMom = trk.GetMomentum();   
            
       // Get predicted hit coordinates 
-      double pu = p[2][0];
-      double pv = p[3][0];
+      double pu = p[2];
+      double pv = p[3];
         
-      _rootHitFitdUdW = p[0][0];     
-      _rootHitFitdVdW = p[1][0];    
-      _rootHitFitU = p[2][0];           
-      _rootHitFitV = p[3][0];          
+      _rootHitFitdUdW = p[0];     
+      _rootHitFitdVdW = p[1];    
+      _rootHitFitU = p[2];           
+      _rootHitFitV = p[3];          
           
       _rootHitFitSigmaU  = TMath::Sqrt(C[2][2]);    
       _rootHitFitSigmaV  = TMath::Sqrt(C[3][3]);  
-      _rootHitPullResidualU = (hit.GetCoord()[0][0] - p[2][0]) / TMath::Sqrt( C[2][2] + hit.GetCov()[0][0] ) ;   
-      _rootHitPullResidualV = (hit.GetCoord()[1][0] - p[3][0]) / TMath::Sqrt( C[3][3] + hit.GetCov()[1][1] ) ;  
+      _rootHitPullResidualU = (hit.GetCoord()[0] - p[2]) / TMath::Sqrt( C[2][2] + hit.GetCov()[0][0] ) ;   
+      _rootHitPullResidualV = (hit.GetCoord()[1] - p[3]) / TMath::Sqrt( C[3][3] + hit.GetCov()[1][1] ) ;  
                                  
       _rootHitFitCellU = dut.GetUCellFromCoord( pu, pv );        
       _rootHitFitCellV = dut.GetVCellFromCoord( pu, pv );       
@@ -485,19 +485,19 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
 
     _rootTrackFitMom = trk.GetMomentum();   
     
-    HepMatrix p = trk.GetTE(_idut).GetState().GetPars();
-    HepSymMatrix C = trk.GetTE(_idut).GetState().GetCov();  
+    auto p = trk.GetTE(_idut).GetState().GetPars();
+    auto C = trk.GetTE(_idut).GetState().GetCov();  
            
     // Get predicted hit coordinates 
-    double pu = p[2][0];
-    double pv = p[3][0];
+    double pu = p[2];
+    double pv = p[3];
         
     // Get readout channels  
               
-    _rootTrackFitdUdW = p[0][0];     
-    _rootTrackFitdVdW = p[1][0];    
-    _rootTrackFitU = p[2][0];           
-    _rootTrackFitV = p[3][0];    
+    _rootTrackFitdUdW = p[0];     
+    _rootTrackFitdVdW = p[1];    
+    _rootTrackFitU = p[2];           
+    _rootTrackFitV = p[3];    
     _rootTrackFitCellU = dut.GetUCellFromCoord( pu, pv );      
     _rootTrackFitCellV = dut.GetVCellFromCoord( pu, pv );      
     _rootTrackFitCellCenterU = dut.GetPixelCenterCoordU( _rootTrackFitCellV, _rootTrackFitCellU ); 

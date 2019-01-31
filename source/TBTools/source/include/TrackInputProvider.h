@@ -4,7 +4,7 @@
 // Include LCIO classes
 #include <IMPL/TrackImpl.h>
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "TBTrack.h"
 #include "TBDetector.h"
  

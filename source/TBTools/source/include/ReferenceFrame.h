@@ -10,8 +10,8 @@ namespace depfet {
  *  Handles coordinate transformations between a pair of cartesian coordinate
  *  systems. The coordinate systems will be called GLOBAL and LOCAL frames. 
  *  
- *  A ReferenceFrame object consists of a HepVector and a HepMatrix. The vector 
- *  is pointing to origin of the local frame. The HepMatrix is the 3x3 rotation 
+ *  A ReferenceFrame object consists of a 3D vector and a 3D rotation matrix. The vector 
+ *  is pointing to origin of the local frame. The matrix is the 3x3 rotation 
  *  matrix into the local frame. 
  */
 using Eigen::Vector3d;
