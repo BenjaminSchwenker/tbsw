@@ -230,7 +230,7 @@ void TBDetector::ReadGearConfiguration( )
       streamlog_out(MESSAGE3) << "Rotation matrix BUG. Euler rotation matrix determinant is " << EulerRotation.determinant() << std::endl; 
     
     // Combine the two factors in proper order
-    Vector3d NominalRotation = EulerRotation*DiscreteRotation;
+    Matrix3d NominalRotation = EulerRotation*DiscreteRotation;
     nominal.SetRotation(NominalRotation);    
     
     // Set nominal frame - initial guess where detector is in space 
@@ -335,7 +335,7 @@ void TBDetector::ReadAlignmentDB( std::string FileName )
     nominal.SetPosition(NominalPosition);
       
     // AlignmentDB stores Euler angles in rad 
-    Matrix3dx EulerRotation;
+    Matrix3d EulerRotation;
     double alpha = histoMap["hRotationAlpha"]->GetBinContent(bin);   
     double beta  = histoMap["hRotationBeta"]->GetBinContent(bin);  
     double gamma = histoMap["hRotationGamma"]->GetBinContent(bin);  

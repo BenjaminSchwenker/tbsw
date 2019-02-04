@@ -21,11 +21,11 @@ namespace depfet {
 TBTrackState::TBTrackState() :  Plane(0)
 {
     Pars=TrackState::Zero();
-    Cov=TrackStateCov::Zero();
+    Cov=TrackStateCovariance::Zero();
 
 }
 
-TBTrackState::TBTrackState(TrackState aPars, TrackStateCov aCov, int aPlane) : Plane(aPlane)
+TBTrackState::TBTrackState(TrackState aPars, TrackStateCovariance aCov, int aPlane) : Plane(aPlane)
 { 
   // Set the plane number
   Plane = aPlane

@@ -47,13 +47,13 @@ void KalmanAlignmentInputProvider::FillEvent(TBTrack& trk, AlignEvent& event)
   ////////////////////////////////////////////////////////
   // Create and initialize vectors and matrices to be used 
    
-  TVectorD * newMeasurement =  event.GetMeasurements()
+  TVectorD * newMeasurement =  event.GetMeasurements();
   newMeasurement->ResizeTo(2*nHits);
         
   TMatrixD * newMeasuredCovariance = event.GetMeasuredCovariance();
   newMeasuredCovariance->ResizeTo(2*nHits, 2);
   
-  TMatrixD * newRefTrackParameters = event.GetRefTrackParameters();
+  TVectorD * newRefTrackParameters = event.GetRefTrackParameters();
   newRefTrackParameters->ResizeTo(5);   
   
   ////////////////////////////////////////////////////////
@@ -149,7 +149,7 @@ TBTrack KalmanAlignmentInputProvider::MakeTBTrack( AlignEvent& event, TBDetector
     int daqid = ids[ihit]; 
     int ipl = detector.GetPlaneNumber(daqid); 
     Vector2d mCoord;
-    mCoord << Measurements[ihit*2+0] << Measurements[ihit*2+1]; 
+    mCoord << Measurements[ihit*2+0] , Measurements[ihit*2+1]; 
     Matrix2d mCov;
     mCov(0,0) = MeasuredCovariance[ihit*2+0][0];
     mCov(0,1) = MeasuredCovariance[ihit*2+0][1];  

@@ -31,13 +31,13 @@ TBVertexFitter::TBVertexFitter(int ipl, TBDetector det)
   
   //Define Matrices used for vertex fit
   //Jacobian B = dh/dq for slope states q = (a,b,(q/p))
-  B = VertexJacobian::Zeros();
+  B = VertexJacobian::Zero();
   B(0,0) = 1;	//dh1/da
   B(1,1) = 1;	//dh2/db
   B(4,2) = 1;	//dh5/d(q/p)
   
   //Jacobian A = dh/dr for vertex state r = (x,y,z)
-  A = VertexJacobian::Zeros();
+  A = VertexJacobian::Zero();
   A(2,0) = 1;	//dh3/dx
   A(3,1) = 1;	//dh4/dy
 
@@ -48,8 +48,8 @@ bool TBVertexFitter::FitVertex(TBVertex& Vertex)
   int ierr = 0; 
   
   //Initial vertex guess at (0,0,0) and large covariance
-  VertexParameter r = VertexParameter::Zeros();   
-  VertexCovariance C = VertexCovariance::Zeros();  
+  VertexParameter r = VertexParameter::Zero();   
+  VertexCovariance C = VertexCovariance::Zero();  
   C(0,0) = 10000*10000;
   C(1,1) = 10000*10000;
   C(2,2) = 10000*10000;
@@ -59,7 +59,7 @@ bool TBVertexFitter::FitVertex(TBVertex& Vertex)
   int ndf = -3;
   //Initialisation of residual vector
   VertexResidual zeta;
-  zeta = VertexResidual::Zeros();
+  zeta = VertexResidual::Zero();
    
   //Loop over trackstates
   for (int i=0; i < Vertex.GetStates().size(); i++) {
@@ -69,14 +69,14 @@ bool TBVertexFitter::FitVertex(TBVertex& Vertex)
     auto V = Vertex.GetStates()[i].GetCov();
 
     //Calculate filter matrices
-    auto G = V.inverse(ierr);
-    if (ierr != 0) {
-      streamlog_out(ERROR) << "ERR: Matrix inversion failed. Quit fitting!"
-                           << std::endl;
-      return true;
-    }	
-    auto W = (B.T()*G*B).inverse();
-    auto GB = G - G * B * W * B.T() * G;
+    auto G = V.inverse();
+    //if (ierr != 0) {
+    //  streamlog_out(ERROR) << "ERR: Matrix inversion failed. Quit fitting!"
+    //                       << std::endl;
+    //  return true;
+    //}	
+    auto W = (B.transpose()*G*B).inverse();
+    auto GB = G - G * B * W * B.transpose() * G;
 
     //Modify Jacobian A to represent current trackstate
     A(2,2) = -p(0);
@@ -84,17 +84,17 @@ bool TBVertexFitter::FitVertex(TBVertex& Vertex)
 
     //Update vertex, covariance
     auto Ctemp = C;
-    C = (C.inverse() + A.T()*GB*A).inverse();
+    C = (C.inverse() + A.transpose()*GB*A).inverse();
 
     auto rtemp = r;
-    r = C * (Ctemp.inverse()*r + A.T()*GB*p);
+    r = C * (Ctemp.inverse()*r + A.transpose()*GB*p);
 
     //calculate slope state
-    auto q = W * B.T() * G * (p - A * r);
+    auto q = W * B.transpose() * G * (p - A * r);
 
     //compute residual and chi2 increment
     zeta = p - A * r - B * q;
-    chi2 += (zeta.T() * G * zeta + (r - rtemp).T() * Ctemp.inverse() * (r - rtemp))[0][0];
+    chi2 += (zeta.transpose() * G * zeta + (r - rtemp).transpose() * Ctemp.inverse() * (r - rtemp))[0];
 
     //increase Number degrees of freedom
     ndf += 2;
@@ -106,7 +106,7 @@ bool TBVertexFitter::FitVertex(TBVertex& Vertex)
   ReferenceFrame localframe = detector.GetDet(plnr).GetNominal();
 
   // Get rotation matrix and position offset of local coordinate system of DUT plane
-  auto Rotation = localframe.GetRotRef().T();
+  auto Rotation = localframe.GetRotRef().transpose();
   auto Offset = localframe.GetPosRef();
 
   /*cout<<"Rotation Matrix"<<endl;
@@ -120,7 +120,7 @@ bool TBVertexFitter::FitVertex(TBVertex& Vertex)
 
   // Now transform the local vertex position and its covariance
   auto r_global=Rotation*r+Offset;
-  auto C_global=Rotation.T()*C*Rotation;
+  auto C_global=Rotation.transpose()*C*Rotation;
 
   /*cout<<"Vertex position in local coords:"<<endl;
   cout<<r<<endl;

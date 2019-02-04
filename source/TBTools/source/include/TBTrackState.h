@@ -1,9 +1,11 @@
 #ifndef TBTRACKSTATE_H
 #define TBTRACKSTATE_H 1
 
-#include<Eigen/Core>
-typedef Eigen::Vector5d TrackState;
-typedef Eigen::Matrix5d TrackStateCov;
+#include<Eigen/Dense>
+typedef Eigen::Matrix<double,5,1> TrackState;
+typedef Eigen::Matrix<double,5,5> TrackStateCovariance;
+
+
 
 namespace depfet { 
 
@@ -32,7 +34,7 @@ class TBTrackState {
   // Parameter vector
   TrackState Pars;
   // Parameter covariance (5x5 matrix)
-  TrackStateCov Cov;
+  TrackStateCovariance Cov;
   // Reference plane number
   int Plane; 
     
@@ -41,7 +43,7 @@ class TBTrackState {
    
   // Constructors
   TBTrackState(); 
-  TBTrackState(TrackState aPars, TrackStateCov aCov=TrackStateCov::Zero(), int aPlane=0);
+  TBTrackState(TrackState aPars, TrackStateCovariance aCov=TrackStateCovariance::Zero(), int aPlane=0);
   
   // Dimension of track state 
   int GetDim() { return 5;}
@@ -51,8 +53,8 @@ class TBTrackState {
   TrackState&  GetPars() { return Pars; }
    
   // Get/Set parameter covariance 
-  void SetCov(const TrackStateCov& aCov ) { Cov = aCov; }
-  TrackStateCov&  GetCov() { return Cov; }
+  void SetCov(const TrackStateCovariance& aCov ) { Cov = aCov; }
+  TrackStateCovariance&  GetCov() { return Cov; }
 
   // Get/Set plane number 
   void SetPlane(int aPlane ) { Plane = aPlane; }
