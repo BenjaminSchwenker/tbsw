@@ -79,7 +79,7 @@ TBTrack TrackInputProvider::MakeTBTrack( lcio::Track * lciotrk, TBDetector& dete
   trk.SetChiSqu(lciotrk->getChi2());
   
   // Create reference track state (seed)
-  TrackState Pars(5,1,0); 
+  TrackState Pars; 
   Pars[0] = lciotrk->getTanLambda();    // This is u'
   Pars[1] = lciotrk->getPhi();          // This is v' 
   Pars[2] = lciotrk->getD0();           // This is u 

@@ -206,7 +206,7 @@ bool TBKalmanMSC::ProcessTrack(TBTrack& trk, int dir, bool biased)
      
     trk.GetReferenceState().Pars = trk.GetTE( ipl ).GetState().GetPars();  
     trk.GetReferenceState().SetPlane(ipl);  
-    trk.SetMomentum(std::abs(charge/trk.GetTE( ipl ).GetState().GetPars()[4][0]));
+    trk.SetMomentum(std::abs(charge/trk.GetTE( ipl ).GetState().GetPars()[4]));
     
     
   }
@@ -243,7 +243,7 @@ TrackScatterKinksCovariance TBKalmanMSC::GetScatterKinkCov(Det& DetUnit, TBTrack
   
   //Theta values of the Sigmapoints
   Eigen::Matrix<double,2,9> Theta;
-  Theta = Eigen::Matrix<double,2,9>::Zeros();
+  Theta = Eigen::Matrix<double,2,9>::Zero();
 
   //reseting the mean of the unscented transform
   double mean1=0;
@@ -358,8 +358,8 @@ TrackScatterKinksCovariance TBKalmanMSC::GetScatterKinkCov(Det& DetUnit, TBTrack
     //for the thetas
     //Fehler liegt hier ich muss für jeden slope aus den sigmapoints die thetas bestimmen
     auto helptheta=slopestotheta(help);
-    Theta[0][i]=helptheta[0][0];
-    Theta[1][i]=helptheta[1][0];	
+    Theta[0][i]=helptheta[0];
+    Theta[1][i]=helptheta[1];	
   }
   
   //Computing the mean of the unscented transform
@@ -374,7 +374,7 @@ TrackScatterKinksCovariance TBKalmanMSC::GetScatterKinkCov(Det& DetUnit, TBTrack
     cov2=cov2+covweight[i]*(Theta[1][i]-mean2)*(Theta[1][i]-mean2);
     cov12=cov12+covweight[i]*(Theta[0][i]-mean1)*(Theta[1][i]-mean2);
   }
-  TrackScatterKinksCovariance Covariance = TrackScatterKinksCovariance::Zeros();
+  TrackScatterKinksCovariance Covariance = TrackScatterKinksCovariance::Zero();
   Covariance(0,0)=cov1;
   Covariance(1,0)=cov12;
   Covariance(1,1)=cov2;
@@ -483,7 +483,7 @@ double TBKalmanMSC::KalmanFilter(TBTrack& trk, int idir, int istart, int istop, 
       m -= H*xref;
                
       // Weigth matrix of measurment 
-      auto W = (V + C0.similarity(H)).inverse(ierr);
+      auto W = (V + H*C0*H.transpose()).inverse();
       if (ierr != 0) {
         streamlog_out(ERROR) << "ERR: Matrix inversion failed. Quit fitting!"
                              << std::endl;
@@ -494,16 +494,16 @@ double TBKalmanMSC::KalmanFilter(TBTrack& trk, int idir, int istart, int istop, 
       auto r = m - H*x0; 
       
       // This is the predicted chi2 
-      auto chi2mat = r.T()*W*r;
-      predchi2 = chi2mat[0][0];   
+      auto chi2mat = r.transpose()*W*r;
+      predchi2 = chi2mat[0];   
       
       // Kalman gain matrix K 
-      auto K = C0 * H.T() * W; 
+      auto K = C0 * H.transpose() * W; 
        
       // This is the filtered deviation from the 
       // reference trajectory.  
       x0 += K * r;
-      C0 -= (W.similarityT(H)).similarity(C0);
+      C0 -=  C0*H.transpose()*W*H*C0.transpose();  
     }  
       
     
@@ -599,27 +599,24 @@ double TBKalmanMSC::KalmanFilter(TBTrack& trk, int idir, int istart, int istop, 
         return -1;
       }	
       
-      auto C1 = C0.similarity(J_det2air);
+      TrackStateCovariance C1 = J_det2air*C0*J_det2air.transpose(); 
       
       // Add scatter noise from last detector
       // -----------------------------------
       
       // Local Scatter gain matrix  
-      TrackStateGain Gl_det;    
-      TrackModel->GetScatterGain(xref, Gl_det);
+      TrackStateGain Gl_det = TrackModel->GetScatterGain(xref);
           
       // General Scatter gain matrix 
       auto G_det = J_det2air*Gl_det;   
         
       // Variance of projected scatter angles   
-      TrackScatterKinksCovariance Q_det;    
-
-      double l0 = te.GetDet().GetTrackLength(xref[2][0], xref[3][0], xref[0][0], xref[1][0]);
-      double X0 = te.GetDet().GetRadLength(xref[2][0],xref[3][0]);    
+      double l0 = te.GetDet().GetTrackLength(xref[2], xref[3], xref[0], xref[1]);
+      double X0 = te.GetDet().GetRadLength(xref[2],xref[3]);    
       double theta2_det = materialeffect::GetScatterTheta2(xref, l0, X0, mass, charge);    
-      Q_det *= theta2_det;
+      Matrix2d Q_det=theta2_det*Matrix2d::Identity();
             
-      C1 += Q_det.similarity(G_det);    
+      C1 +=  G_det*Q_det*G_det.transpose();   
        
       // Extrap covariance to next detector
       // ----------------------------------    
@@ -631,26 +628,23 @@ double TBKalmanMSC::KalmanFilter(TBTrack& trk, int idir, int istart, int istop, 
         return -1;
       }	
       
-      C1 = C1.similarity(J_air2det);
+      C1 = J_air2det*C1*J_air2det.transpose(); 
       
       // Add scatter noise from air 
       //---------------------------   
       
       // Local Scatter gain matrix  
-      TrackStateGain Gl_air;    
-      TrackModel->GetScatterGain(xref_air, Gl_air);
+      TrackStateGain Gl_air = TrackModel->GetScatterGain(xref_air);
           
       // General Scatter gain matrix 
       auto G_air = J_air2det*Gl_air;   
         
-      // Variance of projected scatter angles   
-      TrackScatterKinksCovariance Q_air;     
-      double theta2_air = materialeffect::GetScatterTheta2(xref_air, length, materialeffect::X0_air, mass, charge );   
-      Q_air *= theta2_air;
+      // Variance of projected scatter angles    
+      double theta2_air = materialeffect::GetScatterTheta2(xref_air, length, materialeffect::X0_air, mass, charge );  
+      Matrix2d Q_air=theta2_air*Matrix2d::Identity(); 
             
-      C1 += Q_air.similarity(G_air);    
+      C1 += G_air*Q_air*G_air.transpose();      
        
-      
       // Store prediction results        
       result[inext].Chi2Pred = 0; 
       result[inext].Pr_x = x1;  

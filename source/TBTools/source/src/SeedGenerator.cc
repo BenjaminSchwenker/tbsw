@@ -45,17 +45,17 @@ TBTrackState SeedGenerator::CreateSeedTrack(TBHit FirstHit, TBHit SecondHit, TBD
   ReferenceFrame FirstFrame = Detector.GetDet( firstplane ).GetNominal(); 
   ReferenceFrame SecondFrame = Detector.GetDet( secondplane ).GetNominal(); 
    
-  auto FirstPoint = FirstHit.GetLocalSpacePoint(); 
-  auto FirstGPoint = FirstFrame.TransformPointToGlobal(FirstPoint);
+  Vector3d FirstPoint = FirstHit.GetLocalSpacePoint(); 
+  Vector3d FirstGPoint = FirstFrame.TransformPointToGlobal(FirstPoint);
   
-  auto SecondPoint = SecondHit.GetLocalSpacePoint(); 
-  auto SecondGPoint = SecondFrame.TransformPointToGlobal(SecondPoint);
+  Vector3d SecondPoint = SecondHit.GetLocalSpacePoint(); 
+  Vector3d SecondGPoint = SecondFrame.TransformPointToGlobal(SecondPoint);
   
   // Compute global track direction 
-  auto GobalDirection = SecondGPoint - FirstGPoint;
+  Vector3d GobalDirection = SecondGPoint - FirstGPoint;
  
   // Compute local track direction 
-  auto LocalDirection = FirstFrame.TransformVecToLocal(GobalDirection);  
+  Vector3d LocalDirection = FirstFrame.TransformVecToLocal(GobalDirection);  
   
   // Seed parameters at first sensor
   TrackState Pars;  

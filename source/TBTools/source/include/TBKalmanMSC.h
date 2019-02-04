@@ -104,6 +104,8 @@ typedef std::vector<KalFilterDetMSC> KalFilterVecMSC;
  */ 
 typedef std::vector<TrackState> REFTrack;
 
+typedef Eigen::Matrix<double,2,5> StateHitProjector;
+
 class TBKalmanMSC {
   
  public:

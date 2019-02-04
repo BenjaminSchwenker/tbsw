@@ -11,7 +11,7 @@
 typedef Eigen::Matrix<double,3,1> VertexParameter;
 typedef Eigen::Matrix<double,3,3> VertexCovariance;
 typedef Eigen::Matrix<double,5,3> VertexJacobian;
-typedef Eigen::Matrix<double,4,1> VertexResidual;
+typedef Eigen::Matrix<double,5,1> VertexResidual;
 
 
 

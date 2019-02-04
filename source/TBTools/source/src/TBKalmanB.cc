@@ -18,6 +18,8 @@
 #include <cmath>
 #include <limits>
 
+#include <Eigen/Dense>
+#include <Eigen/LU>
 
 // Namespaces
 using namespace marlin;
@@ -340,9 +342,9 @@ double TBKalmanB::FilterHit(TBHit& hit, TrackState& xref, TrackState& x0, TrackS
   // Covariance for hit coordinates, 2x2 matrix 
   auto& V = hit.GetCov();
   
-  bool invertible;
-  Matrix2d W ;
-  (V + H*C0*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
+  bool invertible = true;
+  Matrix2d W = (V + H*C0*H.transpose()).inverse();
+  //(V + H*C0*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
   if (!invertible) {
     streamlog_out(ERROR) << "Hit filtering: Matrix inversion failed. Quit fitting!"
                          << std::endl;
@@ -510,9 +512,9 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
       m -= H*xref; 
             
       // Weigth matrix of measurment 
-      bool invertible;
-      Matrix2d W ;
-      (V + H*C0*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
+      bool invertible = true;
+      Matrix2d W = (V + H*C0*H.transpose()).inverse();
+      //(V + H*C0*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
       if (!invertible) {
         streamlog_out(ERROR) << "Hit filtering: Matrix inversion failed. Quit fitting!"
                              << std::endl;
@@ -645,11 +647,11 @@ bool TBKalmanB::GetSmoothedData( TrackState& xb, TrackStateCovariance& Cb, Track
 { 
   
   // Error flag  
-  bool invertible;
+  bool invertible = true;
   
   // Compute forward weight matrix
-  TrackStateWeight fW; 
-  Cf.computeInverseWithCheck(fW,invertible);  
+  TrackStateWeight fW = Cf.inverse(); 
+  //Cf.computeInverseWithCheck(fW,invertible);  
   if (!invertible) {
     streamlog_out(ERROR) << "Smoothing 1: Matrix inversion failed. Quit fitting!"
                          << std::endl;
@@ -657,16 +659,17 @@ bool TBKalmanB::GetSmoothedData( TrackState& xb, TrackStateCovariance& Cb, Track
   }	
   
   // Compute backward weight matrix
-  TrackStateWeight bW;
-  Cb.computeInverseWithCheck(bW,invertible);  
+  TrackStateWeight bW = Cb.inverse();
+  //Cb.computeInverseWithCheck(bW,invertible);  
   if (!invertible) {
     streamlog_out(ERROR) << "Smoothing 2: Matrix inversion failed. Quit fitting!"
                          << std::endl;
     return invertible; 
   }	 
   
-  // Weighted (smoothed) covariance   
-  (fW + bW).computeInverseWithCheck(Smoothed_Cov,invertible);  
+  // Weighted (smoothed) covariance
+  Smoothed_Cov = (fW + bW).inverse();   
+  //(fW + bW).computeInverseWithCheck(Smoothed_Cov,invertible);  
   if (!invertible) {
     streamlog_out(ERROR) << "Smoothing 3: Matrix inversion failed. Quit fitting!"
                          << std::endl;
@@ -717,7 +720,7 @@ int TBKalmanB::MAP_FORWARD(  double theta2,
   TrackStateJacobian J;      
   TrackModel->TrackJacobian( xref, Surf, nSurf, J);  
   
-  auto C1 = J*C0*J.transpose(); 
+  TrackStateCovariance C1 = J*C0*J.transpose(); 
         
   // Add scatter noise
   // -----------------------------------
@@ -728,10 +731,11 @@ int TBKalmanB::MAP_FORWARD(  double theta2,
   //cout << "BENNI HACK scatter gain matrix " << Gl << endl; 
             
   // General Scatter gain matrix 
-  auto G = J*Gl;   
+  TrackStateGain G = J*Gl;   
   
   // Variance of projected scatter angles   
-  auto Q=theta2*Matrix2d::Identity();
+  Matrix2d Q=Matrix2d::Identity();
+  Q *= theta2; 
              
   C1 += G*Q*G.transpose();     
          
@@ -780,7 +784,7 @@ int TBKalmanB::MAP_BACKWARD(  double theta2,
   TrackStateJacobian Jinv;
   TrackModel->TrackJacobian( xref, Surf, nSurf, Jinv);  
   
-  auto C1 = Jinv * C0 *Jinv.transpose();
+  TrackStateCovariance C1 = Jinv * C0 *Jinv.transpose();
         
   // Add scatter noise
   // -----------------------------------
@@ -789,7 +793,7 @@ int TBKalmanB::MAP_BACKWARD(  double theta2,
   TrackStateGain Gl = TrackModel->GetScatterGain(nxref);   // Backward form -> use nxref not xref
                  
   // Variance of projected scatter angles   
-  auto Q=theta2*Matrix2d::Identity();
+  Matrix2d Q=theta2*Matrix2d::Identity();
 
              
   C1 +=  Gl*Q*Gl.transpose();    // Backward form -> use Gl not G
@@ -836,8 +840,8 @@ double TBKalmanB::GetPredictedChi2(const Vector2d& r, const StateHitProjector& H
 {
   // Residuals weight: W=(V + HCH^T)^-1
   bool invertible;
-  Matrix2d W ;
-  (V + H*C*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
+  Matrix2d W = (V + H*C*H.transpose()).inverse();
+  //(V + H*C*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
   if (!invertible) {
     streamlog_out(ERROR) << "CHi2Increment: matrix inversion failed"
                          << std::endl;
@@ -855,8 +859,8 @@ double TBKalmanB::GetChi2Increment(const Vector2d& r, const StateHitProjector& H
 {
   // Residuals weight: W=(V - HCH^T)^-1
   bool invertible;
-  Matrix2d W ;
-  (V - H*C*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
+  Matrix2d W = (V - H*C*H.transpose()).inverse();
+  //(V - H*C*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
   if (!invertible) {
     streamlog_out(ERROR) << "CHi2Increment: matrix inversion failed"
                          << std::endl;

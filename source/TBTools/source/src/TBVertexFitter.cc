@@ -15,6 +15,9 @@
 #include <limits>
 #include <vector>
 
+#include <Eigen/Dense>
+#include <Eigen/LU>
+
 // Namespaces
 using namespace marlin;
 using namespace std; 
@@ -58,8 +61,8 @@ bool TBVertexFitter::FitVertex(TBVertex& Vertex)
   double chi2 = 0;
   int ndf = -3;
   //Initialisation of residual vector
-  VertexResidual zeta;
-  zeta = VertexResidual::Zero();
+  TrackState zeta;
+  zeta = TrackState::Zero();
    
   //Loop over trackstates
   for (int i=0; i < Vertex.GetStates().size(); i++) {
@@ -67,14 +70,17 @@ bool TBVertexFitter::FitVertex(TBVertex& Vertex)
     //Copy current trackstate
     auto p = Vertex.GetStates()[i].GetPars();
     auto V = Vertex.GetStates()[i].GetCov();
-
+    
     //Calculate filter matrices
-    auto G = V.inverse();
-    //if (ierr != 0) {
-    //  streamlog_out(ERROR) << "ERR: Matrix inversion failed. Quit fitting!"
-    //                       << std::endl;
-    //  return true;
-    //}	
+    bool invertible = true;
+    TrackStateCovariance G = V.inverse();
+    //V.computeInverseWithCheck(G,invertible); 
+    if (!invertible) {
+      streamlog_out(ERROR) << "VertexFitter ERROR: Matrix inversion failed. Quit fitting!"
+                           << std::endl;
+      return true;  
+    }	
+    
     auto W = (B.transpose()*G*B).inverse();
     auto GB = G - G * B * W * B.transpose() * G;
 
@@ -134,7 +140,7 @@ bool TBVertexFitter::FitVertex(TBVertex& Vertex)
   cout<<"Vertex position cov in global coords"<<endl;
   cout<<C_global<<endl;*/
 
-  Vertex.SetRes(zeta);
+  //Vertex.SetRes(zeta);
   Vertex.SetPos(r);
   Vertex.SetGlobalPos(r_global);
   Vertex.SetCov(C);
