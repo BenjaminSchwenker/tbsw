@@ -73,8 +73,9 @@ SensorAlignmentJacobian KalmanAlignmentAlgorithm2::Jacobian_Alignment(const Trac
   // matrix wrt. ar=(dx, dy, dz, dalpha, dbeta, dgamma).
   
   // Compute A=daq/dar
-  HepMatrix A(6,6,1);  
-  A.sub(1,1,Rot); 
+  Eigen::Matrix<double,6,6> A;
+  A = Eigen::Matrix<double,6,6>::Identity();
+  A.block<3,3>(0,0) = Rot
   
   //cout << "A " << A << endl; 
    
@@ -314,25 +315,25 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
       // Remember that p0,C0 are track estimates with the 
       // current (global) detector alignment 
        
-      HepMatrix p0 = TE.GetState().GetPars();
-      HepSymMatrix C0 = TE.GetState().GetCov(); 
-      HepMatrix m = TE.GetHit().GetCoord();     
-      HepSymMatrix V = TE.GetHit().GetCov();   
+      auto p0 = TE.GetState().GetPars();
+      auto C0 = TE.GetState().GetCov(); 
+      auto m = TE.GetHit().GetCoord();     
+      auto V = TE.GetHit().GetCov();   
          
       // Copy local alignment state/cov  
       //-------------------------------
-      HepVector a0 = AlignStore.GetAlignState(ipl);
-      HepSymMatrix E0 = AlignStore.GetAlignCovariance(ipl); 
+      auto a0 = AlignStore.GetAlignState(ipl);
+      auto E0 = AlignStore.GetAlignCovariance(ipl); 
       
       // Jacobian matrix, derivatives of measurement equation 
       // m=f(p,a) to track parameters p at (a0,p0) 
-      HepMatrix H = TrackFitter.GetHMatrix();
+      auto H = TrackFitter.GetHMatrix();
       
       // Jacobian matrix, derivatives of measurement equation 
       // m=f(p,a) to alignment parameters a at (a0,p0) 
-      HepVector Pos = TE.GetDet().GetNominal().GetPosition(); 
-      HepMatrix Rot = TE.GetDet().GetNominal().GetRotation();
-      HepMatrix D = Jacobian_Alignment(p0, Rot, Pos); 
+      auto Pos = TE.GetDet().GetNominal().GetPosition(); 
+      auto Rot = TE.GetDet().GetNominal().GetRotation();
+      auto D = Jacobian_Alignment(p0, Rot, Pos); 
        
       // Weigth matrix of measurment 
       int ierr; 
@@ -345,13 +346,13 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
       }	
       
       // Gain matrix K for alignment 
-      HepMatrix K = E0 * D.T() * W;
+      auto K = E0 * D.transpose() * W;
       // Track prediction for hit coord   
-      HepMatrix f = H*p0;     
+      auto f = H*p0;     
               
       // Update for alignment state + cov  
-      HepVector a1 = a0 + K * (m - f) ;
-      HepSymMatrix E1 = E0 - (W.similarityT(D)).similarity(E0); 
+      auto a1 = a0 + K * (m - f) ;
+      auto E1 = E0 - (W.similarityT(D)).similarity(E0); 
        
       // Outlier rejection II
       //----------------------

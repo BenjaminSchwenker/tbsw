@@ -184,7 +184,7 @@ bool TBKalmanB::Fit(TBTrack& trk)
            
       // Extrapoate reference state 
       bool error = false;
-      HepMatrix Next_State = TrackModel->Extrapolate(RTrkState, RTrkSurf, Next_Surf, error);  
+      auto Next_State = TrackModel->Extrapolate(RTrkState, RTrkSurf, Next_Surf, error);  
       
       if (error) {
         trk.GetTE(iTE).SetCrossed(false);
@@ -270,8 +270,8 @@ bool TBKalmanB::Fit(TBTrack& trk)
       // Compute unbiased smoothed estimate 
       // of local track state. 
           
-      HepMatrix& xs =TE.GetState().GetPars(); 
-      HepSymMatrix& Cs = TE.GetState().GetCov();
+      auto& xs =TE.GetState().GetPars(); 
+      auto& Cs = TE.GetState().GetCov();
       
       //cout << " plane " << is << " Cf is " << FFilterData[is].Pr_C << endl;
       //xs = FFilterData[is].Pr_x;    
@@ -286,10 +286,10 @@ bool TBKalmanB::Fit(TBTrack& trk)
           xs = FFilterData[is].Pr_x;    
           Cs = FFilterData[is].Pr_C;
       } else {
-          HepMatrix xb = BFilterData[is].Pr_x; 
-          HepSymMatrix Cb = BFilterData[is].Pr_C;
-          HepMatrix xf = FFilterData[is].Pr_x;    
-          HepSymMatrix Cf = FFilterData[is].Pr_C;
+          auto xb = BFilterData[is].Pr_x; 
+          auto Cb = BFilterData[is].Pr_C;
+          auto xf = FFilterData[is].Pr_x;    
+          auto Cf = FFilterData[is].Pr_C;
                 
           bool error = GetSmoothedData(xb, Cb, xf, Cf, xs, Cs);
           if ( error ) {
@@ -330,7 +330,7 @@ bool TBKalmanB::Fit(TBTrack& trk)
 
 /** Filters a new hit 
  */
-double TBKalmanB::FilterHit(TBHit& hit, HepMatrix& xref, HepMatrix& x0, HepSymMatrix& C0) 
+double TBKalmanB::FilterHit(TBHit& hit, TrackState& xref, TrackState& x0, TrackStateCovariacne& C0) 
 { 
   
   // To start ierr is set to 0 (= OK)
@@ -340,7 +340,7 @@ double TBKalmanB::FilterHit(TBHit& hit, HepMatrix& xref, HepMatrix& x0, HepSymMa
   double predchi2 = 0; 
     
   // Measured hit coordinates, 2x1 matrix 
-  HepMatrix& m = hit.GetCoord();
+  auto& m = hit.GetCoord();
         
   // Covariance for hit coordinates, 2x2 matrix 
   HepSymMatrix& V = hit.GetCov();
@@ -354,14 +354,14 @@ double TBKalmanB::FilterHit(TBHit& hit, HepMatrix& xref, HepMatrix& x0, HepSymMa
   }	
      
   // This is the predicted residual 
-  HepMatrix r = m - H*x0 - H*xref; 
+  auto r = m - H*x0 - H*xref; 
       
   // This is the predicted chi2 
-  HepMatrix chi2mat = r.T()*W*r;
-  predchi2 = chi2mat[0][0];   
+  auto chi2mat = r.transpose()*W*r;
+  predchi2 = chi2mat[0];   
       
   // Kalman gain matrix K 
-  HepMatrix K = C0 * H.T() * W; 
+  auto K = C0 * H.transpose() * W; 
        
   // This is the filtered state
   x0 += K * r;
@@ -493,11 +493,11 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
     ReferenceFrame& Surf = te.GetDet().GetNominal();      
     
     // Get current reference state xref
-    HepMatrix& xref = RefStateVec[is];    
+    auto& xref = RefStateVec[is];    
 
     // Copy predicted [x,C]
-    HepMatrix x0 = Result[is].Pr_x;  
-    HepSymMatrix C0 = Result[is].Pr_C;
+    auto x0 = Result[is].Pr_x;  
+    auto C0 = Result[is].Pr_C;
      
     // Here, the measurment update takes place  
     double predchi2 = 0; 
@@ -505,16 +505,16 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
     if ( te.HasHit() ) {
       
       // Measured hit coordinates, 2x1 matrix 
-      HepMatrix m = te.GetHit().GetCoord();
+      auto m = te.GetHit().GetCoord();
         
       // Covariance for hit coordinates, 2x2 matrix 
-      HepSymMatrix& V = te.GetHit().GetCov();
+      auto& V = te.GetHit().GetCov();
       
       // Linearization: Measured deviation from reference 
       m -= H*xref; 
             
       // Weigth matrix of measurment 
-      HepSymMatrix W = (V + C0.similarity(H)).inverse(ierr);
+      auto W = (V + C0.similarity(H)).inverse(ierr);
       if (ierr != 0) {
         streamlog_out(ERROR) << "Hit filtering: Matrix inversion failed. Quit fitting!"
                              << std::endl;
@@ -522,14 +522,14 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
       }	
        
       // This is the predicted residual 
-      HepMatrix r = m - H*x0; 
+      auto r = m - H*x0; 
       
       // This is the predicted chi2 
-      HepMatrix chi2mat = r.T()*W*r;
-      predchi2 = chi2mat[0][0];   
+      auto chi2mat = r.tanspose()*W*r;
+      predchi2 = chi2mat[0];   
       
       // Kalman gain matrix K 
-      HepMatrix K = C0 * H.T() * W; 
+      auto K = C0 * H.transpose() * W; 
        
       // This is the filtered state
       x0 += K * r;
@@ -554,7 +554,7 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
       ReferenceFrame& nSurf = nte.GetDet().GetNominal();
 
       // Get reference state  
-      HepMatrix& nxref = RefStateVec[inext];  
+      auto& nxref = RefStateVec[inext];  
 
       // This fitter takes into account scatter in air
       // gaps between sensors. Therefor, we add a virtual 
@@ -563,7 +563,7 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
       // extrapolation step length between the sensors.
         
       // Extrapolate to air surface between detector planes 
-      HepMatrix xref_air = xref; 
+      auto xref_air = xref; 
       ReferenceFrame Surf_air = Surf; 
       
       // Get signed flight length in air between detectors 
@@ -643,8 +643,8 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
 /** Compute the weighted means of forward and backward filter estimated. In a 
  *  numerically robust way. Returns error flag.
  */
-bool TBKalmanB::GetSmoothedData( HepMatrix& xb, HepSymMatrix& Cb, HepMatrix& xf, HepSymMatrix& Cf,
-                                HepMatrix& Smoothed_State, HepSymMatrix& Smoothed_Cov)
+bool TBKalmanB::GetSmoothedData( TrackStat& xb, TrackStateCovariance& Cb, TrackStat& xf, TrackStateCovariance& Cf,
+                                TrackStat& Smoothed_State, TrackStateCovariance& Smoothed_Cov)
 { 
   
   // Error flag 
@@ -714,8 +714,8 @@ int TBKalmanB::MAP_FORWARD(  double theta2,
   // we can estimate the amount of added uncertainty due to multiple scatter
   // noise.
         
-  // Time update of covariance  matrix        
-  HepMatrix J(ndim, ndim);
+  // Time update of covariance  matrix  
+  TrackStateJacobian J;      
   TrackModel->TrackJacobian( xref, Surf, nSurf, J);  
   
   HepSymMatrix C1 = C0.similarity(J);
@@ -723,18 +723,17 @@ int TBKalmanB::MAP_FORWARD(  double theta2,
   // Add scatter noise
   // -----------------------------------
         
-  // Local Scatter gain matrix  
-  HepMatrix Gl(ndim, 2);    
+  // Local Scatter gain matrix      
+  TrackStateGain Gl;
   TrackModel->GetScatterGain(xref, Gl);
 
   //cout << "BENNI HACK scatter gain matrix " << Gl << endl; 
             
   // General Scatter gain matrix 
-  HepMatrix G = J*Gl;   
+  auto G = J*Gl;   
   
   // Variance of projected scatter angles   
-  HepSymMatrix Q(2, 1);      
-  Q *= theta2;
+  auto Q=theta2*Matrix2d::Identity();
              
   C1 += Q.similarity(G);    
          
@@ -890,37 +889,28 @@ void TBKalmanB::SetNdof(TBTrack& trk)
 
 /** Compute a priori predicted estimate on first sensor. Returns reference state at first sensor.
  */
-HepMatrix TBKalmanB::ComputeBeamConstraint( HepMatrix& x0, HepSymMatrix& C0, ReferenceFrame& FirstSensorFrame, double mass, double mom, double charge)
+TrackState TBKalmanB::ComputeBeamConstraint( TrackState& x0, TrackStateCovariance& C0, ReferenceFrame& FirstSensorFrame, double mass, double mom, double charge)
 {
    
   // First, we must construct a beam uvw plane in front of the first sensor where the beam 
   // constrained is defined. 
   ReferenceFrame BeamFrame;
   
-  HepVector BeamPosition(3);
-  BeamPosition[0] = 0;  
-  BeamPosition[1] = 0;
-  BeamPosition[2] = FirstSensorFrame.GetZPosition()-10; 
+  Vector3d  BeamPosition;
+  BeamPosition << 0, 0, FirstSensorFrame.GetZPosition()-10;  
   BeamFrame.SetPosition(BeamPosition); 
     
-  HepMatrix BeamRotation;
+  Matrix3d BeamRotation;
   FillRotMatrixKarimaki(BeamRotation, 0,0,0);
   BeamFrame.SetRotation(BeamRotation); 
-   
-  // Construct a Gaussian beam state     
-  HepMatrix x_beam(ndim,1,0);
-  x_beam[4][0] = charge/mom;
   
-  HepSymMatrix C_beam(ndim,0);
-  for (int i = 0; i < 2; i++) {
-    C_beam[i][i] = 1E-2;
-    C_beam[i+2][i+2] = 1E2; 
-  }   
-  C_beam[4][4] = 1;  
+  // Construct a Gaussian beam state     
+  TrackState x_beam;
+  x_beam << 0, 0, 0, 0, charge/mom;
   
   // Extrapoate beam  state to first sensor 
   bool error = false;
-  HepMatrix x_first = TrackModel->Extrapolate(x_beam, BeamFrame, FirstSensorFrame, error);  
+  auto x_first = TrackModel->Extrapolate(x_beam, BeamFrame, FirstSensorFrame, error);  
   
   // MAP estimate [x_beam,C_beam] from beam frame to first sensor
   int ierr = 0; 
