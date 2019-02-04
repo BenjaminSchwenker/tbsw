@@ -43,9 +43,36 @@ namespace depfet {
  */
 
 
+//! Class KalFilterDet
+/* 
+ * Class KalFilterDet manages the results of a Kalman filter pass 
+ * for a particular sub detector. The class can be symmetrically
+ * used for the forward and backward filter pass. The detectors
+ * are uniquily identified by their plane number, i.e. position 
+ * along the beam line. 
+ * 
+ * The KalFilterDet class stores [x,C] variable pairs for the 
+ * estimated track states. The [x,C] pair is stored both for 
+ * predicted and updated KF estimates. 
+ * 
+ * @Author B. Schwenker, University of Göttingen
+ * <mailto:benjamin.schwenker@phys.uni-goettingen.de>
+ */
+
+class KalFilterDet
+{
+ public:
+  
+  /* Predicted estimator 
+   */
+  TrackState Pr_x;    
+  TrackStateCovariance Pr_C;     
+  
+};
+
 /* Data type used to store the results of a filter pass. 
  */ 
-typedef std::vector<TBTrackState> FilterStateVec;
+typedef std::vector<KalFilterDet> FilterStateVec;
 typedef Eigen::Matrix<double,2,5> StateHitProjector;
 
 class TBKalmanB {
@@ -56,7 +83,11 @@ class TBKalmanB {
   /** Default Constructor  
    */
   TBKalmanB(TBDetector& detector);
-
+  
+  /** Default Destructor 
+   */
+  ~TBKalmanB();
+  
   /** Performs track fitting. Returns error flag. 
    */
   bool Fit(TBTrack& trk);
@@ -145,7 +176,7 @@ class TBKalmanB {
    *  Input: IDIR           : -1 for backward filter, 1 for forward filter 
    *  Output : RESULT       : Estimated [x,C] pairss for all detectors 
    */
-  double FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::vector<TBTrackState>& RefStateVec ,int idir, FilterStateVec& Result); 
+  double FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::vector<TrackState>& RefStateVec ,int idir, FilterStateVec& Result); 
   
   /** Compute the weighted means of forward and backward filter estimated. In a 
    *  numerically robust way. Returns error flag.

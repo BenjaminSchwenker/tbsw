@@ -351,7 +351,7 @@ void HelixTrackModel::GetScatterGain(const TrackState& State, TrackStateGain& G)
 */
 
 
-void HelixTrackModel::GetScatterGain(const TrackState& State, TrackStateGain& G)
+TrackStateGain HelixTrackModel::GetScatterGain(const TrackState& State)
 {
    
   // Calculation of scatter gain matrix following Wolin and Ho (NIM A329 (1993) 493-500)
@@ -392,7 +392,8 @@ void HelixTrackModel::GetScatterGain(const TrackState& State, TrackStateGain& G)
   // The two independent scattering angles are called 
   // theta1 and theta2. A change in these is affecting
   // the scattered track parameters ...
-   
+  TrackStateGain G;   
+  
   // *** dU'/dtheta1
   G(0,0) = ( a1*g3 - a3*g1 ) / ( g3*g3 );
   // *** dU'/dtheta2
@@ -413,7 +414,7 @@ void HelixTrackModel::GetScatterGain(const TrackState& State, TrackStateGain& G)
   // *** dV/dtheta2
   G(3,1) = 0;
     
-  return ;
+  return G;
 }
 
 

@@ -28,7 +28,7 @@ TBTrackState::TBTrackState() :  Plane(0)
 TBTrackState::TBTrackState(TrackState aPars, TrackStateCovariance aCov, int aPlane) : Plane(aPlane)
 { 
   // Set the plane number
-  Plane = aPlane
+  Plane = aPlane;
   // Set track state vector  
   Pars = aPars;
   // Set track state covariance matrix

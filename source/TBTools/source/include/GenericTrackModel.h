@@ -7,6 +7,7 @@
 
 typedef Eigen::Matrix<double,5,1> TrackState;
 typedef Eigen::Matrix<double,5,5> TrackStateCovariance;
+typedef Eigen::Matrix<double,5,5> TrackStateWeight;
 
 typedef Eigen::Matrix<double,5,5> TrackStateJacobian;
 typedef Eigen::Matrix<double,5,2> TrackStateGain;
@@ -62,7 +63,7 @@ class GenericTrackModel {
  
  /** Extrapolate track along helix for given flight length. Track parameters (State/Surf) are overwritten. 
  */
-  virtual TrackState Extrapolate(const TrackState& State, depfet::ReferenceFrame& Surf,  double length) = 0;
+  virtual void Extrapolate(TrackState& State, depfet::ReferenceFrame& Surf,  double length) = 0;
   
  /** Compute track derivatives for extrapolation from Surf to fSurf.
   *  Linearization point is State at Surf.  

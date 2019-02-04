@@ -113,7 +113,7 @@ class HelixTrackModel : public GenericTrackModel {
   *  It calculates the derivates of track parameters State on 
   *  scattering angles theta1 and theta2. 
   */
-  void GetScatterGain(const TrackState& State, TrackStateGain& G);
+  TrackStateGain GetScatterGain(const TrackState& State);
   
  // Private Functions --------------
  private: 

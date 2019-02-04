@@ -75,10 +75,10 @@ class TBHit {
   
   // Get/Set measured hit coord
   void SetCoord(const Vector2d& aCoord) { Coord = aCoord; }
-  const Vector2d&  GetCoord() { return Coord; }
+  const Vector2d&  GetCoord() const { return Coord; }
   // Get/Set measurment covariance 
   void SetCov(const Matrix2d& aCov ) { Cov = aCov; }
-  const Matrix2d&  GetCov() { return Cov; }
+  const Matrix2d&  GetCov() const { return Cov; }
 
   // Get/Set original raw cluster data   
   void SetRawHit(lcio::TrackerHit* lciohit ) { RawHitPtr = lciohit; }

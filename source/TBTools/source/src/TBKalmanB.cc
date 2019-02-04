@@ -210,8 +210,6 @@ bool TBKalmanB::Fit(TBTrack& trk)
     }   
      
     
-    
-     
     // Init forward filter 
     // The forward pass is initialized using 
     // the reference track state at the first
@@ -318,7 +316,7 @@ bool TBKalmanB::Fit(TBTrack& trk)
          
     trk.GetReferenceState().Pars = trk.GetTE( CrossedTEs[0] ).GetState().GetPars();  
     trk.GetReferenceState().SetPlane(CrossedTEs[0]);  
-    trk.SetMomentum(std::abs(charge/trk.GetTE( CrossedTEs[0] ).GetState().GetPars()[4][0]));
+    trk.SetMomentum(std::abs(charge/trk.GetTE( CrossedTEs[0] ).GetState().GetPars()[4]));
      
   } // end iterations
      
@@ -330,12 +328,9 @@ bool TBKalmanB::Fit(TBTrack& trk)
 
 /** Filters a new hit 
  */
-double TBKalmanB::FilterHit(TBHit& hit, TrackState& xref, TrackState& x0, TrackStateCovariacne& C0) 
+double TBKalmanB::FilterHit(TBHit& hit, TrackState& xref, TrackState& x0, TrackStateCovariance& C0) 
 { 
   
-  // To start ierr is set to 0 (= OK)
-  int ierr = 0; 
-       
   // Here, the measurment update takes place  
   double predchi2 = 0; 
     
@@ -343,11 +338,12 @@ double TBKalmanB::FilterHit(TBHit& hit, TrackState& xref, TrackState& x0, TrackS
   auto& m = hit.GetCoord();
         
   // Covariance for hit coordinates, 2x2 matrix 
-  HepSymMatrix& V = hit.GetCov();
-               
-  // Weigth matrix of measurment 
-  HepSymMatrix W = (V + C0.similarity(H)).inverse(ierr);
-  if (ierr != 0) {
+  auto& V = hit.GetCov();
+  
+  bool invertible;
+  Matrix2d W ;
+  (V + H*C0*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
+  if (!invertible) {
     streamlog_out(ERROR) << "Hit filtering: Matrix inversion failed. Quit fitting!"
                          << std::endl;
     return -1;
@@ -365,7 +361,7 @@ double TBKalmanB::FilterHit(TBHit& hit, TrackState& xref, TrackState& x0, TrackS
        
   // This is the filtered state
   x0 += K * r;
-  C0 -= (W.similarityT(H)).similarity(C0);
+  C0 -= C0*H.transpose()*W*H*C0.transpose(); 
         
   return predchi2;
 }
@@ -459,7 +455,7 @@ int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, TrackStat
 
 /** Runs filter. Returns fit chi2. 
  */
-double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::vector<TBTrackState>& RefStateVec, int idir, FilterStateVec& Result) 
+double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::vector<TrackState>& RefStateVec, int idir, FilterStateVec& Result) 
 { 
     
   // To start ierr is set to 0 (= OK)
@@ -514,8 +510,10 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
       m -= H*xref; 
             
       // Weigth matrix of measurment 
-      auto W = (V + C0.similarity(H)).inverse(ierr);
-      if (ierr != 0) {
+      bool invertible;
+      Matrix2d W ;
+      (V + H*C0*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
+      if (!invertible) {
         streamlog_out(ERROR) << "Hit filtering: Matrix inversion failed. Quit fitting!"
                              << std::endl;
         return -1;
@@ -525,7 +523,7 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
       auto r = m - H*x0; 
       
       // This is the predicted chi2 
-      auto chi2mat = r.tanspose()*W*r;
+      auto chi2mat = r.transpose()*W*r;
       predchi2 = chi2mat[0];   
       
       // Kalman gain matrix K 
@@ -533,8 +531,7 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
        
       // This is the filtered state
       x0 += K * r;
-      C0 -= (W.similarityT(H)).similarity(C0);
-      
+      C0 -= C0*H.transpose()*W*H*C0.transpose();        
     }  
     
     // Store results and update chisqu
@@ -578,8 +575,8 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
           
         // MAP estimate [x0,C0] from old det to air surface
         // ---------------------------------------
-        double l0 = te.GetDet().GetTrackLength(xref[2][0], xref[3][0], xref[0][0], xref[1][0]);
-        double X0 = te.GetDet().GetRadLength(xref[2][0],xref[3][0]);    
+        double l0 = te.GetDet().GetTrackLength(xref[2], xref[3], xref[0], xref[1]);
+        double X0 = te.GetDet().GetRadLength(xref[2],xref[3]);    
         double theta2_det = materialeffect::GetScatterTheta2(xref, l0, X0, mass, charge);   
         ierr = MAP_FORWARD( theta2_det, xref, Surf, xref_air, Surf_air, x0, C0 );
         if (ierr != 0) {
@@ -613,8 +610,8 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
         
         // MAP estimate [x0,C0] from air to new det surface
         // ---------------------------------------
-        double l0 = nte.GetDet().GetTrackLength(nxref[2][0], nxref[3][0], nxref[0][0], nxref[1][0]);
-        double X0 = nte.GetDet().GetRadLength(nxref[2][0],nxref[3][0]);    
+        double l0 = nte.GetDet().GetTrackLength(nxref[2], nxref[3], nxref[0], nxref[1]);
+        double X0 = nte.GetDet().GetRadLength(nxref[2],nxref[3]);    
         double theta2_det = materialeffect::GetScatterTheta2(xref, l0, X0, mass, charge );   // Backward form    
         ierr = MAP_BACKWARD( theta2_det, xref_air, Surf_air, nxref, nSurf, x0, C0 );          
         if (ierr != 0) {
@@ -643,42 +640,44 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
 /** Compute the weighted means of forward and backward filter estimated. In a 
  *  numerically robust way. Returns error flag.
  */
-bool TBKalmanB::GetSmoothedData( TrackStat& xb, TrackStateCovariance& Cb, TrackStat& xf, TrackStateCovariance& Cf,
-                                TrackStat& Smoothed_State, TrackStateCovariance& Smoothed_Cov)
+bool TBKalmanB::GetSmoothedData( TrackState& xb, TrackStateCovariance& Cb, TrackState& xf, TrackStateCovariance& Cf,
+                                TrackState& Smoothed_State, TrackStateCovariance& Smoothed_Cov)
 { 
   
-  // Error flag 
-  int ierr = 0; 
+  // Error flag  
+  bool invertible;
   
   // Compute forward weight matrix
-  HepSymMatrix fW = Cf.inverse(ierr);
-  if (ierr) {
+  TrackStateWeight fW; 
+  Cf.computeInverseWithCheck(fW,invertible);  
+  if (!invertible) {
     streamlog_out(ERROR) << "Smoothing 1: Matrix inversion failed. Quit fitting!"
                          << std::endl;
-    return ierr;
+    return invertible;
   }	
   
   // Compute backward weight matrix
-  HepSymMatrix bW = Cb.inverse(ierr);
-  if (ierr) {
+  TrackStateWeight bW;
+  Cb.computeInverseWithCheck(bW,invertible);  
+  if (!invertible) {
     streamlog_out(ERROR) << "Smoothing 2: Matrix inversion failed. Quit fitting!"
                          << std::endl;
-    return ierr; 
+    return invertible; 
   }	 
   
-  // Weighted covariance   
-  Smoothed_Cov = (fW + bW).inverse(ierr); 
-  if (ierr) {
+  // Weighted (smoothed) covariance   
+  (fW + bW).computeInverseWithCheck(Smoothed_Cov,invertible);  
+  if (!invertible) {
     streamlog_out(ERROR) << "Smoothing 3: Matrix inversion failed. Quit fitting!"
                          << std::endl;
-    return ierr;
+    return invertible;
   }	
   
   // Weighted state           
   Smoothed_State = Smoothed_Cov*(fW*xf + bW*xb);
   
   // Successfull return  
-  return ierr;  
+  return invertible;  
 }
 
 
@@ -718,14 +717,13 @@ int TBKalmanB::MAP_FORWARD(  double theta2,
   TrackStateJacobian J;      
   TrackModel->TrackJacobian( xref, Surf, nSurf, J);  
   
-  HepSymMatrix C1 = C0.similarity(J);
+  auto C1 = J*C0*J.transpose(); 
         
   // Add scatter noise
   // -----------------------------------
         
   // Local Scatter gain matrix      
-  TrackStateGain Gl;
-  TrackModel->GetScatterGain(xref, Gl);
+  TrackStateGain Gl = TrackModel->GetScatterGain(xref);
 
   //cout << "BENNI HACK scatter gain matrix " << Gl << endl; 
             
@@ -735,7 +733,7 @@ int TBKalmanB::MAP_FORWARD(  double theta2,
   // Variance of projected scatter angles   
   auto Q=theta2*Matrix2d::Identity();
              
-  C1 += Q.similarity(G);    
+  C1 += G*Q*G.transpose();     
          
   x0 = J*x0;  
   C0 = C1;  
@@ -788,8 +786,7 @@ int TBKalmanB::MAP_BACKWARD(  double theta2,
   // -----------------------------------
         
   // Local Scatter gain matrix  
-  TrackStateGain Gl;
-  TrackModel->GetScatterGain(nxref, Gl);   // Backward form -> use nxref not xref
+  TrackStateGain Gl = TrackModel->GetScatterGain(nxref);   // Backward form -> use nxref not xref
                  
   // Variance of projected scatter angles   
   auto Q=theta2*Matrix2d::Identity();
@@ -806,7 +803,7 @@ int TBKalmanB::MAP_BACKWARD(  double theta2,
 
 /** Returns the predicted chi2 for hit
  */
-double TBKalmanB::GetPredictedChi2(TrackState& p, TrackStateCovariance& C, TBHit& hit)
+double TBKalmanB::GetPredictedChi2(const TrackState& p, const TrackStateCovariance& C, const TBHit& hit)
 {
   // Get measurement
   const Vector2d& m = hit.GetCoord();

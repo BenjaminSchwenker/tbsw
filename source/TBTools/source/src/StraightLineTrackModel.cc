@@ -169,7 +169,7 @@ void StraightLineTrackModel::Extrapolate(TrackState& State, ReferenceFrame& Surf
   State[1] = gDir[1]/gDir[2];
   State[2] = 0;                       // Track crosses origin of Surf
   State[3] = 0;
-  
+ 
   return;   
 }
 
@@ -315,7 +315,7 @@ int StraightLineTrackModel::TrackJacobian( const TrackState& State, const Refere
  *  It calculates the derivates of track parameters State on 
  *  scattering angles theta1 and theta2. 
  */
-void StraightLineTrackModel::GetScatterGain(const TrackState& State, TrackStateGain& G)
+TrackStateGain StraightLineTrackModel::GetScatterGain(const TrackState& State)
 {
    
   // Calculation of scatter gain matrix following Wolin and Ho (NIM A329 (1993) 493-500)
@@ -356,7 +356,8 @@ void StraightLineTrackModel::GetScatterGain(const TrackState& State, TrackStateG
   // The two independent scattering angles are called 
   // theta1 and theta2. A change in these is affecting
   // the scattered track parameters ...
-   
+  TrackStateGain G;    
+  
   // *** dU'/dtheta1
   G(0,0) = ( a1*g3 - a3*g1 ) / ( g3*g3 );
   // *** dU'/dtheta2
@@ -377,7 +378,7 @@ void StraightLineTrackModel::GetScatterGain(const TrackState& State, TrackStateG
   // *** dV/dtheta2
   G(3,1) = 0;
     
-  return ;
+  return G;
 }
 
 

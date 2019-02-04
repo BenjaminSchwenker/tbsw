@@ -1,7 +1,7 @@
 #ifndef StraightLineTrackModel_H
 #define StraightLineTrackModel_H 1
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "GenericTrackModel.h"
 
 namespace depfet {
@@ -111,7 +111,7 @@ class StraightLineTrackModel : public GenericTrackModel {
   *  It calculates the derivates of track parameters State on 
   *  scattering angles theta1 and theta2. 
   */
-  void GetScatterGain(const TrackState& State, TrackStateGain& G);
+  TrackStateGain GetScatterGain(const TrackState& State);
         
 };
  
