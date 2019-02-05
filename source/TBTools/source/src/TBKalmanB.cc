@@ -839,7 +839,7 @@ double TBKalmanB::GetChi2Increment(TrackState& p, TrackStateCovariance& C, TBHit
 double TBKalmanB::GetPredictedChi2(const Vector2d& r, const StateHitProjector& H, const TrackStateCovariance& C, const Matrix2d& V)
 {
   // Residuals weight: W=(V + HCH^T)^-1
-  bool invertible;
+  bool invertible = true;
   Matrix2d W = (V + H*C*H.transpose()).inverse();
   //(V + H*C*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
   if (!invertible) {
@@ -858,7 +858,7 @@ double TBKalmanB::GetPredictedChi2(const Vector2d& r, const StateHitProjector& H
 double TBKalmanB::GetChi2Increment(const Vector2d& r, const StateHitProjector& H, const TrackStateCovariance& C, const Matrix2d& V)
 {
   // Residuals weight: W=(V - HCH^T)^-1
-  bool invertible;
+  bool invertible = true;
   Matrix2d W = (V - H*C*H.transpose()).inverse();
   //(V - H*C*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
   if (!invertible) {

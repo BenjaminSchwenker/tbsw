@@ -242,8 +242,7 @@ TrackScatterKinksCovariance TBKalmanMSC::GetScatterKinkCov(Det& DetUnit, TBTrack
   double Sigmapoint[9][4];
   
   //Theta values of the Sigmapoints
-  Eigen::Matrix<double,2,9> Theta;
-  Theta = Eigen::Matrix<double,2,9>::Zero();
+  Eigen::Matrix<double,2,9> Theta = Eigen::Matrix<double,2,9>::Zero();
 
   //reseting the mean of the unscented transform
   double mean1=0;
@@ -358,22 +357,23 @@ TrackScatterKinksCovariance TBKalmanMSC::GetScatterKinkCov(Det& DetUnit, TBTrack
     //for the thetas
     //Fehler liegt hier ich muss für jeden slope aus den sigmapoints die thetas bestimmen
     auto helptheta=slopestotheta(help);
-    Theta[0][i]=helptheta[0];
-    Theta[1][i]=helptheta[1];	
+    Theta(0,i)=helptheta(0);
+    Theta(1,i)=helptheta(1);	
   }
   
   //Computing the mean of the unscented transform
   for(int i=0;i<9;i++) {
-    mean1=mean1+meanweight[i]*Theta[0][i];
-    mean2=mean2+meanweight[i]*Theta[1][i];
+    mean1=mean1+meanweight[i]*Theta(0,i);
+    mean2=mean2+meanweight[i]*Theta(1,i);
   }
 
   //Computing the diagonal elements of the covariance matrix of the unscented transform
   for(int i=0;i<9;i++){
-    cov1=cov1+covweight[i]*(Theta[0][i]-mean1)*(Theta[0][i]-mean1);
-    cov2=cov2+covweight[i]*(Theta[1][i]-mean2)*(Theta[1][i]-mean2);
-    cov12=cov12+covweight[i]*(Theta[0][i]-mean1)*(Theta[1][i]-mean2);
+    cov1=cov1+covweight[i]*(Theta(0,i)-mean1)*(Theta(0,i)-mean1);
+    cov2=cov2+covweight[i]*(Theta(1,i)-mean2)*(Theta(1,i)-mean2);
+    cov12=cov12+covweight[i]*(Theta(0,i)-mean1)*(Theta(1,i)-mean2);
   }
+
   TrackScatterKinksCovariance Covariance = TrackScatterKinksCovariance::Zero();
   Covariance(0,0)=cov1;
   Covariance(1,0)=cov12;
@@ -383,11 +383,11 @@ TrackScatterKinksCovariance TBKalmanMSC::GetScatterKinkCov(Det& DetUnit, TBTrack
 }
 
 //Function for getting the thetas from the slopes
-TrackScatterKink TBKalmanMSC::slopestotheta(double slopes[4]){
+TrackScatterKinks TBKalmanMSC::slopestotheta(double slopes[4]){
      
   //Scatter direction in the detector frame
   Vector3d scatdir;
-  scatdir << slopes[2] << slopes[3] << 1;
+  scatdir << slopes[2] ,slopes[3] , 1;
   scatdir = scatdir.normalized(); //Change vector to unit length
   
   // Now, we construct a basis for the comoving frame
@@ -395,7 +395,7 @@ TrackScatterKink TBKalmanMSC::slopestotheta(double slopes[4]){
    
   // n_trk is parallel to unscattered track direction
   Vector3d n_trk;  
-  n_trk << slopes[0] << slopes[1] << 1;  
+  n_trk << slopes[0] , slopes[1] , 1;  
   n_trk = n_trk.normalized(); // Change vector to unit length
   
   // v_trk is orthogonal to track dir and detector u axis  
@@ -422,7 +422,7 @@ TrackScatterKink TBKalmanMSC::slopestotheta(double slopes[4]){
     
   //compute the angles by applying ArcusTangens on the slopes
   TrackScatterKinks theta;
-  theta << TMath::ATan(Slopex) << TMath::ATan(Slopey);
+  theta << TMath::ATan(Slopex) , TMath::ATan(Slopey);
      
   return theta;
 }

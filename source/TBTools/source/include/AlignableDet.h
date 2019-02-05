@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include <Eigen/Core>
+
 typedef Eigen::Matrix<double,6,1> SensorAlignmentParameters;
 typedef Eigen::Matrix<double,6,6> SensorAlignmentCovariance;
 typedef Eigen::Matrix<double,2,6> SensorAlignmentJacobian; 	
