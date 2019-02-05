@@ -25,8 +25,6 @@ SET( LCIO_MINOR_VERSION 12 )
 SET( LCIO_PATCH_LEVEL 2 )
 
 # project options
-OPTION( BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON )
-OPTION( BUILD_32BIT_COMPATIBLE "Set to ON to build in 32 bit compatibility mode" OFF )
 OPTION( BUILD_LCIO_TESTS "Set to ON to build LCIO tests under src/cpp/src/TESTS" OFF )
 OPTION( BUILD_LCIO_EXAMPLES "Set to ON to build LCIO examples under src/cpp/src/EXAMPLES" OFF )
 OPTION( BUILD_WITH_DCAP "Set to ON to build LCIO with dcap (dCache) support" OFF )
@@ -40,38 +38,6 @@ IF( NOT CMAKE_BUILD_TYPE )
     SET( CMAKE_BUILD_TYPE "RelWithDebInfo" )
 ENDIF()
 
-# set default install prefix to project root directory
-IF( CMAKE_INSTALL_PREFIX STREQUAL "/usr/local" )
-    SET( CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" )
-ENDIF()
-
-#---------------- 32/64 bit issues ---------------------------------------
-#INCLUDE( CheckTypeSize )
-#CHECK_TYPE_SIZE( "void*" SIZE_OF_VOID_P )
-
-IF( CMAKE_SIZEOF_VOID_P EQUAL 4 )
-    MESSAGE( STATUS "32 bit architecture detected" )
-ENDIF()
-
-IF( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-    MESSAGE( STATUS "64 bit architecture detected" )
-
-    IF( BUILD_32BIT_COMPATIBLE )
-        IF( COMMAND SET_PROPERTY )
-            SET_PROPERTY(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS 0)
-            SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32" )
-            SET( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -m32" )
-            SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m32" )
-            SET( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -m32" )
-            SET( CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -m32" )
-        ELSE()
-            MESSAGE( FATAL_ERROR "to build in 32 bit compatibility mode you need cmake >= 2.6" )
-        ENDIF()
-        MESSAGE( STATUS "Build in 32 bit compatibility mode" )
-    ELSE()
-        MESSAGE( STATUS "Build in native 64 bit mode" )
-    ENDIF()
-ENDIF()
 
 
 
@@ -116,7 +82,7 @@ ADD_SUBDIRECTORY( sio sio )
 ADD_SUBDIRECTORY( src/cpp lcio )
 
 
-# create uninstall configuration file 
+# create uninstall configuration file
 CONFIGURE_FILE( "${PROJECT_SOURCE_DIR}/cmake_uninstall.cmake.in"
                 "${PROJECT_BINARY_DIR}/cmake_uninstall.cmake"
                 IMMEDIATE @ONLY )
@@ -133,31 +99,17 @@ INSTALL( FILES "${PROJECT_BINARY_DIR}/LCIOConfig.cmake" DESTINATION . )
 
 # display status message for important variables
 MESSAGE( STATUS )
-MESSAGE( STATUS "-------------------------------------------------------------------------------" )
-MESSAGE( STATUS "BUILD_SHARED_LIBS = ${BUILD_SHARED_LIBS}" )
-MESSAGE( STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}" )
-MESSAGE( STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}" )
-IF( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-    MESSAGE( STATUS "BUILD_32BIT_COMPATIBLE = ${BUILD_32BIT_COMPATIBLE}" )
-ENDIF()
+MESSAGE( STATUS "----------------------------- LCIO --------------------------------------------" )
 MESSAGE( STATUS "BUILD_LCIO_TESTS = ${BUILD_LCIO_TESTS}" )
 MESSAGE( STATUS "BUILD_LCIO_EXAMPLES = ${BUILD_LCIO_EXAMPLES}" )
 MESSAGE( STATUS "BUILD_WITH_DCAP = ${BUILD_WITH_DCAP}" )
 MESSAGE( STATUS "INSTALL_DOC = ${INSTALL_DOC}" )
 MESSAGE( STATUS "INSTALL_JAR = ${INSTALL_JAR}" )
 MESSAGE( STATUS "BUILD_ROOTDICT = ${BUILD_ROOTDICT}" )
-MESSAGE( STATUS "Change a value with: cmake -D<Variable>=<Value>" )
-MESSAGE( STATUS "-------------------------------------------------------------------------------" )
-MESSAGE( STATUS )
+
 
 # force some variables that could be defined in the command line
 # to be written to cache
-SET( BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS}" CACHE BOOL
-    "Set to OFF to build static libraries" FORCE )
-SET( CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE PATH
-    "Where to install LCIO" FORCE )
-SET( CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING
-    "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE )
 SET( BUILD_LCIO_TESTS "${BUILD_LCIO_TESTS}" CACHE BOOL
     "Set to ON to build LCIO tests under src/cpp/src/TESTS" FORCE )
 SET( BUILD_LCIO_EXAMPLES "${BUILD_LCIO_EXAMPLES}" CACHE BOOL
@@ -174,11 +126,3 @@ SET( BUILD_ROOTDICT "${BUILD_ROOTDICT}" CACHE BOOL
      "Set to ON to build LCIO ROOT dictionary" FORCE )
 
 
-# export build settings
-INCLUDE( CMakeExportBuildSettings )
-CMAKE_EXPORT_BUILD_SETTINGS( "LCIOBuildSettings.cmake" )
-INSTALL( FILES "${PROJECT_BINARY_DIR}/LCIOBuildSettings.cmake" DESTINATION lib/cmake )
-
-# export library dependencies (keep this as the last line in the file)
-EXPORT_LIBRARY_DEPENDENCIES( "LCIOLibDeps.cmake" )
-INSTALL( FILES "${PROJECT_BINARY_DIR}/LCIOLibDeps.cmake" DESTINATION lib/cmake )

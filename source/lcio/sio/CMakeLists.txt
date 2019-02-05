@@ -48,10 +48,9 @@ SET (SIO_SRCS
   ${SIO_SOURCE_DIR}/src/SIO_streamManager.cc
 )
 
-#------ require proper C++ -------
-ADD_DEFINITIONS( "-Wall -ansi -pedantic" )
-#----- need long long for int64 for now ------
-ADD_DEFINITIONS( "-Wno-long-long -Wno-sign-compare -fno-strict-aliasing" )
+
+#----- This was here - could be important ------
+ADD_DEFINITIONS( "-fno-strict-aliasing" )
 
 ADD_LIBRARY( lib_SIO ${SIO_SRCS} )
 

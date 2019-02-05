@@ -91,10 +91,9 @@ SET( LCIO_UTIL_SRCS
   ./src/UTIL/PIDHandler.cc
 )
 
-#------ require proper C++ -------
-ADD_DEFINITIONS( "-Wall -ansi -pedantic" )
-#----- need long long for int64 for now ------
-ADD_DEFINITIONS( "-Wno-long-long -fno-strict-aliasing" )
+
+#----- This was here - could be important ------
+ADD_DEFINITIONS( "-fno-strict-aliasing" )
 
 
 ADD_CUSTOM_TARGET( lib DEPENDS lib_LCIO lib_SIO )
@@ -118,7 +117,9 @@ SET_TARGET_PROPERTIES( lib_LCIO PROPERTIES
 
 TARGET_LINK_LIBRARIES( lib_LCIO lib_SIO )
 
-
+TARGET_INCLUDE_DIRECTORIES(lib_LCIO INTERFACE
+  "${LCIO_SOURCE_DIR}/src/cpp/include"
+)
 # create symbolic target for calling targets bin_XXX
 ADD_CUSTOM_TARGET( bin )
 
