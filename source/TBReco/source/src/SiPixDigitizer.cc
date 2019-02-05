@@ -428,16 +428,16 @@ namespace depfet {
   //
   void SiPixDigitizer::TransformToLocal(const SimTrackerHit * simTrkHit, SpacePoint & hitLocal)
   {
-    Vector3d position
-    position << simTrkHit->getPosition()[0]*mm << simTrkHit->getPosition()[1]*mm << simTrkHit->getPosition()[2]*mm ;
-    Vector3d momentum
-    momentum << simTrkHit->getMomentum()[0] << simTrkHit->getMomentum()[1] << simTrkHit->getMomentum()[2];
+    Vector3d position;
+    position << simTrkHit->getPosition()[0]*mm , simTrkHit->getPosition()[1]*mm , simTrkHit->getPosition()[2]*mm ;
+    Vector3d momentum;
+    momentum << simTrkHit->getMomentum()[0] , simTrkHit->getMomentum()[1] , simTrkHit->getMomentum()[2];
     
     // Save final results
     hitLocal.position  = position;
       
-    if ( momentum.mag() != 0 ) {
-       hitLocal.direction = momentum/momentum.mag();
+    if ( momentum.norm() != 0 ) {
+       hitLocal.direction = momentum.normalize(); 
     } else {
        hitLocal.direction = momentum; 
     }
@@ -456,9 +456,9 @@ namespace depfet {
     
     streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
                             << std::setprecision(3)
-                            << " Simulated hit local[mm]:  (" << hitLocal.position.getX()
-                            << ", "                           << hitLocal.position.getY()
-                            << ", "                           << hitLocal.position.getZ() << ")"
+                            << " Simulated hit local[mm]:  (" << hitLocal.position(0)
+                            << ", "                           << hitLocal.position(1)
+                            << ", "                           << hitLocal.position(2) << ")"
                             << std::resetiosflags(std::ios::showpos)
                             << std::setprecision(0)
                             << std::endl << std::endl;
@@ -473,7 +473,7 @@ namespace depfet {
     Vector3d exitPoint  = hitLocal.position + hitLocal.direction*trackLength/2.;
       
     // Check entry and exit point are within sensor boundaries  
-    if (  m_detector.GetDet(m_ipl).isPointOutOfSensor( entryPoint.getX(), entryPoint.getY() , entryPoint.getZ() ) ) {
+    if (  m_detector.GetDet(m_ipl).isPointOutOfSensor( entryPoint(0), entryPoint(1) , entryPoint(2) ) ) {
       streamlog_out(MESSAGE2) << std::setiosflags(std::ios::fixed | std::ios::internal )
                               << std::setprecision(3)
                               << "SiPixDigitizer::ProduceIonisationPoints - ionPoint: " << entryPoint/mm << " out of sensor!!!"
@@ -484,7 +484,7 @@ namespace depfet {
             
       return; 
     }
-    if (  m_detector.GetDet(m_ipl).isPointOutOfSensor( exitPoint.getX(), exitPoint.getY() , exitPoint.getZ() ) ) {
+    if (  m_detector.GetDet(m_ipl).isPointOutOfSensor( exitPoint(0), exitPoint(1) , exitPoint(2) ) ) {
       streamlog_out(MESSAGE2) << std::setiosflags(std::ios::fixed | std::ios::internal )
                               << std::setprecision(3)
                               << "SiPixDigitizer::ProduceIonisationPoints - ionPoint: " << exitPoint/mm << " out of sensor!!!"
@@ -520,7 +520,7 @@ namespace depfet {
       // Print
       streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
                               << std::setprecision(3)
-                              << "   Pos [mm]: ( " << iPoint->position.getX()/mm << ", " << iPoint->position.getY()/mm << ", " << iPoint->position.getZ()/mm << " )"
+                              << "   Pos [mm]: ( " << iPoint->position(0)/mm << ", " << iPoint->position(1)/mm << ", " << iPoint->position(2)/mm << " )"
                               << " , dE [keV]: "   << iPoint->eLoss/keV
                               << std::setprecision(0)
                               << std::endl;
@@ -548,7 +548,7 @@ namespace depfet {
       IonisationPoint * iPoint = ionisationPoints[i];
       
       //  Charge cloud created at distance to top plane 
-      double w =  m_detector.GetDet(m_ipl).GetSensitiveThickness()/2. - iPoint->position.getZ();
+      double w =  m_detector.GetDet(m_ipl).GetSensitiveThickness()/2. - iPoint->position(2);
       w = sqrt( w * w );
       
       // Potential valley is at distance to top plane
@@ -571,8 +571,8 @@ namespace depfet {
       double sigmaV = sigmaDiffus; 
       
       //  After Lorentz shift
-      double onPlaneU = iPoint->position.getX() + m_tanLorentzAngle * (w - w0);
-      double onPlaneV = iPoint->position.getY();
+      double onPlaneU = iPoint->position(0) + m_tanLorentzAngle * (w - w0);
+      double onPlaneV = iPoint->position(1);
         
       // Save info in signal point
       SignalPoint * sPoint = new SignalPoint;
@@ -594,14 +594,14 @@ namespace depfet {
       // Print
       streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
                               << std::setprecision(3)
-                              << "   Pos [mm]:( " << sPoint->position.getX()/mm << ", " << sPoint->position.getY()/mm << ", " << sPoint->position.getZ()/mm << " )"
+                              << "   Pos [mm]:( " << sPoint->position(0)/mm << ", " << sPoint->position(1)/mm << ", " << sPoint->position(2)/mm << " )"
                               << " , q [e-]: "    << sPoint->charge
                               << std::setprecision(0)
                               << std::endl;
        
       streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
                               << std::setprecision(3)
-                              << "   Sigma [um]:( " << sPoint->sigma.getX()/um << ", " << sPoint->sigma.getY()/um << ", " << sPoint->sigma.getZ()/um << " )"
+                              << "   Sigma [um]:( " << sPoint->sigma(0)/um << ", " << sPoint->sigma(1)/um << ", " << sPoint->sigma(2)/um << " )"
                               << std::setprecision(0)
                               << std::endl;
       
@@ -636,12 +636,12 @@ namespace depfet {
       SignalPoint * sPoint = signalPoints[i];
       
       // Calculate centre of gaussian charge cloud
-      double centreU = sPoint->position.getX();
-      double centreV = sPoint->position.getY();
+      double centreU = sPoint->position(0);
+      double centreV = sPoint->position(1);
       
       // Calculate width of charge cloud
-      double sigmaU  = sPoint->sigma.getX();
-      double sigmaV  = sPoint->sigma.getY();
+      double sigmaU  = sPoint->sigma(0);
+      double sigmaV  = sPoint->sigma(1);
       
       // Get number of electrons in cloud
       double clusterCharge = sPoint->charge;

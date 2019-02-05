@@ -521,10 +521,10 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
       _rootHitFitU = p[2];           
       _rootHitFitV = p[3];          
           
-      _rootHitFitErrorU  = TMath::Sqrt(C[2][2]);    
-      _rootHitFitErrorV  = TMath::Sqrt(C[3][3]);  
-      _rootHitPullResidualU = (hit.GetCoord()[0] - p[2]) / TMath::Sqrt( C[2][2] + hit.GetCov()[0][0] ) ;   
-      _rootHitPullResidualV = (hit.GetCoord()[1] - p[3]) / TMath::Sqrt( C[3][3] + hit.GetCov()[1][1] ) ;  
+      _rootHitFitErrorU  = TMath::Sqrt(C(2,2));    
+      _rootHitFitErrorV  = TMath::Sqrt(C(3,3));  
+      _rootHitPullResidualU = (hit.GetCoord()[0] - p[2]) / TMath::Sqrt( C(2,2) + hit.GetCov()(0,0) ) ;   
+      _rootHitPullResidualV = (hit.GetCoord()[1] - p[3]) / TMath::Sqrt( C(3,3) + hit.GetCov()(1,1) ) ;  
                                  
       _rootHitFitCellU = fitcol;      
       _rootHitFitCellV = fitrow;    

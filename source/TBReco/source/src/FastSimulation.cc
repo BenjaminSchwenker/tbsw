@@ -199,7 +199,7 @@ namespace depfet {
       double p2 = mcp->getMomentum()[1];
       double p3 = mcp->getMomentum()[2];  
      
-      StateVec state; // du/dw,  dv/dw,  u,   v, q/p
+      TrackState state; // du/dw,  dv/dw,  u,   v, q/p
       state<< p1/p3 , p2/p3, 0, 0,  mcp->getCharge()/std::sqrt(p1*p1 + p2*p2 + p3*p3);
 
         

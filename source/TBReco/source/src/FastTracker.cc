@@ -661,8 +661,8 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
          // Skip all candidate tracks with a very 
          // large angle relative to Z axis. 
          if ( _maxSlope > 0 ) {         
-           double dxdz = Seed.GetPars()[0][0];
-           double dydz = Seed.GetPars()[1][0]; 
+           double dxdz = Seed.GetPars()[0];
+           double dydz = Seed.GetPars()[1]; 
            if ( ( std::abs(dxdz) > _maxSlope ) || ( std::abs(dydz) > _maxSlope )  ) 
            {
              streamlog_out ( MESSAGE2 ) << "Slope too large. Skipping track candidate!! " << endl; 
@@ -726,8 +726,8 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
        // Skip all candidate tracks with a very 
        // large angle relative to Z axis. 
        if ( _maxSlope > 0 ) {         
-         double dxdz = Seed.GetPars()[0][0];
-         double dydz = Seed.GetPars()[1][0]; 
+         double dxdz = Seed.GetPars()[0];
+         double dydz = Seed.GetPars()[1]; 
          if ( ( std::abs(dxdz) > _maxSlope ) || ( std::abs(dydz) > _maxSlope )  ) 
          {
            streamlog_out ( MESSAGE2 ) << "Slope too large. Skipping track candidate!! " << endl; 
