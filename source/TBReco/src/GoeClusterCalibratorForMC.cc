@@ -144,7 +144,7 @@ namespace depfet {
     // Get simhit collection
     //
   
-    LCCollection* simHitCol = NULL;
+    LCCollection* simHitCol = nullptr;
     int nSimHit = 0;   
     try {
       simHitCol = evt->getCollection( _simHitColName ) ;

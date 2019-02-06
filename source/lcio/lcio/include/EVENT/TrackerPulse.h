@@ -55,7 +55,7 @@ public:
     virtual int getQuality() const = 0;
 
     /** Optionally the TrackerData that has been used to create the pulse
-     *  can be stored with the pulse - NULL if none. Check the quality bits for reason
+     *  can be stored with the pulse - nullptr if none. Check the quality bits for reason
      *  why the spectrum has been stored for the pulse.
      */
     virtual TrackerData * getTrackerData() const = 0;

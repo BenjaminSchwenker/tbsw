@@ -73,7 +73,7 @@ namespace IMPL{
     if(getParticles().size()!=0){
       return getParticles().at(0)->getStartVertex();
     }
-    return NULL;
+    return nullptr;
   }
                                                                                                                                                           
   void ReconstructedParticleImpl::setStartVertex( EVENT::Vertex *sv ){

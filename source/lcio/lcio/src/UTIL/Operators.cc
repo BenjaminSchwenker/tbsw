@@ -31,7 +31,7 @@ namespace UTIL{
 //    for(int i=0;i<VTXCOVMATRIX;i++)
 //      out << v->getCovMatrix()[i] << (i<(VTXCOVMATRIX-1)?",":" | [");
     out << setw(3) << v->getParameters().size() << "] | [";
-    out << setw(8) << hex << (v->getAssociatedParticle()!=NULL?v->getAssociatedParticle()->id():0) << "]\n";
+    out << setw(8) << hex << (v->getAssociatedParticle()!=nullptr?v->getAssociatedParticle()->id():0) << "]\n";
     
     return out;
 
@@ -49,7 +49,7 @@ namespace UTIL{
 	v->getPosition()[0] << ", " << v->getPosition()[1] << ", " << v->getPosition()[2] << " | [" ;
 
     out << setw(3) << v->getParameters().size() << "] | [";
-    out << setw(8) << hex << (v->getAssociatedParticle()!=NULL?v->getAssociatedParticle()->id():0) << "]\n";
+    out << setw(8) << hex << (v->getAssociatedParticle()!=nullptr?v->getAssociatedParticle()->id():0) << "]\n";
     
     return out;
 
@@ -85,7 +85,7 @@ namespace UTIL{
     }
     
     out << "Associated Reconstructed Particle ID:\t["; 
-    out << setw(8) << hex << (v->getAssociatedParticle()!=NULL?v->getAssociatedParticle()->id():0) <<"]\n\n";
+    out << setw(8) << hex << (v->getAssociatedParticle()!=nullptr?v->getAssociatedParticle()->id():0) <<"]\n\n";
    
     return out;
   }
@@ -124,7 +124,7 @@ namespace UTIL{
     for(int i=0; i<VTXCOVMATRIX; i++)
       sprintf( buffer, "%s%5.3e%s", buffer, v->getCovMatrix()[i], (i<(VTXCOVMATRIX-1) ? ", ":" |") ) ;
     
-    sprintf( buffer, "%s [%8.8x]\n", buffer, (v->getAssociatedParticle()!=NULL? v->getAssociatedParticle()->id(): 0) ) ;
+    sprintf( buffer, "%s [%8.8x]\n", buffer, (v->getAssociatedParticle()!=nullptr? v->getAssociatedParticle()->id(): 0) ) ;
     
     str = buffer;
     return str;

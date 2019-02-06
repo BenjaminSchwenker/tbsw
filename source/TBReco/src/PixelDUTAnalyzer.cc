@@ -262,7 +262,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
   // Get telescope track collection
   //
   
-  LCCollection* trackcol = NULL;
+  LCCollection* trackcol = nullptr;
   int nTrack = 0;   
   try {
     trackcol = evt->getCollection( _trackColName ) ;

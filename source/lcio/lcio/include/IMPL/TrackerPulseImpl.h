@@ -48,7 +48,7 @@ namespace IMPL {
     virtual int getQuality() const { return _quality ; }
     
     /** Optionally the TrackerData that has been uesed to create the pulse
-     *  can be stored with the pulse - NULL if none. Check the quality bits for reason
+     *  can be stored with the pulse - nullptr if none. Check the quality bits for reason
      *  why the spectrum has been stored for the pulse.
      */
     virtual EVENT::TrackerData * getTrackerData() const { return _corrData ; } 

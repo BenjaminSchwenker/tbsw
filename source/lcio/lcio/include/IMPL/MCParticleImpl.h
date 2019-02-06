@@ -62,7 +62,7 @@ namespace IMPL {
     virtual EVENT::MCParticle * getParent(int i) const ;
 
 
-    /** Returns the endpoint of the particle in [mm] - returns NULL if
+    /** Returns the endpoint of the particle in [mm] - returns nullptr if
      *  undefined (not set). 
      *  Definition of the enpoint depends on the application that created 
      *  the particle, e.g. the start point of the shower in a calorimeter.

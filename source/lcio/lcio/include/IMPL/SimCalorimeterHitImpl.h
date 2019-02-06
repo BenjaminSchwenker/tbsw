@@ -67,7 +67,7 @@ namespace IMPL {
     virtual float getEnergy() const ;
     
     /** Returns the position of the hit in world coordinates.
-     *  NULL if information is not stored. Ask collection for flag, only 
+     *  nullptr if information is not stored. Ask collection for flag, only
      * available if bit LCIO.CHBIT_LONG is set.
      */
     

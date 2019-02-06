@@ -65,7 +65,7 @@ public:
     virtual float getTime() const = 0;
 
     /** Returns the position of the hit in world coordinates.
-     *  NULL if information is not stored - check 
+     *  nullptr if information is not stored - check 
      *  flag(LCIO::RCHBIT_LONG)==1.
      */
     virtual const float* getPosition() const = 0;

@@ -179,7 +179,7 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
   // Get telescope track collection
   //
   
-  LCCollection* trackcol = NULL;
+  LCCollection* trackcol = nullptr;
   bool isTrackok = true;   
   try {
     trackcol = evt->getCollection( _trackColName ) ;
@@ -202,7 +202,7 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
   // Get DUT hit collection 
   // 
   
-  LCCollection* hitcol = NULL;
+  LCCollection* hitcol = nullptr;
   bool isDUTok=true;
   try {
     hitcol = evt->getCollection( _hitColName ) ;

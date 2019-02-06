@@ -45,7 +45,7 @@ public:
     virtual float getEnergy() const = 0;
 
     /** Returns the position of the hit in world coordinates.
-     *  NULL if information is not stored -  check the flag word (bit CHBIT_LONG) 
+     *  nullptr if information is not stored -  check the flag word (bit CHBIT_LONG) 
      *  of the collection.
      */
     virtual const float* getPosition() const = 0;

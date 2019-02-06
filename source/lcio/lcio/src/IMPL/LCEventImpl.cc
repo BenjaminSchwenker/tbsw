@@ -148,7 +148,7 @@ void  LCEventImpl::addCollection(LCCollection * col, const std::string & name) {
   // check if col != 0
   if( col == 0  )
 
-    throw EventException( std::string("LCEventImpl::addCollection()  cannot add NULL collection for : "
+    throw EventException( std::string("LCEventImpl::addCollection()  cannot add nullptr collection for : "
 				      +name) ) ; 
 
   _colMap[ name ]  = col ;

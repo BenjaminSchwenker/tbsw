@@ -27,7 +27,7 @@ namespace depfet {
  * 
  *  In addition, the following info may available 
  *   
- *  - Pointer to cluster raw data (default NULL)
+ *  - Pointer to cluster raw data (default nullptr)
  *  - Unique hitid from pattern reco (default -1)
  *  
  *  @Author B. Schwenker, University of Göttingen
@@ -48,7 +48,7 @@ class TBHit {
   int UniqueID; 
   // Cluster Quality 
   int Quality; 
-  // Pointer to raw TrackerHit (default NULL)
+  // Pointer to raw TrackerHit (default nullptr)
   lcio::TrackerHit * RawHitPtr;
     
  public: // functions 

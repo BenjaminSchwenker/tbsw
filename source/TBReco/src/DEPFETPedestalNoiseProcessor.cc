@@ -140,11 +140,11 @@ DEPFETPedestalNoiseProcessor::DEPFETPedestalNoiseProcessor() : Processor("DEPFET
    
    // ROOT pointer stuff
    
-   _rootFile = NULL;
-   _rootPedeTree = NULL; 
-   _rootPixelTree = NULL;
-   _rootCommonModeTree = NULL;
-   _rootEventTree = NULL;  
+   _rootFile = nullptr;
+   _rootPedeTree = nullptr; 
+   _rootPixelTree = nullptr;
+   _rootCommonModeTree = nullptr;
+   _rootEventTree = nullptr;  
 }
 
 //
