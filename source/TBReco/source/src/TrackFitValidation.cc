@@ -278,8 +278,8 @@ namespace depfet {
               double simHitPosV = simHit->getPosition()[1];
               
               
-              double hitPosU = recoTrack.GetTE(ipl).GetState().GetPars()[2][0];
-              double hitPosV = recoTrack.GetTE(ipl).GetState().GetPars()[3][0];
+              double hitPosU = recoTrack.GetTE(ipl).GetState().GetPars()[2];
+              double hitPosV = recoTrack.GetTE(ipl).GetState().GetPars()[3];
               
               // Skip all DUT hits with too large residuum 
               if ( std::abs(hitPosU-simHitPosU) >= _maxResidualU && _maxResidualU > 0 ) continue;  
@@ -331,25 +331,25 @@ namespace depfet {
           sim_x[1] = momentum[1]/momentum[2];                              // dv/dw      
           sim_x[2] = simHit->getPosition()[0];                             // u
           sim_x[3] = simHit->getPosition()[1];                             // v
-          sim_x[4] = simHit->getMCParticle()->getCharge()/momentum.mag();  // q/p
+          sim_x[4] = simHit->getMCParticle()->getCharge()/momentum.norm();  // q/p
           
           histoName = "htrk_dir_truth_det"+to_string( ipl ); 
-          _histoMap2D[ histoName  ]->Fill(sim_x[0][0],sim_x[1][0]);  
+          _histoMap2D[ histoName  ]->Fill(sim_x[0],sim_x[1]);  
           
           histoName = "htrk_tu_truth_det"+to_string( ipl );
-          _histoMap[ histoName  ]->Fill(sim_x[0][0]);  
+          _histoMap[ histoName  ]->Fill(sim_x[0]);  
           
           histoName = "htrk_tv_truth_det"+to_string( ipl );
-          _histoMap[ histoName  ]->Fill(sim_x[1][0]);  
+          _histoMap[ histoName  ]->Fill(sim_x[1]);  
           
           histoName = "htrk_u_truth_det"+to_string( ipl );
-          _histoMap[ histoName  ]->Fill(sim_x[2][0]);  
+          _histoMap[ histoName  ]->Fill(sim_x[2]);  
           
           histoName = "htrk_v_truth_det"+to_string( ipl );
-          _histoMap[ histoName  ]->Fill(sim_x[3][0]);  
+          _histoMap[ histoName  ]->Fill(sim_x[3]);  
           
           histoName = "htrk_mom_truth_det"+to_string( ipl );
-          _histoMap[ histoName  ]->Fill(momentum.mag());
+          _histoMap[ histoName  ]->Fill(momentum.norm());
           
           
           TBTrack& recoTrack = TrackStore[i];

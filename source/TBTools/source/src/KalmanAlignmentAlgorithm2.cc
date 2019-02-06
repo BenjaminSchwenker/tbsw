@@ -15,8 +15,8 @@
 #include "ThreeDModel.h"
 
 // ROOT includes
-#include "TH1F.h"
-#include "TH2F.h"
+//#include "TH1F.h"
+//#include "TH2F.h"
 #include "TTree.h"
 #include "TMath.h"
 #include "TRandom.h"
@@ -75,7 +75,7 @@ SensorAlignmentJacobian KalmanAlignmentAlgorithm2::Jacobian_Alignment(const Trac
   // Compute A=daq/dar
   Eigen::Matrix<double,6,6> A;
   A = Eigen::Matrix<double,6,6>::Identity();
-  A.block<3,3>(0,0) = Rot
+  A.block<3,3>(0,0) = Rot;
   
   //cout << "A " << A << endl; 
    
@@ -99,14 +99,15 @@ bool KalmanAlignmentAlgorithm2::AlignDetector(TBDetector& detector, AlignableDet
          
     // Load current pixel module    
     Det & adet = detector.GetDet(ipl);
-        
+         
     // Read alignment corrections for sensor ipl 
-    double dx = alignconst.alignmentParameters[ipl*6+0]; 
-    double dy = alignconst.alignmentParameters[ipl*6+1];      
-    double dz = alignconst.alignmentParameters[ipl*6+2];    
-    double dalpha = alignconst.alignmentParameters[ipl*6+3];
-    double dbeta  = alignconst.alignmentParameters[ipl*6+4];
-    double dgamma = alignconst.alignmentParameters[ipl*6+5];
+    SensorAlignmentParameters alignPars = alignconst.GetAlignState(ipl);
+    double dx = alignPars(0);  
+    double dy = alignPars(1);      
+    double dz = alignPars(2);     
+    double dalpha = alignPars(3); 
+    double dbeta  = alignPars(4); 
+    double dgamma = alignPars(5);
      
     // Compute a 'delta' frame from corrections 
     ReferenceFrame deltaFrame = ReferenceFrame::create_karimaki_delta(dx,dy,dz,dalpha,dbeta,dgamma); 
@@ -163,7 +164,7 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
     int nFixed = 0; 
     for (int iParameter=0; iParameter < nParameters; iParameter++){
       // Parameter is fixed? 
-      double sigma2 =  AlignStore.GetAlignCovariance(iAlignable)[iParameter][iParameter];   
+      double sigma2 =  AlignStore.GetAlignCovariance(iAlignable)(iParameter,iParameter);   
       if (sigma2 == 0 ) {
         ++nFixed;
       }     
@@ -330,15 +331,14 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
       auto H = TrackFitter.GetHMatrix();
       
       // Jacobian matrix, derivatives of measurement equation 
-      // m=f(p,a) to alignment parameters a at (a0,p0) 
-      auto Pos = TE.GetDet().GetNominal().GetPosition(); 
+      // m=f(p,a) to alignment parameters a at (a0,p0)  
       auto Rot = TE.GetDet().GetNominal().GetRotation();
-      auto D = Jacobian_Alignment(p0, Rot, Pos); 
+      auto D = Jacobian_Alignment(p0, Rot); 
        
       // Weigth matrix of measurment 
-      int ierr; 
-      HepSymMatrix W = (V + C0.similarity(H) + E0.similarity(D) ).inverse(ierr);
-      if (ierr != 0) {
+      bool invertible = true;
+      Matrix2d W = (V + H*C0*H.transpose() + D*E0*D.transpose() ).inverse();
+      if (!invertible) {
         if (logLevel > 2) { 
           cout << "ERR: Matrix inversion failed. Skipping alignable!" << endl;
         } 
@@ -352,16 +352,16 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
               
       // Update for alignment state + cov  
       auto a1 = a0 + K * (m - f) ;
-      auto E1 = E0 - (W.similarityT(D)).similarity(E0); 
-       
+      auto E1 = E0 - E0*D.transpose()*W*D*E0.transpose();   
+          
       // Outlier rejection II
       //----------------------
       bool filterEvent = false;
       if (deviationCut > 0.0){
         for (int ipar=0; ipar < nParameters; ipar++){
-          if (TMath::Abs(a1[ipar]-a0[ipar]) > deviationCut * TMath::Sqrt(E0[ipar][ipar])) {
+          if (TMath::Abs(a1[ipar]-a0[ipar]) > deviationCut * TMath::Sqrt(E0(ipar,ipar))) {
             cout << "Deviation cut for parameter "<< ipar << ": " << TMath::Abs(a1[ipar] - a0[ipar] ) 
-                 << " while std. deviation is " << TMath::Sqrt(E0[ipar][ipar]) << endl;
+                 << " while std. deviation is " << TMath::Sqrt(E0(ipar,ipar)) << endl;
             filterEvent = true;
           }
         }

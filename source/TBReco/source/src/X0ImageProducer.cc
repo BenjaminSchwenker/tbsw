@@ -385,10 +385,10 @@ void X0ImageProducer::processEvent(LCEvent * evt)
         TBTrackState& InState=uptrack.GetTE(_idut).GetState();
         TBTrackState& OutState=downtrack.GetTE(_idut).GetState(); 
         
-        double u_in = InState.GetPars()[2][0];
-        double v_in = InState.GetPars()[3][0];
-        double u_out = OutState.GetPars()[2][0];
-        double v_out = OutState.GetPars()[3][0];
+        double u_in = InState.GetPars()[2];
+        double v_in = InState.GetPars()[3];
+        double u_out = OutState.GetPars()[2];
+        double v_out = OutState.GetPars()[3];
         
         double hitdist = std::abs(u_in-u_out) + std::abs(v_in-v_out);
                       
@@ -470,12 +470,12 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 	_root_vertex_y = vertexglobalpos[1];
 	_root_vertex_z = vertexglobalpos[2];
 
-	_root_vertex_u_var = vertexcov[0][0];
-	_root_vertex_v_var = vertexcov[1][1];
-	_root_vertex_w_var = vertexcov[2][2];
-	_root_vertex_x_var = vertexglobalcov[0][0];
-	_root_vertex_y_var = vertexglobalcov[1][1];
-	_root_vertex_z_var = vertexglobalcov[2][2];
+	_root_vertex_u_var = vertexcov(0,0);
+	_root_vertex_v_var = vertexcov(1,1);
+	_root_vertex_w_var = vertexcov(2,2);
+	_root_vertex_x_var = vertexglobalcov(0,0);
+	_root_vertex_y_var = vertexglobalcov(1,1);
+	_root_vertex_z_var = vertexglobalcov(2,2);
 
 	_root_vertex_chi2ndf = Vertex.GetChi2Ndof();
 	_root_vertex_prob = TMath::Prob(Vertex.GetChi2(),Vertex.GetNdf());
@@ -509,8 +509,8 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		auto instate_covs=InState.GetCov();
 		auto outstate_covs=OutState.GetCov();
 	 
-		_root_u_var=1.0/(1.0/instate_covs[2][2]+1.0/outstate_covs[2][2]);  // weighted mean
-		_root_v_var=1.0/(1.0/instate_covs[3][3]+1.0/outstate_covs[3][3]);  // weighted mean
+		_root_u_var=1.0/(1.0/instate_covs(2,2)+1.0/outstate_covs(2,2));  // weighted mean
+		_root_v_var=1.0/(1.0/instate_covs(3,3)+1.0/outstate_covs(3,3));  // weighted mean
 		 	
 		// Fill root variables
 		_root_vertex_multiplicity = up2down[iup].size(); 
@@ -525,24 +525,24 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		_root_v_in = p_in[3];
 		_root_u_out = p_out[2]; 
 		_root_v_out = p_out[3];
-		_root_u = (instate_covs[2][2]*p_in[2] + outstate_covs[2][2]*p_out[2])/(instate_covs[2][2]+outstate_covs[2][2]); // weighted mean
-		_root_v = (instate_covs[3][3]*p_in[3] + outstate_covs[3][3]*p_out[3])/(instate_covs[3][3]+outstate_covs[3][3]); // weightes mean 
+		_root_u = (instate_covs(2,2)*p_in[2] + outstate_covs(2,2)*p_out[2])/(instate_covs(2,2)+outstate_covs(2,2)); // weighted mean
+		_root_v = (instate_covs(3,3)*p_in[3] + outstate_covs(3,3)*p_out[3])/(instate_covs(3,3)+outstate_covs(3,3)); // weightes mean 
 	   
 		_root_angle1 = theta[0];
 		_root_angle2 = theta[1];
-		_root_angle1_var = Cov[0][0];
-		_root_angle2_var = Cov[1][1];
+		_root_angle1_var = Cov(0,0);
+		_root_angle2_var = Cov(1,1);
 
 		_root_u_in = p_in[2]; 
 		_root_v_in = p_in[3];
 		_root_u_out = p_out[2]; 
 		_root_v_out = p_out[3];
-		_root_u = (instate_covs[2][2]*p_in[2] + outstate_covs[2][2]*p_out[2])/(instate_covs[2][2]+outstate_covs[2][2]); // weighted mean
-		_root_v = (instate_covs[3][3]*p_in[3] + outstate_covs[3][3]*p_out[3])/(instate_covs[3][3]+outstate_covs[3][3]); // weightes mean 
+		_root_u = (instate_covs(2,2)*p_in[2] + outstate_covs(2,2)*p_out[2])/(instate_covs(2,2)+outstate_covs(2,2)); // weighted mean
+		_root_v = (instate_covs(3,3)*p_in[3] + outstate_covs(3,3)*p_out[3])/(instate_covs(3,3)+outstate_covs(3,3)); // weightes mean 
 	   
 
-		_root_angle1_var = Cov[0][0];
-		_root_angle2_var = Cov[1][1];
+		_root_angle1_var = Cov(0,0);
+		_root_angle2_var = Cov(1,1);
 
 		// Construct the u and v residuals and calculate a chi2 value from them
 		auto res=p_in-p_out;
@@ -552,30 +552,30 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		// Use only the sub matrices, which describe the spatial coordinates of the trackstate
 		auto jchisq = res.block<2,1>(2,0).transpose()*res_covs.block<2,2>(3,3).inverse()*res.block<2,1>(2,0);
 
-		streamlog_out(MESSAGE1) << "Complete Covariance matrix: "<<res_covs.sub(1,4)<<endl;
-		streamlog_out(MESSAGE1) << "Part of Covariance matrix used here: "<<res_covs.sub(3,4)<<endl;
+		streamlog_out(MESSAGE1) << "Complete Covariance matrix: "<< res_covs <<endl;
+		streamlog_out(MESSAGE1) << "Part of Covariance matrix used here: "<<res_covs.block<2,2>(3,3)<<endl;
 
 		_root_chi2=jchisq[0];
 		_root_prob=TMath::Prob(jchisq[0], 2);
 
         if (_m_toy) 
 		{
-		  double dudw = p_in[0][0];
-		  double dvdw = p_in[1][0];
-		  double u = p_in[2][0]; 
-		  double v = p_in[3][0]; 
+		  double dudw = p_in[0];
+		  double dvdw = p_in[1];
+		  double u = p_in[2]; 
+		  double v = p_in[3]; 
 		  double mom = uptrack.GetMomentum();  
 		  double l0 = dut.GetThickness(u,v)*std::sqrt(1 + dudw*dudw + dvdw*dvdw); 
 
           // Simulate energy loss by bremsstrahlung (Bethe Heitler theory)
-          average_mom = 0.5*uptrack.GetCharge()/p_in[4][0];
+          average_mom = 0.5*uptrack.GetCharge()/p_in[4];
           if (_m_ToyBetheHeitler) {
             double t = l0/dut.GetRadLength(u,v);
             double rndm = gRandom->Rndm(1);
             materialeffect::SimulateBetherHeitlerEnergyLoss(p_in, t, uptrack.GetMass(), uptrack.GetCharge(), rndm); 
           } 
           // Take average of momentum before and after scattering
-          average_mom += 0.5*uptrack.GetCharge()/p_in[4][0];
+          average_mom += 0.5*uptrack.GetCharge()/p_in[4];
 		  
 		  // Highland model scattering
 		  double theta2 = materialeffect::GetScatterTheta2(average_mom, l0, dut.GetRadLength(u,v),uptrack.GetMass(), uptrack.GetCharge() );  
@@ -599,8 +599,8 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		  //  use the real reco error
 		  if(_m_reco_error<0)
 		  {
-			reco_error1=TMath::Sqrt( Cov[0][0] );
-			reco_error2=TMath::Sqrt( Cov[1][1] );
+			reco_error1=TMath::Sqrt( Cov(0,0) );
+			reco_error2=TMath::Sqrt( Cov(1,1) );
 		  }
 
 		  // Else use the selected reco error
@@ -610,8 +610,8 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 			reco_error2=_m_reco_error;
 		  }
 
-		  _root_angle1 = theta[0][0]+gRandom->Gaus(0, reco_error1);
-		  _root_angle2 = theta[1][0]+gRandom->Gaus(0, reco_error2);
+		  _root_angle1 = theta[0]+gRandom->Gaus(0, reco_error1);
+		  _root_angle2 = theta[1]+gRandom->Gaus(0, reco_error2);
 
 		  _root_angle1_var = reco_error1*reco_error1;
 		  _root_angle2_var = reco_error2*reco_error2; 

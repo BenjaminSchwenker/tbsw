@@ -24,6 +24,8 @@
 #include <TRandom.h>
 #include <TRandom3.h>
 
+#include <Eigen/Eigenvalues> 
+
 // Used namespaces
 using namespace std; 
 using namespace lcio;
@@ -134,7 +136,7 @@ namespace depfet {
     // The particle state is defined relativ to the Z= m_GunPositionZ
     // plane. The 5 dimensional state vector of the beam particle is  
     // (dx/dz,dy/dz,x,y,p) in global XYZ coordinates.  
-    S = Eigen::Matrix<double,5,5>::Zero();
+     Eigen::Matrix<double,5,5> S = Eigen::Matrix<double,5,5>::Zero();
     
     // First diagonal elements
     S(0,0) = std::pow(m_BeamSlopeXSigma,2);
@@ -154,13 +156,13 @@ namespace depfet {
     S(4,3) = m_BeamCorrelationVertexYvsMomentum*m_BeamVertexYSigma*m_BeamMomentumSigma;       
     
     // Construct average track state of beam particle 
-    m_Mean << 0 << 0 << m_BeamVertexX << m_BeamVertexY << m_BeamMomentum;
+    m_Mean << 0, 0, m_BeamVertexX, m_BeamVertexY, m_BeamMomentum;
     
     // Decompose S and store results to 
     // later generate random deviates    
      
-    SelfAdjointEigenSolver< Eigen::Matrix<double,5,5> > eigensolver(S);
-    if (eigensolver.info() != Success) {
+    Eigen::SelfAdjointEigenSolver< Eigen::Matrix<double,5,5> > eigensolver(S);
+    if (eigensolver.info() != Eigen::Success) {
       std::cerr << "In ParticelGunGenerator: Beam covariance matrix is not positive definite";  
       std::cerr << "---Exiting to System\n";
       exit(1);

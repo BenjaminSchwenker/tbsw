@@ -18,16 +18,16 @@ namespace depfet {
 TBVertex::TBVertex() 
 {
 
- Pos = VertexParameter::Zeros();
- GlobalPos = VertexParameter::Zeros();
+ Pos = VertexParameter::Zero();
+ GlobalPos = VertexParameter::Zero();
   
- Cov = VertexCovariance::Zeros();
- GlobalCov = VertexCovariance::Zeros();
+ Cov = VertexCovariance::Zero();
+ GlobalCov = VertexCovariance::Zero();
   
  chi2 = 0;
  ndf = -3;
   
- Res = VertexResidual::Zeros();
+ Res = VertexResidual::Zero();
 }
 
 TBVertex::TBVertex(VertexParameter aPos, VertexParameter aGlobalPos, VertexCovariance aCov, VertexCovariance aGlobalCov, double achi2) 
@@ -44,7 +44,7 @@ TBVertex::TBVertex(VertexParameter aPos, VertexParameter aGlobalPos, VertexCovar
   chi2 = achi2;
 
   ndf = -3;
-  Res = VertexResidual::Zeros();
+  Res = VertexResidual::Zero();
 }
 
 } // Namespace

@@ -79,6 +79,7 @@ class TBHit {
   // Get/Set measurment covariance 
   void SetCov(const Matrix2d& aCov ) { Cov = aCov; }
   const Matrix2d&  GetCov() const { return Cov; }
+  Matrix2d&  GetCov() { return Cov; }
 
   // Get/Set original raw cluster data   
   void SetRawHit(lcio::TrackerHit* lciohit ) { RawHitPtr = lciohit; }

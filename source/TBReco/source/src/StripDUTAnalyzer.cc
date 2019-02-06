@@ -384,8 +384,8 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
     _rootHitU = hit.GetCoord()[0];         
     _rootHitV = hit.GetCoord()[1];   
     
-    _rootHitSigmaU = hit.GetCov()[0][0]; 
-    _rootHitSigmaV = hit.GetCov()[1][1]; 
+    _rootHitSigmaU = hit.GetCov()(0,0); 
+    _rootHitSigmaV = hit.GetCov()(1,1); 
 
     _rootHitCellU = dut.GetUCellFromCoord( _rootHitU, _rootHitV );  
     _rootHitCellV = dut.GetVCellFromCoord( _rootHitU, _rootHitV );  
@@ -426,10 +426,10 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
       _rootHitFitU = p[2];           
       _rootHitFitV = p[3];          
           
-      _rootHitFitSigmaU  = TMath::Sqrt(C[2][2]);    
-      _rootHitFitSigmaV  = TMath::Sqrt(C[3][3]);  
-      _rootHitPullResidualU = (hit.GetCoord()[0] - p[2]) / TMath::Sqrt( C[2][2] + hit.GetCov()[0][0] ) ;   
-      _rootHitPullResidualV = (hit.GetCoord()[1] - p[3]) / TMath::Sqrt( C[3][3] + hit.GetCov()[1][1] ) ;  
+      _rootHitFitSigmaU  = TMath::Sqrt(C(2,2));    
+      _rootHitFitSigmaV  = TMath::Sqrt(C(3,3));  
+      _rootHitPullResidualU = (hit.GetCoord()[0] - p[2]) / TMath::Sqrt( C(2,2) + hit.GetCov()(0,0) ) ;   
+      _rootHitPullResidualV = (hit.GetCoord()[1] - p[3]) / TMath::Sqrt( C(3,3) + hit.GetCov()(1,1) ) ;  
                                  
       _rootHitFitCellU = dut.GetUCellFromCoord( pu, pv );        
       _rootHitFitCellV = dut.GetVCellFromCoord( pu, pv );       

@@ -195,19 +195,19 @@ void TrackFitDQM::processEvent(LCEvent * evt)
       // Fill track parameter errors
       
       histoName = "hsigma2_tu_sensor"+to_string( ipl );
-      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()[0][0] ) ; 
+      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()(0,0) ) ; 
       
       histoName = "hsigma2_tv_sensor"+to_string( ipl );
-      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()[1][1] ) ;  
+      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()(1,1) ) ;  
       
       histoName = "hsigma2_u_sensor"+to_string( ipl );
-      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()[2][2] ); 
+      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()(2,2) ); 
       
       histoName = "hsigma2_v_sensor"+to_string( ipl );
-      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()[3][3] );
+      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()(3,3) );
       
       histoName = "hsigma2_qp_sensor"+to_string( ipl );
-      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()[4][4] );
+      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()(4,4) );
       
       //
       // Fill beam profile histograms 
@@ -256,8 +256,8 @@ void TrackFitDQM::processEvent(LCEvent * evt)
       double du = TE.GetHit().GetCoord()[0] - TE.GetState().GetPars()[2]; // mm 
       double dv = TE.GetHit().GetCoord()[1] - TE.GetState().GetPars()[3]; // mm
                
-      double pull_u = du / TMath::Sqrt( TE.GetState().GetCov()[2][2] + TE.GetHit().GetCov()[0][0] ) ; 
-      double pull_v = dv / TMath::Sqrt( TE.GetState().GetCov()[3][3] + TE.GetHit().GetCov()[1][1] ) ;  
+      double pull_u = du / TMath::Sqrt( TE.GetState().GetCov()(2,2) + TE.GetHit().GetCov()(0,0) ) ; 
+      double pull_v = dv / TMath::Sqrt( TE.GetState().GetCov()(3,3) + TE.GetHit().GetCov()(1,1) ) ;  
       
       //PixelCluster Cluster = TE.GetHit().GetCluster(); 
       

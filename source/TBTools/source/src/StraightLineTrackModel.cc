@@ -8,6 +8,7 @@
 
 
 #include <cmath>
+#include <iostream>
 
 // Namespaces
 using namespace std; 
@@ -265,7 +266,7 @@ int StraightLineTrackModel::TrackJacobian( const TrackState& State, const Refere
 /** Numerical computation of track derivatives for extrapolation from Surf to fSurf. 
  *  Linearization point is State at Surf.  
  */
-int StraightLineTrackModel::TrackJacobian( const TrackState& State, const ReferenceFrame& Surf, const ReferenceFrame& fSurf, TrackStateJacobian& J)
+int StraightLineTrackModel::TrackJacobianNumerical( const TrackState& State, const ReferenceFrame& Surf, const ReferenceFrame& fSurf, TrackStateJacobian& J)
 {
  
 
@@ -284,7 +285,7 @@ int StraightLineTrackModel::TrackJacobian( const TrackState& State, const Refere
   J= TrackStateJacobian::Zero();
 
   // do column wise differntiation:
-  for(int icol=0;icol<ndim;++icol){
+  for(int icol=0;icol<5;++icol){
     // choose step
     double h=std::fabs(tmpState[icol])*1.e-4;
     if(h<1e-8)h=1.e-8;
@@ -301,7 +302,7 @@ int StraightLineTrackModel::TrackJacobian( const TrackState& State, const Refere
     // remove variation from state
     tmpState[icol]-=h;
     // fill jacobian with difference quotient
-    for(int irow=0;irow<ndim;++irow)
+    for(int irow=0;irow<5;++irow)
         J(irow,icol)=difPred[irow]/h;
   }
   

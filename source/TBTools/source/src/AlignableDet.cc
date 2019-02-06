@@ -12,8 +12,8 @@ AlignableDet::AlignableDet(int nAlignables)
   
   for (int i=0;i<nAlignables;i++) {
     // Initially, no correction is known
-    alignmentParametersVec.push_back(SensorAlignmentParameters::Zeros());
-    alignmentCovarianceVec.push_back(SensorAlignmentCovariance::Zeros()); 
+    alignmentParametersVec.push_back(SensorAlignmentParameters::Zero());
+    alignmentCovarianceVec.push_back(SensorAlignmentCovariance::Zero()); 
   }
 }
 

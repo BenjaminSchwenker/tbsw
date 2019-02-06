@@ -288,15 +288,14 @@ void KalmanAligner::end()
   // Construct the initial alignment state 
   
   int nSensors = _detector.GetNSensors();
-  int nParameters = 6;  
   AlignableDet AlignState(nSensors);
   
   for (int iSensor=0; iSensor < nSensors; iSensor++){     
 
-    SensorAlignmentParameters params;
+    SensorAlignmentParameters alignParams;
     alignParams << 0, 0, 0 , 0, 0, 0;
 
-    SensorAlignmentCovariance alignCov = SensorAlignmentCovariance::Zeros();   
+    SensorAlignmentCovariance alignCov = SensorAlignmentCovariance::Zero();   
     alignCov(0,0) = _errorsShiftX[iSensor]*_errorsShiftX[iSensor];
     alignCov(1,1) = _errorsShiftY[iSensor]*_errorsShiftY[iSensor];
     alignCov(2,2) = _errorsShiftZ[iSensor]*_errorsShiftZ[iSensor];

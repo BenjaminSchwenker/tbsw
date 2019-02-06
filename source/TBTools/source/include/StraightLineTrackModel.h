@@ -107,6 +107,11 @@ class StraightLineTrackModel : public GenericTrackModel {
   */
   int TrackJacobian( const TrackState& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf, TrackStateJacobian& J);
   
+  /** Compute track derivatives for extrapolation from Surf to fSurf.
+  *  Linearization point is State at Surf.  
+  */
+  int TrackJacobianNumerical( const TrackState& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf, TrackStateJacobian& J);
+
   /** Get local scatter gain matrix
   *  It calculates the derivates of track parameters State on 
   *  scattering angles theta1 and theta2. 

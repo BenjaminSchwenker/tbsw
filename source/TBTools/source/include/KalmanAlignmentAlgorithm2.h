@@ -5,10 +5,14 @@
 #include "TBDetector.h"
 #include "AlignableDet.h"
 
+#include "GenericTrackModel.h"
+
 // ROOT includes
 #include "TFile.h"
 
 namespace depfet {
+
+
 
 //! Class KalmanAlignmentAlgorithm2 
 /*  
