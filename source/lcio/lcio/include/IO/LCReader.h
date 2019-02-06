@@ -42,7 +42,7 @@ public:
      *
      * @throws IOException
      */
-    virtual void open(const std::string & filename) throw (IOException, std::exception )  = 0;
+    virtual void open(const std::string & filename) = 0;
 
     /** Opens a list of files for reading (read-only). All subsequent
      * read operations will operate on the list, i.e. if an EOF is encountered
@@ -51,35 +51,35 @@ public:
      *
      * @throws IOException
      */
-    virtual void open(const std::vector<std::string>  & filenames) throw (IOException, std::exception )  = 0;
+    virtual void open(const std::vector<std::string>  & filenames) = 0;
 
     /** Reads the next run header from the file. Returns NULL if
      * 'EOF' read. 
      *
      * @throws IOException
      */
-    virtual EVENT::LCRunHeader * readNextRunHeader() throw (IOException, std::exception )  = 0;
+    virtual EVENT::LCRunHeader * readNextRunHeader() = 0;
 
     /** Same as readNextRunHeader() but allows to set the access mode 
      *  LCIO::READ_ONLY (default) or LCIO::Update. 
      *
      * @throws IOException
      */
-    virtual EVENT::LCRunHeader * readNextRunHeader(int accessMode) throw (IOException, std::exception )  = 0;
+    virtual EVENT::LCRunHeader * readNextRunHeader(int accessMode) = 0;
 
     /** Reads the next event from the file. Returns NULL if
      * 'EOF' read. 
      *
      * @throws IOException
      */
-    virtual EVENT::LCEvent * readNextEvent() throw (IOException, std::exception )  = 0;
+    virtual EVENT::LCEvent * readNextEvent() = 0;
 
     /** Same as readNextEvent() but allows to set the access mode 
      *  LCIO::READ_ONLY (default) or LCIO::Update. 
      *
      * @throws IOException
      */
-    virtual EVENT::LCEvent * readNextEvent(int accessMode) throw (IOException, std::exception )  = 0;
+    virtual EVENT::LCEvent * readNextEvent(int accessMode) = 0;
 
     /** Skips the next n events from the current position.
      */
@@ -92,13 +92,13 @@ public:
      *
      * @throws IOException
      */
-    virtual EVENT::LCEvent * readEvent(int runNumber, int evtNumber) throw (IOException, std::exception )  = 0;
+    virtual EVENT::LCEvent * readEvent(int runNumber, int evtNumber) = 0;
 
     /** Closes the output file/stream etc.
      *
      * @throws IOException
      */
-    virtual void close() throw (IOException, std::exception )  = 0;
+    virtual void close() = 0;
 
     /** Registers a listener for reading LCEvents from a stream.
      */ 
@@ -122,7 +122,7 @@ public:
      *
      * @throws IOException
      */
-    virtual void readStream() throw (IOException, std::exception )  = 0;
+    virtual void readStream() = 0;
 
     /** Reads maxRecord from the input stream and notifies registered 
      * listeners according to the object type found in the stream.
@@ -130,7 +130,7 @@ public:
      *
      * @throws IOException
      */
-    virtual void readStream(int maxRecord) throw (IOException, std::exception )  = 0;
+    virtual void readStream(int maxRecord) = 0;
 }; // class
 } // namespace IO
 #endif /* ifndef IO_LCREADER_H */

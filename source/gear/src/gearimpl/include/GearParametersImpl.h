@@ -34,36 +34,32 @@ namespace gear {
     /** Integer value for key.     
      *  @throws UnknownParameterException
      */
-    virtual int getIntVal(const std::string & key) const throw (UnknownParameterException, std::exception ) ;
+    virtual int getIntVal(const std::string & key) const;
 	
     /** Double value for key      
      *  @throws UnknownParameterException
      */
-    virtual double getDoubleVal(const std::string & key) const throw (UnknownParameterException, std::exception ) ;
+    virtual double getDoubleVal(const std::string & key) const;
 	
     /** String value for key      
      *  @throws UnknownParameterException
      */
-    virtual const std::string & getStringVal(const std::string & key) const 
-      throw (UnknownParameterException, std::exception ) ;
+    virtual const std::string & getStringVal(const std::string & key) const;
 	
     /** Integer values for key      
      *  @throws UnknownParameterException
      */
-    virtual const std::vector<int>  & getIntVals(const std::string & key) const 
-      throw (UnknownParameterException, std::exception ) ;
+    virtual const std::vector<int>  & getIntVals(const std::string & key) const;
 	
     /** Double values for key      
      *  @throws UnknownParameterException
      */
-    virtual const std::vector<double>  & getDoubleVals(const std::string & key) const 
-      throw (UnknownParameterException, std::exception ) ;
+    virtual const std::vector<double>  & getDoubleVals(const std::string & key) const;
 	
     /** String values for key      
      *  @throws UnknownParameterException
      */
-    virtual const std::vector<std::string>  & getStringVals(const std::string & key) const 
-      throw (UnknownParameterException, std::exception ) ;
+    virtual const std::vector<std::string>  & getStringVals(const std::string & key) const ;
 	
     // setters
 

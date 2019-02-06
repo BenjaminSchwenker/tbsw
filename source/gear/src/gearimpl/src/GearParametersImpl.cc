@@ -6,7 +6,7 @@ namespace gear{
   
   GearParametersImpl::~GearParametersImpl() { /* nop */; }
   
-  int GearParametersImpl::getIntVal(const std::string & key) const throw (UnknownParameterException, std::exception ) { 
+  int GearParametersImpl::getIntVal(const std::string & key) const {
     
     IntMap::const_iterator it = _intMap.find( key ) ;
     if( it == _intMap.end() )
@@ -14,7 +14,7 @@ namespace gear{
     return it->second ;
   }
   
-  double GearParametersImpl::getDoubleVal(const std::string & key) const throw (UnknownParameterException, std::exception ) {
+  double GearParametersImpl::getDoubleVal(const std::string & key) const {
     
     DoubleMap::const_iterator it = _doubleMap.find( key ) ;
     if( it == _doubleMap.end() )
@@ -22,8 +22,7 @@ namespace gear{
     return it->second ;
   }
   
-  const std::string & GearParametersImpl::getStringVal(const std::string & key) const 
-    throw (UnknownParameterException, std::exception ) { 
+  const std::string & GearParametersImpl::getStringVal(const std::string & key) const {
 
     StringMap::const_iterator it = _stringMap.find( key ) ;
     if( it == _stringMap.end() )
@@ -31,8 +30,7 @@ namespace gear{
     return it->second ;
   }
 
-  const std::vector<int>  & GearParametersImpl::getIntVals(const std::string & key) const 
-    throw (UnknownParameterException, std::exception ) { 
+  const std::vector<int>  & GearParametersImpl::getIntVals(const std::string & key) const {
 
     IntVecMap::const_iterator it = _intVecMap.find( key ) ;
     if( it == _intVecMap.end() )
@@ -40,8 +38,7 @@ namespace gear{
     return it->second ;
   }
 
-  const std::vector<double>  & GearParametersImpl::getDoubleVals(const std::string & key) const 
-    throw (UnknownParameterException, std::exception ) { 
+  const std::vector<double>  & GearParametersImpl::getDoubleVals(const std::string & key) const {
 
     DoubleVecMap::const_iterator it = _doubleVecMap.find( key ) ;
     if( it == _doubleVecMap.end() )
@@ -49,8 +46,7 @@ namespace gear{
     return it->second ;
   }
 
-  const std::vector<std::string>  & GearParametersImpl::getStringVals(const std::string & key) const 
-    throw (UnknownParameterException, std::exception ) { 
+  const std::vector<std::string>  & GearParametersImpl::getStringVals(const std::string & key) const {
 
     StringVecMap::const_iterator it = _stringVecMap.find( key ) ;
     if( it == _stringVecMap.end() )

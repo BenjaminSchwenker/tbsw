@@ -55,16 +55,17 @@ ENDIF()
 ### INCLUDE, SOURCE, LIB ####################################################
 
 # Include directories
-INCLUDE_DIRECTORIES( source/include ${Eigen_INCLUDE_PATH} ${ROOT_INCLUDE_DIRS})
+INCLUDE_DIRECTORIES( include ${Eigen_INCLUDE_PATH} ${ROOT_INCLUDE_DIRS})
 
 # Set list of sources
-AUX_SOURCE_DIRECTORY( source/src lib_srcs)
+AUX_SOURCE_DIRECTORY( src lib_srcs)
+file(GLOB_RECURSE lib_hdrs RELATIVE "${PROJECT_SOURCE_DIR}" *.h *.hh)
 
 # Create library with the list of library sources
-ADD_LIBRARY( ${PROJECT_NAME} ${lib_srcs} )
+ADD_LIBRARY( ${PROJECT_NAME} ${lib_srcs} ${lib_hdrs} )
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME} lib_LCIO lib_Marlin)
 TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} INTERFACE
-  "${PROJECT_SOURCE_DIR}/source/include"
+  "${PROJECT_SOURCE_DIR}/include"
 )
 
 # Install libraries

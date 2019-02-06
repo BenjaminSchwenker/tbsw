@@ -298,13 +298,13 @@ if( dmpend > bufmax )
 //
 // Buffer characteristics.
 //
-printf("   Start address: %8d  (0x%08x)\n", bufloc, bufloc );
+printf("   Start address: %8ld  (0x%8p)\n", size_t(bufloc), bufloc );
 count = buffer - bufloc;
-printf(" Current address: %8d  (0x%08x)    Offset: %8d  (0x%08x)\n", 
-        buffer, buffer, count, count );
+printf(" Current address: %8ld  (0x%8p)    Offset: %8d  (0x%08x)\n",
+        size_t(buffer), buffer, count, count );
 count = bufmax - bufloc;
-printf("     End address: %8d  (0x%08x)    Offset: %8d  (0x%08x)\n",
-        bufmax, bufmax, count, count );
+printf("     End address: %8ld  (0x%8p)    Offset: %8d  (0x%08x)\n",
+        size_t(bufmax), bufmax, count, count );
 
 //
 // Put out a header.
@@ -321,7 +321,7 @@ printf(  "    -ASCII----------\n");
 //
 memset(  &outbuf[ 0], ' ', sizeof( outbuf ) );
 sprintf( &outbuf[ 1], "%8d",  offset );
-sprintf( &outbuf[10], "%08x", dmpbeg );
+sprintf( &outbuf[10], "%8p", dmpbeg );
 outbuf[ 9] = ':';
 outbuf[18] = ' ';
 outbuf[76] = '\0';
@@ -349,7 +349,7 @@ while( dmpbeg < dmpend )
 
         memset(  &outbuf[ 0], ' ', sizeof( outbuf ) );
         sprintf( &outbuf[ 1], "%8d",  offset );
-        sprintf( &outbuf[10], "%08x", dmpbeg );
+        sprintf( &outbuf[10], "%8p", dmpbeg );
         outbuf[ 9] = ':';
         outbuf[18] = ' ';
         outbuf[76] = '\0';

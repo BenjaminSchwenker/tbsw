@@ -107,21 +107,21 @@ namespace IMPL{
 //      *
 //      * @throws DataNotAvailableException
 //      */
-//     virtual EVENT::LCRelation * getRelation(const std::string & name) const throw (EVENT::DataNotAvailableException, std::exception)  ;
+//     virtual EVENT::LCRelation * getRelation(const std::string & name) const;
 
 //     /** Adds a relation with the given name. Throws an exception if the name already
 //      * exists in the event. NB: Adding relations is allowed even when the event is 'read only'.
 //      * 
 //      *@throws EventException
 //      */ 
-//     virtual void addRelation(EVENT::LCRelation * col, const std::string & name) throw (EVENT::EventException, std::exception)  ;
+//     virtual void addRelation(EVENT::LCRelation * col, const std::string & name);
 
 //     /** Removes (and deletes) the relation with name (if it exists in the event). 
 //      * Throws an exception if the event is 'read only' as defined by the read mode in LCReader.
 //      *
 //      *@throws ReadOnlyException
 //      */ 
-//     virtual void removeRelation(const std::string & name) throw (EVENT::ReadOnlyException, std::exception)  ;
+//     virtual void removeRelation(const std::string & name);
 
     /** Parameters defined for this event.
      */

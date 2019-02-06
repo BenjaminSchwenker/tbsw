@@ -46,34 +46,33 @@ class SIOEventHandler ;
      * user.
      * @throws IOException
      */
-    virtual void open(const std::vector<std::string>& filenames) 
-      throw (IO::IOException, std::exception) ;
+    virtual void open(const std::vector<std::string>& filenames);
 
 
     /** Opens a file for reading (read-only).
      * @throws IOException
      */
-    virtual void open(const std::string & filename) throw (IO::IOException, std::exception) ;
+    virtual void open(const std::string & filename);
     
     /** Reads the next run header from the file. 
      *
      * @throws IOException
      */
-    virtual EVENT::LCRunHeader * readNextRunHeader() throw (IO::IOException, std::exception) ;
+    virtual EVENT::LCRunHeader * readNextRunHeader();
 
     /** Same as readNextRunHeader() but allows to set the access mode 
      *  LCIO::READ_ONLY (default) or LCIO::Update. 
      *
      * @throws IOException
      */
-    virtual EVENT::LCRunHeader * readNextRunHeader(int accessMode) throw (IO::IOException, std::exception) ;
+    virtual EVENT::LCRunHeader * readNextRunHeader(int accessMode);
 
 
     /** Reads the next event from the file. 
      *
      * @throws IOException
      */
-    virtual EVENT::LCEvent* readNextEvent() throw (IO::IOException, std::exception) ;
+    virtual EVENT::LCEvent* readNextEvent();
     
 
     /** Same as readNextRunHeader() but allows to set the access mode 
@@ -81,7 +80,7 @@ class SIOEventHandler ;
      *
      * @throws IOException
      */
-    virtual EVENT::LCEvent* readNextEvent( int accessMode) throw (IO::IOException, std::exception) ;
+    virtual EVENT::LCEvent* readNextEvent( int accessMode);
     
 
     /** Skips the next n events from the current position. In fact simply reads the next n
@@ -96,14 +95,13 @@ class SIOEventHandler ;
      *
      * @throws IOException
      */
-    virtual EVENT::LCEvent * readEvent(int runNumber, int evtNumber) 
-      throw (IO::IOException, std::exception/*, EVENT::NotAvailableException */) ;
+    virtual EVENT::LCEvent * readEvent(int runNumber, int evtNumber);
 
     /** Closes the output file/stream etc.
      *
      * @throws IOException
      */
-    virtual void close() throw (IO::IOException, std::exception) ;
+    virtual void close();
     
     // interface for listeners
  
@@ -130,7 +128,7 @@ class SIOEventHandler ;
      * @throws IOException
      * @throws EndOfException
      */
-    virtual void readStream() throw (IO::IOException, std::exception) ;
+    virtual void readStream();
 
     /** Reads maxRecord from the input stream and notifies registered 
      * listeners according to the object type found in the stream. 
@@ -139,7 +137,7 @@ class SIOEventHandler ;
      * @throws IOException
      * @throws EndOfException
      */
-    virtual void readStream(int maxRecord) throw (IO::IOException, std::exception) ;
+    virtual void readStream(int maxRecord);
 
 
 
@@ -147,7 +145,7 @@ class SIOEventHandler ;
   protected:
 
     void setUpHandlers() ;
-    void readRecord() throw (IO::IOException , IO::EndOfDataException , std::exception) ;
+    void readRecord();
 
 
     void postProcessEvent() ;

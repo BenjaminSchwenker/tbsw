@@ -50,23 +50,8 @@ IF( BUILD_WITH_DCAP )
 ENDIF()
 
 ADD_SUBDIRECTORY( sio sio )
-ADD_SUBDIRECTORY( src/cpp lcio )
+ADD_SUBDIRECTORY( lcio lcio )
 
-
-# create uninstall configuration file
-CONFIGURE_FILE( "${PROJECT_SOURCE_DIR}/cmake_uninstall.cmake.in"
-                "${PROJECT_BINARY_DIR}/cmake_uninstall.cmake"
-                IMMEDIATE @ONLY )
-
-# create uninstall target
-ADD_CUSTOM_TARGET( uninstall "${CMAKE_COMMAND}" -P "${PROJECT_BINARY_DIR}/cmake_uninstall.cmake" )
-
-# create configuration file from .in file
-CONFIGURE_FILE( "${PROJECT_SOURCE_DIR}/LCIOConfig.cmake.in"
-                "${PROJECT_BINARY_DIR}/LCIOConfig.cmake" @ONLY )
-
-# install configuration file
-INSTALL( FILES "${PROJECT_BINARY_DIR}/LCIOConfig.cmake" DESTINATION . )
 
 # display status message for important variables
 MESSAGE( STATUS )

@@ -25,32 +25,32 @@ public:
     /** Integer value for key.     
      *  @throws UnknownParameterException
      */
-    virtual int getIntVal(const std::string & key) const throw (UnknownParameterException, std::exception )  = 0;
+    virtual int getIntVal(const std::string & key) const  = 0;
 
     /** Double value for key      
      *  @throws UnknownParameterException
      */
-    virtual double getDoubleVal(const std::string & key) const throw (UnknownParameterException, std::exception )  = 0;
+    virtual double getDoubleVal(const std::string & key) const = 0;
 
     /** String value for key      
      *  @throws UnknownParameterException
      */
-    virtual const std::string & getStringVal(const std::string & key) const throw (UnknownParameterException, std::exception )  = 0;
+    virtual const std::string & getStringVal(const std::string & key) const = 0;
 
     /** Integer values for key      
      *  @throws UnknownParameterException
      */
-    virtual const std::vector<int>  & getIntVals(const std::string & key) const throw (UnknownParameterException, std::exception )  = 0;
+    virtual const std::vector<int>  & getIntVals(const std::string & key) const = 0;
 
     /** Double values for key      
      *  @throws UnknownParameterException
      */
-    virtual const std::vector<double>  & getDoubleVals(const std::string & key) const throw (UnknownParameterException, std::exception )  = 0;
+    virtual const std::vector<double>  & getDoubleVals(const std::string & key) const = 0;
 
     /** String values for key      
      *  @throws UnknownParameterException
      */
-    virtual const std::vector<std::string>  & getStringVals(const std::string & key) const throw (UnknownParameterException, std::exception )  = 0;
+    virtual const std::vector<std::string>  & getStringVals(const std::string & key) const = 0;
 
     /** All keys of int variables. */ 
     virtual const std::vector<std::string>  & getIntKeys() const = 0;

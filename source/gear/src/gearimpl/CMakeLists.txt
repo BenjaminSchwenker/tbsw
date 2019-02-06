@@ -5,9 +5,10 @@
 
 # get list of all source files
 AUX_SOURCE_DIRECTORY( src lib_srcs )
+file(GLOB_RECURSE gear_hdrs  "${PROJECT_SOURCE_DIR}/src/s" *.h *.hh)
 
 # create library with the list of library sources
-ADD_LIBRARY( lib_GEAR ${lib_srcs} )
+ADD_LIBRARY( lib_GEAR ${lib_srcs} ${gear_hdrs} )
 
 
 # change lib_target properties

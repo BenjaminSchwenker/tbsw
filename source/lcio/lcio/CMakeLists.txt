@@ -6,9 +6,11 @@
 
 INCLUDE_DIRECTORIES (
     "${LCIO_SOURCE_DIR}/sio/include"
-    "${LCIO_SOURCE_DIR}/src/cpp/include"
+    "${LCIO_SOURCE_DIR}/lcio/include"
 )
 
+
+file(GLOB_RECURSE LCIO_HDRS RELATIVE "${LCIO_SOURCE_DIR}/lcio" *.h *.hh)
 
 
 SET( LCIO_IMPL_SRCS
@@ -41,7 +43,6 @@ SET( LCIO_IMPL_SRCS
 SET( LCIO_IOIMPL_SRCS
   ./src/IOIMPL/LCFactory.cc
 )
-
 SET( LCIO_SIO_SRCS
   ./src/SIO/LCSIO.cc
   ./src/SIO/SIOCalHitHandler.cc
@@ -91,7 +92,6 @@ SET( LCIO_UTIL_SRCS
   ./src/UTIL/PIDHandler.cc
 )
 
-
 #----- This was here - could be important ------
 ADD_DEFINITIONS( "-fno-strict-aliasing" )
 
@@ -103,6 +103,7 @@ ADD_LIBRARY( lib_LCIO
   ${LCIO_IOIMPL_SRCS}
   ${LCIO_UTIL_SRCS}
   ${LCIO_SIO_SRCS}
+  ${LCIO_HDRS}
 )
 
 SET_TARGET_PROPERTIES( lib_LCIO PROPERTIES
@@ -118,7 +119,7 @@ SET_TARGET_PROPERTIES( lib_LCIO PROPERTIES
 TARGET_LINK_LIBRARIES( lib_LCIO lib_SIO )
 
 TARGET_INCLUDE_DIRECTORIES(lib_LCIO INTERFACE
-  "${LCIO_SOURCE_DIR}/src/cpp/include"
+  "${LCIO_SOURCE_DIR}/lcio/include"
 )
 # create symbolic target for calling targets bin_XXX
 ADD_CUSTOM_TARGET( bin )

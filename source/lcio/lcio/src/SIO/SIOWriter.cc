@@ -83,7 +83,7 @@ namespace SIO {
 
 
 
-  void SIOWriter::open(const std::string & filename) throw(IOException, std::exception){
+  void SIOWriter::open(const std::string & filename){
 
     std::string sioFilename ;  
     getSIOFileName( filename, sioFilename ) ;
@@ -119,7 +119,7 @@ namespace SIO {
       sioFilename = filename ;    
   } 
 
-  void SIOWriter::open(const std::string& filename, int writeMode) throw(IOException, std::exception) {
+  void SIOWriter::open(const std::string& filename, int writeMode) {
 
     
     // make sure filename has the proper extension (.slcio) 
@@ -177,7 +177,7 @@ namespace SIO {
   }
 
 
-  void SIOWriter::writeRunHeader(const EVENT::LCRunHeader * hdr)  throw(IOException, std::exception) {
+  void SIOWriter::writeRunHeader(const EVENT::LCRunHeader * hdr) {
 
     // create a new handler for every new run 
     
@@ -309,7 +309,7 @@ namespace SIO {
     
   }
 
-  void SIOWriter::writeEvent(const LCEvent* evt)  throw(IOException, std::exception) {
+  void SIOWriter::writeEvent(const LCEvent* evt) {
 
     
     
@@ -355,7 +355,7 @@ namespace SIO {
   }
 
 
-  void SIOWriter::close() throw (IOException, std::exception) {
+  void SIOWriter::close() {
   
     const std::string* streamName  = _stream->getName() ;
 
@@ -367,7 +367,7 @@ namespace SIO {
 
   }
 
-  void SIOWriter::flush() throw (IOException, std::exception) {
+  void SIOWriter::flush() {
   
     const std::string* streamName  = _stream->getName() ;
 

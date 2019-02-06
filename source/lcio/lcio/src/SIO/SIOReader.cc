@@ -132,8 +132,7 @@ namespace SIO {
     SIO_blockManager::clear() ;
   }
 
-  void SIOReader::open(const std::vector<std::string>& filenames) 
-    throw( IOException , std::exception){
+  void SIOReader::open(const std::vector<std::string>& filenames){
 
     unsigned int i;
     struct stat fileinfo ;
@@ -158,7 +157,7 @@ namespace SIO {
     open( (*_myFilenames)[ _currentFileIndex ]  ) ;
   }
 
-  void SIOReader::open(const std::string& filename) throw( IOException , std::exception)  {
+  void SIOReader::open(const std::string& filename) {
 
 
     std::string sioFilename ;  
@@ -271,7 +270,7 @@ namespace SIO {
 //    std::cout << " SIOReader::getEventMap() : done " << std::endl ;
   }
 
-  void SIOReader::readRecord() throw (IOException , EndOfDataException , std::exception) {
+  void SIOReader::readRecord() {
 
     SIO_blockManager::remove(  LCSIO::RUNBLOCKNAME ) ;
     //_runHandler->setRunHeaderPtr( _runP ) ;
@@ -335,11 +334,11 @@ namespace SIO {
   }
   
 
-  LCRunHeader* SIOReader::readNextRunHeader() throw (IOException , std::exception ) {
+  LCRunHeader* SIOReader::readNextRunHeader() {
     return readNextRunHeader( LCIO::READ_ONLY ) ;
   }
 
-  LCRunHeader* SIOReader::readNextRunHeader(int accessMode) throw (IOException , std::exception ) {
+  LCRunHeader* SIOReader::readNextRunHeader(int accessMode) {
 
     // set the _runRecord to unpack for this scope
     //    SIORecordUnpack runUnp( SIOWriter::_runRecord ) ;
@@ -426,13 +425,13 @@ namespace SIO {
   }
 
 
-  LCEvent* SIOReader::readNextEvent() throw (IOException , std::exception ) {
+  LCEvent* SIOReader::readNextEvent() {
 
     return readNextEvent( LCIO::READ_ONLY ) ;
 
   }
 
-  LCEvent* SIOReader::readNextEvent(int accessMode) throw (IOException, std::exception ) {
+  LCEvent* SIOReader::readNextEvent(int accessMode) {
     
 
     // first, we need to read the event header 
@@ -519,8 +518,7 @@ namespace SIO {
     
   }
 
-  EVENT::LCEvent * SIOReader::readEvent(int runNumber, int evtNumber) 
-    throw (IOException , std::exception) {
+  EVENT::LCEvent * SIOReader::readEvent(int runNumber, int evtNumber) {
     
 
     EventMap::iterator it = _evtMap.find( EVENTKEY( runNumber,evtNumber ) ) ;
@@ -605,7 +603,7 @@ namespace SIO {
   }
 
 
-  void SIOReader::close() throw (IOException, std::exception ){
+  void SIOReader::close() {
   
     int status  =  SIO_streamManager::remove( _stream ) ;
     
@@ -632,12 +630,12 @@ namespace SIO {
     _runListeners.erase( _runListeners.find( ls ) );
  }
 
-  void SIOReader::readStream() throw ( IO::IOException, std::exception ){
+  void SIOReader::readStream() {
 
     int maxInt = INT_MAX ; // numeric_limits<int>::max() ;
     readStream( maxInt ) ;
   }
-  void SIOReader::readStream(int maxRecord) throw (IOException, std::exception ){
+  void SIOReader::readStream(int maxRecord) {
     
 
     bool readUntilEOF = false ;

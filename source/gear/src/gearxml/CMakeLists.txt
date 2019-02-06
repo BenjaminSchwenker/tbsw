@@ -5,17 +5,19 @@
 
 # get list of all source files
 AUX_SOURCE_DIRECTORY( src lib_srcs )
+file(GLOB_RECURSE gear_hdrs  "${PROJECT_SOURCE_DIR}/src/include/" *.h *.hh)
 
 # create library with the list of library sources
-ADD_LIBRARY( lib_GEARXML ${lib_srcs} )
+ADD_LIBRARY( lib_GEARXML ${lib_srcs} ${gear_hdrs} )
 
 
 # link gear library with gear
 TARGET_LINK_LIBRARIES( lib_GEARXML lib_GEAR )
 
 
+
 TARGET_INCLUDE_DIRECTORIES(lib_GEARXML INTERFACE
-  "${PROJECT_SOURCE_DIR}/src/cpp/include"
+  "${PROJECT_SOURCE_DIR}/src/include"
 )
 # change lib_target properties
 SET_TARGET_PROPERTIES( lib_GEARXML PROPERTIES

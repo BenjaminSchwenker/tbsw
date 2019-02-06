@@ -26,13 +26,13 @@ namespace EVENT {
     Exception(){  /*no_op*/ ; } 
     
   public: 
-    virtual ~Exception() throw() { /*no_op*/; } 
+    virtual ~Exception() noexcept{ /*no_op*/; }
     
     Exception( const std::string& text ){
       message = "lcio::Exception: " + text ;
     }
 
-    virtual const char* what() const  throw() { return  message.c_str() ; } 
+    virtual const char* what() const  noexcept { return  message.c_str() ; }
 
   };
 
@@ -45,7 +45,7 @@ namespace EVENT {
   protected:
     EventException() {  /*no_op*/ ; } 
   public: 
-    virtual ~EventException() throw() { /*no_op*/; } 
+    virtual ~EventException() noexcept { /*no_op*/; }
 
     EventException( std::string text ){
       message = "lcio::EventException: " + text ;
@@ -59,7 +59,7 @@ namespace EVENT {
   class DataNotAvailableException : public EventException{
 
   public: 
-    virtual ~DataNotAvailableException() throw() { /*no_op*/; } 
+    virtual ~DataNotAvailableException() noexcept { /*no_op*/; }
 
     DataNotAvailableException( std::string text ) {
       message = "lcio::DataNotAvailableException: " + text ;
@@ -73,7 +73,7 @@ namespace EVENT {
   class ReadOnlyException : public EventException{
 
   public: 
-    virtual ~ReadOnlyException() throw() { /*no_op*/; } 
+    virtual ~ReadOnlyException() noexcept { /*no_op*/; }
 
     ReadOnlyException( std::string text ){
       message = "lcio::ReadOnlyException: " + text ;
@@ -91,7 +91,7 @@ namespace IO {
   class IOException : public EVENT::Exception{
     
   protected:
-    IOException() { /* no_op */ } ;
+    IOException() noexcept { /* no_op */ };
 
   public: 
     IOException( std::string text ){
@@ -106,7 +106,7 @@ namespace IO {
    */
   class EndOfDataException : public IOException{
   public: 
-    virtual ~EndOfDataException() throw() { /*no_op*/; } 
+    virtual ~EndOfDataException() noexcept { /*no_op*/; }
 
     EndOfDataException( std::string text ){
       message = "lcio::EndOfDataException: " + text ;

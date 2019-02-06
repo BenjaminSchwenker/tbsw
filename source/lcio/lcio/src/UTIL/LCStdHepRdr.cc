@@ -175,7 +175,7 @@ namespace UTIL{
 	//
 	//  PDGID
 	//
-	mcp->setPDG(_reader->pid(IHEP));
+    mcp->setPDG(_reader->pid(IHEP));
 
 
 	//
@@ -186,12 +186,12 @@ namespace UTIL{
 	//
 	//  Momentum vector
 	//
-	float p0[3] = {_reader->Px(IHEP),_reader->Py(IHEP),_reader->Pz(IHEP)};
+    float p0[3] = {float(_reader->Px(IHEP)),float(_reader->Py(IHEP)),float(_reader->Pz(IHEP))};
 	mcp->setMomentum(p0);
 	//
 	//  Mass
 	//
-	mcp->setMass(_reader->M(IHEP));
+    mcp->setMass(float(_reader->M(IHEP)));
 	//
 	//  Vertex
 	//

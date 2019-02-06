@@ -42,13 +42,14 @@ SET( ${PROJECT_NAME}_VERSION
 
 ### INCLUDE, SOURCE, LIB ####################################################
 # Include directories
-INCLUDE_DIRECTORIES( source/include )
+INCLUDE_DIRECTORIES( include )
+file(GLOB_RECURSE lib_hdrs RELATIVE "${PROJECT_SOURCE_DIR}" *.h *.hh)
 
 # Set list of sources
-AUX_SOURCE_DIRECTORY( source/src lib_srcs)
+AUX_SOURCE_DIRECTORY( src lib_srcs )
 
 # Create library with the list of library sources
-ADD_LIBRARY( ${PROJECT_NAME} ${lib_srcs} )
+ADD_LIBRARY( ${PROJECT_NAME} ${lib_srcs} ${lib_hdrs})
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME} lib_LCIO lib_Marlin)
 
 # Install libraries
