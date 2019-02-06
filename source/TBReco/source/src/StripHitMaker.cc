@@ -209,7 +209,7 @@ void StripHitMaker::processEvent(LCEvent * evt)
       if (hitU.GetDAQID() == hitV.GetDAQID() ) {
         
         // Make LCIO TrackerHit 
-        TBHit hit(hitU.GetDAQID(), hitU.GetCoord()[0][0], hitV.GetCoord()[1][0], hitU.GetCov()[0][0], hitV.GetCov()[1][1], 0, 0);
+        TBHit hit(hitU.GetDAQID(), hitU.GetCoord()[0], hitV.GetCoord()[1], hitU.GetCov()(0,0), hitV.GetCov()(1,1), 0, 0);
         TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
             
         // Add link to full cluster data 

@@ -289,7 +289,7 @@ namespace depfet {
       // Store all hits on the DUT module  
       if( dut.GetPlaneNumber() == ipl )
       {         
-        streamlog_out(MESSAGE2) << " RecoHit at plane " << ipl << " at: (" << RecoHit.GetCoord()[0][0] << ", " << RecoHit.GetCoord()[1][0] << ")" 
+        streamlog_out(MESSAGE2) << " RecoHit at plane " << ipl << " at: (" << RecoHit.GetCoord()[0] << ", " << RecoHit.GetCoord()[1] << ")" 
                                 << endl;
         
         HitStore.push_back( RecoHit );  
@@ -331,8 +331,8 @@ namespace depfet {
             double simHitPosV = simHit->getPosition()[1];
             
             TBHit& recoHit = HitStore[i];
-            double hitPosU = recoHit.GetCoord()[0][0];
-            double hitPosV = recoHit.GetCoord()[1][0];
+            double hitPosU = recoHit.GetCoord()[0];
+            double hitPosV = recoHit.GetCoord()[1];
              
 
             // Skip all hits with too large residuum 
@@ -394,9 +394,10 @@ namespace depfet {
         double originPosV = dut.GetPixelCenterCoordV( Cluster.getVStart(), Cluster.getUStart()); 
         
         SimTrackerHit * simHit = SimHitStore[ hit2simhit[ihit] ]; 
-        Hep3Vector momentum(simHit->getMomentum()[0],simHit->getMomentum()[1],simHit->getMomentum()[2]);
+        Vector3d momentum; 
+        momentum << simHit->getMomentum()[0],simHit->getMomentum()[1],simHit->getMomentum()[2];
         
-        _rootTrackMomentum = momentum.mag();             
+        _rootTrackMomentum = momentum.norm();             
         _rootTrackPosU = simHit->getPosition()[0] - originPosU;          
         _rootTrackPosV = simHit->getPosition()[1] - originPosV;                           
         _rootTrackdUdW = momentum[0]/momentum[2];        
@@ -404,8 +405,8 @@ namespace depfet {
         
         if ( _createDBFromHitMaker ) {
           _rootTrackMomentum = 0;         
-          _rootTrackPosU = hit.GetCoord()[0][0] - originPosU + gRandom->Gaus(0, TMath::Sqrt( hit.GetCov()[0][0]) );          
-          _rootTrackPosV = hit.GetCoord()[1][0] - originPosV + gRandom->Gaus(0, TMath::Sqrt( hit.GetCov()[1][1]) );                           
+          _rootTrackPosU = hit.GetCoord()[0] - originPosU + gRandom->Gaus(0, TMath::Sqrt( hit.GetCov()(0,0)) );          
+          _rootTrackPosV = hit.GetCoord()[1] - originPosV + gRandom->Gaus(0, TMath::Sqrt( hit.GetCov()(1,1)) );                           
           _rootTrackdUdW = 0;        
           _rootTrackdVdW = 0; 
         }

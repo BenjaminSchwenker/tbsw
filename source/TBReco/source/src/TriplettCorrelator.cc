@@ -222,8 +222,8 @@ void TriplettCorrelator::processEvent(LCEvent * evt)
       if (rectrack.GetTE(ipl).HasHit() ) _isActive[ipl]=false; 
 
       // Get extrapolated intersection coordinates
-      double u = rectrack.GetTE(ipl).GetState().GetPars()[2][0]; 
-      double v = rectrack.GetTE(ipl).GetState().GetPars()[3][0];           
+      double u = rectrack.GetTE(ipl).GetState().GetPars()[2]; 
+      double v = rectrack.GetTE(ipl).GetState().GetPars()[3];           
            
       
 

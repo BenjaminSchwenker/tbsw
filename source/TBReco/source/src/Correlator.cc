@@ -238,8 +238,8 @@ void Correlator::processEvent(LCEvent * evt)
       if (!rectrack.GetTE(ipl).IsCrossed()) continue;
 
       // Get extrapolated intersection coordinates
-      double u = rectrack.GetTE(ipl).GetState().GetPars()[2][0]; 
-      double v = rectrack.GetTE(ipl).GetState().GetPars()[3][0];       
+      double u = rectrack.GetTE(ipl).GetState().GetPars()[2]; 
+      double v = rectrack.GetTE(ipl).GetState().GetPars()[3];       
            
       // Loop over all hits on this detector 
       for (int ihit = 0; ihit < HitStore.GetNHits(ipl); ++ihit ) 

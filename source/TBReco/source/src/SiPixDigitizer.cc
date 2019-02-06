@@ -428,19 +428,9 @@ namespace depfet {
   //
   void SiPixDigitizer::TransformToLocal(const SimTrackerHit * simTrkHit, SpacePoint & hitLocal)
   {
-    Vector3d position;
-    position << simTrkHit->getPosition()[0]*mm , simTrkHit->getPosition()[1]*mm , simTrkHit->getPosition()[2]*mm ;
-    Vector3d momentum;
-    momentum << simTrkHit->getMomentum()[0] , simTrkHit->getMomentum()[1] , simTrkHit->getMomentum()[2];
-    
-    // Save final results
-    hitLocal.position  = position;
-      
-    if ( momentum.norm() != 0 ) {
-       hitLocal.direction = momentum.normalize(); 
-    } else {
-       hitLocal.direction = momentum; 
-    }
+    hitLocal.position << simTrkHit->getPosition()[0]*mm , simTrkHit->getPosition()[1]*mm , simTrkHit->getPosition()[2]*mm ;
+    hitLocal.direction << simTrkHit->getMomentum()[0] , simTrkHit->getMomentum()[1] , simTrkHit->getMomentum()[2];
+    hitLocal.direction.normalize();     
   }
   
   //
@@ -567,23 +557,16 @@ namespace depfet {
       // Diffusive spread in lateral plane
       double sigmaDiffus = sqrt( 2 * Utherm * e_mobility * td ); 
       
-      double sigmaU = sigmaDiffus;
-      double sigmaV = sigmaDiffus; 
+      Vector3d pointSigmas;
+      pointSigmas << sigmaDiffus, sigmaDiffus, 0;
       
-      //  After Lorentz shift
-      double onPlaneU = iPoint->position(0) + m_tanLorentzAngle * (w - w0);
-      double onPlaneV = iPoint->position(1);
-        
+      Vector3d pointPosition; 
+      pointPosition << iPoint->position(0) + m_tanLorentzAngle * (w - w0), iPoint->position(1), w0;
+      
       // Save info in signal point
       SignalPoint * sPoint = new SignalPoint;
-      
-      sPoint->position.setX(onPlaneU);
-      sPoint->position.setY(onPlaneV);
-      sPoint->position.setZ(w0);
-      
-      sPoint->sigma.setX(sigmaU);
-      sPoint->sigma.setY(sigmaV);
-      sPoint->sigma.setZ(0);
+      sPoint->position = pointPosition;   
+      sPoint->sigma = pointSigmas; 
       
       // Charge in electrons
       sPoint->charge = iPoint->eLoss/Eeh * e;
