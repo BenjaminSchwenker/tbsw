@@ -27,7 +27,6 @@ OPTION( BUILD_ROOTDICT "Set to ON to build ROOT dictionary" OFF )
 # MARLIN Options
 OPTION( MARLIN_NO_DLL "Set to ON to build Marlin without DLL support" OFF )
 
-set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # Set CMAKE build type (None Debug Release RelWithDebInfo MinSizeRel)
 IF( NOT CMAKE_BUILD_TYPE )
@@ -60,12 +59,20 @@ ADD_DEFINITIONS( "-std=c++14" )
 ADD_DEFINITIONS( "-Wall -pedantic" )
 #------ performance
 ADD_DEFINITIONS( "-march=native -mtune=native" )
+#------ lets get real pedantic as a test...
+ADD_DEFINITIONS( "-Wextra -Wno-unused-macros -Wno-shadow -Wdouble-promotion")
 
 # definitions
 IF( CMAKE_BUILD_TYPE STREQUAL "Debug" OR
     CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo" )
     ADD_DEFINITIONS( "-g -pg" )
 ENDIF()
+IF( CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(CMAKE_VERBOSE_MAKEFILE ON)
+ENDIF()
+
+
+
 
 if(POLICY CMP0002)
   cmake_policy(SET CMP0002 NEW)

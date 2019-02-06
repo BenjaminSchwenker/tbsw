@@ -26,7 +26,7 @@ TrackImpl * TrackInputProvider::MakeLCIOTrack( TBTrack& trk )
   TrackImpl * fittrack = new TrackImpl();
   
   // Copy particle hypothesis   
-  float refpoint[3] = { trk.GetMass(), trk.GetCharge(), trk.GetMomentum() };
+  float refpoint[3] = { float(trk.GetMass()), float(trk.GetCharge()), float(trk.GetMomentum()) };
   fittrack->setReferencePoint(refpoint);
   
   // Copy quality indicators

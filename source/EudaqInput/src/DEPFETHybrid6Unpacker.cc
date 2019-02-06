@@ -448,7 +448,7 @@ namespace eudaqinput {
           }
                      
           //if(debug)printf("ZSData arrived\n");
-          uint16_t current_word,current_row_base,current_row_bit,current_val,current_col,current_CM,current_row;
+          uint16_t current_word,current_row_base=0,current_row_bit,current_val,current_col,current_CM,current_row;
           //uint16_t frame_type = ((tempZSFrameData[0]) >> 13);
           unsigned char mappedCol;
           uint16_t mappedRow;

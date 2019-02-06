@@ -53,7 +53,7 @@ public:
      */
     virtual void open(const std::vector<std::string>  & filenames) = 0;
 
-    /** Reads the next run header from the file. Returns NULL if
+    /** Reads the next run header from the file. Returns nullptr if
      * 'EOF' read. 
      *
      * @throws IOException
@@ -67,7 +67,7 @@ public:
      */
     virtual EVENT::LCRunHeader * readNextRunHeader(int accessMode) = 0;
 
-    /** Reads the next event from the file. Returns NULL if
+    /** Reads the next event from the file. Returns nullptr if
      * 'EOF' read. 
      *
      * @throws IOException
@@ -87,7 +87,7 @@ public:
 
     /** Reads the specified event from file. 
      *  To be used with care: events have to be read in sequential 
-     *  order (as LCIO has no direct access yet).  Returns NULL if
+     *  order (as LCIO has no direct access yet).  Returns nullptr if
      * 'EOF' read, i.e. the specified event hasn't been found in the file.
      *
      * @throws IOException
