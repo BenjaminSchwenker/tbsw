@@ -47,12 +47,20 @@ SET (SIO_SRCS
   ${SIO_SOURCE_DIR}/src/SIO_stream.cc
   ${SIO_SOURCE_DIR}/src/SIO_streamManager.cc
 )
-
+SET (SIO_HDRS
+  ${SIO_SOURCE_DIR}/include/SIO_block.h
+  ${SIO_SOURCE_DIR}/include/SIO_blockManager.h
+  ${SIO_SOURCE_DIR}/include/SIO_functions.h
+  ${SIO_SOURCE_DIR}/include/SIO_record.h
+  ${SIO_SOURCE_DIR}/include/SIO_recordManager.h
+  ${SIO_SOURCE_DIR}/include/SIO_stream.h
+  ${SIO_SOURCE_DIR}/include/SIO_streamManager.h
+)
 
 #----- This was here - could be important ------
 ADD_DEFINITIONS( "-fno-strict-aliasing" )
 
-ADD_LIBRARY( lib_SIO ${SIO_SRCS} )
+ADD_LIBRARY( lib_SIO ${SIO_SRCS} ${SIO_HDRS} )
 
 SET_TARGET_PROPERTIES( lib_SIO PROPERTIES
     # create *nix style library versions + symbolic links

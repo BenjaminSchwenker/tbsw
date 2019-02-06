@@ -24,14 +24,6 @@ SET( LCIO_MAJOR_VERSION 1 )
 SET( LCIO_MINOR_VERSION 12 )
 SET( LCIO_PATCH_LEVEL 2 )
 
-# project options
-OPTION( BUILD_LCIO_TESTS "Set to ON to build LCIO tests under src/cpp/src/TESTS" OFF )
-OPTION( BUILD_LCIO_EXAMPLES "Set to ON to build LCIO examples under src/cpp/src/EXAMPLES" OFF )
-OPTION( BUILD_WITH_DCAP "Set to ON to build LCIO with dcap (dCache) support" OFF )
-OPTION( INSTALL_DOC "Set to OFF to skip build/install Documentation" OFF )
-OPTION( INSTALL_JAR "Set to OFF to skip build/install lcio.jar" OFF )
-OPTION( BUILD_ROOTDICT "Set to ON to build ROOT dictionary" OFF )
-
 
 # set default cmake build type to RelWithDebInfo
 IF( NOT CMAKE_BUILD_TYPE )
@@ -39,32 +31,11 @@ IF( NOT CMAKE_BUILD_TYPE )
 ENDIF()
 
 
-
-
 ##########################################################################################
 
 # library *nix style versioning
 SET( LCIO_SOVERSION "${LCIO_MAJOR_VERSION}.${LCIO_MINOR_VERSION}" )
 SET( LCIO_VERSION "${LCIO_SOVERSION}.${LCIO_PATCH_LEVEL}" )
-
-# add install path to the rpath list
-SET( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
-MARK_AS_ADVANCED( CMAKE_INSTALL_RPATH )
-
-# add install path to the rpath list (apple)
-IF( APPLE )
-    SET( CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib" )
-    MARK_AS_ADVANCED( CMAKE_INSTALL_NAME_DIR )
-ENDIF()
-
-# append link pathes to rpath list
-SET( CMAKE_INSTALL_RPATH_USE_LINK_PATH 1 )
-MARK_AS_ADVANCED( CMAKE_INSTALL_RPATH_USE_LINK_PATH )
-
-# build output directories
-SET( EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin" CACHE PATH "EXECUTABLE_OUTPUT_PATH" FORCE )
-SET( LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/lib" CACHE PATH "LIBRARY_OUTPUT_PATH" FORCE )
-MARK_AS_ADVANCED( EXECUTABLE_OUTPUT_PATH LIBRARY_OUTPUT_PATH )
 
 # input directories
 IF( BUILD_WITH_DCAP )
@@ -118,8 +89,6 @@ SET( BUILD_WITH_DCAP "${BUILD_WITH_DCAP}" CACHE BOOL
     "Set to ON to build LCIO with dcap support (dCache)" FORCE )
 SET( DCAP_HOME "${DCAP_HOME}" CACHE PATH
     "Set to dcap installation directory - only if BUILD_WITH_DCAP=ON" FORCE )
-SET( INSTALL_DOC "${INSTALL_DOC}" CACHE BOOL
-    "Set to OFF to skip build/install Documentation" FORCE )
 SET( INSTALL_JAR "${INSTALL_JAR}" CACHE BOOL
     "Set to OFF to skip build/install lcio.jar" FORCE )
 SET( BUILD_ROOTDICT "${BUILD_ROOTDICT}" CACHE BOOL

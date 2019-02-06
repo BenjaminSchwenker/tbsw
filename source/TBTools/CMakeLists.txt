@@ -55,7 +55,7 @@ ENDIF()
 ### INCLUDE, SOURCE, LIB ####################################################
 
 # Include directories
-INCLUDE_DIRECTORIES( source/include ${Eigen_INCLUDE_PATH} )
+INCLUDE_DIRECTORIES( source/include ${Eigen_INCLUDE_PATH} ${ROOT_INCLUDE_DIRS})
 
 # Set list of sources
 AUX_SOURCE_DIRECTORY( source/src lib_srcs)
@@ -63,6 +63,9 @@ AUX_SOURCE_DIRECTORY( source/src lib_srcs)
 # Create library with the list of library sources
 ADD_LIBRARY( ${PROJECT_NAME} ${lib_srcs} )
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME} lib_LCIO lib_Marlin)
+TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} INTERFACE
+  "${PROJECT_SOURCE_DIR}/source/include"
+)
 
 # Install libraries
 INSTALL( TARGETS ${PROJECT_NAME} DESTINATION lib PERMISSIONS

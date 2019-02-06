@@ -1,12 +1,7 @@
-########################################################
-# CMake compatibility issues: don't modify this, please!
-#CMAKE_MINIMUM_REQUIRED( VERSION 2.4.6 )
-#SET( CMAKE_BACKWARDS_COMPATIBILITY 2.4.6 )
-MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
-# allow more human readable "if then else" constructs
+cmake_minimum_required(VERSION 2.4.6)
 SET( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 ########################################################
-cmake_minimum_required(VERSION 2.4)
+
 # project name
 PROJECT( TBSW )
 
@@ -18,12 +13,21 @@ SET( tbsw_PATCH_LEVEL 0 )
 # project options
 OPTION( BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON )
 OPTION( BUILD_32BIT_COMPATIBLE "Set to ON to build in 32 bit compatibility mode" OFF )
-OPTION( MARLIN_NO_DLL "Set to ON to build Marlin without DLL support" OFF )
 OPTION( INSTALL_DOC "Set to OFF to skip build/install Documentation" OFF )
 OPTION( BUILD_EudaqInput "Set to OFF to not build EudaqInput" ON )
 OPTION( BUILD_TBTools "Set to OFF to not build TBTools" ON )
 OPTION( BUILD_TBReco "Set to OFF to not build TBReco" ON )
 OPTION( BUILD_X0Tools "Set to ON to build X0Tools" OFF )
+# LCIO Options
+OPTION( BUILD_LCIO_TESTS "Set to ON to build LCIO tests under src/cpp/src/TESTS" OFF )
+OPTION( BUILD_LCIO_EXAMPLES "Set to ON to build LCIO examples under src/cpp/src/EXAMPLES" OFF )
+OPTION( BUILD_WITH_DCAP "Set to ON to build LCIO with dcap (dCache) support" OFF )
+OPTION( INSTALL_JAR "Set to OFF to skip build/install lcio.jar" OFF )
+OPTION( BUILD_ROOTDICT "Set to ON to build ROOT dictionary" OFF )
+# MARLIN Options
+OPTION( MARLIN_NO_DLL "Set to ON to build Marlin without DLL support" OFF )
+
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # Set CMAKE build type (None Debug Release RelWithDebInfo MinSizeRel)
 IF( NOT CMAKE_BUILD_TYPE )
@@ -43,18 +47,15 @@ find_package(ROOT REQUIRED)
 MESSAGE( STATUS )
 MESSAGE( STATUS "------------------------------- ROOT -------------------------------------" )
 MESSAGE( STATUS "ROOT_FOUND        = ${ROOT_FOUND}" )
-MESSAGE( STATUS "ROOT_USE_FILE     = ${ROOT_USE_FILE}" )
 MESSAGE( STATUS "ROOT_rootcint_CMD = ${ROOT_rootcint_CMD}" )
-MESSAGE( STATUS "ROOT_root_CMD     = ${ROOT_root_CMD}" )
-MESSAGE( STATUS "ROOT_LIBRARIES     = ${ROOT_LIBRARIES}" )
 MESSAGE( STATUS "ROOT_INCLUDE_DIRS  = ${ROOT_INCLUDE_DIRS}" )
-
+MESSAGE( STATUS "CMAKE_INSTALL_PREFIX  = ${CMAKE_INSTALL_PREFIX}  at START!" )
 
 
 
 #-------------Compiler Flags---------------------------------
 #------ all compiler flags should go here ----
-ADD_DEFINITIONS( "-std=c++11" )
+ADD_DEFINITIONS( "-std=c++14" )
 #------ correct C++
 ADD_DEFINITIONS( "-Wall -pedantic" )
 #------ performance
@@ -77,8 +78,9 @@ ENDIF()
 
 # set default install prefix to project root directory
 #IF( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
+
 IF( CMAKE_INSTALL_PREFIX STREQUAL "/usr/local" )
-    SET( CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" )
+    SET( CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}" )
 ENDIF()
 
 #---------------- 32/64 bit issues ---------------------------------------
@@ -105,21 +107,21 @@ ENDIF()
 
 
 # output directories
-SET( EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin" CACHE PATH
-    "EXECUTABLE_OUTPUT_PATH" FORCE )
-SET( LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/lib" CACHE PATH
-    "LIBRARY_OUTPUT_PATH" FORCE )
-MARK_AS_ADVANCED( EXECUTABLE_OUTPUT_PATH LIBRARY_OUTPUT_PATH )
+# SET( EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin" CACHE PATH
+#    "EXECUTABLE_OUTPUT_PATH" FORCE )
+# SET( LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/lib" CACHE PATH
+#    "LIBRARY_OUTPUT_PATH" FORCE )
+# MARK_AS_ADVANCED( EXECUTABLE_OUTPUT_PATH LIBRARY_OUTPUT_PATH )
 
 # add install path to the rpath list
-SET( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
-MARK_AS_ADVANCED( CMAKE_INSTALL_RPATH )
+# SET( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
+# MARK_AS_ADVANCED( CMAKE_INSTALL_RPATH )
 
 # add install path to the rpath list (apple)
-IF( APPLE )
-    SET( CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib" )
-    MARK_AS_ADVANCED( CMAKE_INSTALL_NAME_DIR )
-ENDIF()
+# IF( APPLE )
+#    SET( CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib" )
+#    MARK_AS_ADVANCED( CMAKE_INSTALL_NAME_DIR )
+# ENDIF()
 
 IF(NOT Eigen_INCLUDE_PATH )
     SET(  Eigen_INCLUDE_PATH "${PROJECT_SOURCE_DIR}/source/Eigen3Include")

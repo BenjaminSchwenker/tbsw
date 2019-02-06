@@ -20,7 +20,7 @@ SET( ${PROJECT_NAME}_PATCH_LEVEL 0 )
 # Project options
 OPTION( BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON )
 OPTION( BUILD_32BIT_COMPATIBLE "Set to ON to build in 32 bit compatibility mode" OFF )
-OPTION( INSTALL_DOC "Set to OFF to skip build/install Documentation" OFF )
+
 
 
 ### ADVANCED SETTINGS #######################################################
@@ -35,14 +35,14 @@ SET( ${PROJECT_NAME}_VERSION
 ### INCLUDE, SOURCE, LIB ####################################################
 
 # Include directories
-INCLUDE_DIRECTORIES( source/include  ${Eigen_INCLUDE_PATH} )
+INCLUDE_DIRECTORIES( source/include ${Eigen_INCLUDE_PATH} ${ROOT_INCLUDE_DIRS})
 
 # Set list of sources
 AUX_SOURCE_DIRECTORY( source/src lib_srcs)
 
 # Create library with the list of library sources
 ADD_LIBRARY( ${PROJECT_NAME} ${lib_srcs} )
-TARGET_LINK_LIBRARIES( ${PROJECT_NAME} lib_LCIO lib_Marlin)
+TARGET_LINK_LIBRARIES( ${PROJECT_NAME} lib_LCIO lib_Marlin TBTools)
 
 # Install libraries
 INSTALL( TARGETS ${PROJECT_NAME} DESTINATION lib PERMISSIONS
