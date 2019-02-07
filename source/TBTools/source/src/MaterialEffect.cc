@@ -11,6 +11,8 @@
 #include "TMath.h"
 #include <Math/DistFunc.h>
 
+#include <Eigen/Geometry> 
+
 using namespace std;
 
 using Eigen::Matrix3d;
