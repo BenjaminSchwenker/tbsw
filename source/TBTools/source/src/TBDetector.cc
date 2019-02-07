@@ -25,6 +25,8 @@
 #include <marlin/Global.h>
 #include <streamlog/streamlog.h>
 
+#include <Eigen/LU>
+
 // Namespaces
 using namespace marlin;
 
