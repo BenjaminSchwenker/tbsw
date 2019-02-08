@@ -60,7 +60,7 @@ namespace materialeffect {
    * Computes the most probable energy loss of a heavy charged particle in silicon of given 
    * thickness according to Landau theory (see PDG)
    */ 
-  double GetMostProbableEnergyLossInSilicon(TrackState State, double thick, double mass, double charge);
+  double GetMostProbableEnergyLossInSilicon(TrackState& State, double thick, double mass, double charge);
   
   /** Compute density effect in silicon
    *

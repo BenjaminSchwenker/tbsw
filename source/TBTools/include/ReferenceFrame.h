@@ -2,6 +2,7 @@
 #define REFERENCEFFRAME_H 1
 
 #include <Eigen/Core>
+#include <Eigen/Geometry> 
 
 namespace depfet {
 
