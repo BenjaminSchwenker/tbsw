@@ -70,7 +70,7 @@ TBHit::TBHit(int newdaqid, const Vector2d &mcoord, const Matrix2d &mcov) : DAQID
   Quality = 0; 
 }
 
-TBHit::TBHit(lcio::TrackerHit* lciohit) : DAQID(-1), Coord(2, 1), Cov(2,0) 
+TBHit::TBHit(lcio::TrackerHit* lciohit) : DAQID(-1) 
 {
   // Set DAQID
   DAQID =  (int) lciohit->getPosition()[2];
@@ -79,8 +79,8 @@ TBHit::TBHit(lcio::TrackerHit* lciohit) : DAQID(-1), Coord(2, 1), Cov(2,0)
   // Set covariance
   const auto & cov_m=lciohit->getCovMatrix();
 
-  Cov << cov_m[0], cov_m[1],
-         cov_m[1], cov_m[2];
+  Cov << cov_m[0], cov_m[2],
+         cov_m[2], cov_m[1];
   // Set hit id 
   UniqueID = -1; 
   // Set raw data pointer
@@ -125,7 +125,7 @@ Vector3d TBHit::GetLocalSpacePoint()
   // Hit coordinates are given wrt. w=0 surface of sensor
   // This is the middle thickness surface containing the 
   // centre of the sensor. 
-  Vector3d Point(3, 0);
+  Vector3d Point;
   Point[0] = Coord[0];
   Point[1] = Coord[1];
   Point[2] = 0;
