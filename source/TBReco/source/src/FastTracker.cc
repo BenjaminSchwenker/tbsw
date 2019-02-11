@@ -501,6 +501,7 @@ void FastTracker::processEvent(LCEvent * evt)
       
      // Print the track candidate 
      streamlog_out(MESSAGE2) << "Printing final track: " << std::endl;  
+     streamlog_out(MESSAGE2) << " Chi2=" << (*ctrack).GetChiSqu() << ", NDF=" << (*ctrack).GetNDF() << std::endl;  
      for(int ipl=0;ipl<_nTelPlanes;ipl++) {
        if ( (*ctrack).GetTE(ipl).HasHit() ) {
          streamlog_out(MESSAGE2) << " at plane " << ipl << ": "
