@@ -1,7 +1,7 @@
 #ifndef TBTrack_H
 #define TBTrack_H 1
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "TBTrackElement.h"
 #include "TBDetector.h"
 #include "TBTrackState.h" 
@@ -110,16 +110,16 @@ class TBTrack {
   
   /** Get reference state at Z=0
   */  
-  TBTrackState& GetReferenceState() { return RefStateZ0; }; 
+  TBTrackState& GetReferenceState() { return RefState; }; 
  
   /** Set reference state at Z=0
   */  
-  void SetReferenceState(TBTrackState& State) {RefStateZ0 = State;}; 
+  void SetReferenceState(TBTrackState& State) {RefState = State;}; 
   
  private:
   
-  // Reference trajectory (at Z=0) 
-  TBTrackState RefStateZ0;   
+  // Reference trajectory
+  TBTrackState RefState;   
 
   // Particel hypothesis 
   double Mom; 

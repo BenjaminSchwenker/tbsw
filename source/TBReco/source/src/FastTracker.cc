@@ -769,10 +769,10 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
   int nAmbiguousHits = 0;   
          
   // This is the initial track state vector
-  TrackState x0;
+  TrackState x0=TrackState::Zero();
          
   // This is the initial covariance matrix 
-  TrackStateCovariance C0;
+  TrackStateCovariance C0 = TrackStateCovariance::Zero();
   TrackState diag;
   diag<<1e-2,1e-2,1e1,1e1,1;
   C0.diagonal() = diag;

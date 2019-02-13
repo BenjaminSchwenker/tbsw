@@ -111,7 +111,7 @@ TrackState StraightLineTrackModel::Extrapolate(const TrackState& State, const Re
   if (fDir[2] == 0) { 
     // No intersection with fSurf
     error = true;
-    return TrackState();
+    return TrackState::Zero();
   }
    
   // Surface normal vector in beam direction 
