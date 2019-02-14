@@ -6,7 +6,7 @@
 // <mailto:benjamin.schwenker@phys.uni-goettingen.de>
 
 // C++ includes
-//#include <iostream>
+#include <iostream>
 
 // TBTools includes
 #include "KalmanAlignmentInputProvider.h"

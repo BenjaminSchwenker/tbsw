@@ -62,6 +62,9 @@ class TBTrackState {
   
   // Get intersection coordinates 
   Eigen::Vector2d GetXCoord();
+
+  // Get covariance for intersection coordinates 
+  Eigen::Matrix2d GetXCoordCovariance();
   
 };
 

@@ -680,7 +680,7 @@ bool TBKalmanB::GetSmoothedData( TrackState& xb, TrackStateCovariance& Cb, Track
   Smoothed_State = Smoothed_Cov*(fW*xf + bW*xb);
   
   // Successfull return  
-  return invertible;  
+  return !invertible;  
 }
 
 

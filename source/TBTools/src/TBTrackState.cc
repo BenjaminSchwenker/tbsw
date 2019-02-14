@@ -1,9 +1,6 @@
-
-
 // TBTools includes
 #include "TBTrackState.h"
 
-using namespace std;
 
 namespace depfet {
 
@@ -18,14 +15,14 @@ namespace depfet {
 
 // Constructors
 
-TBTrackState::TBTrackState() :  Plane(0)
+TBTrackState::TBTrackState() 
 {
+    Plane = 0;
     Pars=TrackState::Zero();
     Cov=TrackStateCovariance::Zero();
-
 }
 
-TBTrackState::TBTrackState(TrackState aPars, TrackStateCovariance aCov, int aPlane) : Plane(aPlane)
+TBTrackState::TBTrackState(TrackState aPars, TrackStateCovariance aCov, int aPlane) 
 { 
   // Set the plane number
   Plane = aPlane;
@@ -39,9 +36,11 @@ TBTrackState::TBTrackState(TrackState aPars, TrackStateCovariance aCov, int aPla
 Eigen::Vector2d TBTrackState::GetXCoord()
 { 
   return Pars.block<2,1>(2,0);
-
 }
 
-
+Eigen::Matrix2d TBTrackState::GetXCoordCovariance()
+{
+  return Cov.block<2,2>(2,2);
+}
 
 } // Namespace
