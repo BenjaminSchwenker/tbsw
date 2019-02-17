@@ -38,12 +38,13 @@ class TBHit {
    
  private: // members 
  
-  // DAQ ID 
-  int DAQID;
-  // Local hit coordinates (2x1 matrix)
-  Vector2d Coord;
   // Hit covariance (2x2 matrix)
   Matrix2d Cov;
+  // Local hit coordinates (2x1 matrix)
+  Vector2d Coord;
+
+  // DAQ ID
+  int DAQID;
   // Unique ID (default -1)
   int UniqueID; 
   // Cluster Quality 
@@ -52,13 +53,14 @@ class TBHit {
   lcio::TrackerHit * RawHitPtr;
     
  public: // functions 
-   
+   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
   // Constructors 
   TBHit();
   TBHit(int newdaqid, double u, double v, double cov_u, double cov_v, double cov_uv, int quality);
   TBHit(int newdaqid, const Vector2d &coord, const Matrix2d &cov);
   TBHit(lcio::TrackerHit* lciohit);
-   
+
   // Build LCIO TrackerHit
   lcio::TrackerHitImpl * MakeLCIOHit();  
   
@@ -79,7 +81,9 @@ class TBHit {
   // Get/Set measurment covariance 
   void SetCov(const Matrix2d& aCov ) { Cov = aCov; }
   const Matrix2d&  GetCov() const { return Cov; }
-  Matrix2d&  GetCov() { return Cov; }
+
+  void ScaleCov(double alpha) { Cov*=alpha; }
+
 
   // Get/Set original raw cluster data   
   void SetRawHit(lcio::TrackerHit* lciohit ) { RawHitPtr = lciohit; }
@@ -100,6 +104,8 @@ class TBHit {
 };
 
 } // Namespace
+#include<Eigen/StdVector>
+EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(depfet::TBHit)
 
 #endif // TBHIT_H
 

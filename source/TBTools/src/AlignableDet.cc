@@ -34,12 +34,12 @@ SensorAlignmentCovariance AlignableDet::GetAlignCovariance(int ipl)
  
 /** Setter
  */
-void AlignableDet::SetAlignState(int ipl, SensorAlignmentParameters a)
+void AlignableDet::SetAlignState(int ipl, const SensorAlignmentParameters& a)
 {
   alignmentParametersVec[ipl] = a; 
 }
 
-void AlignableDet::SetAlignCovariance(int ipl, SensorAlignmentCovariance E)
+void AlignableDet::SetAlignCovariance(int ipl, const SensorAlignmentCovariance& E)
 {
   alignmentCovarianceVec[ipl] = E; 
 }  

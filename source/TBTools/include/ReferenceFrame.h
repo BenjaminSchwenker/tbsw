@@ -2,7 +2,14 @@
 #define REFERENCEFFRAME_H 1
 
 #include <Eigen/Core>
-#include <Eigen/Geometry> 
+#include <Eigen/Geometry>
+
+#include<Eigen/StdVector>
+using Eigen::Vector3d;
+using Eigen::Matrix3d;
+//the following is just to be save. It may slow down compilation time and increase binary size...
+EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(Vector3d)
+EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(Matrix3d)
 
 namespace depfet {
 
@@ -15,8 +22,7 @@ namespace depfet {
  *  is pointing to origin of the local frame. The matrix is the 3x3 rotation 
  *  matrix into the local frame. 
  */
-using Eigen::Vector3d;
-using Eigen::Matrix3d;
+
 
 class ReferenceFrame {
   
@@ -24,6 +30,7 @@ class ReferenceFrame {
   Matrix3d fRotation;
   	
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   
   // Constructors - Identity Transformation 
   ReferenceFrame();
@@ -88,5 +95,7 @@ class ReferenceFrame {
  	
 
 } // Namespace
+
+EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(depfet::ReferenceFrame)
 
 #endif // REFERENCEFFRAME_H

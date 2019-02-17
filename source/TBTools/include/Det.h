@@ -51,7 +51,7 @@ namespace depfet {
 class Det {
    	
  public:
-   
+   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   // Constructors 
   Det();
    
@@ -250,5 +250,6 @@ class Det {
 };
  
 } // Namespace
-
+#include<Eigen/StdVector>
+EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(depfet::Det)
 #endif // DET_H

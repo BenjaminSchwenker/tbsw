@@ -257,7 +257,7 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
         
         // This is the actual annealing
         double alpha = TMath::Power(annealingFactor, (annealingTracks-nUpdates[ipl])/(static_cast<float>(annealingTracks)));
-        TE.GetHit().GetCov() *= alpha;
+        TE.GetHit().ScaleCov(alpha);
         
       } 
     }
