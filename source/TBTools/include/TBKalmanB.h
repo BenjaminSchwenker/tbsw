@@ -186,11 +186,10 @@ class TBKalmanB {
 
   
   
-  int MAP_FORWARD(   double theta2, 
-                        TrackState& xref, ReferenceFrame& Surf,
-                        TrackState& nxref, ReferenceFrame& nSurf,
+  int MAP_FORWARD(double theta2,
+                        TrackState& xref, ReferenceFrame& Surf, ReferenceFrame& nSurf,
                         TrackState& x0, TrackStateCovariance& C0
-                     ); 
+                     );
    
   int MAP_BACKWARD(   double theta2, 
                         TrackState& xref, ReferenceFrame& Surf,
