@@ -332,7 +332,6 @@ bool TBKalmanB::Fit(TBTrack& trk)
  */
 double TBKalmanB::FilterHit(TBHit& hit, TrackState& xref, TrackState& x0, TrackStateCovariance& C0) 
 { 
-  
   // Here, the measurment update takes place  
   double predchi2 = 0; 
     
@@ -340,11 +339,11 @@ double TBKalmanB::FilterHit(TBHit& hit, TrackState& xref, TrackState& x0, TrackS
   auto& m = hit.GetCoord();
         
   // Covariance for hit coordinates, 2x2 matrix 
-  auto& V = hit.GetCov();
-  
+  auto& V= hit.GetCov(); //CHECK WHY Problematic
+
   bool invertible = true;
-  Matrix2d W = (V + H*C0*H.transpose()).inverse();
-  //(V + H*C0*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
+  Matrix2d W;// = (V + H*C0*H.transpose()).inverse();
+  (V+H*C0*H.transpose()).computeInverseWithCheck(W,invertible);   // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
   if (!invertible) {
     streamlog_out(ERROR) << "Hit filtering: Matrix inversion failed. Quit fitting!"
                          << std::endl;
@@ -408,7 +407,7 @@ int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, TrackStat
     double l0 = te.GetDet().GetTrackLength(xref[2], xref[3], xref[0], xref[1]);
     double X0 = te.GetDet().GetRadLength(xref[2],xref[3]);
     double theta2_det = materialeffect::GetScatterTheta2(xref, l0, X0, mass, charge );   
-    ierr = MAP_FORWARD( theta2_det, xref, Surf, xref_air, Surf_air, x0, C0 );
+    ierr = MAP_FORWARD( theta2_det, xref, Surf, Surf_air, x0, C0 );
     if (ierr != 0) {
       streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
                            << std::endl;
@@ -418,7 +417,7 @@ int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, TrackStat
     // MAP estimate [x0,C0] from air to next te 
     // ---------------------------------------
     double theta2_air = materialeffect::GetScatterTheta2(xref, length, materialeffect::X0_air, mass, charge);   
-    ierr = MAP_FORWARD( theta2_air, xref_air, Surf_air, nxref, nSurf, x0, C0 );
+    ierr = MAP_FORWARD( theta2_air, xref_air, Surf_air, nSurf, x0, C0 );
     if (ierr != 0) {
       streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
                            << std::endl;
@@ -506,15 +505,15 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
       auto m = te.GetHit().GetCoord();
         
       // Covariance for hit coordinates, 2x2 matrix 
-      auto& V = te.GetHit().GetCov();
+      auto &V = te.GetHit().GetCov();
       
       // Linearization: Measured deviation from reference 
       m -= H*xref; 
             
       // Weigth matrix of measurment 
       bool invertible = true;
-      Matrix2d W = (V + H*C0*H.transpose()).inverse();
-      //(V + H*C0*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
+      Matrix2d W;// = (V + H*C0*H.transpose()).inverse();
+      (V + H*C0*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
       if (!invertible) {
         streamlog_out(ERROR) << "Hit filtering: Matrix inversion failed. Quit fitting!"
                              << std::endl;
@@ -580,7 +579,7 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
         double l0 = te.GetDet().GetTrackLength(xref[2], xref[3], xref[0], xref[1]);
         double X0 = te.GetDet().GetRadLength(xref[2],xref[3]);    
         double theta2_det = materialeffect::GetScatterTheta2(xref, l0, X0, mass, charge);   
-        ierr = MAP_FORWARD( theta2_det, xref, Surf, xref_air, Surf_air, x0, C0 );
+        ierr = MAP_FORWARD( theta2_det, xref, Surf, Surf_air, x0, C0 );
         if (ierr != 0) {
           streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
                                << std::endl;
@@ -590,7 +589,7 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
         // MAP estimate [x0,C0] from air to new det surface
         // ---------------------------------------
         double theta2_air = materialeffect::GetScatterTheta2(xref, length, materialeffect::X0_air, mass, charge);   
-        ierr = MAP_FORWARD( theta2_air, xref_air, Surf_air, nxref, nSurf, x0, C0 );
+        ierr = MAP_FORWARD( theta2_air, xref_air, Surf_air, nSurf, x0, C0 );
         if (ierr != 0) {
           streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
                                << std::endl;
@@ -669,7 +668,7 @@ bool TBKalmanB::GetSmoothedData( TrackState& xb, TrackStateCovariance& Cb, Track
   
   // Weighted (smoothed) covariance
   Smoothed_Cov = (fW + bW).inverse();   
-  //(fW + bW).computeInverseWithCheck(Smoothed_Cov,invertible);  
+  //(fW + bW).computeInverseWithCheck(Smoothed_Cov,invertible);
   if (!invertible) {
     streamlog_out(ERROR) << "Smoothing 3: Matrix inversion failed. Quit fitting!"
                          << std::endl;
@@ -687,8 +686,7 @@ bool TBKalmanB::GetSmoothedData( TrackState& xb, TrackStateCovariance& Cb, Track
 
 
 int TBKalmanB::MAP_FORWARD(  double theta2, 
-                        TrackState& xref, ReferenceFrame& Surf,
-                        TrackState& nxref, ReferenceFrame& nSurf,
+                        TrackState& xref, ReferenceFrame& Surf, ReferenceFrame& nSurf,
                         TrackState& x0, TrackStateCovariance& C0
                      )
 { 
@@ -816,7 +814,7 @@ double TBKalmanB::GetPredictedChi2(const TrackState& p, const TrackStateCovarian
   const StateHitProjector& H = GetHMatrix();
   Vector2d r = m - H*p;
   // Compute chisq     	    
-  return GetPredictedChi2(r,H,C,V); 
+  return GetPredictedChi2(r,H,C,V);
 }
   
  
@@ -840,8 +838,8 @@ double TBKalmanB::GetPredictedChi2(const Vector2d& r, const StateHitProjector& H
 {
   // Residuals weight: W=(V + HCH^T)^-1
   bool invertible = true;
-  Matrix2d W = (V + H*C*H.transpose()).inverse();
-  //(V + H*C*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
+  Matrix2d W=Matrix2d::Zero();// = (V + H*C*H.transpose()).inverse();
+  (V + H*C*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
   if (!invertible) {
     streamlog_out(ERROR) << "CHi2Increment: matrix inversion failed"
                          << std::endl;
@@ -859,8 +857,8 @@ double TBKalmanB::GetChi2Increment(const Vector2d& r, const StateHitProjector& H
 {
   // Residuals weight: W=(V - HCH^T)^-1
   bool invertible = true;
-  Matrix2d W = (V - H*C*H.transpose()).inverse();
-  //(V - H*C*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
+  Matrix2d W; //= (V - H*C*H.transpose()).inverse();
+  (V - H*C*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
   if (!invertible) {
     streamlog_out(ERROR) << "CHi2Increment: matrix inversion failed"
                          << std::endl;
@@ -917,7 +915,7 @@ TrackState TBKalmanB::ComputeBeamConstraint( TrackState& x0, TrackStateCovarianc
   int ierr = 0; 
   double length = TrackModel->GetSignedStepLength(x_beam, BeamFrame, FirstSensorFrame); 
   double theta2_air = materialeffect::GetScatterTheta2(x_beam, length, materialeffect::X0_air, mass, charge);   
-  ierr = MAP_FORWARD( theta2_air, x_beam, BeamFrame, x_first, FirstSensorFrame, x0, C0 );
+  ierr = MAP_FORWARD( theta2_air, x_beam, BeamFrame, FirstSensorFrame, x0, C0 );
   if (ierr != 0) {
     streamlog_out(ERROR) << "ERR: Problem with track extrapolation"
                          << std::endl;
