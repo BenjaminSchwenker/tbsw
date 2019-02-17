@@ -46,9 +46,8 @@ find_package(ROOT REQUIRED)
 MESSAGE( STATUS )
 MESSAGE( STATUS "------------------------------- ROOT -------------------------------------" )
 MESSAGE( STATUS "ROOT_FOUND        = ${ROOT_FOUND}" )
-MESSAGE( STATUS "ROOT_rootcint_CMD = ${ROOT_rootcint_CMD}" )
 MESSAGE( STATUS "ROOT_INCLUDE_DIRS  = ${ROOT_INCLUDE_DIRS}" )
-MESSAGE( STATUS "CMAKE_INSTALL_PREFIX  = ${CMAKE_INSTALL_PREFIX}  at START!" )
+
 
 
 
@@ -60,8 +59,9 @@ ADD_DEFINITIONS( "-Wall -pedantic" )
 #------ performance
 ADD_DEFINITIONS( "-march=native -mtune=native" )
 #------ lets get real pedantic as a test...
-ADD_DEFINITIONS( "-Wextra -Wno-unused-macros -Wno-shadow -Wdouble-promotion")
-
+ADD_DEFINITIONS( "-Wextra -Wno-unused-macros -Wno-shadow ")# -Wdouble-promotion ")
+#------ but not too much...
+ADD_DEFINITIONS( "-Wno-unused-function ")
 # definitions
 IF( CMAKE_BUILD_TYPE STREQUAL "Debug" OR
     CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo" )
@@ -77,14 +77,14 @@ ENDIF()
 if(POLICY CMP0002)
   cmake_policy(SET CMP0002 NEW)
 endif()
-
 IF(POLICY CMP0003)
   cmake_policy(SET CMP0003 NEW)
 ENDIF()
-
+IF(POLICY CMP0009)
+  cmake_policy(SET CMP0009 NEW)
+ENDIF()
 
 # set default install prefix to project root directory
-#IF( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
 
 IF( CMAKE_INSTALL_PREFIX STREQUAL "/usr/local" )
     SET( CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}" )
@@ -112,23 +112,28 @@ IF( CMAKE_SIZEOF_VOID_P EQUAL 8 )
     ENDIF()
 ENDIF()
 
-
 # output directories
-# SET( EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin" CACHE PATH
-#    "EXECUTABLE_OUTPUT_PATH" FORCE )
-# SET( LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/lib" CACHE PATH
-#    "LIBRARY_OUTPUT_PATH" FORCE )
-# MARK_AS_ADVANCED( EXECUTABLE_OUTPUT_PATH LIBRARY_OUTPUT_PATH )
+SET( EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin" CACHE PATH
+    "EXECUTABLE_OUTPUT_PATH" FORCE )
+SET( LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/lib" CACHE PATH
+    "LIBRARY_OUTPUT_PATH" FORCE )
+MARK_AS_ADVANCED( EXECUTABLE_OUTPUT_PATH LIBRARY_OUTPUT_PATH )
 
 # add install path to the rpath list
-# SET( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
-# MARK_AS_ADVANCED( CMAKE_INSTALL_RPATH )
+SET( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
+MARK_AS_ADVANCED( CMAKE_INSTALL_RPATH )
 
 # add install path to the rpath list (apple)
-# IF( APPLE )
-#    SET( CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib" )
-#    MARK_AS_ADVANCED( CMAKE_INSTALL_NAME_DIR )
-# ENDIF()
+IF( APPLE )
+    SET( CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib" )
+    MARK_AS_ADVANCED( CMAKE_INSTALL_NAME_DIR )
+ENDIF()
+
+# append link pathes to rpath list
+SET( CMAKE_INSTALL_RPATH_USE_LINK_PATH 1 )
+MARK_AS_ADVANCED( CMAKE_INSTALL_RPATH_USE_LINK_PATH )
+
+
 
 IF(NOT Eigen_INCLUDE_PATH )
     SET(  Eigen_INCLUDE_PATH "${PROJECT_SOURCE_DIR}/source/Eigen3Include")
@@ -140,7 +145,7 @@ ADD_SUBDIRECTORY( source )
 
 # display status message for important variables
 MESSAGE( STATUS )
-MESSAGE( STATUS "-------------------------------------------------------------------------------" )
+MESSAGE( STATUS "---------------------------- TBSW Summary-----------------------------------------" )
 MESSAGE( STATUS "BUILD_SHARED_LIBS    = ${BUILD_SHARED_LIBS}" )
 MESSAGE( STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}" )
 MESSAGE( STATUS "CMAKE_BUILD_TYPE     = ${CMAKE_BUILD_TYPE}" )

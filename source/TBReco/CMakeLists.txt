@@ -35,15 +35,15 @@ SET( ${PROJECT_NAME}_VERSION
 ### INCLUDE, SOURCE, LIB ####################################################
 
 # Include directories
-INCLUDE_DIRECTORIES( include ${Eigen_INCLUDE_PATH} ${ROOT_INCLUDE_DIRS})
-
+INCLUDE_DIRECTORIES( include ${Eigen_INCLUDE_PATH})
+INCLUDE_DIRECTORIES(SYSTEM ${ROOT_INCLUDE_DIRS})
 # Set list of sources
 AUX_SOURCE_DIRECTORY( src lib_srcs)
 file(GLOB_RECURSE lib_hdrs RELATIVE "${PROJECT_SOURCE_DIR}" *.h *.hh)
 
 # Create library with the list of library sources
 ADD_LIBRARY( ${PROJECT_NAME} ${lib_srcs} ${lib_hdrs} )
-TARGET_LINK_LIBRARIES( ${PROJECT_NAME} lib_LCIO lib_Marlin TBTools)
+TARGET_LINK_LIBRARIES( ${PROJECT_NAME} lib_LCIO lib_Marlin TBTools ${ROOT_LIBRARIES})
 
 # Install libraries
 INSTALL( TARGETS ${PROJECT_NAME} DESTINATION lib PERMISSIONS
