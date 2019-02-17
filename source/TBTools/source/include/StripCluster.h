@@ -12,7 +12,7 @@ namespace depfet {
   //! StripCluster
   /*! This class stores all information about reconstructed strip clusters
    * 
-   *  @Author Benjamin Schwenker, Universitaet Goettingen
+   *  @author Benjamin Schwenker, Universitaet Goettingen
    *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
    */ 
   
@@ -38,7 +38,7 @@ namespace depfet {
      */
     StripCluster(unsigned short sensorID, float uSeedCharge, float uClsCharge,  float vSeedCharge, float vClsCharge,  
                unsigned short uSize, unsigned short vSize, unsigned short uStart, unsigned short vStart, unsigned short clsType):
-      m_sensorID(sensorID), m_uClsCharge(uClsCharge), m_uSeedCharge(uSeedCharge), m_vClsCharge(uClsCharge), m_vSeedCharge(uSeedCharge),  
+      m_sensorID(sensorID), m_uClsCharge(uClsCharge), m_uSeedCharge(uSeedCharge), m_vClsCharge(vClsCharge), m_vSeedCharge(vSeedCharge),
       m_uSize(uSize), m_vSize(vSize), m_uStart(uStart), m_vStart(vStart), m_clsType(clsType)
     {}
     
@@ -46,7 +46,7 @@ namespace depfet {
     StripCluster(lcio::LCObjectVec& DigitVec, unsigned short sensorID = 0, unsigned short clsType=0) ;
     
     //! Destructor
-    virtual ~StripCluster() { /* NOOP */ ; }
+     ~StripCluster() { /* NOOP */ ; }
     
     /** Get the sensor ID.
      * @return ID of the sensor.
