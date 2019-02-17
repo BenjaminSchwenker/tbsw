@@ -44,7 +44,7 @@ SET( ${PROJECT_NAME}_VERSION
 
 # Create symbolic target for calling targets bin_XXX
 ADD_CUSTOM_TARGET( bin_x0 )
- 
+INCLUDE_DIRECTORIES(SYSTEM ${ROOT_INCLUDE_DIRS})
 # ==== a macro for adding binaries =====
 MACRO( ADD_X0TOOLS_BIN file )
   ADD_EXECUTABLE( bin_${file} ./source/src/${file}.C )

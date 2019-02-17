@@ -143,7 +143,7 @@ class Grid
 
 	void PrintGridParameters()
 	{
-		for(int i=0;i<m_MeasurementAreas.size();i++) 
+        for(size_t i=0;i<m_MeasurementAreas.size();i++)
 		{
 			cout<<endl<<"-----------------------"<<endl;
 			cout<<"Measurement Area "<<i<<endl;
@@ -746,7 +746,7 @@ struct GlobalEstimator {
   double operator() (const double *par) const {
     double ret =0;
       
-	for(int j=0;j<fEstimatorVec.size();j++)
+    for(size_t j=0;j<fEstimatorVec.size();j++)
 	{
       // read function args
       double p1[num_localparameters];
@@ -1770,7 +1770,7 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
 	Grid grid(mEnv);
 
 	// Total number of measurement areas
-	const int num_fitfunctions=grid.GetMeasurementAreas().size();
+    const size_t num_fitfunctions=grid.GetMeasurementAreas().size();
 
 	cout<<"Total number of measurement areas: 	"<<num_fitfunctions<<endl;
 
@@ -1781,10 +1781,10 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
     // 12 completely independent measurement areas with completely unreleated thicknesses and positions.
 
 	// u minimum and v maximum values (in mm)
-	double umin;
-	double vmin;
-	double umax;
-	double vmax;
+    //double umin;
+    //double vmin;
+    //double umax;
+    //double vmax;
 	
 	// Print out the measurement areas, which will be used for the fit
 	grid.PrintGridParameters();
@@ -1794,7 +1794,7 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
     std::vector<TString> inputfiles;
 
     GetInputFiles(inputfiles);
-	for(int iinput=0;iinput<inputfiles.size();iinput++)
+    for(size_t iinput=0;iinput<inputfiles.size();iinput++)
 	{
 		cout<<"input file:"<<inputfiles.at(iinput)<<endl;
 	}
@@ -1826,7 +1826,7 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
 	rootfile->mkdir("grid/fit/");
 
 	// Loop over number of measurement areas
-	for(Int_t i=0; i<num_fitfunctions; i++)
+    for(size_t i=0; i<num_fitfunctions; i++)
 	{
 			// Set the histogram name as a string
 			histoname.Form("measurementarea%i",i+1);

@@ -23,35 +23,35 @@ namespace depfet {
    static const float       e = 1.;
 
 // Charge
-   static const float       C = 1/1.602176462E-19*e;
-   static const float      fC = C / 1.E15;
+   static const float       C = 1/1.602176462E-19f*e;
+   static const float      fC = C / 1.E15f;
 
 // Distance
    static const float      mm = 1.;
    static const float      cm = mm * 10  ;
-   static const float       m = mm * 1.E3;
-   static const float      um = mm / 1.E3;
+   static const float       m = mm * 1.E3f;
+   static const float      um = mm / 1.E3f;
 
 // Energy
    static const float      eV = 1.;
-   static const float     keV = eV * 1.E3;
-   static const float     MeV = eV * 1.E6;
-   static const float     GeV = eV * 1.E9;
+   static const float     keV = eV * 1.E3f;
+   static const float     MeV = eV * 1.E6f;
+   static const float     GeV = eV * 1.E9f;
 
 // Temperature
    static const float       K = 1.;
 
 // Time
    static const float       s = 1.;
-   static const float      ms = s / 1.E3;
-   static const float      us = s / 1.E6;
-   static const float      ns = s / 1.E9;
+   static const float      ms = s / 1.E3f;
+   static const float      us = s / 1.E6f;
+   static const float      ns = s / 1.E9f;
 
 // Voltage
    static const float       V = 1.;
 
 // Magnetic field
-   static const float       T = 1.*V*s/m/m;
+   static const float       T = 1.f*V*s/m/m;
 
 //
 //  Basic constants:
@@ -77,7 +77,7 @@ namespace depfet {
    static const double Utherm = 0.026*V;
    
 // Electron mobility in intrinsic Si at room temperature 
-   static const double e_mobility = 1415 * cm*cm/V/s; 
+   static const double e_mobility = 1415. * cm*cm/V/s;
  
 
 } // Namespace

@@ -181,22 +181,21 @@ void Processor::setParameters( StringParameters* parameters) {
     
     updateParameters();
 
-    std::string verbosity = Global::parameters->getStringVal("Verbosity" ) ;
+//    std::string verbosity = Global::parameters->getStringVal("Verbosity" ) ;
 
-    int level = DEBUG::level ;    // default - DEBUG/VERBOSE
-    if( verbosity == "MESSAGE" )
-      level = MESSAGE::level ;
-    else if( verbosity == "WARNING" )
-      level = WARNING::level ;
-    else if( verbosity == "ERROR" )
-      level = ERROR::level ;
-    else if( verbosity == "SILENT" )
-      level = ERROR::level + 1 ;  // is this really meaningfull in case of errors
+//    int level = DEBUG::level ;    // default - DEBUG/VERBOSE
+//    if( verbosity == "MESSAGE" )
+//      level = MESSAGE::level ;
+//    else if( verbosity == "WARNING" )
+//      level = WARNING::level ;
+//    else if( verbosity == "ERROR" )
+//      level = ERROR::level ;
+//    else if( verbosity == "SILENT" )
+//      level = ERROR::level + 1 ;  // is this really meaningfull in case of errors
 
 //     _log = new LogStream( name() , level ) ;
 
     init() ;
-
   }
   
   void Processor::updateParameters() {

@@ -33,7 +33,7 @@ namespace gear {
     
     /** Register XMLHandler for type. 
      */
-    const void setHandler( const std::string& type , XMLHandler* handler )  ;
+    void setHandler( const std::string& type , XMLHandler* handler )  ;
    
     ~XMLHandlerMgr() ;
 

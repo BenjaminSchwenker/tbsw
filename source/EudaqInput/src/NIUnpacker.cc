@@ -148,8 +148,8 @@ namespace eudaqinput {
     // pivot pixel position
     std::vector<size_t > pivotPixelPosVec;
     
-    unsigned header0 = GET(data0, 0);
-    unsigned header1 = GET(data1, 0);
+    //unsigned header0 = GET(data0, 0);
+    //unsigned header1 = GET(data1, 0);
     unsigned pivot = GET(data0, 1) & 0xffff;
     datait it0 = data0.begin() + 8;
     datait it1 = data1.begin() + 8;
@@ -205,8 +205,8 @@ namespace eudaqinput {
       
       it0 += len0*4 + 16;
       it1 += len1*4 + 16;
-      if (it0 <= data0.end()) header0 = GET(it0, -1);
-      if (it1 <= data1.end()) header1 = GET(it1, -1);
+      //if (it0 <= data0.end()) header0 = GET(it0, -1);
+      //if (it1 <= data1.end()) header1 = GET(it1, -1);
       ++board;
     }
     
@@ -290,7 +290,7 @@ namespace eudaqinput {
         break;
       }
         
-      bool pivot = (row >= (pivotpixel / 16));
+      //bool pivot = (row >= (pivotpixel / 16));
       for (unsigned s = 0; s < numstates; ++s) {
         unsigned v = vec.at(++i);
         unsigned column = v>>2 & 0x7ff;
@@ -311,7 +311,7 @@ namespace eudaqinput {
   //
   // Method called after each event to check the data processed
   //
-  void NIUnpacker::check( LCEvent * evt )
+  void NIUnpacker::check( LCEvent * )
   {
   }
   

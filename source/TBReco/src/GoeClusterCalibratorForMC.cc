@@ -313,11 +313,11 @@ namespace depfet {
           momentum << simHit->getMomentum()[0], simHit->getMomentum()[1],simHit->getMomentum()[2];
           
           // Get local track parameters 
-          double trk_tu = momentum[0]/momentum[2];    // rad
-          double trk_tv = momentum[1]/momentum[2];    // rad
+          //double trk_tu = momentum[0]/momentum[2];    // rad
+          //double trk_tv = momentum[1]/momentum[2];    // rad
           double trk_u = simHit->getPosition()[0];    // mm
           double trk_v = simHit->getPosition()[1];    // mm
-          double trk_mom = momentum.norm();            // GeV
+          //double trk_mom = momentum.norm();            // GeV
           
           // Get cluster label  
           PixelCluster Cluster = hit.GetCluster(); 
@@ -359,7 +359,7 @@ namespace depfet {
   //
   // Method called after each event to check the data processed
   //
-  void GoeClusterCalibratorForMC::check( LCEvent * evt ) {}
+  void GoeClusterCalibratorForMC::check( LCEvent *  ) {}
   
   //
   // Method called after all data processing

@@ -21,7 +21,7 @@ public:
 
     /** Returns the B field vector in Tesla at  given point.
      */	
-    virtual Vector3D at(Vector3D point) const = 0;
+    virtual Vector3D at(const Vector3D &point) const = 0;
 }; // class
 } // namespace gear
 #endif /* ifndef GEAR_BFIELD_H */

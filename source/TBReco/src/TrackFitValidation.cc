@@ -384,7 +384,7 @@ namespace depfet {
           // Case w/o magnetic field is spacial
           if ( ( std::abs(_detector.GetBx()) + std::abs(_detector.GetBy()) + std::abs(_detector.GetBz()) )  == 0 )  {
              
-            int ierr; 
+            int ierr; //TODO change back to comute with check!
             auto jchisq = diff.block<4,1>(0,0).transpose()*rec_cov.block<4,4>(0,0).inverse()*diff.block<4,1>(0,0);
                 
             histoName = "hJ_det"+to_string( ipl );
@@ -395,7 +395,7 @@ namespace depfet {
              
           } else {
             
-            int ierr; 
+            int ierr;  //TODO change back to comute with check!
             auto jchisq = diff.transpose()*rec_cov.inverse()*diff;
             
             histoName = "hJ_det"+to_string( ipl );
@@ -475,7 +475,7 @@ namespace depfet {
   //
   // Method called after each event to check the data processed
   //
-  void TrackFitValidation::check( LCEvent * evt ) {}
+  void TrackFitValidation::check( LCEvent * ) {}
 
   //
   // Method called after all data processing

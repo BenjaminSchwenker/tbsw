@@ -435,7 +435,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
   double average_mom = 0;
 
 
-  for(int iup=0;iup<(int)upTrackStore.size(); iup++)
+  for(size_t iup=0;iup<upTrackStore.size(); iup++)
   {
   
     // Check upstream track is matched 
@@ -449,7 +449,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 	Vertex.AddTrackState(uptrack.GetTE(_idut).GetState());
 
  	// Add downstream trackstates to vertex
-    for(int idown=0;idown<up2down[iup].size();idown++)
+    for(size_t idown=0;idown<up2down[iup].size();idown++)
 	{
 		Vertex.AddTrackState(downTrackStore[up2down[iup][idown]].GetTE(_idut).GetState());
 	}
@@ -482,7 +482,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 	_root_vertex_u_res = vertexres[2];
 	_root_vertex_v_res = vertexres[3];
     
-    for(int idown=0;idown<up2down[iup].size();idown++)
+    for(size_t idown=0;idown<up2down[iup].size();idown++)
 	{
 		TBTrack& downtrack = downTrackStore[ up2down[iup][idown] ];
 
@@ -548,12 +548,12 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		auto res=p_in-p_out;
 		auto res_covs=instate_covs+outstate_covs;
 
-		bool invertible;
+        //bool invertible;
 		// Use only the sub matrices, which describe the spatial coordinates of the trackstate
 		auto jchisq = res.block<2,1>(2,0).transpose()*res_covs.block<2,2>(3,3).inverse()*res.block<2,1>(2,0);
 
 		streamlog_out(MESSAGE1) << "Complete Covariance matrix: "<< res_covs <<endl;
-		streamlog_out(MESSAGE1) << "Part of Covariance matrix used here: "<<res_covs.block<2,2>(3,3)<<endl;
+        streamlog_out(MESSAGE1) << "Part of Covariance matrix used here: "<< res_covs.block<2,2>(3,3)<<endl;
 
 		_root_chi2=jchisq[0];
 		_root_prob=TMath::Prob(jchisq[0], 2);
@@ -564,7 +564,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		  double dvdw = p_in[1];
 		  double u = p_in[2]; 
 		  double v = p_in[3]; 
-		  double mom = uptrack.GetMomentum();  
+          //double mom = uptrack.GetMomentum();
 		  double l0 = dut.GetThickness(u,v)*std::sqrt(1 + dudw*dudw + dvdw*dvdw); 
 
           // Simulate energy loss by bremsstrahlung (Bethe Heitler theory)
@@ -637,7 +637,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 //
 // Method called after each event to check the data processed
 //
-void X0ImageProducer::check( LCEvent * evt )
+void X0ImageProducer::check( LCEvent * )
 {
 }
 

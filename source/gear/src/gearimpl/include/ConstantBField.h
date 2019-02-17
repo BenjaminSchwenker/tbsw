@@ -25,7 +25,7 @@ public:
       //extends GearParameters {
     /** Returns the B field vector in Tesla at  given point.
      */	
-    virtual Vector3D at(Vector3D point) const { return _b ; }
+    virtual Vector3D at(const Vector3D&) const { return _b ; }
 }; // class
 } // namespace gear
 #endif /* ifndef GEAR_BFIELD_H */

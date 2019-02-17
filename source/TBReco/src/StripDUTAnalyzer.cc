@@ -486,7 +486,7 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
     _rootTrackFitMom = trk.GetMomentum();   
     
     auto p = trk.GetTE(_idut).GetState().GetPars();
-    auto C = trk.GetTE(_idut).GetState().GetCov();  
+   // auto C = trk.GetTE(_idut).GetState().GetCov();
            
     // Get predicted hit coordinates 
     double pu = p[2];
@@ -539,7 +539,7 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
 //
 // Method called after each event to check the data processed
 //
-void StripDUTAnalyzer::check( LCEvent * evt )
+void StripDUTAnalyzer::check( LCEvent * )
 {
 }
 

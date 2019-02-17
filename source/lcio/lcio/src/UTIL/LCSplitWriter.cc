@@ -34,7 +34,7 @@ namespace UTIL{
     _wrt->open( getFilename() ) ;
   }
   
-  void LCSplitWriter::open(const std::string & filename, int writeMode) {
+  void LCSplitWriter::open(const std::string &, int) {
       throw Exception(" LCSplitWriter doesn't support  NEW and APPEND mode ! "
 		      " Please remove your old file(s) and use the default mode." ) ;
 
