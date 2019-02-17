@@ -225,7 +225,7 @@ namespace eudaqinput {
 
   // Method called after each event to check the data processed
   //
-  void DEPFETUnpacker::check( LCEvent * evt )
+  void DEPFETUnpacker::check( LCEvent * )
   {
   }
   

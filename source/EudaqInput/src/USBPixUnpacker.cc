@@ -253,7 +253,7 @@ namespace eudaqinput {
   //
   // Method called after each event to check the data processed
   //
-  void USBPixUnpacker::check( LCEvent * evt )
+  void USBPixUnpacker::check( LCEvent * )
   {
   }
   

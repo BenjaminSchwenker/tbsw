@@ -199,7 +199,7 @@ namespace depfet {
   //
   // Method called after each event to check the data processed
   //
-  void HotPixelKiller::check( LCEvent * evt )
+  void HotPixelKiller::check( LCEvent * )
   {
   }
   

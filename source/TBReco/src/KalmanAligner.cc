@@ -274,7 +274,7 @@ void KalmanAligner::processEvent(LCEvent * evt)
 //
 // Method called after each event to check the data processed
 //
-void KalmanAligner::check( LCEvent * evt )
+void KalmanAligner::check( LCEvent * )
 {
 }
 

@@ -570,7 +570,7 @@ void FastTracker::processEvent(LCEvent * evt)
 //
 // Method called after each event to check the data processed
 //
-void FastTracker::check( LCEvent * evt )
+void FastTracker::check( LCEvent *)
 {
 }
 
@@ -819,7 +819,8 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
       {           
         // Get reco hit at plane ipl 
         int hitid = HitIdVec[icand];
-        TBHit & RecoHit = HitStore.GetRecoHitFromID(hitid, ipl);   
+        TBHit & RecoHit = HitStore.GetRecoHitFromID(hitid, ipl);
+        //streamlog_out ( MESSAGE3 ) << "Checking  for hit "<< icand<<"\n" <<RecoHit.GetCoord()<<"\n" << RecoHit.GetCov()<<endl;
         double uhit = RecoHit.GetCoord()[0];
         double vhit = RecoHit.GetCoord()[1];
        
@@ -851,6 +852,7 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
         TBHit& BestHit = HitStore.GetRecoHitFromID(besthitid, ipl);
                
         if ( TrackFitter.GetPredictedChi2(x, C0, BestHit) < _outlierChi2Cut ) {
+             //streamlog_out ( MESSAGE3 ) << "Fitting  for hit "<< besthitid<< " "<<&BestHit <<"\n" <<BestHit.GetCoord()<<"\n" << BestHit.GetCov()<<endl;
           double hitchi2 = TrackFitter.FilterHit(BestHit, xref, x0, C0);
           BestHit.SetUniqueID(besthitid);             
           trk.GetTE(ipl).SetHit(BestHit);               

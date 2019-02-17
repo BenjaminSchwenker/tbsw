@@ -173,7 +173,7 @@ void DiamondRawHitSorter::processEvent(LCEvent * evt)
 //
 // Method called after each event to check the data processed
 //
-void DiamondRawHitSorter::check( LCEvent * evt )
+void DiamondRawHitSorter::check( LCEvent * )
 {
 }
 

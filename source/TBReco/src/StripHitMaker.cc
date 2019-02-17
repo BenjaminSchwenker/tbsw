@@ -238,7 +238,7 @@ void StripHitMaker::processEvent(LCEvent * evt)
 //
 // Method called after each event to check the data processed
 //
-void StripHitMaker::check( LCEvent * evt )
+void StripHitMaker::check( LCEvent * )
 {
 }
 

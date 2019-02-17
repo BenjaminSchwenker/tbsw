@@ -239,7 +239,7 @@ namespace depfet {
   //
   // Method called after each event to check the data processed
   //
-  void TriggerGenerator::check( LCEvent * evt ) {}
+  void TriggerGenerator::check( LCEvent * ) {}
 
   //
   // Method called after all data processing

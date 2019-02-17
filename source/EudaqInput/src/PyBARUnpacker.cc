@@ -321,7 +321,7 @@ namespace eudaqinput {
   //
   // Method called after each event to check the data processed
   //
-  void PyBARUnpacker::check( LCEvent * evt )
+  void PyBARUnpacker::check( LCEvent * )
   {
   }
   

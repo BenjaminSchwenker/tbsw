@@ -133,7 +133,6 @@ void RawHitDQM::processEvent(LCEvent * evt)
          TrackerHitImpl * lciohit = dynamic_cast< TrackerHitImpl* > ( hitcol->getElementAt( ihit ) );
          TBHit RecoHit ( lciohit ); 
          HitStore.AddRecoHit(RecoHit);
-         
                       
        } // End for hit loop      
           
@@ -223,7 +222,7 @@ void RawHitDQM::processEvent(LCEvent * evt)
 //
 // Method called after each event to check the data processed
 //
-void RawHitDQM::check( LCEvent * evt )
+void RawHitDQM::check( LCEvent * )
 {
 }
 

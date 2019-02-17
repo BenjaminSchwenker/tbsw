@@ -195,7 +195,7 @@ void CogHitMaker::processEvent(LCEvent * evt)
 //
 // Method called after each event to check the data processed
 //
-void CogHitMaker::check( LCEvent * evt )
+void CogHitMaker::check( LCEvent * )
 {
 }
 

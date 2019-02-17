@@ -298,7 +298,7 @@ void DEPFETPedestalNoiseProcessor::processEvent(LCEvent * evt)
 //
 // Method called after each event to check the data processed
 //
-void DEPFETPedestalNoiseProcessor::check( LCEvent * evt )
+void DEPFETPedestalNoiseProcessor::check( LCEvent * )
 {
 }
 
@@ -1057,7 +1057,7 @@ void DEPFETPedestalNoiseProcessor::processRawDataDHP2(LCEvent * evt) {
             float Isig = adcValues[iPixel] - _tmpPede[iDetector][iPixel] - CommonMode;
             
             // Hit filter for final noise + pedestal estimation  
-            bool isHit = std::abs( Isig ) > _hitThresholdPre *_tmpNoise[iDetector][iPixel];           
+            //bool isHit = std::abs( Isig ) > _hitThresholdPre *_tmpNoise[iDetector][iPixel];
              
             //if ( !isHit ) {   
             if ( true ) {   

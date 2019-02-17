@@ -544,7 +544,7 @@ void EventViewer::dumpZeroSuppEvent( LCEvent * evt )
 //
 // Method called after each event to check the data processed
 //
-void EventViewer::check( LCEvent * evt )
+void EventViewer::check( LCEvent * )
 {
 }
 

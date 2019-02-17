@@ -302,7 +302,7 @@ void TrackFitDQM::processEvent(LCEvent * evt)
 //
 // Method called after each event to check the data processed
 //
-void TrackFitDQM::check( LCEvent * evt )
+void TrackFitDQM::check( LCEvent * )
 {
 }
 

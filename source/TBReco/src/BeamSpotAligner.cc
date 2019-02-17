@@ -176,7 +176,7 @@ void BeamSpotAligner::processEvent(LCEvent * evt)
 //
 // Method called after each event to check the data processed
 //
-void BeamSpotAligner::check( LCEvent * evt )
+void BeamSpotAligner::check( LCEvent * )
 {
 }
 

@@ -151,7 +151,7 @@ void PixelClusterizer::processEvent(LCEvent * evt)
 //
 // Method called after each event to check the data processed
 //
-void PixelClusterizer::check( LCEvent * evt )
+void PixelClusterizer::check( LCEvent * )
 {
 }
 

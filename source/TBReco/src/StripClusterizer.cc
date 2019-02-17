@@ -143,7 +143,7 @@ void StripClusterizer::processEvent(LCEvent * evt)
 //
 // Method called after each event to check the data processed
 //
-void StripClusterizer::check( LCEvent * evt )
+void StripClusterizer::check( LCEvent * )
 {
 }
 
@@ -213,7 +213,7 @@ void StripClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
     TrackerDataImpl * Digits = dynamic_cast<TrackerDataImpl* > ( DigitCollection->getElementAt(iDet) );
      
     // Get status matrix 
-    TrackerRawDataImpl * Status = dynamic_cast<TrackerRawDataImpl*> (StatusCollection->getElementAt( iDet ));  
+    //TrackerRawDataImpl * Status = dynamic_cast<TrackerRawDataImpl*> (StatusCollection->getElementAt( iDet ));
       
     // Get DAQ ID 
     int sensorID = StripID( Digits ) ["sensorID"];
@@ -222,12 +222,12 @@ void StripClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
     int ipl = _detector.GetPlaneNumber(sensorID);      
     Det& Sensor = _detector.GetDet(ipl);
   
-    int noOfXPixels = Sensor.GetNColumns(); 
-    int noOfYPixels = Sensor.GetNRows();
+    //int noOfXPixels = Sensor.GetNColumns();
+    //int noOfYPixels = Sensor.GetNRows();
 
     // Get max channel numbers 
-    int maxCol = Sensor.GetNColumns() - 1; 
-    int maxRow = Sensor.GetNRows() - 1;
+    //int maxCol = Sensor.GetNColumns() - 1;
+    //int maxRow = Sensor.GetNRows() - 1;
     
     
     FloatVec rawDigits = Digits->getChargeValues();

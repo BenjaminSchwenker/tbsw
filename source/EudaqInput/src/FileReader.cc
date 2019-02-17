@@ -43,7 +43,7 @@ namespace eudaqinput {
   }
   
   bool FileReader::NextEvent(size_t skip) {
-    eudaqinput::Event * ev = 0;
+    eudaqinput::Event * ev = nullptr;
     bool result = ReadEvent(m_des, m_ver, ev, skip);
     if (ev) m_ev = ev;
     return result;

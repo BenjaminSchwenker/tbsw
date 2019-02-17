@@ -270,7 +270,7 @@ void Correlator::processEvent(LCEvent * evt)
 //
 // Method called after each event to check the data processed
 //
-void Correlator::check( LCEvent * evt )
+void Correlator::check( LCEvent * )
 {
 }
 

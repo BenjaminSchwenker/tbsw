@@ -302,7 +302,7 @@ namespace depfet {
   //
   // Method called after each event to check the data processed
   //
-  void ParticleGunGenerator::check( LCEvent * evt ) {}
+  void ParticleGunGenerator::check( LCEvent * ) {}
 
   //
   // Method called after all data processing

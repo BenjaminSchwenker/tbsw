@@ -330,7 +330,7 @@ namespace depfet {
   //
   // Method called after each event to check the data processed
   //
-  void GoeHitMaker::check( LCEvent * evt )
+  void GoeHitMaker::check( LCEvent * )
   {
   }
 

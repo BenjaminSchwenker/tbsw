@@ -182,7 +182,7 @@ void TelUnpacker::processEvent(LCEvent * evt)
 //
 // Method called after each event to check the data processed
 //
-void TelUnpacker::check( LCEvent * evt )
+void TelUnpacker::check( LCEvent * )
 {
 }
 

@@ -241,7 +241,7 @@ namespace depfet {
   //
   // Method called after each event to check the data processed
   //
-  void SmearingDigitizer::check( LCEvent * evt ) { }
+  void SmearingDigitizer::check( LCEvent * ) { }
   
   //
   // Method called after all data processing

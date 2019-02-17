@@ -174,7 +174,7 @@ void HotStripKiller::processEvent(LCEvent * evt)
 //
 // Method called after each event to check the data processed
 //
-void HotStripKiller::check( LCEvent * evt )
+void HotStripKiller::check( LCEvent * )
 {
 }
 

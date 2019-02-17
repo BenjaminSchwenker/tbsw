@@ -785,7 +785,7 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, c
                 printf("WARNING! Bad data size! Should be %%256==8 but %d %% 256 is %d\n",4*frame_size,4*(frame_size % 64));
                 continue;
             }
-            int maxMemRow=(frame_size-2)/16;
+            unsigned maxMemRow=(frame_size-2)/16;
             if (fill_info) {
                 fill_info_from_header(info_map,dhc_prefix+dhe_prefix+fr_prefix,frame, frame_size,dhh_hdr->DataType);
                 info_map[dhc_prefix+dhe_prefix + fr_prefix + "First Row"]=0;

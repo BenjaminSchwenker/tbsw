@@ -214,7 +214,7 @@ namespace depfet {
   //
   // Method called after each event to check the data processed
   //
-  void ClusterShapeToAsciiPrinter::check( LCEvent * evt ) {}
+  void ClusterShapeToAsciiPrinter::check( LCEvent * ) {}
   
   //
   // Method called after all data processing

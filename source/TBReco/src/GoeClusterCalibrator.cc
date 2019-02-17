@@ -280,7 +280,7 @@ namespace depfet {
   //
   // Method called after each event to check the data processed
   //
-  void GoeClusterCalibrator::check( LCEvent * evt ) {}
+  void GoeClusterCalibrator::check( LCEvent * ) {}
   
   //
   // Method called after all data processing
@@ -639,7 +639,7 @@ namespace depfet {
         
         // Add eta bin edges for type
         TVectorD DB_etaBinEdges( etaBinEdges.size() );
-        for ( int iBin=0; iBin < etaBinEdges.size(); iBin++) {
+        for ( size_t iBin=0; iBin < etaBinEdges.size(); iBin++) {
           DB_etaBinEdges[iBin] = etaBinEdges[iBin];
         }
         DB_etaBinEdges.Write(  string("DB_etaBinEdges_"+name).c_str() );

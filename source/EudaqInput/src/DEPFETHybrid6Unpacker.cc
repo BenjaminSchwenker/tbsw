@@ -539,7 +539,7 @@ namespace eudaqinput {
   //
   // Method called after each event to check the data processed
   //
-  void DEPFETHybrid6Unpacker::check( LCEvent * evt )
+  void DEPFETHybrid6Unpacker::check( LCEvent * )
   {
   }
   

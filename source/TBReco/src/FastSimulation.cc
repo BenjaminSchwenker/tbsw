@@ -350,7 +350,7 @@ namespace depfet {
   //
   // Method called after each event to check the data processed
   //
-  void FastSimulation::check( LCEvent * evt ) {}
+  void FastSimulation::check( LCEvent * ) {}
 
   //
   // Method called after all data processing

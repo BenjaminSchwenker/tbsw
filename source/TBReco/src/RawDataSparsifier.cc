@@ -305,7 +305,7 @@ void RawDataSparsifier::processEvent(LCEvent * evt)
 //
 // Method called after each event to check the data processed
 //
-void RawDataSparsifier::check( LCEvent * evt )
+void RawDataSparsifier::check( LCEvent * )
 {
 }
 

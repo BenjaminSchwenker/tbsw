@@ -257,7 +257,7 @@ void TriplettCorrelator::processEvent(LCEvent * evt)
 //
 // Method called after each event to check the data processed
 //
-void TriplettCorrelator::check( LCEvent * evt )
+void TriplettCorrelator::check( LCEvent * )
 {
 }
 
