@@ -99,8 +99,7 @@ protected:
    std::string _rootFileName;       //!< store 2D histos here 
    std::string _selectDataType;     //!< select data type: DATA or RAWDATA or ZEROSUPP
    std::string _selectTrigger; 	    //!< "EXTERNAL" or "ALL"
-   int _maxTriggers;                //!< maximum number triggers 
-   bool _useStatusMap; 	            //!< if yes: use status map for masking	 	 
+   int _maxTriggers;                //!< maximum number triggers  	 
    int _displaySensorID;            //!< select modules to be displayed 
      
  private:

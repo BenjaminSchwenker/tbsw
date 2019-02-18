@@ -58,9 +58,9 @@ namespace depfet {
                                 _asciiFileName, std::string("ClusterShapes.txt"));  
       
     registerProcessorParameter ("AlignmentDBFileName",
-                                "This is the name of the LCIO file with the alignment constants (add .slcio)",
-                                _alignmentDBFileName, static_cast< string > ( "eudet-alignmentDB.slcio" ) ); 
-    
+                             "This is the name of the file with the alignment constants (add .root)",
+                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) ); 
+
     std::vector<int> initIgnoreIDVec;
     registerProcessorParameter ("IgnoreIDs",
                                 "Ignore clusters from list of sensorIDs",

@@ -84,11 +84,6 @@ EventViewer::EventViewer() : Processor("EventViewer")
                                _maxTriggers,
                                static_cast<int>(1000));
    
-   registerProcessorParameter( "UseStatusMap",
-                               "Display only GOOD Pixels, not available for RAWDATA",
-                               _useStatusMap,
-                               static_cast<bool>(false));
-   
    registerProcessorParameter( "DisplaySensorID",
                                "-1: for all sensors or use sensorID to view specific sensor",
                                _displaySensorID,
@@ -255,11 +250,9 @@ void EventViewer::dumpDataEvent( LCEvent * evt )
   try {
     
     LCCollectionVec * frames = dynamic_cast < LCCollectionVec * > (evt->getCollection(_DataCollectionName)); 
-      
-    if ( !_useStatusMap ) {    
-      
-      // Loop over all sensors 
-      for (unsigned int iSensor = 0; iSensor < frames->size(); iSensor++) {
+        
+    // Loop over all sensors 
+    for (unsigned int iSensor = 0; iSensor < frames->size(); iSensor++) {
         
         //
         // open data frame
@@ -309,80 +302,10 @@ void EventViewer::dumpDataEvent( LCEvent * evt )
         _rootFile->cd("/"); 
         eventMap->Write();
     
-      } // end sensor loop
+    } // end sensor loop
         
-    } else {
-      
-      // Load status collection   
-      LCCollectionVec * statusCollection = dynamic_cast < LCCollectionVec * > (evt->getCollection("status"));  
-
-      // Loop over all sensors 
-      for (unsigned int iSensor = 0; iSensor < frames->size(); iSensor++) {
-       
-        //
-        // open data frame
-        TrackerDataImpl * matrix = dynamic_cast<TrackerDataImpl* > (frames->getElementAt(iSensor));
-        CellIDDecoder<TrackerDataImpl> idMatrixDecoder(frames);
-        int currentSensorID = idMatrixDecoder(matrix)["sensorID"]; 
-        int noOfXPixels =  idMatrixDecoder(matrix)["xMax"]+1;    
-        int noOfYPixels =  idMatrixDecoder(matrix)["yMax"]+1;   
-
-        // open status map 
-        TrackerRawDataImpl * status = dynamic_cast<TrackerRawDataImpl* > (statusCollection->getElementAt(iSensor));
-        
-        //
-        // skip this sensor 
-        if ( _displaySensorID != currentSensorID  && _displaySensorID != -1 ) continue;     
- 
-        streamlog_out(MESSAGE1) << "Dump sensor "<<currentSensorID<<endl;  
-
-        // 
-        // prepare histo 
-        std::string histoName = _rootFileName+"_evt_"+to_string(eventID)+"_mod_"+to_string(currentSensorID); 
-        std::string  histoTitle = "Evt:"+to_string(eventID)+" Mod:"+to_string(currentSensorID);
-      	   
-        double xmin = 0 - 0.5;
-        double xmax = noOfXPixels -1 + 0.5;
-        int xnbins = noOfXPixels;
-        double ymin = 0 - 0.5;
-        double ymax = noOfYPixels -1 + 0.5;
-        int ynbins = noOfYPixels; 
-        TH2D * eventMap = new TH2D(histoName.c_str(),histoTitle.c_str(),xnbins,xmin,xmax,ynbins,ymin,ymax);
-        eventMap->SetXTitle("X Axis"); 
-        eventMap->SetYTitle("Y Axis");
-
-        //
-        // fill 2D histo
-        FloatVec charges  = matrix->getChargeValues();
-        ShortVec pixelStatus = status->getADCValues();     
-        int iPixel = 0; 
-        for (int yPixel = 0; yPixel < noOfYPixels; yPixel++) {
-          for ( int xPixel = 0; xPixel < noOfXPixels; xPixel++) {
-        
-            double chargeValue = charges[iPixel];
-            short statusValue = pixelStatus[iPixel]; 
-         
-            if ( statusValue != 0 ) {
-              eventMap->Fill(xPixel,yPixel,0.0); 
-            } else {
-              eventMap->Fill(xPixel,yPixel,chargeValue); 
-            }
-
-            iPixel++;  
-      
-          }
-        }
-        
-        // write map to root file 
-        _rootFile->cd("/"); 
-        eventMap->Write();
-    
-      } // end sensor loop
-   
-    } // end _useStatus
-
   } catch(DataNotAvailableException &e){
-     streamlog_out(ERROR4) << "No data and/or status collection found" << std::endl;
+     streamlog_out(ERROR4) << "No data collection found" << std::endl;
   }  
 
   

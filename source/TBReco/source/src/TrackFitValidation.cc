@@ -69,11 +69,12 @@ namespace depfet {
                            std::string("tracks") ) ;
     
     // Processor parameters:
-    
+
     registerProcessorParameter ("AlignmentDBFileName",
-                                "This is the name of the LCIO file with the alignment constants (add .slcio)",
-                                _alignmentDBFileName, static_cast< string > ( "alignmentDB.slcio" ) );     
-       
+                             "This is the name of the file with the alignment constants (add .root)",
+                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) ); 
+    
+         
     registerProcessorParameter ("MaxResidualU",
                                 "Maximum u residual for matching simHits to hits [mm]. Put -1 to deactivate cut.",
                                 _maxResidualU,  static_cast < double > (0.2));
