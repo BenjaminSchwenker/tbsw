@@ -93,7 +93,7 @@ class Plane:
               rotation1="1.0", rotation2="0.0", rotation3="0.0", rotation4="1.0",)
   
   #pixel prototyp
-  protopixdefault = dict(ptype="0", npoints="4", points="0.0 0.0, 0.0 0.018402778, 0.018402778 0.018402778, 0.018402778 0.0")
+  protopixdefault = dict(type="0", npoints="4", points="0.0 0.0, 0.0 0.018402778, 0.018402778 0.018402778, 0.018402778 0.0")
 
   #pixel matrix
   #createPixel
