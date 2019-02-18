@@ -368,7 +368,8 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
         TrackerDataImpl* sparseCluster = new TrackerDataImpl ; 
         
         int npixels = (*group).size()/3; 
-        
+        auto& chargeVec=sparseCluster->chargeValues();
+        chargeVec.reserve((*group).size());
         for ( int index=0; index < npixels; index++)
         {
            
@@ -383,9 +384,9 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
           }
              
           // Store pixel data int EUTelescope format 
-          sparseCluster->chargeValues().push_back( col );
-          sparseCluster->chargeValues().push_back( row );
-          sparseCluster->chargeValues().push_back( charge );   
+          chargeVec.push_back( col );
+          chargeVec.push_back( row );
+          chargeVec.push_back( charge );
           
         }
             

@@ -155,8 +155,10 @@ void EudaqInputProcessor::readDataSource (int Ntrig) {
               lcEncoder.setCellID( lcBlock );
               
               // loop over the data block
+              auto& vec=lcBlock->adcValues();
+              vec.reserve(vec.size()+data.size());
               for (size_t it = 0; it < data.size(); ++it) {
-                lcBlock->adcValues().push_back( data[it] );
+                vec.push_back( data[it] );
               }
             
               // add the lcio::TrackerRawData to the collection

@@ -546,10 +546,13 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, c
             data_arrived=true;
             dhe_crc_good &= crc_good;
             const DHE_Ghost_Frame_t * dhe_hdr=reinterpret_cast<const DHE_Ghost_Frame_t *>(frame);
-            std::stringstream s;
-            s<<"Frame "<<data_frame_index<<",";
+            std::string fr_prefix;
+            if(fill_info){
+                std::stringstream s;
+                s<<"Frame "<<data_frame_index<<",";
+                fr_prefix=s.str();
+            }
             data_frame_index++;
-            std::string fr_prefix=s.str();
 
             if(frame_size!=1){
                 if (fill_info) info_map["ERROR,"+dhc_prefix+dhe_prefix+fr_prefix + "ERROR_BAD_FRAMESIZE"]+=1;
@@ -585,10 +588,13 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, c
             data_arrived=true;
             dhe_crc_good &= crc_good;
             const DHE_Data_Frame_t * dhe_hdr=reinterpret_cast<const DHE_Data_Frame_t *>(frame);
-            std::stringstream s;
-            s<<"Frame "<<data_frame_index<<",";
+            std::string fr_prefix;
+            if(fill_info){
+                std::stringstream s;
+                s<<"Frame "<<data_frame_index<<",";
+                fr_prefix=s.str();
+            }
             data_frame_index++;
-            std::string fr_prefix=s.str();
 
             if(frame_size<2){
                 if (fill_info) info_map["ERROR,"+dhc_prefix+dhe_prefix +fr_prefix+ "ERROR_BAD_FRAMESIZE"]+=1;
@@ -732,10 +738,13 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, c
             data_arrived=true;
             dhe_crc_good &= crc_good;
             const DHE_Data_Frame_t * dhe_hdr=reinterpret_cast<const DHE_Data_Frame_t *>(frame);
-            std::stringstream s;
-            s<<"Frame "<<data_frame_index<<",";
+            std::string fr_prefix;
+            if(fill_info){
+                std::stringstream s;
+                s<<"Frame "<<data_frame_index<<",";
+                fr_prefix=s.str();
+            }
             data_frame_index++;
-            std::string fr_prefix=s.str();
             if(frame_size<64+2){
                 if (fill_info) info_map["ERROR,"+dhc_prefix+dhe_prefix+fr_prefix + "ERROR_BAD_FRAMESIZE"]+=1;
                 printf("ERROR! Raw data frame is too small! Size %d\n",frame_size);

@@ -279,6 +279,8 @@ namespace eudaqinput {
     }
       
     unsigned npixels = 0;
+    auto& chargevec=zsFrame->chargeValues();
+    chargevec.reserve(chargevec.size()+size_t(1.5*vec.size()));
     for (size_t i = 0; i < vec.size(); ++i) {
       //  std::cout << "  " << i << " : " << hexdec(vec[i]) << std::endl;
       if (i == vec.size() - 1) break;
@@ -295,11 +297,12 @@ namespace eudaqinput {
         unsigned v = vec.at(++i);
         unsigned column = v>>2 & 0x7ff;
         unsigned num = v & 3;
-          
+
+
         for (unsigned j = 0; j < num+1; ++j) {
-            zsFrame->chargeValues().push_back( column+j );
-            zsFrame->chargeValues().push_back( row );
-            zsFrame->chargeValues().push_back( 1 );       
+            chargevec.push_back( column+j );
+            chargevec.push_back( row );
+            chargevec.push_back( 1 );
         }
         npixels += num + 1;
       }
