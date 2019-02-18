@@ -1,9 +1,12 @@
 """ Example python script for generating a gearfile with arbitrary pixel sizes
     author: Helge C. Beck helge-christoph.beck@phys.uni-goettingen.de
 
+    The script uses the xml.ElementTree library to generate a gear xml file. Purpose is to describe the telescope geometry and the detectors to then be used in the tbsw framework.
+
     Usage: 
     In the __main__ part a example is given for the creation of a gear file for just a telescope with 6 mimosa26 detector planes. 
     The base gear structure is (at the moment hard coded) in the function createGearStructure(). Parameters to change there are the number of planes and potentialy the B-field.
+    All parameter values have to be strings otherwise the parsing does not work.
     The detector planes are handled with the class Plane. 
       Parameters to be set can be found in the declared default dictionaries in the class for the different parts of the plane. The parameters can be set on construction of the planes object or with the setXParams(dict) functions. Care has to be taken that the parameters for the pixel prototypes are handled in a list of dictionaries ([{},{},]) because there could be multiple pixel types in one plane. 
       Most important parameter to set is the function that generates the layout of the pixels the pixel matrix. It is the first parameter of the constructer (after self) and has to be set during construction (at the moment no set function provided). This function has to be implemented for the specific layout. An example of this function can be found in the implementation for the mimosa26 pixel -> createPixelM26(). Characteristics of this function:
@@ -30,15 +33,15 @@ from copy import deepcopy
 def createPixelM26(self):
   pixelList = []
   attributes = {}
-  attributes["type"] = 0
+  attributes["type"] = "0"
   npixelsU = 1151
   npixelsV = 575
   basepoints = self.basePointListList[0]
   #basepoints = [(0.0, 0.0), (0.0, 0.018402778), (0.018402778, 0.018402778), (0.018402778, 0.0)]
   for i in range(npixelsU):
     for j in range(npixelsV):
-      attributes["u"] = i
-      attributes["v"] = j
+      attributes["u"] = str(i)
+      attributes["v"] = str(j)
      
       npoints = len(basepoints)
       pitch = 0.018402778
@@ -56,12 +59,14 @@ def createPixelM26(self):
         for adjv in range(j-1, j+2):
           if adjv < 0 or adjv > npixelsV:
             continue
+          if adju == i and adjv == j:
+            continue
           adjacentstring += "{} {}, ".format(adju, adjv)
 
       attributes["points"] = pointstring
       attributes["adjacent"] = adjacentstring
-      attributes["centreu"] = centreu
-      attributes["centrev"] = centrev
+      attributes["centreu"] = str(centreu)
+      attributes["centrev"] = str(centrev)
       pixelList.append(ET.Element('pixel', attributes))
   return pixelList
 
@@ -187,7 +192,7 @@ if __name__ == '__main__':
   gearBase = createGearStructure()
   layers = gearBase.getiterator('layers')[0];
   for i in range(len(telPositionZ)):
-    layer = Plane(createPixelM26, sensparams={"ID":i, "positionZ":telPositionZ[i]})
+    layer = Plane(createPixelM26, sensparams={"ID":str(i), "positionZ":str(telPositionZ[i])})
     layers.append(layer.createLayerElement())
 
   gearFile = ET.ElementTree(gearBase)
