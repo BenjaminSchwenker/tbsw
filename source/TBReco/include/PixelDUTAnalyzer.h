@@ -23,6 +23,9 @@
 #include <IMPL/TrackerHitImpl.h>
 #include <IMPL/TrackImpl.h>
 
+//Bitfield and CellIDDecoder
+#include <UTIL/CellIDDecoder.h>
+
 // Include Marlin classes
 #include <marlin/Global.h>
 #include <marlin/Processor.h>
@@ -206,6 +209,9 @@ class PixelDUTAnalyzer : public marlin::Processor {
    // Handle to detector data 
    TBDetector  _detector;    
    
+   //! internally used as storage for input decoding
+   UTIL::BitField64 _inputDecodeHelper;
+
    // Few counter to show the final summary
    
    //! Number of event w/o input hit

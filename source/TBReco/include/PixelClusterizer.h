@@ -119,6 +119,10 @@ namespace depfet {
    // Handle to detector data sheets 
    TBDetector _detector;    
    
+   //! internally used as storage for input decoding
+   UTIL::BitField64 _inputDecodeHelper;
+   CellIDEncodeConstructHelper _orginalOutputEncoderHelper;
+   CellIDEncodeConstructHelper _clusterOutputEncoderHelper;
    // Pixel mask to filter brocken (hot) channels  
    // Key is sensorID 
    std::map< int, TH2F *> _DB_Map_Mask;

@@ -91,7 +91,8 @@ namespace eudaqinput {
     int _tot_mode;
 
    private: 
-    
+    //! internally used as storage for output decoding
+    CellIDEncodeConstructHelper _outputEncoderHelper;
     int _consecutive_lvl1;
     int _first_sensor_id;
     

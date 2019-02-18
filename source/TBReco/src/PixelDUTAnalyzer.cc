@@ -28,7 +28,6 @@
 
 // lcio includes <.h>
 #include <lcio.h>
-#include <UTIL/CellIDDecoder.h>
 #include <IMPL/LCFlagImpl.h>
 #include <IMPL/LCGenericObjectImpl.h>
 
@@ -48,7 +47,7 @@ PixelDUTAnalyzer aPixelDUTAnalyzer ;
 //
 // Constructor
 //
-PixelDUTAnalyzer::PixelDUTAnalyzer() : Processor("PixelDUTAnalyzer")
+PixelDUTAnalyzer::PixelDUTAnalyzer() : Processor("PixelDUTAnalyzer"),_inputDecodeHelper("")
 {
 
 // Processor description
@@ -111,7 +110,7 @@ PixelDUTAnalyzer::PixelDUTAnalyzer() : Processor("PixelDUTAnalyzer")
                                _testPixels, initTestPixels); 
    
    
-   
+
 }
 
 //
@@ -216,13 +215,13 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
   
   try {
     LCCollection* digitcol = evt->getCollection( _digitColName ) ;
-    CellIDDecoder<TrackerDataImpl> DigitDecoder(digitcol);  
+    CellIDDecoder<TrackerDataImpl> DigitDecoder(digitcol, &_inputDecodeHelper);
     // Search for digits from DUT 
     for (unsigned int iDet = 0; iDet < digitcol->getNumberOfElements(); iDet++) {    
       TrackerDataImpl * digits = dynamic_cast<TrackerDataImpl* > ( digitcol->getElementAt(iDet) );
       int sensorID = DigitDecoder( digits ) ["sensorID"];
       if ( sensorID ==  dut.GetDAQID() ) { 
-        FloatVec pixVector = digits->getChargeValues();
+        const FloatVec &pixVector = digits->getChargeValues();
          
         // Read the number of pixels on DUT in the event
         nDUTDigits = pixVector.size()/3;

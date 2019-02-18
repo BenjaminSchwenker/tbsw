@@ -72,7 +72,9 @@ namespace eudaqinput {
     std::string _inputCollectionName;
     	        
    private: 
-     
+    //! internally used as storage for input decoding
+    UTIL::BitField64 _inputDecodeHelper;
+    CellIDEncodeConstructHelper _outputEncoderHelper;
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number
     int    _nEvt ;   //!< Event number

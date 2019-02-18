@@ -15,6 +15,7 @@
 #include <marlin/ProcessorMgr.h>
 #include <marlin/Exceptions.h>
 
+#include <UTIL/CellIDDecoder.h>
 
 // Include basic C
 #include <string>
@@ -95,6 +96,9 @@ namespace depfet {
     
     // Handle to detector data sheets 
     TBDetector _detector;     
+
+    //! internally used as storage for input decoding
+    UTIL::BitField64 _inputDecodeHelper;
      
     // Count  hits for all pixels 
     std::map < int, FloatVec > _hitCounterMap;

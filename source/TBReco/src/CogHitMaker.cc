@@ -18,7 +18,6 @@
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerDataImpl.h>
 #include <IMPL/TrackerHitImpl.h>
-#include <UTIL/CellIDDecoder.h>
 #include <IMPL/TrackerPulseImpl.h>
 
 // ROOT includes
@@ -41,7 +40,7 @@ CogHitMaker aCogHitMaker ;
 //
 // Constructor
 //
-CogHitMaker::CogHitMaker() : Processor("CogHitMaker")
+CogHitMaker::CogHitMaker() : Processor("CogHitMaker"),_inputDecodeHelper("")
 {
 
 // Processor description
@@ -133,7 +132,7 @@ void CogHitMaker::processEvent(LCEvent * evt)
       LCCollectionVec * hitCollection = new LCCollectionVec(LCIO::TRACKERHIT) ;
          
       // Helper class for decoding cluster ID's
-      CellIDDecoder<TrackerPulseImpl> clusterDecoder( clusterCollection );
+      CellIDDecoder<TrackerPulseImpl> clusterDecoder( clusterCollection ,&_inputDecodeHelper);
       // Loop on all clusters 
       for (unsigned int iClu = 0; iClu < clusterCollection->size(); iClu++) 
       { 

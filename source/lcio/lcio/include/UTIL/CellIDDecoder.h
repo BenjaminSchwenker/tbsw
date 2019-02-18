@@ -32,9 +32,11 @@ namespace UTIL{
   public:  
     
     /** Constructor reads encoding string from collection parameter LCIO::CellIDEncoding.
+     * optional BitField64* _defaultBitField can be given which stores the constructed Encoding.
+     * This allows to construct a CellIDDecoder without constructing the complete encoding everytime.
      */
-    CellIDDecoder( const LCCollection* col ) : _oldHit(0) {
-      
+    CellIDDecoder( const LCCollection* col,  BitField64* _defaultBitField=nullptr ) : _oldHit(0) {
+
       std::string initString("") ; 
 
       if( col !=0 ) 
@@ -53,12 +55,19 @@ namespace UTIL{
 		  << std::endl ;
       }
       
-      _b = new BitField64(  initString ) ; 
+      if(_defaultBitField==nullptr){
+          _b = new BitField64(  initString ) ;
+          _owningBitField=true;
+      } else {
+          _b=_defaultBitField;
+          _b->reinitialize(initString);  //check if encoding is correct - else create encoding
+          _owningBitField=false;
+      }
+
     }
     
     ~CellIDDecoder(){ 
-      
-      delete _b ;
+      if(_owningBitField) delete _b ;
     } 
     
     
@@ -95,7 +104,9 @@ namespace UTIL{
     
   protected:
     BitField64* _b ;
+
     T* _oldHit ;
+    bool _owningBitField;
     
     static std::string*  _defaultEncoding ;
   } ; 

@@ -33,7 +33,7 @@ namespace eudaqinput {
   //
   // Constructor
   //
-  DEPFETUnpacker::DEPFETUnpacker() : Processor("DEPFETUnpacker")
+  DEPFETUnpacker::DEPFETUnpacker() : Processor("DEPFETUnpacker"),_inputDecodeHelper(""),_outputEncoderHelper("sensorID:6,sparsePixelType:5")
   {
     
     // Processor description
@@ -129,7 +129,7 @@ namespace eudaqinput {
       LCCollectionVec * source = dynamic_cast < LCCollectionVec * > (evt->getCollection(_inputCollectionName)); 
        
       // Helper class for decoding raw data 
-      CellIDDecoder<TrackerRawDataImpl> inputDecoder( source );  
+      CellIDDecoder<TrackerRawDataImpl> inputDecoder( source ,&_inputDecodeHelper);
       
       //-----------------------------------------------
       // Decode event data to a DEPFETEvent format   
@@ -185,7 +185,7 @@ namespace eudaqinput {
       LCCollectionVec * result = new LCCollectionVec(LCIO::TRACKERDATA);
 
       // Helper class for encoding digit data 
-      CellIDEncoder<TrackerDataImpl> outputEncoder( "sensorID:6,sparsePixelType:5", result  );
+      CellIDEncoder<TrackerDataImpl> outputEncoder( "sensorID:6,sparsePixelType:5", result, &_outputEncoderHelper);
       
       //-----------------------------------------------
       // Decode event data to a LCIO format

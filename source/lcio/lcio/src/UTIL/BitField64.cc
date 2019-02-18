@@ -169,6 +169,30 @@ namespace UTIL{
     return os.str() ;
   }
 
+
+  BitField64::BitField64( const std::string& initString,const CellIDEncodeConstructHelper * helper) : _value(0){
+      if(helper!=nullptr)
+      {
+          if(initString==helper->get_init_string()){
+              _fields.reserve(helper->info.size());
+
+              for(auto & it:helper->info){
+                  _fields.push_back(new  BitFieldValue( _value, it.name, it.offset, it.signedWidth ));
+              }
+              _map=helper->get_map();
+              _joined=helper->get_joined();
+              _used_init_string=helper->get_init_string();
+              return;
+          } else {
+              std::cout<<"Warning! Used invalid init string in helper object.\nRequested: >>"<<initString<<"<<\nProvided: >>"<<helper->get_init_string()<<"<<\n";
+          }
+      }
+      _joined=0;
+      init( initString ) ;
+      _used_init_string=initString;
+
+  }
+
   void BitField64::addField( const std::string& name,  unsigned offset, int width ){
 
       

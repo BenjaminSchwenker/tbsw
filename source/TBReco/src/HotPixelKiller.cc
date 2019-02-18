@@ -14,7 +14,6 @@
 
 // Include LCIO classes
 #include <lcio.h>
-#include <UTIL/CellIDDecoder.h>
 #include <IMPL/TrackerDataImpl.h>
 #include <IMPL/LCCollectionVec.h>
 
@@ -40,7 +39,7 @@ namespace depfet {
   //
   // Constructor
   //
-  HotPixelKiller::HotPixelKiller() : Processor("HotPixelKiller")
+  HotPixelKiller::HotPixelKiller() : Processor("HotPixelKiller"),_inputDecodeHelper("")
   {
       
     // Processor description
@@ -120,7 +119,7 @@ namespace depfet {
         TrackerDataImpl *trackerData = dynamic_cast < TrackerDataImpl * >(collectionVec->getElementAt (iDetector)); 
         
         // Get DAQ ID of sensor 
-        CellIDDecoder< TrackerDataImpl > DataDecoder( collectionVec );  
+        CellIDDecoder< TrackerDataImpl > DataDecoder( collectionVec,&_inputDecodeHelper);
         int sensorID =  DataDecoder( trackerData ) ["sensorID"] ;
         
         // Read geometry info for sensor 

@@ -18,6 +18,8 @@
 // Include basic C
 #include <string>
 #include <vector>
+//LCIO
+#include <UTIL/CellIDDecoder.h>
 
 namespace depfet {
 
@@ -79,7 +81,9 @@ protected:
    
    // Handle to detector data 
    TBDetector _detector;    
-    
+   //! internally used as storage for input decoding
+   UTIL::BitField64 _inputDecodeHelper;
+
    double _timeCPU; //!< CPU time
    int    _nRun ;   //!< Run number
    int    _nEvt ;   //!< Event number

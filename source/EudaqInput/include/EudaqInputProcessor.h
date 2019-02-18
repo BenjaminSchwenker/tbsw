@@ -8,6 +8,7 @@
 #include <marlin/Exceptions.h>
 
 // lcio includes <.h>
+#include <UTIL/CellIDEncoder.h>
 
 // system includes <>
 #include <vector>
@@ -46,6 +47,7 @@ namespace eudaqinput
     
     
    private:
+    CellIDEncodeConstructHelper _outputEncoderHelper;
     unsigned m_ndata;
     unsigned m_nbore; 
     unsigned m_neore;       

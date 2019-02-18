@@ -25,7 +25,7 @@ namespace eudaqinput {
   //
   // Constructor
   //
-  PyBARUnpacker::PyBARUnpacker() : Processor("PyBARUnpacker")
+  PyBARUnpacker::PyBARUnpacker() : Processor("PyBARUnpacker"),_outputEncoderHelper("sensorID:6,sparsePixelType:5")
   {
     
     // Processor description
@@ -120,7 +120,7 @@ namespace eudaqinput {
   bool PyBARUnpacker::UnpackRawCollection(LCCollectionVec * result, LCCollectionVec * source){
      
     // Helper class for encoding digit data 
-    CellIDEncoder<TrackerDataImpl> outputEncoder( "sensorID:6,sparsePixelType:5", result  );
+    CellIDEncoder<TrackerDataImpl> outputEncoder( "sensorID:6,sparsePixelType:5", result ,&_outputEncoderHelper);
     
     // Check number of frames 
     if ( source->size() != 1 ) {

@@ -81,14 +81,21 @@ namespace eudaqinput {
     int _dhpID;
 
     std::string _mappingString;
-    bool _swapAxes;
+
 	        
    private: 
-    DepfetInterpreter interpreter;
     Mapping mapping;
+    int    _nEvt ;   //!< Event number
+    DepfetInterpreter interpreter;
+
+    //! internally used as storage for input decoding
+    UTIL::BitField64 _inputDecodeHelper;
+    CellIDEncodeConstructHelper _outputEncoderHelper;
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number
-    int    _nEvt ;   //!< Event number
+
+  protected:
+    bool _swapAxes;
   }; // Class
 
 } // Namespace

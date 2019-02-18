@@ -72,7 +72,7 @@ namespace eudaqinput {
   //
   // Constructor
   //
-  DEPFETHybrid6Unpacker::DEPFETHybrid6Unpacker() : Processor("DEPFETHybrid6Unpacker")
+  DEPFETHybrid6Unpacker::DEPFETHybrid6Unpacker() : Processor("DEPFETHybrid6Unpacker"),_inputDecodeHelper("")
   {
     
     // Processor description
@@ -142,7 +142,7 @@ namespace eudaqinput {
       LCCollectionVec * source = dynamic_cast < LCCollectionVec * > (evt->getCollection(_inputCollectionName)); 
       
       // Helper class for decoding raw data 
-      CellIDDecoder<TrackerRawDataImpl> inputDecoder( source );  
+      CellIDDecoder<TrackerRawDataImpl> inputDecoder( source,&_inputDecodeHelper);
       
       //-----------------------------------------------
       // Decode event data to a DEPFETEvent format   

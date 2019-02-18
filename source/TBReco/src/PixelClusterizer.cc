@@ -28,7 +28,8 @@ PixelClusterizer aPixelClusterizer ;
 //
 // Constructor
 //
-PixelClusterizer::PixelClusterizer() : Processor("PixelClusterizer")
+PixelClusterizer::PixelClusterizer() : Processor("PixelClusterizer"),_inputDecodeHelper(""),
+    _orginalOutputEncoderHelper(DEPFET::ZSCLUSTERDEFAULTENCODING),_clusterOutputEncoderHelper(DEPFET::ZSCLUSTERDEFAULTENCODING)
 {
 
 // Processor description
@@ -208,14 +209,14 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
   // Open zero suppressed pixel data  
   LCCollectionVec * Pix_collection = dynamic_cast < LCCollectionVec * > (evt->getCollection(_sparseDataCollectionName)); 
   // Helper class for decoding pixel data 
-  CellIDDecoder<TrackerDataImpl> PixelID( Pix_collection );  
+  CellIDDecoder<TrackerDataImpl> PixelID( Pix_collection,&_inputDecodeHelper );
    
   // The original data collection contains the sparse pixel data for 
   // each accpeted cluster.
   LCCollectionVec * originalDataCollection = new LCCollectionVec(LCIO::TRACKERDATA);
   // Helper class for encoding clsuters  
-  CellIDEncoder<TrackerDataImpl> originalDataEncoder( DEPFET::ZSCLUSTERDEFAULTENCODING, originalDataCollection );  
-  CellIDEncoder<TrackerPulseImpl> clusterEncoder(DEPFET::ZSCLUSTERDEFAULTENCODING, clusterCollection ); 
+  CellIDEncoder<TrackerDataImpl> originalDataEncoder( DEPFET::ZSCLUSTERDEFAULTENCODING, originalDataCollection,&_orginalOutputEncoderHelper );
+  CellIDEncoder<TrackerPulseImpl> clusterEncoder(DEPFET::ZSCLUSTERDEFAULTENCODING, clusterCollection,&_clusterOutputEncoderHelper );
 
   // Clustering loop over pixel detectors 
   for (unsigned int iDet = 0; iDet < Pix_collection->size(); iDet++) { 
@@ -505,8 +506,6 @@ void PixelClusterizer::checkForMerge( int col, int row,
 
 bool PixelClusterizer::areNeighbours( FloatVec &group, int col, int row, int m_accept ) 
 {   
-    
-  bool match=false;
   int npixels = group.size()/3; 
   
   for ( int index=0; index < npixels; index++)
@@ -519,21 +518,20 @@ bool PixelClusterizer::areNeighbours( FloatVec &group, int col, int row, int m_a
     int deltacol = abs(col-col1);
           
     // A side in common
-    if(deltacol+deltarow < 2) match = true;
+    if(deltacol+deltarow < 2) return true;
      
     // A corner in common 
-    if(m_accept == 1 && deltacol == 1 
-                                       && deltarow == 1) match = true;
+    if(m_accept == 1 && deltacol == 1 && deltarow == 1) return true;
      
     // max distance is 2 pixels (includes cases with missing pixels)
-    if(m_accept == 2 && deltacol+deltarow < 3 ) match = true;
+    if(m_accept == 2 && deltacol+deltarow < 3 ) return true;
      
     // max distance is 2 pixels along a diagonal (includes cases with missing pixels)
-    if(m_accept == 3 && deltacol < 3 && deltarow < 3) match = true;
+    if(m_accept == 3 && deltacol < 3 && deltarow < 3) return true;
                       
   }
     
-  return match;
+  return false;;
 }
 
 

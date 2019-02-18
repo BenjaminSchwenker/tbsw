@@ -12,78 +12,78 @@
 #include "LCIOTypes.h"
 
 namespace UTIL {
-  
-  /** Helper class  for string tokenization. Usage:<br>
+
+/** Helper class  for string tokenization. Usage:<br>
    *    std::vector<std::string> tokens ; <br>
    *    LCTokenizer t( tokens ,',') ; <br>
    *    std::for_each( aString.begin(), aString.end(), t ) ;  <br>
    */
-  class LCTokenizer{
+class LCTokenizer{
     
     std::vector< std::string >& _tokens ;
     char _del ;
     char _last ;
 
-  public:
+public:
     
     /** Only c'tor, give (empty) token vector and delimeter character */
-    LCTokenizer( std::vector< std::string >& tokens, char del ) 
-      : _tokens(tokens) 
-	, _del(del), 
-	_last(del) {
+    LCTokenizer( std::vector< std::string >& tokens, char del )
+        : _tokens(tokens)
+        , _del(del),
+          _last(del) {
     }
     
     /** Operator for use with algorithms, e.g. for_each */
-    void operator()(const char& c) { 
-      
-      if( c != _del  ) {
-	
-	if( _last == _del  ) {
-	  _tokens.push_back("") ; 
-	}
-	_tokens.back() += c ;
-      }
-      _last = c ;
-    } 
+    void operator()(const char& c) {
+
+        if( c != _del  ) {
+
+            if( _last == _del  ) {
+                _tokens.push_back("") ;
+            }
+            _tokens.back() += c ;
+        }
+        _last = c ;
+    }
     
-  };
+};
 
 
-  /** Helper class for BitField64 that corresponds to one field value. 
+/** Helper class for BitField64 that corresponds to one field value.
    */
+class CellIDEncodeConstructHelper;
+class BitFieldValue{
 
-  class BitFieldValue{
-  
-  public :
+public :
     virtual ~BitFieldValue() {}
-  
+
     /** The default c'tor.
      * @param  bitfield      reference to the 64bit bitfield
      * @param  offset        offset of field
      * @param  signedWidth   width of field, negative if field is signed
      */
-    BitFieldValue( lcio::long64& bitfield, const std::string& name, 
-		   unsigned offset, int signedWidth ) ; 
+    BitFieldValue( lcio::long64& bitfield, const std::string& name,
+                   unsigned offset, int signedWidth ) ;
 
 
-    /** Returns the current field value 
+    /** Returns the current field value
      */
     lcio::long64 value() const ;
-  
-    /** Assignment operator for user convenience 
+
+    /** Assignment operator for user convenience
      */
     BitFieldValue& operator=(lcio::long64 in) ;
 
     /** Conversion operator for lcio::long64 - allows to write:<br>
      *  lcio::long64 index = myBitFieldValue ;
      */
-    operator lcio::long64() const { return value() ; } 
+    operator lcio::long64() const { return value() ; }
     
     /** fg: removed because it causes ambiguities with operator lcio::long64().
      *  Conversion operator for int - allows to write:<br>
      *  int index = myBitFieldValue ;
      */
-    //     operator int() const { return (int) value() ; } 
+    //     operator int() const { return (int) value() ; }
     
     /** The field's name */
     const std::string& name() const { return _name ; }
@@ -101,8 +101,8 @@ namespace UTIL {
     lcio::ulong64 mask() const { return _mask ; }
 
 
-  protected:
-  
+protected:
+
     lcio::long64& _b ;
     lcio::ulong64 _mask ;
     std::string _name ;
@@ -112,76 +112,91 @@ namespace UTIL {
     int _maxVal ;
     bool _isSigned ;
 
-  };
+};
 
-  /** A bit field of 64bits that allows convenient declaration and 
+/** A bit field of 64bits that allows convenient declaration and
    *  manipulation of sub fields of various widths.<br>
    *  Example:<br>
-   *    BitField64 b("layer:7,system:-3,barrel:3,theta:32:11,phi:11" ) ; <br> 
-   *    b[ "layer"  ]  = 123 ;         <br> 
-   *    b[ "system" ]  = -4 ;          <br> 
-   *    b[ "barrel" ]  = 7 ;           <br> 
-   *    b[ "theta" ]   = 180 ;         <br> 
-   *    b[ "phi" ]     = 270 ;         <br> 
+   *    BitField64 b("layer:7,system:-3,barrel:3,theta:32:11,phi:11" ) ; <br>
+   *    b[ "layer"  ]  = 123 ;         <br>
+   *    b[ "system" ]  = -4 ;          <br>
+   *    b[ "barrel" ]  = 7 ;           <br>
+   *    b[ "theta" ]   = 180 ;         <br>
+   *    b[ "phi" ]     = 270 ;         <br>
    *    ...                            <br>
    *    int theta = b["theta"] ;                    <br>
    *    ...                                         <br>
    *    unsigned phiIndex = b.index("phi) ;         <br>
    *    int phi = b[  phiIndex ] ;                  <br>
-   */  
-  class BitField64{
+   */
+class BitField64{
 
     friend std::ostream& operator<<(std::ostream& os, const BitField64& b) ;
 
-  public :
+public :
 
     typedef std::map<std::string, unsigned int> IndexMap ;
 
 
     ~BitField64() {  // clean up
-      for(unsigned i=0;i<_fields.size();i++){
-	delete _fields[i] ;
-      }
+        for(unsigned i=0;i<_fields.size();i++){
+            delete _fields[i] ;
+        }
     }
-  
+
     /** The c'tor takes an initialization string of the form:<br>
      *  <fieldDesc>[,<fieldDesc>...]<br>
      *  fieldDesc = name:[start]:[-]length<br>
      *  where:<br>
      *  name: The name of the field<br>
-     *  start: The start bit of the field. If omitted assumed to start 
-     *  immediately following previous field, or at the least significant 
+     *  start: The start bit of the field. If omitted assumed to start
+     *  immediately following previous field, or at the least significant
      *  bit if the first field.<br>
-     *  length: The number of bits in the field. If preceeded by '-' 
+     *  length: The number of bits in the field. If preceeded by '-'
      *  the field is signed, otherwise unsigned.<br>
-     *  Bit numbering is from the least significant bit (bit 0) to the most 
+     *  Bit numbering is from the least significant bit (bit 0) to the most
      *  significant (bit 63). <br>
      *  Example: "layer:7,system:-3,barrel:3,theta:32:11,phi:11"
      */
-    BitField64( const std::string& initString ) : _value(0), _joined(0){
-    
-      init( initString ) ;
+    BitField64( const std::string& initString,const CellIDEncodeConstructHelper * helper=nullptr);
+
+    void reinitialize( const std::string& initString ) {
+        if(_used_init_string==initString){
+            return;
+        }
+        if(_used_init_string.size()>0){
+            std::cout<<"Reinitializing BitField64. This is slow \n";
+        }
+        for(unsigned i=0;i<_fields.size();i++){
+            delete _fields[i] ;
+        }
+        _value=0;
+        _joined=0;
+        _map.clear();
+        init( initString ) ;
+        _used_init_string=initString;
+        return;
     }
 
-    /** Returns the current 64bit value 
+    /** Returns the current 64bit value
      */
-    lcio::long64 getValue() { return _value ; } 
+    lcio::long64 getValue() { return _value ; }
     
-    /** Set a new 64bit value 
+    /** Set a new 64bit value
      */
     void  setValue(lcio::long64 value ) { _value = value ; }
     
 
-    /** Acces to field through index 
+    /** Acces to field through index
      */
-    BitFieldValue& operator[](size_t index) { 
-      return *_fields.at( index )  ; 
+    BitFieldValue& operator[](size_t index) {
+        return *_fields.at( index )  ;
     }
     
-    /** Const acces to field through index 
+    /** Const acces to field through index
      */
-    const BitFieldValue& operator[](size_t index) const { 
-      return *_fields.at( index )  ; 
+    const BitFieldValue& operator[](size_t index) const {
+        return *_fields.at( index )  ;
     }
 
     /** Highest bit used in fields [0-63]
@@ -191,46 +206,46 @@ namespace UTIL {
     /** Number of values */
     size_t size() { return _fields.size() ; }
 
-    /** Index for field named 'name' 
+    /** Index for field named 'name'
      */
     size_t index( const std::string& name) const ;
 
     /** Access to field through name .
      */
-    BitFieldValue& operator[](const std::string& name) { 
+    BitFieldValue& operator[](const std::string& name) {
 
-      return *_fields[ index( name ) ] ;
+        return *_fields[ index( name ) ] ;
     }
     /** Const Access to field through name .
      */
-    const BitFieldValue& operator[](const std::string& name) const { 
+    const BitFieldValue& operator[](const std::string& name) const {
 
-      return *_fields[ index( name ) ] ;
+        return *_fields[ index( name ) ] ;
     }
 
 
     /** The low  word, bits 0-31
      */
-    unsigned lowWord() const { return unsigned( _value &  0xffffFFFF )  ; } 
+    unsigned lowWord() const { return unsigned( _value &  0xffffFFFF )  ; }
 
     /** The high  word, bits 32-63
      */
-    unsigned highWord() const { return unsigned( _value >> 32  ) ; } 
+    unsigned highWord() const { return unsigned( _value >> 32  ) ; }
 
 
     /** Return a valid description string of all fields
      */
     std::string fieldDescription() const ;
 
-    /** Return a string with a comma separated list of the current sub field values 
+    /** Return a string with a comma separated list of the current sub field values
      */
     std::string valueString() const ;
 
-  protected:
+protected:
 
-    /** Add an additional field to the list 
+    /** Add an additional field to the list
      */
-    void addField( const std::string& name,  unsigned offset, int width ); 
+    void addField( const std::string& name,  unsigned offset, int width );
 
     /** Decode the initialization string as described in the constructor.
      *  @see BitField64( const std::string& initString )
@@ -247,15 +262,38 @@ namespace UTIL {
     lcio::long64 _value ;
     IndexMap _map ;
     lcio::long64 _joined ;
+    std::string _used_init_string;
 
 
-  };
+};
+
+class CellIDEncodeConstructHelper:private BitField64
+{
+public:
+    struct fieldInfo{
+        fieldInfo(const std::string &_name,unsigned _offset, int _width):name(_name),offset(_offset),signedWidth(_width){}
+        std::string name;
+        unsigned offset;
+        int signedWidth;
+    };
+
+    CellIDEncodeConstructHelper(const std::string &initString):BitField64(initString){
+        for(auto & it:_fields){
+            info.emplace_back(it->name(),it->offset(),it->isSigned()?-it->width():it->width());
+        }
+    }
+    const IndexMap & get_map()const {return _map;}
+    const std::string & get_init_string()const{return _used_init_string;}
+    lcio::long64 get_joined()const{return _joined;}
+    std::vector<fieldInfo> info;
+};
 
 
 
-  /** Operator for dumping BitField64 to streams 
+
+/** Operator for dumping BitField64 to streams
    */
-  std::ostream& operator<<(std::ostream& os, const BitField64& b) ;
+std::ostream& operator<<(std::ostream& os, const BitField64& b) ;
 
 
 } // end namespace

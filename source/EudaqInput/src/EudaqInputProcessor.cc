@@ -27,7 +27,7 @@
 #include <IMPL/LCRunHeaderImpl.h>
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerRawDataImpl.h>
-#include <UTIL/CellIDEncoder.h>
+
 
 // system includes
 #include <string>
@@ -44,7 +44,7 @@ namespace {
   typedef std::vector<unsigned char>::const_iterator datait;
 }
 
-EudaqInputProcessor::EudaqInputProcessor ():DataSourceProcessor  ("EudaqInputProcessor") {
+EudaqInputProcessor::EudaqInputProcessor ():DataSourceProcessor("EudaqInputProcessor"), _outputEncoderHelper("blockID:6") {
   
   _description =
     "Reads one or more EUDAQ .raw files event by event and stores raw data into lcio::LCEvents.\n"
@@ -142,7 +142,7 @@ void EudaqInputProcessor::readDataSource (int Ntrig) {
             LCCollectionVec * rawDataCollection = new LCCollectionVec( lcio::LCIO::TRACKERRAWDATA );
                     
             // set the proper cell encoder
-            CellIDEncoder<TrackerRawDataImpl> lcEncoder( "blockID:6", rawDataCollection  ); 
+            CellIDEncoder<TrackerRawDataImpl> lcEncoder( "blockID:6", rawDataCollection, &_outputEncoderHelper);
             
             // loop over all data blocks in sub event
             for (size_t j = 0; j < rawev->NumBlocks(); ++j) {
