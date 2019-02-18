@@ -28,13 +28,6 @@ void TBTrackElement::SetHit(TBHit& aHit)
   else HitStore[0] = aHit; 
 }
   
-/** True if hit is set  
- */
-bool TBTrackElement::HasHit()
-{
-  return (HitStore.size() == 1); 
-} 
-  
 /** Remove (bad) hit - Outlier rejection  
  */
 void TBTrackElement::RemoveHit() {

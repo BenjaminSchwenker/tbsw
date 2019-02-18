@@ -47,16 +47,16 @@ class TBTrackElement
     
   /* Destructor 
    */
-  ~TBTrackElement(){;}; 
+  ~TBTrackElement(){;}
   
   /* Get detector 
    */
-  Det& GetDet() { return DetUnit; } ;
+  Det& GetDet() { return DetUnit; }
   
   /** True if hit is set  
    */
-  bool HasHit(); 
-  
+  bool HasHit(){ return (HitStore.size() == 1); }
+
   /** Set measured hit  
    */
   void SetHit(TBHit& aHit); 
@@ -71,7 +71,7 @@ class TBTrackElement
   
   /** Get track state - query IsCrossed() before 
    */
-  TBTrackState& GetState() {return State;}; 
+  TBTrackState& GetState() {return State;}
 
   /** Set track state
    */
