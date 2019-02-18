@@ -79,19 +79,19 @@ class TBTrackElement
   
   /** Get fit flag 
    */
-  bool IsCrossed() {return CrossedFlag; }; 
+  bool IsCrossed() {return CrossedFlag; }
   
   /** Set fit flag 
    */
-  void SetCrossed(bool Flag) { CrossedFlag = Flag; }; 
+  void SetCrossed(bool Flag) { CrossedFlag = Flag; }
   
   /** Get ChiSqu 
    */
-  double GetChiSqu() {return LocalChiSqu; }; 
+  double GetChiSqu() {return LocalChiSqu; }
   
   /** Set ChiSqu 
    */
-  void SetChiSqu(double Chi2) { LocalChiSqu = Chi2; }; 
+  void SetChiSqu(double Chi2) { LocalChiSqu = Chi2; }
    
  private: 
   

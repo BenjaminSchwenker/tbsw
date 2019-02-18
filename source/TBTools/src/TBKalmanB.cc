@@ -152,7 +152,12 @@ bool TBKalmanB::Fit(TBTrack& trk)
   // Particle hypothesis  
   mass = trk.GetMass();
   charge = trk.GetCharge();
-  
+  // List of crossed track elements. Predefined here,  so it can be reused.
+  vector<int> CrossedTEs;
+  CrossedTEs.reserve(trk.GetNumTEs());
+  vector<TrackState> RefStateVec;
+  // Reference trajectory.  Predefined here,  so it can be reused.
+  RefStateVec.reserve(trk.GetNumTEs());
   for(int iter=0; iter<NumIt; iter++) { 
     
     // Get paramters of reference trajectory   
@@ -169,12 +174,12 @@ bool TBKalmanB::Fit(TBTrack& trk)
     
     // Compute intersections of the reference trajectory
     // with sub detectors. 
-     
-    // List of crossed track elements  
-    vector<int> CrossedTEs;  
+
+    // List of crossed track elements
+    CrossedTEs.clear();
     
-    // Reference trajectory  
-    vector<TrackState> RefStateVec;
+    // Reference trajectory
+    RefStateVec.clear();
     
     // Loop over all track elements 
     int nTE = trk.GetNumTEs();  
@@ -667,7 +672,7 @@ bool TBKalmanB::GetSmoothedData( TrackState& xb, TrackStateCovariance& Cb, Track
   }	 
   
   // Weighted (smoothed) covariance
-  Smoothed_Cov = (fW + bW).inverse();   
+  Smoothed_Cov = (fW + bW).inverse();
   //(fW + bW).computeInverseWithCheck(Smoothed_Cov,invertible);
   if (!invertible) {
     streamlog_out(ERROR) << "Smoothing 3: Matrix inversion failed. Quit fitting!"
