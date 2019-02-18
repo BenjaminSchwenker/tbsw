@@ -737,7 +737,7 @@ int TBKalmanB::MAP_FORWARD(  double theta2,
              
   C1 += G*Q*G.transpose();     
          
-  x0 = J*x0;  
+  x0 = (J*x0).eval();
   C0 = C1;  
 
   
@@ -796,7 +796,7 @@ int TBKalmanB::MAP_BACKWARD(  double theta2,
              
   C1 +=  Gl*Q*Gl.transpose();    // Backward form -> use Gl not G
          
-  x0 = Jinv*x0;  
+  x0 = (Jinv*x0).eval();
   C0 = C1;  
                
   return 0; 
