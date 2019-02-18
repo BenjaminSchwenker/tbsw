@@ -336,22 +336,22 @@ double TBKalmanB::FilterHit(TBHit& hit, TrackState& xref, TrackState& x0, TrackS
   double predchi2 = 0; 
     
   // Measured hit coordinates, 2x1 matrix 
-  auto& m = hit.GetCoord();
+  const Vector2d& m = hit.GetCoord();
         
   // Covariance for hit coordinates, 2x2 matrix 
-  auto& V= hit.GetCov(); //CHECK WHY Problematic
+  const Matrix2d& V= hit.GetCov(); //CHECK WHY Problematic
 
   bool invertible = true;
-  Matrix2d W;// = (V + H*C0*H.transpose()).inverse();
+  Matrix2d W = Matrix2d::Zero();// = (V + H*C0*H.transpose()).inverse();
   (V+H*C0*H.transpose()).computeInverseWithCheck(W,invertible);   // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
   if (!invertible) {
-    streamlog_out(ERROR) << "Hit filtering: Matrix inversion failed. Quit fitting!"
+    streamlog_out(MESSAGE3) << "Hit filtering: Matrix inversion failed! Returns chi2 < 0!"
                          << std::endl;
     return -1;
   }	
      
   // This is the predicted residual 
-  auto r = m - H*x0 - H*xref; 
+  auto r = m - H*(x0 + xref); 
       
   // This is the predicted chi2 
   auto chi2mat = r.transpose()*W*r;
@@ -409,7 +409,7 @@ int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, TrackStat
     double theta2_det = materialeffect::GetScatterTheta2(xref, l0, X0, mass, charge );   
     ierr = MAP_FORWARD( theta2_det, xref, Surf, Surf_air, x0, C0 );
     if (ierr != 0) {
-      streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
+      streamlog_out(MESSAGE2) << "ERR: Problem with track extrapolation. Quit fitting!"
                            << std::endl;
       return -1;
     }	
@@ -419,7 +419,7 @@ int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, TrackStat
     double theta2_air = materialeffect::GetScatterTheta2(xref, length, materialeffect::X0_air, mass, charge);   
     ierr = MAP_FORWARD( theta2_air, xref_air, Surf_air, nSurf, x0, C0 );
     if (ierr != 0) {
-      streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
+      streamlog_out(MESSAGE2) << "ERR: Problem with track extrapolation. Quit fitting!"
                            << std::endl;
       return -1;
     }	
@@ -431,7 +431,7 @@ int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, TrackStat
     double theta2_air = materialeffect::GetScatterTheta2(xref, length, materialeffect::X0_air, mass, charge) ;   // Backward form 
     ierr = MAP_BACKWARD( theta2_air, xref, Surf, xref_air, Surf_air, x0, C0 );
     if (ierr != 0) {
-      streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
+      streamlog_out(MESSAGE2) << "ERR: Problem with track extrapolation. Quit fitting!"
                            << std::endl;
       return -1;
     }	
@@ -443,7 +443,7 @@ int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, TrackStat
     double theta2_det = materialeffect::GetScatterTheta2(xref, l0, X0, mass, charge);   // Backward form    
     ierr = MAP_BACKWARD( theta2_det, xref_air, Surf_air, nxref, nSurf, x0, C0 );          
     if (ierr != 0) {
-      streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
+      streamlog_out(MESSAGE2) << "ERR: Problem with track extrapolation. Quit fitting!"
                            << std::endl;
       return -1;
     }	
@@ -502,26 +502,23 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
     if ( te.HasHit() ) {
       
       // Measured hit coordinates, 2x1 matrix 
-      auto m = te.GetHit().GetCoord();
+      const Vector2d& m = te.GetHit().GetCoord();
         
       // Covariance for hit coordinates, 2x2 matrix 
-      auto &V = te.GetHit().GetCov();
-      
-      // Linearization: Measured deviation from reference 
-      m -= H*xref; 
+      const Matrix2d& V = te.GetHit().GetCov();
             
       // Weigth matrix of measurment 
       bool invertible = true;
-      Matrix2d W;// = (V + H*C0*H.transpose()).inverse();
+      Matrix2d W = Matrix2d::Zero(); // = (V + H*C0*H.transpose()).inverse();
       (V + H*C0*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
       if (!invertible) {
-        streamlog_out(ERROR) << "Hit filtering: Matrix inversion failed. Quit fitting!"
+        streamlog_out(MESSAGE3) << "Hit filtering: Matrix inversion failed. Quit filter pass!"
                              << std::endl;
         return -1;
       }	
        
       // This is the predicted residual 
-      auto r = m - H*x0; 
+      auto r = m - H*(x0 + xref); 
       
       // This is the predicted chi2 
       auto chi2mat = r.transpose()*W*r;
@@ -581,7 +578,7 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
         double theta2_det = materialeffect::GetScatterTheta2(xref, l0, X0, mass, charge);   
         ierr = MAP_FORWARD( theta2_det, xref, Surf, Surf_air, x0, C0 );
         if (ierr != 0) {
-          streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
+          streamlog_out(MESSAGE2) << "ERR: Problem with track extrapolation. Quit fitting!"
                                << std::endl;
           return -1;
         }	
@@ -591,7 +588,7 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
         double theta2_air = materialeffect::GetScatterTheta2(xref, length, materialeffect::X0_air, mass, charge);   
         ierr = MAP_FORWARD( theta2_air, xref_air, Surf_air, nSurf, x0, C0 );
         if (ierr != 0) {
-          streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
+          streamlog_out(MESSAGE2) << "ERR: Problem with track extrapolation. Quit fitting!"
                                << std::endl;
           return -1;
         }	
@@ -604,7 +601,7 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
         double theta2_air = materialeffect::GetScatterTheta2(xref, length, materialeffect::X0_air, mass, charge) ;   // Backward form 
         ierr = MAP_BACKWARD( theta2_air, xref, Surf, xref_air, Surf_air, x0, C0 );
         if (ierr != 0) {
-          streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
+          streamlog_out(MESSAGE2) << "ERR: Problem with track extrapolation. Quit fitting!"
                                << std::endl;
           return -1;
         }	
@@ -616,7 +613,7 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
         double theta2_det = materialeffect::GetScatterTheta2(xref, l0, X0, mass, charge );   // Backward form    
         ierr = MAP_BACKWARD( theta2_det, xref_air, Surf_air, nxref, nSurf, x0, C0 );          
         if (ierr != 0) {
-          streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
+          streamlog_out(MESSAGE2) << "ERR: Problem with track extrapolation. Quit fitting!"
                                << std::endl;
           return -1;
         }	
@@ -652,7 +649,7 @@ bool TBKalmanB::GetSmoothedData( TrackState& xb, TrackStateCovariance& Cb, Track
   TrackStateWeight fW = Cf.inverse(); 
   //Cf.computeInverseWithCheck(fW,invertible);  
   if (!invertible) {
-    streamlog_out(ERROR) << "Smoothing 1: Matrix inversion failed. Quit fitting!"
+    streamlog_out(MESSAGE3) << "Smoothing 1: Matrix inversion failed. Quit fitting!"
                          << std::endl;
     return invertible;
   }	
@@ -661,7 +658,7 @@ bool TBKalmanB::GetSmoothedData( TrackState& xb, TrackStateCovariance& Cb, Track
   TrackStateWeight bW = Cb.inverse();
   //Cb.computeInverseWithCheck(bW,invertible);  
   if (!invertible) {
-    streamlog_out(ERROR) << "Smoothing 2: Matrix inversion failed. Quit fitting!"
+    streamlog_out(MESSAGE3) << "Smoothing 2: Matrix inversion failed. Quit fitting!"
                          << std::endl;
     return invertible; 
   }	 
@@ -670,7 +667,7 @@ bool TBKalmanB::GetSmoothedData( TrackState& xb, TrackStateCovariance& Cb, Track
   Smoothed_Cov = (fW + bW).inverse();   
   //(fW + bW).computeInverseWithCheck(Smoothed_Cov,invertible);
   if (!invertible) {
-    streamlog_out(ERROR) << "Smoothing 3: Matrix inversion failed. Quit fitting!"
+    streamlog_out(MESSAGE3) << "Smoothing 3: Matrix inversion failed. Quit fitting!"
                          << std::endl;
     return invertible;
   }	
@@ -841,7 +838,7 @@ double TBKalmanB::GetPredictedChi2(const Vector2d& r, const StateHitProjector& H
   Matrix2d W=Matrix2d::Zero();// = (V + H*C*H.transpose()).inverse();
   (V + H*C*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
   if (!invertible) {
-    streamlog_out(ERROR) << "CHi2Increment: matrix inversion failed"
+    streamlog_out(MESSAGE3) << "CHi2Increment: matrix inversion failed"
                          << std::endl;
     return -1;
   }	
@@ -857,10 +854,10 @@ double TBKalmanB::GetChi2Increment(const Vector2d& r, const StateHitProjector& H
 {
   // Residuals weight: W=(V - HCH^T)^-1
   bool invertible = true;
-  Matrix2d W; //= (V - H*C*H.transpose()).inverse();
+  Matrix2d W =Matrix2d::Zero();//= (V - H*C*H.transpose()).inverse();
   (V - H*C*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
   if (!invertible) {
-    streamlog_out(ERROR) << "CHi2Increment: matrix inversion failed"
+    streamlog_out(MESSAGE3) << "CHi2Increment: matrix inversion failed"
                          << std::endl;
     return -1;
   }	
@@ -917,7 +914,7 @@ TrackState TBKalmanB::ComputeBeamConstraint( TrackState& x0, TrackStateCovarianc
   double theta2_air = materialeffect::GetScatterTheta2(x_beam, length, materialeffect::X0_air, mass, charge);   
   ierr = MAP_FORWARD( theta2_air, x_beam, BeamFrame, FirstSensorFrame, x0, C0 );
   if (ierr != 0) {
-    streamlog_out(ERROR) << "ERR: Problem with track extrapolation"
+    streamlog_out(MESSAGE2) << "ERR: Problem with track extrapolation"
                          << std::endl;
   }	
       

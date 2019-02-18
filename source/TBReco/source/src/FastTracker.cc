@@ -843,15 +843,14 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
       } 
               
       if ( besthitid!=-1 )  {
-        // Add closest hit to candidate track
-        // This is a simple greedy selection and may be wrong in 
-        // there are hit ambiguities or the reference track is 
-        // too bad.
-               
+        // Try to compute the predicted hit chi2. This involves a matrix 
+        // inversion and may fail -> returns chi2<0.         
         TBHit& BestHit = HitStore.GetRecoHitFromID(besthitid, ipl);
-               
-        if ( TrackFitter.GetPredictedChi2(x, C0, BestHit) < _outlierChi2Cut ) {
-          double hitchi2 = TrackFitter.FilterHit(BestHit, xref, x0, C0);
+        double hitchi2 = TrackFitter.GetPredictedChi2(x, C0, BestHit);
+         
+        if ( hitchi2 < _outlierChi2Cut && hitchi2 >= 0  ) {
+          // Add closest hit to candidate track
+          TrackFitter.FilterHit(BestHit, xref, x0, C0);
           BestHit.SetUniqueID(besthitid);             
           trk.GetTE(ipl).SetHit(BestHit);               
           // Some bookkeeping   
