@@ -80,7 +80,9 @@ namespace depfet {
     } 
     return streamType.str();  
   }  
-  
+   PixelCluster::operator std::string() const{
+       return getType()+" " + getShape();
+   }
   double PixelCluster::computeEta(double thetaU, double thetaV) const
   {
     auto headPixelIndex = getHeadPixelIndex(thetaU, thetaV);
