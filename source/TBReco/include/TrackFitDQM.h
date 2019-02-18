@@ -94,9 +94,12 @@ namespace depfet {
     // Handle to root file
     TFile * _rootFile;
     
-    std::map< std::string, TH1D *> _histoMap;
-    std::map< std::string, TH2D *> _histoMap2D;  
-    std::map< std::string, TProfile *> _profileMap; 
+    std::map< std::string, TH1D *> _overviewHistoMap;
+    std::map< std::string, TH2D *> _overviewHistoMap2D;
+    std::map< std::string, TProfile *> _overviewProfileMap;
+    std::map< int,std::map< std::string, TH1D *> > _perLayerHistoMap;
+    std::map< int,std::map< std::string, TH2D *> > _perLayerHistoMap2D;
+    std::map< int,std::map< std::string, TProfile *> > _perLayerProfileMap;
      
   }; // Class
 

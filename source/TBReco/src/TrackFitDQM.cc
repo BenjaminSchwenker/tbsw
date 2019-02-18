@@ -139,7 +139,7 @@ void TrackFitDQM::processEvent(LCEvent * evt)
   
   // Main loop over all tracks
   int nTracks = inputCollection->getNumberOfElements(); 
-  _histoMap["hntracks"]->Fill(nTracks); 
+  _overviewHistoMap["hntracks"]->Fill(nTracks);
   
   for (int itrk = 0; itrk < nTracks; itrk++) {
     
@@ -161,19 +161,18 @@ void TrackFitDQM::processEvent(LCEvent * evt)
     //
     // Top level histograms 
     
-    _histoMap["hnhits"]->Fill(track.GetNumHits());  
-    _histoMap["htrkchi2"]->Fill(track.GetChiSqu());
-    _histoMap["htrkchi2ndof"]->Fill(track.GetChiSqu()/track.GetNDF()); 
-    _histoMap["hchi2prob"]->Fill(TMath::Prob(track.GetChiSqu(), track.GetNDF()));
-    _histoMap["hmom"]->Fill(track.GetMomentum());  
-    _histoMap["hcharge"]->Fill(track.GetCharge());  
+    _overviewHistoMap["hnhits"]->Fill(track.GetNumHits());
+    _overviewHistoMap["htrkchi2"]->Fill(track.GetChiSqu());
+    _overviewHistoMap["htrkchi2ndof"]->Fill(track.GetChiSqu()/track.GetNDF());
+    _overviewHistoMap["hchi2prob"]->Fill(TMath::Prob(track.GetChiSqu(), track.GetNDF()));
+    _overviewHistoMap["hmom"]->Fill(track.GetMomentum());
+    _overviewHistoMap["hcharge"]->Fill(track.GetCharge());
 
     //
     // Sensor level histograms 
   
     // Get number of sensors
     int nSens = _detector.GetNSensors(); 
-    std::string histoName; 
 
 
     for (int ipl= 0; ipl< nSens; ++ipl) {  
@@ -191,62 +190,42 @@ void TrackFitDQM::processEvent(LCEvent * evt)
          
       double trk_charge = track.GetCharge();
       double trk_mom = std::abs(trk_charge/trk_qp); 
+      auto& _histoMap=_perLayerHistoMap[ipl];
+      auto& _histoMap2D=_perLayerHistoMap2D[ipl];
+      auto& _profileMap=_perLayerProfileMap[ipl];
 
       // Fill track parameter errors
       
-      histoName = "hsigma2_tu_sensor"+to_string( ipl );
-      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()(0,0) ) ; 
-      
-      histoName = "hsigma2_tv_sensor"+to_string( ipl );
-      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()(1,1) ) ;  
-      
-      histoName = "hsigma2_u_sensor"+to_string( ipl );
-      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()(2,2) ); 
-      
-      histoName = "hsigma2_v_sensor"+to_string( ipl );
-      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()(3,3) );
-      
-      histoName = "hsigma2_qp_sensor"+to_string( ipl );
-      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()(4,4) );
+
+      _histoMap[ "hsigma2_tu_sensor"  ]->Fill( TE.GetState().GetCov()(0,0) ) ;
+      _histoMap[ "hsigma2_tv_sensor"  ]->Fill( TE.GetState().GetCov()(1,1) ) ;
+
+      _histoMap[ "hsigma2_u_sensor"  ]->Fill( TE.GetState().GetCov()(2,2) );
+      _histoMap[ "hsigma2_v_sensor"  ]->Fill( TE.GetState().GetCov()(3,3) );
+
+      _histoMap[ "hsigma2_qp_sensor"  ]->Fill( TE.GetState().GetCov()(4,4) );
       
       //
       // Fill beam profile histograms 
       
-      histoName = "htrk_dudw_vs_u_sensor"+to_string( ipl );
-      _profileMap[ histoName ]->Fill( trk_u, trk_tu );
-      
-      histoName = "htrk_dvdw_vs_u_sensor"+to_string( ipl );
-      _profileMap[ histoName ]->Fill( trk_u, trk_tv );
-      
-      histoName = "htrk_dudw_vs_v_sensor"+to_string( ipl );
-      _profileMap[ histoName ]->Fill( trk_v, trk_tu );
-       
-      histoName = "htrk_dvdw_vs_v_sensor"+to_string( ipl );
-      _profileMap[ histoName ]->Fill( trk_v, trk_tv );   
-      
-      histoName = "htrk_mom_vs_u_sensor"+to_string( ipl );
-      _profileMap[ histoName ]->Fill( trk_u, trk_mom );
-      
-      histoName = "htrk_mom_vs_v_sensor"+to_string( ipl );
-      _profileMap[ histoName ]->Fill( trk_v, trk_mom );   
+      _profileMap[ "htrk_dudw_vs_u_sensor" ]->Fill( trk_u, trk_tu );
+      _profileMap[ "htrk_dvdw_vs_u_sensor" ]->Fill( trk_u, trk_tv );
 
-      histoName = "htrk_u_sensor"+to_string( ipl );
-      _histoMap[ histoName ]->Fill(trk_u); 
-      
-      histoName = "htrk_v_sensor"+to_string( ipl );
-      _histoMap[ histoName ]->Fill(trk_v);
-      
-      histoName = "hhitmap_sensor"+to_string( ipl );
-      _histoMap2D[ histoName  ]->Fill(trk_u,trk_v);   
-      
-      histoName = "htrk_tu_sensor"+to_string( ipl );
-      _histoMap[ histoName  ]->Fill(trk_tu);
-       
-      histoName = "htrk_tv_sensor"+to_string( ipl );
-      _histoMap[ histoName  ]->Fill(trk_tv);
-      
-      histoName = "htrk_mom_sensor"+to_string( ipl );
-      _histoMap[ histoName  ]->Fill(trk_mom);
+      _profileMap[ "htrk_dudw_vs_v_sensor" ]->Fill( trk_v, trk_tu );
+      _profileMap[ "htrk_dvdw_vs_v_sensor" ]->Fill( trk_v, trk_tv );
+
+      _profileMap[ "htrk_mom_vs_u_sensor" ]->Fill( trk_u, trk_mom );
+      _profileMap[ "htrk_mom_vs_v_sensor" ]->Fill( trk_v, trk_mom );
+
+      _histoMap[ "htrk_u_sensor" ]->Fill(trk_u);
+      _histoMap[ "htrk_v_sensor" ]->Fill(trk_v);
+
+      _histoMap2D[ "hhitmap_sensor"  ]->Fill(trk_u,trk_v);
+
+      _histoMap[ "htrk_tu_sensor"  ]->Fill(trk_tu);
+      _histoMap[ "htrk_tv_sensor"  ]->Fill(trk_tv);
+
+      _histoMap[ "htrk_mom_sensor"  ]->Fill(trk_mom);
 	
        
       // Skip sensor w/o measurment
@@ -261,37 +240,22 @@ void TrackFitDQM::processEvent(LCEvent * evt)
       
       //PixelCluster Cluster = TE.GetHit().GetCluster(); 
       
-      histoName = "hresU_sensor"+to_string( ipl );
-      _histoMap[ histoName ]->Fill( du ); 
-       
-      histoName = "hresV_sensor"+to_string( ipl );
-      _histoMap[ histoName ]->Fill( dv ); 
+      _histoMap[ "hresU_sensor" ]->Fill( du );
+      _histoMap[ "hresV_sensor" ]->Fill( dv );
       
-      histoName = "hpull_resU_sensor"+to_string( ipl );
-      _histoMap[ histoName ]->Fill( pull_u );
-      
-      histoName = "hpull_resV_sensor"+to_string( ipl );
-      _histoMap[ histoName ]->Fill( pull_v );
+      _histoMap[ "hpull_resU_sensor" ]->Fill( pull_u );
+      _histoMap[ "hpull_resV_sensor" ]->Fill( pull_v );
        
       // Fill alignment profile 
       
-      histoName = "hduvsu_sensor"+to_string( ipl );
-      _profileMap[ histoName ]->Fill( trk_u , du);
-      
-      histoName = "hdvvsv_sensor"+to_string( ipl );
-      _profileMap[ histoName ]->Fill( trk_v , dv );
-      
-      histoName = "hduvsv_sensor"+to_string( ipl );
-      _profileMap[ histoName ]->Fill( trk_v , du );
-      
-      histoName = "hdvvsu_sensor"+to_string( ipl );
-      _profileMap[ histoName ]->Fill( trk_u , dv );
+      _profileMap[ "hduvsu_sensor" ]->Fill( trk_u , du);
+      _profileMap[ "hdvvsv_sensor" ]->Fill( trk_v , dv );
+      _profileMap[ "hduvsv_sensor" ]->Fill( trk_v , du );
+      _profileMap[ "hdvvsu_sensor" ]->Fill( trk_u , dv );
             
-      histoName = "hduvsthetau_sensor"+to_string( ipl );
-      _profileMap[ histoName ]->Fill( trk_tu , du );   
-      
-      histoName = "hdvvsthetav_sensor"+to_string( ipl );
-      _profileMap[ histoName ]->Fill( trk_tv , dv );
+
+      _profileMap[ "hduvsthetau_sensor" ]->Fill( trk_tu , du );
+      _profileMap[ "hdvvsthetav_sensor" ]->Fill( trk_tv , dv );
                   
     } // end sensor loop   
     
@@ -315,69 +279,61 @@ void TrackFitDQM::end()
   // Loop over all sensors
   for (int ipl=0 ; ipl < _detector.GetNSensors(); ipl++) {
     
-    std::string histoName;
-
     // Fill summary histos on telescope resolution 
-    
-    histoName = "hsigma2_u_sensor"+to_string( ipl );
-    double sigma_u = TMath::Sqrt(_histoMap[ histoName ]->GetMean());
+    auto& _histoMap=_perLayerHistoMap[ipl];
+
+    double sigma_u = TMath::Sqrt(_histoMap[ "hsigma2_u_sensor" ]->GetMean());
     double sigma_error_u = 0; 
-    if (sigma_u > 0) sigma_error_u = 0.5*_histoMap[ histoName ]->GetMeanError()/sigma_u;    
+    if (sigma_u > 0) sigma_error_u = 0.5*_histoMap[ "hsigma2_u_sensor" ]->GetMeanError()/sigma_u;
 
-    histoName = "hsigma2_v_sensor"+to_string( ipl );
-    double sigma_v = TMath::Sqrt(_histoMap[ histoName ]->GetMean());
+    double sigma_v = TMath::Sqrt(_histoMap[ "hsigma2_v_sensor" ]->GetMean());
     double sigma_error_v = 0; 
-    if (sigma_v > 0) sigma_error_v = 0.5*_histoMap[ histoName ]->GetMeanError()/sigma_v;
+    if (sigma_v > 0) sigma_error_v = 0.5*_histoMap[ "hsigma2_v_sensor" ]->GetMeanError()/sigma_v;
 
-    histoName = "hsigma2_tu_sensor"+to_string( ipl );
-    double sigma_tu = TMath::Sqrt(_histoMap[ histoName ]->GetMean());
+    double sigma_tu = TMath::Sqrt(_histoMap[ "hsigma2_tu_sensor" ]->GetMean());
     double sigma_error_tu = 0; 
-    if (sigma_tu > 0) sigma_error_tu = 0.5*_histoMap[ histoName ]->GetMeanError()/sigma_tu;
+    if (sigma_tu > 0) sigma_error_tu = 0.5*_histoMap[ "hsigma2_tu_sensor" ]->GetMeanError()/sigma_tu;
     
-    histoName = "hsigma2_tv_sensor"+to_string( ipl );
-    double sigma_tv = TMath::Sqrt(_histoMap[ histoName ]->GetMean());
+    double sigma_tv = TMath::Sqrt(_histoMap[ "hsigma2_tv_sensor" ]->GetMean());
     double sigma_error_tv = 0; 
-    if (sigma_tv > 0) sigma_error_tv = 0.5*_histoMap[ histoName ]->GetMeanError()/sigma_tv;
+    if (sigma_tv > 0) sigma_error_tv = 0.5*_histoMap[ "hsigma2_tv_sensor" ]->GetMeanError()/sigma_tv;
     
-    histoName = "hpull_resU_sensor"+to_string( ipl );
-    double pull_rms_u = _histoMap[ histoName ]->GetRMS();
-    double pull_rms_error_u = _histoMap[ histoName ]->GetRMSError(); 
+    double pull_rms_u = _histoMap[ "hpull_resU_sensor" ]->GetRMS();
+    double pull_rms_error_u = _histoMap[ "hpull_resU_sensor" ]->GetRMSError();
 
-    histoName = "hpull_resV_sensor"+to_string( ipl );
-    double pull_rms_v = _histoMap[ histoName ]->GetRMS();
-    double pull_rms_error_v = _histoMap[ histoName ]->GetRMSError();    
+    double pull_rms_v = _histoMap[ "hpull_resV_sensor" ]->GetRMS();
+    double pull_rms_error_v = _histoMap[ "hpull_resV_sensor" ]->GetRMSError();
 
-    histoName = "hresU_sensor"+to_string( ipl );
-    double res_rms_u = _histoMap[ histoName ]->GetRMS();
-    double res_rms_error_u = _histoMap[ histoName ]->GetRMSError();
-    
-    histoName = "hresV_sensor"+to_string( ipl );
-    double res_rms_v = _histoMap[ histoName ]->GetRMS();
-    double res_rms_error_v = _histoMap[ histoName ]->GetRMSError();
 
-    _histoMap["hfit_sigma_u"]->SetBinContent(ipl+1, sigma_u ); 
-    _histoMap["hfit_sigma_u"]->SetBinError(ipl+1, sigma_error_u ); 
+    double res_rms_u = _histoMap[ "hresU_sensor" ]->GetRMS();
+    double res_rms_error_u = _histoMap[ "hresU_sensor" ]->GetRMSError();
     
-    _histoMap["hfit_sigma_v"]->SetBinContent(ipl+1, sigma_v ); 
-    _histoMap["hfit_sigma_v"]->SetBinError(ipl+1, sigma_error_v ); 
+    double res_rms_v = _histoMap[ "hresV_sensor" ]->GetRMS();
+    double res_rms_error_v = _histoMap[ "hresV_sensor" ]->GetRMSError();
 
-    _histoMap["hfit_sigma_tu"]->SetBinContent(ipl+1, sigma_tu ); 
-    _histoMap["hfit_sigma_tu"]->SetBinError(ipl+1, sigma_error_tu ); 
+    _overviewHistoMap["hfit_sigma_u"]->SetBinContent(ipl+1, sigma_u );
+    _overviewHistoMap["hfit_sigma_u"]->SetBinError(ipl+1, sigma_error_u );
+    
+    _overviewHistoMap["hfit_sigma_v"]->SetBinContent(ipl+1, sigma_v );
+    _overviewHistoMap["hfit_sigma_v"]->SetBinError(ipl+1, sigma_error_v );
 
-    _histoMap["hfit_sigma_tv"]->SetBinContent(ipl+1, sigma_tv );  
-    _histoMap["hfit_sigma_tv"]->SetBinError(ipl+1, sigma_error_tv ); 
+    _overviewHistoMap["hfit_sigma_tu"]->SetBinContent(ipl+1, sigma_tu );
+    _overviewHistoMap["hfit_sigma_tu"]->SetBinError(ipl+1, sigma_error_tu );
+
+    _overviewHistoMap["hfit_sigma_tv"]->SetBinContent(ipl+1, sigma_tv );
+    _overviewHistoMap["hfit_sigma_tv"]->SetBinError(ipl+1, sigma_error_tv );
     
-    _histoMap["hfit_pull_rms_u"]->SetBinContent(ipl+1, pull_rms_u );
-    _histoMap["hfit_pull_rms_u"]->SetBinError(ipl+1, pull_rms_error_u );  
+    _overviewHistoMap["hfit_pull_rms_u"]->SetBinContent(ipl+1, pull_rms_u );
+    _overviewHistoMap["hfit_pull_rms_u"]->SetBinError(ipl+1, pull_rms_error_u );
     
-    _histoMap["hfit_pull_rms_v"]->SetBinContent(ipl+1, pull_rms_v );   
-    _histoMap["hfit_pull_rms_v"]->SetBinError(ipl+1, pull_rms_error_v );  
+    _overviewHistoMap["hfit_pull_rms_v"]->SetBinContent(ipl+1, pull_rms_v );
+    _overviewHistoMap["hfit_pull_rms_v"]->SetBinError(ipl+1, pull_rms_error_v );
     
-    _histoMap["hfit_res_rms_u"]->SetBinContent(ipl+1, res_rms_u ); 
-    _histoMap["hfit_res_rms_u"]->SetBinError(ipl+1, res_rms_error_u );  
+    _overviewHistoMap["hfit_res_rms_u"]->SetBinContent(ipl+1, res_rms_u );
+    _overviewHistoMap["hfit_res_rms_u"]->SetBinError(ipl+1, res_rms_error_u );
     
-    _histoMap["hfit_res_rms_v"]->SetBinContent(ipl+1, res_rms_v );   
-    _histoMap["hfit_res_rms_v"]->SetBinError(ipl+1, res_rms_error_v );  
+    _overviewHistoMap["hfit_res_rms_v"]->SetBinContent(ipl+1, res_rms_v );
+    _overviewHistoMap["hfit_res_rms_v"]->SetBinError(ipl+1, res_rms_error_v );
 
     // Handle to nominal detector data 
     TBDetector  _detector_nominal;  
@@ -426,12 +382,12 @@ void TrackFitDQM::end()
 	//
 	// Fill alignment histograms
 
-	_histoMap["hxshift_diff"]->SetBinContent(ipl+1,pos_f_nominal[0]-pos_f[0]);
-	_histoMap["hyshift_diff"]->SetBinContent(ipl+1,pos_f_nominal[1]-pos_f[1]);
-	_histoMap["hzshift_diff"]->SetBinContent(ipl+1,pos_f_nominal[2]-pos_f[2]);
-	_histoMap["hxrot_diff"]->SetBinContent(ipl+1,alpha_f_nominal-alpha_f);
-	_histoMap["hyrot_diff"]->SetBinContent(ipl+1,beta_f_nominal-beta_f);
-	_histoMap["hzrot_diff"]->SetBinContent(ipl+1,gamma_f_nominal-gamma_f);
+    _overviewHistoMap["hxshift_diff"]->SetBinContent(ipl+1,pos_f_nominal[0]-pos_f[0]);
+    _overviewHistoMap["hyshift_diff"]->SetBinContent(ipl+1,pos_f_nominal[1]-pos_f[1]);
+    _overviewHistoMap["hzshift_diff"]->SetBinContent(ipl+1,pos_f_nominal[2]-pos_f[2]);
+    _overviewHistoMap["hxrot_diff"]->SetBinContent(ipl+1,alpha_f_nominal-alpha_f);
+    _overviewHistoMap["hyrot_diff"]->SetBinContent(ipl+1,beta_f_nominal-beta_f);
+    _overviewHistoMap["hzrot_diff"]->SetBinContent(ipl+1,gamma_f_nominal-gamma_f);
       
     
   }
@@ -490,77 +446,77 @@ void TrackFitDQM::bookHistos()
   //
   // Top level histograms 
    
-  _histoMap["hntracks"] = new TH1D("hntracks", "", 30, 0, 30); 
-  _histoMap["hntracks"]->SetYTitle("events"); 
-  _histoMap["hntracks"]->SetXTitle("number of tracks per event"); 
+  _overviewHistoMap["hntracks"] = new TH1D("hntracks", "", 30, 0, 30);
+  _overviewHistoMap["hntracks"]->SetYTitle("events");
+  _overviewHistoMap["hntracks"]->SetXTitle("number of tracks per event");
 
-  _histoMap["hnhits"] = new TH1D("hnhits", "", 14, 0, 14); 
-  _histoMap["hnhits"]->SetYTitle("tracks"); 
-  _histoMap["hnhits"]->SetXTitle("number of hits per track"); 
+  _overviewHistoMap["hnhits"] = new TH1D("hnhits", "", 14, 0, 14);
+  _overviewHistoMap["hnhits"]->SetYTitle("tracks");
+  _overviewHistoMap["hnhits"]->SetXTitle("number of hits per track");
   
-  _histoMap["hmom"] = new TH1D("hmom", "", 100, 0, 0); 
-  _histoMap["hmom"]->SetYTitle("tracks"); 
-  _histoMap["hmom"]->SetXTitle("track momentum [GeV]");
+  _overviewHistoMap["hmom"] = new TH1D("hmom", "", 100, 0, 0);
+  _overviewHistoMap["hmom"]->SetYTitle("tracks");
+  _overviewHistoMap["hmom"]->SetXTitle("track momentum [GeV]");
   
-  _histoMap["hcharge"] = new TH1D("hcharge", "", 10, -2, 2); 
-  _histoMap["hcharge"]->SetYTitle("tracks"); 
-  _histoMap["hcharge"]->SetXTitle("track charge [e]");
+  _overviewHistoMap["hcharge"] = new TH1D("hcharge", "", 10, -2, 2);
+  _overviewHistoMap["hcharge"]->SetYTitle("tracks");
+  _overviewHistoMap["hcharge"]->SetXTitle("track charge [e]");
   
-  _histoMap["htrkchi2"] = new TH1D("htrkchi2", "", 400, 0, 100 ); 
-  _histoMap["htrkchi2"]->SetYTitle("tracks"); 
-  _histoMap["htrkchi2"]->SetXTitle("track #chi^{2}");
+  _overviewHistoMap["htrkchi2"] = new TH1D("htrkchi2", "", 400, 0, 100 );
+  _overviewHistoMap["htrkchi2"]->SetYTitle("tracks");
+  _overviewHistoMap["htrkchi2"]->SetXTitle("track #chi^{2}");
    
-  _histoMap["htrkchi2ndof"] = new TH1D("htrkchi2ndof", "", 200, 0, 10); 
-  _histoMap["htrkchi2ndof"]->SetYTitle("tracks"); 
-  _histoMap["htrkchi2ndof"]->SetXTitle("track #chi^{2}/ndof"); 
+  _overviewHistoMap["htrkchi2ndof"] = new TH1D("htrkchi2ndof", "", 200, 0, 10);
+  _overviewHistoMap["htrkchi2ndof"]->SetYTitle("tracks");
+  _overviewHistoMap["htrkchi2ndof"]->SetXTitle("track #chi^{2}/ndof");
 
-  _histoMap["hchi2prob"] = new TH1D("hchi2prob", "", 100, 0, 1);
-  _histoMap["hchi2prob"]->SetXTitle("track p-value"); 
-  _histoMap["hchi2prob"]->SetYTitle("tracks"); 
-  _histoMap["hchi2prob"]->SetMinimum(0.);  
+  _overviewHistoMap["hchi2prob"] = new TH1D("hchi2prob", "", 100, 0, 1);
+  _overviewHistoMap["hchi2prob"]->SetXTitle("track p-value");
+  _overviewHistoMap["hchi2prob"]->SetYTitle("tracks");
+  _overviewHistoMap["hchi2prob"]->SetMinimum(0.);
   
   // Get number of sensors
   int nSens = _detector.GetNSensors();
   
-  _histoMap["hfit_sigma_u"] = new TH1D("hfit_sigma_u","",nSens,0,nSens);    
-  _histoMap["hfit_sigma_u"]->SetStats( false );
-  _histoMap["hfit_sigma_u"]->SetXTitle("plane number"); 
-  _histoMap["hfit_sigma_u"]->SetYTitle("track fit sigma u [mm]"); 
+  _overviewHistoMap["hfit_sigma_u"] = new TH1D("hfit_sigma_u","",nSens,0,nSens);
+  _overviewHistoMap["hfit_sigma_u"]->SetStats( false );
+  _overviewHistoMap["hfit_sigma_u"]->SetXTitle("plane number");
+  _overviewHistoMap["hfit_sigma_u"]->SetYTitle("track fit sigma u [mm]");
   
-  _histoMap["hfit_sigma_v"] = new TH1D("hfit_sigma_v","",nSens,0,nSens);    
-  _histoMap["hfit_sigma_v"]->SetStats( false );
-  _histoMap["hfit_sigma_v"]->SetXTitle("plane number"); 
-  _histoMap["hfit_sigma_v"]->SetYTitle("track fit sigma v [mm]"); 
+  _overviewHistoMap["hfit_sigma_v"] = new TH1D("hfit_sigma_v","",nSens,0,nSens);
+  _overviewHistoMap["hfit_sigma_v"]->SetStats( false );
+  _overviewHistoMap["hfit_sigma_v"]->SetXTitle("plane number");
+  _overviewHistoMap["hfit_sigma_v"]->SetYTitle("track fit sigma v [mm]");
 
-  _histoMap["hfit_sigma_tu"] = new TH1D("hfit_sigma_tu","",nSens,0,nSens);    
-  _histoMap["hfit_sigma_tu"]->SetStats( false );
-  _histoMap["hfit_sigma_tu"]->SetXTitle("plane number"); 
-  _histoMap["hfit_sigma_tu"]->SetYTitle("track fit sigma dudw [rad]"); 
+  _overviewHistoMap["hfit_sigma_tu"] = new TH1D("hfit_sigma_tu","",nSens,0,nSens);
+  _overviewHistoMap["hfit_sigma_tu"]->SetStats( false );
+  _overviewHistoMap["hfit_sigma_tu"]->SetXTitle("plane number");
+  _overviewHistoMap["hfit_sigma_tu"]->SetYTitle("track fit sigma dudw [rad]");
   
-  _histoMap["hfit_sigma_tv"] = new TH1D("hfit_sigma_tv","",nSens,0,nSens);    
-  _histoMap["hfit_sigma_tv"]->SetStats( false );
-  _histoMap["hfit_sigma_tv"]->SetXTitle("plane number"); 
-  _histoMap["hfit_sigma_tv"]->SetYTitle("track fit sigma dvdw [rad]"); 
+  _overviewHistoMap["hfit_sigma_tv"] = new TH1D("hfit_sigma_tv","",nSens,0,nSens);
+  _overviewHistoMap["hfit_sigma_tv"]->SetStats( false );
+  _overviewHistoMap["hfit_sigma_tv"]->SetXTitle("plane number");
+  _overviewHistoMap["hfit_sigma_tv"]->SetYTitle("track fit sigma dvdw [rad]");
    
-  _histoMap["hfit_pull_rms_u"] = new TH1D("hfit_pull_rms_u","",nSens,0,nSens);    
-  _histoMap["hfit_pull_rms_u"]->SetStats( false );
-  _histoMap["hfit_pull_rms_u"]->SetXTitle("plane number"); 
-  _histoMap["hfit_pull_rms_u"]->SetYTitle("RMS pull u residual"); 
+  _overviewHistoMap["hfit_pull_rms_u"] = new TH1D("hfit_pull_rms_u","",nSens,0,nSens);
+  _overviewHistoMap["hfit_pull_rms_u"]->SetStats( false );
+  _overviewHistoMap["hfit_pull_rms_u"]->SetXTitle("plane number");
+  _overviewHistoMap["hfit_pull_rms_u"]->SetYTitle("RMS pull u residual");
   
-  _histoMap["hfit_pull_rms_v"] = new TH1D("hfit_pull_rms_v","",nSens,0,nSens);    
-  _histoMap["hfit_pull_rms_v"]->SetStats( false );
-  _histoMap["hfit_pull_rms_v"]->SetXTitle("plane number"); 
-  _histoMap["hfit_pull_rms_v"]->SetYTitle("RMS pull v residual");  
+  _overviewHistoMap["hfit_pull_rms_v"] = new TH1D("hfit_pull_rms_v","",nSens,0,nSens);
+  _overviewHistoMap["hfit_pull_rms_v"]->SetStats( false );
+  _overviewHistoMap["hfit_pull_rms_v"]->SetXTitle("plane number");
+  _overviewHistoMap["hfit_pull_rms_v"]->SetYTitle("RMS pull v residual");
 
-  _histoMap["hfit_res_rms_u"] = new TH1D("hfit_res_rms_u","",nSens,0,nSens);    
-  _histoMap["hfit_res_rms_u"]->SetStats( false );
-  _histoMap["hfit_res_rms_u"]->SetXTitle("plane number"); 
-  _histoMap["hfit_res_rms_u"]->SetYTitle("RMS u residual"); 
+  _overviewHistoMap["hfit_res_rms_u"] = new TH1D("hfit_res_rms_u","",nSens,0,nSens);
+  _overviewHistoMap["hfit_res_rms_u"]->SetStats( false );
+  _overviewHistoMap["hfit_res_rms_u"]->SetXTitle("plane number");
+  _overviewHistoMap["hfit_res_rms_u"]->SetYTitle("RMS u residual");
   
-  _histoMap["hfit_res_rms_v"] = new TH1D("hfit_res_rms_v","",nSens,0,nSens);    
-  _histoMap["hfit_res_rms_v"]->SetStats( false );
-  _histoMap["hfit_res_rms_v"]->SetXTitle("plane number"); 
-  _histoMap["hfit_res_rms_v"]->SetYTitle("RMS v residual");  
+  _overviewHistoMap["hfit_res_rms_v"] = new TH1D("hfit_res_rms_v","",nSens,0,nSens);
+  _overviewHistoMap["hfit_res_rms_v"]->SetStats( false );
+  _overviewHistoMap["hfit_res_rms_v"]->SetXTitle("plane number");
+  _overviewHistoMap["hfit_res_rms_v"]->SetYTitle("RMS v residual");
 
 
   // Create subdir for alignment plots
@@ -568,29 +524,29 @@ void TrackFitDQM::bookHistos()
   alignDir->cd();
 
 
-  _histoMap["hxshift_diff"] = new TH1D("hxshift_diff", "", nSens,0,nSens); 
-  _histoMap["hxshift_diff"]->SetYTitle("x shift diff [mm]"); 
-  _histoMap["hxshift_diff"]->SetXTitle("sensor"); 
+  _overviewHistoMap["hxshift_diff"] = new TH1D("hxshift_diff", "", nSens,0,nSens);
+  _overviewHistoMap["hxshift_diff"]->SetYTitle("x shift diff [mm]");
+  _overviewHistoMap["hxshift_diff"]->SetXTitle("sensor");
 
-  _histoMap["hyshift_diff"] = new TH1D("hyshift_diff", "", nSens,0,nSens); 
-  _histoMap["hyshift_diff"]->SetYTitle("y shift diff [mm]"); 
-  _histoMap["hyshift_diff"]->SetXTitle("sensor"); 
+  _overviewHistoMap["hyshift_diff"] = new TH1D("hyshift_diff", "", nSens,0,nSens);
+  _overviewHistoMap["hyshift_diff"]->SetYTitle("y shift diff [mm]");
+  _overviewHistoMap["hyshift_diff"]->SetXTitle("sensor");
 
-  _histoMap["hzshift_diff"] = new TH1D("hzshift_diff", "", nSens,0,nSens); 
-  _histoMap["hzshift_diff"]->SetYTitle("z shift diff [mm]"); 
-  _histoMap["hzshift_diff"]->SetXTitle("sensor"); 
+  _overviewHistoMap["hzshift_diff"] = new TH1D("hzshift_diff", "", nSens,0,nSens);
+  _overviewHistoMap["hzshift_diff"]->SetYTitle("z shift diff [mm]");
+  _overviewHistoMap["hzshift_diff"]->SetXTitle("sensor");
 
-  _histoMap["hxrot_diff"] = new TH1D("hxrot_diff", "", nSens,0,nSens); 
-  _histoMap["hxrot_diff"]->SetYTitle("x rot diff [rad]"); 
-  _histoMap["hxrot_diff"]->SetXTitle("sensor"); 
+  _overviewHistoMap["hxrot_diff"] = new TH1D("hxrot_diff", "", nSens,0,nSens);
+  _overviewHistoMap["hxrot_diff"]->SetYTitle("x rot diff [rad]");
+  _overviewHistoMap["hxrot_diff"]->SetXTitle("sensor");
 
-  _histoMap["hyrot_diff"] = new TH1D("hyrot_diff", "", nSens,0,nSens); 
-  _histoMap["hyrot_diff"]->SetYTitle("y rot diff [rad]"); 
-  _histoMap["hyrot_diff"]->SetXTitle("sensor"); 
+  _overviewHistoMap["hyrot_diff"] = new TH1D("hyrot_diff", "", nSens,0,nSens);
+  _overviewHistoMap["hyrot_diff"]->SetYTitle("y rot diff [rad]");
+  _overviewHistoMap["hyrot_diff"]->SetXTitle("sensor");
 
-  _histoMap["hzrot_diff"] = new TH1D("hzrot_diff", "", nSens,0,nSens); 
-  _histoMap["hzrot_diff"]->SetYTitle("z rot diff [rad]"); 
-  _histoMap["hzrot_diff"]->SetXTitle("sensor");
+  _overviewHistoMap["hzrot_diff"] = new TH1D("hzrot_diff", "", nSens,0,nSens);
+  _overviewHistoMap["hzrot_diff"]->SetYTitle("z rot diff [rad]");
+  _overviewHistoMap["hzrot_diff"]->SetXTitle("sensor");
 
   // Change current directory to root
   _rootFile->cd("");
@@ -605,7 +561,9 @@ void TrackFitDQM::bookHistos()
     std::string dirName = "Sensor"+to_string( ipl );
     TDirectory *sensDir = _rootFile->mkdir(dirName.c_str());
     sensDir->cd();
-    
+    auto& _histoMap=_perLayerHistoMap[ipl];
+    auto& _histoMap2D=_perLayerHistoMap2D[ipl];
+    auto& _profileMap=_perLayerProfileMap[ipl];
     double max; 
     int nbins; 
     double safetyFactor = 1.1;
@@ -619,167 +577,167 @@ void TrackFitDQM::bookHistos()
     // root output file.  
     
     histoName = "hsigma2_u_sensor"+to_string( ipl );
-    _histoMap[ histoName  ] = new TH1D(histoName.c_str(), "", 1, 0, 1); 
-    _histoMap[ histoName  ]->StatOverflows(); 	
-    _histoMap[ histoName  ]->SetDirectory(0);
+    _histoMap[ "hsigma2_u_sensor"  ] = new TH1D(histoName.c_str(), "", 1, 0, 1);
+    _histoMap[ "hsigma2_u_sensor"  ]->StatOverflows();
+    _histoMap[ "hsigma2_u_sensor"  ]->SetDirectory(0);
     
     histoName = "hsigma2_v_sensor"+to_string( ipl );  
-    _histoMap[ histoName  ] = new TH1D(histoName.c_str(), "", 1, 0, 1);
-    _histoMap[ histoName  ]->StatOverflows(); 	
-    _histoMap[ histoName  ]->SetDirectory(0);
+    _histoMap[ "hsigma2_v_sensor"  ] = new TH1D(histoName.c_str(), "", 1, 0, 1);
+    _histoMap[ "hsigma2_v_sensor"  ]->StatOverflows();
+    _histoMap[ "hsigma2_v_sensor"  ]->SetDirectory(0);
     
     histoName = "hsigma2_tu_sensor"+to_string( ipl );
-    _histoMap[ histoName  ] = new TH1D(histoName.c_str(), "", 1, 0, 1);
-    _histoMap[ histoName  ]->StatOverflows(); 	
-    _histoMap[ histoName  ]->SetDirectory(0);    
+    _histoMap[ "hsigma2_tu_sensor"  ] = new TH1D(histoName.c_str(), "", 1, 0, 1);
+    _histoMap[ "hsigma2_tu_sensor"  ]->StatOverflows();
+    _histoMap[ "hsigma2_tu_sensor"  ]->SetDirectory(0);
 
     histoName = "hsigma2_tv_sensor"+to_string( ipl );
-    _histoMap[ histoName  ] = new TH1D(histoName.c_str(), "", 1, 0, 1);  
-    _histoMap[ histoName  ]->StatOverflows(); 	    
-    _histoMap[ histoName  ]->SetDirectory(0);
+    _histoMap[ "hsigma2_tv_sensor"  ] = new TH1D(histoName.c_str(), "", 1, 0, 1);
+    _histoMap[ "hsigma2_tv_sensor"  ]->StatOverflows();
+    _histoMap[ "hsigma2_tv_sensor"  ]->SetDirectory(0);
     
     histoName = "hsigma2_qp_sensor"+to_string( ipl );
-    _histoMap[ histoName  ] = new TH1D(histoName.c_str(), "", 1, 0, 1);
-    _histoMap[ histoName  ]->StatOverflows(); 	
-    _histoMap[ histoName  ]->SetDirectory(0);     
+    _histoMap[ "hsigma2_qp_sensor"  ] = new TH1D(histoName.c_str(), "", 1, 0, 1);
+    _histoMap[ "hsigma2_qp_sensor"  ]->StatOverflows();
+    _histoMap[ "hsigma2_qp_sensor"  ]->SetDirectory(0);
     
     // Plot residuals U/V 
     
     histoName = "hresU_sensor"+to_string( ipl );
     max = 5*safetyFactor*Sensor.GetSensitiveSizeU()/(Sensor.GetNCellsU()+1); 
-    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 500, -max, +max);
-    _histoMap[ histoName ]->SetXTitle("u residual [mm]"); 
-    _histoMap[ histoName ]->SetYTitle("tracks"); 
+    _histoMap[ "hresU_sensor" ] = new TH1D(histoName.c_str(), "", 500, -max, +max);
+    _histoMap[ "hresU_sensor" ]->SetXTitle("u residual [mm]");
+    _histoMap[ "hresU_sensor" ]->SetYTitle("tracks");
     
     histoName = "hresV_sensor"+to_string( ipl );
     max = 5*safetyFactor*Sensor.GetSensitiveSizeV()/(Sensor.GetNCellsV()+1); 
-    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 500, -max, +max);
-    _histoMap[ histoName ]->SetXTitle("v residual [mm]"); 
-    _histoMap[ histoName ]->SetYTitle("tracks"); 
+    _histoMap[ "hresV_sensor" ] = new TH1D(histoName.c_str(), "", 500, -max, +max);
+    _histoMap[ "hresV_sensor" ]->SetXTitle("v residual [mm]");
+    _histoMap[ "hresV_sensor" ]->SetYTitle("tracks");
     
     // Plot residuals pulls  
 
     histoName = "hpull_resU_sensor"+to_string( ipl );
-    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, -4, +4);
-    _histoMap[ histoName ]->SetXTitle(" pull u residual"); 
-    _histoMap[ histoName ]->SetYTitle(" tracks");    
+    _histoMap[ "hpull_resU_sensor" ] = new TH1D(histoName.c_str(), "", 100, -4, +4);
+    _histoMap[ "hpull_resU_sensor" ]->SetXTitle(" pull u residual");
+    _histoMap[ "hpull_resU_sensor" ]->SetYTitle(" tracks");
     
     histoName = "hpull_resV_sensor"+to_string( ipl );
-    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, -4, +4);
-    _histoMap[ histoName ]->SetXTitle(" pull v residual"); 
-    _histoMap[ histoName ]->SetYTitle(" tracks");
+    _histoMap[ "hpull_resV_sensor" ] = new TH1D(histoName.c_str(), "", 100, -4, +4);
+    _histoMap[ "hpull_resV_sensor" ]->SetXTitle(" pull v residual");
+    _histoMap[ "hpull_resV_sensor" ]->SetYTitle(" tracks");
            
     // Plot residual profiles 
     
     histoName = "hduvsu_sensor"+to_string( ipl );
     max = safetyFactor*Sensor.GetSensitiveSizeU()/2; 
     nbins = 100; 
-    _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", nbins, -max, +max);
-    _profileMap[ histoName ]->SetXTitle("u [mm]"); 
-    _profileMap[ histoName ]->SetYTitle("mean residual u [mm]");
+    _profileMap[ "hduvsu_sensor" ] = new TProfile(histoName.c_str(), "", nbins, -max, +max);
+    _profileMap[ "hduvsu_sensor" ]->SetXTitle("u [mm]");
+    _profileMap[ "hduvsu_sensor" ]->SetYTitle("mean residual u [mm]");
       
     histoName = "hdvvsv_sensor"+to_string( ipl );
     max = safetyFactor*Sensor.GetSensitiveSizeV()/2;  
     nbins = 100;  
-    _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", nbins, -max, +max); 
-    _profileMap[ histoName ]->SetXTitle("v [mm]"); 
-    _profileMap[ histoName ]->SetYTitle("mean residual v [mm]");
+    _profileMap[ "hdvvsv_sensor" ] = new TProfile(histoName.c_str(), "", nbins, -max, +max);
+    _profileMap[ "hdvvsv_sensor" ]->SetXTitle("v [mm]");
+    _profileMap[ "hdvvsv_sensor" ]->SetYTitle("mean residual v [mm]");
     
     histoName = "hduvsv_sensor"+to_string( ipl );
     max = safetyFactor*Sensor.GetSensitiveSizeV()/2; 
     nbins = 100;  
-    _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", nbins, -max, +max); 
-    _profileMap[ histoName ]->SetXTitle("v [mm]"); 
-    _profileMap[ histoName ]->SetYTitle("mean residual u [mm]");    
+    _profileMap[ "hduvsv_sensor" ] = new TProfile(histoName.c_str(), "", nbins, -max, +max);
+    _profileMap[ "hduvsv_sensor" ]->SetXTitle("v [mm]");
+    _profileMap[ "hduvsv_sensor" ]->SetYTitle("mean residual u [mm]");
        
     histoName = "hdvvsu_sensor"+to_string( ipl );
     max = safetyFactor*Sensor.GetSensitiveSizeU()/2;  
     nbins = 100; 
-    _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", nbins, -max, +max); 
-    _profileMap[ histoName ]->SetXTitle("u [mm]"); 
-    _profileMap[ histoName ]->SetYTitle("mean residual v [mm]");
+    _profileMap[ "hdvvsu_sensor" ] = new TProfile(histoName.c_str(), "", nbins, -max, +max);
+    _profileMap[ "hdvvsu_sensor" ]->SetXTitle("u [mm]");
+    _profileMap[ "hdvvsu_sensor" ]->SetYTitle("mean residual v [mm]");
           
     histoName = "hduvsthetau_sensor"+to_string( ipl );
     max = 0;  // max track slope [rad]
-    _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", 100, -max, +max); 
-    _profileMap[ histoName ]->SetXTitle("du/dw [rad]"); 
-    _profileMap[ histoName ]->SetYTitle("mean residual u [mm]");    
+    _profileMap[ "hduvsthetau_sensor" ] = new TProfile(histoName.c_str(), "", 100, -max, +max);
+    _profileMap[ "hduvsthetau_sensor" ]->SetXTitle("du/dw [rad]");
+    _profileMap[ "hduvsthetau_sensor" ]->SetYTitle("mean residual u [mm]");
     
     histoName = "hdvvsthetav_sensor"+to_string( ipl );
     max = 0;  // max track slope [rad]
-    _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", 100, -max, +max); 
-    _profileMap[ histoName ]->SetXTitle("dv/dw [rad]"); 
-    _profileMap[ histoName ]->SetYTitle("mean residual v [mm]");    
+    _profileMap[ "hdvvsthetav_sensor" ] = new TProfile(histoName.c_str(), "", 100, -max, +max);
+    _profileMap[ "hdvvsthetav_sensor" ]->SetXTitle("dv/dw [rad]");
+    _profileMap[ "hdvvsthetav_sensor" ]->SetYTitle("mean residual v [mm]");
 
     // Plot beam profiles
     TDirectory *beamDir = sensDir->mkdir("BeamProfile");
     beamDir->cd(); 
     
     histoName = "htrk_mom_sensor"+to_string( ipl );
-    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, 0, 0); 
-    _histoMap[ histoName ]->SetXTitle("track momentum [GeV]");
-    _histoMap[ histoName ]->SetYTitle("tracks"); 
+    _histoMap[ "htrk_mom_sensor" ] = new TH1D(histoName.c_str(), "", 100, 0, 0);
+    _histoMap[ "htrk_mom_sensor" ]->SetXTitle("track momentum [GeV]");
+    _histoMap[ "htrk_mom_sensor" ]->SetYTitle("tracks");
     
     histoName = "htrk_tu_sensor"+to_string( ipl ); 
-    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, 0, 0); 
-    _histoMap[ histoName ]->SetXTitle("fit du/dw [rad]"); 
-    _histoMap[ histoName ]->SetYTitle("tracks"); 
+    _histoMap[ "htrk_tu_sensor" ] = new TH1D(histoName.c_str(), "", 100, 0, 0);
+    _histoMap[ "htrk_tu_sensor" ]->SetXTitle("fit du/dw [rad]");
+    _histoMap[ "htrk_tu_sensor" ]->SetYTitle("tracks");
     
     histoName = "htrk_tv_sensor"+to_string( ipl ); 
-    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, 0, 0); 
-    _histoMap[ histoName ]->SetXTitle("fit dv/dw [rad]"); 
-    _histoMap[ histoName ]->SetYTitle("tracks"); 
+    _histoMap[ "htrk_tv_sensor" ] = new TH1D(histoName.c_str(), "", 100, 0, 0);
+    _histoMap[ "htrk_tv_sensor" ]->SetXTitle("fit dv/dw [rad]");
+    _histoMap[ "htrk_tv_sensor" ]->SetYTitle("tracks");
       
     double maxU = safetyFactor*Sensor.GetSensitiveSizeU()/2;  
     double maxV = safetyFactor*Sensor.GetSensitiveSizeV()/2;  
     nbins = 100;           
     
     histoName = "htrk_u_sensor"+to_string( ipl ); 
-    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", nbins, -maxU, +maxU); 
-    _histoMap[ histoName ]->SetXTitle("fit u [mm]"); 
-    _histoMap[ histoName ]->SetYTitle("tracks"); 
+    _histoMap[ "htrk_u_sensor" ] = new TH1D(histoName.c_str(), "", nbins, -maxU, +maxU);
+    _histoMap[ "htrk_u_sensor" ]->SetXTitle("fit u [mm]");
+    _histoMap[ "htrk_u_sensor" ]->SetYTitle("tracks");
 
     histoName = "htrk_v_sensor"+to_string( ipl ); 
-    _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", nbins, -maxV, +maxV);
-    _histoMap[ histoName ]->SetXTitle("fit v [mm]"); 
-    _histoMap[ histoName ]->SetYTitle("tracks"); 
+    _histoMap[ "htrk_v_sensor" ] = new TH1D(histoName.c_str(), "", nbins, -maxV, +maxV);
+    _histoMap[ "htrk_v_sensor" ]->SetXTitle("fit v [mm]");
+    _histoMap[ "htrk_v_sensor" ]->SetYTitle("tracks");
 
     histoName = "hhitmap_sensor"+to_string( ipl );
-    _histoMap2D[ histoName] = new TH2D(histoName.c_str(), "" ,nbins, -maxU, +maxU, nbins, -maxV, +maxV);
-    _histoMap2D[histoName]->SetXTitle("fit u [mm]"); 
-    _histoMap2D[histoName]->SetYTitle("fit v [mm]");   
-    _histoMap2D[histoName]->SetZTitle("tracks"); 
-    _histoMap2D[histoName]->SetStats( false );
+    _histoMap2D["hhitmap_sensor"] = new TH2D(histoName.c_str(), "" ,nbins, -maxU, +maxU, nbins, -maxV, +maxV);
+    _histoMap2D["hhitmap_sensor"]->SetXTitle("fit u [mm]");
+    _histoMap2D["hhitmap_sensor"]->SetYTitle("fit v [mm]");
+    _histoMap2D["hhitmap_sensor"]->SetZTitle("tracks");
+    _histoMap2D["hhitmap_sensor"]->SetStats( false );
     
     histoName = "htrk_dudw_vs_u_sensor"+to_string( ipl );
-    _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", nbins, -maxU, +maxU); 
-    _profileMap[ histoName ]->SetYTitle("fit du/dw [rad]"); 
-    _profileMap[ histoName ]->SetXTitle("fit u [mm]");    
+    _profileMap[ "htrk_dudw_vs_u_sensor" ] = new TProfile(histoName.c_str(), "", nbins, -maxU, +maxU);
+    _profileMap[ "htrk_dudw_vs_u_sensor" ]->SetYTitle("fit du/dw [rad]");
+    _profileMap[ "htrk_dudw_vs_u_sensor" ]->SetXTitle("fit u [mm]");
      
     histoName = "htrk_dvdw_vs_u_sensor"+to_string( ipl );
-    _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", nbins, -maxU, +maxU); 
-    _profileMap[ histoName ]->SetYTitle("fit dv/dw [rad]"); 
-    _profileMap[ histoName ]->SetXTitle("fit u [mm]");   
+    _profileMap[ "htrk_dvdw_vs_u_sensor" ] = new TProfile(histoName.c_str(), "", nbins, -maxU, +maxU);
+    _profileMap[ "htrk_dvdw_vs_u_sensor" ]->SetYTitle("fit dv/dw [rad]");
+    _profileMap[ "htrk_dvdw_vs_u_sensor" ]->SetXTitle("fit u [mm]");
     
     histoName = "htrk_dudw_vs_v_sensor"+to_string( ipl );
-    _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", nbins, -maxV, +maxV); 
-    _profileMap[ histoName ]->SetYTitle("fit du/dw [rad]"); 
-    _profileMap[ histoName ]->SetXTitle("fit v [mm]");    
+    _profileMap[ "htrk_dudw_vs_v_sensor" ] = new TProfile(histoName.c_str(), "", nbins, -maxV, +maxV);
+    _profileMap[ "htrk_dudw_vs_v_sensor" ]->SetYTitle("fit du/dw [rad]");
+    _profileMap[ "htrk_dudw_vs_v_sensor" ]->SetXTitle("fit v [mm]");
     
     histoName = "htrk_dvdw_vs_v_sensor"+to_string( ipl );
-    _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", nbins, -maxV, +maxV); 
-    _profileMap[ histoName ]->SetYTitle("dv/dw [rad]"); 
-    _profileMap[ histoName ]->SetXTitle("v [mm]");  
+    _profileMap[ "htrk_dvdw_vs_v_sensor" ] = new TProfile(histoName.c_str(), "", nbins, -maxV, +maxV);
+    _profileMap[ "htrk_dvdw_vs_v_sensor" ]->SetYTitle("dv/dw [rad]");
+    _profileMap[ "htrk_dvdw_vs_v_sensor" ]->SetXTitle("v [mm]");
     
     histoName = "htrk_mom_vs_u_sensor"+to_string( ipl );
-    _profileMap[ histoName ] = new TProfile(histoName.c_str(), "",  nbins, -maxU, +maxU); 
-    _profileMap[ histoName ]->SetYTitle("momentum [GeV]"); 
-    _profileMap[ histoName ]->SetXTitle("u [mm]");  
+    _profileMap[ "htrk_mom_vs_u_sensor" ] = new TProfile(histoName.c_str(), "",  nbins, -maxU, +maxU);
+    _profileMap[ "htrk_mom_vs_u_sensor" ]->SetYTitle("momentum [GeV]");
+    _profileMap[ "htrk_mom_vs_u_sensor" ]->SetXTitle("u [mm]");
     
     histoName = "htrk_mom_vs_v_sensor"+to_string( ipl );
-    _profileMap[ histoName ] = new TProfile(histoName.c_str(), "", nbins, -maxV, +maxV); 
-    _profileMap[ histoName ]->SetYTitle("momentum [GeV]"); 
-    _profileMap[ histoName ]->SetXTitle("v [mm]");      
+    _profileMap[ "htrk_mom_vs_v_sensor" ] = new TProfile(histoName.c_str(), "", nbins, -maxV, +maxV);
+    _profileMap[ "htrk_mom_vs_v_sensor" ]->SetYTitle("momentum [GeV]");
+    _profileMap[ "htrk_mom_vs_v_sensor" ]->SetXTitle("v [mm]");
     
     
     
