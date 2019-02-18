@@ -121,9 +121,13 @@ class Path(object):
         processor_node.remove(parameter)      
       
       # override processor parameter as needed 
-      for key, value in processor.params.items():   
+      for key, value in processor.params.items():
+
         parameter = processor_node.find("./parameter[@name='%s']" % str(key))
-        parameter.set('value', str(value)) 
+        if(parameter is not None):
+          parameter.set('value', str(value))
+        else:
+          raise IOError("Setting", key,"not in xml file")
        
       # add processor to xml tree
       root.append(processor_node)
@@ -179,8 +183,12 @@ class Environment(object):
       raise ValueError('Steerfiles {} cannot be found.'.format(steerfiles) )
     
     # create file processors.xml 
-    subprocess.call('/$MARLIN/bin/Marlin -x > {}'.format(self.tmpdir+'/processors.xml'), shell=True)
-    
+    retval = subprocess.call('/$MARLIN/bin/Marlin -x > {}'.format(self.tmpdir+'/processors.xml'), shell=True)
+    if retval < 0:
+      raise RuntimeError("While creating xmlfile, Marlin was killed by signal %d " % ( -retval))
+    elif retval > 0:
+      raise RuntimeError("Process Marlin failed with exit code %d " % (retval))
+
     # create localDB folder 
     os.mkdir(self.tmpdir+'/localDB')
 
@@ -202,7 +210,7 @@ class Environment(object):
       xmlfile = path.get_steerfile()
       logfile = path.get_name() + '.log'
       if self.profile:
-        action = 'valgrind --tool=callgrind --callgrind-out-file='+path.get_name()+'.out.%p /$MARLIN/bin/Marlin ' + xmlfile + ' > ' + logfile + ' 2>&1'
+        action = 'LD_BIND_NOW=yes valgrind --tool=callgrind --callgrind-out-file='+path.get_name()+'.out.%p /$MARLIN/bin/Marlin ' + xmlfile + ' > ' + logfile + ' 2>&1'
       else:
         action = '/$MARLIN/bin/Marlin ' + xmlfile + ' > ' + logfile + ' 2>&1'
 
