@@ -28,12 +28,11 @@ TBTrack::TBTrack(TBDetector& detector)
   // The skeleton track model is defined by the 
   // detector setup
   int nDet = detector.GetNSensors(); 
-  
+  TEVec.reserve(nDet);
   for(int ipl=0;ipl<nDet;ipl++)  {  
     // Create track element 
-    TBTrackElement TE(detector.GetDet(ipl));
     // Add track element  
-    TEVec.push_back(TE);
+    TEVec.emplace_back(detector.GetDet(ipl));
   }
   
   // Particle hypothesis  
