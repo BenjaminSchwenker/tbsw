@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export ROOTSYS=/home/benjamin/work/root-v6-10-08
+
 
 if [ -z "$ROOTSYS" ]
 then
@@ -21,7 +21,7 @@ pushd build
 echo "Setting up build: >>cmake ..<<"
 cmake ..
 echo "Building: >>make -j8<<"
-make -j8
+make -j3
 popd
 
 echo "Creating init script: workspace/init_tbsw.sh "
