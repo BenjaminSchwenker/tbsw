@@ -58,6 +58,7 @@ ADD_DEFINITIONS( "-std=c++14" )
 ADD_DEFINITIONS( "-Wall -pedantic" )
 #------ performance
 ADD_DEFINITIONS( "-march=native -mtune=native" )
+#ADD_DEFINITIONS( "-mtune=native -mno-avx -mno-avx2" )
 #------ lets get real pedantic as a test...
 ADD_DEFINITIONS( "-Wextra -Wno-unused-macros -Wno-shadow ")# -Wdouble-promotion ")
 #------ but not too much...
@@ -65,7 +66,7 @@ ADD_DEFINITIONS( "-Wno-unused-function ")
 # definitions
 IF( CMAKE_BUILD_TYPE STREQUAL "Debug" OR
     CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo" )
-    ADD_DEFINITIONS( "-g -pg" )
+    ADD_DEFINITIONS( "-g" )
 ENDIF()
 IF( CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_VERBOSE_MAKEFILE ON)
