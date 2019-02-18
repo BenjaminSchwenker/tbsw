@@ -155,10 +155,10 @@ void RawHitDQM::processEvent(LCEvent * evt)
   for (int iplane = 0; iplane < _detector.GetNSensors(); ++iplane ) {
      
     std::string histoName;
-    
+    std::string planeNumber=(to_string( iplane ));
     nhits += HitStore.GetNHits(iplane); 
     
-    histoName = "hnhits_sensor"+to_string( iplane );
+    histoName = "hnhits_sensor"+planeNumber;
     _histoMap[ histoName ]->Fill(HitStore.GetNHits(iplane));
     
     for (int ihit = 0; ihit < HitStore.GetNHits(iplane); ++ihit ) {
@@ -172,45 +172,45 @@ void RawHitDQM::processEvent(LCEvent * evt)
       double hit_sigma_v = TMath::Sqrt(Hit.GetCov()(1,1)); 
       double hit_corr_uv = Hit.GetCov()(0,1)/(hit_sigma_u*hit_sigma_v); 
         
-      histoName = "hsigma_hit_u_det"+to_string( iplane ); 
+      histoName = "hsigma_hit_u_det"+planeNumber;
       _histoMap[ histoName  ]->Fill(hit_sigma_u);
       
-      histoName = "hsigma_hit_v_det"+to_string( iplane );
+      histoName = "hsigma_hit_v_det"+planeNumber;
       _histoMap[ histoName  ]->Fill(hit_sigma_v); 
       
-      histoName = "hcorr_uv_det"+to_string( iplane );
+      histoName = "hcorr_uv_det"+planeNumber;
       _histoMap[ histoName  ]->Fill(hit_corr_uv);  
       
-      histoName = "hhit_u_det"+to_string( iplane );
+      histoName = "hhit_u_det"+planeNumber;
       _histoMap[ histoName  ]->Fill(hit_u); 
       
-      histoName = "hhit_v_det"+to_string( iplane );
+      histoName = "hhit_v_det"+planeNumber;
       _histoMap[ histoName  ]->Fill(hit_v);
       
-      histoName = "hhitmap"+to_string( iplane );
+      histoName = "hhitmap"+planeNumber;
       _histoMap2D[ histoName  ]->Fill(hit_u,hit_v);   
       
       PixelCluster Cluster = Hit.GetCluster(); 
       
-      histoName = "hdigitmap"+to_string(  iplane  );
+      histoName = "hdigitmap"+planeNumber;
       _histoMap2D[ histoName  ]->Fill(Cluster.getUStart(),Cluster.getVStart()); 
       
-      histoName = "hcls_charge_sensor"+to_string(  iplane  );
+      histoName = "hcls_charge_sensor"+planeNumber;
       _histoMap[ histoName  ]->Fill(Cluster.getCharge()); 
       
-      histoName = "hseed_charge_sensor"+to_string(  iplane  );
+      histoName = "hseed_charge_sensor"+planeNumber;
       _histoMap[ histoName  ]->Fill(Cluster.getSeedCharge()); 
       
-      histoName = "hcls_type_sensor"+to_string(  iplane  );
+      histoName = "hcls_type_sensor"+planeNumber;
       _histoMap[ histoName  ]->Fill(0); 
        
-      histoName = "hsize_sensor"+to_string(  iplane  );   
+      histoName = "hsize_sensor"+planeNumber;
       _histoMap[ histoName  ]->Fill(Cluster.getSize()); 
       
-      histoName = "hsizeU_sensor"+to_string(  iplane  );
+      histoName = "hsizeU_sensor"+planeNumber;
       _histoMap[ histoName  ]->Fill(Cluster.getUSize()); 
       
-      histoName = "hsizeV_sensor"+to_string(  iplane  );    
+      histoName = "hsizeV_sensor"+planeNumber;
       _histoMap[ histoName  ]->Fill(Cluster.getVSize()); 
       
     }
