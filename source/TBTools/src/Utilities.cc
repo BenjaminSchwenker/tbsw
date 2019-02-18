@@ -13,14 +13,6 @@ using namespace std;
 
 namespace depfet {
 
-/** Used to generate string keys.*/
-std::string to_string( int key ) {
-
-  std::ostringstream s;
-  s  <<  key;
-  return s.str();
-
-}
  	
 std::vector<std::string> splitpath( const std::string& str, const std::set<char> delimiters)
 {
