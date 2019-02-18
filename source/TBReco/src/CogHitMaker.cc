@@ -132,12 +132,11 @@ void CogHitMaker::processEvent(LCEvent * evt)
       // Create hit collection  
       LCCollectionVec * hitCollection = new LCCollectionVec(LCIO::TRACKERHIT) ;
          
+      // Helper class for decoding cluster ID's
+      CellIDDecoder<TrackerPulseImpl> clusterDecoder( clusterCollection );
       // Loop on all clusters 
       for (unsigned int iClu = 0; iClu < clusterCollection->size(); iClu++) 
       { 
-        // Helper class for decoding cluster ID's 
-        CellIDDecoder<TrackerPulseImpl> clusterDecoder( clusterCollection ); 
-        
         // Read cluster header
         TrackerPulseImpl* cluster = dynamic_cast<TrackerPulseImpl* > ( clusterCollection->getElementAt(iClu) )  ;       
         int sensorID = clusterDecoder(cluster)["sensorID"]; 
