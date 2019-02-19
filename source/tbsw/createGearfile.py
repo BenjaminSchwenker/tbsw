@@ -7,10 +7,11 @@
     In the __main__ part a example is given for the creation of a gear file for just a telescope with 6 mimosa26 detector planes. 
     The base gear structure is (at the moment hard coded) in the function createGearStructure(). Parameters to change there are the number of planes and potentialy the B-field.
     All parameter values have to be strings otherwise the parsing does not work.
+    Because of memory consumption all parts are written (appended) to the outfile as soon as possible. The example file for the mimosa26 telescope has a size of 1.1Gb on disc. Trying to keep this in memory is not adviced. Opening and closing the file for every pixel slows down the programm considerably, so a large enough buffer can be filled and then written. Care has to be taken that the telescope layers are put in between the correct opening and closing tags as done in the provided example. This is not a very intuitive way of doing it put for the mimosa26 this reduces the memory consumption from 50% (capped) to less then 1% on 8Gb RAM machine.  
     The detector planes are handled with the class Plane. 
       Parameters to be set can be found in the declared default dictionaries in the class for the different parts of the plane. The parameters can be set on construction of the planes object or with the setXParams(dict) functions. Care has to be taken that the parameters for the pixel prototypes are handled in a list of dictionaries ([{},{},]) because there could be multiple pixel types in one plane. 
       Most important parameter to set is the function that generates the layout of the pixels the pixel matrix. It is the first parameter of the constructer (after self) and has to be set during construction (at the moment no set function provided). This function has to be implemented for the specific layout. An example of this function can be found in the implementation for the mimosa26 pixel -> createPixelM26(). Characteristics of this function:
-        return: A list of ElementTree Elements
+        return: No return, all created elements are written to file directly
         Elements: name is 'pixel'
                   attributes = {"type": "0",  # global type of the pixel
                                 "u": , "v",   # column, row coordinates of the pixel, pixel address in raw data
@@ -21,14 +22,16 @@
                                }
         For conveniance there is a method called in Plane class before generating the pixel layout that creates a list of list of tuples. The list of tuples consists of the coordinates of the pixel prototype corners. Every prototype pixel is an entry in the outer list. This list is (should be) plane object specific and can be accessed with self.basePointListList. 
       Other parameters for Plane class:
+        The filename/path where the resulting gear file is written has to be provided to xmloutfile contructer parameter. In the class the write action is always append, so the file should be prepared for the plane elements.
         With the default parameters (including now the createPixelM26 function that has to be set manualy at construction) a mimosa26 plane is created with ID=0 and at positionX/Y/Z=0.0. These two parameters are the ones that have to be set for every plane. Either on construction or with the setSensitiveParams() function. Not every parameter has to be set. For every plane the default parameters are assigned first and then with the provided parameters overwritten. So not provided parameters stay the default ones. 
-    
-    In some fashion the path/name of the output gear xml file has to be provided to the ElementTree.write(name) function. 
+        The Plane class does not return anything. All elements are written to the outputfile with the writeFile function.
+    The path/name of the output gear xml file has to be provided to the Plane class constructor. 
     Parameters for the telescope setup have to be provided in some way. 
 
 """
 import xml.etree.ElementTree as ET
 from copy import deepcopy 
+import os
 
 def createPixelM26(self):
   pixelList = []
@@ -37,7 +40,7 @@ def createPixelM26(self):
   npixelsU = 1151
   npixelsV = 575
   basepoints = self.basePointListList[0]
-  #basepoints = [(0.0, 0.0), (0.0, 0.018402778), (0.018402778, 0.018402778), (0.018402778, 0.0)]
+  count = 0
   for i in range(npixelsU):
     for j in range(npixelsV):
       attributes["u"] = str(i)
@@ -68,7 +71,15 @@ def createPixelM26(self):
       attributes["centreu"] = str(centreu)
       attributes["centrev"] = str(centrev)
       pixelList.append(ET.Element('pixel', attributes))
-  return pixelList
+      count += 1
+      if count == 1000 or (i == npixelsU-1 and j == npixelsV-1):
+        with open(self.xmloutfile, "a") as f:
+          for element in pixelList:
+            f.write(ET.tostring(element))
+          f.flush()
+          os.fsync(f.fileno())
+        pixelList[:] = []
+        count = 0
 
 
 #def createPixel3DRectangle(self):
@@ -98,8 +109,9 @@ class Plane:
   #pixel matrix
   #createPixel
 
-  def __init__(self, createPixelfunction, ladderparams=None, sensparams=None, pixelProtoypeparams=None):
+  def __init__(self, createPixelfunction, xmloutfile, ladderparams=None, sensparams=None, pixelProtoypeparams=None):
     self.createPixel = createPixelfunction 
+    self.xmloutfile = xmloutfile
     self.setLadderParams(ladderparams)
     self.setSensitiveParams(sensparams)
     self.setPixelPrototypeParams(pixelProtoypeparams)
@@ -114,18 +126,15 @@ class Plane:
     return sensitive
 
   def createPixelPrototype(self):
-    pixelPrototype = []
     for i in range(self.nprotopixel):
-      pixelPrototype.append(ET.Element('pixelProtoype', self.protopixlistdic[i]))
-    return pixelPrototype
+      self.writeFile(ET.Element('pixelProtoype', self.protopixlistdic[i]))
 
   def createPixelMatrix(self):
-    pixelMatrix = ET.Element('pixelMatrix')
-    pixelList = self.createPixel(self)
-    #for pixel in pixelList:
-    #  pixelMatrix.append(p)
-    pixelMatrix.extend(pixelList)
-    return pixelMatrix
+    matrixstart = '<pixelMatrix>'
+    matrixend = '</pixelMatrix>'
+    self.writeFile(matrixstart)
+    self.createPixel(self)
+    self.writeFile(matrixend)
 
   def setLadderParams(self, ladderparamsdic):
     self.ladderparams = deepcopy(self.ldefault)
@@ -155,7 +164,6 @@ class Plane:
       pointList = []
       for point in self.protopixlistdic[i]["points"].split(','):
         pointList.append(tuple(x for x in point.split()))
-      #pointList = [tuple(float(x) for x in point.split()) for point in self.protopixlistdic[i]["points"].split(',') if point)]
 
       self.basePointListList.append(pointList)
     
@@ -163,13 +171,29 @@ class Plane:
     layer = ET.Element('layer')
     ladder = self.createLadder()
     sensitive = self.createSensitive()
-    pixelPrototypeList = self.createPixelPrototype()
-    pixelMatrix = self.createPixelMatrix()
     layer.append(ladder)
     layer.append(sensitive)
-    layer.extend(pixelPrototypeList)
-    layer.append(pixelMatrix)
-    return layer
+    stringlayer = ET.tostring(layer)
+    pixelInsertPos = stringlayer.find('</layer>')
+    layerstart, layerend = stringlayer[:pixelInsertPos], stringlayer[pixelInsertPos:]
+    self.writeFile(layerstart)
+
+    self.createPixelPrototype()
+    self.createPixelMatrix()
+
+    self.writeFile(layerend)
+
+  def writeFile(self, writeobject):  # write object is either an ET.Element or a string
+    writestring = ""
+    if ET.iselement(writeobject):
+      writestring = ET.tostring(writeobject)
+    else:
+      writestring = writeobject
+    with open(self.xmloutfile, "a") as f:
+      f.write(writestring)
+      f.flush()
+      os.fsync(f.fileno())
+
 
 outfile = 'gearTest.xml'
 
@@ -183,17 +207,32 @@ def createGearStructure():
   detectorTag = ET.SubElement(detectorsTag, 'detector', name="SiPlanes", gearType="SiPlanesParameters")
   siPlanesIDTag = ET.SubElement(detectorTag, 'siplanesID', ID="250")
   siPlanesNumber = ET.SubElement(detectorTag, 'siplanesNumber', number="6")
-  layers = ET.SubElement(detectorTag, 'layers')
-  return gearTag
+
+  stringgearTag = ET.tostring(gearTag)
+  layerInsertPos = stringgearTag.find('</detector>')
+  openingTags, closingTags = stringgearTag[:layerInsertPos], stringgearTag[layerInsertPos:]
+  openingTags += '<layers>'
+  closingTags = '</layers>' + closingTags
+  gearTag.clear()
+  return [openingTags, closingTags]
   
 
 if __name__ == '__main__':
   # base mimosa 26 telescope
-  gearBase = createGearStructure()
-  layers = gearBase.getiterator('layers')[0];
-  for i in range(len(telPositionZ)):
-    layer = Plane(createPixelM26, sensparams={"ID":str(i), "positionZ":str(telPositionZ[i])})
-    layers.append(layer.createLayerElement())
+  f = open(outfile, "w") # reset the file to empty because use append mode later
+  f.close()
+  gearBaseTags = createGearStructure()
 
-  gearFile = ET.ElementTree(gearBase)
-  gearFile.write(outfile)
+  with open(outfile, "a") as f:
+    f.write(gearBaseTags[0])
+    f.flush()
+    os.fsync(f.fileno())
+
+  for i in range(len(telPositionZ)):
+    layer = Plane(createPixelM26, xmloutfile=outfile, sensparams={"ID":str(i), "positionZ":str(telPositionZ[i])})
+    layer.createLayerElement()
+
+  with open(outfile, "a") as f:
+    f.write(gearBaseTags[1])
+    f.flush()
+    os.fsync(f.fileno())
