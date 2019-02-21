@@ -134,7 +134,7 @@ public:
         size_t dataBegin=_current_ptr-data;
 
         assert(dataBegin<data_size);
-        assert(dataBegin>2);
+        assert(dataBegin>=2);
         if( dataBegin<2 || dataBegin>data_size){
             printf("Invalid data size and data begin in event. Got size %d and begin %ld!\n",data_size,dataBegin);
             throw std::out_of_range("No valid data in magic found!");
