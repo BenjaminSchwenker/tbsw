@@ -32,12 +32,8 @@
 #include <IMPL/LCFlagImpl.h>
 #include <IMPL/LCGenericObjectImpl.h>
 
-// Include CLHEP classes
-#include <CLHEP/Matrix/Vector.h>
-
 // Used namespaces
 using namespace std; 
-using namespace CLHEP; 
 using namespace lcio ;
 using namespace marlin ;
 
@@ -345,8 +341,8 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     if( dut.GetPlaneNumber() == ipl )
     {         
         streamlog_out(MESSAGE2) << " DUT hit at plane " << ipl 
-                                << "   U [mm]= " << RecoHit.GetCoord()[0][0]
-                                << "   V [mm]= " << RecoHit.GetCoord()[1][0] 
+                                << "   U [mm]= " << RecoHit.GetCoord()[0]
+                                << "   V [mm]= " << RecoHit.GetCoord()[1] 
                                 << endl;
       
         HitStore.push_back( RecoHit );  
@@ -399,12 +395,12 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
         if (hit2track[ihit] >= 0) continue;   
         
         TBHit& RecoHit = HitStore[ihit];
-        double uhit = RecoHit.GetCoord()[0][0];
-        double vhit = RecoHit.GetCoord()[1][0];
+        double uhit = RecoHit.GetCoord()[0];
+        double vhit = RecoHit.GetCoord()[1];
 
         TBTrack& trk = TrackStore[itrk]; 
-        double utrk = trk.GetTE(_idut).GetState().GetPars()[2][0];
-        double vtrk = trk.GetTE(_idut).GetState().GetPars()[3][0];
+        double utrk = trk.GetTE(_idut).GetState().GetPars()[2];
+        double vtrk = trk.GetTE(_idut).GetState().GetPars()[3];
 
         // Skip all DUT hits with too large residuum 
         if ( std::abs(utrk-uhit) >= _maxResidualU && _maxResidualU > 0 ) continue;  
@@ -472,8 +468,8 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
       
     TBHit& hit = HitStore[ihit];
     
-    _rootHitU = hit.GetCoord()[0][0];         
-    _rootHitV = hit.GetCoord()[1][0];   
+    _rootHitU = hit.GetCoord()[0];         
+    _rootHitV = hit.GetCoord()[1];   
     
     _rootHitCellU= dut.GetUCellFromCoord( _rootHitU, _rootHitV );  
     _rootHitCellV = dut.GetVCellFromCoord( _rootHitU, _rootHitV );  
@@ -505,30 +501,30 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
         }  
       } 
       
-      HepMatrix p = trk.GetTE(_idut).GetState().GetPars();
-      HepSymMatrix C = trk.GetTE(_idut).GetState().GetCov();  
+      auto p = trk.GetTE(_idut).GetState().GetPars();
+      auto C = trk.GetTE(_idut).GetState().GetCov();  
       
 
       _rootHitLocalChi2 = TrackFitter.GetPredictedChi2(p, C, hit);
       _rootHitFitMomentum = trk.GetMomentum();   
            
       // Get predicted hit coordinates 
-      double pu = p[2][0];
-      double pv = p[3][0];
+      double pu = p[2];
+      double pv = p[3];
         
       // Get readout channels  
       int fitcol = dut.GetUCellFromCoord( pu, pv );     
       int fitrow = dut.GetVCellFromCoord( pu, pv );           
        
-      _rootHitFitdUdW = p[0][0];     
-      _rootHitFitdVdW = p[1][0];    
-      _rootHitFitU = p[2][0];           
-      _rootHitFitV = p[3][0];          
+      _rootHitFitdUdW = p[0];     
+      _rootHitFitdVdW = p[1];    
+      _rootHitFitU = p[2];           
+      _rootHitFitV = p[3];          
           
-      _rootHitFitErrorU  = TMath::Sqrt(C[2][2]);    
-      _rootHitFitErrorV  = TMath::Sqrt(C[3][3]);  
-      _rootHitPullResidualU = (hit.GetCoord()[0][0] - p[2][0]) / TMath::Sqrt( C[2][2] + hit.GetCov()[0][0] ) ;   
-      _rootHitPullResidualV = (hit.GetCoord()[1][0] - p[3][0]) / TMath::Sqrt( C[3][3] + hit.GetCov()[1][1] ) ;  
+      _rootHitFitErrorU  = TMath::Sqrt(C(2,2));    
+      _rootHitFitErrorV  = TMath::Sqrt(C(3,3));  
+      _rootHitPullResidualU = (hit.GetCoord()[0] - p[2]) / TMath::Sqrt( C(2,2) + hit.GetCov()(0,0) ) ;   
+      _rootHitPullResidualV = (hit.GetCoord()[1] - p[3]) / TMath::Sqrt( C(3,3) + hit.GetCov()(1,1) ) ;  
                                  
       _rootHitFitCellU = fitcol;      
       _rootHitFitCellV = fitrow;    
@@ -585,12 +581,12 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
       }  
     } 
     
-    HepMatrix p = trk.GetTE(_idut).GetState().GetPars();
-    HepSymMatrix C = trk.GetTE(_idut).GetState().GetCov();  
+    auto p = trk.GetTE(_idut).GetState().GetPars();
+    auto C = trk.GetTE(_idut).GetState().GetCov();  
            
     // Get predicted hit coordinates 
-    double pu = p[2][0];
-    double pv = p[3][0];
+    double pu = p[2];
+    double pv = p[3];
         
     // Get readout channels  
     int fitcellu = dut.GetUCellFromCoord( pu, pv );     
@@ -598,10 +594,10 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     
     _rootTrackPixelType = dut.GetPixelType(fitcellv, fitcellu);  
     _rootTrackFitMomentum = trk.GetMomentum();      
-    _rootTrackFitdUdW = p[0][0];     
-    _rootTrackFitdVdW = p[1][0];    
-    _rootTrackFitU = p[2][0];           
-    _rootTrackFitV = p[3][0];    
+    _rootTrackFitdUdW = p[0];     
+    _rootTrackFitdVdW = p[1];    
+    _rootTrackFitU = p[2];           
+    _rootTrackFitV = p[3];    
     _rootTrackFitCellU = fitcellu;      
     _rootTrackFitCellV = fitcellv;    
     _rootTrackFitCellUCenter = dut.GetPixelCenterCoordU( fitcellv, fitcellu ); 

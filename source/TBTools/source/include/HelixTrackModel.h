@@ -1,7 +1,7 @@
 #ifndef HelixTrackModel_H
 #define HelixTrackModel_H 1
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "GenericTrackModel.h"
 
 namespace depfet {
@@ -79,7 +79,7 @@ class HelixTrackModel : public GenericTrackModel {
   
   /** Default Constructor  
    */
-  HelixTrackModel(const CLHEP::HepVector& field);
+  HelixTrackModel(const Vector3d& field);
   
   /** Track propagation in magnetic field
    */
@@ -90,30 +90,30 @@ class HelixTrackModel : public GenericTrackModel {
   
   /* Returns signed fligth length (mm) to surface fSurf. Track starts at surface Surf and has state State.
   */
-  double GetSignedStepLength(const CLHEP::HepMatrix& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf);
+  double GetSignedStepLength(const TrackState& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf);
   
   /* Returns true if track hits the surface fSurf.
   */
-  bool CheckHitsSurface(const CLHEP::HepMatrix& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf);
+  bool CheckHitsSurface(const TrackState& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf);
   
   /** Returns track state at surface fSurf. 
    */
-  CLHEP::HepMatrix Extrapolate(const CLHEP::HepMatrix& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf, bool& error);
+  TrackState Extrapolate(const TrackState& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf, bool& error);
   
   /** Extrapolate track along helix for given flight length. Track parameters (State/Surf) are overwritten. 
   */
-  void Extrapolate(CLHEP::HepMatrix& State, depfet::ReferenceFrame& Surf,  double length);
+  void Extrapolate(TrackState& State, depfet::ReferenceFrame& Surf,  double length);
   
   /** Compute track derivatives for extrapolation from Surf to fSurf.
   *  Linearization point is State at Surf.  
   */
-  int TrackJacobian( const CLHEP::HepMatrix& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf ,  CLHEP::HepMatrix& J);
+  int TrackJacobian( const TrackState& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf , TrackStateJacobian& J);
   
   /** Get local scatter gain matrix
   *  It calculates the derivates of track parameters State on 
   *  scattering angles theta1 and theta2. 
   */
-  void GetScatterGain(const CLHEP::HepMatrix& State, CLHEP::HepMatrix& G);
+  TrackStateGain GetScatterGain(const TrackState& State);
   
  // Private Functions --------------
  private: 
@@ -121,19 +121,19 @@ class HelixTrackModel : public GenericTrackModel {
   /* Bisection method to find the root of the function GetDistanceToPlane. 
   */
   double BisectionMethod( 
-   const CLHEP::HepMatrix& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf, 
+   const TrackState& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf,
    double maxlength);   
   
   /* Returns distance (mm) to surface fSurf after extrapolating track 
   * from Surf for some flight length 
   */
-  double GetDistanceToPlane(const CLHEP::HepMatrix& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf, double length);
+  double GetDistanceToPlane(const TrackState& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf, double length);
   
  // Private Members -----------------
  private:
   
   // Magentic field in Tesla
-  CLHEP::HepVector Bfield;
+  Vector3d Bfield;
   int ndim; 
   
 };

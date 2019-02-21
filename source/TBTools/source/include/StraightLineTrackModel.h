@@ -1,7 +1,7 @@
 #ifndef StraightLineTrackModel_H
 #define StraightLineTrackModel_H 1
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "GenericTrackModel.h"
 
 namespace depfet {
@@ -87,31 +87,36 @@ class StraightLineTrackModel : public GenericTrackModel {
   /* Returns signed fligth length (mm) to surface fSurf from Surf. Track 
   * state given at Surf. 
   */
-  double GetSignedStepLength(const CLHEP::HepMatrix& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf);
+  double GetSignedStepLength(const TrackState& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf);
 
   /* Returns true if track hits the surface fSurf.
   */
-  bool CheckHitsSurface(const CLHEP::HepMatrix& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf);
+  bool CheckHitsSurface(const TrackState& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf);
   
   /** Returns track state at surface fSurf for track model (State/Surf) 
   */
-  CLHEP::HepMatrix Extrapolate(const CLHEP::HepMatrix& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf, bool& error);
+  TrackState Extrapolate(const TrackState& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf, bool& error);
   
   /** Extrapolate track model (State/Surf) by a flight length of L. Afterwards, Surf is
   *  normal to Z axis (beam axis). 
   */
-  void Extrapolate(CLHEP::HepMatrix& State, depfet::ReferenceFrame& Surf, double length);
+  void Extrapolate(TrackState& State, depfet::ReferenceFrame& Surf, double length);
   
   /** Compute track derivatives for extrapolation from Surf to fSurf.
   *  Linearization point is State at Surf.  
   */
-  int TrackJacobian( const CLHEP::HepMatrix& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf, CLHEP::HepMatrix& J);
+  int TrackJacobian( const TrackState& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf, TrackStateJacobian& J);
   
+  /** Compute track derivatives for extrapolation from Surf to fSurf.
+  *  Linearization point is State at Surf.  
+  */
+  int TrackJacobianNumerical( const TrackState& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf, TrackStateJacobian& J);
+
   /** Get local scatter gain matrix
   *  It calculates the derivates of track parameters State on 
   *  scattering angles theta1 and theta2. 
   */
-  void GetScatterGain(const CLHEP::HepMatrix& State, CLHEP::HepMatrix& G);
+  TrackStateGain GetScatterGain(const TrackState& State);
         
 };
  

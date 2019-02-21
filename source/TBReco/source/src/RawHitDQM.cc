@@ -29,7 +29,7 @@
 using namespace std; 
 using namespace lcio;
 using namespace marlin;
-using namespace CLHEP;
+
 
 namespace depfet {
 
@@ -166,12 +166,12 @@ void RawHitDQM::processEvent(LCEvent * evt)
       
       TBHit& Hit = HitStore.GetRecoHitFromID(ihit, iplane); 
       
-      double hit_u = Hit.GetCoord()[0][0]; 
-      double hit_v = Hit.GetCoord()[1][0]; 
+      double hit_u = Hit.GetCoord()[0]; 
+      double hit_v = Hit.GetCoord()[1]; 
       
-      double hit_sigma_u = TMath::Sqrt(Hit.GetCov()[0][0]); 
-      double hit_sigma_v = TMath::Sqrt(Hit.GetCov()[1][1]); 
-      double hit_corr_uv = Hit.GetCov()[0][1]/(hit_sigma_u*hit_sigma_v); 
+      double hit_sigma_u = TMath::Sqrt(Hit.GetCov()(0,0)); 
+      double hit_sigma_v = TMath::Sqrt(Hit.GetCov()(1,1)); 
+      double hit_corr_uv = Hit.GetCov()(0,1)/(hit_sigma_u*hit_sigma_v); 
         
       histoName = "hsigma_hit_u_det"+to_string( iplane ); 
       _histoMap[ histoName  ]->Fill(hit_sigma_u);

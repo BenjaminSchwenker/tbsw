@@ -31,8 +31,11 @@
 // Used namespaces
 using namespace std; 
 using namespace lcio;
-using namespace CLHEP; 
 using namespace marlin;
+
+
+#include <Eigen/Core>
+using Eigen::Vector3d;
 
 namespace depfet {
 
@@ -157,8 +160,8 @@ void BeamSpotAligner::processEvent(LCEvent * evt)
       
       if ( rectrack.GetTE(ipl).HasHit() ) {
       
-        double um = rectrack.GetTE(ipl).GetHit().GetCoord()[0][0];
-        double vm = rectrack.GetTE(ipl).GetHit().GetCoord()[1][0];
+        double um = rectrack.GetTE(ipl).GetHit().GetCoord()[0];
+        double vm = rectrack.GetTE(ipl).GetHit().GetCoord()[1];
         
         string histoName = "hhitmap_sensor"+to_string( ipl );
         _histoMap2D[ histoName  ]->Fill(um,vm); 
@@ -237,13 +240,13 @@ void BeamSpotAligner::end()
     // the z axis. 
     
     // We have calculated offset in local coord  
-    HepVector local_offset(3);
-    local_offset[0] = -offsetU; 
-    local_offset[1] = -offsetV;      
-    local_offset[2] = 0;  
+    Vector3d local_offset;
+    local_offset << -offsetU,-offsetV,0;
+
+
       
     // Transform local offset to global offset   
-    HepVector global_offset = _detector.GetDet(ipl).GetNominal().GetRotation().T() * local_offset ;  
+    Vector3d global_offset = _detector.GetDet(ipl).GetNominal().GetRotation().transpose() * local_offset ;
     double dx = global_offset[0]; 
     double dy = global_offset[1];      
     double dz = global_offset[2];   

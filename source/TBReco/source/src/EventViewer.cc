@@ -66,7 +66,7 @@ EventViewer::EventViewer() : Processor("EventViewer")
    registerProcessorParameter( "RootFileName",
                                "Output root file name",
                                _rootFileName,
-                               std::string("TB"));
+                               std::string("EventViewer.root"));
    
    registerProcessorParameter("SelectDataType", "Available types are: \n"
                              "RAWDATA: NxM matrix of raw data\n"
@@ -83,11 +83,6 @@ EventViewer::EventViewer() : Processor("EventViewer")
                                "Max number of triggers",
                                _maxTriggers,
                                static_cast<int>(1000));
-   
-   registerProcessorParameter( "UseStatusMap",
-                               "Display only GOOD Pixels, not available for RAWDATA",
-                               _useStatusMap,
-                               static_cast<bool>(false));
    
    registerProcessorParameter( "DisplaySensorID",
                                "-1: for all sensors or use sensorID to view specific sensor",
@@ -106,29 +101,28 @@ EventViewer::EventViewer() : Processor("EventViewer")
 //
 void EventViewer::init() {
 
-// Initialize variables
+   // Initialize variables
    _nRun = 0 ;
    _nEvt = 0 ;
    _triggerCounter = 0;
    
-// Print set parameters
+   // Print set parameters
    printProcessorParams();
-
-// Read detector constants from gear file
+   
+   // Read detector constants from gear file
    _detector.ReadGearConfiguration();    
    
-// transform the selectDataType string to small letters
+   // transform the selectDataType string to small letters
    transform(_selectDataType.begin(), _selectDataType.end(), _selectDataType.begin(), ::tolower);
    transform(_selectTrigger.begin(), _selectTrigger.end(), _selectTrigger.begin(), ::tolower);
-
-// CPU time start
+   
+   // CPU time start
    _timeCPU = clock()/1000;
-
-// ROOT_OUTPUT
-   string hname = _rootFileName + "_DepfetEvent.root"; 
-   _rootFile = new TFile(hname.c_str(),"recreate");
-
-// Check if trigger file needed
+   
+   // ROOT_OUTPUT
+   _rootFile = new TFile(_rootFileName.c_str(),"recreate");
+   
+   // Check if trigger file needed
    _triggers.clear();  
    if ( _selectTrigger == "external" ) {
           
@@ -154,15 +148,14 @@ void EventViewer::init() {
 
        }
        triggerFile.close();
-
+       
+       // sort triggers to improve search speed
+       sort (_triggers.begin(), _triggers.end());
+       
      } else {
-       streamlog_out(ERROR) << "Unable to open trigger file. " << endl; 
-       exit(1); 
+       streamlog_out(ERROR) << "Unable to open trigger file. " << endl;  
      }
      
-     // sort triggers to improve search speed
-     sort (_triggers.begin(), _triggers.end());
-
    } // endif 
    
 }
@@ -195,11 +188,7 @@ void EventViewer::processEvent(LCEvent * evt)
                                                                    << (evt->getEventNumber())
                                                                    << std::endl << std::endl;
    
-   if ( _triggerCounter > _maxTriggers ) {
-     streamlog_out( MESSAGE3 ) << "Enough triggers processed!" << endl;
-     throw StopProcessingException(this);
-   }
-           
+             
    //
    // Open collections
    try {
@@ -209,7 +198,7 @@ void EventViewer::processEvent(LCEvent * evt)
      if ( _selectTrigger == "external" ) {        
          trigger = checkExternalTrigger(evt);    
      } else  {
-         trigger = true; 
+         if ( _triggerCounter < _maxTriggers ) trigger = true; 
      }
         
      if ( trigger ) {
@@ -218,7 +207,7 @@ void EventViewer::processEvent(LCEvent * evt)
          else if ( _selectDataType  == "rawdata" )  dumpRawDataEvent( evt );
          else if ( _selectDataType  == "zerosupp" )  dumpZeroSuppEvent( evt );
          else {
-           exit(-1); 
+           streamlog_out(ERROR) << "Invalid data type selected. Should be 'data' or 'rawdata' or 'zerosupp'." << std::endl;
          }
          _triggerCounter++;          
      }
@@ -255,11 +244,9 @@ void EventViewer::dumpDataEvent( LCEvent * evt )
   try {
     
     LCCollectionVec * frames = dynamic_cast < LCCollectionVec * > (evt->getCollection(_DataCollectionName)); 
-      
-    if ( !_useStatusMap ) {    
-      
-      // Loop over all sensors 
-      for (unsigned int iSensor = 0; iSensor < frames->size(); iSensor++) {
+        
+    // Loop over all sensors 
+    for (unsigned int iSensor = 0; iSensor < frames->size(); iSensor++) {
         
         //
         // open data frame
@@ -273,10 +260,11 @@ void EventViewer::dumpDataEvent( LCEvent * evt )
         // skip this sensor 
         if ( _displaySensorID != currentSensorID  && _displaySensorID != -1 ) continue;     
  
-        streamlog_out(MESSAGE4) << "Dump sensor data wo status "<<currentSensorID<<endl;  
-
+        streamlog_out(MESSAGE3) << "Dump sensor data wo status "<<currentSensorID<<endl;  
+        
         // 
-        // prepare histo 
+        // create histo in local root file
+        _rootFile->cd("");  
         std::string histoName = _rootFileName+"_evt_"+to_string(eventID)+"_mod_"+to_string(currentSensorID); 
         std::string  histoTitle = "Evt:"+to_string(eventID)+" Mod:"+to_string(currentSensorID);
       	   
@@ -305,84 +293,13 @@ void EventViewer::dumpDataEvent( LCEvent * evt )
           }
         }
      
-        // write map to root file 
-        _rootFile->cd("/"); 
+        // write map to local root file 
         eventMap->Write();
     
-      } // end sensor loop
+    } // end sensor loop
         
-    } else {
-      
-      // Load status collection   
-      LCCollectionVec * statusCollection = dynamic_cast < LCCollectionVec * > (evt->getCollection("status"));  
-
-      // Loop over all sensors 
-      for (unsigned int iSensor = 0; iSensor < frames->size(); iSensor++) {
-       
-        //
-        // open data frame
-        TrackerDataImpl * matrix = dynamic_cast<TrackerDataImpl* > (frames->getElementAt(iSensor));
-        CellIDDecoder<TrackerDataImpl> idMatrixDecoder(frames);
-        int currentSensorID = idMatrixDecoder(matrix)["sensorID"]; 
-        int noOfXPixels =  idMatrixDecoder(matrix)["xMax"]+1;    
-        int noOfYPixels =  idMatrixDecoder(matrix)["yMax"]+1;   
-
-        // open status map 
-        TrackerRawDataImpl * status = dynamic_cast<TrackerRawDataImpl* > (statusCollection->getElementAt(iSensor));
-        
-        //
-        // skip this sensor 
-        if ( _displaySensorID != currentSensorID  && _displaySensorID != -1 ) continue;     
- 
-        streamlog_out(MESSAGE1) << "Dump sensor "<<currentSensorID<<endl;  
-
-        // 
-        // prepare histo 
-        std::string histoName = _rootFileName+"_evt_"+to_string(eventID)+"_mod_"+to_string(currentSensorID); 
-        std::string  histoTitle = "Evt:"+to_string(eventID)+" Mod:"+to_string(currentSensorID);
-      	   
-        double xmin = 0 - 0.5;
-        double xmax = noOfXPixels -1 + 0.5;
-        int xnbins = noOfXPixels;
-        double ymin = 0 - 0.5;
-        double ymax = noOfYPixels -1 + 0.5;
-        int ynbins = noOfYPixels; 
-        TH2D * eventMap = new TH2D(histoName.c_str(),histoTitle.c_str(),xnbins,xmin,xmax,ynbins,ymin,ymax);
-        eventMap->SetXTitle("X Axis"); 
-        eventMap->SetYTitle("Y Axis");
-
-        //
-        // fill 2D histo
-        FloatVec charges  = matrix->getChargeValues();
-        ShortVec pixelStatus = status->getADCValues();     
-        int iPixel = 0; 
-        for (int yPixel = 0; yPixel < noOfYPixels; yPixel++) {
-          for ( int xPixel = 0; xPixel < noOfXPixels; xPixel++) {
-        
-            double chargeValue = charges[iPixel];
-            short statusValue = pixelStatus[iPixel]; 
-         
-            if ( statusValue != 0 ) {
-              eventMap->Fill(xPixel,yPixel,0.0); 
-            } else {
-              eventMap->Fill(xPixel,yPixel,chargeValue); 
-            }
-
-            iPixel++;  
-      
-          }
-        }
-        
-        // write map to root file 
-        _rootFile->cd("/"); 
-        eventMap->Write();
-    
-      } // end sensor loop
-   
-    } // end _useStatus
-
   } catch(DataNotAvailableException &e){
-     streamlog_out(ERROR4) << "No data and/or status collection found" << std::endl;
+     streamlog_out(ERROR4) << "No data collection found" << std::endl;
   }  
 
   
@@ -409,18 +326,20 @@ void EventViewer::dumpRawDataEvent( LCEvent * evt )
       // open data frame
       TrackerRawDataImpl * rawmatrix = dynamic_cast<TrackerRawDataImpl* > (frames->getElementAt(iSensor));
       CellIDDecoder<TrackerRawDataImpl> idRawMatrixDecoder( frames );
-      int currentSensorID = idRawMatrixDecoder(rawmatrix)["sensorID"]; 
-      int noOfXPixels =  idRawMatrixDecoder(rawmatrix)["xMax"]+1;    
-      int noOfYPixels =  idRawMatrixDecoder(rawmatrix)["yMax"]+1;   
-
+      int currentSensorID = idRawMatrixDecoder(rawmatrix)["sensorID"];  
+      int ipl = _detector.GetPlaneNumber(currentSensorID);   
+      int noOfXPixels =  _detector.GetDet(ipl).GetNColumns();   
+      int noOfYPixels =  _detector.GetDet(ipl).GetNRows();  
+      
       //
       // skip this sensor 
       if ( _displaySensorID != currentSensorID  && _displaySensorID != -1 ) continue;     
- 
-      streamlog_out(MESSAGE1) << "Dump sensor "<<currentSensorID<<endl;  
-
+      
+      streamlog_out(MESSAGE3) << "Dump sensor plane " << ipl << " with sensorID " << currentSensorID << endl;  
+      
       // 
       // prepare histo 
+      _rootFile->cd(""); 
       std::string histoName = _rootFileName+"_rawEvt_"+to_string(eventID)+"_mod_"+to_string(currentSensorID); 
       std::string  histoTitle = "Raw Evt:"+to_string(eventID)+" Mod:"+to_string(currentSensorID);
       	   
@@ -449,7 +368,6 @@ void EventViewer::dumpRawDataEvent( LCEvent * evt )
       }
      
       // write map to root file 
-      _rootFile->cd("/"); 
       eventMap->Write();
 
     } // end sensor loop
@@ -461,7 +379,7 @@ void EventViewer::dumpRawDataEvent( LCEvent * evt )
 }
 
 //
-// Method dumping event data from Mimosa26 
+// Method dumping zero suppressed event data 
 //
 void EventViewer::dumpZeroSuppEvent( LCEvent * evt )
 {
@@ -489,16 +407,18 @@ void EventViewer::dumpZeroSuppEvent( LCEvent * evt )
       TrackerDataImpl * matrix = dynamic_cast<TrackerDataImpl* > (frames->getElementAt(iSensor));
       int currentSensorID = idMatrixDecoder(matrix)["sensorID"]; 
       int ipl = _detector.GetPlaneNumber(currentSensorID);   
-           
-      streamlog_out(MESSAGE4) << "Dump sensor iDetector " << iSensor << " with sensorID " << currentSensorID << endl;  
-      
       int noOfXPixels =  _detector.GetDet(ipl).GetNColumns();   
       int noOfYPixels =  _detector.GetDet(ipl).GetNRows();  
       
       //
       // skip this sensor 
       if ( _displaySensorID != currentSensorID  && _displaySensorID != -1 ) continue;     
+
+      streamlog_out(MESSAGE3) << "Dump sensor iDetector " << iSensor << " with sensorID " << currentSensorID << endl;  
       
+      // 
+      // prepare histo 
+      _rootFile->cd(""); 
       double xmin = 0 - 0.5;
       double xmax = noOfXPixels -1 + 0.5;
       int xnbins = noOfXPixels;
@@ -528,14 +448,13 @@ void EventViewer::dumpZeroSuppEvent( LCEvent * evt )
       }
        
       // write map to root file 
-      _rootFile->cd("/"); 
       eventMap->Write();
       
 
     } // end sensor loop
 
   } catch(DataNotAvailableException &e){
-     streamlog_out(ERROR4) << "No raw data collection found" << std::endl;
+     streamlog_out(ERROR4) << "No zerosupp data collection found" << std::endl;
   }   
   
 }

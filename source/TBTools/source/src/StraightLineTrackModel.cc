@@ -3,15 +3,14 @@
 // Author: Benjamin Schwenker, University of Göttingen 
 // <mailto:benjamin.schwenker@phys.uni-goettingen.de>
 
-// DEPFETTrackTool includes
+// TBTool includes
 #include "StraightLineTrackModel.h"
 
-#include "CLHEP/Vector/ThreeVector.h"
 
 #include <cmath>
+#include <iostream>
 
 // Namespaces
-using namespace CLHEP;
 using namespace std; 
 
 namespace depfet {
@@ -19,7 +18,7 @@ namespace depfet {
 /* Returns signed fligth length (mm) to surface fSurf from Surf. Track 
  * state given at Surf. 
  */
-double StraightLineTrackModel::GetSignedStepLength(const HepMatrix& State, const ReferenceFrame& Surf, const ReferenceFrame& fSurf)
+double StraightLineTrackModel::GetSignedStepLength(const TrackState& State, const ReferenceFrame& Surf, const ReferenceFrame& fSurf)
 {
   
   // Compute the intersection point of the trajectory with final 
@@ -30,55 +29,51 @@ double StraightLineTrackModel::GetSignedStepLength(const HepMatrix& State, const
   // l is the signed track length in mm. 
   
   // Intersection point on initial surface 
-  HepVector xPoint(3,0);
-  xPoint[0] = State[2][0];
-  xPoint[1] = State[3][0];
-  xPoint[2] = 0;
+  Vector3d xPoint;
+  xPoint<< State[2], State[3], 0;
   
   // Track direction on initial surface
-  HepVector Dir(3,0);
-  Dir[0] = State[0][0];
-  Dir[1] = State[1][0];
-  Dir[2] = 1;
-  Dir /= Dir.norm();  // Unit lenght vector  
+  Vector3d Dir;
+  Dir<< State[0], State[1], 1;
+  Dir.normalize(); // Unit lenght vector
+
   
   // Get coord trafo from Surf to fSurf
-  HepMatrix Rot = fSurf.GetRotation()*Surf.GetRotation().T();  
-  HepVector Origin = Surf.GetRotation()*(fSurf.GetPosition()-Surf.GetPosition());
-  
+  // perhaps use auto for the next two. Could help.
+  Matrix3d Rot = fSurf.GetRotation()*Surf.GetRotation().transpose();
+  Vector3d Origin = Surf.GetRotation()*(fSurf.GetPosition()-Surf.GetPosition());
+
   // Track direction on final surface   
-  HepVector fDir = Rot*Dir;
+  Vector3d fDir = Rot*Dir;
   if (fDir[2] == 0) { 
     // No intersection with final plane  
     return 0;   
   }
    
   // Surface normal vector in beam direction 
-  HepVector W(3,0); 
-  W[2] = 1;  
+  Vector3d W = Vector3d::UnitZ();
+
   
   // Signed flight length between surfaces  
-  double length = dot(Rot*(Origin-xPoint), W) / fDir[2];  
+  double length = (Rot*(Origin-xPoint)).dot(W) / fDir[2];
   
   return length;  
 }
 
 /* Returns true if track hits the surface fSurf.
  */
-bool StraightLineTrackModel::CheckHitsSurface(const HepMatrix& State, const ReferenceFrame& Surf, const ReferenceFrame& fSurf)
+bool StraightLineTrackModel::CheckHitsSurface(const TrackState& State, const ReferenceFrame& Surf, const ReferenceFrame& fSurf)
 {
    
   // Track direction on initial surface
-  HepVector Dir(3,0);
-  Dir[0] = State[0][0];
-  Dir[1] = State[1][0];
-  Dir[2] = 1;
-   
+  Vector3d Dir;
+  Dir<< State[0], State[1], 1;
+
   // Get coord trafo from Surf to fSurf
-  HepMatrix Rot = fSurf.GetRotation()*Surf.GetRotation().T();  
+  Matrix3d Rot = fSurf.GetRotation()*Surf.GetRotation().transpose();
   
   // Track direction on final surface   
-  HepVector fDir = Rot*Dir;
+  Vector3d fDir = Rot*Dir;
   if (fDir[2] == 0) { 
     // No intersection with final plane  
     return false;   
@@ -90,7 +85,7 @@ bool StraightLineTrackModel::CheckHitsSurface(const HepMatrix& State, const Refe
 
 /** Returns track state at surface fSurf from state at surface Surf 
  */
-HepMatrix StraightLineTrackModel::Extrapolate(const HepMatrix& State, const ReferenceFrame& Surf, const ReferenceFrame& fSurf, bool& error)
+TrackState StraightLineTrackModel::Extrapolate(const TrackState& State, const ReferenceFrame& Surf, const ReferenceFrame& fSurf, bool& error)
 {
 
   // No problem so far
@@ -100,45 +95,38 @@ HepMatrix StraightLineTrackModel::Extrapolate(const HepMatrix& State, const Refe
   // All variables refer to initial surface coord.   
 
   // Intersection point on reference surface 
-  HepVector xPoint(3,0);
-  xPoint[0] = State[2][0];
-  xPoint[1] = State[3][0];
-  xPoint[2] = 0;
+  Vector3d xPoint;
+  xPoint<< State[2], State[3], 0;
   
   // Track direction on reference surface
-  HepVector Dir(3,0);
-  Dir[0] = State[0][0];
-  Dir[1] = State[1][0];
-  Dir[2] = 1;
+  Vector3d Dir;
+  Dir<< State[0], State[1], 1;
   
   // Get coord trafo from Surf to fSurf
-  HepMatrix Rot = fSurf.GetRotation()*Surf.GetRotation().T();  
-  HepVector Origin = Surf.GetRotation()*(fSurf.GetPosition()-Surf.GetPosition());
+  Matrix3d Rot = fSurf.GetRotation()*Surf.GetRotation().transpose();
+  Vector3d Origin = Surf.GetRotation()*(fSurf.GetPosition()-Surf.GetPosition());
   
   // Track direction on final surface   
-  HepVector fDir = Rot*Dir;
+  Vector3d fDir = Rot*Dir;
   if (fDir[2] == 0) { 
     // No intersection with fSurf
     error = true;
-    return HepMatrix();
+    return TrackState::Zero();
   }
    
   // Surface normal vector in beam direction 
-  HepVector W(3,0); 
-  W[2] = 1;  
+  Vector3d W=Vector3d::UnitZ();
+
   
   // This is like step lenght 
-  double SX = dot(Rot*(Origin-xPoint), W) / fDir[2];  
+  double SX = (Rot*(Origin-xPoint)).dot(W) / fDir[2];
   
   // Intersection point with fSurf
-  HepVector fPoint = Rot*(xPoint+SX*Dir-Origin);  
+  Vector3d fPoint = Rot*(xPoint+SX*Dir-Origin);
   
   // Track parameters on fSurf
-  HepMatrix fState = State;  
-  fState[0][0] = fDir[0]/fDir[2]; 
-  fState[1][0] = fDir[1]/fDir[2];
-  fState[2][0] = fPoint[0]; 
-  fState[3][0] = fPoint[1]; 
+  TrackState fState;
+  fState << fDir[0]/fDir[2], fDir[1]/fDir[2], fPoint[0], fPoint[1], State[4];
   
   return fState; 
 }
@@ -149,44 +137,40 @@ HepMatrix StraightLineTrackModel::Extrapolate(const HepMatrix& State, const Refe
 /** Extrapolate track model (State/Surf) by a flight length of L. Afterwards, Surf is normal 
  *  to Z axis (beam axis). 
  */
-void StraightLineTrackModel::Extrapolate(HepMatrix& State, ReferenceFrame& Surf, double Length)
+void StraightLineTrackModel::Extrapolate(TrackState& State, ReferenceFrame& Surf, double Length)
 {
   
   // Get trafo from global coord to reference surface coord  
-  HepMatrix& Rot = Surf.GetRotRef(); 
-  HepVector& Origin = Surf.GetPosRef();
+  const Matrix3d& Rot = Surf.GetRotRef();
+  const Vector3d& Origin = Surf.GetPosRef();
   
   // Compute 3D representation of track: r(l) = xPoint + l*Dir
   
-  // Intersection point on Surf 
-  HepVector xPoint(3,0);
-  xPoint[0] = State[2][0];
-  xPoint[1] = State[3][0];
-  xPoint[2] = 0;
-  
-  // Track direction on Surf
-  HepVector Dir(3,0);
-  Dir[0] = State[0][0];
-  Dir[1] = State[1][0];
-  Dir[2] = 1;
-  Dir /= Dir.norm(); 
+
+  // Intersection point on Surf
+  Vector3d xPoint;
+  xPoint<< State[2], State[3], 0;
+
+   // Track direction on Surf
+  Vector3d Dir;
+  Dir<< State[0], State[1], 1;
   
   // Endpoint of extrapolation step in global coord.   
-  HepVector gPoint = Rot.T()*(xPoint+Length*Dir) + Origin ;
+  Vector3d gPoint = Rot.transpose()*(xPoint+Length*Dir) + Origin ;
   
   // Track direction in global coord. 
-  HepVector gDir = Rot.T()*Dir;
+  Vector3d gDir = Rot.transpose()*Dir;
   
   // Overwrite Surf  
   Surf.SetPosition(gPoint);              
-  Surf.SetRotation(HepMatrix(3, 3, 1));  // Surface normal to Z axis 
+  Surf.SetRotation(Matrix3d::Identity());  // Surface normal to Z axis
    
   // Overwrite State
-  State[0][0] = gDir[0]/gDir[2]; 
-  State[1][0] = gDir[1]/gDir[2];
-  State[2][0] = 0;                       // Track crosses origin of Surf    
-  State[3][0] = 0; 
-  
+  State[0] = gDir[0]/gDir[2];
+  State[1] = gDir[1]/gDir[2];
+  State[2] = 0;                       // Track crosses origin of Surf
+  State[3] = 0;
+ 
   return;   
 }
 
@@ -194,42 +178,36 @@ void StraightLineTrackModel::Extrapolate(HepMatrix& State, ReferenceFrame& Surf,
 /** Compute track derivatives for extrapolation from initial surface Surf to 
  *  final surface fSurf. The expansion is around state p.  
  */
-int StraightLineTrackModel::TrackJacobian( const HepMatrix& State, const ReferenceFrame& Surf, const ReferenceFrame& fSurf, HepMatrix& J) 
+int StraightLineTrackModel::TrackJacobian( const TrackState& State, const ReferenceFrame& Surf, const ReferenceFrame& fSurf, TrackStateJacobian& J)
 {
   
   // Get coord trafo from Surf to fSurf
-  HepMatrix Rot = fSurf.GetRotation()*Surf.GetRotation().T();  
-  HepVector Origin = Surf.GetRotation()*(fSurf.GetPosition()-Surf.GetPosition());
+  Matrix3d Rot = fSurf.GetRotation()*Surf.GetRotation().transpose();
+  Vector3d Origin = Surf.GetRotation()*(fSurf.GetPosition()-Surf.GetPosition());
   
   // Intersection point on initial surface 
-  HepVector xPoint(3,0);
-  xPoint[0] = State[2][0];
-  xPoint[1] = State[3][0];
-  xPoint[2] = 0;
-  
+  Vector3d xPoint;
+  xPoint<< State[2], State[3], 0;
+
   // Trajectory direction on initial surface
-  HepVector Dir(3,0);
-  Dir[0] = State[0][0];
-  Dir[1] = State[1][0];
-  Dir[2] = 1;
+  Vector3d Dir;
+  Dir<< State[0], State[1], 1;
+
   
   // Trajectory direction on final surface   
-  HepVector fDir = Rot*Dir;
+  Vector3d fDir = Rot*Dir;
   if (fDir[2] == 0) { // No intersection with final plane 
     return 1;
   }
    
   // Surface normal vector in beam direction 
-  HepVector W(3,0); 
-  W[2] = 1;  
+  Vector3d W=Vector3d::UnitZ();
   
-  double SX = dot(Rot*(Origin-xPoint), W) / fDir[2];
+  double SX = (Rot*(Origin-xPoint)).dot( W) / fDir[2];
   
   // DEFINE TRANSPORTATION MATRIX OF TRAJ. PARAMETRTS FROM 
   // CURRENT SURFACE TO TARGET SURFACE 
-   
-  HepMatrix j(5,5);
-  
+
   // For details of derivation, please refer to V. Karimäki "Straight Line 
   // Fit for Pixel and Strip Detectors with Arbitrary Plane Orientations", CMS Note.
   // Parameters at target surface:   U', V', U, V, Q/P
@@ -239,49 +217,46 @@ int StraightLineTrackModel::TrackJacobian( const HepMatrix& State, const Referen
   
   double Up = fDir[0]/fDir[2];
   double Vp = fDir[1]/fDir[2];     
-  
+  J=TrackStateJacobian::Zero();
   // *** dU'/du'
-  j[0][0] = (Rot[0][0]*fDir[2]-fDir[0]*Rot[2][0]) / (fDir[2]*fDir[2]) ; 
+  J(0,0) = (Rot(0,0)*fDir[2]-fDir[0]*Rot(2,0)) / (fDir[2]*fDir[2]) ;
   // *** dU'/dv'
-  j[0][1] = (Rot[0][1]*fDir[2]-fDir[0]*Rot[2][1]) / (fDir[2]*fDir[2]) ; 
+  J(0,1) = (Rot(0,1)*fDir[2]-fDir[0]*Rot(2,1)) / (fDir[2]*fDir[2]) ;
   // *** dU'/du
-  j[0][2] = 0;
+  J(0,2) = 0;
   // *** dU'/dv
-  j[0][3] = 0;
+  J(0,3) = 0;
   
   // *** dV'/du' 
-  j[1][0] = (Rot[1][0]*fDir[2]-fDir[1]*Rot[2][0]) / (fDir[2]*fDir[2]) ; 
+  J(1,0) = (Rot(1,0)*fDir[2]-fDir[1]*Rot(2,0)) / (fDir[2]*fDir[2]) ;
   // *** dV'/dv' 
-  j[1][1] = (Rot[1][1]*fDir[2]-fDir[1]*Rot[2][1]) / (fDir[2]*fDir[2]) ; 
+  J(1,1) = (Rot(1,1)*fDir[2]-fDir[1]*Rot(2,1)) / (fDir[2]*fDir[2]) ;
   // *** dV'/du
-  j[1][2] = 0;
+  J(1,2) = 0;
   // *** dV'/dV
-  j[1][3] = 0;
+  J(1,3) = 0;
     
   // *** dU/du
-  j[2][2] = Rot[0][0] - Rot[2][0] * Up;
+  J(2,2) = Rot(0,0) - Rot(2,0) * Up;
   // *** dU/dv
-  j[2][3] = Rot[0][1] - Rot[2][1] * Up;
+  J(2,3) = Rot(0,1) - Rot(2,1) * Up;
   // *** dU/du'
-  j[2][0] = SX * j[2][2];
+  J(2,0) = SX * J(2,2);
   // *** dU/dv'
-  j[2][1] = SX * j[2][3];
+  J(2,1) = SX * J(2,3);
   
   // *** dV/du
-  j[3][2] = Rot[1][0] - Rot[2][0] * Vp;
+  J(3,2) = Rot(1,0) - Rot(2,0) *  Vp;
   // *** dV/dv
-  j[3][3] = Rot[1][1] - Rot[2][1] * Vp;
+  J(3,3) = Rot(1,1) - Rot(2,1) * Vp;
   // *** dV/du'
-  j[3][0] = SX * j[3][2];
+  J(3,0) = SX * J(3,2);
   // *** dV/dv'
-  j[3][1] = SX * j[3][3];
+  J(3,1) = SX * J(3,3);
 
   // *** d(Q/P)/d(q/p)
-  j[4][4] = 1; 
+  J(4,4) = 1;
 
-
-  // The final track jacobian 
-  J = j; 
     
   // Everything ok
   return 0;
@@ -291,33 +266,31 @@ int StraightLineTrackModel::TrackJacobian( const HepMatrix& State, const Referen
 /** Numerical computation of track derivatives for extrapolation from Surf to fSurf. 
  *  Linearization point is State at Surf.  
  */
-
-/*
-
-int StraightLineTrackModel::TrackJacobian( const HepMatrix& State, const ReferenceFrame& Surf, const ReferenceFrame& fSurf, HepMatrix& J)
+int StraightLineTrackModel::TrackJacobianNumerical( const TrackState& State, const ReferenceFrame& Surf, const ReferenceFrame& fSurf, TrackStateJacobian& J)
 {
  
-  int ndim = 5; 
-  HepMatrix j(ndim,ndim); 
-  HepMatrix tmpState = State;
+
+  TrackState  tmpState = State;
   bool error = false; 
    
   // Extrapolate track along helix to next detector plane 
-  HepMatrix statePred = Extrapolate(tmpState, Surf, fSurf,  error);
+  TrackState statePred = Extrapolate(tmpState, Surf, fSurf,  error);
   if (error) {
     std::cout << "ERR: Propagation to next detector failed. Quit fitting!" << std::endl;
     return 1;   
   }   
 
-  HepMatrix difPred = statePred;
-   
+  TrackState difPred = statePred;
+
+  J= TrackStateJacobian::Zero();
+
   // do column wise differntiation:
-  for(int icol=0;icol<ndim;++icol){
+  for(int icol=0;icol<5;++icol){
     // choose step
-    double h=std::fabs(tmpState[icol][0])*1.e-4;
+    double h=std::fabs(tmpState[icol])*1.e-4;
     if(h<1e-8)h=1.e-8;
     // vary the state
-    tmpState[icol][0]+=h;
+    tmpState[icol]+=h;
     // extrap state 
     difPred = Extrapolate(tmpState, Surf, fSurf,  error); 
     if (error) {
@@ -327,53 +300,46 @@ int StraightLineTrackModel::TrackJacobian( const HepMatrix& State, const Referen
     // difference
     difPred-=statePred;
     // remove variation from state
-    tmpState[icol][0]-=h;
+    tmpState[icol]-=h;
     // fill jacobian with difference quotient
-    for(int irow=0;irow<ndim;++irow)j[irow][icol]=difPred[irow][0]/h;
+    for(int irow=0;irow<5;++irow)
+        J(irow,icol)=difPred[irow]/h;
   }
-  
-  // The final track jacobian 
-  J = j; 
-
   
       
   // Everything ok
   return 0;
-} 
-
-*/
+}
+ 
 
 /** Get local scatter gain matrix
  *  It calculates the derivates of track parameters State on 
  *  scattering angles theta1 and theta2. 
  */
-void StraightLineTrackModel::GetScatterGain(const HepMatrix& State, CLHEP::HepMatrix& G)
+TrackStateGain StraightLineTrackModel::GetScatterGain(const TrackState& State)
 {
    
   // Calculation of scatter gain matrix following Wolin and Ho (NIM A329 (1993) 493-500)
   // Transverse displacement of the track is ignored. A thin scatter is assumed. 
    
   // P3 and P4 are local direction tangents 
-  double p3 = State[0][0];    
-  double p4 = State[1][0]; 
+  double p3 = State[0];
+  double p4 = State[1];
      
   // Needed is the rotation matrix comoving frame -> detector frame.  
   // We construct a basis for the comoving frame:
    
   // n_trk is parallel to unscattered track direction
-  Hep3Vector n_trk;    
-  n_trk[0] = p3;    
-  n_trk[1] = p4;    
-  n_trk[2] = 1;  
-  n_trk /= n_trk.mag(); // Change vector to unit size
-   
+  Vector3d n_trk;
+  n_trk<< p3, p4, 1;
+  n_trk.normalize();
+
   // v_trk is orthogonal to track dir and detector u axis  
-  Hep3Vector u_hat(1,0,0);
-  Hep3Vector v_trk = n_trk.cross(u_hat);
-  v_trk /= v_trk.mag();
-  
+  Vector3d u_hat=Vector3d::UnitX();
+  Vector3d v_trk = n_trk.cross(u_hat).normalized();
+
   // u_trk completes rigth handed system  
-  Hep3Vector u_trk = v_trk.cross(n_trk);   
+  Vector3d u_trk = v_trk.cross(n_trk);
   
   // Now, we can directly read off the direction cosines 
   double a1 = u_trk[0];  
@@ -391,28 +357,33 @@ void StraightLineTrackModel::GetScatterGain(const HepMatrix& State, CLHEP::HepMa
   // The two independent scattering angles are called 
   // theta1 and theta2. A change in these is affecting
   // the scattered track parameters ...
-   
-  // *** dU'/dtheta1 
-  G[0][0] = ( a1*g3 - a3*g1 ) / ( g3*g3 );
-  // *** dU'/dtheta2 
-  G[0][1] = ( a2*g3 - a3*g2 ) / ( g3*g3 );
-  // *** dV'/dtheta1     
-  G[1][0] = ( b1*g3 - b3*g1 ) / ( g3*g3 );
-  // *** dV'/dtheta2 
-  G[1][1] = ( b2*g3 - b3*g2 ) / ( g3*g3 );
+  TrackStateGain G;    
   
-  // Scattering angles affect the track 
-  // do not affect impact point 
-  // *** dU/dtheta1     
-  G[2][0] = 0;
-  // *** dU/dtheta2 
-  G[2][1] = 0;
-  // *** dV/dtheta1     
-  G[3][0] = 0;
-  // *** dV/dtheta2   
-  G[3][1] = 0;    
+  // *** dU'/dtheta1
+  G(0,0) = ( a1*g3 - a3*g1 ) / ( g3*g3 );
+  // *** dU'/dtheta2
+  G(0,1) = ( a2*g3 - a3*g2 ) / ( g3*g3 );
+  // *** dV'/dtheta1
+  G(1,0) = ( b1*g3 - b3*g1 ) / ( g3*g3 );
+  // *** dV'/dtheta2
+  G(1,1) = ( b2*g3 - b3*g2 ) / ( g3*g3 );
+
+  // Scattering angles affect the track
+  // do not affect impact point
+  // *** dU/dtheta1
+  G(2,0) = 0;
+  // *** dU/dtheta2
+  G(2,1) = 0;
+  // *** dV/dtheta1
+  G(3,0) = 0;
+  // *** dV/dtheta2
+  G(3,1) = 0;
+  // *** d(q/p)/dtheta1
+  G(4,0) = 0;
+  // *** d(q/p)/dtheta2
+  G(4,1) = 0;
     
-  return ;
+  return G;
 }
 
 

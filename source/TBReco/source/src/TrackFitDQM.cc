@@ -28,7 +28,6 @@
 using namespace std; 
 using namespace lcio;
 using namespace marlin;
-using namespace CLHEP;
 
 namespace depfet {
 
@@ -184,11 +183,11 @@ void TrackFitDQM::processEvent(LCEvent * evt)
       TBTrackElement& TE = track.GetTE(ipl);  
            
       // Get local track parameters 
-      double trk_tu = TE.GetState().GetPars()[0][0];  // rad
-      double trk_tv = TE.GetState().GetPars()[1][0];  // rad
-      double trk_u = TE.GetState().GetPars()[2][0];   // mm
-      double trk_v = TE.GetState().GetPars()[3][0];   // mm
-      double trk_qp = TE.GetState().GetPars()[4][0];   // 1/GeV
+      double trk_tu = TE.GetState().GetPars()[0];  // rad
+      double trk_tv = TE.GetState().GetPars()[1];  // rad
+      double trk_u = TE.GetState().GetPars()[2];   // mm
+      double trk_v = TE.GetState().GetPars()[3];   // mm
+      double trk_qp = TE.GetState().GetPars()[4];   // 1/GeV
          
       double trk_charge = track.GetCharge();
       double trk_mom = std::abs(trk_charge/trk_qp); 
@@ -196,19 +195,19 @@ void TrackFitDQM::processEvent(LCEvent * evt)
       // Fill track parameter errors
       
       histoName = "hsigma2_tu_sensor"+to_string( ipl );
-      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()[0][0] ) ; 
+      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()(0,0) ) ; 
       
       histoName = "hsigma2_tv_sensor"+to_string( ipl );
-      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()[1][1] ) ;  
+      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()(1,1) ) ;  
       
       histoName = "hsigma2_u_sensor"+to_string( ipl );
-      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()[2][2] ); 
+      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()(2,2) ); 
       
       histoName = "hsigma2_v_sensor"+to_string( ipl );
-      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()[3][3] );
+      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()(3,3) );
       
       histoName = "hsigma2_qp_sensor"+to_string( ipl );
-      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()[4][4] );
+      _histoMap[ histoName  ]->Fill( TE.GetState().GetCov()(4,4) );
       
       //
       // Fill beam profile histograms 
@@ -254,11 +253,11 @@ void TrackFitDQM::processEvent(LCEvent * evt)
       if ( !TE.HasHit() ) continue;  
        
       // Get pixel residuals 
-      double du = TE.GetHit().GetCoord()[0][0] - TE.GetState().GetPars()[2][0]; // mm 
-      double dv = TE.GetHit().GetCoord()[1][0] - TE.GetState().GetPars()[3][0]; // mm
+      double du = TE.GetHit().GetCoord()[0] - TE.GetState().GetPars()[2]; // mm 
+      double dv = TE.GetHit().GetCoord()[1] - TE.GetState().GetPars()[3]; // mm
                
-      double pull_u = du / TMath::Sqrt( TE.GetState().GetCov()[2][2] + TE.GetHit().GetCov()[0][0] ) ; 
-      double pull_v = dv / TMath::Sqrt( TE.GetState().GetCov()[3][3] + TE.GetHit().GetCov()[1][1] ) ;  
+      double pull_u = du / TMath::Sqrt( TE.GetState().GetCov()(2,2) + TE.GetHit().GetCov()(0,0) ) ; 
+      double pull_v = dv / TMath::Sqrt( TE.GetState().GetCov()(3,3) + TE.GetHit().GetCov()(1,1) ) ;  
       
       //PixelCluster Cluster = TE.GetHit().GetCluster(); 
       
@@ -392,34 +391,34 @@ void TrackFitDQM::end()
     // ------------------------------  
 		
 	// This is the position vector of the sensor in the nominal telescope geometry
-	HepVector pos_f_nominal = _detector_nominal.GetDet(ipl).GetNominal().GetPosition(); 
+	auto pos_f_nominal = _detector_nominal.GetDet(ipl).GetNominal().GetPosition(); 
 		
 	// This is the rotation matrix of the sensor in the nominal telescope geoemtry; it 
 	// contains a discrete and a continuous factor. 
-	HepMatrix Rot_f_nominal = _detector_nominal.GetDet(ipl).GetNominal().GetRotation();
+	auto Rot_f_nominal = _detector_nominal.GetDet(ipl).GetNominal().GetRotation();
 
 	// This is the discrete factor of sensor rotation in the nominal telescope geometry. 
-	HepMatrix DRot_nominal = _detector_nominal.GetDet(ipl).GetDiscrete().GetRotation();
+	auto DRot_nominal = _detector_nominal.GetDet(ipl).GetDiscrete().GetRotation();
 		
 	// This is finally the continous factor of the rotation in the nominal telescope geometry
-	HepMatrix CRot_f_nominal = Rot_f_nominal*DRot_nominal.T(); 
+	auto CRot_f_nominal = Rot_f_nominal*DRot_nominal.transpose(); 
 		
 	// Euler angles are defined wrt. the continous rotation in the nominal telescope geometry
 	double alpha_f_nominal, beta_f_nominal, gamma_f_nominal; 
 	GetAnglesKarimaki(CRot_f_nominal, alpha_f_nominal, beta_f_nominal, gamma_f_nominal); 
 
 	// This is the position vector of the sensor in the aligned telescope geometry
-	HepVector pos_f = _detector.GetDet(ipl).GetNominal().GetPosition(); 
+	auto pos_f = _detector.GetDet(ipl).GetNominal().GetPosition(); 
 		
 	// This is the rotation matrix of the sensor in the aligned telescope geometry; it 
 	// contains a discrete and a continuous factor. 
-	HepMatrix Rot_f = _detector.GetDet(ipl).GetNominal().GetRotation();
+	auto Rot_f = _detector.GetDet(ipl).GetNominal().GetRotation();
 
 	// This is the discrete factor of sensor rotation in the aligned telescope geometry. 
-	HepMatrix DRot = _detector.GetDet(ipl).GetDiscrete().GetRotation();
+	auto DRot = _detector.GetDet(ipl).GetDiscrete().GetRotation();
 		
 	// This is finally the continous factor of the rotation in the aligned telescope geometry
-	HepMatrix CRot_f = Rot_f*DRot.T(); 
+	auto CRot_f = Rot_f*DRot.transpose(); 
 		
 	// Euler angles are defined wrt. the continous rotation in the aligned telescope geometry
 	double alpha_f, beta_f, gamma_f; 

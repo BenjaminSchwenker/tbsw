@@ -13,11 +13,9 @@
 #include <cassert>
 #include <cstdlib>
 
-// CLHEP includes 
-#include <CLHEP/Matrix/Matrix.h>
+
 
 using namespace std;
-using namespace CLHEP;
 
 namespace depfet {
 
@@ -47,25 +45,25 @@ TBTrackState SeedGenerator::CreateSeedTrack(TBHit FirstHit, TBHit SecondHit, TBD
   ReferenceFrame FirstFrame = Detector.GetDet( firstplane ).GetNominal(); 
   ReferenceFrame SecondFrame = Detector.GetDet( secondplane ).GetNominal(); 
    
-  HepVector FirstPoint = FirstHit.GetLocalSpacePoint(); 
-  HepVector FirstGPoint = FirstFrame.TransformPointToGlobal(FirstPoint);
+  Vector3d FirstPoint = FirstHit.GetLocalSpacePoint(); 
+  Vector3d FirstGPoint = FirstFrame.TransformPointToGlobal(FirstPoint);
   
-  HepVector SecondPoint = SecondHit.GetLocalSpacePoint(); 
-  HepVector SecondGPoint = SecondFrame.TransformPointToGlobal(SecondPoint);
+  Vector3d SecondPoint = SecondHit.GetLocalSpacePoint(); 
+  Vector3d SecondGPoint = SecondFrame.TransformPointToGlobal(SecondPoint);
   
   // Compute global track direction 
-  HepVector GobalDirection = SecondGPoint - FirstGPoint;
+  Vector3d GobalDirection = SecondGPoint - FirstGPoint;
  
   // Compute local track direction 
-  HepVector LocalDirection = FirstFrame.TransformVecToLocal(GobalDirection);  
+  Vector3d LocalDirection = FirstFrame.TransformVecToLocal(GobalDirection);  
   
   // Seed parameters at first sensor
-  HepMatrix Pars(5,1,0);  
-  Pars[0][0] = LocalDirection[0]/LocalDirection[2]; 
-  Pars[1][0] = LocalDirection[1]/LocalDirection[2];
-  Pars[2][0] = FirstHit.GetCoord()[0][0];
-  Pars[3][0] = FirstHit.GetCoord()[1][0];
-  Pars[4][0] = charge/mom;
+  TrackState Pars;  
+  Pars[0] = LocalDirection[0]/LocalDirection[2]; 
+  Pars[1] = LocalDirection[1]/LocalDirection[2];
+  Pars[2] = FirstHit.GetCoord()[0];
+  Pars[3] = FirstHit.GetCoord()[1];
+  Pars[4] = charge/mom;
   
   TBTrackState Seed;
   Seed.Pars = Pars;
@@ -85,18 +83,18 @@ TBTrackState SeedGenerator::CreateSeedTrack(TBHit Hit, TBDetector& Detector)
   ReferenceFrame Frame = Detector.GetDet( planenumber ).GetNominal(); 
   
   // Seed follows z direction
-  HepVector GobalDirection(3,0);
-  GobalDirection[2] = 1; 
+  Vector3d GobalDirection;
+  GobalDirection << 0,0,1;   
 
   // Compute local track direction 
-  HepVector LocalDirection = Frame.TransformVecToLocal(GobalDirection);  
+  Vector3d LocalDirection = Frame.TransformVecToLocal(GobalDirection);  
   
-  HepMatrix Pars(5,1,0); 
-  Pars[0][0] = LocalDirection[0]/LocalDirection[2];  
-  Pars[1][0] = LocalDirection[1]/LocalDirection[2];
-  Pars[2][0] = Hit.GetCoord()[0][0];
-  Pars[3][0] = Hit.GetCoord()[1][0];
-  Pars[4][0] = charge/mom;
+  TrackState Pars; 
+  Pars[0] = LocalDirection[0]/LocalDirection[2];  
+  Pars[1] = LocalDirection[1]/LocalDirection[2];
+  Pars[2] = Hit.GetCoord()[0];
+  Pars[3] = Hit.GetCoord()[1];
+  Pars[4] = charge/mom;
 
   TBTrackState Seed;
   Seed.Pars = Pars;
@@ -113,12 +111,12 @@ TBTrackState SeedGenerator::CreateSeedTrack()
   
   
   // Seed crosses origin and follows z axis 
-  HepMatrix Pars(5,1,0); 
-  Pars[0][0] = 0; 
-  Pars[1][0] = 0; 
-  Pars[2][0] = 0;
-  Pars[3][0] = 0;
-  Pars[4][0] = charge/mom;
+  TrackState Pars; 
+  Pars[0] = 0; 
+  Pars[1] = 0; 
+  Pars[2] = 0;
+  Pars[3] = 0;
+  Pars[4] = charge/mom;
         
   TBTrackState Seed;
   Seed.Pars = Pars;

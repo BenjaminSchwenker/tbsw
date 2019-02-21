@@ -33,7 +33,6 @@
 
 
 // Used namespaces
-using namespace CLHEP;
 using namespace lcio ;
 using namespace marlin ;
 
@@ -144,7 +143,12 @@ namespace depfet {
   //
   void SmearingDigitizer::processEvent(LCEvent * evt)
   {
-   
+     
+    // Print event number
+    if ((evt->getEventNumber())%100 == 0) streamlog_out(MESSAGE3) << "Events processed: "
+                                                                  << (evt->getEventNumber())
+                                                                  << std::endl << std::endl;
+    
     //
     // Open collections
     try {

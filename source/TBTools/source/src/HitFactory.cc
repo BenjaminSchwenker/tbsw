@@ -47,7 +47,7 @@ void HitFactory::AddRecoHit(TBHit & hit)
   int hitID = (int) _HitStore[ipl].size(); 
   
   // Compute unique sector id
-  int secID = floor( hit.GetCoord()[0][0] / _SectorPitch );
+  int secID = floor( hit.GetCoord()[0] / _SectorPitch );
   
   // Now we can proceed to register the hit 
   _HitStore[ipl].push_back(hit);     

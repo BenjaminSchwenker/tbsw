@@ -24,11 +24,12 @@
 #include <TRandom.h>
 #include <TRandom3.h>
 
+#include <Eigen/Eigenvalues> 
+
 // Used namespaces
 using namespace std; 
 using namespace lcio;
 using namespace marlin;
-using namespace CLHEP;
 
 namespace depfet {
 
@@ -134,49 +135,46 @@ namespace depfet {
     //
     // The particle state is defined relativ to the Z= m_GunPositionZ
     // plane. The 5 dimensional state vector of the beam particle is  
-    // (dx/dz,dy/dz,x,y,p) in global XYZ coordinates. 
-    HepSymMatrix S(5,0);
-    S[0][0] = std::pow(m_BeamSlopeXSigma,2);
-    S[1][1] = std::pow(m_BeamSlopeYSigma,2);
-    S[2][2] = std::pow(m_BeamVertexXSigma,2);
-    S[3][3] = std::pow(m_BeamVertexYSigma,2);
-    S[4][4] = std::pow(m_BeamMomentumSigma,2);    
-    S[0][2] = m_BeamCorrelationVertexXvsSlopeX*m_BeamSlopeXSigma*m_BeamVertexXSigma;
-    S[2][4] = m_BeamCorrelationVertexXvsMomentum*m_BeamVertexXSigma*m_BeamMomentumSigma;
-    S[1][3] = m_BeamCorrelationVertexYvsSlopeY*m_BeamVertexYSigma*m_BeamSlopeYSigma;
-    S[3][4] = m_BeamCorrelationVertexYvsMomentum*m_BeamVertexYSigma*m_BeamMomentumSigma;     
+    // (dx/dz,dy/dz,x,y,p) in global XYZ coordinates.  
+     Eigen::Matrix<double,5,5> S = Eigen::Matrix<double,5,5>::Zero();
+    
+    // First diagonal elements
+    S(0,0) = std::pow(m_BeamSlopeXSigma,2);
+    S(1,1) = std::pow(m_BeamSlopeYSigma,2);
+    S(2,2) = std::pow(m_BeamVertexXSigma,2);
+    S(3,3) = std::pow(m_BeamVertexYSigma,2);
+    S(4,4) = std::pow(m_BeamMomentumSigma,2); 
+
+    // Off diagonals 
+    S(0,2) = m_BeamCorrelationVertexXvsSlopeX*m_BeamSlopeXSigma*m_BeamVertexXSigma;
+    S(2,0) = m_BeamCorrelationVertexXvsSlopeX*m_BeamSlopeXSigma*m_BeamVertexXSigma;   
+    S(2,4) = m_BeamCorrelationVertexXvsMomentum*m_BeamVertexXSigma*m_BeamMomentumSigma;
+    S(4,2) = m_BeamCorrelationVertexXvsMomentum*m_BeamVertexXSigma*m_BeamMomentumSigma;
+    S(1,3) = m_BeamCorrelationVertexYvsSlopeY*m_BeamVertexYSigma*m_BeamSlopeYSigma;
+    S(3,1) = m_BeamCorrelationVertexYvsSlopeY*m_BeamVertexYSigma*m_BeamSlopeYSigma;
+    S(3,4) = m_BeamCorrelationVertexYvsMomentum*m_BeamVertexYSigma*m_BeamMomentumSigma; 
+    S(4,3) = m_BeamCorrelationVertexYvsMomentum*m_BeamVertexYSigma*m_BeamMomentumSigma;       
     
     // Construct average track state of beam particle 
-    m_Mean = HepVector(5);
-    m_Mean(1) = 0;
-    m_Mean(2) = 0;
-    m_Mean(3) = m_BeamVertexX;
-    m_Mean(4) = m_BeamVertexY;
-    m_Mean(5) = m_BeamMomentum;
+    m_Mean << 0, 0, m_BeamVertexX, m_BeamVertexY, m_BeamMomentum;
     
     // Decompose S and store results to 
     // later generate random deviates    
-    m_U  = HepMatrix(5,1);
-    m_Sigmas = HepVector(5);
+     
+    Eigen::SelfAdjointEigenSolver< Eigen::Matrix<double,5,5> > eigensolver(S);
+    if (eigensolver.info() != Eigen::Success) {
+      std::cerr << "In ParticelGunGenerator: Beam covariance matrix is not positive definite";  
+      std::cerr << "---Exiting to System\n";
+      exit(1);
+    }   
     
-    HepSymMatrix tempS ( S ); 
-    
-    m_U = diagonalize ( &tempS );               // S = U Sdiag U.T()
-    HepSymMatrix D = S.similarityT(m_U);        // D = U.T() S U = Sdiag
-    for (int i = 1; i <= S.num_row(); i++) {
-      double s2 = D(i,i);
-      if ( s2 > 0 ) {
-	    m_Sigmas(i) = std::sqrt ( s2 );
-      } else {
-        std::cerr << "In ParticelGunGenerator: " <<
-                    "      Beam covariance matrix is not positive definite.  Eigenvalues are:\n";
-        for (int ixx = 1; ixx <= S.num_row(); ixx++) {
-          std::cerr << "      " << D(ixx,ixx) << std::endl;
-        }
-        std::cerr << "---Exiting to System\n";
-        exit(1);
-      }
+    m_U  = eigensolver.eigenvectors();
+    m_Sigmas = eigensolver.eigenvalues();     
+     
+    for (int i = 0; i < 5; i++) {
+	  m_Sigmas(i) = std::sqrt ( m_Sigmas(i) );
     } 
+    
   }
 
   //
@@ -218,22 +216,22 @@ namespace depfet {
     while ( time < m_BeamTimeWindow ) { 
 
       // Sample 5 dimensional state vector for new beam particle 
-      HepVector state = deviates();
+      TrackState state = deviates();
     
       // The sampling may return a negative momentum 
-      if ( state(5) <= 0.001 ) state(5) = 0.001;
+      if ( state(4) <= 0.001 ) state(4) = 0.001;
 
-      double momentum = state(5);    // momentum in GeV        
-      double tx = state(1);          // direction tangent dx/dz
-      double ty = state(2);          // direction tangent dy/dz 
+      double momentum = state(4);    // momentum in GeV        
+      double tx = state(0);          // direction tangent dx/dz
+      double ty = state(1);          // direction tangent dy/dz 
       
       double Norm = momentum/std::sqrt( tx*tx + ty*ty + 1 );
       double P1 = tx*Norm; 
       double P2 = ty*Norm; 
       double P3 = Norm; 
       
-      double V1 = state(3);          // x vertex position  
-      double V2 = state(4);          // y vertex position   
+      double V1 = state(2);          // x vertex position  
+      double V2 = state(3);          // y vertex position   
       double V3 = m_BeamVertexZ;     // z vertex position  
           
       //
@@ -354,12 +352,13 @@ namespace depfet {
 
   }
   
-  HepVector ParticleGunGenerator::deviates( ) const
+  TrackState ParticleGunGenerator::deviates( ) const
   {
     // Returns vector of gaussian randoms based on sigmas, rotated by U,
-    // with means of 0. 
-    HepVector v(5);  // The vector to be returned
-    for ( int i = 1; i <= 5; i++ ) {
+    // with means of 0.
+    TrackState v = TrackState::Zero();
+ 
+    for ( int i = 0; i < 5; i++ ) {
       v(i) = gRandom->Gaus(0, m_Sigmas(i));  
     }
     return m_Mean + m_U*v;

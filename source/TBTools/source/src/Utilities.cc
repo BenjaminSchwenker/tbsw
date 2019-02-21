@@ -9,7 +9,7 @@
 #include <TROOT.h>
  	
 using namespace std;
-using namespace CLHEP;
+
 
 namespace depfet {
 
@@ -61,40 +61,6 @@ bool equal( double val1, double val2, double precision)
   return TMath::Abs(2*(val1-val2)/(val1+val2)) < precision;
 }
 
- 
-//////////////////////////////////////////////////////////////////////
-// Conversion of matrices
- 	
-/** \brief Convert a CLHEP HepMatrix to ROOT TMatrixD. */
-void CLHEPtoROOT( HepMatrix & oldM, TMatrixD * newM)
-{
-  newM->ResizeTo(oldM.num_row(), oldM.num_col());
-  for (int i = 0; i < oldM.num_row(); i++) {
-    for (int j = 0; j < oldM.num_col(); j++) {
-      (*newM)[i][j] = oldM[i][j];
-    }
-  }
-}
- 	
-/** \brief Convert a CLHEP HepSymMatrix to ROOT TMatrixDSym. */
-void CLHEPtoROOT( HepSymMatrix & oldM, TMatrixDSym * newM)
-{
-  newM->ResizeTo(oldM.num_row(), oldM.num_col());
-  for (int i = 0; i < oldM.num_row(); i++) {
-    for (int j = i; j < oldM.num_col(); j++) {
-      (*newM)[i][j] = oldM[i][j];
-    }
-  }
-}
- 	
-/** \brief Convert a CLHEP HepVector to ROOT TVectorD. */
-void CLHEPtoROOT( HepVector & oldV, TVectorD * newV)
-{
-  newV->ResizeTo(oldV.num_row());
-  for (int i = 0; i < oldV.num_row(); i++) {
-    (*newV)[i] = oldV[i];
-  }
-}
 	
 // Utility routines
 //==================

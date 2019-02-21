@@ -4,7 +4,7 @@
 #include "TObject.h"
 #include "TClonesArray.h"
 #include "TVectorD.h"
-#include "TMatrixDSym.h"
+#include "TMatrixD.h"
 #include "TArrayI.h"
 
 namespace depfet {
@@ -38,7 +38,7 @@ class AlignEvent {
   double fChi2;      // chi^2 of track fit
   TArrayI     * fIndex;                // daqid of hit planes
   TVectorD    * fMeasurements;         // measured hits
-  TMatrixDSym * fMeasuredCovariance;   // measured covariance matrix
+  TMatrixD * fMeasuredCovariance;   // measured covariance matrix
   TVectorD    * fRefTrackParameters;   // reference parameters 
   int fRefPlane;                       // plane number of reference frame
 
@@ -60,7 +60,7 @@ class AlignEvent {
   // without constructing
   TArrayI     * GetIndex() { return fIndex; };
   TVectorD    * GetMeasurements() { return fMeasurements; };
-  TMatrixDSym * GetMeasuredCovariance() { return fMeasuredCovariance; };
+  TMatrixD    * GetMeasuredCovariance() { return fMeasuredCovariance; };
   TVectorD    * GetRefTrackParameters() { return fRefTrackParameters; };
   
   

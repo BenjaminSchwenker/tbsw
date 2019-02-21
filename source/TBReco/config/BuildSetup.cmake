@@ -36,10 +36,6 @@ SET( Marlin_HOME "$ENV{TBSW_HOME}/Marlin"
 SET( TBTools_HOME "$ENV{TBSW_HOME}/TBTools"
      CACHE PATH "Path to TBTools" FORCE )
 
-# Path to CLHEP, respectively to 'clhep-config'
-SET( CLHEP_HOME "$ENV{CLHEP_HOME}"  
-     CACHE PATH "Path to CLHEP" FORCE )
-
 # Path to ROOT
 SET( ROOT_HOME "$ENV{ROOTSYS}"
     CACHE PATH "Path to ROOT " FORCE )
@@ -49,7 +45,7 @@ SET( ROOT_HOME "$ENV{ROOTSYS}"
 #############################################################################
 
 # Project depends on ...
-SET( PROJECT_DEPENDS "CLHEP GEAR LCIO Marlin ROOT TBTools" 
+SET( PROJECT_DEPENDS "GEAR LCIO Marlin ROOT TBTools" 
      CACHE STRING "TBReco dependence" FORCE )
     
 # Set CMAKE build type (None Debug Release RelWithDebInfo MinSizeRel), default: RelWithDebInfo

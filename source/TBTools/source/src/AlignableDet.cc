@@ -1,62 +1,47 @@
 #include "AlignableDet.h"
 
-
-using namespace CLHEP;
-
 namespace depfet {	
 
 /** Constructor 
  */
-AlignableDet::AlignableDet(int nAlignables, int nParameters)
+AlignableDet::AlignableDet(int nAlignables)
 { 
-  // Initially, no correction is known
-  alignmentParameters = HepVector(nAlignables*nParameters,0);      
-  alignmentCovariance = HepSymMatrix(nAlignables*nParameters,0);  
+  
+  // We assume six parameters per alignable for a planar sensor.
+  // And we do not store the cross correlations between the alignment of different sensors. 
+  
+  for (int i=0;i<nAlignables;i++) {
+    // Initially, no correction is known
+    alignmentParametersVec.push_back(SensorAlignmentParameters::Zero());
+    alignmentCovarianceVec.push_back(SensorAlignmentCovariance::Zero()); 
+  }
 }
 
 
 /** Getter
  */
-HepVector AlignableDet::GetAlignState(int ipl) 
+SensorAlignmentParameters AlignableDet::GetAlignState(int ipl) 
 {
-  HepVector a(6,0);     
-  for (int k=0; k<6; ++k) { 
-    a[k] = alignmentParameters[ipl*6+k];
-  }
-  return a; 
+  return alignmentParametersVec.at(ipl); 
 }
 
-
-HepSymMatrix AlignableDet::GetAlignCovariance(int ipl)
+SensorAlignmentCovariance AlignableDet::GetAlignCovariance(int ipl)
 {
-  HepSymMatrix E(6,0); 
-  for (int k=0; k<6; ++k) {
-    for (int l=0; l<=k; ++l) {    
-      E[k][l] = alignmentCovariance[ipl*6+k][ipl*6+l];
-    }
-  }
-  return E; 
+  return alignmentCovarianceVec.at(ipl); 
 } 
  
 
  
 /** Setter
  */
-void AlignableDet::SetAlignState(int ipl, HepVector a)
+void AlignableDet::SetAlignState(int ipl, SensorAlignmentParameters a)
 {
-  for (int k=0; k<6; ++k) { 
-    alignmentParameters[ipl*6+k] = a[k];
-  }
+  alignmentParametersVec[ipl] = a; 
 }
 
-
-void AlignableDet::SetAlignCovariance(int ipl, HepSymMatrix E)
+void AlignableDet::SetAlignCovariance(int ipl, SensorAlignmentCovariance E)
 {
-   for (int k=0; k<6; ++k) {
-    for (int l=0; l<=k; ++l) {    
-      alignmentCovariance[ipl*6+k][ipl*6+l] = E[k][l];
-    }
-  }
+  alignmentCovarianceVec[ipl] = E; 
 }  
 
 

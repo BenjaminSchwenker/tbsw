@@ -1,12 +1,8 @@
 #ifndef REFERENCEFFRAME_H
 #define REFERENCEFFRAME_H 1
 
-// Include basic C
-
-// Include CLHEP classes
-#include <CLHEP/Matrix/Matrix.h>
-#include <CLHEP/Matrix/Vector.h>
-
+#include <Eigen/Core>
+#include <Eigen/Geometry> 
 
 namespace depfet {
 
@@ -15,15 +11,17 @@ namespace depfet {
  *  Handles coordinate transformations between a pair of cartesian coordinate
  *  systems. The coordinate systems will be called GLOBAL and LOCAL frames. 
  *  
- *  A ReferenceFrame object consists of a HepVector and a HepMatrix. The vector 
- *  is pointing to origin of the local frame. The HepMatrix is the 3x3 rotation 
+ *  A ReferenceFrame object consists of a 3D vector and a 3D rotation matrix. The vector 
+ *  is pointing to origin of the local frame. The matrix is the 3x3 rotation 
  *  matrix into the local frame. 
  */
- 	
+using Eigen::Vector3d;
+using Eigen::Matrix3d;
+
 class ReferenceFrame {
   
-  CLHEP::HepVector fPosition;
-  CLHEP::HepMatrix fRotation;
+  Vector3d fPosition;
+  Matrix3d fRotation;
   	
  public:
   
@@ -34,36 +32,36 @@ class ReferenceFrame {
   bool operator==(const ReferenceFrame& other) const; 
 
   
-  ReferenceFrame(CLHEP::HepVector& position, CLHEP::HepMatrix& rotation);
+  ReferenceFrame(Vector3d& position, Matrix3d& rotation);
   	
   // Methods for access to member variables
-  CLHEP::HepVector GetPosition() const { return fPosition; };
-  CLHEP::HepMatrix GetRotation() const { return fRotation; };
-  void SetPosition(CLHEP::HepVector position) { fPosition = position; };
-  void SetRotation(CLHEP::HepMatrix rotation) { fRotation = rotation; };
-  CLHEP::HepVector& GetPosRef()  { return fPosition; };
-  CLHEP::HepMatrix& GetRotRef()  { return fRotation; };
-  
+  Vector3d GetPosition() const { return fPosition; }
+  Matrix3d GetRotation() const { return fRotation; }
+  void SetPosition(Vector3d position) { fPosition = position; }
+  void SetRotation(Matrix3d rotation) { fRotation = rotation; }
+  const Vector3d& GetPosRef()  { return fPosition; }
+  const Matrix3d& GetRotRef()  { return fRotation; }
+
   // Method transforming given point from global ref. system to local ref. system
-  CLHEP::HepVector TransformPointToLocal(CLHEP::HepVector& global) const  
-    { return fRotation * (global - fPosition); };
+  Vector3d TransformPointToLocal(Vector3d& global) const
+    { return fRotation * (global - fPosition); }
   
   // Method transforming given point from local ref. system to global ref. system
-  CLHEP::HepVector TransformPointToGlobal(CLHEP::HepVector& local) const 
-    { return fRotation.T() * local + fPosition; };
+  Vector3d TransformPointToGlobal(Vector3d& local) const
+    { return fRotation.transpose() * local + fPosition; }
    
   // Method transforming given vector from global ref. system to local ref. system
-  CLHEP::HepVector TransformVecToLocal(CLHEP::HepVector& globalVec)  const
-    { return fRotation * globalVec;   }
+  Vector3d TransformVecToLocal(Vector3d& globalVec)  const
+    { return fRotation * globalVec; }
   
   // Method transforming given vector from global ref. system to local ref. system
-  CLHEP::HepVector TransformVecToGlobal(CLHEP::HepVector& localVec) const
-    { return fRotation.T() * localVec;  }
+  Vector3d TransformVecToGlobal(Vector3d& localVec) const
+    { return fRotation.transpose() * localVec;  }
    
   // Get direction cosines of local unit vectors UVW wrt. global XYZ  
-  CLHEP::HepVector GetU() ;
-  CLHEP::HepVector GetV() ;
-  CLHEP::HepVector GetW() ;
+  Vector3d GetU() ;
+  Vector3d GetV() ;
+  Vector3d GetW() ;
 
   // Get Z position of surface 
   double GetZPosition() const

@@ -15,14 +15,11 @@
 #include "ThreeDModel.h"
 
 // ROOT includes
-#include "TH1F.h"
-#include "TH2F.h"
 #include "TTree.h"
 #include "TMath.h"
 #include "TRandom.h"
 
 // Namespaces
-using namespace CLHEP;
 using namespace std; 
 
 namespace depfet {
@@ -38,7 +35,7 @@ KalmanAlignmentAlgorithm2::KalmanAlignmentAlgorithm2() {}
  *  The Jacobian matrix is evaluated for track parematers p0=(tu, tv, u, v)
  *  and for given sensor position and rotation.   
  */
-HepMatrix KalmanAlignmentAlgorithm2::Jacobian_Alignment(const HepMatrix & p0, const HepMatrix & Rot,const HepVector & Pos ) const
+SensorAlignmentJacobian KalmanAlignmentAlgorithm2::Jacobian_Alignment(const TrackState & p0, const Matrix3d & Rot ) const
 {
   
   // First, we build the derivatives wrt. the alignment 
@@ -47,26 +44,26 @@ HepMatrix KalmanAlignmentAlgorithm2::Jacobian_Alignment(const HepMatrix & p0, co
   // Reference: see V. Karimäki's HIP paper
      
   // Local track parameters  
-  double tu = p0[0][0];
-  double tv = p0[1][0];
-  double u  = p0[2][0];
-  double v  = p0[3][0]; 
+  double tu = p0[0];
+  double tv = p0[1];
+  double u  = p0[2];
+  double v  = p0[3]; 
   
   // The jacobian matrix
-  HepMatrix Jaq(2, 6);
+  SensorAlignmentJacobian Jaq;
   
-  Jaq[0][0] = -1;      // dfu / ddu
-  Jaq[1][0] = 0;       // dfv / ddu
-  Jaq[0][1] = 0;       // dfu / ddv
-  Jaq[1][1] = -1;      // dfv / ddv
-  Jaq[0][2] = +tu;     // dfu / ddw
-  Jaq[1][2] = +tv;     // dfv / ddw
-  Jaq[0][3] = -v*tu;   // dfu / ddalpha
-  Jaq[1][3] = -v*tv;   // dfv / ddalpha
-  Jaq[0][4] = u*tu;    // dfu / ddbeta
-  Jaq[1][4] = u*tv;    // dfv / ddbeta
-  Jaq[0][5] = -v;      // dfu / ddgamma
-  Jaq[1][5] = u;       // dfv / ddgamma
+  Jaq(0,0) = -1;      // dfu / ddu
+  Jaq(1,0) = 0;       // dfv / ddu
+  Jaq(0,1) = 0;       // dfu / ddv
+  Jaq(1,1) = -1;      // dfv / ddv
+  Jaq(0,2) = +tu;     // dfu / ddw
+  Jaq(1,2) = +tv;     // dfv / ddw
+  Jaq(0,3) = -v*tu;   // dfu / ddalpha
+  Jaq(1,3) = -v*tv;   // dfv / ddalpha
+  Jaq(0,4) = u*tu;    // dfu / ddbeta
+  Jaq(1,4) = u*tv;    // dfv / ddbeta
+  Jaq(0,5) = -v;      // dfu / ddgamma
+  Jaq(1,5) = u;       // dfv / ddgamma
    
   //cout << "Jaq " << Jaq << endl; 
   
@@ -74,17 +71,16 @@ HepMatrix KalmanAlignmentAlgorithm2::Jacobian_Alignment(const HepMatrix & p0, co
   // matrix wrt. ar=(dx, dy, dz, dalpha, dbeta, dgamma).
   
   // Compute A=daq/dar
-  HepMatrix A(6,6,1);  
-  A.sub(1,1,Rot); 
-  
-  //cout << "A " << A << endl; 
+  Eigen::Matrix<double,6,6> A;
+  A = Eigen::Matrix<double,6,6>::Identity();
+  A.block<3,3>(0,0) = Rot;
    
   // Apply chain rule 
-  HepMatrix Ja=Jaq*A; 
+  Jaq=(Jaq*A).eval(); 
   
-  //cout << "Ja " << Ja << endl; 
   
-  return Ja;
+  
+  return Jaq;
 }
 
 
@@ -99,14 +95,15 @@ bool KalmanAlignmentAlgorithm2::AlignDetector(TBDetector& detector, AlignableDet
          
     // Load current pixel module    
     Det & adet = detector.GetDet(ipl);
-        
+         
     // Read alignment corrections for sensor ipl 
-    double dx = alignconst.alignmentParameters[ipl*6+0]; 
-    double dy = alignconst.alignmentParameters[ipl*6+1];      
-    double dz = alignconst.alignmentParameters[ipl*6+2];    
-    double dalpha = alignconst.alignmentParameters[ipl*6+3];
-    double dbeta  = alignconst.alignmentParameters[ipl*6+4];
-    double dgamma = alignconst.alignmentParameters[ipl*6+5];
+    SensorAlignmentParameters alignPars = alignconst.GetAlignState(ipl);
+    double dx = alignPars(0);  
+    double dy = alignPars(1);      
+    double dz = alignPars(2);     
+    double dalpha = alignPars(3); 
+    double dbeta  = alignPars(4); 
+    double dgamma = alignPars(5);
      
     // Compute a 'delta' frame from corrections 
     ReferenceFrame deltaFrame = ReferenceFrame::create_karimaki_delta(dx,dy,dz,dalpha,dbeta,dgamma); 
@@ -163,7 +160,7 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
     int nFixed = 0; 
     for (int iParameter=0; iParameter < nParameters; iParameter++){
       // Parameter is fixed? 
-      double sigma2 =  AlignStore.GetAlignCovariance(iAlignable)[iParameter][iParameter];   
+      double sigma2 =  AlignStore.GetAlignCovariance(iAlignable)(iParameter,iParameter);   
       if (sigma2 == 0 ) {
         ++nFixed;
       }     
@@ -315,53 +312,47 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
       // Remember that p0,C0 are track estimates with the 
       // current (global) detector alignment 
        
-      HepMatrix p0 = TE.GetState().GetPars();
-      HepSymMatrix C0 = TE.GetState().GetCov(); 
-      HepMatrix m = TE.GetHit().GetCoord();     
-      HepSymMatrix V = TE.GetHit().GetCov();   
+      TrackState p0 = TE.GetState().GetPars();
+      TrackStateCovariance C0 = TE.GetState().GetCov(); 
+      Vector2d m = TE.GetHit().GetCoord();     
+      Matrix2d V = TE.GetHit().GetCov();   
          
       // Copy local alignment state/cov  
       //-------------------------------
-      HepVector a0 = AlignStore.GetAlignState(ipl);
-      HepSymMatrix E0 = AlignStore.GetAlignCovariance(ipl); 
+      SensorAlignmentParameters a0 = AlignStore.GetAlignState(ipl);
+      SensorAlignmentCovariance E0 = AlignStore.GetAlignCovariance(ipl); 
       
       // Jacobian matrix, derivatives of measurement equation 
       // m=f(p,a) to track parameters p at (a0,p0) 
-      HepMatrix H = TrackFitter.GetHMatrix();
+      StateHitProjector H = TrackFitter.GetHMatrix();
       
       // Jacobian matrix, derivatives of measurement equation 
-      // m=f(p,a) to alignment parameters a at (a0,p0) 
-      HepVector Pos = TE.GetDet().GetNominal().GetPosition(); 
-      HepMatrix Rot = TE.GetDet().GetNominal().GetRotation();
-      HepMatrix D = Jacobian_Alignment(p0, Rot, Pos); 
+      // m=f(p,a) to alignment parameters a at (a0,p0)  
+      Matrix3d Rot = TE.GetDet().GetNominal().GetRotation();
+      SensorAlignmentJacobian D = Jacobian_Alignment(p0, Rot); 
        
       // Weigth matrix of measurment 
-      int ierr; 
-      HepSymMatrix W = (V + C0.similarity(H) + E0.similarity(D) ).inverse(ierr);
-      if (ierr != 0) {
+      bool invertible = true;
+      Matrix2d W = (V + H*C0*H.transpose() + D*E0*D.transpose() ).inverse();
+      if (!invertible) {
         if (logLevel > 2) { 
           cout << "ERR: Matrix inversion failed. Skipping alignable!" << endl;
         } 
         continue;
       }	
-      
-      // Gain matrix K for alignment 
-      HepMatrix K = E0 * D.T() * W;
-      // Track prediction for hit coord   
-      HepMatrix f = H*p0;     
               
       // Update for alignment state + cov  
-      HepVector a1 = a0 + K * (m - f) ;
-      HepSymMatrix E1 = E0 - (W.similarityT(D)).similarity(E0); 
-       
+      SensorAlignmentParameters a1 = a0 + (E0 * D.transpose() * W) * (m -  (H*p0) ) ;
+      SensorAlignmentCovariance E1 = E0 - E0*D.transpose()*W*D*E0.transpose();   
+          
       // Outlier rejection II
       //----------------------
       bool filterEvent = false;
       if (deviationCut > 0.0){
         for (int ipar=0; ipar < nParameters; ipar++){
-          if (TMath::Abs(a1[ipar]-a0[ipar]) > deviationCut * TMath::Sqrt(E0[ipar][ipar])) {
+          if (TMath::Abs(a1[ipar]-a0[ipar]) > deviationCut * TMath::Sqrt(E0(ipar,ipar))) {
             cout << "Deviation cut for parameter "<< ipar << ": " << TMath::Abs(a1[ipar] - a0[ipar] ) 
-                 << " while std. deviation is " << TMath::Sqrt(E0[ipar][ipar]) << endl;
+                 << " while std. deviation is " << TMath::Sqrt(E0(ipar,ipar)) << endl;
             filterEvent = true;
           }
         }

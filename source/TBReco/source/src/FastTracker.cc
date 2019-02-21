@@ -35,7 +35,6 @@
 using namespace std; 
 using namespace lcio;
 using namespace marlin;
-using namespace CLHEP;
 
 namespace depfet {
 
@@ -502,6 +501,7 @@ void FastTracker::processEvent(LCEvent * evt)
       
      // Print the track candidate 
      streamlog_out(MESSAGE2) << "Printing final track: " << std::endl;  
+     streamlog_out(MESSAGE2) << " Chi2=" << (*ctrack).GetChiSqu() << ", NDF=" << (*ctrack).GetNDF() << std::endl;  
      for(int ipl=0;ipl<_nTelPlanes;ipl++) {
        if ( (*ctrack).GetTE(ipl).HasHit() ) {
          streamlog_out(MESSAGE2) << " at plane " << ipl << ": "
@@ -662,8 +662,8 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
          // Skip all candidate tracks with a very 
          // large angle relative to Z axis. 
          if ( _maxSlope > 0 ) {         
-           double dxdz = Seed.GetPars()[0][0];
-           double dydz = Seed.GetPars()[1][0]; 
+           double dxdz = Seed.GetPars()[0];
+           double dydz = Seed.GetPars()[1]; 
            if ( ( std::abs(dxdz) > _maxSlope ) || ( std::abs(dydz) > _maxSlope )  ) 
            {
              streamlog_out ( MESSAGE2 ) << "Slope too large. Skipping track candidate!! " << endl; 
@@ -727,8 +727,8 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
        // Skip all candidate tracks with a very 
        // large angle relative to Z axis. 
        if ( _maxSlope > 0 ) {         
-         double dxdz = Seed.GetPars()[0][0];
-         double dydz = Seed.GetPars()[1][0]; 
+         double dxdz = Seed.GetPars()[0];
+         double dydz = Seed.GetPars()[1]; 
          if ( ( std::abs(dxdz) > _maxSlope ) || ( std::abs(dydz) > _maxSlope )  ) 
          {
            streamlog_out ( MESSAGE2 ) << "Slope too large. Skipping track candidate!! " << endl; 
@@ -769,15 +769,14 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
   int nAmbiguousHits = 0;   
          
   // This is the initial track state vector
-  HepMatrix x0(5,1,0);
+  TrackState x0=TrackState::Zero();
          
   // This is the initial covariance matrix 
-  HepSymMatrix C0(5,0);
-  for (int i = 0; i < 2; i++) {
-    C0[i][i] = 1E-2;
-    C0[i+2][i+2] = 1E1; 
-  } 
-  C0[4][4] = 1;  
+  TrackStateCovariance C0 = TrackStateCovariance::Zero();
+  TrackState diag;
+  diag<<1e-2,1e-2,1e1,1e1,1;
+  C0.diagonal() = diag;
+
           
   double finderChi2 = 0; 
   
@@ -794,18 +793,18 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
   for(int ipl=istart; ipl!=istop; ipl+=idir) { 
             
     // This is the reference state on the current track element
-    HepMatrix& xref = trk.GetTE(ipl).GetState().GetPars();
+    TrackState& xref = trk.GetTE(ipl).GetState().GetPars();
                      
     // Skip passive sensors    
     if( _isActive[ipl] && trk.GetTE(ipl).IsCrossed() ) { 
                   
       // This is the filtered local track state using all hits 
       // encountered so far 
-      HepMatrix x = xref + x0;
+      TrackState x = xref + x0;
              
       // Get extrapolated intersection coordinates
-      double u = x[2][0]; 
-      double v = x[3][0]; 
+      double u = x[2];
+      double v = x[3];
              
       // Fast preselection of hit candidates compatible to   
       // predicted intersection coordinates. 
@@ -821,8 +820,8 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
         // Get reco hit at plane ipl 
         int hitid = HitIdVec[icand];
         TBHit & RecoHit = HitStore.GetRecoHitFromID(hitid, ipl);   
-        double uhit = RecoHit.GetCoord()[0][0];              
-        double vhit = RecoHit.GetCoord()[1][0]; 
+        double uhit = RecoHit.GetCoord()[0];
+        double vhit = RecoHit.GetCoord()[1];
        
         // Discard hits with too large residuals
         if ( std::abs(u - uhit) >= _maxResidualU[ipl] && _maxResidualU[ipl] > 0) continue; 
@@ -844,15 +843,14 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
       } 
               
       if ( besthitid!=-1 )  {
-        // Add closest hit to candidate track
-        // This is a simple greedy selection and may be wrong in 
-        // there are hit ambiguities or the reference track is 
-        // too bad.
-               
+        // Try to compute the predicted hit chi2. This involves a matrix 
+        // inversion and may fail -> returns chi2<0.         
         TBHit& BestHit = HitStore.GetRecoHitFromID(besthitid, ipl);
-               
-        if ( TrackFitter.GetPredictedChi2(x, C0, BestHit) < _outlierChi2Cut ) {
-          double hitchi2 = TrackFitter.FilterHit(BestHit, xref, x0, C0);
+        double hitchi2 = TrackFitter.GetPredictedChi2(x, C0, BestHit);
+         
+        if ( hitchi2 < _outlierChi2Cut && hitchi2 >= 0  ) {
+          // Add closest hit to candidate track
+          TrackFitter.FilterHit(BestHit, xref, x0, C0);
           BestHit.SetUniqueID(besthitid);             
           trk.GetTE(ipl).SetHit(BestHit);               
           // Some bookkeeping   
@@ -873,7 +871,7 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
     // Extrapolate filtered state to next track element 
     int inext = ipl+idir;
     if (inext!=istop)  {
-      HepMatrix& nxref = trk.GetTE(inext).GetState().GetPars();
+      auto nxref = trk.GetTE(inext).GetState().GetPars();
       exerr = TrackFitter.PropagateState(trk.GetTE(ipl), trk.GetTE(inext), xref, nxref, x0, C0); 
       if ( exerr ) { // just skip the track 
         _noOfFailedFits++;

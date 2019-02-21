@@ -30,13 +30,10 @@
 #include <IMPL/SimTrackerHitImpl.h>
 #include <UTIL/CellIDDecoder.h>
 
-// Include CLHEP classes
-#include <CLHEP/Matrix/Vector.h>
-#include <CLHEP/Vector/ThreeVector.h>
+
 
 // Used namespaces
 using namespace std; 
-using namespace CLHEP; 
 using namespace lcio ;
 using namespace marlin ;
 
@@ -72,11 +69,12 @@ namespace depfet {
                            std::string("tracks") ) ;
     
     // Processor parameters:
-    
+
     registerProcessorParameter ("AlignmentDBFileName",
-                                "This is the name of the LCIO file with the alignment constants (add .slcio)",
-                                _alignmentDBFileName, static_cast< string > ( "alignmentDB.slcio" ) );     
-       
+                             "This is the name of the file with the alignment constants (add .root)",
+                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) ); 
+    
+         
     registerProcessorParameter ("MaxResidualU",
                                 "Maximum u residual for matching simHits to hits [mm]. Put -1 to deactivate cut.",
                                 _maxResidualU,  static_cast < double > (0.2));
@@ -281,8 +279,8 @@ namespace depfet {
               double simHitPosV = simHit->getPosition()[1];
               
               
-              double hitPosU = recoTrack.GetTE(ipl).GetState().GetPars()[2][0];
-              double hitPosV = recoTrack.GetTE(ipl).GetState().GetPars()[3][0];
+              double hitPosU = recoTrack.GetTE(ipl).GetState().GetPars()[2];
+              double hitPosV = recoTrack.GetTE(ipl).GetState().GetPars()[3];
               
               // Skip all DUT hits with too large residuum 
               if ( std::abs(hitPosU-simHitPosU) >= _maxResidualU && _maxResidualU > 0 ) continue;  
@@ -325,121 +323,122 @@ namespace depfet {
           std::string histoName;
           
           SimTrackerHit * simHit = SimHitStore[ track2simhit[i] ]; 
-          Hep3Vector momentum(simHit->getMomentum()[0],simHit->getMomentum()[1],simHit->getMomentum()[2]);
+          Vector3d momentum; 
+          momentum << simHit->getMomentum()[0] , simHit->getMomentum()[1] , simHit->getMomentum()[2];
           
           // Compute a local track state from simHit
-          HepMatrix sim_x(5,1,0);
-          sim_x[0][0] = momentum[0]/momentum[2];                              // du/dw   
-          sim_x[1][0] = momentum[1]/momentum[2];                              // dv/dw      
-          sim_x[2][0] = simHit->getPosition()[0];                             // u
-          sim_x[3][0] = simHit->getPosition()[1];                             // v
-          sim_x[4][0] = simHit->getMCParticle()->getCharge()/momentum.mag();  // q/p
-
+          TrackState sim_x;
+          sim_x[0] = momentum[0]/momentum[2];                              // du/dw   
+          sim_x[1] = momentum[1]/momentum[2];                              // dv/dw      
+          sim_x[2] = simHit->getPosition()[0];                             // u
+          sim_x[3] = simHit->getPosition()[1];                             // v
+          sim_x[4] = simHit->getMCParticle()->getCharge()/momentum.norm();  // q/p
+          
           histoName = "htrk_dir_truth_det"+to_string( ipl ); 
-          _histoMap2D[ histoName  ]->Fill(sim_x[0][0],sim_x[1][0]);  
+          _histoMap2D[ histoName  ]->Fill(sim_x[0],sim_x[1]);  
           
           histoName = "htrk_tu_truth_det"+to_string( ipl );
-          _histoMap[ histoName  ]->Fill(sim_x[0][0]);  
+          _histoMap[ histoName  ]->Fill(sim_x[0]);  
           
           histoName = "htrk_tv_truth_det"+to_string( ipl );
-          _histoMap[ histoName  ]->Fill(sim_x[1][0]);  
+          _histoMap[ histoName  ]->Fill(sim_x[1]);  
           
           histoName = "htrk_u_truth_det"+to_string( ipl );
-          _histoMap[ histoName  ]->Fill(sim_x[2][0]);  
+          _histoMap[ histoName  ]->Fill(sim_x[2]);  
           
           histoName = "htrk_v_truth_det"+to_string( ipl );
-          _histoMap[ histoName  ]->Fill(sim_x[3][0]);  
+          _histoMap[ histoName  ]->Fill(sim_x[3]);  
           
           histoName = "htrk_mom_truth_det"+to_string( ipl );
-          _histoMap[ histoName  ]->Fill(momentum.mag());
+          _histoMap[ histoName  ]->Fill(momentum.norm());
           
           
           TBTrack& recoTrack = TrackStore[i];
            
-          HepMatrix rec_x = recoTrack.GetTE(ipl).GetState().GetPars();
-          HepSymMatrix& rec_cov = recoTrack.GetTE(ipl).GetState().GetCov();  
+          auto rec_x = recoTrack.GetTE(ipl).GetState().GetPars();
+          auto rec_cov = recoTrack.GetTE(ipl).GetState().GetCov();  
           
           double rec_charge = recoTrack.GetCharge();       
-          double rec_mom = std::abs(rec_charge/rec_x[4][0]);   
+          double rec_mom = std::abs(rec_charge/rec_x[4]);   
 
           // Fill reco track parameters
              
           histoName = "htrk_tu_det"+to_string( ipl );
-          _histoMap[ histoName  ]->Fill(rec_x[0][0]);  
+          _histoMap[ histoName  ]->Fill(rec_x[0]);  
           
           histoName = "htrk_tv_det"+to_string( ipl );
-          _histoMap[ histoName  ]->Fill(rec_x[1][0]); 
+          _histoMap[ histoName  ]->Fill(rec_x[1]); 
           
           histoName = "htrk_u_det"+to_string( ipl );
-          _histoMap[ histoName  ]->Fill(rec_x[2][0]); 
+          _histoMap[ histoName  ]->Fill(rec_x[2]); 
           
           histoName = "htrk_v_det"+to_string( ipl );
-          _histoMap[ histoName  ]->Fill(rec_x[3][0]); 
+          _histoMap[ histoName  ]->Fill(rec_x[3]); 
           
           histoName = "htrk_mom_det"+to_string( ipl );
           _histoMap[ histoName  ]->Fill( rec_mom ); 
           
           // Fill track parameter pulls
                      
-          HepMatrix diff = rec_x-sim_x;
+          auto diff = rec_x-sim_x;
           
           // Case w/o magnetic field is spacial
           if ( ( std::abs(_detector.GetBx()) + std::abs(_detector.GetBy()) + std::abs(_detector.GetBz()) )  == 0 )  {
              
             int ierr; 
-            HepMatrix jchisq = diff.sub(1,4,1,1).T()*rec_cov.sub(1,4).inverse(ierr)*diff.sub(1,4,1,1);
-                        
+            auto jchisq = diff.block<4,1>(0,0).transpose()*rec_cov.block<4,4>(0,0).inverse()*diff.block<4,1>(0,0);
+                
             histoName = "hJ_det"+to_string( ipl );
-            _histoMap[histoName]->Fill(jchisq[0][0]);  
+            _histoMap[histoName]->Fill(jchisq[0]);  
             
             histoName = "hJp_det"+to_string( ipl );
-            _histoMap[histoName]->Fill(TMath::Prob(jchisq[0][0], 4));
+            _histoMap[histoName]->Fill(TMath::Prob(jchisq[0], 4));
              
           } else {
             
             int ierr; 
-            HepMatrix jchisq = diff.T()*rec_cov.inverse(ierr)*diff;
+            auto jchisq = diff.transpose()*rec_cov.inverse()*diff;
             
             histoName = "hJ_det"+to_string( ipl );
-            _histoMap[histoName]->Fill(jchisq[0][0]);  
+            _histoMap[histoName]->Fill(jchisq[0]);  
             
             histoName = "hJp_det"+to_string( ipl );
-            _histoMap[histoName]->Fill(TMath::Prob(jchisq[0][0], 5));
+            _histoMap[histoName]->Fill(TMath::Prob(jchisq[0], 5));
             
           }
            
           
           histoName = "hp1_det"+to_string( ipl );
-          _histoMap[ histoName ]->Fill(diff[0][0]/TMath::Sqrt(rec_cov[0][0]));
+          _histoMap[ histoName ]->Fill(diff[0]/TMath::Sqrt(rec_cov(0,0) ));
           
           histoName = "hp2_det"+to_string( ipl );
-          _histoMap[ histoName ]->Fill(diff[1][0]/TMath::Sqrt(rec_cov[1][1]));
+          _histoMap[ histoName ]->Fill(diff[1]/TMath::Sqrt(rec_cov(1,1) ));
           
           histoName = "hp3_det"+to_string( ipl );
-          _histoMap[ histoName ]->Fill(diff[2][0]/TMath::Sqrt(rec_cov[2][2]));
+          _histoMap[ histoName ]->Fill(diff[2]/TMath::Sqrt(rec_cov(2,2) ));
           
           histoName = "hp4_det"+to_string( ipl );
-          _histoMap[ histoName ]->Fill(diff[3][0]/TMath::Sqrt(rec_cov[3][3]));  
+          _histoMap[ histoName ]->Fill(diff[3]/TMath::Sqrt(rec_cov(3,3) ));  
           
           histoName = "hp5_det"+to_string( ipl );
-          _histoMap[ histoName ]->Fill(diff[4][0]/TMath::Sqrt(rec_cov[4][4]));   
+          _histoMap[ histoName ]->Fill(diff[4]/TMath::Sqrt(rec_cov(4,4) ));   
           
           // Fill track parameter errors
           
           histoName = "hsigma_tu_det"+to_string( ipl );
-          _histoMap[ histoName  ]->Fill( TMath::Sqrt(rec_cov[0][0]) ) ; 
+          _histoMap[ histoName  ]->Fill( TMath::Sqrt(rec_cov(0,0) ) ) ; 
            
           histoName = "hsigma_tv_det"+to_string( ipl );
-          _histoMap[ histoName  ]->Fill( TMath::Sqrt(rec_cov[1][1]) ) ;  
+          _histoMap[ histoName  ]->Fill( TMath::Sqrt(rec_cov(1,1) ) ) ;  
           
           histoName = "hsigma_u_det"+to_string( ipl );
-          _histoMap[ histoName  ]->Fill( TMath::Sqrt( rec_cov[2][2]) ); 
+          _histoMap[ histoName  ]->Fill( TMath::Sqrt( rec_cov(2,2) ) ); 
           
           histoName = "hsigma_v_det"+to_string( ipl );
-          _histoMap[ histoName  ]->Fill( TMath::Sqrt( rec_cov[3][3]) );
+          _histoMap[ histoName  ]->Fill( TMath::Sqrt( rec_cov(3,3) ) );
           
           histoName = "hsigma_mom_det"+to_string( ipl );
-          _histoMap[ histoName  ]->Fill( rec_mom*rec_mom*TMath::Sqrt( rec_cov[4][4]) ); 
+          _histoMap[ histoName  ]->Fill( rec_mom*rec_mom*TMath::Sqrt( rec_cov(4,4) ) ); 
           
           // Hit variables  
           if ( recoTrack.GetTE(ipl).HasHit() ) {
@@ -448,15 +447,15 @@ namespace depfet {
             double  hitchi2 = recoTrack.GetTE(ipl).GetChiSqu();  
             
             // Get hit residual
-            HepMatrix r = recoTrack.GetTE(ipl).GetHit().GetCoord();
+            auto r = recoTrack.GetTE(ipl).GetHit().GetCoord();
             r -= recoTrack.GetTE(ipl).GetState().GetXCoord();
             
             // Fill hit residuals 
             histoName = "hresU_det"+to_string( ipl );
-            _histoMap[ histoName ]-> Fill(r[0][0]); 
+            _histoMap[ histoName ]-> Fill(r[0]); 
             
             histoName = "hresV_det"+to_string( ipl );
-            _histoMap[ histoName ]->Fill(r[1][0]);
+            _histoMap[ histoName ]->Fill(r[1]);
                     
             histoName = "hchi2inc_det"+to_string( ipl );  
             _histoMap[histoName]->Fill(hitchi2);  
@@ -703,14 +702,14 @@ namespace depfet {
       histoName = "hresU_det"+to_string( ipl );
       min = -10*adet.GetSensitiveSizeU()/(adet.GetNCellsU()+1); 
       max = +10*adet.GetSensitiveSizeU()/(adet.GetNCellsU()+1); 
-      _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, min, max);
+      _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 301, min, max);
       _histoMap[ histoName ]->SetXTitle("u residual [mm]"); 
       _histoMap[ histoName ]->SetYTitle("tracks"); 
       
       histoName = "hresV_det"+to_string( ipl );
       min = -10*adet.GetSensitiveSizeV()/(adet.GetNCellsV()+1); 
       max = +10*adet.GetSensitiveSizeV()/(adet.GetNCellsV()+1); 
-      _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, min, max); 
+      _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 301, min, max); 
       _histoMap[ histoName ]->SetXTitle("v residual [mm]"); 
       _histoMap[ histoName ]->SetYTitle("tracks"); 
       

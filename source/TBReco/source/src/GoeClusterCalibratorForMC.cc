@@ -28,9 +28,6 @@
 #include <IMPL/SimTrackerHitImpl.h>
 #include <UTIL/CellIDDecoder.h>
 
-// Include CLHEP classes
-#include <CLHEP/Matrix/Vector.h>
-#include <CLHEP/Vector/ThreeVector.h>
 
 // Include ROOT classes
 #include <TFile.h>
@@ -40,7 +37,6 @@
 
 // Used namespaces
 using namespace std; 
-using namespace CLHEP; 
 using namespace lcio ;
 using namespace marlin ;
 
@@ -213,7 +209,7 @@ namespace depfet {
       TBHit recoHit ( lciohit  );        
       int sensorID = recoHit.GetDAQID();      
                 
-      streamlog_out(MESSAGE2) << " RecoHit with sensorID " << sensorID << " at: (" << recoHit.GetCoord()[0][0] << ", " << recoHit.GetCoord()[1][0] << ")" 
+      streamlog_out(MESSAGE2) << " RecoHit with sensorID " << sensorID << " at: (" << recoHit.GetCoord()[0] << ", " << recoHit.GetCoord()[1] << ")" 
                               << endl;
         
       bool ignoreID = false;
@@ -268,8 +264,8 @@ namespace depfet {
               double simHitPosV = simHit->getPosition()[1];
                
               TBHit& recoHit = RecoHits[i];
-              double hitPosU = recoHit.GetCoord()[0][0];
-              double hitPosV = recoHit.GetCoord()[1][0];
+              double hitPosU = recoHit.GetCoord()[0];
+              double hitPosV = recoHit.GetCoord()[1];
                
               // Skip all hits with too large residuum 
               if ( std::abs(hitPosU-simHitPosU) >= _maxResidualU && _maxResidualU > 0 ) continue;  
@@ -313,14 +309,15 @@ namespace depfet {
           Det & Sensor = _detector.GetDet(ipl);   
            
           SimTrackerHit * simHit = SimHits[ hit2simhit[ihit] ]; 
-          Hep3Vector momentum(simHit->getMomentum()[0],simHit->getMomentum()[1],simHit->getMomentum()[2]);
+          Vector3d momentum;
+          momentum << simHit->getMomentum()[0], simHit->getMomentum()[1],simHit->getMomentum()[2];
           
           // Get local track parameters 
           double trk_tu = momentum[0]/momentum[2];    // rad
           double trk_tv = momentum[1]/momentum[2];    // rad
           double trk_u = simHit->getPosition()[0];    // mm
           double trk_v = simHit->getPosition()[1];    // mm
-          double trk_mom = momentum.mag();            // GeV
+          double trk_mom = momentum.norm();            // GeV
           
           // Get cluster label  
           PixelCluster Cluster = hit.GetCluster(); 

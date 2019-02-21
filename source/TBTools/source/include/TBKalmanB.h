@@ -1,15 +1,11 @@
 #ifndef TBKalmanB_H
 #define TBKalmanB_H 1
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "TBTrack.h"
 #include "TBHit.h"
 #include "GenericTrackModel.h"
 
-// CLHEP includes 
-#include <CLHEP/Matrix/Vector.h>
-#include <CLHEP/Matrix/Matrix.h>
-#include <CLHEP/Matrix/SymMatrix.h>
 
 
 namespace depfet {
@@ -47,33 +43,37 @@ namespace depfet {
  */
 
 
-//! Class FilterState
+//! Class KalFilterDet
 /* 
- * Class FilterState manages the filter states at a detector plane. 
+ * Class KalFilterDet manages the results of a Kalman filter pass 
+ * for a particular sub detector. The class can be symmetrically
+ * used for the forward and backward filter pass. The detectors
+ * are uniquily identified by their plane number, i.e. position 
+ * along the beam line. 
  * 
- * The FilterState class stores [x,C] variable pairs for the 
+ * The KalFilterDet class stores [x,C] variable pairs for the 
  * estimated track states. The [x,C] pair is stored both for 
- * predicted estimate only 
+ * predicted and updated KF estimates. 
  * 
  * @Author B. Schwenker, University of Göttingen
  * <mailto:benjamin.schwenker@phys.uni-goettingen.de>
  */
 
-class FilterState
+class KalFilterDet
 {
  public:
   
   /* Predicted estimator 
    */
-  CLHEP::HepMatrix Pr_x;     
-  CLHEP::HepSymMatrix Pr_C; 
+  TrackState Pr_x;    
+  TrackStateCovariance Pr_C;     
+  
 };
-
 
 /* Data type used to store the results of a filter pass. 
  */ 
-typedef std::vector<FilterState> FilterStateVec;
-
+typedef std::vector<KalFilterDet> FilterStateVec;
+typedef Eigen::Matrix<double,2,5> StateHitProjector;
 
 class TBKalmanB {
   
@@ -83,11 +83,11 @@ class TBKalmanB {
   /** Default Constructor  
    */
   TBKalmanB(TBDetector& detector);
-
-  /** Default d'tor  
+  
+  /** Default Destructor 
    */
   ~TBKalmanB();
-
+  
   /** Performs track fitting. Returns error flag. 
    */
   bool Fit(TBTrack& trk);
@@ -130,33 +130,33 @@ class TBKalmanB {
   
   /** Returns the chi2 increment
    */
-  double GetChi2Increment(CLHEP::HepMatrix& p, CLHEP::HepSymMatrix& C, TBHit& hit); 
+  double GetChi2Increment(TrackState& p, TrackStateCovariance& C, TBHit& hit);
   
   /** Returns the chi2 increment
    */
-  double GetChi2Increment( CLHEP::HepMatrix& r, CLHEP::HepMatrix& H, CLHEP::HepSymMatrix& C, CLHEP::HepSymMatrix& V); 
+  double GetChi2Increment(const Vector2d& r, const StateHitProjector& H, const TrackStateCovariance& C, const Matrix2d& V);
     
   /** Returns the predicted chi2 for hit
    */
-  double GetPredictedChi2(CLHEP::HepMatrix& p, CLHEP::HepSymMatrix& C, TBHit& hit); 
+  double GetPredictedChi2(const TrackState& p, const TrackStateCovariance& C, const TBHit& hit);
   
   /** Returns the predicted chi2
    */
-  double GetPredictedChi2( CLHEP::HepMatrix& r, CLHEP::HepMatrix& H, CLHEP::HepSymMatrix& C, CLHEP::HepSymMatrix& V); 
+  double GetPredictedChi2(const Vector2d& r, const StateHitProjector& H, const TrackStateCovariance& C, const Matrix2d& V);
   
   /** Propagte state from trackelement te to next track element nte 
    */
-  int PropagateState(TBTrackElement& te, TBTrackElement& nte, CLHEP::HepMatrix& xref, CLHEP::HepMatrix& nxref, CLHEP::HepMatrix& x0, CLHEP::HepSymMatrix& C0);
+  int PropagateState(TBTrackElement& te, TBTrackElement& nte, TrackState& xref, TrackState& nxref, TrackState& x0, TrackStateCovariance& C0);
   
   /** Filters a new hit. Returns predicted chi2 
    */
-  double FilterHit(TBHit& hit, CLHEP::HepMatrix& xref, CLHEP::HepMatrix& x0, CLHEP::HepSymMatrix& C0);  
+  double FilterHit(TBHit& hit, TrackState& xref, TrackState& x0, TrackStateCovariance& C0);  
 
   /** Get underlying track model
    */
   GenericTrackModel* GetTrackModel() {return TrackModel;}  
    
-  CLHEP::HepMatrix& GetHMatrix()
+  const StateHitProjector& GetHMatrix()
     { return H;} 
 
   /** Set number of degrees of freedom in trk
@@ -168,7 +168,7 @@ class TBKalmanB {
   
   /** Compute a priori predicted estimate on first sensor. Returns reference state at first sensor.
    */
-  CLHEP::HepMatrix ComputeBeamConstraint( CLHEP::HepMatrix& x0, CLHEP::HepSymMatrix& C0, ReferenceFrame& FirstSensorFrame, double mass, double mom, double charge);
+  TrackState ComputeBeamConstraint( TrackState& x0, TrackStateCovariance& C0, ReferenceFrame& FirstSensorFrame, double mass, double mom, double charge);
   
   /** Run filter on track. Returns fit chi2. 
    *    
@@ -176,26 +176,25 @@ class TBKalmanB {
    *  Input: IDIR           : -1 for backward filter, 1 for forward filter 
    *  Output : RESULT       : Estimated [x,C] pairss for all detectors 
    */
-  double FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::vector<CLHEP::HepMatrix>& RefStateVec ,int idir, FilterStateVec& Result); 
+  double FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::vector<TrackState>& RefStateVec ,int idir, FilterStateVec& Result); 
   
   /** Compute the weighted means of forward and backward filter estimated. In a 
    *  numerically robust way. Returns error flag.
    */
-  bool GetSmoothedData( CLHEP::HepMatrix& xb, CLHEP::HepSymMatrix& Cb, CLHEP::HepMatrix& rf, CLHEP::HepSymMatrix& Cf,
-                        CLHEP::HepMatrix& xs, CLHEP::HepSymMatrix& Cs);
+  bool GetSmoothedData( TrackState& xb, TrackStateCovariance& Cb, TrackState& rf, TrackStateCovariance& Cf,
+                        TrackState& xs, TrackStateCovariance& Cs);
 
   
   
-  int MAP_FORWARD(   double theta2, 
-                        CLHEP::HepMatrix& xref, ReferenceFrame& Surf, 
-                        CLHEP::HepMatrix& nxref, ReferenceFrame& nSurf, 
-                        CLHEP::HepMatrix& x0, CLHEP::HepSymMatrix& C0
-                     ); 
+  int MAP_FORWARD(double theta2,
+                        TrackState& xref, ReferenceFrame& Surf, ReferenceFrame& nSurf,
+                        TrackState& x0, TrackStateCovariance& C0
+                     );
    
   int MAP_BACKWARD(   double theta2, 
-                        CLHEP::HepMatrix& xref, ReferenceFrame& Surf, 
-                        CLHEP::HepMatrix& nxref, ReferenceFrame& nSurf, 
-                        CLHEP::HepMatrix& x0, CLHEP::HepSymMatrix& C0
+                        TrackState& xref, ReferenceFrame& Surf,
+                        TrackState& nxref, ReferenceFrame& nSurf,
+                        TrackState& x0, TrackStateCovariance& C0
                      ); 
   
    
@@ -206,8 +205,14 @@ class TBKalmanB {
   int NumIt;
    
   // Project states to hit coord
-  CLHEP::HepMatrix H; 
-  
+  StateHitProjector H;
+   
+  // Initial track state vector to start fitting 
+  TrackState x0;
+
+  // Initial track state covariacne matric to start fitting
+  TrackStateCovariance C0;
+
   double mass;
   double charge;
   

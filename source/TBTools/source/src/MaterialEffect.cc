@@ -11,9 +11,12 @@
 #include "TMath.h"
 #include <Math/DistFunc.h>
 
-using namespace std;
-using namespace CLHEP;
+#include <Eigen/Geometry> 
 
+using namespace std;
+
+using Eigen::Matrix3d;
+using Eigen::Vector3d;
 
 namespace materialeffect {
 
@@ -23,7 +26,7 @@ namespace materialeffect {
  * parameter gets updated. The thickness t is given in units of the 
  * radiation length X0.
  */ 
-void SimulateBetherHeitlerEnergyLoss(HepMatrix& State, double t, double mass, double charge, double rndm)     
+void SimulateBetherHeitlerEnergyLoss(TrackState& State, double t, double mass, double charge, double rndm)
 {
   if ( t > 0  ) { 
     // Comput energy loss fraction
@@ -32,7 +35,7 @@ void SimulateBetherHeitlerEnergyLoss(HepMatrix& State, double t, double mass, do
     double z = TMath::Exp(-u);
     
     // Compute initial energy 
-    double mom = charge/State[4][0];
+    double mom = charge/State[4];
     double m2 = mass*mass;
     double p2 = mom*mom;
     double e2 = m2 + p2;
@@ -44,7 +47,7 @@ void SimulateBetherHeitlerEnergyLoss(HepMatrix& State, double t, double mass, do
     else mom = 0.001*mass;
     
     // Finally, update the state
-    State[4][0] = charge/mom;  
+    State[4] = charge/mom;
   } 
 }
 
@@ -84,7 +87,7 @@ double ComputeDeltaInSilicon(double gamma2, double beta2)
  * Computes the most probable energy loss of a heavy charged particle in silicon of given 
  * thickness according to Landau theory (see PDG)
  */ 
-double GetMostProbableEnergyLossInSilicon(HepMatrix& State, double thick, double mass, double charge)
+double GetMostProbableEnergyLossInSilicon(TrackState& State, double thick, double mass, double charge)
 {
   double A = 28; 
   double Z = 14; 
@@ -93,7 +96,7 @@ double GetMostProbableEnergyLossInSilicon(HepMatrix& State, double thick, double
   double eMass = 0.5109989E-3;
   double exciteE = 170.0E-9;
          
-  double mom = charge/State[4][0];   
+  double mom = charge/State[4];
   double m2 = mass*mass;
   double p2 = mom*mom;
   double e2 = m2 + p2;
@@ -122,7 +125,7 @@ double GetMostProbableEnergyLossInSilicon(HepMatrix& State, double thick, double
  * Samples an energy loss of a heavy charged particle in silicon of given 
  * thickness according to Landau theory (see PDG)
 */ 
-double SimulateEnergyLossInSilicon(HepMatrix& State, double thick, double mass, double charge, double lambda) 
+double SimulateEnergyLossInSilicon(TrackState& State, double thick, double mass, double charge, double lambda)
 {
   double A = 28; 
   double Z = 14; 
@@ -131,7 +134,7 @@ double SimulateEnergyLossInSilicon(HepMatrix& State, double thick, double mass, 
   double eMass = 0.5109989E-3;
   double exciteE = 170.0E-9;
            
-  double mom = charge/State[4][0]; 
+  double mom = charge/State[4];
   double m2 = mass*mass;
   double p2 = mom*mom;
   double e2 = m2 + p2;
@@ -161,9 +164,9 @@ double SimulateEnergyLossInSilicon(HepMatrix& State, double thick, double mass, 
  *  one-dimensional projection on one axis of a plane that is perpendicular
  *  to the particle direction before scattering. 
  */ 
-double GetScatterTheta2(HepMatrix& State, double x, double x0, double mass, double charge)  
+double GetScatterTheta2(TrackState& State, double x, double x0, double mass, double charge)
 {
-  double mom = charge/State[4][0]; 
+  double mom = charge/State[4];
   
   // Sanity check -  mass 
   if (mass <= 0) return 0;
@@ -240,52 +243,48 @@ double GetScatterTheta2(double mom, double x, double x0, double mass, double cha
  * Note: Initially, the track state is before scattering, and gets overwritten 
  * by state after scattering.
  */ 
-void ScatterTrack(HepMatrix& State, double kink_u, double kink_v)
+void ScatterTrack(TrackState& State, double kink_u, double kink_v)
 {
- 
-  // Track direction after scatter in comoving frame
-  Hep3Vector scatdir;   
-  scatdir[0] = TMath::Tan(kink_u);    
-  scatdir[1] = TMath::Tan(kink_v);    
-  scatdir[2] = 1;  
-  scatdir /= scatdir.mag(); // Change vector to unit length
-  
-  // Now, we construct a basis for the comoving frame
-  // basis vectors are u_trk, v_trk, n_trk
-   
-  
-  // n_trk is parallel to unscattered track direction
-  Hep3Vector n_trk;    
-  n_trk[0] = State[0][0];    
-  n_trk[1] = State[1][0];    
-  n_trk[2] = 1;  
-  n_trk /= n_trk.mag(); // Change vector to unit length
-   
-  // v_trk is orthogonal to track dir and detector u axis  
-  Hep3Vector u_hat(1,0,0);
-  Hep3Vector v_trk = n_trk.cross(u_hat);
-  v_trk /= v_trk.mag();
-  
-  // u_trk completes rigth handed system  
-  Hep3Vector u_trk = v_trk.cross(n_trk);   
-  
-  // Now, we construct rotation matrix from comoving 
-  // frame to detector frame 
-  HepRotation CoRot; 
-  CoRot.rotateAxes(u_trk, v_trk, n_trk); 
-  
-  // This is the scattered dirction in 
-  // detector frame :) 
-  scatdir = CoRot * scatdir;
- 
-  // Overwritte State with new directions 
-  State[0][0] = scatdir[0]/scatdir[2];    
-  State[1][0] = scatdir[1]/scatdir[2];
-    
-  return;
-  
-}
+   // Track direction after scatter in comoving frame
+   Vector3d scatdir;
+   scatdir<< TMath::Tan(kink_u), TMath::Tan(kink_v), 1;
 
+   scatdir.normalize();
+
+
+   // Now, we construct a basis for the comoving frame
+   // basis vectors are u_trk, v_trk, n_trk
+
+
+   // n_trk is parallel to unscattered track direction
+   Vector3d n_trk;
+   n_trk<< State[0], State[1], 1;
+   n_trk.normalize();
+
+
+  // v_trk is orthogonal to track dir and detector u axis
+  Vector3d u_hat = Vector3d::UnitX();
+  Vector3d v_trk = n_trk.cross(u_hat).normalized();
+
+
+  // u_trk completes rigth handed system
+  Vector3d u_trk = v_trk.cross(n_trk);
+
+  // Now, we construct rotation matrix from comoving
+  // frame to detector frame
+  Matrix3d CoRot;
+  CoRot<< u_trk, v_trk, n_trk;
+
+  // This is the scattered dirction in
+  // detector frame :)
+  scatdir = CoRot * scatdir;
+
+  // Overwritte State with new directions
+  State[0] = scatdir[0]/scatdir[2];
+  State[1] = scatdir[1]/scatdir[2];
+
+  return;
+}
 
 }  // end namespace
 

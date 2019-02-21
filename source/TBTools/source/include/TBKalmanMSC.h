@@ -1,7 +1,7 @@
 #ifndef TBKalmanMSC_H
 #define TBKalmanMSC_H 1
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "TBTrack.h"
 #include "TBHit.h"
 #include "GenericTrackModel.h"
@@ -9,12 +9,6 @@
 //other includes includes
 #include <TMath.h>
 
-// CLHEP includes 
-#include <CLHEP/Matrix/Vector.h>
-#include <CLHEP/Matrix/Matrix.h>
-#include <CLHEP/Matrix/SymMatrix.h>
-#include <CLHEP/Vector/ThreeVector.h>
-#include <CLHEP/Vector/Rotation.h>
 
 namespace depfet {
 
@@ -88,13 +82,13 @@ class KalFilterDetMSC
   
   /* Predicted estimator 
    */
-  CLHEP::HepMatrix Pr_x;     // 4x1 matrix
-  CLHEP::HepSymMatrix Pr_C;     // 4x4 matrix
+  TrackState Pr_x;    
+  TrackStateCovariance Pr_C;     
   
   /* Updated estimator 
    */
-  CLHEP::HepMatrix Up_x;     // 4x1 matrix
-  CLHEP::HepSymMatrix Up_C;     // 4x4 matrix
+  TrackState Up_x;     
+  TrackStateCovariance Up_C;    
   
   /* Predicted Chi2, zero if no hit found 
    */  
@@ -108,7 +102,9 @@ typedef std::vector<KalFilterDetMSC> KalFilterVecMSC;
 /* Data type used to store local track parameters along reference 
  * trajectory. 
  */ 
-typedef std::vector<CLHEP::HepMatrix> REFTrack;
+typedef std::vector<TrackState> REFTrack;
+
+typedef Eigen::Matrix<double,2,5> StateHitProjector;
 
 class TBKalmanMSC {
   
@@ -128,21 +124,19 @@ class TBKalmanMSC {
   
   /** Get scatter kink angles (as 2x1 matrix) 
    */
-  CLHEP::HepMatrix GetScatterKinks(Det& DetUnit, TBTrackState& InState, TBTrackState& OutState);
+  TrackScatterKinks GetScatterKinks(Det& DetUnit, TBTrackState& InState, TBTrackState& OutState);
 
   /** Get covariance of scatter kinks (as 2x2 sym matrix)
    */
-  CLHEP::HepSymMatrix GetScatterKinkCov(Det& DetUnit, TBTrackState& InState, TBTrackState& OutState);
+  TrackScatterKinksCovariance GetScatterKinkCov(Det& DetUnit, TBTrackState& InState, TBTrackState& OutState);
 
   /** Help function to get thetas from slope vector
    */
-  CLHEP::HepMatrix slopestotheta(double slopes[4]);
-
-
-  CLHEP::HepMatrix& GetHMatrix()
-    { return H;} 
+  TrackScatterKinks slopestotheta(double slopes[4]);
   
-  
+  const StateHitProjector& GetHMatrix()
+    { return H;}
+
 
  // Private Methods -----------------
  private:
@@ -161,19 +155,22 @@ class TBKalmanMSC {
    */
   void SetNdof(TBTrack& trk);
    
-  
-
  // Private Members -----------------
  private:
   
   // Project states to hit coord
-  CLHEP::HepMatrix H; 
+  StateHitProjector H;
+
+  // Initial track state vector to start fitting 
+  TrackState x0;
+
+  // Initial track state covariacne matric to start fitting
+  TrackStateCovariance C0;
 
   GenericTrackModel* TrackModel;
 
   int ndim; // dimension of state
-  
-  double mom; 
+ 
   double mass;
   double charge;
   

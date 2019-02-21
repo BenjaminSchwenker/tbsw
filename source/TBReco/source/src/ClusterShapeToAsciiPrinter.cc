@@ -27,7 +27,6 @@
 
 // Used namespaces
 using namespace std; 
-using namespace CLHEP; 
 using namespace lcio ;
 using namespace marlin ;
 
@@ -59,9 +58,9 @@ namespace depfet {
                                 _asciiFileName, std::string("ClusterShapes.txt"));  
       
     registerProcessorParameter ("AlignmentDBFileName",
-                                "This is the name of the LCIO file with the alignment constants (add .slcio)",
-                                _alignmentDBFileName, static_cast< string > ( "eudet-alignmentDB.slcio" ) ); 
-    
+                             "This is the name of the file with the alignment constants (add .root)",
+                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) ); 
+
     std::vector<int> initIgnoreIDVec;
     registerProcessorParameter ("IgnoreIDs",
                                 "Ignore clusters from list of sensorIDs",
@@ -173,17 +172,17 @@ namespace depfet {
         if ( TE.HasHit() && !ignoreID ) { 
           
           // Get local track parameters 
-          double trk_tu = TE.GetState().GetPars()[0][0];  // rad
-          double trk_tv = TE.GetState().GetPars()[1][0];  // rad
-          double trk_u = TE.GetState().GetPars()[2][0];   // mm
-          double trk_v = TE.GetState().GetPars()[3][0];   // mm
-          double trk_qp = TE.GetState().GetPars()[4][0];  // 1/GeV
+          double trk_tu = TE.GetState().GetPars()[0];  // rad
+          double trk_tv = TE.GetState().GetPars()[1];  // rad
+          double trk_u = TE.GetState().GetPars()[2];   // mm
+          double trk_v = TE.GetState().GetPars()[3];   // mm
+          double trk_qp = TE.GetState().GetPars()[4];  // 1/GeV
           double trk_charge = track.GetCharge();
           double trk_mom = std::abs(trk_charge/trk_qp); 
            
-          double sigma2_u = TE.GetState().GetCov()[2][2]; 
-          double sigma2_v = TE.GetState().GetCov()[3][3]; 
-          double cov_uv   = TE.GetState().GetCov()[2][3];  
+          double sigma2_u = TE.GetState().GetCov()(2,2); 
+          double sigma2_v = TE.GetState().GetCov()(3,3); 
+          double cov_uv   = TE.GetState().GetCov()(2,3);  
            
           PixelCluster Cluster = TE.GetHit().GetCluster();  
           string id = Cluster.getShape(); 

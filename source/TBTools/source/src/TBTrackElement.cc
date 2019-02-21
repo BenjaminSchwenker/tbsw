@@ -4,10 +4,9 @@
 // <mailto:benjamin.schwenker@phys.uni-goettingen.de>
 
 
-// DEPFETTrackTools includes 
+// TBTools includes 
 #include "TBTrackElement.h"
 
-using namespace CLHEP;
 using namespace std;
 
 namespace depfet {

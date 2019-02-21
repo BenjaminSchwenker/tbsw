@@ -685,8 +685,8 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, c
                         current_row_base = 2 * ((current_word) >> 6);
                         current_CM = (current_word) & 0x3f;
                         if(last_was_start_of_row){
-                            printf("===> Double row header! Row Header 0x%4x row base %2d, CM: %d\n",current_word,current_row_base, current_CM);
-                            printf("===> last row header was 0x%4x\n",dhpData[ipix-1]);
+                            if(debug) printf("===> Double row header! Row Header 0x%4x row base %2d, CM: %d\n",current_word,current_row_base, current_CM);
+                            if(debug) printf("===> last row header was 0x%4x\n",dhpData[ipix-1]);
                             if (fill_info) info_map["ERROR,"+dhc_prefix+dhe_prefix + fr_prefix+"ERROR_DOUBLE_START_ROW_WORD"]+=1;
                         }
 

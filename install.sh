@@ -1,7 +1,7 @@
 #!/bin/bash
 
-export ROOTSYS="${ROOTSYS:-/home/benjamin/work/root-v6-10-08}"
-export CLHEP_HOME="${CLHEP_HOME:-/home/benjamin/work/CLHEP-2-3-4-5/lib/CLHEP-2.3.4.5}"
+export ROOTSYS=/home/benjamin/work/root-v6-10-08
+export EIGEN3_INCLUDE_DIR=/home/benjamin/eigen_v3.3.7
 
 ############################################################
 # Please do not edit stuff below here !!!!!!!!!!!!!!!!!!!!!!

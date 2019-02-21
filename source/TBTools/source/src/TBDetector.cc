@@ -13,11 +13,6 @@
 #include <TH1F.h>
 #include <TFile.h>
 
-// Include CLHEP
-#include <CLHEP/Matrix/DiagMatrix.h>
-#include <CLHEP/Matrix/Matrix.h>
-#include <CLHEP/Matrix/Vector.h>
-
 // Include Gear header files
 #include <gear/GEAR.h>
 #include <gear/GearParameters.h>
@@ -30,8 +25,9 @@
 #include <marlin/Global.h>
 #include <streamlog/streamlog.h>
 
+#include <Eigen/LU>
+
 // Namespaces
-using namespace CLHEP;
 using namespace marlin;
 
 
@@ -186,21 +182,21 @@ void TBDetector::ReadGearConfiguration( )
     // from gear file. 
     
     // Read discrete rotation from local to global coord.  
-    HepMatrix DiscreteRotation(3, 3, 1); 
+    Matrix3d DiscreteRotation(Matrix3d::Identity()); 
     int r1 = siPlanesLayerLayout->getSensitiveRotation1(ilayer); 
     int r2 = siPlanesLayerLayout->getSensitiveRotation2(ilayer); 
     int r3 = siPlanesLayerLayout->getSensitiveRotation3(ilayer);  
     int r4 = siPlanesLayerLayout->getSensitiveRotation4(ilayer);
     
-    DiscreteRotation[0][0] = r1; 
-    DiscreteRotation[0][1] = r2; 
-    DiscreteRotation[1][0] = r3; 
-    DiscreteRotation[1][1] = r4;
+    DiscreteRotation(0,0) = r1; 
+    DiscreteRotation(0,1) = r2; 
+    DiscreteRotation(1,0) = r3; 
+    DiscreteRotation(1,1) = r4;
     
     if ( r1*r4 - r2*r3 == 1 ) {     
-      DiscreteRotation[2][2] = 1;
+      DiscreteRotation(2,2) = 1;
     } else if ( r1*r4 - r2*r3 == -1 ) {
-      DiscreteRotation[2][2] = -1;  
+      DiscreteRotation(2,2) = -1;  
     } else {
       streamlog_out(MESSAGE3) << std::endl << "Rotation parameters in gear file wrong" << std::endl;  
     }
@@ -216,20 +212,17 @@ void TBDetector::ReadGearConfiguration( )
     // Nominal reference frame 
     ReferenceFrame nominal;
     
-    HepVector NominalPosition(3);
-    NominalPosition[0] = siPlanesLayerLayout->getSensitivePositionX(ilayer); 
-    NominalPosition[1] = siPlanesLayerLayout->getSensitivePositionY(ilayer);
-    NominalPosition[2] = siPlanesLayerLayout->getSensitivePositionZ(ilayer);
+    Vector3d NominalPosition;
+    NominalPosition << siPlanesLayerLayout->getSensitivePositionX(ilayer),  siPlanesLayerLayout->getSensitivePositionY(ilayer), siPlanesLayerLayout->getSensitivePositionZ(ilayer);
     nominal.SetPosition(NominalPosition);
-
-
+    
     // Read Euler rotation from local to global frame
-    HepMatrix EulerRotation;
     const double MYPI = std::atan(1.0)*4;  
     // Gear file stores angles in degree 
     double alpha = siPlanesLayerLayout->getSensitiveRotationAlpha(ilayer)*MYPI/180.; 
     double beta = siPlanesLayerLayout->getSensitiveRotationBeta(ilayer)*MYPI/180.; 
     double gamma = siPlanesLayerLayout->getSensitiveRotationGamma(ilayer)*MYPI/180.; 
+    Matrix3d EulerRotation;
     FillRotMatrixKarimaki(EulerRotation, 
             alpha, 
             beta,
@@ -239,7 +232,7 @@ void TBDetector::ReadGearConfiguration( )
       streamlog_out(MESSAGE3) << "Rotation matrix BUG. Euler rotation matrix determinant is " << EulerRotation.determinant() << std::endl; 
     
     // Combine the two factors in proper order
-    HepMatrix NominalRotation = EulerRotation*DiscreteRotation;
+    Matrix3d NominalRotation = EulerRotation*DiscreteRotation;
     nominal.SetRotation(NominalRotation);    
     
     // Set nominal frame - initial guess where detector is in space 
@@ -339,22 +332,20 @@ void TBDetector::ReadAlignmentDB( std::string FileName )
     
     // Now, read nominal position from DB
     ReferenceFrame nominal;
-    HepVector NominalPosition(3);
-    NominalPosition[0] = histoMap["hPositionX"]->GetBinContent(bin);
-    NominalPosition[1] = histoMap["hPositionY"]->GetBinContent(bin);
-    NominalPosition[2] = histoMap["hPositionZ"]->GetBinContent(bin);
+    Vector3d NominalPosition;
+    NominalPosition << histoMap["hPositionX"]->GetBinContent(bin), histoMap["hPositionY"]->GetBinContent(bin), histoMap["hPositionZ"]->GetBinContent(bin);
     nominal.SetPosition(NominalPosition);
       
     // AlignmentDB stores Euler angles in rad 
-    HepMatrix EulerRotation;
+    Matrix3d EulerRotation;
     double alpha = histoMap["hRotationAlpha"]->GetBinContent(bin);   
     double beta  = histoMap["hRotationBeta"]->GetBinContent(bin);  
     double gamma = histoMap["hRotationGamma"]->GetBinContent(bin);  
     FillRotMatrixKarimaki(EulerRotation, alpha, beta, gamma);
       
     // Combine the two factors in proper order
-    HepMatrix DiscreteRotation = adet.GetDiscrete().GetRotation(); 
-    HepMatrix NominalRotation = EulerRotation*DiscreteRotation;
+    Matrix3d DiscreteRotation = adet.GetDiscrete().GetRotation(); 
+    Matrix3d NominalRotation = EulerRotation*DiscreteRotation;
     nominal.SetRotation(NominalRotation);  
       
     nominal.SetRotation(NominalRotation);
@@ -424,12 +415,12 @@ void TBDetector::WriteAlignmentDB( )
     Det & adet = GetDet(ipl);    
     
     // Now, write nominal tracker geometry parameters  
-    HepVector Origin = adet.GetNominal().GetPosition(); 
-    HepMatrix NominalRotation = adet.GetNominal().GetRotation(); 
+    auto Origin = adet.GetNominal().GetPosition(); 
+    auto NominalRotation = adet.GetNominal().GetRotation(); 
       
     // Factor out the discrete rotation 
-    HepMatrix DiscreteRotation = adet.GetDiscrete().GetRotation(); 
-    HepMatrix EulerRotation = NominalRotation*DiscreteRotation.T();
+    auto DiscreteRotation = adet.GetDiscrete().GetRotation(); 
+    auto EulerRotation = NominalRotation*DiscreteRotation.transpose();
        
     double alpha, beta, gamma; 
     GetAnglesKarimaki(EulerRotation, alpha, beta, gamma);   

@@ -7,7 +7,7 @@
 #define StripDUTAnalyzer_H 1
 
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "TBDetector.h"
 
 

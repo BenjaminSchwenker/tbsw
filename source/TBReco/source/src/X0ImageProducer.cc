@@ -36,12 +36,9 @@
 #include <TRandom.h>
 #include <TRandom3.h>
 
-// Include CLHEP classes
-#include <CLHEP/Matrix/Vector.h>
 
 // Used namespaces
 using namespace std; 
-using namespace CLHEP; 
 using namespace lcio ;
 using namespace marlin ;
 
@@ -388,10 +385,10 @@ void X0ImageProducer::processEvent(LCEvent * evt)
         TBTrackState& InState=uptrack.GetTE(_idut).GetState();
         TBTrackState& OutState=downtrack.GetTE(_idut).GetState(); 
         
-        double u_in = InState.GetPars()[2][0];
-        double v_in = InState.GetPars()[3][0];
-        double u_out = OutState.GetPars()[2][0];
-        double v_out = OutState.GetPars()[3][0];
+        double u_in = InState.GetPars()[2];
+        double v_in = InState.GetPars()[3];
+        double u_out = OutState.GetPars()[2];
+        double v_out = OutState.GetPars()[3];
         
         double hitdist = std::abs(u_in-u_out) + std::abs(v_in-v_out);
                       
@@ -460,30 +457,30 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 	// Calculate vertex parameters
 	// In case the vertex multiplicity is larger than 1, these values will be set for every upstream downstream track combination 
 	bool vfiterr = VertexFitter.FitVertex(Vertex);
-	HepMatrix vertexpos = Vertex.GetPos();
-	HepMatrix vertexcov = Vertex.GetCov();
-	HepMatrix vertexglobalpos = Vertex.GetGlobalPos();
-	HepMatrix vertexglobalcov = Vertex.GetGlobalCov();
-	HepMatrix vertexres = Vertex.GetRes();
+	auto vertexpos = Vertex.GetPos();
+	auto vertexcov = Vertex.GetCov();
+	auto vertexglobalpos = Vertex.GetGlobalPos();
+	auto vertexglobalcov = Vertex.GetGlobalCov();
+	auto vertexres = Vertex.GetRes();
 
-	_root_vertex_u = vertexpos[0][0];
-	_root_vertex_v = vertexpos[1][0];
-	_root_vertex_w = vertexpos[2][0];
-	_root_vertex_x = vertexglobalpos[0][0];
-	_root_vertex_y = vertexglobalpos[1][0];
-	_root_vertex_z = vertexglobalpos[2][0];
+	_root_vertex_u = vertexpos[0];
+	_root_vertex_v = vertexpos[1];
+	_root_vertex_w = vertexpos[2];
+	_root_vertex_x = vertexglobalpos[0];
+	_root_vertex_y = vertexglobalpos[1];
+	_root_vertex_z = vertexglobalpos[2];
 
-	_root_vertex_u_var = vertexcov[0][0];
-	_root_vertex_v_var = vertexcov[1][1];
-	_root_vertex_w_var = vertexcov[2][2];
-	_root_vertex_x_var = vertexglobalcov[0][0];
-	_root_vertex_y_var = vertexglobalcov[1][1];
-	_root_vertex_z_var = vertexglobalcov[2][2];
+	_root_vertex_u_var = vertexcov(0,0);
+	_root_vertex_v_var = vertexcov(1,1);
+	_root_vertex_w_var = vertexcov(2,2);
+	_root_vertex_x_var = vertexglobalcov(0,0);
+	_root_vertex_y_var = vertexglobalcov(1,1);
+	_root_vertex_z_var = vertexglobalcov(2,2);
 
 	_root_vertex_chi2ndf = Vertex.GetChi2Ndof();
 	_root_vertex_prob = TMath::Prob(Vertex.GetChi2(),Vertex.GetNdf());
-	_root_vertex_u_res = vertexres[2][0];
-	_root_vertex_v_res = vertexres[3][0];
+	_root_vertex_u_res = vertexres[2];
+	_root_vertex_v_res = vertexres[3];
     
     for(int idown=0;idown<up2down[iup].size();idown++)
 	{
@@ -500,22 +497,20 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		//Here we use the In and Out State and the GetScatterKinks function of the TBKalmanMSC Class
 		
 		//Angles and angle errors
-		HepMatrix theta(2,1,0);
-		HepSymMatrix Cov(2,0);
-		theta = TrackFitterMSC.GetScatterKinks(dut, InState, OutState); 
-		Cov = TrackFitterMSC.GetScatterKinkCov(dut, InState, OutState);
+		auto theta = TrackFitterMSC.GetScatterKinks(dut, InState, OutState); 
+		auto Cov = TrackFitterMSC.GetScatterKinkCov(dut, InState, OutState);
 		
 		// Get the track parameters of the fitted track on the current sensor
 		// The u and v positions are needed for a position-resolved measurement
-		HepMatrix p_in = InState.GetPars();
-		HepMatrix p_out = OutState.GetPars();
+		auto p_in = InState.GetPars();
+		auto p_out = OutState.GetPars();
 
 		// Get the covariance entries of the intersection coordinates
-		HepSymMatrix instate_covs=InState.GetCov();
-		HepSymMatrix outstate_covs=OutState.GetCov();
+		auto instate_covs=InState.GetCov();
+		auto outstate_covs=OutState.GetCov();
 	 
-		_root_u_var=1.0/(1.0/instate_covs[2][2]+1.0/outstate_covs[2][2]);  // weighted mean
-		_root_v_var=1.0/(1.0/instate_covs[3][3]+1.0/outstate_covs[3][3]);  // weighted mean
+		_root_u_var=1.0/(1.0/instate_covs(2,2)+1.0/outstate_covs(2,2));  // weighted mean
+		_root_v_var=1.0/(1.0/instate_covs(3,3)+1.0/outstate_covs(3,3));  // weighted mean
 		 	
 		// Fill root variables
 		_root_vertex_multiplicity = up2down[iup].size(); 
@@ -526,61 +521,61 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		_rootTrackProbCombo = TMath::Prob( comboChi2 ,uptrack.GetNDF()+downtrack.GetNDF());
 
  
-		_root_u_in = p_in[2][0]; 
-		_root_v_in = p_in[3][0];
-		_root_u_out = p_out[2][0]; 
-		_root_v_out = p_out[3][0];
-		_root_u = (instate_covs[2][2]*p_in[2][0] + outstate_covs[2][2]*p_out[2][0])/(instate_covs[2][2]+outstate_covs[2][2]); // weighted mean
-		_root_v = (instate_covs[3][3]*p_in[3][0] + outstate_covs[3][3]*p_out[3][0])/(instate_covs[3][3]+outstate_covs[3][3]); // weightes mean 
+		_root_u_in = p_in[2]; 
+		_root_v_in = p_in[3];
+		_root_u_out = p_out[2]; 
+		_root_v_out = p_out[3];
+		_root_u = (instate_covs(2,2)*p_in[2] + outstate_covs(2,2)*p_out[2])/(instate_covs(2,2)+outstate_covs(2,2)); // weighted mean
+		_root_v = (instate_covs(3,3)*p_in[3] + outstate_covs(3,3)*p_out[3])/(instate_covs(3,3)+outstate_covs(3,3)); // weightes mean 
 	   
-		_root_angle1 = theta[0][0];
-		_root_angle2 = theta[1][0];
-		_root_angle1_var = Cov[0][0];
-		_root_angle2_var = Cov[1][1];
+		_root_angle1 = theta[0];
+		_root_angle2 = theta[1];
+		_root_angle1_var = Cov(0,0);
+		_root_angle2_var = Cov(1,1);
 
-		_root_u_in = p_in[2][0]; 
-		_root_v_in = p_in[3][0];
-		_root_u_out = p_out[2][0]; 
-		_root_v_out = p_out[3][0];
-		_root_u = (instate_covs[2][2]*p_in[2][0] + outstate_covs[2][2]*p_out[2][0])/(instate_covs[2][2]+outstate_covs[2][2]); // weighted mean
-		_root_v = (instate_covs[3][3]*p_in[3][0] + outstate_covs[3][3]*p_out[3][0])/(instate_covs[3][3]+outstate_covs[3][3]); // weightes mean 
+		_root_u_in = p_in[2]; 
+		_root_v_in = p_in[3];
+		_root_u_out = p_out[2]; 
+		_root_v_out = p_out[3];
+		_root_u = (instate_covs(2,2)*p_in[2] + outstate_covs(2,2)*p_out[2])/(instate_covs(2,2)+outstate_covs(2,2)); // weighted mean
+		_root_v = (instate_covs(3,3)*p_in[3] + outstate_covs(3,3)*p_out[3])/(instate_covs(3,3)+outstate_covs(3,3)); // weightes mean 
 	   
 
-		_root_angle1_var = Cov[0][0];
-		_root_angle2_var = Cov[1][1];
+		_root_angle1_var = Cov(0,0);
+		_root_angle2_var = Cov(1,1);
 
 		// Construct the u and v residuals and calculate a chi2 value from them
-		HepMatrix res=p_in-p_out;
-		HepSymMatrix res_covs=instate_covs+outstate_covs;
+		auto res=p_in-p_out;
+		auto res_covs=instate_covs+outstate_covs;
 
-		int ierr; 
+		bool invertible;
 		// Use only the sub matrices, which describe the spatial coordinates of the trackstate
-		HepMatrix jchisq = res.sub(3,4,1,1).T()*res_covs.sub(3,4).inverse(ierr)*res.sub(3,4,1,1);
+		auto jchisq = res.block<2,1>(2,0).transpose()*res_covs.block<2,2>(3,3).inverse()*res.block<2,1>(2,0);
 
-		streamlog_out(MESSAGE1) << "Complete Covariance matrix: "<<res_covs.sub(1,4)<<endl;
-		streamlog_out(MESSAGE1) << "Part of Covariance matrix used here: "<<res_covs.sub(3,4)<<endl;
+		streamlog_out(MESSAGE1) << "Complete Covariance matrix: "<< res_covs <<endl;
+		streamlog_out(MESSAGE1) << "Part of Covariance matrix used here: "<<res_covs.block<2,2>(3,3)<<endl;
 
-		_root_chi2=jchisq[0][0];
-		_root_prob=TMath::Prob(jchisq[0][0], 2);
+		_root_chi2=jchisq[0];
+		_root_prob=TMath::Prob(jchisq[0], 2);
 
         if (_m_toy) 
 		{
-		  double dudw = p_in[0][0];
-		  double dvdw = p_in[1][0];
-		  double u = p_in[2][0]; 
-		  double v = p_in[3][0]; 
+		  double dudw = p_in[0];
+		  double dvdw = p_in[1];
+		  double u = p_in[2]; 
+		  double v = p_in[3]; 
 		  double mom = uptrack.GetMomentum();  
 		  double l0 = dut.GetThickness(u,v)*std::sqrt(1 + dudw*dudw + dvdw*dvdw); 
 
           // Simulate energy loss by bremsstrahlung (Bethe Heitler theory)
-          average_mom = 0.5*uptrack.GetCharge()/p_in[4][0];
+          average_mom = 0.5*uptrack.GetCharge()/p_in[4];
           if (_m_ToyBetheHeitler) {
             double t = l0/dut.GetRadLength(u,v);
             double rndm = gRandom->Rndm(1);
             materialeffect::SimulateBetherHeitlerEnergyLoss(p_in, t, uptrack.GetMass(), uptrack.GetCharge(), rndm); 
           } 
           // Take average of momentum before and after scattering
-          average_mom += 0.5*uptrack.GetCharge()/p_in[4][0];
+          average_mom += 0.5*uptrack.GetCharge()/p_in[4];
 		  
 		  // Highland model scattering
 		  double theta2 = materialeffect::GetScatterTheta2(average_mom, l0, dut.GetRadLength(u,v),uptrack.GetMass(), uptrack.GetCharge() );  
@@ -588,7 +583,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		  double kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 ));    
 	  
 		  // Scatter track ('in' state -> 'out' state)
-		  HepMatrix toystate=p_in;
+		  auto toystate=p_in;
 		  materialeffect::ScatterTrack(toystate, kink_u, kink_v); 
 
 		  TBTrackState outstate_toy;
@@ -604,8 +599,8 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		  //  use the real reco error
 		  if(_m_reco_error<0)
 		  {
-			reco_error1=TMath::Sqrt( Cov[0][0] );
-			reco_error2=TMath::Sqrt( Cov[1][1] );
+			reco_error1=TMath::Sqrt( Cov(0,0) );
+			reco_error2=TMath::Sqrt( Cov(1,1) );
 		  }
 
 		  // Else use the selected reco error
@@ -615,8 +610,8 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 			reco_error2=_m_reco_error;
 		  }
 
-		  _root_angle1 = theta[0][0]+gRandom->Gaus(0, reco_error1);
-		  _root_angle2 = theta[1][0]+gRandom->Gaus(0, reco_error2);
+		  _root_angle1 = theta[0]+gRandom->Gaus(0, reco_error1);
+		  _root_angle2 = theta[1]+gRandom->Gaus(0, reco_error2);
 
 		  _root_angle1_var = reco_error1*reco_error1;
 		  _root_angle2_var = reco_error2*reco_error2; 

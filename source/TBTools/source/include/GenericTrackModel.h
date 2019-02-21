@@ -1,13 +1,19 @@
 #ifndef GenericTrackModel_H
 #define GenericTrackModel_H 1
 
-// DEPFETTrackTools includes
+// TBTools includes
 #include "ReferenceFrame.h"
 
-// CLHEP includes 
-#include <CLHEP/Matrix/Vector.h>
-#include <CLHEP/Matrix/Matrix.h>
-#include <CLHEP/Matrix/SymMatrix.h>
+
+typedef Eigen::Matrix<double,5,1> TrackState;
+typedef Eigen::Matrix<double,5,5> TrackStateCovariance;
+typedef Eigen::Matrix<double,5,5> TrackStateWeight;
+
+typedef Eigen::Matrix<double,5,5> TrackStateJacobian;
+typedef Eigen::Matrix<double,5,2> TrackStateGain;
+typedef Eigen::Matrix<double,2,1> TrackScatterKinks;
+typedef Eigen::Matrix<double,2,2> TrackScatterKinksCovariance;
+
 
 namespace depfet {
 
@@ -45,30 +51,30 @@ class GenericTrackModel {
  
  /* Returns signed fligth length (mm) to surface fSurf. Track starts at surface Surf and has state State.
   */
-  virtual double GetSignedStepLength(const CLHEP::HepMatrix& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf) = 0;
+  virtual double GetSignedStepLength(const TrackState& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf) = 0;
   
  /* Returns true if track hits the surface fSurf. Track starts at surface Surf and has state State.
   */
-  virtual bool CheckHitsSurface(const CLHEP::HepMatrix& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf) = 0;
+  virtual bool CheckHitsSurface(const TrackState& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf) = 0;
 
  /** Returns track state at surface fSurf. 
   */
-  virtual CLHEP::HepMatrix Extrapolate(const CLHEP::HepMatrix& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf, bool& error) =0;
+  virtual TrackState Extrapolate(const TrackState& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf, bool& error) =0;
  
  /** Extrapolate track along helix for given flight length. Track parameters (State/Surf) are overwritten. 
  */
-  virtual void Extrapolate(CLHEP::HepMatrix& State, depfet::ReferenceFrame& Surf,  double length) = 0;
+  virtual void Extrapolate(TrackState& State, depfet::ReferenceFrame& Surf,  double length) = 0;
   
  /** Compute track derivatives for extrapolation from Surf to fSurf.
   *  Linearization point is State at Surf.  
   */
-  virtual int TrackJacobian( const CLHEP::HepMatrix& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf ,  CLHEP::HepMatrix& J) =0;
+  virtual int TrackJacobian( const TrackState& State, const depfet::ReferenceFrame& Surf, const depfet::ReferenceFrame& fSurf ,  TrackStateJacobian& J) =0;
   
  /** Get local scatter gain matrix
   *  It calculates the derivates of track parameters State on 
   *  scattering angles theta1 and theta2. 
   */
- virtual void GetScatterGain(const CLHEP::HepMatrix& State, CLHEP::HepMatrix& G) =0;
+ virtual TrackStateGain GetScatterGain(const TrackState& State) =0;
  
   
 };

@@ -31,16 +31,15 @@
 #include "HelixTrackModel.h"
 #include "StraightLineTrackModel.h"
 
-// CLHEP includes
-#include "CLHEP/Matrix/Vector.h"
-
-
+#include <Eigen/Core>
+using Eigen::Vector3d;
+using Eigen::Matrix;
 
 // Used namespaces
 using namespace std; 
 using namespace lcio ;
 using namespace marlin ;
-using namespace CLHEP;
+
 
 namespace depfet {
 
@@ -83,7 +82,11 @@ namespace depfet {
     
     registerProcessorParameter ("AlignmentDBFileName",
                              "This is the name of the file with the alignment constants (add .root)",
-                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) );  
+                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) ); 
+    
+    registerProcessorParameter ("NewAlignment",
+                              "Start alignment from scratch (true/false)?",
+                              _newAlignment, static_cast <bool> (true) );  
     
     
                                  
@@ -106,7 +109,9 @@ namespace depfet {
     m_detector.ReadGearConfiguration();  
     
     // Read alignment data base file 
-    m_detector.ReadAlignmentDB( _alignmentDBFileName );  
+    if(!_newAlignment) m_detector.ReadAlignmentDB( _alignmentDBFileName );
+    // This is needed, because if the AlignmentDB is not read, the detector construct doesn't know the alignmentDB name
+    else  m_detector.SetAlignmentDBName( _alignmentDBFileName );
   }
 
   //
@@ -151,10 +156,8 @@ namespace depfet {
     // Init the track model for simulation
     GenericTrackModel* TrackModel; 
       
-    HepVector field(3,0);
-    field[0] = m_detector.GetBx();
-    field[1] = m_detector.GetBy();
-    field[2] = m_detector.GetBz(); 
+    Vector3d field;
+    field<< m_detector.GetBx(), m_detector.GetBy(), m_detector.GetBz();
       
     if ( field.norm() == 0 ) {
       TrackModel = new StraightLineTrackModel();    
@@ -190,25 +193,21 @@ namespace depfet {
       ReferenceFrame frame;
       
       // Origin of frame coincides with particle vertex
-      HepVector origin(3);
-      origin[0] = mcp->getVertex()[0];
-      origin[1] = mcp->getVertex()[1];
-      origin[2] = mcp->getVertex()[2];
+
+
+      Vector3d origin;
+      origin<< mcp->getVertex()[0], mcp->getVertex()[1], mcp->getVertex()[2];
+
       frame.SetPosition(origin); 
       
       // Track state defined at reference frame
-      HepMatrix state(5,1); 
-        
       double p1 = mcp->getMomentum()[0];
       double p2 = mcp->getMomentum()[1];
       double p3 = mcp->getMomentum()[2];  
      
-      
-      state[0][0] = p1/p3;                                                      // du/dw
-      state[1][0] = p2/p3;                                                      // dv/dw
-      state[2][0] = 0;                                                          // u 
-      state[3][0] = 0;                                                          // v  
-      state[4][0] = mcp->getCharge()/std::sqrt(p1*p1 + p2*p2 + p3*p3);          // q/p
+      TrackState state; // du/dw,  dv/dw,  u,   v, q/p
+      state<< p1/p3 , p2/p3, 0, 0,  mcp->getCharge()/std::sqrt(p1*p1 + p2*p2 + p3*p3);
+
         
       
       // Enter main loop to propagate particle through telescope
@@ -229,11 +228,11 @@ namespace depfet {
           
           // Local track state on sensor == defined as state before scattering and energy loss 
           // --------------------------- 
-          double dudw = state[0][0];
-          double dvdw = state[1][0];
-          double u = state[2][0]; 
-          double v = state[3][0]; 
-          double mom = mcp->getCharge()/state[4][0]; 
+          double dudw = state[0];
+          double dvdw = state[1];
+          double u = state[2];
+          double v = state[3];
+          double mom = mcp->getCharge()/state[4];
           double l0 = current_det.GetThickness(u,v)*std::sqrt(1 + dudw*dudw + dvdw*dvdw);  
           
           // Simulate energy loss in material layer
@@ -268,14 +267,14 @@ namespace depfet {
           simHitVec->push_back( simHit );
            
           // Simulate energy loss by bremsstrahlung (Bethe Heitler theory)
-          average_mom = 0.5*mcp->getCharge()/state[4][0];
+          average_mom = 0.5*mcp->getCharge()/state[4];
           if (m_doFractionalBetheHeitlerEnergyLoss) {
             double t = l0/current_det.GetRadLength(u,v);
             double rndm = gRandom->Rndm(1);
             materialeffect::SimulateBetherHeitlerEnergyLoss(state, t, mcp->getMass(), mcp->getCharge(), rndm);    
           }
           // Take average of momentum before and after scattering
-          average_mom += 0.5*mcp->getCharge()/state[4][0]; 
+          average_mom += 0.5*mcp->getCharge()/state[4];
            
           if(  m_scatterModel==0  ) { 
             // Highland model scattering
@@ -313,14 +312,14 @@ namespace depfet {
         // ------------------------------- 
         
         // Simulate energy loss by bremsstrahlung (Bethe Heitler theory)
-        average_mom = 0.5*mcp->getCharge()/state[4][0];
+        average_mom = 0.5*mcp->getCharge()/state[4];
         if (m_doFractionalBetheHeitlerEnergyLoss) {
           double t = length/materialeffect::X0_air;
           double rndm = gRandom->Rndm(1);
           materialeffect::SimulateBetherHeitlerEnergyLoss(state, t, mcp->getMass(), mcp->getCharge(), rndm); 
         } 
         // Take average of momentum before and after scattering
-        average_mom += 0.5*mcp->getCharge()/state[4][0];
+        average_mom += 0.5*mcp->getCharge()/state[4];
         
         if( m_scatterModel==0 ) { 
           // Highland model scattering     
@@ -333,7 +332,7 @@ namespace depfet {
           
         // Get state on next detector
         bool error = false; 
-        HepMatrix next_state = TrackModel->Extrapolate(state, frame, next_frame, error);  
+        TrackState next_state = TrackModel->Extrapolate(state, frame, next_frame, error);
         
         if (error) { // check for loopers
           break;      

@@ -8,7 +8,7 @@
 #include <cassert>
 #include <cstdlib>
 
-// DEPFETTrackTools include
+// TBTools include
 #include "TBTrack.h"
 
 // Marlin includes 
@@ -16,7 +16,6 @@
 #include <streamlog/streamlog.h>
 
 // Namespaces
-using namespace CLHEP;
 using namespace marlin;
 using namespace std; 
 

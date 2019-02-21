@@ -8,7 +8,7 @@
 
 #include "TriplettCorrelator.h"
 
-// Include DEPFETTrackTools header files
+// Include TBTools header files
 #include "TBHit.h"
 #include "TBTrack.h"
 #include "Det.h"
@@ -27,13 +27,9 @@
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerHitImpl.h>
 
-// Include CLHEP classes
-#include <CLHEP/Matrix/Vector.h>
-
 // Used namespaces
 using namespace std; 
 using namespace lcio;
-using namespace CLHEP; 
 using namespace marlin;
 
 namespace depfet {
@@ -226,8 +222,8 @@ void TriplettCorrelator::processEvent(LCEvent * evt)
       if (rectrack.GetTE(ipl).HasHit() ) _isActive[ipl]=false; 
 
       // Get extrapolated intersection coordinates
-      double u = rectrack.GetTE(ipl).GetState().GetPars()[2][0]; 
-      double v = rectrack.GetTE(ipl).GetState().GetPars()[3][0];           
+      double u = rectrack.GetTE(ipl).GetState().GetPars()[2]; 
+      double v = rectrack.GetTE(ipl).GetState().GetPars()[3];           
            
       
 
@@ -237,7 +233,7 @@ void TriplettCorrelator::processEvent(LCEvent * evt)
         TBHit & anyhit = HitStore.GetRecoHitFromID(ihit, ipl);
            
         // Measured hit coordinates
-        HepVector anypos = anyhit.GetLocalSpacePoint();
+        Vector3d anypos = anyhit.GetLocalSpacePoint();
         double um = anypos[0]; 
         double vm = anypos[1];   
         
@@ -332,13 +328,12 @@ void TriplettCorrelator::end()
     Det & adet = tmp_detector.GetDet(ipl);
       
     // We have calculated offset in local coord.
-    HepVector local_offset(3);
-    local_offset[0] = -offsetU; 
-    local_offset[1] = -offsetV;      
-    local_offset[2] = 0;  
+    Vector3d local_offset;
+    local_offset<< -offsetU, -offsetV, 0;
+
       
     // And transform to offsets in global coord.  
-    HepVector global_offset = adet.GetNominal().GetRotation().T() * local_offset ;  
+    Vector3d global_offset = adet.GetNominal().GetRotation().transpose() * local_offset ;
     double dx = global_offset[0]; 
     double dy = global_offset[1];      
     double dz = global_offset[2];    

@@ -1,10 +1,6 @@
-
-
-// DEPFETTrackTools includes
+// TBTools includes
 #include "TBTrackState.h"
 
-using namespace std;
-using namespace CLHEP;
 
 namespace depfet {
 
@@ -19,23 +15,32 @@ namespace depfet {
 
 // Constructors
 
-TBTrackState::TBTrackState() : Pars(4, 1, 0), Cov(4, 0)  , Plane(0)
-{;}
+TBTrackState::TBTrackState() 
+{
+    Plane = 0;
+    Pars=TrackState::Zero();
+    Cov=TrackStateCovariance::Zero();
+}
 
-TBTrackState::TBTrackState(HepMatrix aPars, HepSymMatrix aCov) : Pars(4, 1, 0), Cov(4,0)  , Plane(0)
+TBTrackState::TBTrackState(TrackState aPars, TrackStateCovariance aCov, int aPlane) 
 { 
-  // Set track parameters 
+  // Set the plane number
+  Plane = aPlane;
+  // Set track state vector  
   Pars = aPars;
-  // Set track covariance
+  // Set track state covariance matrix
   Cov = aCov;
 }
 
 // Get intersection coordinates 
-HepMatrix TBTrackState::GetXCoord()  
+Eigen::Vector2d TBTrackState::GetXCoord()
 { 
-  return Pars.sub(3,4,1,1); 
+  return Pars.block<2,1>(2,0);
 }
 
-
+Eigen::Matrix2d TBTrackState::GetXCoordCovariance()
+{
+  return Cov.block<2,2>(2,2);
+}
 
 } // Namespace
