@@ -26,11 +26,15 @@ IF( MARLIN_NO_DLL )
 ENDIF()
 
 ##########################################################################################
+file(GLOB marlin_hdrs "${Marlin_SOURCE_DIR}/include/marlin/*.h" "${Marlin_SOURCE_DIR}/include/marlin/*.hh")
+file(GLOB streamlog_hdrs "${Marlin_SOURCE_DIR}/include/streamlog/*.h" "${Marlin_SOURCE_DIR}/include/streamlog/*.hh")
+
+
+
 
 # library *nix style versioning
 SET( Marlin_SOVERSION "${Marlin_MAJOR_VERSION}.${Marlin_MINOR_VERSION}" )
 SET( Marlin_VERSION "${Marlin_SOVERSION}.${Marlin_PATCH_LEVEL}" )
-
 
 # input directories
 ADD_SUBDIRECTORY( streamlog )

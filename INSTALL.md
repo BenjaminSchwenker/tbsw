@@ -18,21 +18,6 @@ In case you are working with Ubuntu, the following recipe may work for you as we
 $ sudo apt install cmake
 ```
 
-# Eigen 
-
-Eigen is a C++ template library for linear algebra. The project home page can be found at this URL https://eigen.tuxfamily.org. For tbsw, we will 
-download the stable release 3.3.7:
-
-```
-$ wget http://bitbucket.org/eigen/eigen/get/3.3.7.tar.bz2 
-$ tar -xjf 3.3.7.tar.bz2
-$ mv eigen-eigen-323c052e1731/ eigen_v3.3.7
-```
-
-This creates a folder `eigen_v3.3.7` in your current working directory. Eigen consists only of header files, hence there is nothing to compile before 
-you can use it.
-
-
 # Python 
 
 You should use your default system version of Python. Check that library python-dev is installed on your system to work with PyRoot. You can install by typing: 
@@ -94,25 +79,27 @@ $ git clone https://BenjaminSchwenker@bitbucket.org/BenjaminSchwenker/tbsw.git
 $ cd tbsw
 ```
 
-Open the script install.sh and edit the two first lines with exports for ROOTSYS and EIGEN3_INCLUDE_DIR to the locations on your local machine. 
-For example: 
-
-```
-export ROOTSYS=<absolute-path-to-root-installdir>                               # See Root section above
-export EIGEN3_INCLUDE_DIR=/home/benjamin/eigen_v3.3.7                           # See Eigen section above
-```
-
-Save the edits and close the file. Run the install script: 
+Please make sure that the path to your ROOT instalation is set in $ROOTSYS
+Run the install script:
 
 ```
 $ . install.sh
 ```
 
-In case the building of tbsw needs to be repeated, clean the repository before installing: 
+This script will create a build folder "build" and will compile tbsw.
+If you want to clean the tbsw directory for a complete rebuild, you can clean the tbsw directory with:
 
 ```
 $ . make_clean.sh
-$ . install.sh
+```
+
+Alternative:
+If you want to build TBSW in a different folder, want a special build type or a special Root version to be used, please use:
+
+```
+$ cd your/build/dir
+$ cmake path/to/tbsw -DROOT_HOME=/your/root/folder -DCMAKE_INSTALL_PREFIX=Release
+$ cmake --build .
 ```
 
 After the installation is done, you can test the software by running a small test beam simulation. All actuall work with tbsw is encapsulated in workspaces. The installation comes with a template workspace. The first two lines make a copy of the template workspace and cd into it. 
@@ -139,7 +126,7 @@ It can be obtained with the devtoolset:
 $ sudo yum install yum-conf-repos
 $ sudo yum install yum-conf-softwarecollections
 
-# Install Developer Toolset 6
+# Install Developer Toolset 7
 $ sudo yum install devtoolset-7
 
 # Enter Developer Toolset 7 Environment

@@ -55,7 +55,9 @@ LIST( REMOVE_ITEM lib_srcs ./Marlin.cc ./ProcessorLoader.cc )
 ####################################################################################################
 
 # create library
-ADD_LIBRARY( lib_Marlin ${lib_srcs} )
+
+ADD_LIBRARY( lib_Marlin ${lib_srcs}  ${marlin_hdrs})
+
 
 # link to libstreamlog
 TARGET_LINK_LIBRARIES( lib_Marlin lib_streamlog  lib_LCIO lib_GEARXML)

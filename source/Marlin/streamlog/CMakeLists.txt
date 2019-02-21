@@ -33,7 +33,7 @@ INCLUDE_DIRECTORIES( BEFORE ./source/include )
 AUX_SOURCE_DIRECTORY( ./source/src lib_srcs )
 
 # create library with the list of library sources
-ADD_LIBRARY( lib_streamlog ${lib_srcs} )
+ADD_LIBRARY( lib_streamlog ${lib_srcs} ${streamlog_hdrs} )
 
 # create symbolic lib target for calling target lib_XXX
 #ADD_CUSTOM_TARGET( lib DEPENDS lib_streamlog )
