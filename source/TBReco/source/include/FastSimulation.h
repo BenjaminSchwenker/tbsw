@@ -75,6 +75,11 @@ namespace depfet
     
     //! Alignment DB file name 
     std::string _alignmentDBFileName;
+     
+    //! New alignment  
+    /*! Don't use current alignment data base, but start from scratch   
+     */
+    bool _newAlignment;
     
     // Choose model for multiple scattering ( Highland:0 )
     int m_scatterModel;  

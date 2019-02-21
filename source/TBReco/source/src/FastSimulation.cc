@@ -82,7 +82,11 @@ namespace depfet {
     
     registerProcessorParameter ("AlignmentDBFileName",
                              "This is the name of the file with the alignment constants (add .root)",
-                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) );  
+                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) ); 
+    
+    registerProcessorParameter ("NewAlignment",
+                              "Start alignment from scratch (true/false)?",
+                              _newAlignment, static_cast <bool> (true) );  
     
     
                                  
@@ -105,7 +109,9 @@ namespace depfet {
     m_detector.ReadGearConfiguration();  
     
     // Read alignment data base file 
-    m_detector.ReadAlignmentDB( _alignmentDBFileName );  
+    if(!_newAlignment) m_detector.ReadAlignmentDB( _alignmentDBFileName );
+    // This is needed, because if the AlignmentDB is not read, the detector construct doesn't know the alignmentDB name
+    else  m_detector.SetAlignmentDBName( _alignmentDBFileName );
   }
 
   //
