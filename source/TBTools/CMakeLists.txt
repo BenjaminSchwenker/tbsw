@@ -84,6 +84,8 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 ### FINAL STATUS ############################################################
 
 # Display status message for important variables
+if (VERBOSE)
 MESSAGE( STATUS )
 MESSAGE( STATUS "------------------------- ${PROJECT_NAME} --------------------------------------" )
 MESSAGE( STATUS "${PROJECT_NAME}_VERSION = ${${PROJECT_NAME}_VERSION}" )
+ENDIF()

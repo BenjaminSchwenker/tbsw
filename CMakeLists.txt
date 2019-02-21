@@ -18,6 +18,7 @@ OPTION( BUILD_EudaqInput "Set to OFF to not build EudaqInput" ON )
 OPTION( BUILD_TBTools "Set to OFF to not build TBTools" ON )
 OPTION( BUILD_TBReco "Set to OFF to not build TBReco" ON )
 OPTION( BUILD_X0Tools "Set to ON to build X0Tools" OFF )
+OPTION( VERBOSE "Set to ON to make Verbose makefile" OFF )
 # LCIO Options
 OPTION( BUILD_LCIO_TESTS "Set to ON to build LCIO tests under src/cpp/src/TESTS" OFF )
 OPTION( BUILD_LCIO_EXAMPLES "Set to ON to build LCIO examples under src/cpp/src/EXAMPLES" OFF )
@@ -43,10 +44,12 @@ SET( CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}" CACHE PATH
 
 find_package(ROOT REQUIRED)
 # display status message for important variables
+IF( VERBOSE )
 MESSAGE( STATUS )
 MESSAGE( STATUS "------------------------------- ROOT -------------------------------------" )
 MESSAGE( STATUS "ROOT_FOUND        = ${ROOT_FOUND}" )
 MESSAGE( STATUS "ROOT_INCLUDE_DIRS  = ${ROOT_INCLUDE_DIRS}" )
+ENDIF()
 
 
 
@@ -68,12 +71,9 @@ IF( CMAKE_BUILD_TYPE STREQUAL "Debug" OR
     CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo" )
     ADD_DEFINITIONS( "-g" )
 ENDIF()
-IF( CMAKE_BUILD_TYPE STREQUAL "Debug")
+IF( VERBOSE )
     set(CMAKE_VERBOSE_MAKEFILE ON)
 ENDIF()
-
-
-
 
 if(POLICY CMP0002)
   cmake_policy(SET CMP0002 NEW)
@@ -97,8 +97,6 @@ IF( CMAKE_SIZEOF_VOID_P EQUAL 4 )
 ENDIF()
 
 IF( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-    MESSAGE( STATUS "64 bit architecture detected" )
-
     IF( BUILD_32BIT_COMPATIBLE )
         IF( COMMAND SET_PROPERTY )
             SET_PROPERTY(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS 0)
@@ -143,20 +141,21 @@ ENDIF()
 # input directories
 ADD_SUBDIRECTORY( source )
 
-
 # display status message for important variables
 MESSAGE( STATUS )
 MESSAGE( STATUS "---------------------------- TBSW Summary-----------------------------------------" )
-MESSAGE( STATUS "BUILD_SHARED_LIBS    = ${BUILD_SHARED_LIBS}" )
-MESSAGE( STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}" )
-MESSAGE( STATUS "CMAKE_BUILD_TYPE     = ${CMAKE_BUILD_TYPE}" )
+MESSAGE( STATUS "BUILD_SHARED_LIBS      = ${BUILD_SHARED_LIBS}" )
+MESSAGE( STATUS "CMAKE_INSTALL_PREFIX   = ${CMAKE_INSTALL_PREFIX}" )
+MESSAGE( STATUS "CMAKE_BUILD_TYPE       = ${CMAKE_BUILD_TYPE}" )
+MESSAGE( STATUS "ROOT_INCLUDE_DIRS      = ${ROOT_INCLUDE_DIRS}" )
+MESSAGE( STATUS "VERBOSE                = ${VERBOSE}" )
 IF( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-    MESSAGE( STATUS "BUILD_32BIT_COMPATIBLE = ${BUILD_32BIT_COMPATIBLE}" )
+MESSAGE( STATUS "BUILD_32BIT_COMPATIBLE = ${BUILD_32BIT_COMPATIBLE}" )
 ENDIF()
-MESSAGE( STATUS "BUILD_EudaqInput     = ${BUILD_EudaqInput}" )
-MESSAGE( STATUS "BUILD_TBTools        = ${BUILD_TBTools}" )
-MESSAGE( STATUS "BUILD_TBReco         = ${BUILD_TBReco}" )
-MESSAGE( STATUS "BUILD_X0Tools        = ${BUILD_X0Tools}" )
+MESSAGE( STATUS "BUILD_EudaqInput       = ${BUILD_EudaqInput}" )
+MESSAGE( STATUS "BUILD_TBTools          = ${BUILD_TBTools}" )
+MESSAGE( STATUS "BUILD_TBReco           = ${BUILD_TBReco}" )
+MESSAGE( STATUS "BUILD_X0Tools          = ${BUILD_X0Tools}" )
 MESSAGE( STATUS "Change a value with: cmake -D<Variable>=<Value>" )
 MESSAGE( STATUS "-------------------------------------------------------------------------------" )
 MESSAGE( STATUS )

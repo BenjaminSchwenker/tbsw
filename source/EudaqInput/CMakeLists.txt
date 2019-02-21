@@ -58,6 +58,8 @@ INSTALL( TARGETS ${PROJECT_NAME} DESTINATION lib PERMISSIONS
         GROUP_READ GROUP_EXECUTE
         WORLD_READ WORLD_EXECUTE )
 # display status message for important variables
+if (VERBOSE)
 MESSAGE( STATUS )
 MESSAGE( STATUS "------------------------- ${PROJECT_NAME} --------------------------------------" )
 MESSAGE( STATUS "${PROJECT_NAME}_VERSION = ${${PROJECT_NAME}_VERSION}" )
+ENDIF()

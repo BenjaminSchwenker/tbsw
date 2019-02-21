@@ -54,10 +54,11 @@ INSTALL( TARGETS ${PROJECT_NAME} DESTINATION lib PERMISSIONS
 ### FINAL STATUS ############################################################
 
 # Display status message for important variables
+if (VERBOSE)
 MESSAGE( STATUS )
 MESSAGE( STATUS "------------------------- ${PROJECT_NAME} --------------------------------------" )
 MESSAGE( STATUS "${PROJECT_NAME}_VERSION = ${${PROJECT_NAME}_VERSION}" )
-
+ENDIF()
 
 
 

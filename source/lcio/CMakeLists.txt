@@ -54,6 +54,7 @@ ADD_SUBDIRECTORY( lcio lcio )
 
 
 # display status message for important variables
+if (VERBOSE)
 MESSAGE( STATUS )
 MESSAGE( STATUS "----------------------------- LCIO --------------------------------------------" )
 MESSAGE( STATUS "BUILD_LCIO_TESTS = ${BUILD_LCIO_TESTS}" )
@@ -62,7 +63,7 @@ MESSAGE( STATUS "BUILD_WITH_DCAP = ${BUILD_WITH_DCAP}" )
 MESSAGE( STATUS "INSTALL_DOC = ${INSTALL_DOC}" )
 MESSAGE( STATUS "INSTALL_JAR = ${INSTALL_JAR}" )
 MESSAGE( STATUS "BUILD_ROOTDICT = ${BUILD_ROOTDICT}" )
-
+ENDIF()
 
 # force some variables that could be defined in the command line
 # to be written to cache
