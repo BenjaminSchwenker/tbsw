@@ -264,7 +264,7 @@ def randomize_gearparameter(gearfile=None, sensorID=None, parametername=None, me
     :@sigma              Sigma of the gaussian random distribution
     :author: ulf.stolzenberg@phys.uni-goettingen.de  
   """   
-
+  
   # Calculate random shift for this parameter
   value=random.gauss(mean,sigma)
   add_offset(gearfile=gearfile, sensorID=sensorID, parametername=parametername, value=value)
@@ -280,36 +280,28 @@ def randomize_telescope(gearfile=None, mean_list=[0.0,0.0,0.0,0.0,0.0,0.0], sigm
     :@modeexception_list      List of misalignment modes, which are not used
     :author: ulf.stolzenberg@phys.uni-goettingen.de  
   """  
-
+  
   tree = xml.etree.ElementTree.parse(gearfile)
   root = tree.getroot()  
-
-  # This is the default mode list: Containing all the positions and angles
-  default_mode_list=['positionX','positionY','positionZ','alpha','beta','gamma']
-
-  # Combine the default_mode_list and the mean and sigma lists to tuples
-  parameter_tuple_list=zip_longest(default_mode_list, mean_list, sigma_list, fillvalue=0.0)
-
-  # Run over the tuple list and remove tuples, that have a first element that is also present in the modeexception_list
-  for modeexception in modeexception_list:
-      parameter_tuple_list = filter(lambda x: x[0] != modeexception,parameter_tuple_list)
-
+  
+  # This is the parameter name list: Containing all the positions and angles
+  parameter_name_list=['positionX','positionY','positionZ','alpha','beta','gamma']
+  
   for detectors in root.findall('detectors'): 
     for detector in detectors.findall('detector'):
       for layers in detector.findall('layers'):
         for layer in layers.findall('layer'):
 
-          for ladder in layer.findall('sensitive'):
-            ID=ladder.get('ID')
-
+          for sensitive in layer.findall('sensitive'):
+            ID=int(sensitive.get('ID'))
+             
             # Check whether the sensor exception list contains this id
-            if sensorexception_list.count(int(ID)) < 1:
-              print('[INFO] Misalign position of plane with ID '+ID)
+            if not ID in sensorexception_list:
+              print('[INFO] Misalign position of plane with ID '+str(ID))
               # Loop over the alignment parameters in the default mode list
-              for parameter_tuple in parameter_tuple_list:
-                #Randomize the mode for this specific mode and sensor ID
-                randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername=parameter_tuple[0], mean=parameter_tuple[1], sigma=parameter_tuple[2])
-
+              for (i,parametername) in enumerate(parameter_name_list):
+                if not parametername in modeexception_list:
+                  randomize_gearparameter(gearfile=gearfile, sensorID=ID, parametername=parametername, mean=mean_list[i], sigma=sigma_list[i])   
 
 def set_globalparameter(gearfile=None, parametername=None, value=None):
   """

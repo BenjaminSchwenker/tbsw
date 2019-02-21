@@ -1,6 +1,6 @@
 """
-This is an example script to demonstrate how tbsw can be used to analyze test beam 
-data using Python scripts.
+This is an example script to quickly check the correctness of the track fitting in a test beam
+environment. 
 
 The script below simulates a test beam experiment where charged tracks cross a misaligned
 pixel telescope containing six Mimosa 26 detector planes forming a reference  telescope.
@@ -36,7 +36,7 @@ useTruthMisalignment = True
 mean_list=[0.0,0.0,0.0,0.0,0.0,0.0] 
 sigma_list=[0.1,0.1,0.1,0.3,0.3,1.5]
 
-# List of sensor ids and modes, which are excluded during misalignment
+# List of sensor ids and modes ('positionX','positionY','positionZ','alpha','beta','gamma'), which are excluded during misalignment
 sensorexception_list=[] 
 modeexception_list=[]
 
@@ -84,16 +84,31 @@ def create_sim_path(Env):
   m26digi = tbsw.Processor(name="M26SimpleDigit",proctype="SmearingDigitizer")
   m26digi.param("FilterIDs", "0 1 2 3 4 5")
   m26digi.param("HitCollectionName", "hit_m26")
+  m26digi.param("IntegrationWindow","true")
+  m26digi.param("StartIntegration","0")
+  m26digi.param("StopIntegration","100000")
+  m26digi.param("ClusterSigmaU", "0.0032" )
+  m26digi.param("ClusterSigmaV", "0.0032" )
   sim_path.add_processor(m26digi)
-
+  
   pxddigi = tbsw.Processor(name="PXDSimpleDigit",proctype="SmearingDigitizer")
   pxddigi.param("FilterIDs", "6")
   pxddigi.param("HitCollectionName", "hit_pxd")
+  pxddigi.param("IntegrationWindow","true")
+  pxddigi.param("StartIntegration","0")
+  pxddigi.param("StopIntegration","20000")
+  pxddigi.param("ClusterSigmaU", "0.006" )
+  pxddigi.param("ClusterSigmaV", "0.010" )
   sim_path.add_processor(pxddigi)
-
+  
   feidigi = tbsw.Processor(name="FEISimpleDigit",proctype="SmearingDigitizer")
   feidigi.param("FilterIDs", "21")
   feidigi.param("HitCollectionName", "hit_fei4")
+  feidigi.param("IntegrationWindow","true")
+  feidigi.param("StartIntegration","0")
+  feidigi.param("StopIntegration","20")
+  feidigi.param("ClusterSigmaU", "0.030" )
+  feidigi.param("ClusterSigmaV", "0.070" )
   sim_path.add_processor(feidigi)
   
   lciooutput = tbsw.Processor(name="LCIOOutput",proctype="LCIOOutputProcessor")
@@ -258,6 +273,7 @@ def create_reco_path(Env):
   
   fittester = tbsw.Processor(name="fittester", proctype="TrackFitValidation")
   fittester.param("AlignmentDBFileName","localDB/alignmentDB.root")  
+  fittester.param("RootFileName", "Validation.root")  
   reco_path.add_processor(fittester)
   
   return [ reco_path ]  
