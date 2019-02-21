@@ -87,7 +87,7 @@ TBTrackState SeedGenerator::CreateSeedTrack(TBHit Hit, TBDetector& Detector)
   GobalDirection << 0,0,1;   
 
   // Compute local track direction 
-  auto LocalDirection = Frame.TransformVecToLocal(GobalDirection);  
+  Vector3d LocalDirection = Frame.TransformVecToLocal(GobalDirection);  
   
   TrackState Pars; 
   Pars[0] = LocalDirection[0]/LocalDirection[2];  

@@ -44,14 +44,14 @@ double StraightLineTrackModel::GetSignedStepLength(const TrackState& State, cons
   Vector3d Origin = Surf.GetRotation()*(fSurf.GetPosition()-Surf.GetPosition());
 
   // Track direction on final surface   
-  auto fDir = Rot*Dir;
+  Vector3d fDir = Rot*Dir;
   if (fDir[2] == 0) { 
     // No intersection with final plane  
     return 0;   
   }
    
   // Surface normal vector in beam direction 
-  auto W = Vector3d::UnitZ();
+  Vector3d W = Vector3d::UnitZ();
 
   
   // Signed flight length between surfaces  
@@ -73,7 +73,7 @@ bool StraightLineTrackModel::CheckHitsSurface(const TrackState& State, const Ref
   Matrix3d Rot = fSurf.GetRotation()*Surf.GetRotation().transpose();
   
   // Track direction on final surface   
-  auto fDir = Rot*Dir;
+  Vector3d fDir = Rot*Dir;
   if (fDir[2] == 0) { 
     // No intersection with final plane  
     return false;   
@@ -107,7 +107,7 @@ TrackState StraightLineTrackModel::Extrapolate(const TrackState& State, const Re
   Vector3d Origin = Surf.GetRotation()*(fSurf.GetPosition()-Surf.GetPosition());
   
   // Track direction on final surface   
-  auto fDir = Rot*Dir;
+  Vector3d fDir = Rot*Dir;
   if (fDir[2] == 0) { 
     // No intersection with fSurf
     error = true;
@@ -115,7 +115,7 @@ TrackState StraightLineTrackModel::Extrapolate(const TrackState& State, const Re
   }
    
   // Surface normal vector in beam direction 
-  auto W=Vector3d::UnitZ();
+  Vector3d W=Vector3d::UnitZ();
 
   
   // This is like step lenght 
@@ -195,13 +195,13 @@ int StraightLineTrackModel::TrackJacobian( const TrackState& State, const Refere
 
   
   // Trajectory direction on final surface   
-  auto fDir = Rot*Dir;
+  Vector3d fDir = Rot*Dir;
   if (fDir[2] == 0) { // No intersection with final plane 
     return 1;
   }
    
   // Surface normal vector in beam direction 
-  auto W=Vector3d::UnitZ();
+  Vector3d W=Vector3d::UnitZ();
   
   double SX = (Rot*(Origin-xPoint)).dot( W) / fDir[2];
   
@@ -335,7 +335,7 @@ TrackStateGain StraightLineTrackModel::GetScatterGain(const TrackState& State)
   n_trk.normalize();
 
   // v_trk is orthogonal to track dir and detector u axis  
-  auto u_hat=Vector3d::UnitX();
+  Vector3d u_hat=Vector3d::UnitX();
   Vector3d v_trk = n_trk.cross(u_hat).normalized();
 
   // u_trk completes rigth handed system  
@@ -378,6 +378,10 @@ TrackStateGain StraightLineTrackModel::GetScatterGain(const TrackState& State)
   G(3,0) = 0;
   // *** dV/dtheta2
   G(3,1) = 0;
+  // *** d(q/p)/dtheta1
+  G(4,0) = 0;
+  // *** d(q/p)/dtheta2
+  G(4,1) = 0;
     
   return G;
 }

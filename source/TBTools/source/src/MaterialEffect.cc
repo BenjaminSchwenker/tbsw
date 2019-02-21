@@ -263,12 +263,12 @@ void ScatterTrack(TrackState& State, double kink_u, double kink_v)
 
 
   // v_trk is orthogonal to track dir and detector u axis
-  auto u_hat = Vector3d::UnitX();
-  auto v_trk = n_trk.cross(u_hat).normalized();
+  Vector3d u_hat = Vector3d::UnitX();
+  Vector3d v_trk = n_trk.cross(u_hat).normalized();
 
 
   // u_trk completes rigth handed system
-  auto u_trk = v_trk.cross(n_trk);
+  Vector3d u_trk = v_trk.cross(n_trk);
 
   // Now, we construct rotation matrix from comoving
   // frame to detector frame

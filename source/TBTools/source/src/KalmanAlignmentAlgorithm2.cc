@@ -15,8 +15,6 @@
 #include "ThreeDModel.h"
 
 // ROOT includes
-//#include "TH1F.h"
-//#include "TH2F.h"
 #include "TTree.h"
 #include "TMath.h"
 #include "TRandom.h"
@@ -76,15 +74,13 @@ SensorAlignmentJacobian KalmanAlignmentAlgorithm2::Jacobian_Alignment(const Trac
   Eigen::Matrix<double,6,6> A;
   A = Eigen::Matrix<double,6,6>::Identity();
   A.block<3,3>(0,0) = Rot;
-  
-  //cout << "A " << A << endl; 
    
   // Apply chain rule 
-  auto Ja=Jaq*A; 
+  Jaq=(Jaq*A).eval(); 
   
-  //cout << "Ja " << Ja << endl; 
   
-  return Ja;
+  
+  return Jaq;
 }
 
 
@@ -316,24 +312,24 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
       // Remember that p0,C0 are track estimates with the 
       // current (global) detector alignment 
        
-      auto p0 = TE.GetState().GetPars();
-      auto C0 = TE.GetState().GetCov(); 
-      auto m = TE.GetHit().GetCoord();     
-      auto V = TE.GetHit().GetCov();   
+      TrackState p0 = TE.GetState().GetPars();
+      TrackStateCovariance C0 = TE.GetState().GetCov(); 
+      Vector2d m = TE.GetHit().GetCoord();     
+      Matrix2d V = TE.GetHit().GetCov();   
          
       // Copy local alignment state/cov  
       //-------------------------------
-      auto a0 = AlignStore.GetAlignState(ipl);
-      auto E0 = AlignStore.GetAlignCovariance(ipl); 
+      SensorAlignmentParameters a0 = AlignStore.GetAlignState(ipl);
+      SensorAlignmentCovariance E0 = AlignStore.GetAlignCovariance(ipl); 
       
       // Jacobian matrix, derivatives of measurement equation 
       // m=f(p,a) to track parameters p at (a0,p0) 
-      auto H = TrackFitter.GetHMatrix();
+      StateHitProjector H = TrackFitter.GetHMatrix();
       
       // Jacobian matrix, derivatives of measurement equation 
       // m=f(p,a) to alignment parameters a at (a0,p0)  
-      auto Rot = TE.GetDet().GetNominal().GetRotation();
-      auto D = Jacobian_Alignment(p0, Rot); 
+      Matrix3d Rot = TE.GetDet().GetNominal().GetRotation();
+      SensorAlignmentJacobian D = Jacobian_Alignment(p0, Rot); 
        
       // Weigth matrix of measurment 
       bool invertible = true;
@@ -344,15 +340,10 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
         } 
         continue;
       }	
-      
-      // Gain matrix K for alignment 
-      auto K = E0 * D.transpose() * W;
-      // Track prediction for hit coord   
-      auto f = H*p0;     
               
       // Update for alignment state + cov  
-      auto a1 = a0 + K * (m - f) ;
-      auto E1 = E0 - E0*D.transpose()*W*D*E0.transpose();   
+      SensorAlignmentParameters a1 = a0 + (E0 * D.transpose() * W) * (m -  (H*p0) ) ;
+      SensorAlignmentCovariance E1 = E0 - E0*D.transpose()*W*D*E0.transpose();   
           
       // Outlier rejection II
       //----------------------

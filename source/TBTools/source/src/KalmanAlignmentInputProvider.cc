@@ -60,7 +60,7 @@ void KalmanAlignmentInputProvider::FillEvent(TBTrack& trk, AlignEvent& event)
   // Fill vectors and matrices  
   
   // Reference track parameters 
-  auto refstate = trk.GetReferenceState().GetPars(); 
+  TrackState refstate = trk.GetReferenceState().GetPars(); 
   (*newRefTrackParameters)[0] = refstate(0);     
   (*newRefTrackParameters)[1] = refstate(1);  
   (*newRefTrackParameters)[2] = refstate(2);  
@@ -82,8 +82,8 @@ void KalmanAlignmentInputProvider::FillEvent(TBTrack& trk, AlignEvent& event)
     ids[index] = TE.GetDet().GetDAQID(); 
     
     // Fill measurments + cov 
-    auto hitCoord = TE.GetHit().GetCoord();
-    auto hitCov = TE.GetHit().GetCov();
+    Vector2d hitCoord = TE.GetHit().GetCoord();
+    Matrix2d hitCov = TE.GetHit().GetCov();
     for (int k=0; k<=1; ++k) {
       (*newMeasurement)[index*2+k] = hitCoord(k); 
       for (int l=0; l<=1; ++l) {     

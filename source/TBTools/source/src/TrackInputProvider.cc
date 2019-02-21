@@ -36,7 +36,7 @@ TrackImpl * TrackInputProvider::MakeLCIOTrack( TBTrack& trk )
   fittrack->setNdf( trk.GetReferenceState().GetPlane()  );           
   
   // Copy reference track 
-  auto refstate = trk.GetReferenceState().GetPars();
+  TrackState refstate = trk.GetReferenceState().GetPars();
    
   fittrack->setTanLambda(refstate[0]);    // This is u'
   fittrack->setPhi(refstate[1]);          // This is v' 

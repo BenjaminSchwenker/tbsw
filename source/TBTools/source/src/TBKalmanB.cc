@@ -362,7 +362,8 @@ double TBKalmanB::FilterHit(TBHit& hit, TrackState& xref, TrackState& x0, TrackS
        
   // This is the filtered state
   x0 += K * r;
-  C0 -= C0*H.transpose()*W*H*C0.transpose(); 
+  C0 -= ( C0*H.transpose()*W*H*C0.transpose() ).eval() ; 
+
         
   return predchi2;
 }
@@ -529,7 +530,7 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
        
       // This is the filtered state
       x0 += K * r;
-      C0 -= C0*H.transpose()*W*H*C0.transpose();        
+      C0 -= ( C0*H.transpose()*W*H*C0.transpose() ).eval();       
     }  
     
     // Store results and update chisqu
@@ -722,8 +723,6 @@ int TBKalmanB::MAP_FORWARD(  double theta2,
         
   // Local Scatter gain matrix      
   TrackStateGain Gl = TrackModel->GetScatterGain(xref);
-
-  //cout << "BENNI HACK scatter gain matrix " << Gl << endl; 
             
   // General Scatter gain matrix 
   TrackStateGain G = J*Gl;   
@@ -734,7 +733,7 @@ int TBKalmanB::MAP_FORWARD(  double theta2,
              
   C1 += G*Q*G.transpose();     
          
-  x0 = J*x0;  
+  x0 = (J*x0).eval(); 
   C0 = C1;  
 
   
@@ -793,7 +792,7 @@ int TBKalmanB::MAP_BACKWARD(  double theta2,
              
   C1 +=  Gl*Q*Gl.transpose();    // Backward form -> use Gl not G
          
-  x0 = Jinv*x0;  
+  x0 = ( Jinv*x0 ).eval();  
   C0 = C1;  
                
   return 0; 
