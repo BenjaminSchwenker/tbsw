@@ -73,7 +73,7 @@ TrackState HelixTrackModel::Extrapolate(const TrackState& State, const Reference
   Extrapolate(tmpState, tmpSurf,  length);
   
   // Track position in global coordinates 
-  auto x = tmpSurf.GetPosition();
+  Vector3d x = tmpSurf.GetPosition();
   
   // Track direction in global coord
   // Important: We assume that we see only the part of the helix where
@@ -84,8 +84,8 @@ TrackState HelixTrackModel::Extrapolate(const TrackState& State, const Reference
   // Finally rotate the temporary state into the 
   // local coordinates of fSurf 
    
-  auto xloc = fSurf.TransformPointToLocal(x);
-  auto tloc = fSurf.TransformVecToLocal(t);
+  Vector3d xloc = fSurf.TransformPointToLocal(x);
+  Vector3d tloc = fSurf.TransformVecToLocal(t);
     
   // Overwrite State
   tmpState[0] = tloc[0]/tloc[2];
@@ -112,8 +112,8 @@ void HelixTrackModel::Extrapolate(TrackState& State, ReferenceFrame& Surf,  doub
   tloc<< State[0], State[1], 1;
   
   // Transform track state into global coordintes  
-  auto x = Surf.TransformPointToGlobal(xloc);
-  auto t = Surf.TransformVecToGlobal(tloc);
+  Vector3d x = Surf.TransformPointToGlobal(xloc);
+  Vector3d t = Surf.TransformVecToGlobal(tloc);
   
   // Construct basis vectors (n, b, h) of helix frame 
   
@@ -145,8 +145,8 @@ void HelixTrackModel::Extrapolate(TrackState& State, ReferenceFrame& Surf,  doub
   double theta = 0.29979*Bnorm*length*kappa/1000; 
   double rho = 1000*coslambda/kappa/0.29979/Bnorm;
   
-  auto xnew = x + rho*(1-TMath::Cos(theta))*n + rho*TMath::Sin(theta)*b + rho*theta*tanlambda*h;
-  auto tnew = coslambda*( TMath::Sin(theta)*n + TMath::Cos(theta)*b + tanlambda*h );
+  Vector3d xnew = x + rho*(1-TMath::Cos(theta))*n + rho*TMath::Sin(theta)*b + rho*theta*tanlambda*h;
+  Vector3d tnew = coslambda*( TMath::Sin(theta)*n + TMath::Cos(theta)*b + tanlambda*h );
   
   // Overwrite Surf  
   Surf.SetPosition(xnew);                // Track crosses origin of Surf 
@@ -199,7 +199,7 @@ double HelixTrackModel::GetDistanceToPlane(const TrackState& State, const Refere
 
   // Extrapolate a copy of the current state and surface along 
   // the helix. 
-  auto tmpState = State;
+  TrackState tmpState = State;
   ReferenceFrame tmpSurf = Surf;  
   Extrapolate(tmpState, tmpSurf, length);
 
@@ -207,7 +207,7 @@ double HelixTrackModel::GetDistanceToPlane(const TrackState& State, const Refere
   Vector3d xnew = tmpSurf.GetPosition();
     
   // Transform track state into loccal coordintes of fSurf  
-  auto D = fSurf.TransformPointToLocal(xnew);
+  Vector3d D = fSurf.TransformPointToLocal(xnew);
 
   // Return signed distance of xnew to surface fSurf
   return D[2];
@@ -370,7 +370,7 @@ TrackStateGain HelixTrackModel::GetScatterGain(const TrackState& State)
   n_trk.normalize(); // Change vector to unit size
    
   // v_trk is orthogonal to track dir and detector u axis  
-  auto u_hat=Vector3d::UnitX();
+  Vector3d u_hat=Vector3d::UnitX();
   Vector3d v_trk = n_trk.cross(u_hat).normalized();
   
   // u_trk completes rigth handed system  
@@ -413,6 +413,10 @@ TrackStateGain HelixTrackModel::GetScatterGain(const TrackState& State)
   G(3,0) = 0;
   // *** dV/dtheta2
   G(3,1) = 0;
+  // *** d(q/p)/dtheta1
+  G(4,0) = 0;
+  // *** d(q/p)/dtheta2
+  G(4,1) = 0;
     
   return G;
 }

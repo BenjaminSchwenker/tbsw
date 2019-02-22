@@ -35,6 +35,7 @@
 #include "TString.h"
 #include "TMath.h"
 #include "TEnv.h"
+#include "TFitResult.h"
 
 
 
@@ -866,19 +867,43 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
   // Use RMS value as a rough measure of the fit range for a gaussian fit
   TF1 *f1 = new TF1("f1","gaus(x)",-fitrange,fitrange);
   f1->SetParameter(2,histo->GetRMS());
+  f1->FixParameter(1,0);
+  f1->SetParLimits(2,0.0,2*histo->GetRMS());
   f1->SetLineStyle(2);
   TFitResultPtr fitr=h2->Fit("f1","RS");
+
+  cout<<endl<<"Fit results:  "<<endl;
+  cout<<"Fit is valid: "<<fitr->IsValid()<<endl;
+  cout<<"Fit status: "<<fitr->Status()<<endl;
   
   // Repeat fit in case it failed
-  if(fitr!=0)
+  if(!fitr->IsValid())
   {
     cout<<"Fit of angle distribution failed with status: "<<fitr<<endl;
     cout<<"Repeat fit "<<endl;
     h2->Fit("f1","RM");
+
+	cout<<endl<<"Fall back Fit results: "<<endl;
+	cout<<"Fit is valid: "<<fitr->IsValid()<<endl;
+	cout<<"Fit status: "<<fitr->Status()<<endl;
   }
 
   // Use the determined sigma value to calculate the fit range
   double sigma = f1->GetParameter(2);
+
+  // In case the second fit failed as well, simply use the RMS of the histo in the 3 sigma range
+  if(!fitr->IsValid()) 
+  {
+	double corerange=3*histo->GetRMS();
+
+	// Limit histo range to core of distribution
+	histo->GetXaxis()->SetRangeUser(-corerange,corerange);
+
+	// Get RMS of core distribution without outliers
+	sigma = histo->GetRMS();
+    cout<<"Fall back fit of angle distribution failed with status: "<<fitr<<"! Just use RMS of histogram."<<endl;
+  }
+
   fitrange=sqrt(2.0*rangevalue)*sigma;
   cout<<"Determined fit range: " << fitrange<<endl<<endl;
 

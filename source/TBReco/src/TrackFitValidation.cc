@@ -69,11 +69,12 @@ namespace depfet {
                            std::string("tracks") ) ;
     
     // Processor parameters:
-    
+
     registerProcessorParameter ("AlignmentDBFileName",
-                                "This is the name of the LCIO file with the alignment constants (add .slcio)",
-                                _alignmentDBFileName, static_cast< string > ( "alignmentDB.slcio" ) );     
-       
+                             "This is the name of the file with the alignment constants (add .root)",
+                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) ); 
+    
+         
     registerProcessorParameter ("MaxResidualU",
                                 "Maximum u residual for matching simHits to hits [mm]. Put -1 to deactivate cut.",
                                 _maxResidualU,  static_cast < double > (0.2));
@@ -701,14 +702,14 @@ namespace depfet {
       histoName = "hresU_det"+to_string( ipl );
       min = -10*adet.GetSensitiveSizeU()/(adet.GetNCellsU()+1); 
       max = +10*adet.GetSensitiveSizeU()/(adet.GetNCellsU()+1); 
-      _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, min, max);
+      _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 301, min, max);
       _histoMap[ histoName ]->SetXTitle("u residual [mm]"); 
       _histoMap[ histoName ]->SetYTitle("tracks"); 
       
       histoName = "hresV_det"+to_string( ipl );
       min = -10*adet.GetSensitiveSizeV()/(adet.GetNCellsV()+1); 
       max = +10*adet.GetSensitiveSizeV()/(adet.GetNCellsV()+1); 
-      _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 100, min, max); 
+      _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 301, min, max); 
       _histoMap[ histoName ]->SetXTitle("v residual [mm]"); 
       _histoMap[ histoName ]->SetYTitle("tracks"); 
       
