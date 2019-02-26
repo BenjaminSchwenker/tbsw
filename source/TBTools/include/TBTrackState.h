@@ -58,7 +58,7 @@ class TBTrackState {
 
   // Get/Set plane number 
   void SetPlane(int aPlane ) { Plane = aPlane; }
-  int  GetPlane() { return Plane; }
+  int  GetPlane() const { return Plane; }
   
   // Get intersection coordinates 
   Eigen::Vector2d GetXCoord();

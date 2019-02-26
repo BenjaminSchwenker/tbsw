@@ -51,15 +51,15 @@ class TBTrackElement
   
   /* Get detector 
    */
-  Det& GetDet() { return DetUnit; }
+  const Det& GetDet() { return DetUnit; }
   
   /** True if hit is set  
    */
-  bool HasHit(){ return (HitStore.size() == 1); }
+  bool HasHit(){ return hasHit; }
 
   /** Set measured hit  
    */
-  void SetHit(TBHit& aHit); 
+  void SetHit(const TBHit& aHit);
   
   /** Get hit - query HasHit() before 
    */
@@ -75,7 +75,7 @@ class TBTrackElement
 
   /** Set track state
    */
-  void SetState(TBTrackState& aState); 
+  void SetState(const  TBTrackState& aState);
   
   /** Get fit flag 
    */
@@ -95,27 +95,32 @@ class TBTrackElement
    
  private: 
   
-  /* Detector unit   
-   */ 
-  Det DetUnit;
-  
-  /* Container for registered hits 
-   */ 
-  std::vector<TBHit> HitStore;   
-     
+  /* Container for registered hits
+   */
+  std::vector<TBHit> HitStore;
   /* Track state on surface
    */
-  TBTrackState State; 
+  TBTrackState State;
+
+  /* Detector unit   
+   */ 
+  Det &DetUnit;
   
+  /* Local ChiSqu - consistency of hit assignment
+   */
+  double LocalChiSqu;
+     
   /* Flags detector crossed by track  
    */ 
   bool CrossedFlag; 
+  /* Flags detector has hit
+   */
+  bool hasHit;
   
-  /* Local ChiSqu - consistency of hit assignment 
-   */  
-  double LocalChiSqu;   
+
 };
 
 } // Namespace
-
+//#include<Eigen/StdVector>
+//EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(depfet::TBTrackElement)
 #endif
