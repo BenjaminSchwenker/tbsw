@@ -172,7 +172,7 @@ void CogHitMaker::processEvent(LCEvent * evt)
         // Add link to full cluster data 
         LCObjectVec clusterVec;
         clusterVec.push_back( cluster->getTrackerData() );
-        trackerhit->rawHits() = clusterVec;
+        trackerhit->rawHits() = std::move(clusterVec);
         
         // Add hit to the hit collection
         hitCollection->push_back( trackerhit );
