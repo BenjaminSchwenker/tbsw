@@ -91,21 +91,6 @@ namespace UTIL{
     return *this ;
   }
   
-
-
-
-  size_t BitField64::index( const std::string& name) const {
-    
-    IndexMap::const_iterator it = _map.find( name ) ;
-    
-    if( it != _map.end() ) 
-      
-      return it->second  ;
-    
-    else
-      throw Exception(" BitFieldValue: unknown name: " + name ) ;
-  }
-  
   unsigned BitField64::highestBit() {
 
     unsigned hb(0) ;

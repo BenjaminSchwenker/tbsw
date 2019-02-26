@@ -208,7 +208,13 @@ public :
 
     /** Index for field named 'name'
      */
-    size_t index( const std::string& name) const ;
+    inline size_t index( const std::string& name) const {
+      IndexMap::const_iterator it = _map.find( name ) ;
+      if( it != _map.end() )
+        return it->second  ;
+      else
+        throw EVENT::Exception(" BitFieldValue: unknown name: " + name ) ;
+    }
 
     /** Access to field through name .
      */
