@@ -6,7 +6,36 @@
 #include "TBHit.h"
 #include "GenericTrackModel.h"
 
+namespace depfet {
+//! Class KalFilterDet
+/*
+ * Class KalFilterDet manages the results of a Kalman filter pass
+ * for a particular sub detector. The class can be symmetrically
+ * used for the forward and backward filter pass. The detectors
+ * are uniquily identified by their plane number, i.e. position
+ * along the beam line.
+ *
+ * The KalFilterDet class stores [x,C] variable pairs for the
+ * estimated track states. The [x,C] pair is stored both for
+ * predicted and updated KF estimates.
+ *
+ * @Author B. Schwenker, University of Göttingen
+ * <mailto:benjamin.schwenker@phys.uni-goettingen.de>
+ */
 
+class KalFilterDet
+{
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  /* Predicted estimator
+   */
+  TrackState Pr_x;
+  TrackStateCovariance Pr_C;
+
+};
+}
+#include<Eigen/StdVector>
+EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(depfet::KalFilterDet)
 
 namespace depfet {
 
@@ -43,32 +72,7 @@ namespace depfet {
  */
 
 
-//! Class KalFilterDet
-/* 
- * Class KalFilterDet manages the results of a Kalman filter pass 
- * for a particular sub detector. The class can be symmetrically
- * used for the forward and backward filter pass. The detectors
- * are uniquily identified by their plane number, i.e. position 
- * along the beam line. 
- * 
- * The KalFilterDet class stores [x,C] variable pairs for the 
- * estimated track states. The [x,C] pair is stored both for 
- * predicted and updated KF estimates. 
- * 
- * @Author B. Schwenker, University of Göttingen
- * <mailto:benjamin.schwenker@phys.uni-goettingen.de>
- */
 
-class KalFilterDet
-{
- public:
-  
-  /* Predicted estimator 
-   */
-  TrackState Pr_x;    
-  TrackStateCovariance Pr_C;     
-  
-};
 
 /* Data type used to store the results of a filter pass. 
  */ 
@@ -181,21 +185,21 @@ class TBKalmanB {
   /** Compute the weighted means of forward and backward filter estimated. In a 
    *  numerically robust way. Returns error flag.
    */
-  bool GetSmoothedData( TrackState& xb, TrackStateCovariance& Cb, TrackState& rf, TrackStateCovariance& Cf,
+  bool GetSmoothedData( const TrackState& xb, const TrackStateCovariance& Cb, const TrackState& rf, const TrackStateCovariance& Cf,
                         TrackState& xs, TrackStateCovariance& Cs);
 
   
   
   int MAP_FORWARD(double theta2,
-                        TrackState& xref, ReferenceFrame& Surf, ReferenceFrame& nSurf,
+                        const TrackState& xref, const ReferenceFrame& Surf, const ReferenceFrame& nSurf,
                         TrackState& x0, TrackStateCovariance& C0
                      );
    
-  int MAP_BACKWARD(   double theta2, 
-                        TrackState& xref, ReferenceFrame& Surf,
-                        TrackState& nxref, ReferenceFrame& nSurf,
+  int MAP_BACKWARD(double theta2,
+                        const TrackState &xref, const ReferenceFrame &Surf,
+                        const TrackState &nxref, const ReferenceFrame &nSurf,
                         TrackState& x0, TrackStateCovariance& C0
-                     ); 
+                     );
   
    
  // Private Members -----------------
