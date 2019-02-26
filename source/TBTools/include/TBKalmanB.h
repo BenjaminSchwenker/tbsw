@@ -26,6 +26,8 @@ namespace depfet {
 class KalFilterDet
 {
  public:
+  KalFilterDet():Pr_x(TrackState::Zero()),Pr_C(TrackStateCovariance::Zero()){ }
+
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   /* Predicted estimator
    */
@@ -187,8 +189,6 @@ class TBKalmanB {
    */
   bool GetSmoothedData( const TrackState& xb, const TrackStateCovariance& Cb, const TrackState& rf, const TrackStateCovariance& Cf,
                         TrackState& xs, TrackStateCovariance& Cs);
-
-  
   
   int MAP_FORWARD(double theta2,
                         const TrackState& xref, const ReferenceFrame& Surf, const ReferenceFrame& nSurf,

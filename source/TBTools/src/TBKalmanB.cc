@@ -362,10 +362,10 @@ double TBKalmanB::FilterHit(TBHit& hit, TrackState& xref, TrackState& x0, TrackS
   predchi2 = (r.transpose()*W*r)[0];
       
   // Kalman gain matrix K 
-  Matrix<double,5,2> K = C0 * H.transpose() * W; 
+  //Eigen::Matrix<double,5,2> K = C0 * H.transpose() * W;
        
   // This is the filtered state
-  x0 += K * r;
+  x0 += C0 * H.transpose() * W * r;
   C0 -= ( C0*H.transpose()*W*H*C0.transpose() ).eval() ; 
 
         
@@ -379,10 +379,10 @@ int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, TrackStat
 { 
        
   // Reference frame for next track element          
-  ReferenceFrame& nSurf = nte.GetDet().GetNominal();
+  const ReferenceFrame& nSurf = nte.GetDet().GetNominal();
 
   // Reference frame for current track element          
-  ReferenceFrame& Surf = te.GetDet().GetNominal();
+  const ReferenceFrame& Surf = te.GetDet().GetNominal();
   
   // Direction of propagation (idir > 0 means along beam direction)
   int idir = nte.GetDet().GetPlaneNumber() - te.GetDet().GetPlaneNumber();
@@ -529,10 +529,10 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
       predchi2 = (r.transpose()*W*r) [0];   
       
       // Kalman gain matrix K 
-      Matrix<double,5,2> K = C0 * H.transpose() * W; 
+      //auto K = C0 * H.transpose() * W;
        
       // This is the filtered state
-      x0 += K * r;
+      x0 += C0 * H.transpose() * W * r;
       C0 -= ( C0*H.transpose()*W*H*C0.transpose() ).eval();       
     }  
     
