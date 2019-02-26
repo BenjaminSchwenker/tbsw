@@ -35,13 +35,14 @@ IF( NOT CMAKE_BUILD_TYPE )
 ENDIF()
 
 IF(ROOT_HOME)
+    SET( ROOT_BASH_PATH ${ROOT_HOME})
     SET( CMAKE_PREFIX_PATH ${ROOT_HOME})
 ELSE()
+    SET( ROOT_BASH_PATH $ENV{ROOTSYS})
     SET( CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 ENDIF()
 SET( CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}" CACHE PATH
     "CMAKE_PREFIX_PATH" FORCE )
-
 find_package(ROOT REQUIRED)
 # display status message for important variables
 IF( VERBOSE )
@@ -49,6 +50,10 @@ MESSAGE( STATUS )
 MESSAGE( STATUS "------------------------------- ROOT -------------------------------------" )
 MESSAGE( STATUS "ROOT_FOUND        = ${ROOT_FOUND}" )
 MESSAGE( STATUS "ROOT_INCLUDE_DIRS  = ${ROOT_INCLUDE_DIRS}" )
+MESSAGE( STATUS "ROOT_rootcint_CMD  = ${ROOT_rootcint_CMD}" )
+MESSAGE( STATUS "ROOT_LIBRARIES  = ${ROOT_LIBRARIES}" )
+MESSAGE( STATUS "CMAKE_PREFIX_PATH  = ${CMAKE_PREFIX_PATH}" )
+MESSAGE( STATUS "ROOT_RIO_LIBRARY  = ${ROOT_RIO_LIBRARY}" )
 ENDIF()
 
 
@@ -181,3 +186,25 @@ SET( BUILD_TBReco "${BUILD_TBReco}" CACHE BOOL
      "Set to OFF to not build TBReco"  FORCE )
 SET( BUILD_X0Tools "${BUILD_X0Tools}" CACHE BOOL
       "Set to ON to build TBReco"  FORCE )
+
+# Create the init_tbsw.sh file
+
+file(WRITE  "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#!/bin/bash\n")
+file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#--------------------------------------------------------------------------------\n")
+file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#    ROOT                                                                        \n")
+file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#--------------------------------------------------------------------------------\n")
+file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "export ROOTSYS=${ROOT_BASH_PATH}\n")
+file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "export PATH=${ROOT_BASH_PATH}/bin:\$PATH\n")
+file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "export LD_LIBRARY_PATH=${ROOT_BASH_PATH}/lib:\$LD_LIBRARY_PATH\n")
+file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "export PYTHONPATH=${ROOT_BASH_PATH}/lib:${PROJECT_SOURCE_DIR}/source:\$PYTHONPATH\n")
+file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "export ROOT_INCLUDE_PATH=${PROJECT_BINARY_DIR}\n")
+file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "\n")
+
+file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#--------------------------------------------------------------------------------\n")
+file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#    TBSW                                                                        \n")
+file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#--------------------------------------------------------------------------------\n")
+file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "export PATH=${PROJECT_BINARY_DIR}/bin:\$PATH\n")
+file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "export LD_LIBRARY_PATH=${PROJECT_BINARY_DIR}/lib:\$LD_LIBRARY_PATH\n")
+file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "export MARLIN_DLL=${PROJECT_BINARY_DIR}/lib/libTBReco.so:${PROJECT_BINARY_DIR}/lib/libEudaqInput.so:\n")
+file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "export MARLIN=${PROJECT_BINARY_DIR}\n")
+file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "\n")

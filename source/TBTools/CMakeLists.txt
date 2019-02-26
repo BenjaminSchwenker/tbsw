@@ -25,16 +25,21 @@ SET( ${PROJECT_NAME}_PATCH_LEVEL 0 )
 # create a new dictionary for class AlignEvent
 IF( NOT EXISTS "${PROJECT_SOURCE_DIR}/include/AlignEventDict.h" )
     MESSAGE( STATUS "Creating root dictionary for class AlignEvent" )
-    
+    set(ENV{LD_LIBRARY_PATH} "${ROOT_BASH_PATH}/lib:$ENV{LD_LIBRARY_PATH}")
+    EXEC_PROGRAM( "echo $LD_LIBRARY_PATH" "${PROJECT_SOURCE_DIR}/include"
+            OUTPUT_VARIABLE out_tmp
+            RETURN_VALUE out_ret )
+    MESSAGE( STATUS "The library path was" )
+    MESSAGE( STATUS "${out_tmp}" )
     EXEC_PROGRAM( ${ROOT_rootcint_CMD} "${PROJECT_SOURCE_DIR}/include"
             ARGS -f AlignEventDict.C 
             ARGS -c AlignEvent.h LinkDef.h
             OUTPUT_VARIABLE out_tmp
             RETURN_VALUE out_ret )
     IF( out_ret )
+        MESSAGE( STATUS "${out_tmp}" )
         MESSAGE( FATAL_ERROR "Error executing rootcint!!" )
     ENDIF()
-    
 ENDIF()
 
 # move dictionary file to other sources 
@@ -47,6 +52,7 @@ IF( EXISTS "${PROJECT_SOURCE_DIR}/include/AlignEventDict.C" )
             OUTPUT_VARIABLE out_tmp
             RETURN_VALUE out_ret )
     IF( out_ret )
+        MESSAGE( FATAL_ERROR "${out_tmp}" )
         MESSAGE( FATAL_ERROR "Error moving dictionary!!" )
     ENDIF()
     
