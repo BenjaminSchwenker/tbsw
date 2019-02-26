@@ -103,6 +103,7 @@ vector<int> HitFactory::GetCompatibleHitIds(int ipl, double u, double v, double 
   
   // List of id for compatible hits 
   vector<int> CompatibleHitIds;
+  CompatibleHitIds.reserve(8);
   
   // Compute range of compatible sectors 
   int minSecID = floor( (u-distMaxU) / _SectorPitch );
