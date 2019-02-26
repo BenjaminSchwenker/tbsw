@@ -290,11 +290,12 @@ bool TBKalmanB::Fit(TBTrack& trk)
           xs = FFilterData[is].Pr_x;    
           Cs = FFilterData[is].Pr_C;
       } else {
-          TrackState & xb = BFilterData[is].Pr_x; 
-          TrackStateCovariance & Cb = BFilterData[is].Pr_C;
-          TrackState & xf = FFilterData[is].Pr_x;    
-          TrackStateCovariance & Cf = FFilterData[is].Pr_C;
-                
+
+          const auto& xb = BFilterData[is].Pr_x;
+          const auto& Cb = BFilterData[is].Pr_C;
+          const auto& xf = FFilterData[is].Pr_x;
+          const auto& Cf = FFilterData[is].Pr_C;
+
           bool error = GetSmoothedData(xb, Cb, xf, Cf, xs, Cs);
           if ( error ) {
             trk.SetChiSqu(-1);
@@ -491,10 +492,10 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
     TBTrackElement& te = TEVec[iTE];
     
     // Get surface parameters           
-    ReferenceFrame& Surf = te.GetDet().GetNominal();      
+    const ReferenceFrame& Surf = te.GetDet().GetNominal();
     
     // Get current reference state xref
-    TrackState & xref = RefStateVec[is];    
+    const auto& xref = RefStateVec[is];
 
     // Copy predicted [x,C]
     TrackState x0 = Result[is].Pr_x;  
@@ -544,10 +545,10 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
     if (inext!=istop+idir)  {
          
       // Next surface along filter direction 
-      TBTrackElement& nte = TEVec[ CrossedTEs[inext] ]; 
+      TBTrackElement& nte = TEVec[ CrossedTEs[inext] ];
       
       // Parameters for next surface          
-      ReferenceFrame& nSurf = nte.GetDet().GetNominal();
+      const ReferenceFrame& nSurf = nte.GetDet().GetNominal();
 
       // Get reference state  
       TrackState & nxref = RefStateVec[inext];  
@@ -637,52 +638,84 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
 /** Compute the weighted means of forward and backward filter estimated. In a 
  *  numerically robust way. Returns error flag.
  */
-bool TBKalmanB::GetSmoothedData( TrackState& xb, TrackStateCovariance& Cb, TrackState& xf, TrackStateCovariance& Cf,
-                                TrackState& Smoothed_State, TrackStateCovariance& Smoothed_Cov)
-{ 
-  
-  // Error flag  
-  bool invertible = true;
-  
-  // Compute forward weight matrix
-  TrackStateWeight fW = Cf.inverse(); 
-  //Cf.computeInverseWithCheck(fW,invertible);  
-  if (!invertible) {
-    streamlog_out(MESSAGE3) << "Smoothing 1: Matrix inversion failed. Quit fitting!"
-                         << std::endl;
-    return invertible;
-  }	
-  
-  // Compute backward weight matrix
-  TrackStateWeight bW = Cb.inverse();
-  //Cb.computeInverseWithCheck(bW,invertible);  
-  if (!invertible) {
-    streamlog_out(MESSAGE3) << "Smoothing 2: Matrix inversion failed. Quit fitting!"
-                         << std::endl;
-    return invertible; 
-  }	 
-  
-  // Weighted (smoothed) covariance
-  Smoothed_Cov = (fW + bW).inverse();   
-  //(fW + bW).computeInverseWithCheck(Smoothed_Cov,invertible);
-  if (!invertible) {
-    streamlog_out(MESSAGE3) << "Smoothing 3: Matrix inversion failed. Quit fitting!"
-                         << std::endl;
-    return invertible;
-  }	
-  
-  // Weighted state           
-  Smoothed_State = Smoothed_Cov*(fW*xf + bW*xb);
-  
-  // Successfull return  
-  return !invertible;  
+bool TBKalmanB::GetSmoothedData( const TrackState& xb, const TrackStateCovariance& Cb, const TrackState& xf, const TrackStateCovariance& Cf,
+               TrackState& Smoothed_State, TrackStateCovariance& Smoothed_Cov){
+    // Compute forward weight matrix
+    TrackStateCovariance Cb_inv=Cb.llt().solve(TrackStateCovariance::Identity());
+    if(!(Cb* (Cb_inv*xb)).isApprox(xb,1e-6)){
+        streamlog_out(MESSAGE3)<< "Smoothing 1: Matrix inversion failed. Quit fitting!"
+                 << std::endl;
+//        streamlog_out(MESSAGE3)<< "Smoothing 1: Original matrix" << std::endl<< Cb << std::endl;
+//        streamlog_out(MESSAGE3)<< "Smoothing 1: Inverted matrix" << std::endl<< Cb_inv << std::endl;
+//        streamlog_out(MESSAGE3)<< "Smoothing 1: Other inverse function" << std::endl<< Cb.inverse() << std::endl;
+//        streamlog_out(MESSAGE3)<< "Smoothing 1: Multiply result" << std::endl<< Cb*Cb_inv << std::endl;
+//        streamlog_out(MESSAGE3)<< "Smoothing 1: Vector" << std::endl<< xb.transpose() << std::endl;
+//        streamlog_out(MESSAGE3)<< "Smoothing 1: Vector result" << std::endl<< (Cb* (Cb_inv*xb)).transpose() << std::endl;
+//        streamlog_out(MESSAGE3)<< "Smoothing 1: Diff " << std::endl<< (xb-Cb* (Cb_inv*xb)).transpose() << std::endl;
+        return true;
+    }
+    // Compute backward weight matrix
+    TrackStateCovariance Cf_inv=Cf.llt().solve(TrackStateCovariance::Identity());
+    if(!(Cf*(Cf_inv*xf)).isApprox(xf,1e-6)){
+        streamlog_out(MESSAGE3)<< "Smoothing 2: Matrix inversion failed. Quit fitting!"
+                 << std::endl;
+        return true;
+    }
+    // Weighted (smoothed) covariance
+    Smoothed_Cov=(Cf_inv+Cb_inv).llt().solve(TrackStateCovariance::Identity());
+    // Weighted state
+    Smoothed_State = Smoothed_Cov*(Cf_inv*xf + Cb_inv*xb);
+    if(!((Cf_inv+Cb_inv)* Smoothed_State).isApprox(Cf_inv*xf + Cb_inv*xb,1e-6)){
+        streamlog_out(MESSAGE3)<< "Smoothing 3: Matrix inversion failed. Quit fitting!"
+                 << std::endl;
+        return true;
+    }
+    return false;
 }
+/* Old implementation*/
+//bool TBKalmanB::GetSmoothedData( TrackState& xb, TrackStateCovariance& Cb, TrackState& xf, TrackStateCovariance& Cf,
+//                                TrackState& Smoothed_State, TrackStateCovariance& Smoothed_Cov)
+//{
 
+//  // Error flag
+//  bool invertible = true;
 
+//  // Compute forward weight matrix
+//  TrackStateWeight fW = Cf.inverse();
+//  //Cf.computeInverseWithCheck(fW,invertible);
+//  if (!invertible) {
+//    streamlog_out(MESSAGE3) << "Smoothing 1: Matrix inversion failed. Quit fitting!"
+//                         << std::endl;
+//    return invertible;
+//  }
 
+//  // Compute backward weight matrix
+//  TrackStateWeight bW = Cb.inverse();
+//  //Cb.computeInverseWithCheck(bW,invertible);
+//  if (!invertible) {
+//    streamlog_out(MESSAGE3) << "Smoothing 2: Matrix inversion failed. Quit fitting!"
+//                         << std::endl;
+//    return invertible;
+//  }
+
+//  // Weighted (smoothed) covariance
+//  Smoothed_Cov = (fW + bW).inverse();
+//  //(fW + bW).computeInverseWithCheck(Smoothed_Cov,invertible);
+//  if (!invertible) {
+//    streamlog_out(MESSAGE3) << "Smoothing 3: Matrix inversion failed. Quit fitting!"
+//                         << std::endl;
+//    return invertible;
+//  }
+
+//  // Weighted state
+//  Smoothed_State = Smoothed_Cov*(fW*xf + bW*xb);
+
+//  // Successfull return
+//  return !invertible;
+//}
 
 int TBKalmanB::MAP_FORWARD(  double theta2, 
-                        TrackState& xref, ReferenceFrame& Surf, ReferenceFrame& nSurf,
+                        const TrackState& xref, const ReferenceFrame& Surf, const ReferenceFrame& nSurf,
                         TrackState& x0, TrackStateCovariance& C0
                      )
 { 
@@ -713,9 +746,8 @@ int TBKalmanB::MAP_FORWARD(  double theta2,
   // Time update of covariance  matrix  
   TrackStateJacobian J;      
   TrackModel->TrackJacobian( xref, Surf, nSurf, J);  
-  
-  TrackStateCovariance C1 = J*C0*J.transpose(); 
-        
+
+
   // Add scatter noise
   // -----------------------------------
         
@@ -725,21 +757,15 @@ int TBKalmanB::MAP_FORWARD(  double theta2,
   // General Scatter gain matrix 
   TrackStateGain G = J*Gl;   
   
-  // Variance of projected scatter angles   
-  Matrix2d Q=Matrix2d::Identity();
-  Q *= theta2; 
-             
-  C1 += G*Q*G.transpose();     
-         
-  x0 = (J*x0).eval(); 
-  C0 = C1;  
+  x0 = (J*x0).eval();
+  C0.noalias() = (J*C0).eval()*J.transpose() + theta2*G*G.transpose();
 
   return 0; 
 }
 
 int TBKalmanB::MAP_BACKWARD(  double theta2, 
-                        TrackState& xref, ReferenceFrame& Surf,
-                        TrackState& nxref, ReferenceFrame& nSurf,
+                        const TrackState& xref, const ReferenceFrame& Surf,
+                        const TrackState& nxref, const ReferenceFrame& nSurf,
                         TrackState& x0, TrackStateCovariance& C0
                      )
 {
@@ -773,8 +799,6 @@ int TBKalmanB::MAP_BACKWARD(  double theta2,
   // Time update of covariance  matrix        
   TrackStateJacobian Jinv;
   TrackModel->TrackJacobian( xref, Surf, nSurf, Jinv);  
-  
-  TrackStateCovariance C1 = Jinv * C0 *Jinv.transpose();
         
   // Add scatter noise
   // -----------------------------------
@@ -782,14 +806,9 @@ int TBKalmanB::MAP_BACKWARD(  double theta2,
   // Local Scatter gain matrix  
   TrackStateGain Gl = TrackModel->GetScatterGain(nxref);   // Backward form -> use nxref not xref
                  
-  // Variance of projected scatter angles   
-  Matrix2d Q=theta2*Matrix2d::Identity();
-
-             
-  C1 +=  Gl*Q*Gl.transpose();    // Backward form -> use Gl not G
          
   x0 = (Jinv*x0).eval();
-  C0 = C1;  
+  C0.noalias() = (Jinv * C0).eval() *Jinv.transpose() + theta2 * Gl*Gl.transpose();
                
   return 0; 
 }

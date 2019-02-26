@@ -10,8 +10,8 @@ import tbsw
 import os
 
 
-maxRecordNrLong  = -1
-maxRecordNrShort = 200000
+maxRecordNrLong  = 3000
+maxRecordNrShort = 3000
 def add_unpackers(path):
   """
   Adds unpackers to the path

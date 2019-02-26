@@ -9,7 +9,8 @@
 
 // TBTools includes
 #include "TBDetector.h"
-
+#include "TBTrack.h"
+#include "TBHit.h"
 
 // Include basic C
 #include <vector>
@@ -274,6 +275,10 @@ class PixelDUTAnalyzer : public marlin::Processor {
    int    _nRun ;   //!< Run number
    int    _nEvt ;   //!< Event number
    
+
+   std::vector<TBTrack> TrackStore;
+   std::vector<TBHit> HitStore;
+
 }; // Class
 
 } // Namespace

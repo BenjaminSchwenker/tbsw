@@ -296,9 +296,9 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
   // Read telescope tracks and DUT hits 
   // ----------------------------------
   
-  std::vector<TBTrack> TrackStore;
-  std::vector<TBHit> HitStore;    
-     
+
+  TrackStore.clear();
+  HitStore.clear();
   // Get tracks from the lcio file 
   TrackInputProvider TrackLCIOReader;  
     
@@ -322,7 +322,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
       continue;
     } 
         
-    TrackStore.push_back(trk);                                 
+    TrackStore.push_back(std::move(trk));
   } // End track loop
     
   // Get hits from the lcio file   
@@ -344,7 +344,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
                                 << "   V [mm]= " << RecoHit.GetCoord()[1] 
                                 << endl;
       
-        HitStore.push_back( RecoHit );  
+        HitStore.push_back( std::move(RecoHit) );
     }
   } 
   
