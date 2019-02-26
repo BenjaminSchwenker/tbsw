@@ -17,7 +17,7 @@ OPTION( INSTALL_DOC "Set to OFF to skip build/install Documentation" OFF )
 OPTION( BUILD_EudaqInput "Set to OFF to not build EudaqInput" ON )
 OPTION( BUILD_TBTools "Set to OFF to not build TBTools" ON )
 OPTION( BUILD_TBReco "Set to OFF to not build TBReco" ON )
-OPTION( BUILD_X0Tools "Set to ON to build X0Tools" OFF )
+OPTION( BUILD_X0Tools "Set to OFF to build X0Tools" ON )
 OPTION( VERBOSE "Set to ON to make Verbose makefile" OFF )
 # LCIO Options
 OPTION( BUILD_LCIO_TESTS "Set to ON to build LCIO tests under src/cpp/src/TESTS" OFF )
@@ -53,7 +53,6 @@ MESSAGE( STATUS "ROOT_INCLUDE_DIRS  = ${ROOT_INCLUDE_DIRS}" )
 MESSAGE( STATUS "ROOT_rootcint_CMD  = ${ROOT_rootcint_CMD}" )
 MESSAGE( STATUS "ROOT_LIBRARIES  = ${ROOT_LIBRARIES}" )
 MESSAGE( STATUS "CMAKE_PREFIX_PATH  = ${CMAKE_PREFIX_PATH}" )
-MESSAGE( STATUS "ROOT_RIO_LIBRARY  = ${ROOT_RIO_LIBRARY}" )
 ENDIF()
 
 

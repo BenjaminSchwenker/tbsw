@@ -48,7 +48,7 @@ IF( EXISTS "${PROJECT_SOURCE_DIR}/include/AlignEventDict.C" )
             RETURN_VALUE out_ret )
     IF( out_ret )
         MESSAGE( FATAL_ERROR "${out_tmp}" )
-        MESSAGE( FATAL_ERROR "Error moving dictionary!!" )
+        MESSAGE( FATAL_ERROR "Error moving dictionary! This is strange. Please retry calling CMake. That might fix it." )
     ENDIF()
     
 ENDIF()

@@ -10,8 +10,8 @@ import tbsw
 import os
 
 
-maxRecordNrLong  = 3000
-maxRecordNrShort = 3000
+maxRecordNrLong  = -1
+maxRecordNrShort = 200000
 def add_unpackers(path):
   """
   Adds unpackers to the path
@@ -548,7 +548,7 @@ if __name__ == '__main__':
   parser.add_argument('--steerfiles', dest='steerfiles', default='steering-files/depfet-tb/', type=str, help='Path to steerfiles')
   parser.add_argument('--caltag', dest='caltag', default='', type=str, help='Name of calibration tag to use')
   parser.add_argument('--mapping', dest='mapping', default='OF', type=str, help='OF,OB,IF,IB')
-  parser.add_argument('--useClusterDB', dest='use_cluster_db', default=False, type=bool, help="Use cluster database")
+  parser.add_argument('--useClusterDB', dest='use_cluster_db', default=True, type=bool, help="Use cluster database")
   parser.add_argument('--skipCalibration', dest='skip_calibration', default=False, type=bool, help="Skip creating a new calibration tag")
   parser.add_argument('--skipReconstruction', dest='skip_reco', default=False, type=bool, help="Skip reconstruction of run")
   parser.add_argument('--profile', dest='profile', action='store_true',
