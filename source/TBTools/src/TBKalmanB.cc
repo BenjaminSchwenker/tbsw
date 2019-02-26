@@ -362,7 +362,7 @@ double TBKalmanB::FilterHit(TBHit& hit, TrackState& xref, TrackState& x0, TrackS
   predchi2 = (r.transpose()*W*r)[0];
       
   // Kalman gain matrix K 
-  Matrix<double,5,2> K = C0 * H.transpose() * W; 
+  auto K = C0 * H.transpose() * W; 
        
   // This is the filtered state
   x0 += K * r;
@@ -529,7 +529,7 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
       predchi2 = (r.transpose()*W*r) [0];   
       
       // Kalman gain matrix K 
-      Matrix<double,5,2> K = C0 * H.transpose() * W; 
+      auto K = C0 * H.transpose() * W; 
        
       // This is the filtered state
       x0 += K * r;

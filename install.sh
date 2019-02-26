@@ -9,7 +9,7 @@ then
 fi
 
 # make sure we stop immediately on errors
-set -e
+# set -e
  
 
 mkdir -p build
