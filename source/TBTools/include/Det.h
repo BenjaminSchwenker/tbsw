@@ -59,51 +59,51 @@ class Det {
   // ------------------------------------------------------
  
   // Get/Set detector DAQ ID
-  int GetDAQID(){ return _ID; };
+  int GetDAQID()const { return _ID; };
   void SetDAQID (int ID){ _ID = ID; };
   
   // Get/Set plane number   
-  int GetPlaneNumber()  { return _PlaneNumber; } ;
+  int GetPlaneNumber() const { return _PlaneNumber; } ;
   void SetPlaneNumber(int ipl)  { _PlaneNumber = ipl; } ;
 
   // Get/Set thickness in sensitive volume
-  double GetSensitiveThickness()  { return _SensitiveThickness; };
+  double GetSensitiveThickness() const { return _SensitiveThickness; };
   void SetSensitiveThickness(double thickness)  { _SensitiveThickness = thickness; };
 
   // Get/Set radiation length in sensitive volume
-  double GetSensitiveRadLength() { return _SensitiveRadLength; };
+  double GetSensitiveRadLength() const { return _SensitiveRadLength; };
   void SetSensitiveRadLength(double X0) { _SensitiveRadLength=X0; };
 
   // Get/Set atomic number in sensitive volume 
-  double GetSensitiveAtomicNumber() { return _SensitiveAtomicNumber; };
+  double GetSensitiveAtomicNumber() const { return _SensitiveAtomicNumber; };
   void SetSensitiveAtomicNumber(double Z) { _SensitiveAtomicNumber=Z; };
 
   // Get/Set atomic mass in sensitive volume 
-  double GetSensitiveAtomicMass() { return _SensitiveAtomicMass; };
+  double GetSensitiveAtomicMass() const { return _SensitiveAtomicMass; };
   void SetSensitiveAtomicMass(double A) { _SensitiveAtomicMass=A; };
 
   // Get/Set size u of ladder (sensitive + supports)  
-  double GetLadderSizeU()  { return _LadderSizeU; };
+  double GetLadderSizeU()  const { return _LadderSizeU; };
   void SetLadderSizeU(double size)  { _LadderSizeU = size; };
    
   // Get/Set size V of ladder (sensitive + supports)  
-  double GetLadderSizeV()  { return _LadderSizeV; };
+  double GetLadderSizeV()  const { return _LadderSizeV; };
   void SetLadderSizeV(double size)  { _LadderSizeV = size; };
 
   // Get/Set thickness of ladder in nonsentive volume    
-  double GetLadderThickness() { return _LadderThickness; };
+  double GetLadderThickness() const { return _LadderThickness; };
   void SetLadderThickness(double thickness) { _LadderThickness=thickness; };
   
   // Get/Set radiation length in nonsentive volume    
-  double GetLadderRadLength()  { return _LadderRadLength; };
+  double GetLadderRadLength() const { return _LadderRadLength; };
   void SetLadderRadLength(double X0)  { _LadderRadLength = X0; };
    
   // Get/Set atomic number in nonsensitive volume 
-  double GetLadderAtomicNumber() { return _LadderAtomicNumber; };
+  double GetLadderAtomicNumber() const { return _LadderAtomicNumber; };
   void SetLadderAtomicNumber(double Z) { _LadderAtomicNumber=Z; };
 
   // Get/Set atomic mass in nonsensitive volume 
-  double GetLadderAtomicMass() { return _LadderAtomicMass; };
+  double GetLadderAtomicMass() const { return _LadderAtomicMass; };
   void SetLadderAtomicMass(double A) { _LadderAtomicMass=A; };
   
   // Set the u cells  
@@ -113,11 +113,11 @@ class Det {
   void SetCellsV( std::vector< std::tuple<int,int,double> > vCells); 
        
   // Get/Set nominal sensor frame (i.e. where the detector is supposed to be)
-  ReferenceFrame & GetNominal()  { return _Nominal; };
+  const ReferenceFrame & GetNominal() const { return _Nominal; };
   void SetNominalFrame(ReferenceFrame nominal) { _Nominal  = nominal; };   
    	
   // Get/Set discrete rotation (mounting orientation of sensor) 
-  ReferenceFrame & GetDiscrete()  { return _Discrete; }; 
+  const ReferenceFrame & GetDiscrete() const { return _Discrete; };
   void SetDiscreteFrame(ReferenceFrame discrete) {_Discrete  = discrete;};   
  
   // These functions are relevant for tracking and DUT analysis
@@ -138,10 +138,10 @@ class Det {
   virtual int GetPixelType(int vcell, int ucell);  
 
   // Get number of ucells  
-  virtual int GetNCellsU();  
+  virtual int GetNCellsU() const;
 
   // Get number of vcells  
-  virtual int GetNCellsV();
+  virtual int GetNCellsV() const;
 
   // Get number of ucells  
   virtual int GetNColumns() { return _nCellsU; }  
@@ -150,10 +150,10 @@ class Det {
   virtual int GetNRows() { return _nCellsV; }
 
   // Get size u of active area  
-  virtual double GetSensitiveSizeU();  
+  virtual double GetSensitiveSizeU() const;
   
   // Get size v of active area  
-  virtual double GetSensitiveSizeV(); 
+  virtual double GetSensitiveSizeV() const;
       
   // Get column/u pixel pitch 
   virtual double GetPitchU(int vcell, int ucell); 
@@ -162,27 +162,27 @@ class Det {
   virtual double GetPitchV(int vcell, int ucell);  
    
   // Check if module box crossed
-  virtual bool ModuleCrossed(double u, double v, double w = 0);
+  virtual bool ModuleCrossed(double u, double v, double w = 0) const;
 
   virtual bool isPointOutOfSensor( double u , double v , double w = 0); 
   
   // Check if sensitive volume crossed
-  virtual bool SensitiveCrossed(double u, double v, double w = 0);
+  virtual bool SensitiveCrossed(double u, double v, double w = 0) const;
       
   // Get thickness at coordinates (u,v) 
-  virtual double GetThickness(double u, double v);
+  virtual double GetThickness(double u, double v) const;
 
   // Get length of particle track (mm)
-  virtual double GetTrackLength(double u, double v, double dudw, double dvdw);  
+  virtual double GetTrackLength(double u, double v, double dudw, double dvdw) const;
     
   // Get radlenght at coordinates (u,v) 
-  virtual double GetRadLength(double u, double v);
+  virtual double GetRadLength(double u, double v) const;
 
   // Get atomic number at coordinates (u,v)
-  virtual double GetAtomicNumber(double u, double v); 
+  virtual double GetAtomicNumber(double u, double v) const;
  
   // Get atomic mass at coordinates (u,v)
-  virtual double GetAtomicMass(double u, double v);   
+  virtual double GetAtomicMass(double u, double v) const;
   
   // Calculate pixel column from coord (u,v)   
   virtual int GetUCellFromCoord( double u, double v );

@@ -123,22 +123,22 @@ void Det::SetCellsV( std::vector< std::tuple<int,int,double> > vCells)
 
 
 
-int Det::GetNCellsU()
+int Det::GetNCellsU() const
 {
   return _nCellsU; 
 }  
 
-int Det::GetNCellsV()
+int Det::GetNCellsV() const
 {
   return _nCellsV; 
 }   
 
-double Det::GetSensitiveSizeU()
+double Det::GetSensitiveSizeU() const
 {
   return _sensitiveSizeU; 
 }  
   
-double Det::GetSensitiveSizeV()
+double Det::GetSensitiveSizeV() const
 {
   return _sensitiveSizeV;  
 } 
@@ -204,7 +204,7 @@ void Det::decodePixelID(int vcell, int ucell, int uniqPixelID)
  	
 /**  Check if sensitive volume is crossed
  */
-bool Det::SensitiveCrossed(double u, double v, double w)
+bool Det::SensitiveCrossed(double u, double v, double w) const
 {
   if (u < -(GetSensitiveSizeU())/2.  || u > (GetSensitiveSizeU())/2.) {
    return false;
@@ -234,7 +234,7 @@ bool Det::isPointOutOfSensor( double u, double v, double w)
  	
 /**  Check if module is crossed (including supports)
  */
-bool Det::ModuleCrossed(double u, double v, double w)
+bool Det::ModuleCrossed(double u, double v, double w) const
 {  
   if (u < -GetLadderSizeU()/2.  || u > GetLadderSizeU()/2.) {
    return false;
@@ -248,7 +248,7 @@ bool Det::ModuleCrossed(double u, double v, double w)
   return true; 
 }
 
-double Det::GetThickness(double u, double v)
+double Det::GetThickness(double u, double v) const
 {
   if ( SensitiveCrossed(u, v) ) {
     return GetSensitiveThickness(); 
@@ -261,12 +261,12 @@ double Det::GetThickness(double u, double v)
 
 /** Get length of particle track (mm)
  */
-double Det::GetTrackLength(double u, double v, double dudw, double dvdw)
+double Det::GetTrackLength(double u, double v, double dudw, double dvdw) const
 {
   return GetThickness(u,v)*std::sqrt(1 + dudw*dudw + dvdw*dvdw);  
 }
     
-double Det::GetRadLength(double u, double v)
+double Det::GetRadLength(double u, double v) const
 { 
   if ( SensitiveCrossed(u, v) ) {
     return GetSensitiveRadLength(); 
@@ -277,7 +277,7 @@ double Det::GetRadLength(double u, double v)
   return materialeffect::X0_air; 
 } 
 
-double Det::GetAtomicNumber(double u, double v)
+double Det::GetAtomicNumber(double u, double v) const
 { 
   if ( SensitiveCrossed(u, v) ) {
     return GetSensitiveAtomicNumber(); 
@@ -288,7 +288,7 @@ double Det::GetAtomicNumber(double u, double v)
   return 8; 
 } 
 
-double Det::GetAtomicMass(double u, double v)
+double Det::GetAtomicMass(double u, double v) const
 { 
   if ( SensitiveCrossed(u, v) ) {
     return GetSensitiveAtomicMass(); 

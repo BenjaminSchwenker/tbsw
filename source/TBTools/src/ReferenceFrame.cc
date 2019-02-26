@@ -61,7 +61,7 @@ Vector3d ReferenceFrame::GetW()
   return  fRotation.transpose() * localW;
 }
 
-ReferenceFrame ReferenceFrame::combine_karimaki(ReferenceFrame& first, ReferenceFrame& delta)
+ReferenceFrame ReferenceFrame::combine_karimaki(const ReferenceFrame& first, const ReferenceFrame& delta)
 {
   ReferenceFrame combinedFrame;
   combinedFrame.SetRotation(delta.GetRotation()*first.GetRotation());
@@ -92,7 +92,7 @@ ReferenceFrame ReferenceFrame::create_karimaki_delta(double dx, double dy, doubl
 } 
 
 
-void ReferenceFrame::PrintHepMatrix() 
+void ReferenceFrame::PrintHepMatrix()  const
 {
   streamlog_out(MESSAGE3) << " Frame Position [mm]:   "    << std::endl
                           << GetPosition()  << std::endl
@@ -101,7 +101,7 @@ void ReferenceFrame::PrintHepMatrix()
 } 
 
 
-void ReferenceFrame::PrintParams() 
+void ReferenceFrame::PrintParams()  const
 {
 
   Matrix3d rot = GetRotation();

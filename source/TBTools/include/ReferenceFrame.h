@@ -81,15 +81,15 @@ class ReferenceFrame {
   // added.  This is done how Veikko Karimaki defined the "misalignment". It
   // has the advantage that once you are satisfied with the combined values,
   // you can make them to the nominal ones...
-  static ReferenceFrame combine_karimaki(ReferenceFrame & first, ReferenceFrame & delta);
+  static ReferenceFrame combine_karimaki(const ReferenceFrame & first, const ReferenceFrame & delta);
   
   // Static member to create a Karimaki delta frame. A delta frame parametrizes
   // a small alignment corrections to sensor position and rotation. A delta frame 
   // may be merged with a 'regular' sensor frame using function combine_karimaki. 
   static ReferenceFrame create_karimaki_delta(double dx, double dy, double dz, double dalpha, double dbeta, double dgamma); 
   
-  void PrintHepMatrix() ; 
-  void PrintParams() ; 
+  void PrintHepMatrix() const ;
+  void PrintParams() const;
 
 };  // End class ReferenceFrame
  	
