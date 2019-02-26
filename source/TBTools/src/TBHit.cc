@@ -108,7 +108,7 @@ TrackerHitImpl * TBHit::MakeLCIOHit(  )
   trackerhit->setPosition( &localPos[0] );   
        
   // Set covariance matrix as (c_uu, c_vv, c_uv=0)
-  float localCov[3] = {0.,0.,0.}; 
+  float localCov[6] = {0.,0.,0.,0.,0.,0.};
   localCov[0] = Cov(0,0);
   localCov[1] = Cov(1,1);
   localCov[2] = Cov(0,1);
@@ -118,6 +118,23 @@ TrackerHitImpl * TBHit::MakeLCIOHit(  )
   trackerhit->setType(Quality);
          
   return trackerhit; 
+}
+
+static lcio::TrackerHitImpl * MakeLCIOHit(int newdaqid, double u, double v, double cov_u, double cov_v, double cov_uv, int quality)
+{
+  TrackerHitImpl * trackerhit = new TrackerHitImpl;
+
+  // Set hit position
+  double localPos[3] = {u,v,double(newdaqid)};
+  trackerhit->setPosition( &localPos[0] );
+
+  // Set covariance matrix as (c_uu, c_vv, c_uv=0)
+  float localCov[6] = {float(cov_u),float(cov_v),float(cov_uv),0.,0.,0.};
+  trackerhit->setCovMatrix ( &localCov[0]);
+
+  // Set quality
+  trackerhit->setType(quality);
+  return trackerhit;
 }
 
 Vector3d TBHit::GetLocalSpacePoint()

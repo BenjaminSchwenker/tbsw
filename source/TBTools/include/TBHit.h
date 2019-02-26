@@ -42,15 +42,17 @@ class TBHit {
   Matrix2d Cov;
   // Local hit coordinates (2x1 matrix)
   Vector2d Coord;
-
-  // DAQ ID
-  int DAQID;
-  // Unique ID (default -1)
-  int UniqueID; 
-  // Cluster Quality 
-  int Quality; 
   // Pointer to raw TrackerHit (default nullptr)
   lcio::TrackerHit * RawHitPtr;
+  // Unique ID (default -1)
+  int UniqueID;
+
+  // DAQ ID
+  short DAQID;
+
+  // Cluster Quality 
+  short Quality;
+
     
  public: // functions 
    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -63,16 +65,17 @@ class TBHit {
 
   // Build LCIO TrackerHit
   lcio::TrackerHitImpl * MakeLCIOHit();  
+  static lcio::TrackerHitImpl * MakeLCIOHit(int newdaqid, double u, double v, double cov_u, double cov_v, double cov_uv, int quality);
   
   // Get/Set plane number 
-  void SetDAQ(int newdaqid) { DAQID = newdaqid; }
+  void SetDAQ(int newdaqid) { DAQID = short(newdaqid); }
   int GetDAQID()  { return DAQID; }
   
   // Dimension of a pixel hit
   int GetDim() { return 2;}
   
   // Get/Set quality of raw cluster
-  void SetQuality(int flag) { Quality=flag; }
+  void SetQuality(int flag) { Quality=short(flag); }
   int GetQuality() { return Quality; }
   
   // Get/Set measured hit coord

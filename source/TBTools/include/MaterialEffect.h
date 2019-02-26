@@ -25,7 +25,7 @@ namespace materialeffect {
   *  one-dimensional projection on one axis of a plane that is perpendicular
   *  to the particle direction before scattering.  
   */ 
-  double GetScatterTheta2(TrackState& State, double x, double x0, double mass, double charge);
+  double GetScatterTheta2(const TrackState& State, double x, double x0, double mass, double charge);
   
   /** Calculate variance of the projected angular deflection due to multiple
    *  scattering of a particle for x/x0 a la Highland.
