@@ -37,7 +37,7 @@ void TBTrackElement::SetHit(const TBHit& aHit)
 /** Remove (bad) hit - Outlier rejection  
  */
 void TBTrackElement::RemoveHit() {
-  HitStore.clear()
+  HitStore.clear();
   hasHit=false;
 }
 
