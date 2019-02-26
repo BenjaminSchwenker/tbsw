@@ -8,6 +8,9 @@ then
       return -1
 fi
 
+export PATH=$ROOTSYS/bin:$PATH
+export LD_LIBRARY_PATH=$ROOTSYS/lib:$LD_LIBRARY_PATH
+
 # make sure we stop immediately on errors
 set -e
  

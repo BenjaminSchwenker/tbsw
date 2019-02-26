@@ -208,17 +208,15 @@ class TBKalmanB {
   StateHitProjector H;
    
   // Initial track state vector to start fitting 
-  TrackState x0;
+  TrackState x0_init;
 
   // Initial track state covariacne matric to start fitting
-  TrackStateCovariance C0;
+  TrackStateCovariance C0_init;
 
   double mass;
   double charge;
   
   GenericTrackModel* TrackModel; 
-  
-  int ndim; // dimension of state
   
   // Use beam constraint in fitter
   bool m_useBC; 

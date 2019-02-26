@@ -35,29 +35,27 @@ TBKalmanB::TBKalmanB(TBDetector& detector)
 { 
   // Number of iterations for double filter
   NumIt = 1;       
-  
-  ndim = 5; // dimension of state vector
-   
+    
   // Project hit coord out of track state
   H = StateHitProjector::Zero();
   H(0,2) = 1.;
   H(1,3) = 1.;
 
   // Set the initial track state vector
-  x0 = TrackState::Zero();
+  x0_init = TrackState::Zero();
     
   // Set the initial track state covariance matrix
-  C0 = TrackStateCovariance::Zero();
+  C0_init = TrackStateCovariance::Zero();
     
   for (int i = 0; i < 2; i++) {
     // There is a tradeoff between choosing large values (which makes the
     // tracking numerically unstable) and choosing small values (which biases
     // the track from the seed). I found 1E4 working for this model, but this
     // might need to get tuned.
-    C0(i,i) = 1E-2;
-    C0(i+2,i+2) = 1E2; 
+    C0_init(i,i) = 1E-2;
+    C0_init(i+2,i+2) = 1E2; 
   } 
-  C0(4,4) = 1;  
+  C0_init(4,4) = 1;  
   
   // Electron mass, in GeV 
   mass = 0.000511;
@@ -120,13 +118,12 @@ bool TBKalmanB::ExtrapolateSeed(TBTrack& trk)
            
     // Extrapoate reference state 
     bool error = false;
-    TrackState Next_State = TrackModel->Extrapolate(RTrkState, RTrkSurf, Next_Surf, error);  
+    TE.GetState().GetPars() = TrackModel->Extrapolate(RTrkState, RTrkSurf, Next_Surf, error);  
       
     if (error) {
       TE.SetCrossed(false);
     } else {
       TE.SetCrossed(true); 
-      TE.GetState().GetPars() = Next_State;
     }
     
   } 
@@ -148,16 +145,19 @@ bool TBKalmanB::Fit(TBTrack& trk)
   //    w=0 surface local sensor frame. 
   
   double chisqu = -1;    
+
+  // Number of sensor planes
+  int nTE = trk.GetNumTEs();  
   
   // Particle hypothesis  
   mass = trk.GetMass();
   charge = trk.GetCharge();
   // List of crossed track elements. Predefined here,  so it can be reused.
   vector<int> CrossedTEs;
-  CrossedTEs.reserve(trk.GetNumTEs());
+  CrossedTEs.reserve(nTE);
   vector<TrackState> RefStateVec;
   // Reference trajectory.  Predefined here,  so it can be reused.
-  RefStateVec.reserve(trk.GetNumTEs());
+  RefStateVec.reserve(nTE);
   for(int iter=0; iter<NumIt; iter++) { 
     
     // Get paramters of reference trajectory   
@@ -169,7 +169,7 @@ bool TBKalmanB::Fit(TBTrack& trk)
       // trajectory 
       double mom = trk.GetMomentum();    
       RTrkSurf = trk.GetTE(0).GetDet().GetNominal();
-      RTrkState = ComputeBeamConstraint( x0, C0, RTrkSurf, mass, mom, charge);
+      RTrkState = ComputeBeamConstraint( x0_init, C0_init, RTrkSurf, mass, mom, charge);
     }
     
     // Compute intersections of the reference trajectory
@@ -181,9 +181,8 @@ bool TBKalmanB::Fit(TBTrack& trk)
     // Reference trajectory
     RefStateVec.clear();
     
-    // Loop over all track elements 
-    int nTE = trk.GetNumTEs();  
     
+    // Loop over all sensor planes
     for(int iTE=0; iTE<nTE; ++iTE) {
       
       // Next surface along beam line  
@@ -191,7 +190,7 @@ bool TBKalmanB::Fit(TBTrack& trk)
            
       // Extrapoate reference state 
       bool error = false;
-      auto Next_State = TrackModel->Extrapolate(RTrkState, RTrkSurf, Next_Surf, error);  
+      TrackState Next_State = TrackModel->Extrapolate(RTrkState, RTrkSurf, Next_Surf, error);  
       
       if (error) {
         trk.GetTE(iTE).SetCrossed(false);
@@ -223,8 +222,8 @@ bool TBKalmanB::Fit(TBTrack& trk)
     // sensor. 
     
     FilterStateVec FFilterData(nCrossed);
-    FFilterData[0].Pr_x = x0;
-    FFilterData[0].Pr_C = C0;
+    FFilterData[0].Pr_x = x0_init;
+    FFilterData[0].Pr_C = C0_init;
     
     // Forward FILTER -----------------------------------------------------
     chisqu = FilterPass(trk, CrossedTEs, RefStateVec, +1, FFilterData); 
@@ -243,8 +242,8 @@ bool TBKalmanB::Fit(TBTrack& trk)
     // sensor from forward pass. 
     
     FilterStateVec BFilterData(nCrossed);
-    BFilterData[nCrossed-1].Pr_x = x0;   
-    BFilterData[nCrossed-1].Pr_C = C0;  
+    BFilterData[nCrossed-1].Pr_x = x0_init;   
+    BFilterData[nCrossed-1].Pr_C = C0_init;  
     
     // Backward FILTER  -----------------------------------------------------
     double chisqu_back = FilterPass(trk, CrossedTEs, RefStateVec, -1, BFilterData);  
@@ -275,8 +274,8 @@ bool TBKalmanB::Fit(TBTrack& trk)
       // Compute unbiased smoothed estimate 
       // of local track state. 
           
-      auto& xs =TE.GetState().GetPars(); 
-      auto& Cs = TE.GetState().GetCov();
+      TrackState & xs =TE.GetState().GetPars(); 
+      TrackStateCovariance & Cs = TE.GetState().GetCov();
       
       //cout << " plane " << is << " Cf is " << FFilterData[is].Pr_C << endl;
       //xs = FFilterData[is].Pr_x;    
@@ -291,10 +290,10 @@ bool TBKalmanB::Fit(TBTrack& trk)
           xs = FFilterData[is].Pr_x;    
           Cs = FFilterData[is].Pr_C;
       } else {
-          auto xb = BFilterData[is].Pr_x; 
-          auto Cb = BFilterData[is].Pr_C;
-          auto xf = FFilterData[is].Pr_x;    
-          auto Cf = FFilterData[is].Pr_C;
+          TrackState & xb = BFilterData[is].Pr_x; 
+          TrackStateCovariance & Cb = BFilterData[is].Pr_C;
+          TrackState & xf = FFilterData[is].Pr_x;    
+          TrackStateCovariance & Cf = FFilterData[is].Pr_C;
                 
           bool error = GetSmoothedData(xb, Cb, xf, Cf, xs, Cs);
           if ( error ) {
@@ -356,14 +355,13 @@ double TBKalmanB::FilterHit(TBHit& hit, TrackState& xref, TrackState& x0, TrackS
   }	
      
   // This is the predicted residual 
-  auto r = m - H*(x0 + xref); 
+  Vector2d r = m - H*(x0 + xref); 
       
   // This is the predicted chi2 
-  auto chi2mat = r.transpose()*W*r;
-  predchi2 = chi2mat[0];   
+  predchi2 = (r.transpose()*W*r)[0];
       
   // Kalman gain matrix K 
-  auto K = C0 * H.transpose() * W; 
+  Matrix<double,5,2> K = C0 * H.transpose() * W; 
        
   // This is the filtered state
   x0 += K * r;
@@ -496,11 +494,11 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
     ReferenceFrame& Surf = te.GetDet().GetNominal();      
     
     // Get current reference state xref
-    auto& xref = RefStateVec[is];    
+    TrackState & xref = RefStateVec[is];    
 
     // Copy predicted [x,C]
-    auto x0 = Result[is].Pr_x;  
-    auto C0 = Result[is].Pr_C;
+    TrackState x0 = Result[is].Pr_x;  
+    TrackStateCovariance C0 = Result[is].Pr_C;
      
     // Here, the measurment update takes place  
     double predchi2 = 0; 
@@ -524,14 +522,13 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
       }	
        
       // This is the predicted residual 
-      auto r = m - H*(x0 + xref); 
+      Vector2d r = m - H*(x0 + xref); 
       
-      // This is the predicted chi2 
-      auto chi2mat = r.transpose()*W*r;
-      predchi2 = chi2mat[0];   
+      // This is the predicted chi2  
+      predchi2 = (r.transpose()*W*r) [0];   
       
       // Kalman gain matrix K 
-      auto K = C0 * H.transpose() * W; 
+      Matrix<double,5,2> K = C0 * H.transpose() * W; 
        
       // This is the filtered state
       x0 += K * r;
@@ -540,8 +537,6 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
     
     // Store results and update chisqu
     chisqu += predchi2;
-    
-    
      
     // Propagate to next surface
     int inext = is+idir;
@@ -555,7 +550,7 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
       ReferenceFrame& nSurf = nte.GetDet().GetNominal();
 
       // Get reference state  
-      auto& nxref = RefStateVec[inext];  
+      TrackState & nxref = RefStateVec[inext];  
 
       // This fitter takes into account scatter in air
       // gaps between sensors. Therefor, we add a virtual 
@@ -564,13 +559,11 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
       // extrapolation step length between the sensors.
         
       // Extrapolate to air surface between detector planes 
-      auto xref_air = xref; 
+      TrackState xref_air = xref; 
       ReferenceFrame Surf_air = Surf; 
       
       // Get signed flight length in air between detectors 
       double length = TrackModel->GetSignedStepLength(xref, Surf, nSurf); 
-      
-      
       
       // Extraploate half step along straight line 
       TrackModel->Extrapolate(xref_air, Surf_air, length/2);
@@ -845,8 +838,7 @@ double TBKalmanB::GetPredictedChi2(const Vector2d& r, const StateHitProjector& H
     return -1;
   }	
   // chisq= r^T*W*r
-  auto chisq = r.transpose()*W*r;
-  return chisq[0];
+  return (r.transpose()*W*r)[0];
 }
 
 
@@ -864,8 +856,7 @@ double TBKalmanB::GetChi2Increment(const Vector2d& r, const StateHitProjector& H
     return -1;
   }	
   // chisq= r^T*W*r
-  auto chisq = r.transpose()*W*r;
-  return chisq[0];
+  return (r.transpose()*W*r)[0];
 }
 
 /** Set number of degrees of freedom in trk
@@ -908,7 +899,7 @@ TrackState TBKalmanB::ComputeBeamConstraint( TrackState& x0, TrackStateCovarianc
   
   // Extrapoate beam  state to first sensor 
   bool error = false;
-  auto x_first = TrackModel->Extrapolate(x_beam, BeamFrame, FirstSensorFrame, error);  
+  TrackState x_first = TrackModel->Extrapolate(x_beam, BeamFrame, FirstSensorFrame, error);  
   
   // MAP estimate [x_beam,C_beam] from beam frame to first sensor
   int ierr = 0; 
