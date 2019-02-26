@@ -9,6 +9,7 @@
 
 #include <cmath>
 #include "TMath.h"
+#include "math.h"
 #include <Math/DistFunc.h>
 
 #include <Eigen/Geometry> 
@@ -164,7 +165,7 @@ double SimulateEnergyLossInSilicon(TrackState& State, double thick, double mass,
  *  one-dimensional projection on one axis of a plane that is perpendicular
  *  to the particle direction before scattering. 
  */ 
-double GetScatterTheta2(TrackState& State, double x, double x0, double mass, double charge)
+double GetScatterTheta2(const TrackState& State, double x, double x0, double mass, double charge)
 {
   double mom = charge/State[4];
   
@@ -183,13 +184,13 @@ double GetScatterTheta2(TrackState& State, double x, double x0, double mass, dou
   // Sanity check - use air as default  
   if (x0 <= 0) x0 = 305000;    
   
-  double RI = x/x0;   
+  float RI = float(x/x0);
   double Etot = std::sqrt(mom*mom + mass*mass);  
   double pBeta = mom*mom/Etot;  
        
   // Highland formula 
   // -------------------
-  double SigTheta = 0.0136*(charge/pBeta)*std::sqrt(RI)*(1.+0.038*std::log(RI));   
+  double SigTheta = 0.0136*(charge/pBeta)*std::sqrt(RI)*(1.+0.038*logf(RI));
   double SigTheta2 = SigTheta*SigTheta;
      
   return SigTheta2;
