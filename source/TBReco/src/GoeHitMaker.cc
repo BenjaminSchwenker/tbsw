@@ -44,7 +44,7 @@ namespace depfet {
   //
   // Constructor
   //
-  GoeHitMaker::GoeHitMaker() : Processor("GoeHitMaker")
+  GoeHitMaker::GoeHitMaker() : Processor("GoeHitMaker"),_inputDecodeHelper("")
   {
     
     // Processor description
@@ -111,37 +111,37 @@ namespace depfet {
       histoName = "hDB_Weight";
       if ( (TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
         m_DB_Weight = (TH1F *) clusterDBFile->Get(histoName.c_str());  
-        m_DB_Weight->SetDirectory(0);
+        m_DB_Weight->SetDirectory(nullptr);
       } 
        
       histoName = "hDB_U";
       if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
         m_DB_U = (TH1F *) clusterDBFile->Get(histoName.c_str());
-        m_DB_U->SetDirectory(0);
+        m_DB_U->SetDirectory(nullptr);
       } 
       
       histoName = "hDB_V"; 
       if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
         m_DB_V = (TH1F *) clusterDBFile->Get(histoName.c_str());
-        m_DB_V->SetDirectory(0);
+        m_DB_V->SetDirectory(nullptr);
       } 
       
       histoName = "hDB_Sigma2_U";
       if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
         m_DB_Sigma2_U = (TH1F *) clusterDBFile->Get(histoName.c_str());
-        m_DB_Sigma2_U->SetDirectory(0);
+        m_DB_Sigma2_U->SetDirectory(nullptr);
       } 
       
       histoName = "hDB_Sigma2_V";
       if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
         m_DB_Sigma2_V = (TH1F *) clusterDBFile->Get(histoName.c_str());
-        m_DB_Sigma2_V->SetDirectory(0);
+        m_DB_Sigma2_V->SetDirectory(nullptr);
       } 
       
       histoName = "hDB_Cov_UV";
       if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
         m_DB_Cov_UV = (TH1F *) clusterDBFile->Get(histoName.c_str());
-        m_DB_Cov_UV->SetDirectory(0);
+        m_DB_Cov_UV->SetDirectory(nullptr);
       } 
     
       histoName = "DB_periods";
@@ -161,7 +161,7 @@ namespace depfet {
       histoName = "hDB_Types";
       if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
         m_DB_Types = (TH1F *) clusterDBFile->Get(histoName.c_str());
-        m_DB_Types->SetDirectory(0);
+        m_DB_Types->SetDirectory(nullptr);
       } 
     
       // We need the eta bin edges for all cluster types  
@@ -225,13 +225,14 @@ namespace depfet {
       
       // Create hit collection  
       LCCollectionVec * hitCollection = new LCCollectionVec(LCIO::TRACKERHIT) ;
-         
+
+      // Helper class for decoding cluster ID's
+      CellIDDecoder<TrackerPulseImpl> clusterDecoder( clusterCollection,&_inputDecodeHelper);
+
       // Loop on all clusters 
       for (unsigned int iClu = 0; iClu < clusterCollection->size(); iClu++) 
       {
-        // Helper class for decoding cluster ID's 
-        CellIDDecoder<TrackerPulseImpl> clusterDecoder( clusterCollection ); 
-        
+
         // Read cluster header
         TrackerPulseImpl* cluster = dynamic_cast<TrackerPulseImpl* > ( clusterCollection->getElementAt(iClu) )  ;       
         int sensorID = clusterDecoder(cluster)["sensorID"]; 
@@ -247,7 +248,8 @@ namespace depfet {
         string typeName = aCluster.getType(pixeltype, _vCellPeriod, _uCellPeriod); 
         double eta = aCluster.computeEta(_thetaU, _thetaV);
         int etaBin = aCluster.computeEtaBin(eta, m_etaBinEdgesMap[typeName]);
-        string shapeName = aCluster.getShape(pixeltype,_vCellPeriod, _uCellPeriod, etaBin);  
+        string shapeName = aCluster.getEtaBinString(etaBin)+typeName;
+
         
         streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID << " with shape " << shapeName << endl; 
         

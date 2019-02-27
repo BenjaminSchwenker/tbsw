@@ -20,7 +20,8 @@
 
 // Include ROOT classes
 #include <TH1F.h>
-
+//LCIO
+#include <UTIL/CellIDDecoder.h>
 
 
 namespace depfet {
@@ -101,6 +102,9 @@ namespace depfet {
      
     // Handle to detector data 
     TBDetector _detector;  
+
+    //! internally used as storage for input decoding
+    UTIL::BitField64 _inputDecodeHelper;
 
     // Store cluster calibration
     TH1F * m_DB_Weight;
