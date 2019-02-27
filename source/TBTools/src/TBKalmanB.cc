@@ -63,6 +63,10 @@ TBKalmanB::TBKalmanB(TBDetector& detector)
   // Electron charge in, e
   charge = -1;
   
+  // TODO: In order to use the beam constraint, the inital covariance 
+  // matrix neeed to be computed. this code is missing rigth now. 
+  // Currently, using the useBC flag will be ignored.
+  
   // By default, beam constraint is not used 
   m_useBC = false; 
   m_sizex = 0;       // spot size, mm
@@ -137,52 +141,53 @@ bool TBKalmanB::ExtrapolateSeed(TBTrack& trk)
 bool TBKalmanB::Fit(TBTrack& trk)
 {
    
-  // Before the actual fitting, some things need clarification:
-  // 
-  // 1) The track state estimate (x, C) consists of an estimated parameters  
-  //    x and a covariance matrix C.
-  // 2) The track state is local, i.e. it is defined with respect to the 
-  //    w=0 surface local sensor frame. 
-  
-  double chisqu = -1;    
-
-  // Number of sensor planes
-  int nTE = trk.GetNumTEs();  
-  
   // Particle hypothesis  
   mass = trk.GetMass();
   charge = trk.GetCharge();
-  // List of crossed track elements. Predefined here,  so it can be reused.
+  
+  // Number of sensor planes
+  int nTE = trk.GetNumTEs();
+   
+  // Number of planes crossed by seed trajectory
+  int nCrossed = 0;
+  
+  // List of crossed track elements. Predefined here, so it can be reused.
   vector<int> CrossedTEs;
   CrossedTEs.reserve(nTE);
+  // Reference trajectory.  Predefined here, so it can be reused.
   vector<TrackState> RefStateVec;
-  // Reference trajectory.  Predefined here,  so it can be reused.
   RefStateVec.reserve(nTE);
+  // List of predicted estimators from forward pass.  Predefined here, so it can be reused.
+  FilterStateVec FFilterData;
+  FFilterData.reserve(nTE);
+  // List of predicted estimators from backward pass.  Predefined here, so it can be reused.
+  FilterStateVec BFilterData;  
+  BFilterData.reserve(nTE);
+  
+  // Improve the seed parameters used for linearization of the fit. 
+  // 
+  // We can improve the seed by running a backward
+  // filter from the last to the firts plane in the beam. 
+  // A new seed is taken to be the predicted state at 
+  // the first plane. 
+  
   for(int iter=0; iter<NumIt; iter++) { 
+    
+    // TODO: Extrapolation of the reference state into the telescope is a repeating topic. One could deal with it 
+    // by reusing the ExtrapolateSeed() member function. But one needs to circumvent the usage of the CrossedTEs
+    // vector in the fitting code. 
     
     // Get paramters of reference trajectory   
     TrackState RTrkState = trk.GetReferenceState().GetPars();      
-    ReferenceFrame RTrkSurf = trk.GetTE( trk.GetReferenceState().GetPlane() ).GetDet().GetNominal();
-    
-    if ( m_useBC ) {
-      // The idea is to use the beam constraint as a reference
-      // trajectory 
-      double mom = trk.GetMomentum();    
-      RTrkSurf = trk.GetTE(0).GetDet().GetNominal();
-      RTrkState = ComputeBeamConstraint( x0_init, C0_init, RTrkSurf, mass, mom, charge);
-    }
-    
-    // Compute intersections of the reference trajectory
-    // with sub detectors. 
-
-    // List of crossed track elements
+    ReferenceFrame RTrkSurf = trk.GetTE( trk.GetReferenceState().GetPlane() ).GetDet().GetNominal(); 
+     
+    // Clear list of crossed track elements
     CrossedTEs.clear();
     
-    // Reference trajectory
+    // Clear reference trajectory
     RefStateVec.clear();
     
-    
-    // Loop over all sensor planes
+    // Loop over all track elements (sensor planes)
     for(int iTE=0; iTE<nTE; ++iTE) {
       
       // Next surface along beam line  
@@ -203,8 +208,8 @@ bool TBKalmanB::Fit(TBTrack& trk)
       }
     } 
     
-    // Number of crossed track elements  
-    int nCrossed = (int) CrossedTEs.size(); 
+    // Number of crossed track elements 
+    nCrossed = (int) CrossedTEs.size(); 
     
     // The reference trajectory should at least 
     // intersect with one detector.  
@@ -214,34 +219,12 @@ bool TBKalmanB::Fit(TBTrack& trk)
       SetNdof(trk);
       return true;
     }   
-     
-    
-    // Init forward filter 
-    // The forward pass is initialized using 
-    // the reference track state at the first
-    // sensor. 
-    
-    FilterStateVec FFilterData(nCrossed);
-    FFilterData[0].Pr_x = x0_init;
-    FFilterData[0].Pr_C = C0_init;
-    
-    // Forward FILTER -----------------------------------------------------
-    chisqu = FilterPass(trk, CrossedTEs, RefStateVec, +1, FFilterData); 
-
-    // A very basic consistency test 
-    if ( std::isnan(chisqu) ||  chisqu < 0 )  {
-      trk.SetChiSqu(-1);
-      SetNdof(trk);
-      return true;
-    }
-
     
     // Init backward filter 
     // The backward pass is initialized using 
-    // the smoothed track state at the last 
-    // sensor from forward pass. 
-    
-    FilterStateVec BFilterData(nCrossed);
+    // the reference track state at the last
+    // sensor. 
+    BFilterData.clear();
     BFilterData[nCrossed-1].Pr_x = x0_init;   
     BFilterData[nCrossed-1].Pr_C = C0_init;  
     
@@ -254,79 +237,163 @@ bool TBKalmanB::Fit(TBTrack& trk)
       SetNdof(trk);
       return true;
     } 
-
+    
+    // Set new seed parameters and new linearization point  
+    trk.GetReferenceState().Pars =  RefStateVec[0] +  BFilterData[0].Pr_x;   
+    trk.GetReferenceState().SetPlane(CrossedTEs[0]);  
+    trk.SetMomentum(std::abs(charge/trk.GetReferenceState().Pars[4]));
+  } // end iterations
    
 
-    // Smoothing 
-    // 
-    // Finally, we carry out the smoothing of forwars backward 
-    // filter estimates. This is done by combining the forward 
-    // and backward estimates at all crossed track elements. 
-       
-    for(int is=0; is<nCrossed; ++is) {
-       
-      // Get plane number 
-      int iTE = CrossedTEs[is];  
+  // Recompute the seed trajectory 
+  //
+  // Get the reference parameters and extrapolate them into 
+  // the telescope. Same as before. 
+  
+  // Get paramters of reference trajectory   
+  TrackState RTrkState = trk.GetReferenceState().GetPars();      
+  ReferenceFrame RTrkSurf = trk.GetTE( trk.GetReferenceState().GetPlane() ).GetDet().GetNominal();
+  
+
+// TODO: This code is currently brocken and should not be used.     
+//  if ( m_useBC ) {
+    // The idea is to use the beam constraint as a reference
+    // trajectory 
+    
+//    double mom = trk.GetMomentum();    
+//    RTrkSurf = trk.GetTE(0).GetDet().GetNominal();
+//    RTrkState = ComputeBeamConstraint(RTrkSurf, mom, charge);
+//  }  
+    
+  // Clear list of crossed track elements
+  CrossedTEs.clear();
+    
+  // Clear reference trajectory
+  RefStateVec.clear();
+    
+  // Compute intersections of the reference trajectory
+  // with sub detectors. 
+  
+  // Loop over all sensor planes
+  for(int iTE=0; iTE<nTE; ++iTE) {
       
-      // Get track element 
-      TBTrackElement& TE = trk.GetTE( iTE ); 
+    // Next surface along beam line  
+    const ReferenceFrame& Next_Surf = trk.GetTE(iTE).GetDet().GetNominal();
+           
+    // Extrapoate reference state 
+    bool error = false;
+    TrackState Next_State = TrackModel->Extrapolate(RTrkState, RTrkSurf, Next_Surf, error);  
       
-      // Compute unbiased smoothed estimate 
-      // of local track state. 
+    if (error) {
+      trk.GetTE(iTE).SetCrossed(false);
+    } else {
+      trk.GetTE(iTE).SetCrossed(true);
+      // Remember plane number 
+      CrossedTEs.push_back(iTE);
+      // Remember reference state 
+      RefStateVec.push_back(Next_State);      
+    }
+  } 
+    
+  // Number of crossed track elements  
+  nCrossed = (int) CrossedTEs.size(); 
+    
+  // The reference trajectory should at least 
+  // intersect with one detector.  
+    
+  if ( nCrossed == 0 ) {
+    trk.SetChiSqu(-1);
+    SetNdof(trk);
+    return true;
+  }   
+     
+  // Init forward filter 
+  // The forward pass is initialized using 
+  // the reference track state at the first
+  // sensor. 
+  FFilterData.clear();  
+  FFilterData[0].Pr_x = x0_init;
+  FFilterData[0].Pr_C = C0_init;
+    
+  // Run forward FILTER -----------------------------------------------------
+  double chisqu = FilterPass(trk, CrossedTEs, RefStateVec, +1, FFilterData); 
+  
+  // A very basic consistency test 
+  if ( std::isnan(chisqu) ||  chisqu < 0 )  {
+    trk.SetChiSqu(-1);
+    SetNdof(trk);
+    return true;
+  }
+  
+  // Init backward filter 
+  // The backward pass is initialized using 
+  // the reference track state at the last
+  // sensor. 
+  BFilterData.clear();
+  BFilterData[nCrossed-1].Pr_x = x0_init;   
+  BFilterData[nCrossed-1].Pr_C = C0_init;  
+    
+  // Run backward FILTER  -----------------------------------------------------
+  double chisqu_back = FilterPass(trk, CrossedTEs, RefStateVec, -1, BFilterData);  
+      
+  // A very basic consistency test 
+  if ( std::isnan(chisqu_back) ||  chisqu_back < 0 )  {
+    trk.SetChiSqu(-1);
+    SetNdof(trk);
+    return true;
+  } 
+
+  // Smoothing 
+  // 
+  // Finally, we carry out the smoothing of forwars backward 
+  // filter estimates. This is done by combining the forward 
+  // and backward estimates at all crossed track elements. 
+       
+  for(int is=0; is<nCrossed; ++is) {
+       
+    // Get plane number 
+    int iTE = CrossedTEs[is];  
+      
+    // Get track element 
+    TBTrackElement& TE = trk.GetTE( iTE ); 
+      
+    // Compute unbiased smoothed estimate 
+    // of local track state. 
           
-      TrackState & xs =TE.GetState().GetPars(); 
-      TrackStateCovariance & Cs = TE.GetState().GetCov();
+    TrackState & xs =TE.GetState().GetPars(); 
+    TrackStateCovariance & Cs = TE.GetState().GetCov();
+        
+    // Smoothing 
+    if (is == 0) {
+      xs = BFilterData[is].Pr_x; 
+      Cs = BFilterData[is].Pr_C;  
+    } else if (is == nCrossed-1) {
+      xs = FFilterData[is].Pr_x;    
+      Cs = FFilterData[is].Pr_C;
+    } else {
+      const auto& xb = BFilterData[is].Pr_x;
+      const auto& Cb = BFilterData[is].Pr_C;
+      const auto& xf = FFilterData[is].Pr_x;
+      const auto& Cf = FFilterData[is].Pr_C;
       
-      //cout << " plane " << is << " Cf is " << FFilterData[is].Pr_C << endl;
-      //xs = FFilterData[is].Pr_x;    
-      //Cs = FFilterData[is].Pr_C;
-
-      
-      // Smoothing 
-      if (is == 0) {
-          xs = BFilterData[is].Pr_x; 
-          Cs = BFilterData[is].Pr_C;  
-      } else if (is == nCrossed-1) {
-          xs = FFilterData[is].Pr_x;    
-          Cs = FFilterData[is].Pr_C;
-      } else {
-
-          const auto& xb = BFilterData[is].Pr_x;
-          const auto& Cb = BFilterData[is].Pr_C;
-          const auto& xf = FFilterData[is].Pr_x;
-          const auto& Cf = FFilterData[is].Pr_C;
-
-          bool error = GetSmoothedData(xb, Cb, xf, Cf, xs, Cs);
-          if ( error ) {
-            trk.SetChiSqu(-1);
-            SetNdof(trk); 
-            return true; 
-          }
-                     
+      bool error = GetSmoothedData(xb, Cb, xf, Cf, xs, Cs);
+      if ( error ) {
+        trk.SetChiSqu(-1);
+        SetNdof(trk); 
+        return true; 
       }
+    }
       
-      // Linearization: This adds the reference parameters         
-      xs += RefStateVec[is];
+    // Linearization: This adds the reference parameters         
+    xs += RefStateVec[is];
       
-      // Compute local ChiSqu   
-      if ( TE.HasHit() ) {     
-        TBHit& hit =  TE.GetHit();            
-        TE.SetChiSqu(GetPredictedChi2(xs, Cs, hit));
-      } 
-    }  
-     
-    // Linearization 
-    // 
-    // We can exploit the current fit to improve the linearization point 
-    // iteratively. Note that the beam constraint overwrites the new 
-    // linearization point. 
-         
-    trk.GetReferenceState().Pars = trk.GetTE( CrossedTEs[0] ).GetState().GetPars();  
-    trk.GetReferenceState().SetPlane(CrossedTEs[0]);  
-    trk.SetMomentum(std::abs(charge/trk.GetTE( CrossedTEs[0] ).GetState().GetPars()[4]));
-     
-  } // end iterations
-     
+    // Compute local ChiSqu using the smoothed state  
+    if ( TE.HasHit() ) {     
+      TBHit& hit =  TE.GetHit();            
+      TE.SetChiSqu(GetPredictedChi2(xs, Cs, hit));
+    } 
+  }  
+  
   // Everything is ok
   trk.SetChiSqu(chisqu);
   SetNdof(trk);  
@@ -335,7 +402,7 @@ bool TBKalmanB::Fit(TBTrack& trk)
 
 /** Filters a new hit 
  */
-double TBKalmanB::FilterHit(TBHit& hit, TrackState& xref, TrackState& x0, TrackStateCovariance& C0) 
+double TBKalmanB::FilterHit(const TBHit& hit, const TrackState& xref, TrackState& x0, TrackStateCovariance& C0) 
 { 
   // Here, the measurment update takes place  
   double predchi2 = 0; 
@@ -831,7 +898,7 @@ double TBKalmanB::GetPredictedChi2(const TrackState& p, const TrackStateCovarian
  
 /** Returns the chi2 increment for hit
  */
-double TBKalmanB::GetChi2Increment(TrackState& p, TrackStateCovariance& C, TBHit& hit)
+double TBKalmanB::GetChi2Increment(const TrackState& p, const TrackStateCovariance& C, const TBHit& hit)
 {
   // Get measurement
   const Vector2d& m = hit.GetCoord();
@@ -896,12 +963,14 @@ void TBKalmanB::SetNdof(TBTrack& trk)
 }
 
 /** Compute a priori predicted estimate on first sensor. Returns reference state at first sensor.
+ *
+ * This function overrides the initial track state parameters and its covariance matrix
  */
-TrackState TBKalmanB::ComputeBeamConstraint( TrackState& x0, TrackStateCovariance& C0, ReferenceFrame& FirstSensorFrame, double mass, double mom, double charge)
+TrackState TBKalmanB::ComputeBeamConstraint(ReferenceFrame& FirstSensorFrame, double mom, double charge)
 {
    
   // First, we must construct a beam uvw plane in front of the first sensor where the beam 
-  // constrained is defined. 
+  // constrained is defined. But this 10 mm in front of the first sensor. 
   ReferenceFrame BeamFrame;
   
   Vector3d  BeamPosition;
@@ -919,16 +988,6 @@ TrackState TBKalmanB::ComputeBeamConstraint( TrackState& x0, TrackStateCovarianc
   // Extrapoate beam  state to first sensor 
   bool error = false;
   TrackState x_first = TrackModel->Extrapolate(x_beam, BeamFrame, FirstSensorFrame, error);  
-  
-  // MAP estimate [x_beam,C_beam] from beam frame to first sensor
-  int ierr = 0; 
-  double length = TrackModel->GetSignedStepLength(x_beam, BeamFrame, FirstSensorFrame); 
-  double theta2_air = materialeffect::GetScatterTheta2(x_beam, length, materialeffect::X0_air, mass, charge);   
-  ierr = MAP_FORWARD( theta2_air, x_beam, BeamFrame, FirstSensorFrame, x0, C0 );
-  if (ierr != 0) {
-    streamlog_out(MESSAGE2) << "ERR: Problem with track extrapolation"
-                         << std::endl;
-  }	
       
   return x_first;
 }

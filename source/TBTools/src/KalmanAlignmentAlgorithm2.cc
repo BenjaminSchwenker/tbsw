@@ -197,7 +197,7 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
   
   // Configure track fitter 
   GenericTrackFitter TrackFitter(detector);
-  TrackFitter.SetNumIterations(2);     
+  TrackFitter.SetNumIterations(1);     
   TrackFitter.SetUseBeamConstraint(useBC);
      
   // Loop

@@ -9,15 +9,9 @@
 namespace depfet {
 //! Class KalFilterDet
 /*
- * Class KalFilterDet manages the results of a Kalman filter pass
- * for a particular sub detector. The class can be symmetrically
- * used for the forward and backward filter pass. The detectors
- * are uniquily identified by their plane number, i.e. position
- * along the beam line.
- *
- * The KalFilterDet class stores [x,C] variable pairs for the
- * estimated track states. The [x,C] pair is stored both for
- * predicted and updated KF estimates.
+ * Class KalFilterDet contains a Kalman filter estimate of 
+ * a local track state. It contains the state parameter 
+ * vector and its covariance matrix.
  *
  * @Author B. Schwenker, University of Göttingen
  * <mailto:benjamin.schwenker@phys.uni-goettingen.de>
@@ -48,9 +42,9 @@ namespace depfet {
  * scattering both in detector modules and air gaps between detectors. 
  * 
  * The TBKalmanB class operates on TBTrack objects. Each instance 
- * of TBTrack holds all required input data to carry out the fit. 
+ * of TBTrack holds all required input data to carry out the fit.  
  * After the fit is completed, the TBTrack instance also holds 
- * fit results and quality indicators. 
+ * fit results and fit quality indicators. 
  * 
  * The track fit is startet by calling the function 'Fit' upon 
  * a TBTrack instance. The algorithm works as follows
@@ -59,9 +53,9 @@ namespace depfet {
  * TBTrack with all sub detectors (TE).
  *                                                                              
  * 2) Perform  double filter pass (forward and backward) and 
- * compute optimal predicted estimates at all sensor planes. The current track
- * state is used to linearize the computation of transport matrices 
- * and material effects.           
+ * compute optimal predicted estimates at all sensor planes. The 
+ * local reference state is used to linearize the computation of 
+ * transport matrices and material effects.           
  * 
  * 3) Smoothed track parameter estimates and covariances and chi2's are 
  * calculated for all sensor planes. Moreover, the reference trajectory 
@@ -70,8 +64,6 @@ namespace depfet {
  * @Author B. Schwenker, University of Göttingen
  * <mailto:benjamin.schwenker@phys.uni-goettingen.de>
  */
-
-
 
 
 /* Data type used to store the results of a filter pass. 
@@ -134,7 +126,7 @@ class TBKalmanB {
   
   /** Returns the chi2 increment
    */
-  double GetChi2Increment(TrackState& p, TrackStateCovariance& C, TBHit& hit);
+  double GetChi2Increment(const TrackState& p, const TrackStateCovariance& C, const TBHit& hit);
   
   /** Returns the chi2 increment
    */
@@ -154,7 +146,7 @@ class TBKalmanB {
   
   /** Filters a new hit. Returns predicted chi2 
    */
-  double FilterHit(TBHit& hit, TrackState& xref, TrackState& x0, TrackStateCovariance& C0);  
+  double FilterHit(const TBHit& hit, const TrackState& xref, TrackState& x0, TrackStateCovariance& C0);  
 
   /** Get underlying track model
    */
@@ -172,13 +164,15 @@ class TBKalmanB {
   
   /** Compute a priori predicted estimate on first sensor. Returns reference state at first sensor.
    */
-  TrackState ComputeBeamConstraint( TrackState& x0, TrackStateCovariance& C0, ReferenceFrame& FirstSensorFrame, double mass, double mom, double charge);
+  TrackState ComputeBeamConstraint( ReferenceFrame& FirstSensorFrame, double mom, double charge);
   
-  /** Run filter on track. Returns fit chi2. 
+  /** Run filter on track. Returns fit chi2. Failure if chi2<0.
    *    
+   *  Input: trk            : Track with all associated hits and seed parameters
+   *  Input: CrossedTEs     : Vector with the plane numbers of intersected senors planes
    *  Input: RefStateVec    : Vector of reference track parameters  
    *  Input: IDIR           : -1 for backward filter, 1 for forward filter 
-   *  Output : RESULT       : Estimated [x,C] pairss for all detectors 
+   *  Output : RESULT       : Estimated [x,C] pairs for all detectors 
    */
   double FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::vector<TrackState>& RefStateVec ,int idir, FilterStateVec& Result); 
   
