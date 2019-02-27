@@ -642,22 +642,22 @@ bool TBKalmanB::GetSmoothedData( const TrackState& xb, const TrackStateCovarianc
                TrackState& Smoothed_State, TrackStateCovariance& Smoothed_Cov){
     // Compute forward weight matrix
     TrackStateCovariance Cb_inv=Cb.llt().solve(TrackStateCovariance::Identity());
-    if(!(Cb* (Cb_inv*xb)).isApprox(xb,1e-6)){
-        streamlog_out(MESSAGE3)<< "Smoothing 1: Matrix inversion failed. Quit fitting!"
+    if(!(Cb* (Cb_inv*xb)).isApprox(xb,1e-5)){
+        streamlog_out(WARNING)<< "Smoothing 1: Matrix inversion failed. Quit fitting!"
                  << std::endl;
-//        streamlog_out(MESSAGE3)<< "Smoothing 1: Original matrix" << std::endl<< Cb << std::endl;
-//        streamlog_out(MESSAGE3)<< "Smoothing 1: Inverted matrix" << std::endl<< Cb_inv << std::endl;
-//        streamlog_out(MESSAGE3)<< "Smoothing 1: Other inverse function" << std::endl<< Cb.inverse() << std::endl;
-//        streamlog_out(MESSAGE3)<< "Smoothing 1: Multiply result" << std::endl<< Cb*Cb_inv << std::endl;
-//        streamlog_out(MESSAGE3)<< "Smoothing 1: Vector" << std::endl<< xb.transpose() << std::endl;
-//        streamlog_out(MESSAGE3)<< "Smoothing 1: Vector result" << std::endl<< (Cb* (Cb_inv*xb)).transpose() << std::endl;
-//        streamlog_out(MESSAGE3)<< "Smoothing 1: Diff " << std::endl<< (xb-Cb* (Cb_inv*xb)).transpose() << std::endl;
+        streamlog_out(MESSAGE3)<< "Smoothing 1: Original matrix" << std::endl<< Cb << std::endl;
+        streamlog_out(MESSAGE3)<< "Smoothing 1: Inverted matrix" << std::endl<< Cb_inv << std::endl;
+        streamlog_out(MESSAGE3)<< "Smoothing 1: Other inverse function" << std::endl<< Cb.inverse() << std::endl;
+        streamlog_out(MESSAGE3)<< "Smoothing 1: Multiply result" << std::endl<< Cb*Cb_inv << std::endl;
+        streamlog_out(MESSAGE3)<< "Smoothing 1: Vector" << std::endl<< xb.transpose() << std::endl;
+        streamlog_out(MESSAGE3)<< "Smoothing 1: Vector result" << std::endl<< (Cb* (Cb_inv*xb)).transpose() << std::endl;
+        streamlog_out(MESSAGE3)<< "Smoothing 1: Diff " << std::endl<< (xb-Cb* (Cb_inv*xb)).transpose() << std::endl;
         return true;
     }
     // Compute backward weight matrix
     TrackStateCovariance Cf_inv=Cf.llt().solve(TrackStateCovariance::Identity());
-    if(!(Cf*(Cf_inv*xf)).isApprox(xf,1e-6)){
-        streamlog_out(MESSAGE3)<< "Smoothing 2: Matrix inversion failed. Quit fitting!"
+    if(!(Cf*(Cf_inv*xf)).isApprox(xf,1e-5)){
+        streamlog_out(WARNING)<< "Smoothing 2: Matrix inversion failed. Quit fitting!"
                  << std::endl;
         return true;
     }
@@ -665,8 +665,8 @@ bool TBKalmanB::GetSmoothedData( const TrackState& xb, const TrackStateCovarianc
     Smoothed_Cov=(Cf_inv+Cb_inv).llt().solve(TrackStateCovariance::Identity());
     // Weighted state
     Smoothed_State = Smoothed_Cov*(Cf_inv*xf + Cb_inv*xb);
-    if(!((Cf_inv+Cb_inv)* Smoothed_State).isApprox(Cf_inv*xf + Cb_inv*xb,1e-6)){
-        streamlog_out(MESSAGE3)<< "Smoothing 3: Matrix inversion failed. Quit fitting!"
+    if(!((Cf_inv+Cb_inv)* Smoothed_State).isApprox(Cf_inv*xf + Cb_inv*xb,1e-5)){
+        streamlog_out(WARNING)<< "Smoothing 3: Matrix inversion failed. Quit fitting!"
                  << std::endl;
         return true;
     }
