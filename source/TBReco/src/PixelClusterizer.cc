@@ -325,6 +325,7 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
       if(!found)
       {
         FloatVec newGroup;
+        newGroup.reserve(6);
         newGroup.push_back(col);
         newGroup.push_back(row);
         newGroup.push_back(charge);
