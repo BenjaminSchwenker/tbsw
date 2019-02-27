@@ -315,8 +315,8 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
       streamlog_out ( MESSAGE3 ) << "Track has already hit on dut plane. Danger to bias final results" << endl;
     } 
     
-    // Refit track in nominal alignment
-    bool trkerr = TrackFitter.Fit(trk);
+    // Refit track in current alignment. Restrict smoothing to DUT plane.
+    bool trkerr = TrackFitter.Fit(trk, _idut);
     if ( trkerr ) {
       streamlog_out ( MESSAGE3 ) << "Fit failed. Skipping track!" << endl;
       continue;

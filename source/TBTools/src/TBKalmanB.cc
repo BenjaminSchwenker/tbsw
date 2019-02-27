@@ -138,7 +138,7 @@ bool TBKalmanB::ExtrapolateSeed(TBTrack& trk)
 
 /** Performs track fitting. Returns error flag.
  */
-bool TBKalmanB::Fit(TBTrack& trk)
+bool TBKalmanB::Fit(TBTrack& trk, int smoothPlane)
 {
    
   // Particle hypothesis  
@@ -353,44 +353,48 @@ bool TBKalmanB::Fit(TBTrack& trk)
        
     // Get plane number 
     int iTE = CrossedTEs[is];  
+    
+    // Smoothing is expensive and should only be done for 
+    // all planes when requested by the user. 
+    if ( (smoothPlane < 0) || (iTE == smoothPlane)  ) { 
       
-    // Get track element 
-    TBTrackElement& TE = trk.GetTE( iTE ); 
+      // Get track element 
+      TBTrackElement& TE = trk.GetTE( iTE ); 
       
-    // Compute unbiased smoothed estimate 
-    // of local track state. 
+      // Compute unbiased smoothed estimate 
+      // of local track state. 
           
-    TrackState & xs =TE.GetState().GetPars(); 
-    TrackStateCovariance & Cs = TE.GetState().GetCov();
+      TrackState & xs =TE.GetState().GetPars(); 
+      TrackStateCovariance & Cs = TE.GetState().GetCov();
         
-    // Smoothing 
-    if (is == 0) {
-      xs = BFilterData[is].Pr_x; 
-      Cs = BFilterData[is].Pr_C;  
-    } else if (is == nCrossed-1) {
-      xs = FFilterData[is].Pr_x;    
-      Cs = FFilterData[is].Pr_C;
-    } else {
-      const auto& xb = BFilterData[is].Pr_x;
-      const auto& Cb = BFilterData[is].Pr_C;
-      const auto& xf = FFilterData[is].Pr_x;
-      const auto& Cf = FFilterData[is].Pr_C;
-      
-      bool error = GetSmoothedData(xb, Cb, xf, Cf, xs, Cs);
-      if ( error ) {
-        trk.SetChiSqu(-1);
-        SetNdof(trk); 
-        return true; 
+      // Smoothing 
+      if (is == 0) {
+        xs = BFilterData[is].Pr_x; 
+        Cs = BFilterData[is].Pr_C;  
+      } else if (is == nCrossed-1) {
+        xs = FFilterData[is].Pr_x;    
+        Cs = FFilterData[is].Pr_C;
+      } else {
+        const auto& xb = BFilterData[is].Pr_x;
+        const auto& Cb = BFilterData[is].Pr_C;
+        const auto& xf = FFilterData[is].Pr_x;
+        const auto& Cf = FFilterData[is].Pr_C;
+        
+        bool error = GetSmoothedData(xb, Cb, xf, Cf, xs, Cs);
+        if ( error ) {
+          trk.SetChiSqu(-1);
+          SetNdof(trk); 
+          return true; 
+        }
       }
-    }
       
-    // Linearization: This adds the reference parameters         
-    xs += RefStateVec[is];
+      // Linearization: This adds the reference parameters         
+      xs += RefStateVec[is];
       
-    // Compute local ChiSqu using the smoothed state  
-    if ( TE.HasHit() ) {     
-      TBHit& hit =  TE.GetHit();            
-      TE.SetChiSqu(GetPredictedChi2(xs, Cs, hit));
+      // Compute local ChiSqu using the smoothed state  
+      if ( TE.HasHit() ) {     
+        TE.SetChiSqu(GetPredictedChi2(xs, Cs, TE.GetHit()));
+      }
     } 
   }  
   

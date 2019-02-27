@@ -85,8 +85,13 @@ class TBKalmanB {
   ~TBKalmanB();
   
   /** Performs track fitting. Returns error flag. 
+   * 
+   * The smoothPlane variable control the smoother pass. Use a value of -1 for smoothing all track elements.
+   * Alternativly, the user can put the number (>=0) of one specific track element to restrict the smoothing
+   * to this track element only. In this case, the track state and covariance matrix of the other track elements will 
+   * be undefined.    
    */
-  bool Fit(TBTrack& trk);
+  bool Fit(TBTrack& trk, int smoothPlane);
 
   /** Extrapolates the track seed to all planes. Returns error flag. 
    */
