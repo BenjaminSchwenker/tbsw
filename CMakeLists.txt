@@ -141,9 +141,10 @@ MARK_AS_ADVANCED( CMAKE_INSTALL_RPATH_USE_LINK_PATH )
 IF(NOT Eigen_INCLUDE_PATH )
     SET(  Eigen_INCLUDE_PATH "${PROJECT_SOURCE_DIR}/source/Eigen3Include")
 ENDIF()
-
+SET(  fmt_INCLUDE_PATH "${PROJECT_SOURCE_DIR}/source/fmt")
 # input directories
 ADD_SUBDIRECTORY( source )
+
 
 # display status message for important variables
 MESSAGE( STATUS )

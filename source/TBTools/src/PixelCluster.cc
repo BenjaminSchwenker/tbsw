@@ -7,10 +7,12 @@
 
 #include "PixelCluster.h"
 #include <algorithm>
+#include <numeric>
 #include <limits>
 #include <iterator>
 #include <cmath>
-
+#define FMT_HEADER_ONLY 1
+#include <fmt/format.h>
 using namespace std;
 using namespace lcio; 
 
@@ -22,14 +24,15 @@ namespace depfet {
                                   m_sensorID(sensorID), m_clsCharge(0), m_seedCharge(0),
                                   m_clsSize(0), m_uSize(0), m_vSize(0), m_uStart(0), m_vStart(0)
   {
-    FloatVec rawDigits = Digits->getChargeValues();
+    const EVENT::FloatVec &rawDigits = Digits->getChargeValues();
     int size = rawDigits.size()/3; 
-    
+    m_sortedDigits.reserve(size);
+
     unsigned short vMin = std::numeric_limits<unsigned short>::max();
     unsigned short vMax = 0;
     unsigned short uMin = std::numeric_limits<unsigned short>::max();
     unsigned short uMax = 0; 
-    
+
     for ( int index=0; index<size;  index++) { 
       unsigned short iU = static_cast<unsigned short> (rawDigits[index * 3]);
       unsigned short iV = static_cast<unsigned short> (rawDigits[index * 3 + 1]);
@@ -59,30 +62,37 @@ namespace depfet {
   std::string PixelCluster::getShape(int pixeltype, int vCellPeriod, int uCellPeriod, int etaBin) const 
   {
     // Compute cluster label string
-    stringstream streamLabel;  
-    streamLabel << "E" << etaBin << "P" << m_vStart % vCellPeriod << "." <<  m_uStart % uCellPeriod  
-                << "." << pixeltype; 
-    
+    std::string ret;
+    ret.reserve(9+4*m_sortedDigits.size());
+    ret.append(fmt::format("E{}P{}.{}.{}",etaBin,m_vStart % vCellPeriod,m_uStart % uCellPeriod,pixeltype));
     for (auto digit : m_sortedDigits ) {
-      streamLabel << "D" << digit.m_cellIDV - m_vStart  <<  "." << digit.m_cellIDU - m_uStart;  
-    } 
-    return streamLabel.str();   
+        ret.append(fmt::format("D{}.{}",digit.m_cellIDV - m_vStart ,digit.m_cellIDU - m_uStart));
+    }
+    return ret;
   }
-   
+
   std::string PixelCluster::getType(int pixeltype, int vCellPeriod, int uCellPeriod) const 
   { 
-    // Compute cluster type string
-    stringstream streamType;    
-    streamType << "P" << int(m_vStart % vCellPeriod) << "." <<  int(m_uStart % uCellPeriod) << "." << pixeltype;   
-    
-    for (auto digit : m_sortedDigits ) { 
-      streamType << "D" << digit.m_cellIDV - m_vStart  <<  "." << digit.m_cellIDU - m_uStart;  
-    } 
-    return streamType.str();  
+    std::string ret;
+    ret.reserve(7+4*m_sortedDigits.size());
+    ret.append(fmt::format("P{}.{}.{}",m_vStart % vCellPeriod,m_uStart % uCellPeriod,pixeltype));
+    for (auto digit : m_sortedDigits ) {
+        ret.append(fmt::format("D{}.{}",digit.m_cellIDV - m_vStart ,digit.m_cellIDU - m_uStart));
+    }
+    return ret;
   }  
+  std::string PixelCluster::getEtaBinString(int etaBin) const
+  {
+    std::string ret;
+    ret.reserve(9+4*m_sortedDigits.size());
+    ret.append(fmt::format("E{}",etaBin));
+    return ret;
+  }
+
    PixelCluster::operator std::string() const{
        return getType()+" " + getShape();
    }
+
   double PixelCluster::computeEta(double thetaU, double thetaV) const
   {
     auto headPixelIndex = getHeadPixelIndex(thetaU, thetaV);
