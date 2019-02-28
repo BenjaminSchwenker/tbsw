@@ -10,7 +10,7 @@
 
 SET( Marlin_Version_Header "MarlinVersion.h" )
 
-FILE( WRITE "${Marlin_BINARY_DIR}/marlin/${Marlin_Version_Header}"
+FILE( WRITE "${PROJECT_BINARY_DIR}/marlin/${Marlin_Version_Header}"
 "#ifndef MarlinVersion_h
 #define MarlinVersion_h 1
 
@@ -25,10 +25,10 @@ FILE( WRITE "${Marlin_BINARY_DIR}/marlin/${Marlin_Version_Header}"
 )
 
 # include previously generated marlinversion.h
-INCLUDE_DIRECTORIES( BEFORE "${Marlin_BINARY_DIR}" )
+INCLUDE_DIRECTORIES( BEFORE "${PROJECT_BINARY_DIR}" )
 
 # and install it
-INSTALL( DIRECTORY "${Marlin_BINARY_DIR}/marlin" DESTINATION include PATTERN "*~" EXCLUDE )
+INSTALL( DIRECTORY "${PROJECT_BINARY_DIR}/marlin" DESTINATION include PATTERN "*~" EXCLUDE )
 
 # include directories
 INCLUDE_DIRECTORIES( BEFORE "${Marlin_SOURCE_DIR}/include" )
@@ -44,9 +44,6 @@ INSTALL( DIRECTORY "${Marlin_SOURCE_DIR}/include/marlin" DESTINATION include
 ### SOURCES
 ####################################################################################################
 
-# require proper c++
-ADD_DEFINITIONS( "-Wall -ansi -pedantic" )
-
 # get list of all source files in this directory
 AUX_SOURCE_DIRECTORY( . lib_srcs )
 
@@ -58,13 +55,15 @@ LIST( REMOVE_ITEM lib_srcs ./Marlin.cc ./ProcessorLoader.cc )
 ####################################################################################################
 
 # create library
-ADD_LIBRARY( lib_Marlin ${lib_srcs} )
+
+ADD_LIBRARY( lib_Marlin ${lib_srcs}  ${marlin_hdrs})
+
 
 # link to libstreamlog
-TARGET_LINK_LIBRARIES( lib_Marlin lib_streamlog )
-
-# create symbolic lib target for calling target lib_XXX
-ADD_CUSTOM_TARGET( lib DEPENDS lib_Marlin )
+TARGET_LINK_LIBRARIES( lib_Marlin lib_streamlog  lib_LCIO lib_GEARXML)
+TARGET_INCLUDE_DIRECTORIES(lib_Marlin INTERFACE
+  "${Marlin_SOURCE_DIR}/include"
+)
 
 # change lib_target properties
 SET_TARGET_PROPERTIES( lib_Marlin PROPERTIES
@@ -97,7 +96,7 @@ IF( NOT UNIX OR APPLE )
 ENDIF()
 
 # create symbolic bin target for calling targets bin_XXX
-ADD_CUSTOM_TARGET( bin )
+ADD_CUSTOM_TARGET( bin_marlin )
 
 IF( NOT MARLIN_NO_DLL )
     FIND_LIBRARY( DL_LIB NAMES ${CMAKE_DL_LIBS} dl )
@@ -124,7 +123,7 @@ ENDIF()
 
 # ----- Marlin binary --------------------------------------------------------
 ADD_EXECUTABLE( Marlin Marlin.cc ProcessorLoader.cc )
-ADD_DEPENDENCIES( bin Marlin )
+ADD_DEPENDENCIES( bin_marlin Marlin )
 
 # link against library
 IF( BUILD_SHARED_LIBS )
@@ -140,7 +139,7 @@ IF( DEFINED LINK_STATIC_WHOLE_LIBS )
     ENDFOREACH()
 ENDIF()
 
-INSTALL( TARGETS Marlin DESTINATION bin )
+INSTALL( TARGETS Marlin DESTINATION bin_marlin )
 # ----------------------------------------------------------------------------
 
 

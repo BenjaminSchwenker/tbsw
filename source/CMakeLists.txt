@@ -1,0 +1,20 @@
+# input directories
+ADD_SUBDIRECTORY( lcio )
+ADD_SUBDIRECTORY( gear )
+ADD_SUBDIRECTORY( Marlin )
+IF (BUILD_EudaqInput)
+    ADD_SUBDIRECTORY( EudaqInput )
+ENDIF()
+IF (BUILD_TBTools)
+    ADD_SUBDIRECTORY( TBTools )
+ENDIF()
+IF (BUILD_TBReco)
+    ADD_SUBDIRECTORY( TBReco )
+ENDIF()
+
+IF (BUILD_X0Tools)
+    ADD_SUBDIRECTORY( X0Tools )
+ENDIF()
+
+
+

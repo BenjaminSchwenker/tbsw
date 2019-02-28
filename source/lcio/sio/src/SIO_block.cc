@@ -43,7 +43,7 @@ SIO_block::~SIO_block()
 // manager to find this block's name in its list and return a pointer to it.
 // I told you this was tricky!
 //
-if( (SIO_blockManager::get( getName()->c_str() )) != NULL )
+if( (SIO_blockManager::get( getName()->c_str() )) != nullptr )
     SIO_blockManager::remove( this );
 
 return;
