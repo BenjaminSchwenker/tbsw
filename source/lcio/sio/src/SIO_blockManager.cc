@@ -25,7 +25,7 @@
 // ----------------------------------------------------------------------------
 // Initialize the private static variables.
 // ----------------------------------------------------------------------------
-blockMap_c*    SIO_blockManager::blockMap  = NULL;
+blockMap_c*    SIO_blockManager::blockMap  = nullptr;
 SIO_verbosity  SIO_blockManager::verbosity = SIO_SILENT;
 
 // ----------------------------------------------------------------------------
@@ -63,13 +63,13 @@ if( !SIO_functions::validateName( i_name ) )
                   << i_name
                   << std::endl;
     }
-    return( NULL );
+    return( nullptr );
 }
 
 //
 // If the map's never been instantiated, do it now!
 //
-if( blockMap == NULL )
+if( blockMap == nullptr )
     blockMap = new blockMap_c;
 
 //
@@ -81,7 +81,7 @@ std::pair< std::string const, SIO_block* >
 //
 // Insert the entry.  This may or may not succeed depending on whether the
 // named block pre-exists.  If it does pre-exist, print a warning and return
-// a NULL pointer (that should get the caller's attention).
+// a nullptr pointer (that should get the caller's attention).
 //
 status = blockMap->insert( entry );
 if( !status.second )
@@ -93,7 +93,7 @@ if( !status.second )
                   << "not added (already exists)"
                   << std::endl;
     }
-    return( NULL );
+    return( nullptr );
 }
 
 if( verbosity >= SIO_ALL )
@@ -121,7 +121,7 @@ SIO_block* SIO_blockManager::get
 //
 // Search the map (if it exists yet!)
 //
-if( blockMap != NULL )
+if( blockMap != nullptr )
 {
     blockMap_i
         iter;
@@ -153,7 +153,7 @@ if( verbosity >= SIO_ALL )
 //
 // That's all folks!
 //
-return( NULL );
+return( nullptr );
 }
 
 // ----------------------------------------------------------------------------
@@ -184,7 +184,7 @@ void SIO_blockManager::clear() {
   }
   
   delete blockMap;
-  blockMap = NULL;
+  blockMap = nullptr;
 
 }
 
@@ -200,7 +200,7 @@ unsigned int SIO_blockManager::remove
 //
 // Search the map (if it exists!)
 //
-if( blockMap != NULL )
+if( blockMap != nullptr )
 {
     blockMap_i
         iter;
@@ -234,7 +234,7 @@ if( blockMap != NULL )
 //         if( blockMap->size() == 0 )
 //         {
 //             delete blockMap;
-//             blockMap = NULL;
+//             blockMap = nullptr;
 //         } 
         return( SIO_BLOCK_SUCCESS );
     }

@@ -129,7 +129,7 @@ namespace marlin{
 	for( std::vector<TiXmlNode*>::iterator it = groupParams.begin() ; it != groupParams.end() ; it++){
 	  proc->InsertEndChild( **it ) ;
 	}
-	std::auto_ptr<TiXmlNode> clone( proc->Clone() ) ;
+    std::unique_ptr<TiXmlNode> clone( proc->Clone() ) ;
 	root->InsertBeforeChild( section , *clone  ) ;   // FIXME: memory mngmt. ?
       }
 
@@ -381,7 +381,7 @@ namespace marlin{
 
 	TiXmlNode* parent = current->Parent() ;
 
-	std::auto_ptr<TiXmlNode> clone( child->Clone() ) ;
+    std::unique_ptr<TiXmlNode> clone( child->Clone() ) ;
 
 	parent->InsertBeforeChild(  current , *clone ) ;  
 

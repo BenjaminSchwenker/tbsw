@@ -483,17 +483,17 @@ namespace marlin{
       int evtProc = itT->second.second ;
       
       if( evtProc > evtTotal ) 
-	evtTotal = evtProc ;
+         evtTotal = evtProc ;
       
       streamlog_out(MESSAGE)  <<  cName 
 			      <<  std::setw(12) << std::scientific  << tProc  << " s in " 
 			      <<  std::setw(12) << evtProc << " events  ==> " ;
 
-      if( evtProc > 0 )
-	streamlog_out(MESSAGE)  <<  std::setw(12) << std::scientific  << tProc / evtProc << " [ s/evt.] "  ;
-      else
-	streamlog_out(MESSAGE)  <<  std::setw(12) << std::scientific  << "NaN"  << " [ s/evt.] "  ;
-	
+      if( evtProc > 0 ){
+        streamlog_out(MESSAGE)  <<  std::setw(12) << std::scientific  << tProc / evtProc << " [ s/evt.] "  ;
+      }else{
+        streamlog_out(MESSAGE)  <<  std::setw(12) << std::scientific  << "NaN"  << " [ s/evt.] "  ;
+      }
       streamlog_out(MESSAGE)  <<  std::endl ;
 
     }
@@ -502,11 +502,11 @@ namespace marlin{
 			    <<  std::setw(12) << std::scientific  << tTotal << " s in " 
 			    <<  std::setw(12) << evtTotal << " events  ==> " ;
 
-    if( evtTotal > 0 )
+    if( evtTotal > 0 ){
       streamlog_out(MESSAGE)  <<  std::setw(12) << std::scientific  << tTotal / evtTotal << " [ s/evt.] "  ;
-    else
+    }else{
       streamlog_out(MESSAGE)  <<  std::setw(12) << std::scientific  << "NaN"  << " [ s/evt.] "  ;
-    
+    }
     streamlog_out(MESSAGE)  <<  std::endl ;
     
     

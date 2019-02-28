@@ -18,32 +18,6 @@ In case you are working with Ubuntu, the following recipe may work for you as we
 $ sudo apt install cmake
 ```
 
-
-# CLHEP 
-
-The project home page can be found at this URL http://proj-clhep.web.cern.ch/proj-clhep/. It is most convinient to install CLHEP from the git 
-repository. 
-
-```
-$ git clone https://gitlab.cern.ch/CLHEP/CLHEP.git
-```
-
-This create a folder CLHEP in your current working directory containing the CLHEP repository. Now create two further directories <installdir> and <builddir>
-and build the software.  
-
-
-```
-$ mkdir <clhep-installdir> 
-$ mkdir <clhep-builddir> 
-$ cd <clhep-builddir> 
-$ cmake -DCMAKE_INSTALL_PREFIX=<clhep-installdir>  ../CLHEP
-$ cmake --build . 
-$ ctest
-$ cmake --build . --target install
-```
-
-The folder <clhep-builddir> may be deleted afterwards. In the end, the folder <clhep-installdir> should contain bin/ include/ and lib/ subfolders. 
-
 # Python 
 
 You should use your default system version of Python. Check that library python-dev is installed on your system to work with PyRoot. You can install by typing: 
@@ -105,25 +79,27 @@ $ git clone https://BenjaminSchwenker@bitbucket.org/BenjaminSchwenker/tbsw.git
 $ cd tbsw
 ```
 
-Open the script install.sh and edit the two first lines with exports for ROOTSYS and CLHEP_HOME to the locations on your local machine. 
-For example: 
-
-```
-export CLHEP_HOME=<absolute-path-to-clhep-installdir>/lib/CLHEP-2.3.4.3         # See CLHEP section above, points to folder containing CLHEPConfig.cmake
-export ROOTSYS=<absolute-path-to-root-installdir>                               # See Root section above
-```
-
-Save the edits and close the file. Run the install script: 
+Please make sure that the path to your ROOT instalation is set in $ROOTSYS
+Run the install script:
 
 ```
 $ . install.sh
 ```
 
-In case the building of tbsw needs to be repeated, clean the repository before installing: 
+This script will create a build folder "build" and will compile tbsw.
+If you want to clean the tbsw directory for a complete rebuild, you can clean the tbsw directory with:
 
 ```
 $ . make_clean.sh
-$ . install.sh
+```
+
+Alternative:
+If you want to build TBSW in a different folder, want a special build type or a special Root version to be used, please use:
+
+```
+$ cd your/build/dir
+$ cmake path/to/tbsw -DROOT_HOME=/your/root/folder -DCMAKE_INSTALL_PREFIX=Release
+$ cmake --build .
 ```
 
 After the installation is done, you can test the software by running a small test beam simulation. All actuall work with tbsw is encapsulated in workspaces. The installation comes with a template workspace. The first two lines make a copy of the template workspace and cd into it. 
@@ -150,7 +126,7 @@ It can be obtained with the devtoolset:
 $ sudo yum install yum-conf-repos
 $ sudo yum install yum-conf-softwarecollections
 
-# Install Developer Toolset 6
+# Install Developer Toolset 7
 $ sudo yum install devtoolset-7
 
 # Enter Developer Toolset 7 Environment

@@ -207,7 +207,7 @@ if( stream->mode != SIO_MODE_READ )
 //fg: ---
 
         newbuf = (unsigned char *)malloc( newlen );
-        if( newbuf == NULL )
+        if( newbuf == nullptr )
         {
             if( stream->verbosity >= SIO_ERRORS )
 	    {
@@ -556,11 +556,11 @@ ifer = reinterpret_cast<void *>(*xfer);
 if( stream->mode != SIO_MODE_READ )
 {
     //
-    // Ignore NULL pointers.  These are always recorded in the buffer with a
+    // Ignore nullptr pointers.  These are always recorded in the buffer with a
     // zero match word (and are treated specially when read back).  There's no
     // point in putting useless information in the maps.
     //
-    if( ifer != NULL )
+    if( ifer != nullptr )
     {
         std::pair< void* const, void* >
             entry( ifer,
@@ -609,7 +609,7 @@ else
     // Hand -something- back to the caller.  The number passed back is -not-
     // a pointer, and pointer relocation will not occur until the whole record
     // has been read.  The only circumstance where the next line is important
-    // is the case of a NULL pointer which the caller may be relying on to
+    // is the case of a nullptr pointer which the caller may be relying on to
     // find the end of (for instance) a singly linked list.
     //
     *xfer = static_cast<SIO_POINTER_DECL>(match);
