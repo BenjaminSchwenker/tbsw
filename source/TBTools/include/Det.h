@@ -162,7 +162,7 @@ class Det {
   /** Compute ucell and vcell from pixelID.
    *  Has to be implemented by subclasses.  
    */ 
-  virtual void decodePixelID(int& vcell, int ucell, int uniqPixelID) = 0;
+  virtual void decodePixelID(int& vcell, int& ucell, int uniqPixelID) = 0;
 
   /** Returns true if pixels at position (vcell1,ucell1) and (vcell2,ucell2) are neighbors.
    *  Has to be implemented by subclasses.  

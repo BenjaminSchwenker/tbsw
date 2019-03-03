@@ -72,6 +72,12 @@ namespace materialeffect {
   // Highland radiation length for air [mm] (NTP: 20 deg, 1bar, PDG value)   
   static const float X0_air = 303900;
 
+  // TODO: this is a wild guess, check it
+  static const float AtomicMass_air = 16; 
+
+  // TODO: this is a wild guess, check it
+  static const float AtomicNumber_air = 8; 
+
 } // Namespace
 
 

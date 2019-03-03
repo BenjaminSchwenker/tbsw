@@ -531,7 +531,7 @@ bool PixelClusterizer::areNeighbours( FloatVec &group, int col, int row, int m_a
                       
   }
     
-  return false;;
+  return false;
 }
 
 
