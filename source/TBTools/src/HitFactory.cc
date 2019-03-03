@@ -37,10 +37,10 @@ HitFactory::HitFactory(TBDetector& Detector, double SectorPitch)
 void HitFactory::AddRecoHit(TBHit & hit)
 {
   // To which detector does hit belong 
-  int daqid = hit.GetDAQID();
-  int ipl = _detector.GetPlaneNumber(daqid);  
+  int sensorid = hit.GetSensorID();
+  int ipl = _detector.GetPlaneNumber(sensorid);  
 
-  // Check that daqid is registered in the gear file
+  // Check that plane number is valid  
   if ( ipl < 0 ) return;  
   
   // Compute unique id of this hit 

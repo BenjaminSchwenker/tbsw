@@ -206,10 +206,10 @@ void StripHitMaker::processEvent(LCEvent * evt)
       TBHit hitU = HitStoreU[iU]; 
       TBHit hitV = HitStoreV[iV];
       
-      if (hitU.GetDAQID() == hitV.GetDAQID() ) {
+      if (hitU.GetSensorID() == hitV.GetSensorID() ) {
         
         // Make LCIO TrackerHit 
-        TBHit hit(hitU.GetDAQID(), hitU.GetCoord()[0], hitV.GetCoord()[1], hitU.GetCov()(0,0), hitV.GetCov()(1,1), 0, 0);
+        TBHit hit(hitU.GetSensorID(), hitU.GetCoord()[0], hitV.GetCoord()[1], hitU.GetCov()(0,0), hitV.GetCov()(1,1), 0, 0);
         TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
             
         // Add link to full cluster data 

@@ -19,7 +19,7 @@
 #include <gear/GearMgr.h>
 #include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
-#include "gear/BField.h"
+#include <gear/BField.h>
 
 // Include Marlin
 #include <marlin/Global.h>
@@ -63,7 +63,39 @@ void TBDetector::ReadGearConfiguration( )
 {
   
   streamlog_out ( MESSAGE3) << "Construct Test Beam Detector" << std::endl;
+   
+  /*
+  //Now create all subcomponents
+  for (const GearDir& component : detectorDir.getNodes("DetectorComponent")) {
+    string name;
+    string creatorName;
+    try {
+      name        = component.getString("@name");
+      creatorName = component.getString("Creator");
+    } catch (gearbox::PathEmptyError& e) {
+      B2ERROR("Could not find required element Name or Creator for " << component.getPath());
+      continue;
+    }
     
+    if (!m_components.empty() && m_components.count(name) == 0) {
+      B2DEBUG(50, "DetectorComponent " << name << " not in list of components, skipping");
+      continue;
+    }
+    
+    string libraryName = component.getString("Creator/@library", "");
+    if (!iov.empty()) {
+      CreatorBase* creator = CreatorManager::getCreator(creatorName, libraryName);
+      if (creator) {
+        creator->createPayloads(GearDir(component, "Content"), iov);
+      } else {
+        B2ERROR("Could not load creator " << creatorName << " from " << libraryName);
+      }
+    }
+    config.addComponent({name, creatorName, libraryName});
+  }
+  */
+
+ 
   // Check iff gear file is available  
   if ( Global::GEAR == 0x0 ) {
     streamlog_out ( ERROR4 ) <<  "The GearMgr is not available, for an unknown reason." << std::endl;
@@ -136,7 +168,7 @@ void TBDetector::ReadGearConfiguration( )
      
     // Set ID   
     int ID = siPlanesLayerLayout->getSensitiveID(ilayer);
-    adet.SetDAQID(ID);
+    adet.SetSensorID(ID);
     _indexMap[ID] = ipl;
 
     // Set u cells 
@@ -326,7 +358,7 @@ void TBDetector::ReadAlignmentDB( std::string FileName )
     int bin = ipl + 1; 
 
     // Check consistency with gear file 
-    if ( histoMap["hSensorID"]->GetBinContent(bin) != adet.GetDAQID() ) {
+    if ( histoMap["hSensorID"]->GetBinContent(bin) != adet.GetSensorID() ) {
       streamlog_out ( WARNING ) <<  "Alignment DB inconsistent to Gear file!!" << std::endl;   
     }
     
@@ -427,7 +459,7 @@ void TBDetector::WriteAlignmentDB( )
     
     int bin = ipl+1;
     
-    _histoMap["hSensorID"]->SetBinContent( bin, adet.GetDAQID() );
+    _histoMap["hSensorID"]->SetBinContent( bin, adet.GetSensorID() );
     _histoMap["hSensorID"]->SetBinError( bin, 0 );
     
     _histoMap["hPositionX"]->SetBinContent( bin, Origin[0] );

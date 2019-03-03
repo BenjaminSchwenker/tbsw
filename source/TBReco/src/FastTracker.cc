@@ -205,7 +205,7 @@ void FastTracker::init() {
     } else {
         ss << "Passive plane" ;
     }
-    ss << "  ID = " << _detector.GetDet(ipl).GetDAQID()
+    ss << "  ID = " << _detector.GetDet(ipl).GetSensorID()  
        << "  at Z [mm] = " << setprecision(3) <<  _detector.GetDet(ipl).GetNominal().GetPosition()[2]; 
       
     streamlog_out( MESSAGE3 ) <<  ss.str() << endl;
@@ -266,7 +266,7 @@ void FastTracker::init() {
     } else {
         ss << "Passive plane" ;
     }
-    ss << "  ID = " << _detector.GetDet(ipl).GetDAQID()
+    ss << "  ID = " << _detector.GetDet(ipl).GetSensorID()  
        << "  maxU/mm= " << setprecision(3) <<  _maxResidualU[ipl]
        << "  maxV/mm= " << setprecision(3) <<  _maxResidualV[ipl]; 
       
@@ -326,8 +326,8 @@ void FastTracker::processEvent(LCEvent * evt)
          TBHit RecoHit ( lciohit  );        
          
          // We have to find plane number of the hit 
-         int daqid = RecoHit.GetDAQID();
-         int ipl = _detector.GetPlaneNumber(daqid);
+         int sensorid = RecoHit.GetSensorID();
+         int ipl = _detector.GetPlaneNumber(sensorid);
             
          if (ipl == -99 ) continue; 
 

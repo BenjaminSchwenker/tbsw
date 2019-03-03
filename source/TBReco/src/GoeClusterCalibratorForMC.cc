@@ -207,7 +207,7 @@ namespace depfet {
       // Built a TBHit
       TrackerHitImpl * lciohit = dynamic_cast<TrackerHitImpl*>( hitCol->getElementAt(i) ) ;
       TBHit recoHit ( lciohit  );        
-      int sensorID = recoHit.GetDAQID();      
+      int sensorID = recoHit.GetSensorID();      
                 
       streamlog_out(MESSAGE2) << " RecoHit with sensorID " << sensorID << " at: (" << recoHit.GetCoord()[0] << ", " << recoHit.GetCoord()[1] << ")" 
                               << endl;
@@ -304,7 +304,7 @@ namespace depfet {
         if ( hit2simhit[ihit] >= 0 ) {        
           
           TBHit& hit = RecoHits[ihit];     
-          int sensorID = hit.GetDAQID();     
+          int sensorID = hit.GetSensorID();     
           int ipl = _detector.GetPlaneNumber(sensorID);
           Det & Sensor = _detector.GetDet(ipl);   
            

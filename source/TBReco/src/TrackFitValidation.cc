@@ -635,13 +635,13 @@ namespace depfet {
       // Local track parameter errors 
       
       histoName = "hsigma_u_det"+to_string( ipl ); 
-      max = 100*adet.GetSensitiveSizeU()/(adet.GetNCellsU()+1); 
+      max = 100*adet.GetSensitiveSizeU()/(adet.GetMaxUCell()+2 ); 
       _histoMap[ histoName  ] = new TH1D(histoName.c_str(), "", 8000, 0, max); 
       _histoMap[ histoName  ]->SetXTitle("sigma u [mm]"); 
       _histoMap[ histoName  ]->SetYTitle("tracks"); 
        
       histoName = "hsigma_v_det"+to_string( ipl );
-      max = 100*adet.GetSensitiveSizeV()/(adet.GetNCellsV()+1); 
+      max = 100*adet.GetSensitiveSizeV()/(adet.GetMaxVCell()+2); 
       _histoMap[ histoName  ] = new TH1D(histoName.c_str(), "", 8000, 0, max);
       _histoMap[ histoName  ]->SetXTitle("sigma v [mm]"); 
       _histoMap[ histoName  ]->SetYTitle("tracks"); 
@@ -700,15 +700,15 @@ namespace depfet {
       _histoMap[histoName]->SetYTitle("tracks");    
     
       histoName = "hresU_det"+to_string( ipl );
-      min = -10*adet.GetSensitiveSizeU()/(adet.GetNCellsU()+1); 
-      max = +10*adet.GetSensitiveSizeU()/(adet.GetNCellsU()+1); 
+      min = -10*adet.GetSensitiveSizeU()/(adet.GetMaxUCell()+2); 
+      max = +10*adet.GetSensitiveSizeU()/(adet.GetMaxUCell()+2); 
       _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 301, min, max);
       _histoMap[ histoName ]->SetXTitle("u residual [mm]"); 
       _histoMap[ histoName ]->SetYTitle("tracks"); 
       
       histoName = "hresV_det"+to_string( ipl );
-      min = -10*adet.GetSensitiveSizeV()/(adet.GetNCellsV()+1); 
-      max = +10*adet.GetSensitiveSizeV()/(adet.GetNCellsV()+1); 
+      min = -10*adet.GetSensitiveSizeV()/(adet.GetMaxVCell()+2); 
+      max = +10*adet.GetSensitiveSizeV()/(adet.GetMaxVCell()+2); 
       _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 301, min, max); 
       _histoMap[ histoName ]->SetXTitle("v residual [mm]"); 
       _histoMap[ histoName ]->SetYTitle("tracks"); 

@@ -225,7 +225,7 @@ namespace depfet {
         //------------------------
         TBTrackElement& TE = track.GetTE(ipl);  
         Det & Sensor = _detector.GetDet(ipl);  
-        int sensorID = Sensor.GetDAQID();        
+        int sensorID = Sensor.GetSensorID();        
         
         bool ignoreID = false;
         for (auto id :  _ignoreIDVec)  {

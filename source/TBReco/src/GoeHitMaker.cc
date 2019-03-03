@@ -183,7 +183,7 @@ namespace depfet {
     delete clusterDBFile;
     
     for(int ipl=0;ipl<_detector.GetNSensors();ipl++)  { 
-      int sensorID = _detector.GetDet(ipl).GetDAQID();
+      int sensorID = _detector.GetDet(ipl).GetSensorID();
       _countAllMap[sensorID] = 0;   
       _countCalMap[sensorID] = 0;  
     }
@@ -341,7 +341,7 @@ namespace depfet {
   {
     
     for(int ipl=0;ipl<_detector.GetNSensors();ipl++)  { 
-      int sensorID = _detector.GetDet(ipl).GetDAQID();
+      int sensorID = _detector.GetDet(ipl).GetSensorID();
       
       float coverage_efficiency = 100.0*((float)_countCalMap[sensorID]/_countAllMap[sensorID]);
       

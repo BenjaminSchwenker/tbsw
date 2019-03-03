@@ -181,7 +181,7 @@ namespace depfet {
       v /= m_clsCharge; 
     } 
         
-    // Compute the diagonal elements of the hit covariance matrix in mm2
+    // Compute the 2x2 hit covariance matrix 
     cov_u = pow(getUSize()*Sensor.GetPitchU(getVStart(), getUStart())/sqrt(12),2);
     cov_v = pow(getVSize()*Sensor.GetPitchV(getVStart(), getUStart())/sqrt(12),2); 
     cov_uv = 0.0;   

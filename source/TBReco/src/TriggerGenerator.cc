@@ -58,16 +58,16 @@ namespace depfet {
                               m_fakeTriggerPeriod, static_cast< int > ( 0 ) );  
     
     std::vector<float> initScinti;
-    registerProcessorParameter ("ScinitNo1", "Scinti parameters: DAQID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)",
+    registerProcessorParameter ("ScinitNo1", "Scinti parameters: SensorID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)",
                               _scintiNo1, initScinti );
     
-    registerProcessorParameter ("ScinitNo2", "Scinti parameters: DAQID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)",
+    registerProcessorParameter ("ScinitNo2", "Scinti parameters: SensorID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)",
                               _scintiNo2, initScinti );
     
-    registerProcessorParameter ("ScinitNo3", "Scinti parameters: DAQID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)",
+    registerProcessorParameter ("ScinitNo3", "Scinti parameters: SensorID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)",
                               _scintiNo3, initScinti );
     
-    registerProcessorParameter ("ScinitNo4", "Scinti parameters: DAQID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)",
+    registerProcessorParameter ("ScinitNo4", "Scinti parameters: SensorID, Umin[mm], Vmin[mm], Umax[mm], Vmax[mm] (leave empty to deactivate)",
                               _scintiNo4, initScinti );
                                  
   }
@@ -203,7 +203,7 @@ namespace depfet {
         
         // Check if simhit can trigger a scinti 
         for ( size_t i = 0; i < m_scintiVec.size(); i++ )  {
-          bool signal = ( m_scintiVec[i].GetDAQID() == sensorID ) && m_scintiVec[i].isPointInSensor(u,v);         
+          bool signal = ( m_scintiVec[i].GetSensorID() == sensorID ) && m_scintiVec[i].isPointInSensor(u,v);         
           sctStateVec[i] = sctStateVec[i] || signal; 
         }
       }

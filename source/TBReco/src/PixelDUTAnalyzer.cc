@@ -147,7 +147,7 @@ void PixelDUTAnalyzer::init() {
    Det & dut = _detector.GetDet(_idut); 
           
    // Print out geometry information  
-   streamlog_out ( MESSAGE3 )  << "D.U.T. plane  ID = " << dut.GetDAQID()
+   streamlog_out ( MESSAGE3 )  << "D.U.T. plane  ID = " << dut.GetSensorID() 
                                << "  at position = " << _idut 
                                << endl << endl;
     
@@ -220,7 +220,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     for (unsigned int iDet = 0; iDet < digitcol->getNumberOfElements(); iDet++) {    
       TrackerDataImpl * digits = dynamic_cast<TrackerDataImpl* > ( digitcol->getElementAt(iDet) );
       int sensorID = DigitDecoder( digits ) ["sensorID"];
-      if ( sensorID ==  dut.GetDAQID() ) { 
+      if ( sensorID ==  dut.GetSensorID()  ) { 
         const FloatVec &pixVector = digits->getChargeValues();
          
         // Read the number of pixels on DUT in the event
@@ -333,8 +333,8 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     TBHit RecoHit ( lciohit  );        
          
     // We have to find plane number of the hit 
-    int daqid = RecoHit.GetDAQID();      
-    int ipl = _detector.GetPlaneNumber(daqid);  
+    int sensorid = RecoHit.GetSensorID();      
+    int ipl = _detector.GetPlaneNumber(sensorid);  
       
     // Store all hits on the DUT module  
     if( dut.GetPlaneNumber() == ipl )
@@ -449,7 +449,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
   // Fill event tree
   _rootRunNumber = evt->getRunNumber();  
   _rootEventNumber = evt->getEventNumber();  
-  _rootSensorID = dut.GetDAQID();       
+  _rootSensorID = dut.GetSensorID();        
   _rootNTelTracks = nTrack; 
   _rootNDUTDigits = nDUTDigits;
   _rootDUTHasTestPixels = hasTestPixels;

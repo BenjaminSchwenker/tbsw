@@ -907,7 +907,7 @@ namespace depfet {
     for (short int ipl=0; ipl < m_detector.GetNSensors(); ipl++) {
       
       m_ipl = ipl;     
-      m_sensorID = m_detector.GetDet(m_ipl).GetDAQID();
+      m_sensorID = m_detector.GetDet(m_ipl).GetSensorID();
       
       if ( std::find(m_filterIDs.begin(), m_filterIDs.end(), m_sensorID) == m_filterIDs.end() ) {
         streamlog_out(MESSAGE2) << " Do not create noise hits on sensorID: "  << m_sensorID << std::endl;
@@ -915,7 +915,7 @@ namespace depfet {
       }
       
       // Average number of noise pixels
-      double meanNoisePixels = m_noiseFraction * m_detector.GetDet(m_ipl).GetNCellsU() * m_detector.GetDet(m_ipl).GetNCellsV();
+      double meanNoisePixels = m_noiseFraction * (m_detector.GetDet(m_ipl).GetMaxUCell() +1) * (m_detector.GetDet(m_ipl).GetMaxVCell()+1);
             
       // Total number of noise pixels has Poison distribution
       int fractionPixels = gRandom->Poisson(meanNoisePixels);  
@@ -923,8 +923,8 @@ namespace depfet {
       // Generate noise digits
       for (int iNoisePixel=0; iNoisePixel<fractionPixels; iNoisePixel++) {
                     
-        int iU  = int(gRandom->Uniform( m_detector.GetDet(m_ipl).GetNCellsU() ));
-        int iV  = int(gRandom->Uniform( m_detector.GetDet(m_ipl).GetNCellsV() ));
+        int iU  = int(gRandom->Uniform( m_detector.GetDet(m_ipl).GetMaxUCell()+1  ));
+        int iV  = int(gRandom->Uniform( m_detector.GetDet(m_ipl).GetMaxVCell()+1  ));
                   
         // Describe pixel by unique ID
         int uniqPixelID  = m_detector.GetDet(m_ipl).encodePixelID(iV, iU);     

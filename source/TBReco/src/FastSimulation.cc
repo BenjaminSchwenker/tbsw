@@ -255,7 +255,7 @@ namespace depfet {
           simHit->setMomentum(hitMom);
           
           // Set CellID
-          cellIDEnc["sensorID"] = m_detector.GetDet(ipl).GetDAQID();
+          cellIDEnc["sensorID"] = m_detector.GetDet(ipl).GetSensorID();  
           cellIDEnc["isEntry"] = 0;
           cellIDEnc["isExit"] = 0;
           cellIDEnc.setCellID(simHit);

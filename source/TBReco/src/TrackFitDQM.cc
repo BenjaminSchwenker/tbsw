@@ -604,13 +604,13 @@ void TrackFitDQM::bookHistos()
     // Plot residuals U/V 
     
     histoName = "hresU_sensor"+to_string( ipl );
-    max = 5*safetyFactor*Sensor.GetSensitiveSizeU()/(Sensor.GetNCellsU()+1); 
+    max = 5*safetyFactor*Sensor.GetSensitiveSizeU()/(Sensor.GetMaxUCell()+2); 
     _histoMap[ "hresU_sensor" ] = new TH1D(histoName.c_str(), "", 500, -max, +max);
     _histoMap[ "hresU_sensor" ]->SetXTitle("u residual [mm]");
     _histoMap[ "hresU_sensor" ]->SetYTitle("tracks");
     
     histoName = "hresV_sensor"+to_string( ipl );
-    max = 5*safetyFactor*Sensor.GetSensitiveSizeV()/(Sensor.GetNCellsV()+1); 
+    max = 5*safetyFactor*Sensor.GetSensitiveSizeV()/(Sensor.GetMaxVCell()+2); 
     _histoMap[ "hresV_sensor" ] = new TH1D(histoName.c_str(), "", 500, -max, +max);
     _histoMap[ "hresV_sensor" ]->SetXTitle("v residual [mm]");
     _histoMap[ "hresV_sensor" ]->SetYTitle("tracks");

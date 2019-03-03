@@ -220,7 +220,7 @@ void HotStripKiller::end()
       
     int nUCells = Sensor.GetNColumns(); 
     int nVCells = Sensor.GetNRows(); 
-    int sensorID = Sensor.GetDAQID(); 
+    int sensorID = Sensor.GetSensorID();  
     
     TrackerRawDataImpl * statusMatrix   = new TrackerRawDataImpl;
     
@@ -660,7 +660,7 @@ void HotStripKiller::computeMask() {
      
     int nUCells = Sensor.GetNColumns(); 
     int nVCells = Sensor.GetNRows();
-    int sensorID = Sensor.GetDAQID(); 
+    int sensorID = Sensor.GetSensorID(); 
         
     // Loop over all vStrips  
     for (int cell = 0; cell < nVCells; cell++) {

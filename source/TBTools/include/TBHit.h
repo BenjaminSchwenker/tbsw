@@ -47,8 +47,8 @@ class TBHit {
   // Unique ID (default -1)
   int UniqueID;
 
-  // DAQ ID
-  short DAQID;
+  // Sensor ID
+  short SensorID;
 
   // Cluster Quality 
   short Quality;
@@ -59,17 +59,17 @@ class TBHit {
 
   // Constructors 
   TBHit();
-  TBHit(int newdaqid, double u, double v, double cov_u, double cov_v, double cov_uv, int quality);
-  TBHit(int newdaqid, const Vector2d &coord, const Matrix2d &cov);
+  TBHit(int newSensorID, double u, double v, double cov_u, double cov_v, double cov_uv, int quality);
+  TBHit(int newSensorID, const Vector2d &coord, const Matrix2d &cov);
   TBHit(lcio::TrackerHit* lciohit);
 
   // Build LCIO TrackerHit
   lcio::TrackerHitImpl * MakeLCIOHit();  
-  static lcio::TrackerHitImpl * MakeLCIOHit(int newdaqid, double u, double v, double cov_u, double cov_v, double cov_uv, int quality);
+  static lcio::TrackerHitImpl * MakeLCIOHit(int newSensorID, double u, double v, double cov_u, double cov_v, double cov_uv, int quality);
   
-  // Get/Set plane number 
-  void SetDAQ(int newdaqid) { DAQID = short(newdaqid); }
-  int GetDAQID()  { return DAQID; }
+  // Get/Set sensorID 
+  void SetSensorID(int newSensorID) { SensorID = short(newSensorID); }
+  int GetSensorID()  { return SensorID; }
   
   // Dimension of a pixel hit
   int GetDim() { return 2;}

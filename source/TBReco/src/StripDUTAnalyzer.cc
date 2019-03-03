@@ -127,7 +127,7 @@ void StripDUTAnalyzer::init() {
    Det & dut = _detector.GetDet(_idut); 
           
    // Print out geometry information  
-   streamlog_out ( MESSAGE3 )  << "D.U.T. plane  ID = " << dut.GetDAQID()
+   streamlog_out ( MESSAGE3 )  << "D.U.T. plane  ID = " << dut.GetSensorID() 
                                << "  at position = " << _idut 
                                << endl << endl;
     
@@ -260,8 +260,8 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
     TBHit RecoHit ( lciohit  );        
          
     // We have to find plane number of the hit 
-    int daqid = RecoHit.GetDAQID();      
-    int ipl = _detector.GetPlaneNumber(daqid);  
+    int sensorid = RecoHit.GetSensorID();      
+    int ipl = _detector.GetPlaneNumber(sensorid);  
       
     // Store all hits on the DUT module  
     if( dut.GetPlaneNumber() == ipl )
@@ -374,7 +374,7 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
     
     _rootRunNumber = evt->getRunNumber();  
     _rootEventNumber = evt->getEventNumber();  
-    _rootDetectorID = dut.GetDAQID();       
+    _rootDetectorID = dut.GetSensorID();       
     _rootNTelTracks = nTrack; 
     _rootNDUTHits = (int)HitStore.size(); 
     
@@ -476,7 +476,7 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
     
     _rootRunNumber = evt->getRunNumber();  
     _rootEventNumber = evt->getEventNumber();  
-    _rootDetectorID = dut.GetDAQID();   
+    _rootDetectorID = dut.GetSensorID();     
     _rootNTelTracks = nTrack; 
     _rootNDUTHits = (int)HitStore.size(); 
    
@@ -651,7 +651,7 @@ bool StripDUTAnalyzer::getDUTStatus(LCEvent * evt, ShortVec & statusVec) {
       // DAQ ID for pixel detector	
       int sensorID =  Decoder(status)["sensorID"];
          
-      if (sensorID == dut.GetDAQID()) { 
+      if (sensorID == dut.GetSensorID() ) { 
         statusVec = status->getADCValues(); 
         isOk = true; 
         break;

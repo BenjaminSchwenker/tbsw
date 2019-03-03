@@ -26,13 +26,13 @@ TBTrackState SeedGenerator::CreateSeedTrack(TBHit FirstHit, TBHit SecondHit, TBD
 {  
 
   // Check hits are on different detectors 
-  if ( FirstHit.GetDAQID() == SecondHit.GetDAQID() ) {
+  if ( FirstHit.GetSensorID() == SecondHit.GetSensorID() ) {
     return CreateSeedTrack(FirstHit, Detector);  
   }     
 
   // Get plane numbers 
-  int firstplane = Detector.GetPlaneNumber( FirstHit.GetDAQID() );
-  int secondplane = Detector.GetPlaneNumber( SecondHit.GetDAQID() );
+  int firstplane = Detector.GetPlaneNumber( FirstHit.GetSensorID() );
+  int secondplane = Detector.GetPlaneNumber( SecondHit.GetSensorID() );
   
   // Sort hits along beam line 
   if ( firstplane > secondplane ) {
@@ -77,7 +77,7 @@ TBTrackState SeedGenerator::CreateSeedTrack(TBHit Hit, TBDetector& Detector)
 { 
 
   // Get plane number of hit
-  int planenumber = Detector.GetPlaneNumber( Hit.GetDAQID() );  
+  int planenumber = Detector.GetPlaneNumber( Hit.GetSensorID() );  
 
   // Compute global space point
   ReferenceFrame Frame = Detector.GetDet( planenumber ).GetNominal(); 

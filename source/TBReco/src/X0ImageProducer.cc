@@ -139,7 +139,7 @@ void X0ImageProducer::init() {
    Det & dut = _detector.GetDet(_idut); 
           
    // Print out geometry information  
-   streamlog_out ( MESSAGE3 )  << "Scatter DUT plane  ID = " << dut.GetDAQID()
+   streamlog_out ( MESSAGE3 )  << "Scatter DUT plane  ID = " << dut.GetSensorID()  
                                << "  at position = " << _idut 
                                << endl << endl;
 

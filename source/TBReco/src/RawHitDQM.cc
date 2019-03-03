@@ -312,14 +312,14 @@ void RawHitDQM::bookHistos() {
                 
     histoName = "hsigma_hit_u_det"+to_string( ipl );
     histoTitle ="Cluster sigma u"; 
-    max = 10*adet.GetSensitiveSizeU()/(adet.GetNCellsU()+1); 
+    max = 10*adet.GetSensitiveSizeU()/(adet.GetMaxUCell()+2); 
     _histoMap[ histoName  ] = new TH1D(histoName.c_str(), histoTitle.c_str(), 400, 0, max); 
     _histoMap[ histoName  ]->SetXTitle("cluster sigma u [mm]"); 
     _histoMap[ histoName  ]->SetYTitle("number of cluster");
     
     histoName = "hsigma_hit_v_det"+to_string( ipl );
     histoTitle ="Cluster sigma v"; 
-    max = 10*adet.GetSensitiveSizeV()/(adet.GetNCellsV()+1); 
+    max = 10*adet.GetSensitiveSizeV()/(adet.GetMaxVCell()+2); 
     _histoMap[ histoName  ] = new TH1D(histoName.c_str(), histoTitle.c_str(), 400, 0, max);
     _histoMap[ histoName  ]->SetXTitle("cluster sigma v [mm]"); 
     _histoMap[ histoName  ]->SetYTitle("number of cluster"); 
@@ -347,14 +347,14 @@ void RawHitDQM::bookHistos() {
     _histoMap[ histoName ]->SetXTitle("cluster v [mm]"); 
     
     histoName = "hhitmap"+to_string( ipl );
-    histoTitle ="Hitmap for plane " +to_string( ipl )+" DAQID " + to_string( adet.GetDAQID() );
+    histoTitle ="Hitmap for plane " +to_string( ipl )+" SensorID " + to_string( adet.GetSensorID()  );
     _histoMap2D[ histoName] = new TH2D(histoName.c_str(), histoTitle.c_str(),uBins, -uBox, +uBox, vBins, -vBox, +vBox);
     _histoMap2D[histoName]->SetXTitle("cluster u [mm]"); 
     _histoMap2D[histoName]->SetYTitle("cluster v [mm]");    
     _histoMap2D[histoName]->SetStats( false );  
     
     histoName = "hdigitmap"+to_string( ipl );
-    histoTitle ="Hitmap for plane " +to_string( ipl )+" DAQID " + to_string( adet.GetDAQID() );
+    histoTitle ="Hitmap for plane " +to_string( ipl )+" SensorID " + to_string( adet.GetSensorID() );
     _histoMap2D[ histoName] = new TH2D(histoName.c_str(), histoTitle.c_str(),adet.GetNColumns(), 0, adet.GetNColumns(), adet.GetNRows(), 0, adet.GetNRows());
     _histoMap2D[histoName]->SetXTitle("cluster u start [cellID]"); 
     _histoMap2D[histoName]->SetYTitle("cluster v start [cellID]");    

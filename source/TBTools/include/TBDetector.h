@@ -70,21 +70,6 @@ namespace depfet {
    *  the DUT, alpha and/or beta may be large in so called tilt angle scans using rotation
    *  stages.  
    *   
-   *  PIXEL DATA
-   *  
-   *  The pixel data coming from the DAQ is addressed by an integer column and row 
-   *  number counting from zero. The measured raw signals are integer valued. 
-   *  Calibrated signal values may be doubles or integers. 
-   *  
-   *  The position of the center of pixel p=(col,row,0) in local coordinates depends on 
-   *  the physical arrangement of pixel. In case the pixels form a rectangular grid with 
-   *  pixel size pitch_u and pitch_v it is  
-   *  
-   *  q = PITCH * (p - p0 ) ; p = (col, row, 0) 
-   *   
-   *  where PITCH=diag(pitch_u,pitch_v,0) and shift vector p0 = (nxpixels/2,nypixels/2,0)  
-   *  pointing from lower left edge (0,0) to the center of the active sensor area.  
-   *  
    *  COORDINATE TRANSFORMATIONS 
    *  
    *  The concept of a reference frame (RotationMatrix + TranslationVector) is 

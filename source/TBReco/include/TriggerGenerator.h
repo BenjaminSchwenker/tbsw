@@ -32,13 +32,13 @@ namespace depfet
     TrgScinti(int sensID, float minU, float maxU, float minV, float maxV) : 
       m_sensID(sensID), m_minU(minU), m_maxU(maxU), m_minV(minV), m_maxV(maxV) {}
         
-    int GetDAQID(){ return m_sensID; };
+    int GetSensorID(){ return m_sensID; };
   
     bool isPointInSensor( double u , double v); 
 
    private:
     
-    // DAQ Id
+    // sensor Id
     int m_sensID;
     // min/max U
     float m_minU; 
