@@ -328,9 +328,9 @@ void EventViewer::dumpRawDataEvent( LCEvent * evt )
       CellIDDecoder<TrackerRawDataImpl> idRawMatrixDecoder( frames );
       int currentSensorID = idRawMatrixDecoder(rawmatrix)["sensorID"];  
       int ipl = _detector.GetPlaneNumber(currentSensorID);   
-      int noOfXPixels =  _detector.GetDet(ipl).GetNColumns();   
-      int noOfYPixels =  _detector.GetDet(ipl).GetNRows();  
-      
+      int noOfXPixels =  _detector.GetDet(ipl).GetMaxUCell()+1;   
+      int noOfYPixels =  _detector.GetDet(ipl).GetMaxVCell()+1;  
+
       //
       // skip this sensor 
       if ( _displaySensorID != currentSensorID  && _displaySensorID != -1 ) continue;     
@@ -407,8 +407,8 @@ void EventViewer::dumpZeroSuppEvent( LCEvent * evt )
       TrackerDataImpl * matrix = dynamic_cast<TrackerDataImpl* > (frames->getElementAt(iSensor));
       int currentSensorID = idMatrixDecoder(matrix)["sensorID"]; 
       int ipl = _detector.GetPlaneNumber(currentSensorID);   
-      int noOfXPixels =  _detector.GetDet(ipl).GetNColumns();   
-      int noOfYPixels =  _detector.GetDet(ipl).GetNRows();  
+      int noOfXPixels =  _detector.GetDet(ipl).GetMaxUCell()+1;   
+      int noOfYPixels =  _detector.GetDet(ipl).GetMaxVCell()+1;  
       
       //
       // skip this sensor 

@@ -61,7 +61,7 @@ Vector3d ReferenceFrame::GetW()
   return  fRotation.transpose() * localW;
 }
 
-ReferenceFrame ReferenceFrame::combine_karimaki(ReferenceFrame& first, ReferenceFrame& delta)
+ReferenceFrame ReferenceFrame::combine_karimaki(const ReferenceFrame& first, const ReferenceFrame& delta) 
 {
   ReferenceFrame combinedFrame;
   combinedFrame.SetRotation(delta.GetRotation()*first.GetRotation());

@@ -538,11 +538,11 @@ namespace depfet {
       IonisationPoint * iPoint = ionisationPoints[i];
       
       //  Charge cloud created at distance to top plane 
-      double w =  m_detector.GetDet(m_ipl).GetSensitiveThickness()/2. - iPoint->position(2);
+      double w =  m_detector.GetDet(m_ipl).GetThickness(iPoint->position(0), iPoint->position(1))/2. - iPoint->position(2);
       w = sqrt( w * w );
       
       // Potential valley is at distance to top plane
-      double w0 = m_detector.GetDet(m_ipl).GetSensitiveThickness()/2. - 0.02;
+      double w0 = m_detector.GetDet(m_ipl).GetThickness(iPoint->position(0), iPoint->position(1))/2. - 0.02;
       double dw = 0.003;  
       
       // Drift time into potential valley -  

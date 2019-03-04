@@ -572,8 +572,8 @@ namespace depfet {
       
       // Local track parameters 
       
-      double  uBox = 1.1 * 0.5 * adet.GetLadderSizeU();
-      double  vBox = 1.1 * 0.5 * adet.GetLadderSizeV();
+      double  uBox = 1.1 * 0.5 * adet.GetSensitiveSizeU();
+      double  vBox = 1.1 * 0.5 * adet.GetSensitiveSizeV();
       
       histoName = "htrk_dir_truth_det"+to_string( ipl ); 
       _histoMap2D[ histoName  ] = new TH2D(histoName.c_str(), "",1000, -0.03, 0.03,1000, -0.03, 0.03); 

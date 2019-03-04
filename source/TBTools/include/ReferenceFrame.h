@@ -81,7 +81,7 @@ class ReferenceFrame {
   // added.  This is done how Veikko Karimaki defined the "misalignment". It
   // has the advantage that once you are satisfied with the combined values,
   // you can make them to the nominal ones...
-  static ReferenceFrame combine_karimaki(ReferenceFrame & first, ReferenceFrame & delta);
+  static ReferenceFrame combine_karimaki(const ReferenceFrame & first, const ReferenceFrame & delta);
   
   // Static member to create a Karimaki delta frame. A delta frame parametrizes
   // a small alignment corrections to sensor position and rotation. A delta frame 

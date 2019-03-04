@@ -217,9 +217,8 @@ void HotStripKiller::end()
     // Read geometry info for sensor
     int ipl = _planeNumbers[iDetector];       
     Det& Sensor = _detector.GetDet(ipl);      
-      
-    int nUCells = Sensor.GetNColumns(); 
-    int nVCells = Sensor.GetNRows(); 
+    int nUCells = Sensor.GetMaxUCell()+1;
+    int nVCells = Sensor.GetMaxVCell()+1;
     int sensorID = Sensor.GetSensorID();  
     
     TrackerRawDataImpl * statusMatrix   = new TrackerRawDataImpl;
@@ -270,10 +269,9 @@ void HotStripKiller::end()
      
     // Read geometry info for sensor
     int ipl = _planeNumbers[iDetector];       
-    Det& Sensor = _detector.GetDet(ipl);      
-      
-    int nUCells = Sensor.GetNColumns(); 
-    int nVCells = Sensor.GetNRows(); 
+    Det& Sensor = _detector.GetDet(ipl);       
+    int nUCells = Sensor.GetMaxUCell()+1;
+    int nVCells = Sensor.GetMaxVCell()+1;
     
     // Count masked channels 
     double nmaskedU = 0;  
@@ -402,9 +400,8 @@ void HotStripKiller::accumulateHits(LCEvent * evt) {
       // Read geometry info for sensor 
       int ipl = _detector.GetPlaneNumber(sensorID);      
       Det& Sensor = _detector.GetDet(ipl);
-      
-      int nUCells = Sensor.GetNColumns(); 
-      int nVCells = Sensor.GetNRows();
+      int nUCells = Sensor.GetMaxUCell()+1;
+      int nVCells = Sensor.GetMaxVCell()+1;
           
       FloatVec sparseDigits = trackerData->getChargeValues();
       int nDigits = sparseDigits.size()/3; 
@@ -541,18 +538,20 @@ void HotStripKiller::initializeAlgorithms(LCEvent * evt) {
 
     
       Det& Sensor = _detector.GetDet(ipl);
+      int nUCells = Sensor.GetMaxUCell()+1;
+      int nVCells = Sensor.GetMaxVCell()+1;
              
       // Initialize all u strips as GOOD
-      _statusU.push_back(ShortVec( Sensor.GetNColumns(), 0 ));
+      _statusU.push_back(ShortVec( nUCells, 0 ));
       
       // Initialize hit counter for all u strips to zero
-      _hitCounterU.push_back(FloatVec( Sensor.GetNColumns(), 0.));
+      _hitCounterU.push_back(FloatVec( nUCells, 0.));
 
       // Initialize all v strips as GOOD
-      _statusV.push_back(ShortVec( Sensor.GetNRows(), 0 ));
+      _statusV.push_back(ShortVec(nVCells, 0 ));
       
       // Initialize hit counter for all v strips to zero
-      _hitCounterV.push_back(FloatVec( Sensor.GetNRows(), 0.));
+      _hitCounterV.push_back(FloatVec( nVCells, 0.));
           
     } // End of detector loop
     
@@ -581,8 +580,10 @@ void HotStripKiller::initializeAlgorithms(LCEvent * evt) {
       dirName = "/Sensor"+to_string(ipl)+"/";
       _rootFile->cd(dirName.c_str());
       
-      int uBins = Sensor.GetNColumns();  
-      int vBins = Sensor.GetNRows(); 
+     
+      int uBins = Sensor.GetMaxUCell()+1;
+      int vBins = Sensor.GetMaxVCell()+1;
+      
       
       histoName = "hmaskU_sensor"+to_string( ipl );
       _histoMap[histoName] = new TH1D(histoName.c_str(), "" ,uBins, 0, uBins);
@@ -657,9 +658,8 @@ void HotStripKiller::computeMask() {
     // Read geometry info for sensor
     int ipl = _planeNumbers[iDetector];       
     Det& Sensor = _detector.GetDet(ipl);      
-     
-    int nUCells = Sensor.GetNColumns(); 
-    int nVCells = Sensor.GetNRows();
+    int nUCells = Sensor.GetMaxUCell()+1;
+    int nVCells = Sensor.GetMaxVCell()+1;
     int sensorID = Sensor.GetSensorID(); 
         
     // Loop over all vStrips  

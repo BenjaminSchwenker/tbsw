@@ -20,7 +20,7 @@ namespace depfet {
 Det::Det(const std::string& typeName, int sensorID, int planeNumber) :  
   m_typeName(typeName),
   m_sensorID(sensorID),
-  m_planeNumber(planeNumber), 
+  m_planeNumber(planeNumber) 
 {
   //register detector in map
   //DetMgr::instance()->registerDet( this ) ;

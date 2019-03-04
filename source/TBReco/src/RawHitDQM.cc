@@ -331,7 +331,7 @@ void RawHitDQM::bookHistos() {
     _histoMap[ histoName  ]->SetYTitle("number of cluster"); 
    
     double  uBox = safetyFactor * 0.5 * adet.GetSensitiveSizeU();    
-    int uBins = adet.GetNColumns();             
+    int uBins = adet.GetMaxUCell()+1;             
     
     histoName = "hhit_u_det"+to_string( ipl );
     histoTitle ="Cluster u"; 
@@ -339,7 +339,7 @@ void RawHitDQM::bookHistos() {
     _histoMap[ histoName ]->SetXTitle("cluster u [mm]"); 
     
     double  vBox = safetyFactor * 0.5 * adet.GetSensitiveSizeV();   
-    int vBins = adet.GetNRows(); 
+    int vBins = adet.GetMaxVCell()+1;
     
     histoName = "hhit_v_det"+to_string( ipl );
     histoTitle ="Cluster v"; 
@@ -355,7 +355,7 @@ void RawHitDQM::bookHistos() {
     
     histoName = "hdigitmap"+to_string( ipl );
     histoTitle ="Hitmap for plane " +to_string( ipl )+" SensorID " + to_string( adet.GetSensorID() );
-    _histoMap2D[ histoName] = new TH2D(histoName.c_str(), histoTitle.c_str(),adet.GetNColumns(), 0, adet.GetNColumns(), adet.GetNRows(), 0, adet.GetNRows());
+    _histoMap2D[ histoName] = new TH2D(histoName.c_str(), histoTitle.c_str(),adet.GetMaxUCell()+1, 0, adet.GetMaxUCell()+1, adet.GetMaxVCell()+1, 0, adet.GetMaxVCell()+1);
     _histoMap2D[histoName]->SetXTitle("cluster u start [cellID]"); 
     _histoMap2D[histoName]->SetYTitle("cluster v start [cellID]");    
     _histoMap2D[histoName]->SetStats( false ); 

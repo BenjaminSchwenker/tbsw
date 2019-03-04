@@ -232,8 +232,8 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
     Det& adet = _detector.GetDet(ipl);
        
     // Get max channel numbers 
-    int maxCol = adet.GetNColumns() - 1; 
-    int maxRow = adet.GetNRows() - 1;
+    int maxCol = adet.GetMaxUCell();   
+    int maxRow = adet.GetMaxVCell(); 
     
     // List of firing pixels. Each pixel has a col, row and charge 
     FloatVec pixVector = pixModule->getChargeValues();

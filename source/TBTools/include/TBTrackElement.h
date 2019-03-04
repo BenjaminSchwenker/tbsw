@@ -43,7 +43,7 @@ class TBTrackElement
   
   /* Constructor
    */
-  TBTrackElement(const Det& aDetUnit);
+  TBTrackElement(Det& aDetUnit);
     
   /* Destructor 
    */

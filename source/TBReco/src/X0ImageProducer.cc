@@ -276,7 +276,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
    
 
    
-  Det dut = _detector.GetDet(_idut);
+  Det & dut = _detector.GetDet(_idut);
 
   // Vertex fit track matching
   if(_vertexfitswitch)
@@ -359,7 +359,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
   // or no hit is close enough to a track!! 
   double distmin=numeric_limits<double >::max();
    
-  Det dut = _detector.GetDet(_idut);
+  Det & dut = _detector.GetDet(_idut);
 
   do{
     int bestup=-1;
