@@ -18,8 +18,8 @@ using namespace marlin;
 
 namespace depfet {
 
-// TODO add the constructor
-SquareDet::SquareDet() {}
+SquareDet::SquareDet(const std::string& typeName, int sensorID, int planeNumber)
+  : Det(typeName, sensorID, planeNumber) {}
 
 
 int SquareDet::GetMaxUCell()
@@ -31,6 +31,12 @@ int SquareDet::GetMaxVCell()
 {
   return m_nCellsV-1;
 }  
+
+SquareDet* SquareDet::newDet() 
+{
+  return new SquareDet("SquareDet",-1,-1);
+}
+
 
 
 // TODO this code should be put into the class where the SquareDet get constructed from an XML file
@@ -45,7 +51,7 @@ void SquareDet::SetCellsU( std::vector< std::tuple<int,int,double> > uCells)
   
   // Secondly, avoid an empty cell vector 
   if ( m_uCells.size() == 0 ) { 
-    streamlog_out(ERROR) << "SensorID=" << m_sensorID << "has no ucells! Add a default ucell"
+    streamlog_out(ERROR) << "SensorID=" << GetSensorID() << "has no ucells! Add a default ucell"
                          << std::endl;     
     m_uCells.push_back( std::tuple<int, int, double>(0, 0, 0) );
   }
@@ -60,12 +66,12 @@ void SquareDet::SetCellsU( std::vector< std::tuple<int,int,double> > uCells)
     double pitch = std::get<2>(group);   
      
     if ( maxCell < minCell ) { 
-      streamlog_out(ERROR) << "SensorID=" << m_sensorID << "has cell group with maxCell < minCell!"
+      streamlog_out(ERROR) << "SensorID=" << GetSensorID() << "has cell group with maxCell < minCell!"
                            << std::endl;     
     }
      
     if (pitch <= 0) {
-     streamlog_out(ERROR) << "SensorID=" << m_sensorID << "has cell group with pitch <= 0!"
+     streamlog_out(ERROR) << "SensorID=" << GetSensorID() << "has cell group with pitch <= 0!"
                           << std::endl;
     }
     
@@ -93,7 +99,7 @@ void SquareDet::SetCellsV( std::vector< std::tuple<int,int,double> > vCells)
   
   // Secondly, avoid an empty cell vector 
   if ( m_vCells.size() == 0 ) { 
-    streamlog_out(ERROR) << "SensorID=" << m_sensorID << "has no vcells! Add a default ucell"
+    streamlog_out(ERROR) << "SensorID=" << GetSensorID() << "has no vcells! Add a default ucell"
                          << std::endl;     
     m_vCells.push_back( std::tuple<int, int, double>(0, 0, 0) );
   }
@@ -108,12 +114,12 @@ void SquareDet::SetCellsV( std::vector< std::tuple<int,int,double> > vCells)
     double pitch = std::get<2>(group);   
 
     if ( maxCell < minCell ) { 
-      streamlog_out(ERROR) << "SensorID=" << m_sensorID << "has cell group with maxCell < minCell!"
+      streamlog_out(ERROR) << "SensorID=" << GetSensorID() << "has cell group with maxCell < minCell!"
                            << std::endl;     
     }
      
     if (pitch <= 0) {
-     streamlog_out(ERROR) << "SensorID=" << m_sensorID << "has cell group with pitch <= 0!"
+     streamlog_out(ERROR) << "SensorID=" << GetSensorID() << "has cell group with pitch <= 0!"
                           << std::endl;
     }
 
@@ -217,7 +223,7 @@ int SquareDet::encodePixelID(int vcell, int ucell)
 }
 
 
-void SquareDet::decodePixelID(int vcell, int ucell, int uniqPixelID)
+void SquareDet::decodePixelID(int& vcell, int& ucell, int uniqPixelID)
 {
   vcell = uniqPixelID / m_nCellsU;
   ucell = uniqPixelID - vcell*m_nCellsU;

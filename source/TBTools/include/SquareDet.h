@@ -11,43 +11,20 @@
 namespace depfet {
 	
 /** Class SquareDet
- *  
- *  A pixel detector module
- *  
- *  The SquareDet class represents a pixel module in a pixel tracking telescope. Its 
- *  main purpose is to provide a functional interface to the detector data 
- *  for reconstruction algorithms. The class interfaces all data fields for a 
- *  gear layer in the gear file. Most fields are self explanatory. Some need a
- *  little bit of explanation
- * 
- *  ID: Unique index to match geometry information to detector raw data 
- *  UCellID: Index of readout cells along u axis, also called column. Column i neignbors columns i-1 and i+1  
- *  VCellID: Index of readout cells along v axis, also called rows. Row i neignbors rows i-1 and i+1  
- *   
- *  The position and orientation of the detector is represented by an object
- *  of class ReferenceFrame called 'Nominal'. In short, the 'Nominal' reference 
- *  frame manages the transformation from local UVW to global XYZ coordinates. 
- *  The 'Nominal' reference frame is loaded from the alignment data base, if it
- *  is available. Otherwise, it is loaded from the gear file. 
- *  
- *  A special instance of class ReferenceFrame called 'Discrete' is used to  
- *  represent the discrete 'flips' from the local UVW to global XYZ axes. 
- *  The 'Discrete' reference frame represents the different possibolities 
- *  to install the detector in the beam line,i.e. is the detector front 
- *  side pointing into the beam? Or, is the local u axis pointing upwards? 
- *  
- *  The SquareDet class also provides an advanced interface to detector data for 
- *  reconstruction methodes. This includes: 
  *    
- *  A) Transform between local coord and readout channels 
- *  B) Position resolved detector material profile data  
- *  C) Boundary intersection tests for partical tracking 
+ *  The SquareDet class is a subclass of the Det class and represents a pixel detector 
+ *  with a checkerboard type pixel matrix. The pixel pitch may change along the local 
+ *  u-axis or v-axis.  
  *  
+ *  The pixel matrix has pixel at positions uCell, vCell in the range [0,maxUCell] and 
+ *  [0,maxVCell]. The pixel center is just the geometrical center of a pixel in local 
+ *  sensor coordinates. 
+ * 
  *  @Author B. Schwenker, University of Göttingen
  *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
  */
  
-class SquareDet : Det {
+class SquareDet : public Det {
    	
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -61,9 +38,8 @@ class SquareDet : Det {
   ~SquareDet() ; 
 
   /** Return a new instance of the Det.
-   *  Has to be implemented by subclasses.
    */
-  Det* newDet();
+  SquareDet* newDet() override;
     
   /** Get pixel type for pixel at position vcell and ucell. 
    */
@@ -155,9 +131,9 @@ class SquareDet : Det {
    */ 
   bool areNeighbors(int vcell1, int ucell1, int vcell2, int ucell2) override;
 
-  /** Get nominal sensor frame (i.e. where the detector is supposed to be)
+  /** Set nominal sensor frame. This is needed for applying alignment corrections. 
    */
-  ReferenceFrame & GetNominal() override { return m_nominal; }
+  void SetNominalFrame(const ReferenceFrame& nominal) { m_nominal  = nominal; }   
   
   /** Get nominal sensor frame (i.e. where the detector is supposed to be)
    */
@@ -165,7 +141,7 @@ class SquareDet : Det {
 	
   /** Get discrete rotation (mounting orientation of sensor) 
    */
-  const ReferenceFrame & GetDiscrete() const override { return _Discrete; }
+  const ReferenceFrame & GetDiscrete() const override { return m_discrete; }
   
  private:
 
@@ -189,10 +165,7 @@ class SquareDet : Det {
    */
   int GetPixelTypeV(int vcell, int ucell);   
 
-  // Cells along sensor u axis  
-  std::vector< std::tuple<int,int,double> > m_uCells;
-  // Cells along sensor v axis   
-  std::vector< std::tuple<int,int,double> > m_vCells ; 
+  
   // Thickness in sensitive volume
   double m_sensitiveThickness;
   // Rad. length in sensitive volume
@@ -228,6 +201,10 @@ class SquareDet : Det {
   int m_nCellsV; 
   int m_minCellU;
   int m_minCellV; 
+  // Cells along sensor u axis  
+  std::vector< std::tuple<int,int,double> > m_uCells;
+  // Cells along sensor v axis   
+  std::vector< std::tuple<int,int,double> > m_vCells ; 
   std::vector<double> m_offsetsU;
   std::vector<double> m_offsetsV; 
 };

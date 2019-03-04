@@ -140,7 +140,7 @@ class TBDetector {
   double _By; 
   double _Bz; 
 
-  // Name of LCIO data base file 
+  // Name of data base file 
   std::string _alignmentDBFileName;
   
   // Total number of sensors  
@@ -149,8 +149,8 @@ class TBDetector {
   // Maps sensorID to planeNumber 
   std::map< int, int > _indexMap;   
   
-  // Vector of pixel detector in beam 
-  std::vector<Det> _DetVec;      
+  // Vector of pixel detectors 
+  std::vector<Det*> _DetVec;      
   
 }; // End class TBDetector
  

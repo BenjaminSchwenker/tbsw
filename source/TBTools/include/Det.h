@@ -171,11 +171,11 @@ class Det {
   
   /** Get nominal sensor frame (i.e. where the detector is supposed to be)
    */
-  virtual ReferenceFrame & GetNominal() = 0; 
-  
-  /** Get nominal sensor frame (i.e. where the detector is supposed to be)
-   */
   virtual const ReferenceFrame & GetNominal() const = 0;    
+
+  /** Set nominal sensor frame. This is needed for applying alignment corrections. 
+   */
+  virtual void SetNominalFrame(const ReferenceFrame& nominal) = 0;  
 	
   /** Get discrete rotation (mounting orientation of sensor) 
    */

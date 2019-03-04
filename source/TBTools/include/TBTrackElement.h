@@ -43,7 +43,7 @@ class TBTrackElement
   
   /* Constructor
    */
-  TBTrackElement(Det& aDetUnit);
+  TBTrackElement(const Det& aDetUnit);
     
   /* Destructor 
    */
@@ -51,7 +51,7 @@ class TBTrackElement
   
   /* Get detector 
    */
-  Det& GetDet() { return DetUnit; }
+  Det& GetDet() { return reinterpret_cast<Det&>(m_detPtr); } 
   
   /** True if hit is set  
    */
@@ -95,9 +95,9 @@ class TBTrackElement
    
  private: 
   
-  /* Detector unit   
+  /* Pointer to Det instance 
    */ 
-  Det DetUnit;
+  Det* m_detPtr;
   
   /* Container for registered hits 
    */ 

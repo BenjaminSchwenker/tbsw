@@ -95,7 +95,7 @@ void TBDetector::ReadGearConfiguration( )
   }
   */
 
- 
+  /*
   // Check iff gear file is available  
   if ( Global::GEAR == 0x0 ) {
     streamlog_out ( ERROR4 ) <<  "The GearMgr is not available, for an unknown reason." << std::endl;
@@ -274,6 +274,7 @@ void TBDetector::ReadGearConfiguration( )
     _DetVec[ipl] = adet;
     
   }
+  */
     
 }
 
@@ -494,7 +495,7 @@ void TBDetector::WriteAlignmentDB( )
  */
 Det & TBDetector::GetDet( int ipl ) 
 {
-  return _DetVec[ipl];
+  return reinterpret_cast<Det&>(_DetVec[ipl]);
 }
 
 

@@ -92,7 +92,7 @@ ReferenceFrame ReferenceFrame::create_karimaki_delta(double dx, double dy, doubl
 } 
 
 
-void ReferenceFrame::PrintHepMatrix() 
+void ReferenceFrame::PrintHepMatrix() const 
 {
   streamlog_out(MESSAGE3) << " Frame Position [mm]:   "    << std::endl
                           << GetPosition()  << std::endl

@@ -88,7 +88,7 @@ class ReferenceFrame {
   // may be merged with a 'regular' sensor frame using function combine_karimaki. 
   static ReferenceFrame create_karimaki_delta(double dx, double dy, double dz, double dalpha, double dbeta, double dgamma); 
   
-  void PrintHepMatrix() ; 
+  void PrintHepMatrix() const; 
   void PrintParams() ; 
 
 };  // End class ReferenceFrame
