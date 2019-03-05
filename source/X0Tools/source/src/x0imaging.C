@@ -431,7 +431,7 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
   {
     cout<<endl<<"Fit of angle distribution failed with status: "<<fitr<<endl;
     cout<<"Repeat fit "<<endl;
-    fitr=h2->Fit("f1","RM");
+    fitr=h2->Fit("f1","RMS");
 
 	cout<<endl<<"Second Fit results: "<<endl;
 	cout<<"Fit status: "<<fitr<<endl;
