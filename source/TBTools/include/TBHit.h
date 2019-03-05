@@ -69,14 +69,14 @@ class TBHit {
   
   // Get/Set sensorID 
   void SetSensorID(int newSensorID) { SensorID = short(newSensorID); }
-  int GetSensorID()  { return SensorID; }
+  int GetSensorID() const { return SensorID; }
   
   // Dimension of a pixel hit
-  int GetDim() { return 2;}
+  int GetDim() const { return 2;}
   
   // Get/Set quality of raw cluster
   void SetQuality(int flag) { Quality=short(flag); }
-  int GetQuality() { return Quality; }
+  int GetQuality() const { return Quality; }
   
   // Get/Set measured hit coord
   void SetCoord(const Vector2d& aCoord) { Coord = aCoord; }
@@ -102,7 +102,7 @@ class TBHit {
   int GetUniqueID() { return UniqueID; }
    
   // Get 3D point in sensor coordinates 
-  Vector3d GetLocalSpacePoint();
+  Vector3d GetLocalSpacePoint() const;
   
 };
 

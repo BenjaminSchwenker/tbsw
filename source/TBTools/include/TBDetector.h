@@ -125,6 +125,9 @@ class TBDetector {
   //! Get detector at plane number ipl
   Det& GetDet(int ipl);
 
+  //! Get detector at plane number ipl
+  const Det& GetDet(int ipl) const;
+
   //! Get components of magnetic field in tesla
   double GetBx() const { return m_Bx;}
   double GetBy() const { return m_By;}

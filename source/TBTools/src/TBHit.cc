@@ -139,7 +139,7 @@ static lcio::TrackerHitImpl * MakeLCIOHit(int newSensorID, double u, double v, d
   return trackerhit;
 }
 
-Vector3d TBHit::GetLocalSpacePoint()
+Vector3d TBHit::GetLocalSpacePoint() const
 {
   // Hit coordinates are given wrt. w=0 surface of sensor
   // This is the middle thickness surface containing the 

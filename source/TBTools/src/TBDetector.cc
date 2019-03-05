@@ -458,6 +458,11 @@ Det & TBDetector::GetDet( int ipl )
   return *m_Dets[ipl];
 }
 
+const Det & TBDetector::GetDet( int ipl ) const 
+{
+  return *m_Dets[ipl];
+}
+
 
 
 int TBDetector::GetPlaneNumber(int sensorID) const 
