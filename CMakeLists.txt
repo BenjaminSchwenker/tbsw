@@ -64,7 +64,7 @@ ADD_DEFINITIONS( "-std=c++14" )
 #------ correct C++
 ADD_DEFINITIONS( "-Wall -pedantic" )
 #------ performance
-ADD_DEFINITIONS( "-march=native -mtune=native" )
+#ADD_DEFINITIONS( "-march=native -mtune=native" )  #TODO we want this line back
 #ADD_DEFINITIONS( "-mtune=native -mno-avx -mno-avx2" )
 #------ lets get real pedantic as a test...
 ADD_DEFINITIONS( "-Wextra -Wno-unused-macros -Wno-shadow ")# -Wdouble-promotion ")
