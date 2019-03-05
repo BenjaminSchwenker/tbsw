@@ -28,13 +28,13 @@ PolyDet::PolyDet(const std::string& typeName, int sensorID, int planeNumber,
                  double sensAtomicMass, double ladderThick, double ladderRadLength, 
                  double ladderAtomicNumber, double ladderAtomicMass, double ladderSizeU, 
                  double ladderSizeV, const std::vector< std::tuple<int,int,int,double,double> >& cells, 
-		 const std::vector< std::tuple<int,double,double,std::vector<std::tuple<double,double>>>> & protocells,
+		         const std::vector< std::tuple<int,double,double,std::vector<std::tuple<double,double>>> > & protocells,
                  const ReferenceFrame& discrete, const ReferenceFrame& nominal )
   : Det(typeName, sensorID, planeNumber) 
 {
   
   // Set cells and layout
-  SetCells(cells, protocells)
+  SetCells(cells, protocells);
 
   m_sensitiveThickness = sensThick;
   m_sensitiveRadLength = sensRadLenght;
@@ -71,14 +71,17 @@ void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, doub
   m_cells = cells;
   
   for (auto group: protocells){ // not checking if type already in ?
-    m_cells_neighb_dist.emplace_back(std::get<0>(group), std::get<1>(group), std::get<2>(group))
+    m_cells_neighb_dist.emplace_back(std::get<0>(group), std::get<1>(group), std::get<2>(group));
   }
 
   m_layout = new TH2Poly();
   m_layout->SetFloat();
   m_layout->SetStats(0);
-  m_layout->SetName((std::string("layout_d"+std::to_string(GetPlaneID()))).c_str());
+  m_layout->SetName((std::string("layout_d"+std::to_string(GetSensorID()))).c_str());
   // generate the bins in m_layout
+
+  /*
+  // TODO: Outcomment this because i do not see immediatly how to fix the code. 
   for (auto group: cells){
     TGraph gpixel; // does this need to be a pointer ? does this object need to stay to stay in the layout?
     std::string pixelname = std::to_string(std::get<0>(group)) + "," + std::to_string(std::get<1>(group));
@@ -99,6 +102,7 @@ void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, doub
     }
     m_layout->AddBin(&gpixel);
   }
+  */
   // sensitive area?
 }
 
@@ -120,16 +124,16 @@ bool PolyDet::areNeighbors(int vcell1, int ucell1, int vcell2, int ucell2)
   double ucoord1 = -m_sensitiveSizeU/2.;
   double vcoord2 = m_sensitiveSizeV/2.;
   double ucoord2 = m_sensitiveSizeU/2.;
-  GetPixelCenterCoodinate(vcoord1, ucoord1, vcell1, ucell1);
-  GetPixelCenterCoodinate(vcoord2, ucoord2, vcell2, ucell2);
+  GetPixelCenterCoord(vcoord1, ucoord1, vcell1, ucell1);
+  GetPixelCenterCoord(vcoord2, ucoord2, vcell2, ucell2);
   
   int type1 = GetPixelType(vcell1, ucell1);
   int type2 = GetPixelType(vcell2, ucell2); 
 
-  distu1 = 0.;
-  distv1 = 0.;
-  distu2 = 0.;
-  distv2 = 0.;
+  double distu1 = 0.;
+  double distv1 = 0.;
+  double distu2 = 0.;
+  double distv2 = 0.;
   bool found1 = false;
   bool found2 = false;
   for (auto group: m_cells_neighb_dist){
@@ -146,7 +150,7 @@ bool PolyDet::areNeighbors(int vcell1, int ucell1, int vcell2, int ucell2)
     if (found1 && found2)
       break;
   }
-  if ((abs(coordu1-coordu2) < distu1 || abs(coordu1-coordu2) < distu2) && (abs(coordv1-coordv2) < distv1 || abs(coordv1-coordv2) < distv2))
+  if ((abs(ucoord1-ucoord2) < distu1 || abs(ucoord1-ucoord2) < distu2) && (abs(vcoord1-vcoord2) < distv1 || abs(vcoord1-vcoord2) < distv2))
     return true;
 
   return false;
@@ -169,7 +173,8 @@ double PolyDet::GetPitchU(int vcell, int ucell)
   int type = GetPixelType(vcell, ucell);
   for (auto group: m_pitch){
     if (type = std::get<0>(group))
-      return std::get<1>(group);  
+      return std::get<1>(group);
+  }  
   return -1.0; // better return value?
 } 
 
@@ -178,7 +183,8 @@ double PolyDet::GetPitchV(int vcell, int ucell)
   int type = GetPixelType(vcell, ucell);
   for (auto group: m_pitch){
     if (type = std::get<0>(group))
-      return std::get<2>(group);  
+      return std::get<2>(group);
+  }  
   return -1.0;
 }  
 
@@ -200,7 +206,7 @@ bool PolyDet::SensitiveCrossed(double u, double v, double w)
 {
   // use TH2Poly isInside(u,v)?
   // catch -5?
-  int bin m_layout->FindBin(u, v);
+  int bin = m_layout->FindBin(u, v);
   if (bin < 0 && bin != -5)
     return false;
   /*if (u < -(m_sensitiveSizeU)/2.  || u > (m_sensitiveSizeU)/2.) {
@@ -311,14 +317,14 @@ double PolyDet::GetPixelCenterCoordU(int vcell, int ucell)
     if (ucell == std::get<0>(group) && vcell == std::get<1>(group))
       return std::get<3>(group);
   }
-  return -m_sensistiveSizeU/2.-0.1;
+  return -m_sensitiveSizeU/2.-0.1;
 }
 
 
 void PolyDet::GetPixelCenterCoord(double& vcoord, double& ucoord, int vcell, int ucell)
 {
-  vcoord = GetPixelCenterCoordV(int vcell, int ucell);
-  ucoord = GetPixelCenterCoordU(int vcell, int ucell);
+  vcoord = GetPixelCenterCoordV(vcell, ucell);
+  ucoord = GetPixelCenterCoordU(vcell, ucell);
 }
 
 int PolyDet::GetUCellFromCoord( double u, double v )

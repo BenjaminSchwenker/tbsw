@@ -10,40 +10,15 @@
 
 // Include ROOT
 #include <TH2Poly.h>
+
+
 namespace depfet {
 	
 /** Class PolyDet
- *  TODO
- *  A pixel detector module
- *  
- *  The SquareDet class represents a pixel module in a pixel tracking telescope. Its 
- *  main purpose is to provide a functional interface to the detector data 
- *  for reconstruction algorithms. The class interfaces all data fields for a 
- *  gear layer in the gear file. Most fields are self explanatory. Some need a
- *  little bit of explanation
  * 
- *  ID: Unique index to match geometry information to detector raw data 
- *  UCellID: Index of readout cells along u axis, also called column. Column i neignbors columns i-1 and i+1  
- *  VCellID: Index of readout cells along v axis, also called rows. Row i neignbors rows i-1 and i+1  
- *   
- *  The position and orientation of the detector is represented by an object
- *  of class ReferenceFrame called 'Nominal'. In short, the 'Nominal' reference 
- *  frame manages the transformation from local UVW to global XYZ coordinates. 
- *  The 'Nominal' reference frame is loaded from the alignment data base, if it
- *  is available. Otherwise, it is loaded from the gear file. 
+ *  The PolyDet class is a subclass of the Det class and represents a pixel detector 
+ *  with a pixel matrix of polygon shaped pixels.
  *  
- *  A special instance of class ReferenceFrame called 'Discrete' is used to  
- *  represent the discrete 'flips' from the local UVW to global XYZ axes. 
- *  The 'Discrete' reference frame represents the different possibolities 
- *  to install the detector in the beam line,i.e. is the detector front 
- *  side pointing into the beam? Or, is the local u axis pointing upwards? 
- *  
- *  The SquareDet class also provides an advanced interface to detector data for 
- *  reconstruction methodes. This includes: 
- *    
- *  A) Transform between local coord and readout channels 
- *  B) Position resolved detector material profile data  
- *  C) Boundary intersection tests for partical tracking 
  *  
  *  @Author H. C. Beck, University of Göttingen
  *  <mailto:helge-christoph.beck@phys.uni-goettingen.de>
@@ -61,12 +36,12 @@ class PolyDet : public Det {
   
   /** Constructor
    */
-  PolyDet::PolyDet(const std::string& typeName, int sensorID, int planeNumber, 
+  PolyDet(const std::string& typeName, int sensorID, int planeNumber, 
                  double sensThick, double sensRadLenght, double sensAtomicNumber,
                  double sensAtomicMass, double ladderThick, double ladderRadLength, 
                  double ladderAtomicNumber, double ladderAtomicMass, double ladderSizeU, 
                  double ladderSizeV, const std::vector< std::tuple<int,int,int,double,double> >& cells, 
-		 const std::vector< std::tuple<int,double,double,std::vector<std::tuple<double,double>>>> & protocells,
+		         const std::vector< std::tuple<int,double,double,std::vector<std::tuple<double,double>>>> & protocells,
                  const ReferenceFrame& discrete, const ReferenceFrame& nominal );
 
   /** Get pixel type for pixel at position vcell and ucell. 
@@ -159,9 +134,9 @@ class PolyDet : public Det {
    */ 
   bool areNeighbors(int vcell1, int ucell1, int vcell2, int ucell2) override;
 
-  /** Get nominal sensor frame (i.e. where the detector is supposed to be)
+  /** Set nominal sensor frame. This is needed for applying alignment corrections. 
    */
-  void SetNominalFrame(const ReferenceFrame& nominal) { m_nominal = nominal; }
+  void SetNominalFrame(const ReferenceFrame& nominal) { m_nominal  = nominal; }   
   
   /** Get nominal sensor frame (i.e. where the detector is supposed to be)
    */
@@ -179,7 +154,7 @@ class PolyDet : public Det {
  
   /** Gets the coordinates of the pixel vcell, ucell, helper function combining the get functions for the individual coordinates.
    */
-  void PolyDet::GetPixelCenterCoord(double& vcoord, double& ucoord, int vcell, int ucell)
+  void GetPixelCenterCoord(double& vcoord, double& ucoord, int vcell, int ucell);
   /** Check if module is crossed (including supports)
    */
   bool ModuleCrossed(double u, double v);
