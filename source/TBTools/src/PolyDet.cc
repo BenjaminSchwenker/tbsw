@@ -54,10 +54,6 @@ PolyDet::PolyDet(const std::string& typeName, int sensorID, int planeNumber,
 PolyDet::PolyDet(const std::string& typeName, int sensorID, int planeNumber) : Det(typeName, sensorID, planeNumber) {}
 
 
-PolyDet* PolyDet::newDet()
-{
-  return new PolyDet("PolyDet", -1, -1);
-}
 // set during TH2Poly creation
 int PolyDet::GetMaxUCell()
 {

@@ -55,18 +55,20 @@ class PolyDet : public Det {
 //  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
  
    
-  /** Default constructor
+  /** Constructor
    */
   PolyDet(const std::string& typeName, int sensorID, int planeNumber) ; 
   
-  /** Destructor */
-  ~PolyDet() ; 
-
-  /** Return a new instance of the Det.
-   *  Has to be implemented by subclasses.
+  /** Constructor
    */
-  PolyDet* newDet() override ;
-    
+  PolyDet::PolyDet(const std::string& typeName, int sensorID, int planeNumber, 
+                 double sensThick, double sensRadLenght, double sensAtomicNumber,
+                 double sensAtomicMass, double ladderThick, double ladderRadLength, 
+                 double ladderAtomicNumber, double ladderAtomicMass, double ladderSizeU, 
+                 double ladderSizeV, const std::vector< std::tuple<int,int,int,double,double> >& cells, 
+		 const std::vector< std::tuple<int,double,double,std::vector<std::tuple<double,double>>>> & protocells,
+                 const ReferenceFrame& discrete, const ReferenceFrame& nominal );
+
   /** Get pixel type for pixel at position vcell and ucell. 
    */
   int GetPixelType(int vcell, int ucell) override;  
