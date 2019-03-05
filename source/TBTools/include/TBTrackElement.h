@@ -51,7 +51,7 @@ class TBTrackElement
   
   /* Get detector 
    */
-  Det& GetDet() { return reinterpret_cast<Det&>(m_detPtr); } 
+  Det& GetDet() { return *m_detPtr; } 
   
   /** True if hit is set  
    */

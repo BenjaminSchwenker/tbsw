@@ -455,7 +455,7 @@ void TBDetector::WriteAlignmentDB( )
 
 Det & TBDetector::GetDet( int ipl ) 
 {
-  return reinterpret_cast<Det&>(m_Dets[ipl]);
+  return *m_Dets[ipl];
 }
 
 
