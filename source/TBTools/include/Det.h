@@ -52,12 +52,7 @@ class Det {
   
   /** Destructor */
   virtual ~Det() {}
-
-  /** Return a new instance of the Det.
-   *  Has to be implemented by subclasses.
-   */
-  virtual Det* newDet() = 0 ;
-    
+  
   /** Get pixel type for pixel at position vcell and ucell. 
    *  Has to be implemented by subclasses.
    */
