@@ -18,8 +18,41 @@ using namespace marlin;
 
 namespace depfet {
 
+
+
+SquareDet::SquareDet(const std::string& typeName, int sensorID, int planeNumber, 
+                     double sensThick, double sensRadLenght, double sensAtomicNumber,
+                     double sensAtomicMass, double ladderThick, double ladderRadLength, 
+                     double ladderAtomicNumber, double ladderAtomicMass, double ladderSizeU, 
+                     double ladderSizeV, const std::vector< std::tuple<int,int,double> >& uCells, 
+                     const std::vector< std::tuple<int,int,double> >& vCells, 
+                     const ReferenceFrame& discrete, const ReferenceFrame& nominal )
+  : Det(typeName, sensorID, planeNumber) 
+{
+  
+  // Set u cells 
+  SetCellsU( uCells);
+      
+  // Set v cells 
+  SetCellsV( vCells );
+
+  m_sensitiveThickness = sensThick;
+  m_sensitiveRadLength = sensRadLenght;
+  m_sensitiveAtomicNumber = sensAtomicNumber;
+  m_sensitiveAtomicMass = sensAtomicMass;
+  m_ladderThickness = ladderThick;
+  m_ladderRadLength = ladderRadLength;
+  m_ladderAtomicNumber = ladderAtomicNumber;  
+  m_ladderAtomicMass = ladderAtomicMass;  
+  m_ladderSizeU = ladderSizeU; 
+  m_ladderSizeV = ladderSizeV; 
+  m_discrete = discrete;
+  m_nominal = nominal;
+}
+
 SquareDet::SquareDet(const std::string& typeName, int sensorID, int planeNumber)
   : Det(typeName, sensorID, planeNumber) {}
+
 
 
 int SquareDet::GetMaxUCell()

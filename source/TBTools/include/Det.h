@@ -51,7 +51,7 @@ class Det {
   Det(const std::string& typeName, int sensorID, int planeNumber) ; 
   
   /** Destructor */
-  virtual ~Det() ; 
+  virtual ~Det() {}
 
   /** Return a new instance of the Det.
    *  Has to be implemented by subclasses.

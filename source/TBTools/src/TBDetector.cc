@@ -1,6 +1,7 @@
 // Local include files
 #include "TBDetector.h"
 #include "ThreeDModel.h"
+#include "SquareDet.h"
 
 // Include basic C header files
 #include <cstdlib>
@@ -33,32 +34,28 @@ using namespace marlin;
 
 namespace depfet {
 
-//
-// Constructor
-//
+
 TBDetector::TBDetector( ) 
 {
   // This is a setup with no detectors 
-  _alignmentDBFileName = "xxx";
-  _numberOfSensors  = 0; 
+  m_alignmentDBFileName = "xxx";
+  m_numberOfSensors  = 0; 
 
-  _Bx = 0;
-  _By = 0;
-  _Bz = 0;
+  m_Bx = 0;
+  m_By = 0;
+  m_Bz = 0;
   
 }
 
-//
-// Destructor - Delete the detectors from memory
-//
+
 TBDetector::~TBDetector()
 {
+  for (Det* aDet : m_Dets) delete aDet;
+  m_Dets.clear();
 }
 
 
-//
-//  Build detector from gear file
-//
+
 void TBDetector::ReadGearConfiguration( )
 {
   
@@ -95,7 +92,7 @@ void TBDetector::ReadGearConfiguration( )
   }
   */
 
-  /*
+  
   // Check iff gear file is available  
   if ( Global::GEAR == 0x0 ) {
     streamlog_out ( ERROR4 ) <<  "The GearMgr is not available, for an unknown reason." << std::endl;
@@ -108,9 +105,9 @@ void TBDetector::ReadGearConfiguration( )
   gear::BField * bField = 
                   const_cast<gear::BField* > (&(Global::GEAR->getBField()));  
 
-  _Bx = bField->at(gear::Vector3D())[0];
-  _By = bField->at(gear::Vector3D())[1];
-  _Bz = bField->at(gear::Vector3D())[2];
+  m_Bx = bField->at(gear::Vector3D())[0];
+  m_By = bField->at(gear::Vector3D())[1];
+  m_Bz = bField->at(gear::Vector3D())[2];
   
   //
   // Read data about detectors planes 
@@ -124,11 +121,11 @@ void TBDetector::ReadGearConfiguration( )
   // 
   // Sorting all sensors according to position along beam 
   
-  _numberOfSensors = siPlanesLayerLayout->getNLayers();    
+  m_numberOfSensors = siPlanesLayerLayout->getNLayers();    
   std::vector<int> planeSort;  
   std::vector<double> planeZPosition;
    
-  for(int ipl=0; ipl < _numberOfSensors; ipl++) {
+  for(int ipl=0; ipl < m_numberOfSensors; ipl++) {
     planeZPosition.push_back( siPlanesLayerLayout->getSensitivePositionZ(ipl) );
     planeSort.push_back( ipl ); 
   }
@@ -136,7 +133,7 @@ void TBDetector::ReadGearConfiguration( )
   bool sorted;
   do {
      sorted=false;
-     for(int iz=0; iz<_numberOfSensors-1 ; iz++) {
+     for(int iz=0; iz<m_numberOfSensors-1 ; iz++) {
        if( planeZPosition[iz]> planeZPosition[iz+1])   {
          double posZ = planeZPosition[iz];
          planeZPosition[iz] = planeZPosition[iz+1];
@@ -151,69 +148,25 @@ void TBDetector::ReadGearConfiguration( )
      }
   } while(sorted);
   
-  // Resize space for pixel modules (Det's) 
-  _DetVec.resize( _numberOfSensors );
+  
    
   // Loop over all pixel modules  
-  for (int ipl=0; ipl < _numberOfSensors ; ipl++) {
+  for (int ipl=0; ipl < m_numberOfSensors ; ipl++) {
     
-    // Create a new Det object  
-    Det adet;
-
-    // Set plane number 
-    adet.SetPlaneNumber(ipl);
+    
+    // TODO: all code in this loop is currently SquareDet specific
+    //       and needs to be move into a SquareDetCreator class
 
     // Gear layer number is needed to read the layout data  
     int ilayer = planeSort[ipl];
      
-    // Set ID   
-    int ID = siPlanesLayerLayout->getSensitiveID(ilayer);
-    adet.SetSensorID(ID);
-    _indexMap[ID] = ipl;
+    // Set sensorID   
+    int sensorID = siPlanesLayerLayout->getSensitiveID(ilayer);
+    m_indexMap[sensorID] = ipl;
 
-    // Set u cells 
-    adet.SetCellsU( siPlanesLayerLayout->getSensitiveUCells( ilayer ) );
-      
-    // Set v cells 
-    adet.SetCellsV( siPlanesLayerLayout->getSensitiveVCells( ilayer ) );
-         
-    double SensThick = siPlanesLayerLayout->getSensitiveThickness(ilayer);
-    adet.SetSensitiveThickness(SensThick);
-
-    double SensRadLength = siPlanesLayerLayout->getSensitiveRadLength(ilayer);
-    adet.SetSensitiveRadLength(SensRadLength);
+     
+    // Read discrete rotation from mounting frame to global frame.  
     
-    double SensAtomicNumber = siPlanesLayerLayout->getSensitiveAtomicNumber(ilayer);
-    adet.SetSensitiveAtomicNumber(SensAtomicNumber);
-
-    double SensAtomicMass = siPlanesLayerLayout->getSensitiveAtomicMass(ilayer);
-    adet.SetSensitiveAtomicMass(SensAtomicMass);
-        
-    double LadderThick = siPlanesLayerLayout->getLayerThickness(ilayer);
-    adet.SetLadderThickness(LadderThick);
-       
-    double LadderRadLength = siPlanesLayerLayout->getLayerRadLength(ilayer);
-    adet.SetLadderRadLength(LadderRadLength);
-      
-    double LadderSizeU= siPlanesLayerLayout->getLayerSizeU(ilayer);
-    adet.SetLadderSizeU(LadderSizeU); 
-         
-    double LadderSizeV = siPlanesLayerLayout->getLayerSizeV(ilayer); 
-    adet.SetLadderSizeV(LadderSizeV); 
-    
-    double LadderAtomicNumber = siPlanesLayerLayout->getLayerAtomicNumber(ilayer);
-    adet.SetLadderAtomicNumber(LadderAtomicNumber);
-
-    double LadderAtomicMass = siPlanesLayerLayout->getLayerAtomicMass(ilayer);
-    adet.SetLadderAtomicMass(LadderAtomicMass);
-       
-    // Discrete rotation frame 
-    ReferenceFrame discrete;
-    
-    // Construct a nominal local <-> global rotation matrix
-    // from gear file. 
-    
-    // Read discrete rotation from local to global coord.  
     Matrix3d DiscreteRotation(Matrix3d::Identity()); 
     int r1 = siPlanesLayerLayout->getSensitiveRotation1(ilayer); 
     int r2 = siPlanesLayerLayout->getSensitiveRotation2(ilayer); 
@@ -234,21 +187,14 @@ void TBDetector::ReadGearConfiguration( )
     }
     
     if ( std::abs( DiscreteRotation.determinant() - 1 ) ==  1.e-5 )  
-      streamlog_out(MESSAGE3) << "Rotation matrix BUG. Discrete matrix determinant is " << DiscreteRotation.determinant() << std::endl; 
+      streamlog_out(MESSAGE3) << "Rotation matrix BUG. Discrete matrix determinant is " << DiscreteRotation.determinant() << std::endl;      
     
-    discrete.SetRotation(DiscreteRotation);    
+    // Construct discrete reference frame 
+    ReferenceFrame discrete;
+    discrete.SetRotation(DiscreteRotation);   
     
-    // Set discrete frame 
-    adet.SetDiscreteFrame(discrete);
-    
-    // Nominal reference frame 
-    ReferenceFrame nominal;
-    
-    Vector3d NominalPosition;
-    NominalPosition << siPlanesLayerLayout->getSensitivePositionX(ilayer),  siPlanesLayerLayout->getSensitivePositionY(ilayer), siPlanesLayerLayout->getSensitivePositionZ(ilayer);
-    nominal.SetPosition(NominalPosition);
-    
-    // Read Euler rotation from local to global frame
+    // Read Euler rotation from local to mounting frame
+     
     const double MYPI = std::atan(1.0)*4;  
     // Gear file stores angles in degree 
     double alpha = siPlanesLayerLayout->getSensitiveRotationAlpha(ilayer)*MYPI/180.; 
@@ -265,40 +211,57 @@ void TBDetector::ReadGearConfiguration( )
     
     // Combine the two factors in proper order
     Matrix3d NominalRotation = EulerRotation*DiscreteRotation;
-    nominal.SetRotation(NominalRotation);    
+      
+    // Read position of origin of local uvw frame in global coordinates 
+    Vector3d NominalPosition;
+    NominalPosition << siPlanesLayerLayout->getSensitivePositionX(ilayer),  siPlanesLayerLayout->getSensitivePositionY(ilayer), siPlanesLayerLayout->getSensitivePositionZ(ilayer);
     
-    // Set nominal frame - initial guess where detector is in space 
-    adet.SetNominalFrame(nominal);
+    // Construct nominal reference frame 
+    ReferenceFrame nominal;
+    nominal.SetPosition(NominalPosition);
+    nominal.SetRotation(NominalRotation);   
     
-    // Save detector in collection
-    _DetVec[ipl] = adet;
-    
+    // Create a new Det object, ownership goes with TBDetector 
+    m_Dets.push_back( new SquareDet( "SquareDet",
+                                  sensorID,
+                                  ipl,
+                                  siPlanesLayerLayout->getSensitiveThickness(ilayer), 
+                                  siPlanesLayerLayout->getSensitiveRadLength(ilayer),
+                                  siPlanesLayerLayout->getSensitiveAtomicNumber(ilayer),
+                                  siPlanesLayerLayout->getSensitiveAtomicMass(ilayer), 
+                                  siPlanesLayerLayout->getLayerThickness(ilayer), 
+                                  siPlanesLayerLayout->getLayerRadLength(ilayer), 
+                                  siPlanesLayerLayout->getLayerAtomicNumber(ilayer), 
+                                  siPlanesLayerLayout->getLayerAtomicMass(ilayer),
+                                  siPlanesLayerLayout->getLayerSizeU(ilayer), 
+                                  siPlanesLayerLayout->getLayerSizeV(ilayer),  
+                                  siPlanesLayerLayout->getSensitiveUCells( ilayer ), 
+                                  siPlanesLayerLayout->getSensitiveVCells( ilayer ), 
+                                  discrete, 
+                                  nominal
+                                 ));
   }
-  */
+  
     
 }
 
-// 
-// Read name of alignment data base file 
-//   
+
 void TBDetector::SetAlignmentDBName( std::string FileName )
 {
      
   // Store name of alignment data base
-  _alignmentDBFileName = FileName;
+  m_alignmentDBFileName = FileName;
 }
 
-// 
-// Read alignment data base file 
-//   
+
 void TBDetector::ReadAlignmentDB( std::string FileName )
 {
      
   // Store name of alignment data base
-  _alignmentDBFileName = FileName;
+  m_alignmentDBFileName = FileName;
   
   // Open alignment data base
-  TFile * rootFile = new TFile(_alignmentDBFileName.c_str(), "READ");
+  TFile * rootFile = new TFile(m_alignmentDBFileName.c_str(), "READ");
   
   std::map< std::string, TH1F *> histoMap;
  
@@ -352,7 +315,7 @@ void TBDetector::ReadAlignmentDB( std::string FileName )
     return; 
   } 
 
-  for ( int ipl = 0; ipl < _numberOfSensors; ipl++ ) {
+  for ( int ipl = 0; ipl < m_numberOfSensors; ipl++ ) {
     
     Det & adet = GetDet(ipl);
     
@@ -394,55 +357,53 @@ void TBDetector::ReadAlignmentDB( std::string FileName )
   Print();    
 }
 
-// 
-// Write alignment data base - overwrites old DB file   
-//   
+
 void TBDetector::WriteAlignmentDB( )
 {
   
-  streamlog_out(MESSAGE3) << std::endl << "Write alignment DB file " << _alignmentDBFileName << std::endl << std::endl;
+  streamlog_out(MESSAGE3) << std::endl << "Write alignment DB file " << m_alignmentDBFileName << std::endl << std::endl;
   
-  TFile * rootFile = new TFile( _alignmentDBFileName.c_str(),"recreate");
+  TFile * rootFile = new TFile( m_alignmentDBFileName.c_str(),"recreate");
   rootFile->cd("");
   
   std::map< std::string, TH1F *> _histoMap;
    
-  _histoMap["hSensorID"] = new TH1F("hSensorID", "", _numberOfSensors,0,_numberOfSensors); 
+  _histoMap["hSensorID"] = new TH1F("hSensorID", "", m_numberOfSensors,0,m_numberOfSensors); 
   _histoMap["hSensorID"]->SetStats( false );
   _histoMap["hSensorID"]->SetYTitle("sensor id"); 
   _histoMap["hSensorID"]->SetXTitle("plane");
 
-  _histoMap["hPositionX"] = new TH1F("hPositionX", "", _numberOfSensors,0,_numberOfSensors); 
+  _histoMap["hPositionX"] = new TH1F("hPositionX", "", m_numberOfSensors,0,m_numberOfSensors); 
   _histoMap["hPositionX"]->SetStats( false );
   _histoMap["hPositionX"]->SetYTitle("position x [mm]"); 
   _histoMap["hPositionX"]->SetXTitle("plane"); 
 
-  _histoMap["hPositionY"] = new TH1F("hPositionY", "", _numberOfSensors,0,_numberOfSensors); 
+  _histoMap["hPositionY"] = new TH1F("hPositionY", "", m_numberOfSensors,0,m_numberOfSensors); 
   _histoMap["hPositionY"]->SetStats( false );
   _histoMap["hPositionY"]->SetYTitle("position y [mm]"); 
   _histoMap["hPositionY"]->SetXTitle("plane"); 
 
-  _histoMap["hPositionZ"] = new TH1F("hPositionZ", "", _numberOfSensors,0,_numberOfSensors); 
+  _histoMap["hPositionZ"] = new TH1F("hPositionZ", "", m_numberOfSensors,0,m_numberOfSensors); 
   _histoMap["hPositionZ"]->SetStats( false );
   _histoMap["hPositionZ"]->SetYTitle("position z [mm]"); 
   _histoMap["hPositionZ"]->SetXTitle("plane"); 
 
-  _histoMap["hRotationAlpha"] = new TH1F("hRotationAlpha", "", _numberOfSensors,0,_numberOfSensors); 
+  _histoMap["hRotationAlpha"] = new TH1F("hRotationAlpha", "", m_numberOfSensors,0,m_numberOfSensors); 
   _histoMap["hRotationAlpha"]->SetStats( false );
   _histoMap["hRotationAlpha"]->SetYTitle("rotation alpha [rad]"); 
   _histoMap["hRotationAlpha"]->SetXTitle("plane"); 
 
-  _histoMap["hRotationBeta"] = new TH1F("hRotationBeta", "", _numberOfSensors,0,_numberOfSensors); 
+  _histoMap["hRotationBeta"] = new TH1F("hRotationBeta", "", m_numberOfSensors,0,m_numberOfSensors); 
   _histoMap["hRotationBeta"]->SetStats( false );
   _histoMap["hRotationBeta"]->SetYTitle("rotation beta [rad]"); 
   _histoMap["hRotationBeta"]->SetXTitle("plane"); 
 
-  _histoMap["hRotationGamma"] = new TH1F("hRotationGamma", "", _numberOfSensors,0,_numberOfSensors); 
+  _histoMap["hRotationGamma"] = new TH1F("hRotationGamma", "", m_numberOfSensors,0,m_numberOfSensors); 
   _histoMap["hRotationGamma"]->SetStats( false );
   _histoMap["hRotationGamma"]->SetYTitle("rotation gamma [rad]"); 
   _histoMap["hRotationGamma"]->SetXTitle("plane");
 
-  for ( int ipl = 0; ipl < _numberOfSensors; ipl++ ) {
+  for ( int ipl = 0; ipl < m_numberOfSensors; ipl++ ) {
     
     // Load current pixel module 
     Det & adet = GetDet(ipl);    
@@ -488,29 +449,26 @@ void TBDetector::WriteAlignmentDB( )
   rootFile->Close();
   delete rootFile;   
 
-  streamlog_out(MESSAGE3) << std::endl << "Finish alignment DB file " << _alignmentDBFileName << std::endl << std::endl;
+  streamlog_out(MESSAGE3) << std::endl << "Finish alignment DB file " << m_alignmentDBFileName << std::endl << std::endl;
 }
 
-/** Get data handle for pixel module at position ipl
- */
+
 Det & TBDetector::GetDet( int ipl ) 
 {
-  return reinterpret_cast<Det&>(_DetVec[ipl]);
+  return reinterpret_cast<Det&>(m_Dets[ipl]);
 }
 
 
-/** Get plane number from sensorID 
- */  
-int TBDetector::GetPlaneNumber(int ID) 
+
+int TBDetector::GetPlaneNumber(int sensorID) const 
 {
-  if (_indexMap.count(ID) > 0 ) 
-    return _indexMap[ID];
+  if (m_indexMap.count(sensorID) > 0 ) 
+    return m_indexMap.at(sensorID);
   else 
     return -99;  
 }
 
-/** Method printing detector
- */
+
 void TBDetector::Print( ) 
 {
   streamlog_out(MESSAGE3) << std::endl

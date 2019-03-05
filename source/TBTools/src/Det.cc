@@ -26,7 +26,7 @@ Det::Det(const std::string& typeName, int sensorID, int planeNumber) :
   //DetMgr::instance()->registerDet( this ) ;
 }
 
-Det::~Det() {}
+
 
 
 /**  Print methods

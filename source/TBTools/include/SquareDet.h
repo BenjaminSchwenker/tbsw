@@ -16,10 +16,12 @@ namespace depfet {
  *  with a checkerboard type pixel matrix. The pixel pitch may change along the local 
  *  u-axis or v-axis.  
  *  
- *  The pixel matrix has pixel at positions uCell, vCell in the range [0,maxUCell] and 
- *  [0,maxVCell]. The pixel center is just the geometrical center of a pixel in local 
- *  sensor coordinates. 
- * 
+ *  The pixel matrix has pixel at positions vCell, uCell in the range [0,maxUCell] and 
+ *  [0,maxVCell]. The center of the pixel is the geometrical center of the square area 
+ *  with height GetPitchV(vCell,uCell) and width GetPitch(vCell,uCell) in local sensor
+ *  coordinates. The total sensitve area of the entire pixel matrix has height 
+ *  GetSensitiveSizeV() and width GetSensitiveSizeU(). 
+ *  
  *  @Author B. Schwenker, University of Göttingen
  *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
  */
@@ -29,10 +31,21 @@ class SquareDet : public Det {
  public:
 //  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
  
-   
-  /** Default constructor
+  
+      
+  /** Constructor
    */
   SquareDet(const std::string& typeName, int sensorID, int planeNumber) ; 
+  
+  /** Constructor
+   */
+  SquareDet(const std::string& typeName, int sensorID, int planeNumber, 
+                     double sensThick, double sensRadLenght, double sensAtomicNumber,
+                     double sensAtomicMass, double ladderThick, double ladderRadLength, 
+                     double ladderAtomicNumber, double ladderAtomicMass, double ladderSizeU, 
+                     double LayerSizeV, const std::vector< std::tuple<int,int,double> >& uCells, 
+                     const std::vector< std::tuple<int,int,double> >& vCells, 
+                     const ReferenceFrame& discrete, const ReferenceFrame& nominal );
   
   /** Destructor */
   ~SquareDet() ; 

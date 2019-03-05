@@ -117,40 +117,40 @@ class TBDetector {
   void SetAlignmentDBName( std::string FileName );
   
   //! Get number of pixel sensors 
-  int GetNSensors() { return _numberOfSensors; };
+  int GetNSensors() const { return m_numberOfSensors; }
   
   //! Translate DAQ (Sensor) ID to plane number  
-  int GetPlaneNumber(int sensorID);
+  int GetPlaneNumber(int sensorID) const;
   
   //! Get detector at plane number ipl
   Det& GetDet(int ipl);
 
-  //! Get components of magnetic field in Tesla
-  double GetBx() { return _Bx;};
-  double GetBy() { return _By;};
-  double GetBz() { return _Bz;};
+  //! Get components of magnetic field in tesla
+  double GetBx() const { return m_Bx;}
+  double GetBy() const { return m_By;}
+  double GetBz() const { return m_Bz;}
   
-  //! Method printing general Gear parameters
-  void Print() ;
+  //! Method printing general geometry parameters
+  void Print();
      
  private:
        
   // Cartesian components of magnetic field
-  double _Bx; 
-  double _By; 
-  double _Bz; 
+  double m_Bx; 
+  double m_By; 
+  double m_Bz; 
 
   // Name of data base file 
-  std::string _alignmentDBFileName;
+  std::string m_alignmentDBFileName;
   
   // Total number of sensors  
-  int _numberOfSensors;       
+  int m_numberOfSensors;       
   
   // Maps sensorID to planeNumber 
-  std::map< int, int > _indexMap;   
+  std::map< int, int > m_indexMap;   
   
-  // Vector of pixel detectors 
-  std::vector<Det*> _DetVec;      
+  // Vector of pointers to Det objects 
+  std::vector<Det*> m_Dets;      
   
 }; // End class TBDetector
  
