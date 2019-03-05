@@ -65,12 +65,6 @@ int SquareDet::GetMaxVCell()
   return m_nCellsV-1;
 }  
 
-SquareDet* SquareDet::newDet() 
-{
-  return new SquareDet("SquareDet",-1,-1);
-}
-
-
 
 // TODO this code should be put into the class where the SquareDet get constructed from an XML file
 void SquareDet::SetCellsU( std::vector< std::tuple<int,int,double> > uCells)

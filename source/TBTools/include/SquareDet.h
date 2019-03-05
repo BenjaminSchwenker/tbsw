@@ -47,12 +47,6 @@ class SquareDet : public Det {
                      const std::vector< std::tuple<int,int,double> >& vCells, 
                      const ReferenceFrame& discrete, const ReferenceFrame& nominal );
   
-  /** Destructor */
-  ~SquareDet() ; 
-
-  /** Return a new instance of the Det.
-   */
-  SquareDet* newDet() override;
     
   /** Get pixel type for pixel at position vcell and ucell. 
    */
