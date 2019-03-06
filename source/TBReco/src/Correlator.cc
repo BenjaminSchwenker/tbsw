@@ -216,7 +216,7 @@ void Correlator::processEvent(LCEvent * evt)
     rectrack.SetMomentum( _momentum ); 
        
     // Set seed paramaters   
-    TBHit& refhit = HitStore.GetRecoHitFromID(iref, _refPlane);  
+    const TBHit& refhit = HitStore.GetRecoHitFromID(iref, _refPlane);  
     TBTrackState Seed = TrackSeeder.CreateSeedTrack(refhit, _detector);   
     rectrack.SetReferenceState(Seed);
     
@@ -245,7 +245,7 @@ void Correlator::processEvent(LCEvent * evt)
       for (int ihit = 0; ihit < HitStore.GetNHits(ipl); ++ihit ) 
       {      
         
-        TBHit & anyhit = HitStore.GetRecoHitFromID(ihit, ipl);
+        const TBHit & anyhit = HitStore.GetRecoHitFromID(ihit, ipl);
            
         // Measured hit coordinates
         Vector3d anypos = anyhit.GetLocalSpacePoint();

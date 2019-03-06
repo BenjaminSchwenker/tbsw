@@ -230,7 +230,7 @@ void TriplettCorrelator::processEvent(LCEvent * evt)
       // Loop over all hits on this detector 
       for (int ihit = 0; ihit < HitStore.GetNHits(ipl); ++ihit ) 
       {      
-        TBHit & anyhit = HitStore.GetRecoHitFromID(ihit, ipl);
+        const TBHit & anyhit = HitStore.GetRecoHitFromID(ihit, ipl);
            
         // Measured hit coordinates
         Vector3d anypos = anyhit.GetLocalSpacePoint();

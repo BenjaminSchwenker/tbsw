@@ -545,12 +545,12 @@ void FastTracker::processEvent(LCEvent * evt)
      for(int ipl=0;ipl<_nTelPlanes;ipl++)  { 
        for (int ihit = 0; ihit < HitStore.GetNHits(ipl); ihit++ ) {  
          // Get hit    
-         TBHit& hit = HitStore.GetRecoHitFromID(ihit, ipl); 
+         const TBHit& hit = HitStore.GetRecoHitFromID(ihit, ipl); 
          // Check hit was not used
          if ( std::find(usedIDs[ipl].begin(), usedIDs[ipl].end(), hit.GetUniqueID() ) == usedIDs[ipl].end() )
          {
            // Print the track candidate 
-           streamlog_out(MESSAGE2) << "Printing at plane " << ipl << "  not used hit: " << hit.GetCoord() 
+           streamlog_out(MESSAGE2) << "At plane " << ipl << "  not used hit at position: " << hit.GetCoord() 
                                    << endl;
            
            notUsedHitCollection->push_back( hit.MakeLCIOHit() );
@@ -655,8 +655,8 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
          trk.SetMomentum( my_momentum ); 
          
          // Compute seed track 
-         TBHit& firsthit = HitStore.GetRecoHitFromID(ihit, firstplane);  
-         TBHit& secondhit = HitStore.GetRecoHitFromID(jhit, secondplane);
+         const TBHit& firsthit = HitStore.GetRecoHitFromID(ihit, firstplane);  
+         const TBHit& secondhit = HitStore.GetRecoHitFromID(jhit, secondplane);
          TBTrackState Seed = TrackSeeder.CreateSeedTrack(firsthit, secondhit, _detector);   
          
          // Skip all candidate tracks with a very 
@@ -721,7 +721,7 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
        trk.SetMomentum( my_momentum ); 
          
        // Compute seed track 
-       TBHit& seedhit = HitStore.GetRecoHitFromID(ihit, seedplane);  
+       const TBHit& seedhit = HitStore.GetRecoHitFromID(ihit, seedplane);  
        TBTrackState Seed = TrackSeeder.CreateSeedTrack(seedhit, _detector); 
        
        // Skip all candidate tracks with a very 
@@ -808,7 +808,7 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
              
       // Fast preselection of hit candidates compatible to   
       // predicted intersection coordinates. 
-      vector<int> HitIdVec = HitStore.GetCompatibleHitIds(ipl, u, v, _maxResidualU[ipl], _maxResidualV[ipl]);
+      vector<int> HitIdVec = HitStore.GetCompatibleHitIds(ipl, u, _maxResidualU[ipl]);
              
       // Now, we select the best hit candidate 
       int ncandhits = HitIdVec.size();
@@ -819,7 +819,7 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
       {           
         // Get reco hit at plane ipl 
         int hitid = HitIdVec[icand];
-        TBHit & RecoHit = HitStore.GetRecoHitFromID(hitid, ipl);
+        const TBHit & RecoHit = HitStore.GetRecoHitFromID(hitid, ipl);
         //streamlog_out ( MESSAGE3 ) << "Checking  for hit "<< icand<<"\n" <<RecoHit.GetCoord()<<"\n" << RecoHit.GetCov()<<endl;
         double uhit = RecoHit.GetCoord()[0];
         double vhit = RecoHit.GetCoord()[1];
@@ -846,7 +846,7 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
       if ( besthitid!=-1 )  {
         // Try to compute the predicted hit chi2. This involves a matrix 
         // inversion and may fail -> returns chi2<0.         
-        TBHit& BestHit = HitStore.GetRecoHitFromID(besthitid, ipl);
+        TBHit BestHit = HitStore.GetRecoHitFromID(besthitid, ipl);
         double hitchi2 = TrackFitter.FilterHit(BestHit, xref, x0, C0); 
          
         if ( hitchi2 < _outlierChi2Cut && hitchi2 >= 0  ) {

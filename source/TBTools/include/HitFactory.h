@@ -11,7 +11,7 @@
 
 namespace depfet { 
  
-  typedef std::map< int , std::vector<int> > SectorMap;
+  
 
 /** Class HitFactory 
  *  
@@ -32,42 +32,44 @@ namespace depfet {
   	
 class HitFactory {
   
- private: 
-  
-  // Total number of pixel sensors 
-  TBDetector _detector;
-  
-  // Subdivide detector along u-axis 
-  double _SectorPitch; 
-  
-  // Vector of hits for each detector 
-  std::vector< std::vector<TBHit> > _HitStore; 
-    
-  // Vector of sector maps for each detector 
-  std::vector< SectorMap > _HitSubStore; 
+ typedef std::map< int , std::vector<int> > SectorMap;
   
  public:
    
   // Constructor
-  HitFactory(TBDetector& Detector, double SectorPitch=1); 
+  HitFactory(const TBDetector& Detector, double SectorPitch=1); 
   
   // Add hit to pattern factory 
-  void AddRecoHit(TBHit& hit); 
+  void AddRecoHit(const TBHit& hit); 
   
   // Get all hits for plane ipl 
   std::vector<TBHit>& GetHits(int ipl);
   
   // Get reco hit at position ihit from sensor ipl
-  TBHit& GetRecoHitFromID(int ihit, int ipl); 
+  const TBHit& GetRecoHitFromID(int ihit, int ipl) const; 
   
   // Get Ids of hits compatible with track at (u,v) 
-  std::vector<int> GetCompatibleHitIds(int ipl, double u, double v, double distMaxU, double distMaxV=0);
+  std::vector<int> GetCompatibleHitIds(int ipl, double u, double distMaxU) const;
   
   // Get total number of hits  
-  int GetNHits();
+  int GetNHits() const;
    
   // Get number of hits for detector ipl 
-  int GetNHits(int ipl); 
+  int GetNHits(int ipl) const; 
+
+ private: 
+  
+  // Reference to TBDetector
+  const TBDetector& m_detector;
+  
+  // Subdivide detector along u-axis 
+  double m_sectorPitch; 
+  
+  // Vector of hits for each detector 
+  std::vector< std::vector<TBHit> > m_hitStore; 
+    
+  // Vector of sector maps for each detector 
+  std::vector< SectorMap > m_hitSubStore; 
   
 };
 

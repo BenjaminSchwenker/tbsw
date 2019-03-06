@@ -163,7 +163,7 @@ void RawHitDQM::processEvent(LCEvent * evt)
     
     for (int ihit = 0; ihit < HitStore.GetNHits(iplane); ++ihit ) {
       
-      TBHit& Hit = HitStore.GetRecoHitFromID(ihit, iplane); 
+      const TBHit & Hit = HitStore.GetRecoHitFromID(ihit, iplane); 
       
       double hit_u = Hit.GetCoord()[0]; 
       double hit_v = Hit.GetCoord()[1]; 

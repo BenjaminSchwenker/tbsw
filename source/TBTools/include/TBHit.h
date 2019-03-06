@@ -46,10 +46,8 @@ class TBHit {
   lcio::TrackerHit * RawHitPtr;
   // Unique ID (default -1)
   int UniqueID;
-
   // Sensor ID
   short SensorID;
-
   // Cluster Quality 
   short Quality;
 
@@ -64,7 +62,7 @@ class TBHit {
   TBHit(lcio::TrackerHit* lciohit);
 
   // Build LCIO TrackerHit
-  lcio::TrackerHitImpl * MakeLCIOHit();  
+  lcio::TrackerHitImpl * MakeLCIOHit() const;  
   static lcio::TrackerHitImpl * MakeLCIOHit(int newSensorID, double u, double v, double cov_u, double cov_v, double cov_uv, int quality);
   
   // Get/Set sensorID 
@@ -93,13 +91,13 @@ class TBHit {
   lcio::TrackerHit* GetRawHit()  { return RawHitPtr; }
 
   
-  PixelCluster GetCluster();
+  PixelCluster GetCluster() const;
 
-  StripCluster GetStripCluster(); 
+  StripCluster GetStripCluster() const; 
   
   // Get/Set unique ID for hit  
   void SetUniqueID(int ID ) { UniqueID = ID; }
-  int GetUniqueID() { return UniqueID; }
+  int GetUniqueID() const { return UniqueID; }
    
   // Get 3D point in sensor coordinates 
   Vector3d GetLocalSpacePoint() const;

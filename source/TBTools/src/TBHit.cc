@@ -97,7 +97,7 @@ TBHit::TBHit(lcio::TrackerHit* lciohit)
  * The lcio::TrackerHit class is used to store reco TBHits persistently in 
  * LCIO files.  
  */
-TrackerHitImpl * TBHit::MakeLCIOHit(  ) 
+TrackerHitImpl * TBHit::MakeLCIOHit(  ) const
 {
   
   TrackerHitImpl * trackerhit = new TrackerHitImpl;
@@ -151,7 +151,7 @@ Vector3d TBHit::GetLocalSpacePoint() const
   return Point; 
 } 
 
-PixelCluster TBHit::GetCluster() 
+PixelCluster TBHit::GetCluster() const
 {
   
   if (RawHitPtr == nullptr ) return PixelCluster();
@@ -165,7 +165,7 @@ PixelCluster TBHit::GetCluster()
   return PixelCluster(clusterDigits,SensorID);  
 }
 
-StripCluster TBHit::GetStripCluster() 
+StripCluster TBHit::GetStripCluster() const
 {
   
   if (RawHitPtr == nullptr ) return StripCluster();
