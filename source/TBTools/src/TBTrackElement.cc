@@ -14,9 +14,8 @@ namespace depfet {
 
 /* Constructor 
  */
-TBTrackElement::TBTrackElement(Det& aDetUnit) 
+TBTrackElement::TBTrackElement(Det& aDet) : m_det(aDet)
 {
-  m_detPtr = &aDetUnit; 
   CrossedFlag = false; 
   LocalChiSqu = 0;   
 }

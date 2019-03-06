@@ -51,7 +51,7 @@ class TBTrackElement
   
   /* Get detector 
    */
-  Det& GetDet() { return *m_detPtr; } 
+  Det& GetDet() { return m_det; } 
   
   /** True if hit is set  
    */
@@ -95,9 +95,9 @@ class TBTrackElement
    
  private: 
   
-  /* Pointer to Det instance 
+  /* Reference to detector instance 
    */ 
-  Det* m_detPtr;
+  Det& m_det;
   
   /* Container for registered hits 
    */ 
