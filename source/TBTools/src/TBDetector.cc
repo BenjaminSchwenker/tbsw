@@ -4,11 +4,9 @@
 #include "SquareDet.h"
 
 // Include basic C header files
-#include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <algorithm>
-#include <cassert> 
 
 // Include ROOT classes
 #include <TH1F.h>
@@ -24,6 +22,7 @@
 
 // Include Marlin
 #include <marlin/Global.h>
+#include <marlin/tinyxml.h>
 #include <streamlog/streamlog.h>
 
 #include <Eigen/LU>
@@ -33,6 +32,41 @@ using namespace marlin;
 
 
 namespace depfet {
+
+// Helper function copied over from gear (this all that is actually needed)
+namespace {
+  
+  std::string getXMLAttribute(const TiXmlNode* node , const std::string& name ) {
+    
+    const TiXmlElement* el = node->ToElement() ;
+    if( el == 0 )
+      throw gear::ParseException("XMLParser::getAttribute not an XMLElement " ) ;
+    
+    const std::string*  at = el->Attribute( name ) ;
+    
+    if( at == 0 ){
+      std::stringstream str ;
+      str  << "XMLParser::getAttribute missing attribute \"" << name
+	   << "\" in element <" << el->Value() << "/> " ;
+      throw gear::ParseException( str.str() ) ;
+    }
+     
+    return std::string( *at )  ;
+  }
+  
+  std::string getOptionalXMLAttribute(const  TiXmlNode* node , const std::string& name ,
+				      const std::string& defaultValue) {
+    
+    std::string result( defaultValue ) ;
+    
+    try{
+      result = getXMLAttribute( node, name ) ;
+    }
+    catch( gear::ParseException& p){
+    }
+    return result ;
+  }
+} // end anonymouse namespace
 
 
 TBDetector::TBDetector( ) 
@@ -44,9 +78,7 @@ TBDetector::TBDetector( )
   m_Bx = 0;
   m_By = 0;
   m_Bz = 0;
-  
 }
-
 
 TBDetector::~TBDetector()
 {
@@ -54,15 +86,14 @@ TBDetector::~TBDetector()
   m_Dets.clear();
 }
 
-
-
-void TBDetector::ReadGearConfiguration( )
+void TBDetector::ReadGearConfiguration( const std::string & geometryXMLFile )
 {
   
-  streamlog_out ( MESSAGE3) << "Construct Test Beam Detector" << std::endl;
+  streamlog_out ( MESSAGE3) << "Construct Test Beam Detector NEW WAY" << std::endl;
    
   /*
-  //Now create all subcomponents
+  // Draft for abstracted logic to create DetectorComponents of different types 
+   
   for (const GearDir& component : detectorDir.getNodes("DetectorComponent")) {
     string name;
     string creatorName;
@@ -91,14 +122,237 @@ void TBDetector::ReadGearConfiguration( )
     config.addComponent({name, creatorName, libraryName});
   }
   */
-
   
+  
+  TiXmlDocument doc ;
+  bool loadOkay = doc.LoadFile( geometryXMLFile  ) ;
+  
+  if( !loadOkay ) {
+      
+    std::stringstream str ;
+    str  << "Error reading geometry XML file [" << geometryXMLFile
+	     << ", row: " << doc.ErrorRow() << ", col: " << doc.ErrorCol() << "] : "
+	     << doc.ErrorDesc() ;
+      
+    throw gear::ParseException( str.str() ) ;
+  }
+  
+  TiXmlElement* root = doc.RootElement();
+   
+  if( root == 0 ){
+    throw gear::ParseException( std::string( "No root tag found in ") + geometryXMLFile  ) ;
+  }
+   
+  TiXmlNode* global = root->FirstChild("global") ;
+  if( global != 0 ){
+    std::string detName  =  getXMLAttribute( global, "detectorName" )  ;
+    // TODO put the detName somewhere
+    streamlog_out ( MESSAGE3) << "detectorName " << detName  << std::endl;
+  }
+     
+  // 
+  // Read data about constant magnetic field vector 
+   
+  TiXmlNode* field = root->FirstChild("BField")  ;
+  if( field != 0 ){
+    m_Bx  =  atof(  getXMLAttribute( field , "x" ) .c_str() ) ;
+    m_By  =  atof(  getXMLAttribute( field , "y" ) .c_str() ) ;
+    m_Bz  =  atof(  getXMLAttribute( field , "z" ) .c_str() ) ;
+  }
+  
+  //
+  // Read data about detectors planes 
+   
+  TiXmlNode* detectors = root->FirstChild("detectors")  ;
+  if( detectors == 0 ){
+    throw gear::ParseException( std::string( "No detectors tag found in  ") + geometryXMLFile  ) ;
+  }
+  
+  TiXmlNode* det = 0 ;
+  while( ( det = detectors->IterateChildren( "detector", det ) )  != 0  ){
+    
+    std::string name  =  getXMLAttribute( det, "name" );  
+    std::string type("UNKOWN") ;
+    
+    try {       
+	  type  =  getXMLAttribute( det, "geartype" )  ;
+       
+      //std::cout << "Reading detector " << name
+      //          << " with \"geartype\" " << type << std::endl ;
+    } catch( gear::ParseException& e){
+      
+	  streamlog_out ( MESSAGE3) << "Igoring detector " << name
+                                << " with missing attribute \"geartype\" " << std::endl ; 
+	  continue ;
+    }
+     
+    // Read back SiPlanes ..
+    // TODO: all code in this loop is currently SquareDet specific
+    //       and needs to be move into a SquareDetCreator class
+    
+    if (type == "SiPlanesParameters") {
+      // setup ID
+      const TiXmlElement* siplanesID = det->FirstChildElement( "siplanesID" ) ;
+      int setupID = atoi( getXMLAttribute( siplanesID , "ID" ).c_str() ) ;
+       
+      // number of telescope planes
+      const TiXmlElement* siplanesNumber = det->FirstChildElement( "siplanesNumber" ) ;
+      int nplanes = atoi( getXMLAttribute( siplanesNumber , "number" ).c_str() ) ;
+      
+      // layers
+      const TiXmlNode* xmlLayers = det->FirstChildElement( "layers" ) ;
+      
+      const TiXmlNode* xmlLayer = 0 ;  
+      int ilayer = 0;
+      while( ( xmlLayer = xmlLayers->IterateChildren( "layer" , xmlLayer ) ) != 0 ) {
+        
+        const TiXmlNode* xmlSensitive = xmlLayer->FirstChildElement( "sensitive" ) ;
+        const TiXmlNode* xmlLadder = xmlLayer->FirstChildElement( "ladder" ) ;
+        const TiXmlNode* xmlUCellGroup = 0;  
+        const TiXmlNode* xmlVCellGroup = 0; 
+           
+        int sensorID = atoi( getXMLAttribute( xmlSensitive , "ID" ).c_str() ) ; 
+        double sPosX   = atof( getXMLAttribute( xmlSensitive , "positionX" ).c_str() ) ;
+        double sPosY   = atof( getXMLAttribute( xmlSensitive , "positionY" ).c_str() ) ;
+        double sPosZ   = atof( getXMLAttribute( xmlSensitive , "positionZ" ).c_str() ) ;
+        double sThick   = atof( getXMLAttribute( xmlSensitive , "thickness" ).c_str() ) ;
+        double sRadLen = atof( getXMLAttribute( xmlSensitive , "radLength" ).c_str() ) ;  
+        double sAtomicNum = atof( getXMLAttribute( xmlSensitive , "atomicNumber" ).c_str() ) ;  
+        double sAtomicMass = atof( getXMLAttribute( xmlSensitive , "atomicMass" ).c_str() ) ;  
+        double sAlpha  = atof(getXMLAttribute( xmlSensitive , "alpha" ).c_str() ) ;
+        double sBeta   = atof(getXMLAttribute( xmlSensitive , "beta" ).c_str() ) ;
+        double sGamma  = atof(getXMLAttribute( xmlSensitive , "gamma" ).c_str() ) ;
+        int sRotat1 = atoi(getXMLAttribute( xmlSensitive , "rotation1" ).c_str() ) ;
+        int sRotat2 = atoi(getXMLAttribute( xmlSensitive , "rotation2" ).c_str() ) ;
+        int sRotat3 = atoi(getXMLAttribute( xmlSensitive , "rotation3" ).c_str() ) ;
+        int sRotat4 = atoi(getXMLAttribute( xmlSensitive , "rotation4" ).c_str() ) ;
+        double lSizU   = atof( getXMLAttribute( xmlLadder , "sizeU" ).c_str() ) ;
+        double lSizV   = atof( getXMLAttribute( xmlLadder , "sizeV" ).c_str() ) ;
+        double lThick   = atof( getXMLAttribute( xmlLadder , "thickness" ).c_str() ) ;
+        double lRadLen = atof( getXMLAttribute( xmlLadder , "radLength" ).c_str() ) ;
+        double lAtomicNum = atof( getXMLAttribute( xmlLadder , "atomicNumber" ).c_str() ) ;  
+        double lAtomicMass  = atof(getXMLAttribute( xmlLadder , "atomicMass" ).c_str() ) ;
+        
+        std::vector< std::tuple<int,int,double> > uCellGroupVec; 
+        while( ( xmlUCellGroup = xmlLayer->IterateChildren( "uCellGroup" , xmlUCellGroup ) ) != 0 ) {
+          int sMinCell = atoi( getXMLAttribute( xmlUCellGroup , "minCell" ).c_str() ) ;
+          int sMaxCell = atoi( getXMLAttribute( xmlUCellGroup , "maxCell" ).c_str() ) ;
+          double sPitch = atof(getXMLAttribute( xmlUCellGroup , "pitch" ).c_str() ) ;
+          uCellGroupVec.push_back( std::tuple<int, int, double>(sMinCell, sMaxCell, sPitch) );   
+        }
+        
+        std::vector< std::tuple<int,int,double> > vCellGroupVec; 
+        while( ( xmlVCellGroup = xmlLayer->IterateChildren( "vCellGroup" , xmlVCellGroup ) ) != 0 ) {
+          int sMinCell = atoi( getXMLAttribute( xmlVCellGroup , "minCell" ).c_str() ) ;
+          int sMaxCell = atoi( getXMLAttribute( xmlVCellGroup , "maxCell" ).c_str() ) ;
+          double sPitch = atof(getXMLAttribute( xmlVCellGroup , "pitch" ).c_str() ) ;
+          vCellGroupVec.push_back( std::tuple<int, int, double>(sMinCell, sMaxCell, sPitch) );
+        }  
+        
+        // Construct discrete rotation from mounting frame to global frame.  
+        Matrix3d DiscreteRotation(Matrix3d::Identity()); 
+        DiscreteRotation(0,0) = sRotat1; 
+        DiscreteRotation(0,1) = sRotat2; 
+        DiscreteRotation(1,0) = sRotat3; 
+        DiscreteRotation(1,1) = sRotat4;
+         
+        if ( sRotat1*sRotat4 - sRotat2*sRotat3 == 1 ) {     
+          DiscreteRotation(2,2) = 1;
+        } else if ( sRotat1*sRotat4 - sRotat2*sRotat3 == -1 ) {
+          DiscreteRotation(2,2) = -1;  
+        } else {
+          streamlog_out(MESSAGE3) << std::endl << "Rotation parameters in gear file wrong" << std::endl;  
+        }
+        
+        if ( std::abs( DiscreteRotation.determinant() - 1 ) ==  1.e-5 )  
+          streamlog_out(MESSAGE3) << "Rotation matrix BUG. Discrete matrix determinant is " << DiscreteRotation.determinant() << std::endl;      
+            
+        // Construct discrete reference frame 
+        ReferenceFrame discrete;
+        discrete.SetRotation(DiscreteRotation);   
+        
+        // Read Euler rotation from local to mounting frame
+     
+        const double MYPI = std::atan(1.0)*4;  
+        // Gear file stores angles in degree 
+        double alpha = sAlpha*MYPI/180.; 
+        double beta = sBeta*MYPI/180.; 
+        double gamma = sGamma*MYPI/180.; 
+        Matrix3d EulerRotation;
+        FillRotMatrixKarimaki(EulerRotation, 
+                              alpha, 
+                              beta,
+                              gamma);
+        
+        if ( std::abs( EulerRotation.determinant() - 1 ) ==  1.e-5 )  
+          streamlog_out(MESSAGE3) << "Rotation matrix BUG. Euler rotation matrix determinant is " << EulerRotation.determinant() << std::endl;   
+         
+        // Combine the two factors in proper order
+        Matrix3d NominalRotation = EulerRotation*DiscreteRotation;
+        
+        // Read position of origin of local uvw frame in global coordinates 
+        Vector3d NominalPosition;
+        NominalPosition << sPosX, sPosY, sPosZ;
+        
+        // Construct nominal reference frame 
+        ReferenceFrame nominal;
+        nominal.SetPosition(NominalPosition);
+        nominal.SetRotation(NominalRotation);     
+        
+        // Create a new Det object, ownership goes with TBDetector 
+        m_Dets.push_back( new SquareDet( "SquareDet",
+                                  sensorID,
+                                  ilayer,
+                                  sThick, 
+                                  sRadLen,
+                                  sAtomicNum,
+                                  sAtomicMass, 
+                                  lThick, 
+                                  lRadLen, 
+                                  lAtomicNum, 
+                                  lAtomicMass,
+                                  lSizU, 
+                                  lSizV,  
+                                  uCellGroupVec, 
+                                  vCellGroupVec, 
+                                  discrete, 
+                                  nominal
+                                 ));
+        
+        // Increment layer counter
+        ilayer++;
+      } // end loop  
+   
+      // Set number of sensors read from XML file
+      m_numberOfSensors = int(m_Dets.size());
+      
+      // Order the sensors according the the z position along 
+      // the beam line.
+      std::sort(std::begin(m_Dets), std::end(m_Dets), [](auto const *t1, auto const *t2) {
+         return t1->GetNominal().GetZPosition() < t2->GetNominal().GetZPosition(); });
+      
+      int planeNumber = 0;
+      for (Det* aDet : m_Dets) {
+        aDet->SetPlaneNumber(planeNumber);
+        m_indexMap[aDet->GetSensorID()] = planeNumber;
+        planeNumber++;  
+      }
+       
+    }  
+  } 
+}
+
+void TBDetector::ReadGearConfiguration( )
+{
+  
+  streamlog_out ( MESSAGE3) << "Construct Test Beam Detector OLD WAY" << std::endl;
+   
   // Check iff gear file is available  
   if ( Global::GEAR == 0x0 ) {
     streamlog_out ( ERROR4 ) <<  "The GearMgr is not available, for an unknown reason." << std::endl;
     exit(-1);
   }
-  
+     
   // 
   // Read data about constant magnetic field vector 
    
@@ -241,8 +495,6 @@ void TBDetector::ReadGearConfiguration( )
                                   nominal
                                  ));
   }
-  
-    
 }
 
 

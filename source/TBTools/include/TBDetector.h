@@ -107,8 +107,11 @@ class TBDetector {
   //! Write alignment data base file - overwrites old DB file
   void WriteAlignmentDB( );
     
-  //! Build detector from gear file 
+  //! Build detector from  with gear
   void ReadGearConfiguration( );
+ 
+  //! Build detector from geometry file 
+  void ReadGearConfiguration( const std::string & geometryXMLFile );
   
   //! Read alignment data base file 
   void ReadAlignmentDB( std::string FileName );
