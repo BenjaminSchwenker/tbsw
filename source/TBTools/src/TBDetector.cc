@@ -2,6 +2,8 @@
 #include "TBDetector.h"
 #include "ThreeDModel.h"
 #include "SquareDet.h"
+#include "DetCreatorManager.h"
+#include "DetCreatorBase.h"
 
 // Include basic C header files
 #include <iomanip>
@@ -53,19 +55,7 @@ namespace {
      
     return std::string( *at )  ;
   }
-  
-  std::string getOptionalXMLAttribute(const  TiXmlNode* node , const std::string& name ,
-				      const std::string& defaultValue) {
-    
-    std::string result( defaultValue ) ;
-    
-    try{
-      result = getXMLAttribute( node, name ) ;
-    }
-    catch( gear::ParseException& p){
-    }
-    return result ;
-  }
+ 
 } // end anonymouse namespace
 
 
@@ -91,39 +81,6 @@ void TBDetector::ReadGearConfiguration( const std::string & geometryXMLFile )
   
   streamlog_out ( MESSAGE3) << "Construct Test Beam Detector NEW WAY" << std::endl;
    
-  /*
-  // Draft for abstracted logic to create DetectorComponents of different types 
-   
-  for (const GearDir& component : detectorDir.getNodes("DetectorComponent")) {
-    string name;
-    string creatorName;
-    try {
-      name        = component.getString("@name");
-      creatorName = component.getString("Creator");
-    } catch (gearbox::PathEmptyError& e) {
-      B2ERROR("Could not find required element Name or Creator for " << component.getPath());
-      continue;
-    }
-    
-    if (!m_components.empty() && m_components.count(name) == 0) {
-      B2DEBUG(50, "DetectorComponent " << name << " not in list of components, skipping");
-      continue;
-    }
-    
-    string libraryName = component.getString("Creator/@library", "");
-    if (!iov.empty()) {
-      CreatorBase* creator = CreatorManager::getCreator(creatorName, libraryName);
-      if (creator) {
-        creator->createPayloads(GearDir(component, "Content"), iov);
-      } else {
-        B2ERROR("Could not load creator " << creatorName << " from " << libraryName);
-      }
-    }
-    config.addComponent({name, creatorName, libraryName});
-  }
-  */
-  
-  
   TiXmlDocument doc ;
   bool loadOkay = doc.LoadFile( geometryXMLFile  ) ;
   
@@ -167,18 +124,18 @@ void TBDetector::ReadGearConfiguration( const std::string & geometryXMLFile )
   if( detectors == 0 ){
     throw gear::ParseException( std::string( "No detectors tag found in  ") + geometryXMLFile  ) ;
   }
-  
+   
   TiXmlNode* det = 0 ;
   while( ( det = detectors->IterateChildren( "detector", det ) )  != 0  ){
     
     std::string name  =  getXMLAttribute( det, "name" );  
-    std::string type("UNKOWN") ;
+    std::string creatorName("UNKOWN") ;
     
     try {       
-	  type  =  getXMLAttribute( det, "geartype" )  ;
+	  creatorName =  getXMLAttribute( det, "geartype" )  ;
        
       //std::cout << "Reading detector " << name
-      //          << " with \"geartype\" " << type << std::endl ;
+      //          << " with \"geartype\" " << creatorName << std::endl ;
     } catch( gear::ParseException& e){
       
 	  streamlog_out ( MESSAGE3) << "Igoring detector " << name
@@ -186,160 +143,29 @@ void TBDetector::ReadGearConfiguration( const std::string & geometryXMLFile )
 	  continue ;
     }
      
-    // Read back SiPlanes ..
-    // TODO: all code in this loop is currently SquareDet specific
-    //       and needs to be move into a SquareDetCreator class
+    DetCreatorBase* creator = DetCreatorManager::getCreator(creatorName);
+    if (creator) {
+      creator->create(det, m_Dets);
+    } else {
+      streamlog_out (ERROR3) << "Could not find creator " << creatorName << std::endl;
+    }
     
-    if (type == "SiPlanesParameters") {
-      // setup ID
-      const TiXmlElement* siplanesID = det->FirstChildElement( "siplanesID" ) ;
-      int setupID = atoi( getXMLAttribute( siplanesID , "ID" ).c_str() ) ;
-       
-      // number of telescope planes
-      const TiXmlElement* siplanesNumber = det->FirstChildElement( "siplanesNumber" ) ;
-      int nplanes = atoi( getXMLAttribute( siplanesNumber , "number" ).c_str() ) ;
+  } // end loop detector components
+    
+  // Set total number of sensors read from XML file
+  m_numberOfSensors = int(m_Dets.size());
       
-      // layers
-      const TiXmlNode* xmlLayers = det->FirstChildElement( "layers" ) ;
+  // Order the sensors according the the z position along 
+  // the beam line.
+  std::sort(std::begin(m_Dets), std::end(m_Dets), [](auto const *t1, auto const *t2) {
+                   return t1->GetNominal().GetZPosition() < t2->GetNominal().GetZPosition(); });
       
-      const TiXmlNode* xmlLayer = 0 ;  
-      int ilayer = 0;
-      while( ( xmlLayer = xmlLayers->IterateChildren( "layer" , xmlLayer ) ) != 0 ) {
-        
-        const TiXmlNode* xmlSensitive = xmlLayer->FirstChildElement( "sensitive" ) ;
-        const TiXmlNode* xmlLadder = xmlLayer->FirstChildElement( "ladder" ) ;
-        const TiXmlNode* xmlUCellGroup = 0;  
-        const TiXmlNode* xmlVCellGroup = 0; 
-           
-        int sensorID = atoi( getXMLAttribute( xmlSensitive , "ID" ).c_str() ) ; 
-        double sPosX   = atof( getXMLAttribute( xmlSensitive , "positionX" ).c_str() ) ;
-        double sPosY   = atof( getXMLAttribute( xmlSensitive , "positionY" ).c_str() ) ;
-        double sPosZ   = atof( getXMLAttribute( xmlSensitive , "positionZ" ).c_str() ) ;
-        double sThick   = atof( getXMLAttribute( xmlSensitive , "thickness" ).c_str() ) ;
-        double sRadLen = atof( getXMLAttribute( xmlSensitive , "radLength" ).c_str() ) ;  
-        double sAtomicNum = atof( getXMLAttribute( xmlSensitive , "atomicNumber" ).c_str() ) ;  
-        double sAtomicMass = atof( getXMLAttribute( xmlSensitive , "atomicMass" ).c_str() ) ;  
-        double sAlpha  = atof(getXMLAttribute( xmlSensitive , "alpha" ).c_str() ) ;
-        double sBeta   = atof(getXMLAttribute( xmlSensitive , "beta" ).c_str() ) ;
-        double sGamma  = atof(getXMLAttribute( xmlSensitive , "gamma" ).c_str() ) ;
-        int sRotat1 = atoi(getXMLAttribute( xmlSensitive , "rotation1" ).c_str() ) ;
-        int sRotat2 = atoi(getXMLAttribute( xmlSensitive , "rotation2" ).c_str() ) ;
-        int sRotat3 = atoi(getXMLAttribute( xmlSensitive , "rotation3" ).c_str() ) ;
-        int sRotat4 = atoi(getXMLAttribute( xmlSensitive , "rotation4" ).c_str() ) ;
-        double lSizU   = atof( getXMLAttribute( xmlLadder , "sizeU" ).c_str() ) ;
-        double lSizV   = atof( getXMLAttribute( xmlLadder , "sizeV" ).c_str() ) ;
-        double lThick   = atof( getXMLAttribute( xmlLadder , "thickness" ).c_str() ) ;
-        double lRadLen = atof( getXMLAttribute( xmlLadder , "radLength" ).c_str() ) ;
-        double lAtomicNum = atof( getXMLAttribute( xmlLadder , "atomicNumber" ).c_str() ) ;  
-        double lAtomicMass  = atof(getXMLAttribute( xmlLadder , "atomicMass" ).c_str() ) ;
-        
-        std::vector< std::tuple<int,int,double> > uCellGroupVec; 
-        while( ( xmlUCellGroup = xmlLayer->IterateChildren( "uCellGroup" , xmlUCellGroup ) ) != 0 ) {
-          int sMinCell = atoi( getXMLAttribute( xmlUCellGroup , "minCell" ).c_str() ) ;
-          int sMaxCell = atoi( getXMLAttribute( xmlUCellGroup , "maxCell" ).c_str() ) ;
-          double sPitch = atof(getXMLAttribute( xmlUCellGroup , "pitch" ).c_str() ) ;
-          uCellGroupVec.push_back( std::tuple<int, int, double>(sMinCell, sMaxCell, sPitch) );   
-        }
-        
-        std::vector< std::tuple<int,int,double> > vCellGroupVec; 
-        while( ( xmlVCellGroup = xmlLayer->IterateChildren( "vCellGroup" , xmlVCellGroup ) ) != 0 ) {
-          int sMinCell = atoi( getXMLAttribute( xmlVCellGroup , "minCell" ).c_str() ) ;
-          int sMaxCell = atoi( getXMLAttribute( xmlVCellGroup , "maxCell" ).c_str() ) ;
-          double sPitch = atof(getXMLAttribute( xmlVCellGroup , "pitch" ).c_str() ) ;
-          vCellGroupVec.push_back( std::tuple<int, int, double>(sMinCell, sMaxCell, sPitch) );
-        }  
-        
-        // Construct discrete rotation from mounting frame to global frame.  
-        Matrix3d DiscreteRotation(Matrix3d::Identity()); 
-        DiscreteRotation(0,0) = sRotat1; 
-        DiscreteRotation(0,1) = sRotat2; 
-        DiscreteRotation(1,0) = sRotat3; 
-        DiscreteRotation(1,1) = sRotat4;
-         
-        if ( sRotat1*sRotat4 - sRotat2*sRotat3 == 1 ) {     
-          DiscreteRotation(2,2) = 1;
-        } else if ( sRotat1*sRotat4 - sRotat2*sRotat3 == -1 ) {
-          DiscreteRotation(2,2) = -1;  
-        } else {
-          streamlog_out(MESSAGE3) << std::endl << "Rotation parameters in gear file wrong" << std::endl;  
-        }
-        
-        if ( std::abs( DiscreteRotation.determinant() - 1 ) ==  1.e-5 )  
-          streamlog_out(MESSAGE3) << "Rotation matrix BUG. Discrete matrix determinant is " << DiscreteRotation.determinant() << std::endl;      
-            
-        // Construct discrete reference frame 
-        ReferenceFrame discrete;
-        discrete.SetRotation(DiscreteRotation);   
-        
-        // Read Euler rotation from local to mounting frame
-     
-        const double MYPI = std::atan(1.0)*4;  
-        // Gear file stores angles in degree 
-        double alpha = sAlpha*MYPI/180.; 
-        double beta = sBeta*MYPI/180.; 
-        double gamma = sGamma*MYPI/180.; 
-        Matrix3d EulerRotation;
-        FillRotMatrixKarimaki(EulerRotation, 
-                              alpha, 
-                              beta,
-                              gamma);
-        
-        if ( std::abs( EulerRotation.determinant() - 1 ) ==  1.e-5 )  
-          streamlog_out(MESSAGE3) << "Rotation matrix BUG. Euler rotation matrix determinant is " << EulerRotation.determinant() << std::endl;   
-         
-        // Combine the two factors in proper order
-        Matrix3d NominalRotation = EulerRotation*DiscreteRotation;
-        
-        // Read position of origin of local uvw frame in global coordinates 
-        Vector3d NominalPosition;
-        NominalPosition << sPosX, sPosY, sPosZ;
-        
-        // Construct nominal reference frame 
-        ReferenceFrame nominal;
-        nominal.SetPosition(NominalPosition);
-        nominal.SetRotation(NominalRotation);     
-        
-        // Create a new Det object, ownership goes with TBDetector 
-        m_Dets.push_back( new SquareDet( "SquareDet",
-                                  sensorID,
-                                  ilayer,
-                                  sThick, 
-                                  sRadLen,
-                                  sAtomicNum,
-                                  sAtomicMass, 
-                                  lThick, 
-                                  lRadLen, 
-                                  lAtomicNum, 
-                                  lAtomicMass,
-                                  lSizU, 
-                                  lSizV,  
-                                  uCellGroupVec, 
-                                  vCellGroupVec, 
-                                  discrete, 
-                                  nominal
-                                 ));
-        
-        // Increment layer counter
-        ilayer++;
-      } // end loop  
-   
-      // Set number of sensors read from XML file
-      m_numberOfSensors = int(m_Dets.size());
-      
-      // Order the sensors according the the z position along 
-      // the beam line.
-      std::sort(std::begin(m_Dets), std::end(m_Dets), [](auto const *t1, auto const *t2) {
-         return t1->GetNominal().GetZPosition() < t2->GetNominal().GetZPosition(); });
-      
-      int planeNumber = 0;
-      for (Det* aDet : m_Dets) {
-        aDet->SetPlaneNumber(planeNumber);
-        m_indexMap[aDet->GetSensorID()] = planeNumber;
-        planeNumber++;  
-      }
-       
-    }  
-  } 
+  int planeNumber = 0;
+  for (Det* aDet : m_Dets) {
+    aDet->SetPlaneNumber(planeNumber);
+    m_indexMap[aDet->GetSensorID()] = planeNumber;
+    planeNumber++;  
+  }
 }
 
 void TBDetector::ReadGearConfiguration( )

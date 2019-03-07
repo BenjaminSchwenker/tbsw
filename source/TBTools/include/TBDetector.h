@@ -127,7 +127,10 @@ class TBDetector {
   
   //! Get detector at plane number ipl
   Det& GetDet(int ipl);
-
+  
+  //! Get detectors
+  std::vector<Det*>& GetDets() {return m_Dets; } 
+  
   //! Get detector at plane number ipl
   const Det& GetDet(int ipl) const;
 
