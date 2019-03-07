@@ -13,9 +13,15 @@
 
 #include <algorithm>
 
+#include <string>
+#include <vector>
+#include <tuple>
+#include <limits>
+
 // Include ROOT
 #include <TH2Poly.h>
 #include <TGraph.h>
+#include <TList.h>
 
 // Namespaces
 using namespace marlin;
@@ -57,12 +63,12 @@ PolyDet::PolyDet(const std::string& typeName, int sensorID, int planeNumber) : D
 // set during TH2Poly creation
 int PolyDet::GetMaxUCell()
 {
-  return m_nCellsU-1;
+  return m_maxCellU;
 }  
 
 int PolyDet::GetMaxVCell()
 {
-  return m_nCellsV-1;
+  return m_maxCellV;
 }  
 
 // TODO this code should be put into the class where the PolyDet get constructed from an XML file
@@ -73,37 +79,82 @@ void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, doub
   for (auto group: protocells){ // not checking if type already in ?
     m_cells_neighb_dist.emplace_back(std::get<0>(group), std::get<1>(group), std::get<2>(group));
   }
+  TH2Poly *unshiftedLayout = new TH2Poly();
+  unshiftedLayout->SetFloat();
+  unshiftedLayout->SetName("helperlayout");
 
   m_layout = new TH2Poly();
   m_layout->SetFloat();
   m_layout->SetStats(0);
   m_layout->SetName((std::string("layout_d"+std::to_string(GetSensorID()))).c_str());
   // generate the bins in m_layout
+  double sensSizeUmax = -std::numeric_limits<double>::max();
+  double sensSizeUmin = std::numeric_limits<double>::max();
+  double sensSizeVmax = -std::numeric_limits<double>::max();
+  double sensSizeVmin = std::numeric_limits<double>::max();
 
-  /*
+  m_maxCellU = 0;
+  m_maxCellV = 0;
+  m_minCellU = std::numeric_limits<int>::max();
+  m_minCellV = std::numeric_limits<int>::max();
   // TODO: Outcomment this because i do not see immediatly how to fix the code. 
   for (auto group: cells){
-    TGraph gpixel; // does this need to be a pointer ? does this object need to stay to stay in the layout?
-    std::string pixelname = std::to_string(std::get<0>(group)) + "," + std::to_string(std::get<1>(group));
-    gpixel.SetName(pixelname.c_str());
-
-    int type = std::get<3>(group);
-    double centeru = std::get<4>(group);
-    double centerv = std::get<5>(group);
+    int type = std::get<2>(group);
+    double centeru = std::get<3>(group);
+    double centerv = std::get<4>(group);
     for (auto protopix: protocells){
       if (type == std::get<0>(protopix)){
         int i = 0;
+        TGraph *gpixel = new TGraph(std::get<3>(protopix).size()); // does this need to be a pointer ? does this object need to stay to stay in the layout?
+        std::string pixelname = std::to_string(std::get<0>(group)) + "," + std::to_string(std::get<1>(group));
+        gpixel->SetName(pixelname.c_str());
+	m_maxCellU = (std::get<0>(group) > m_maxCellU) ? std::get<0>(group) : m_maxCellU;
+        m_maxCellV = (std::get<1>(group) > m_maxCellV) ? std::get<1>(group) : m_maxCellV;
+        m_minCellU = (std::get<0>(group) < m_minCellU) ? std::get<0>(group) : m_minCellU;
+        m_minCellV = (std::get<1>(group) < m_minCellV) ? std::get<1>(group) : m_minCellV;
         for (auto points: std::get<3>(protopix)){
-          gpixel.SetPoint(i, std::get<0>(points)+centeru, std::get<1>(points)+centerv);
+          double x = std::get<0>(points)+centeru;
+	  double y = std::get<1>(points)+centerv;
+          gpixel->SetPoint(i, x, y);
+	  sensSizeUmax = (x > sensSizeUmax) ? x : sensSizeUmax;
+	  sensSizeUmin = (x < sensSizeUmin) ? x : sensSizeUmin;
+	  sensSizeVmax = (y > sensSizeVmax) ? y : sensSizeVmax;
+	  sensSizeVmin = (y < sensSizeVmin) ? y : sensSizeVmin;
 	  i++;
 	}
+        unshiftedLayout->AddBin(gpixel);
         break;
       }
-    }
-    m_layout->AddBin(&gpixel);
+    } 
   }
-  */
-  // sensitive area?
+  // layout not necessary centred around origin, so shift it
+  double shiftu = sensSizeUmax - (sensSizeUmax-sensSizeUmin)/2.;
+  double shiftv = sensSizeVmax - (sensSizeVmax-sensSizeVmin)/2.;
+  // check if "==" to 0.0 then no shifting needed but m_layout assignment
+  TList *binList = unshiftedLayout->GetBins();
+  TH2PolyBin *polyBin;
+  TIter next(binList);
+  TObject *obj = 0;
+  while ((obj = next())){
+    polyBin = (TH2PolyBin*)obj;
+    TGraph *gpoly = (TGraph*)polyBin->GetPolygon();
+    for (int k = 0; k<gpoly->GetN(); k++){
+      double x = 0.0;
+      double y = 0.0;
+      gpoly->GetPoint(k, x, y);
+      gpoly->SetPoint(k, x-shiftu, y-shiftv);
+    }
+    m_layout->AddBin(gpoly->Clone());
+    //std::cout << gpoly->GetName() << " " << m_layoutshift->GetBinName(binno) << std::endl; // same name confirmed													
+  }
+  // sensitive area
+  m_sensitiveSizeU = sensSizeUmax - sensSizeUmin;
+  m_sensitiveSizeV = sensSizeVmax - sensSizeVmin;
+
+  // number of u cells and v cells, assuemed u,v start at min then number is max-minu/v +1
+  m_nCellsU = m_maxCellU - m_minCellU + 1;
+  m_nCellsV = m_maxCellV - m_minCellV + 1;
+
 }
 
 double PolyDet::GetSensitiveSizeU()

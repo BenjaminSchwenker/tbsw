@@ -161,11 +161,11 @@ class PolyDet : public Det {
 
   /** Get u type for pixel at position vcell and ucell. 
    */
-  int GetPixelTypeU(int vcell, int ucell);   
+  //int GetPixelTypeU(int vcell, int ucell);   
    
   /** Get v type for pixel at position vcell and ucell. 
    */
-  int GetPixelTypeV(int vcell, int ucell);   
+  //int GetPixelTypeV(int vcell, int ucell);   
 
   // TH2Poly object that defines the class, describing the pixel layout
   TH2Poly *m_layout;
@@ -209,7 +209,9 @@ class PolyDet : public Det {
   int m_nCellsU; 
   int m_nCellsV; 
   int m_minCellU;
-  int m_minCellV; 
+  int m_minCellV;
+  int m_maxCellU;
+  int m_maxCellV; 
   std::vector<double> m_offsetsU;
   std::vector<double> m_offsetsV; 
 };
