@@ -94,7 +94,7 @@ void PolyDetCreator::create(const TiXmlNode* content, std::vector<Det*>& dets) {
     
     const TiXmlNode* xmlPixelMatrix = xmlLayer->FirstChildElement( "pixelMatrix" );
     const TiXmlNode* xmlPixel = 0;
-    vector<tupe<int, int, int, double, double>> pixelGroupVec;
+    vector<tuple<int, int, int, double, double>> pixelGroupVec;
     while((xmlPixel = xmlPixelMatrix->IterateChildren( "pixel", xmlPixel ) ) != 0){
       int type = atoi( getXMLAttribute( xmlPixel , "type" ).c_str() ) ;
       int u = atoi( getXMLAttribute( xmlPixel , "u" ).c_str() ) ;
