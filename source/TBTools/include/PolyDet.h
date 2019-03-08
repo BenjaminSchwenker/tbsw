@@ -159,14 +159,6 @@ class PolyDet : public Det {
    */
   bool ModuleCrossed(double u, double v);
 
-  /** Get u type for pixel at position vcell and ucell. 
-   */
-  //int GetPixelTypeU(int vcell, int ucell);   
-   
-  /** Get v type for pixel at position vcell and ucell. 
-   */
-  //int GetPixelTypeV(int vcell, int ucell);   
-
   // TH2Poly object that defines the class, describing the pixel layout
   TH2Poly *m_layout;
   // Cells, tuple< u,v,type,centreu, centrev >
