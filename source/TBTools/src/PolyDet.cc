@@ -71,7 +71,7 @@ int PolyDet::GetMaxVCell()
   return m_maxCellV;
 }  
 
-// TODO this code should be put into the class where the PolyDet get constructed from an XML file
+// Creates the TH2Poly layout with the center at 0,0
 void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, double> >& cells, const std::vector< std::tuple<int,double,double,std::vector<std::tuple<double,double>>>> & protocells)
 {
   m_cells = cells;
@@ -87,7 +87,7 @@ void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, doub
   m_layout->SetFloat();
   m_layout->SetStats(0);
   m_layout->SetName((std::string("layout_d"+std::to_string(GetSensorID()))).c_str());
-  // generate the bins in m_layout
+
   double sensSizeUmax = -std::numeric_limits<double>::max();
   double sensSizeUmin = std::numeric_limits<double>::max();
   double sensSizeVmax = -std::numeric_limits<double>::max();
@@ -97,7 +97,7 @@ void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, doub
   m_maxCellV = 0;
   m_minCellU = std::numeric_limits<int>::max();
   m_minCellV = std::numeric_limits<int>::max();
-  // TODO: Outcomment this because i do not see immediatly how to fix the code. 
+  // generate the pixel in the layout from the center position and the prototype pixel.
   for (auto group: cells){
     int type = std::get<2>(group);
     double centeru = std::get<3>(group);
@@ -105,8 +105,8 @@ void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, doub
     for (auto protopix: protocells){
       if (type == std::get<0>(protopix)){
         int i = 0;
-        TGraph *gpixel = new TGraph(std::get<3>(protopix).size()); // does this need to be a pointer ? does this object need to stay to stay in the layout?
-        std::string pixelname = std::to_string(std::get<0>(group)) + "," + std::to_string(std::get<1>(group));
+        TGraph *gpixel = new TGraph(std::get<3>(protopix).size()); 
+	std::string pixelname = std::to_string(std::get<0>(group)) + "," + std::to_string(std::get<1>(group));
         gpixel->SetName(pixelname.c_str());
 	m_maxCellU = (std::get<0>(group) > m_maxCellU) ? std::get<0>(group) : m_maxCellU;
         m_maxCellV = (std::get<1>(group) > m_maxCellV) ? std::get<1>(group) : m_maxCellV;
@@ -130,7 +130,7 @@ void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, doub
   // layout not necessary centred around origin, so shift it
   double shiftu = sensSizeUmax - (sensSizeUmax-sensSizeUmin)/2.;
   double shiftv = sensSizeVmax - (sensSizeVmax-sensSizeVmin)/2.;
-  // check if "==" to 0.0 then no shifting needed but m_layout assignment
+  
   TList *binList = unshiftedLayout->GetBins();
   TH2PolyBin *polyBin;
   TIter next(binList);
@@ -138,14 +138,13 @@ void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, doub
   while ((obj = next())){
     polyBin = (TH2PolyBin*)obj;
     TGraph *gpoly = (TGraph*)polyBin->GetPolygon();
-    for (int k = 0; k<gpoly->GetN(); k++){
+    for (int k = 0; k < gpoly->GetN(); k++){
       double x = 0.0;
       double y = 0.0;
       gpoly->GetPoint(k, x, y);
       gpoly->SetPoint(k, x-shiftu, y-shiftv);
     }
-    m_layout->AddBin(gpoly->Clone());
-    //std::cout << gpoly->GetName() << " " << m_layoutshift->GetBinName(binno) << std::endl; // same name confirmed													
+    m_layout->AddBin(gpoly->Clone());    
   }
   // sensitive area
   m_sensitiveSizeU = sensSizeUmax - sensSizeUmin;
@@ -154,6 +153,9 @@ void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, doub
   // number of u cells and v cells, assuemed u,v start at min then number is max-minu/v +1
   m_nCellsU = m_maxCellU - m_minCellU + 1;
   m_nCellsV = m_maxCellV - m_minCellV + 1;
+
+  delete unshiftedLayout;
+  unshiftedLayout = nullptr;
 
 }
 
@@ -208,8 +210,7 @@ bool PolyDet::areNeighbors(int vcell1, int ucell1, int vcell2, int ucell2)
 }
 
 int PolyDet::GetPixelType(int vcell, int ucell)  
-{
-  int i = 0; 
+{ 
   for (auto group : m_cells ) {
     int uCell = std::get<0>(group);
     int vCell = std::get<1>(group);
@@ -223,7 +224,7 @@ double PolyDet::GetPitchU(int vcell, int ucell)
 {
   int type = GetPixelType(vcell, ucell);
   for (auto group: m_pitch){
-    if (type = std::get<0>(group))
+    if (type == std::get<0>(group))
       return std::get<1>(group);
   }  
   return -1.0; // better return value?
@@ -233,7 +234,7 @@ double PolyDet::GetPitchV(int vcell, int ucell)
 {
   int type = GetPixelType(vcell, ucell);
   for (auto group: m_pitch){
-    if (type = std::get<0>(group))
+    if (type == std::get<0>(group))
       return std::get<2>(group);
   }  
   return -1.0;
@@ -244,36 +245,23 @@ int PolyDet::encodePixelID(int vcell, int ucell)
   return (m_nCellsU*vcell + ucell);
 }
 
-
 void PolyDet::decodePixelID(int& vcell, int& ucell, int uniqPixelID)
 {
   vcell = uniqPixelID / m_nCellsU;
   ucell = uniqPixelID - vcell*m_nCellsU;
 }
 
-
-// TODO would be faster with sensitiveSize, no need to search for bin?
 bool PolyDet::SensitiveCrossed(double u, double v, double w)
 {
-  // use TH2Poly isInside(u,v)?
-  // catch -5?
   int bin = m_layout->FindBin(u, v);
   if (bin < 0 && bin != -5)
     return false;
-  /*if (u < -(m_sensitiveSizeU)/2.  || u > (m_sensitiveSizeU)/2.) {
-   return false;
-  }
-  if (v < -(m_sensitiveSizeV)/2. || v > (m_sensitiveSizeV)/2.) {
-    return false;
-  }
-  */
   if (w < -m_sensitiveThickness/2. || w > m_sensitiveThickness/2.) {
     return false;
   }
   return true; 
 }
 
-// TODO leave as is, difficult with margin and findBin
 bool PolyDet::isPointOutOfSensor( double u, double v, double w) 
 {
   bool isOut = false; 
@@ -286,8 +274,7 @@ bool PolyDet::isPointOutOfSensor( double u, double v, double w)
    // Return if out or not
    return isOut;
 }
-	
-// TODO leave as is as ladder not described with TH2Poly
+
 bool PolyDet::ModuleCrossed(double u, double v)
 {  
   if (u < -m_ladderSizeU/2.  || u > m_ladderSizeU/2.) {
