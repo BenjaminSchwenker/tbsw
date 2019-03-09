@@ -115,7 +115,7 @@ KalmanAligner::KalmanAligner() : Processor("KalmanAligner")
                               _errorsGamma, initErrorsGamma );
 
   registerProcessorParameter ("UpdateAlignment",
-                              "Update lcio alignmentDB using alignment results (true/false)?",
+                              "Update alignment DB using offset corrections (true/false)?",
                               _updateAlignment, static_cast <bool> (true) ); 
 
   registerProcessorParameter ("NewAlignment",

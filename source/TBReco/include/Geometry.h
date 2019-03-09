@@ -22,7 +22,7 @@ namespace depfet {
 
 //! Geometry processor 
 /*! 
- * 
+ *  Setup geometry description for test beam telescope 
  *   
  *  Author: Benjamin Schwenker, Göttingen University 
  *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
@@ -42,15 +42,6 @@ class Geometry : public marlin::Processor {
    //!Method called at the beginning of data processing - used for initialization
    virtual void init();
    
-   //!Method called for each run - used for run header processing
-   virtual void processRunHeader(LCRunHeader * run);
-   
-   //!Method called for each event - used for event data processing
-   virtual void processEvent(LCEvent * evt);
-   
-   //!Method called after each event - used for data checking
-   virtual void check(LCEvent * evt);
-   
    //!Method called after all data processing
    virtual void end();
    
@@ -60,6 +51,17 @@ class Geometry : public marlin::Processor {
  protected:
    
    //! Processor Parameters 
+
+   //! Path for the geometry in the parameter space
+   std::string m_geometryPath;
+
+   /** Whether or not this module will raise an error if the geometry is
+     * already present. This can be used to add the geometry multiple times if
+     * it's not clear if it's already present in another path */
+   bool m_ignoreIfPresent{false};
+
+   /** If true we need to create a payload */
+   bool m_createGeometryPayload{false};
       
    //! AlignmentDB file name 
    std::string _alignmentDBFileName;
@@ -71,15 +73,7 @@ class Geometry : public marlin::Processor {
    /*! Don't use current alignment data base, but start from scratch   
     */
    bool _newAlignment;
-   
- private:
-   
-   double _timeCPU; //!< CPU time
-   int    _nRun ;   //!< Run number
-   int    _nEvt ;   //!< Event number
     
-   // Handle to detector data 
-   TBDetector  _detector;        
 }; // Class
 
 } // Namespace

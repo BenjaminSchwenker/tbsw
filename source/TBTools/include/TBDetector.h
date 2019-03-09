@@ -141,6 +141,14 @@ class TBDetector {
   
   //! Method printing general geometry parameters
   void Print();
+
+  /** Return a reference to the singleton instance */
+  static TBDetector& GetInstance();
+   
+  /** Return a reference to the SensorInfo of a given SensorID.
+   *  This function is a shorthand for TBDetect::GetInstance().GetDet(planeNumber)
+   */
+  static const Det& Get(int planeNumber) { return GetInstance().GetDet(planeNumber); }
      
  private:
        

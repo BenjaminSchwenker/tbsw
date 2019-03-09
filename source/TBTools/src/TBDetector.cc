@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <iostream>
 #include <algorithm>
+#include <memory>
 
 // Include ROOT classes
 #include <TH1F.h>
@@ -58,6 +59,12 @@ namespace {
  
 } // end anonymouse namespace
 
+
+TBDetector& TBDetector::GetInstance()
+{
+  static std::unique_ptr<TBDetector> instance(new TBDetector());
+  return *instance;
+}
 
 TBDetector::TBDetector( ) 
 {
