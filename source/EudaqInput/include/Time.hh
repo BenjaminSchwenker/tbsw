@@ -48,12 +48,13 @@ namespace eudaqinput {
       return tv_sec > other.tv_sec ||
         (tv_sec == other.tv_sec && tv_usec > other.tv_usec);
     }
-    operator const timeval () const {
+    operator timeval () const {
       timeval tv;
       tv.tv_sec = tv_sec;
       tv.tv_usec = tv_usec;
       return tv;
     }
+
     std::string Formatted(const std::string & format = DEFAULT_FORMAT) const;
     static Time Current();
   private:
@@ -79,11 +80,12 @@ namespace eudaqinput {
 
   inline std::ostream & operator << (std::ostream & os, const timeval & tv) {
     if (tv.tv_sec < 0) {
-      return os << '-' << Time(-tv.tv_sec - 1, 1000000 - tv.tv_usec);
+      return os << '-' <<timeval(Time(-tv.tv_sec - 1, 1000000 - tv.tv_usec));
     }
     return os << tv.tv_sec << '.' << std::setw(6) << std::setfill('0') << tv.tv_usec << std::setfill(' ');
   }
 
 }
+
 
 #endif // EUDAQINPUT_INCLUDED_Time
