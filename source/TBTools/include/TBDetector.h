@@ -113,11 +113,11 @@ class TBDetector {
   //! Build detector from geometry file 
   void ReadGearConfiguration( const std::string & geometryXMLFile );
   
-  //! Read alignment data base file 
-  void ReadAlignmentDB( std::string FileName );
+  //! Read alignment data base  
+  void ApplyAlignmentDB( );
 
-  //! Read alignment data base file name 
-  void SetAlignmentDBName( std::string FileName );
+  //! Set path to alignment data base file 
+  void SetAlignmentDBPath( std::string FilePath );
   
   //! Get number of pixel sensors 
   int GetNSensors() const { return m_numberOfSensors; }
@@ -157,8 +157,8 @@ class TBDetector {
   double m_By; 
   double m_Bz; 
 
-  // Name of data base file 
-  std::string m_alignmentDBFileName;
+  // Path to data base file 
+  std::string m_alignmentDBFilePath;
   
   // Total number of sensors  
   int m_numberOfSensors;       

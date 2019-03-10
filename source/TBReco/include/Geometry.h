@@ -51,28 +51,15 @@ class Geometry : public marlin::Processor {
  protected:
    
    //! Processor Parameters 
-
-   //! Path for the geometry in the parameter space
-   std::string m_geometryPath;
-
-   /** Whether or not this module will raise an error if the geometry is
-     * already present. This can be used to add the geometry multiple times if
-     * it's not clear if it's already present in another path */
-   bool m_ignoreIfPresent{false};
-
-   /** If true we need to create a payload */
-   bool m_createGeometryPayload{false};
-      
-   //! AlignmentDB file name 
-   std::string _alignmentDBFileName;
-      
-   //! Update alignmentDB   
-   bool _updateAlignment;
    
-   //! New alignment  
-   /*! Don't use current alignment data base, but start from scratch   
-    */
-   bool _newAlignment;
+   //! AlignmentDB file path
+   std::string m_alignmentDBFilePath;
+      
+   //! Override alignmentDB file   
+   bool m_overrideAlignment;
+   
+   //! Apply alignmentDB corrections   
+   bool m_applyAlignment;
     
 }; // Class
 

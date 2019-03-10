@@ -69,7 +69,7 @@ TBDetector& TBDetector::GetInstance()
 TBDetector::TBDetector( ) 
 {
   // This is a setup with no detectors 
-  m_alignmentDBFileName = "xxx";
+  m_alignmentDBFilePath = "";
   m_numberOfSensors  = 0; 
 
   m_Bx = 0;
@@ -331,22 +331,18 @@ void TBDetector::ReadGearConfiguration( )
 }
 
 
-void TBDetector::SetAlignmentDBName( std::string FileName )
+void TBDetector::SetAlignmentDBPath( std::string FilePath )
 {
-     
   // Store name of alignment data base
-  m_alignmentDBFileName = FileName;
+  m_alignmentDBFilePath = FilePath;
 }
 
 
-void TBDetector::ReadAlignmentDB( std::string FileName )
+void TBDetector::ApplyAlignmentDB(  )
 {
-     
-  // Store name of alignment data base
-  m_alignmentDBFileName = FileName;
-  
-  // Open alignment data base
-  TFile * rootFile = new TFile(m_alignmentDBFileName.c_str(), "READ");
+    
+  // Open alignment data base file
+  TFile * rootFile = new TFile(m_alignmentDBFilePath.c_str(), "READ");
   
   std::map< std::string, TH1F *> histoMap;
  
@@ -446,9 +442,9 @@ void TBDetector::ReadAlignmentDB( std::string FileName )
 void TBDetector::WriteAlignmentDB( )
 {
   
-  streamlog_out(MESSAGE3) << std::endl << "Write alignment DB file " << m_alignmentDBFileName << std::endl << std::endl;
+  streamlog_out(MESSAGE3) << std::endl << "Write alignment DB file " << m_alignmentDBFilePath << std::endl << std::endl;
   
-  TFile * rootFile = new TFile( m_alignmentDBFileName.c_str(),"recreate");
+  TFile * rootFile = new TFile( m_alignmentDBFilePath.c_str(),"recreate");
   rootFile->cd("");
   
   std::map< std::string, TH1F *> _histoMap;
@@ -534,7 +530,7 @@ void TBDetector::WriteAlignmentDB( )
   rootFile->Close();
   delete rootFile;   
 
-  streamlog_out(MESSAGE3) << std::endl << "Finish alignment DB file " << m_alignmentDBFileName << std::endl << std::endl;
+  streamlog_out(MESSAGE3) << std::endl << "Finish alignment DB file " << m_alignmentDBFilePath << std::endl << std::endl;
 }
 
 

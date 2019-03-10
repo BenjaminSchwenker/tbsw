@@ -3,7 +3,6 @@
 // Author: Benjamin Schwenker, University of Göttingen 
 // <mailto:benjamin.schwenker@phys.uni-goettingen.de>
 
-// TBTools includes 
 #include "Geometry.h"
 
 // C++ includes
@@ -33,17 +32,17 @@ Geometry::Geometry() : Processor("Geometry")
    
   // 
   // Processor parameters
-  registerProcessorParameter ("AlignmentDBFileName",
-                             "This is the name of the file with the alignment constants (add .root)",
-                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) ); 
+  registerProcessorParameter ("AlignmentDBFilePath",
+                             "This is the path to the alignment constants (add .root)",
+                             m_alignmentDBFilePath, static_cast< string > ( "alignmentDB.root" ) ); 
   
-  registerProcessorParameter ("UpdateAlignment",
-                              "Update lcio alignmentDB using alignment results (true/false)?",
-                              _updateAlignment, static_cast <bool> (true) ); 
+  registerProcessorParameter ("OverrideAlignment",
+                              "Override alignmentDB (true/false)?",
+                              m_overrideAlignment, static_cast <bool> (true) ); 
 
-  registerProcessorParameter ("NewAlignment",
-                              "Start alignment from scratch (true/false)?",
-                              _newAlignment, static_cast <bool> (false) ); 
+  registerProcessorParameter ("ApplyAlignment",
+                              "Apply corrections from alignmentDB (true/false)?",
+                              m_applyAlignment, static_cast <bool> (false) ); 
                                 
 }
 
@@ -57,18 +56,16 @@ void Geometry::init() {
   
   std::string gearFile = Global::parameters->getStringVal("GearXMLFile" ) ;
    
-  // Read detector constants from gear file NEW WAY
-  // This creates an instance of TBDetector which is globally available
+  // Read detector constants from gear file and create a global instance
+  // of TBDetector 
   TBDetector::GetInstance().ReadGearConfiguration(gearFile);
   
-  streamlog_out( MESSAGE3 ) << "Print after reading gear " << endl;
-  TBDetector::GetInstance().Print();
+  // Set the path to alignmentDB file
+  TBDetector::GetInstance().SetAlignmentDBPath( m_alignmentDBFilePath );
   
-  // Read alignment data base file 
-  if(!_newAlignment) TBDetector::GetInstance().ReadAlignmentDB( _alignmentDBFileName );
-  // This is needed, because if the AlignmentDB is not read, the detector construct doesn't know the alignmentDB name
-  else  TBDetector::GetInstance().SetAlignmentDBName( _alignmentDBFileName ); 
-       
+  // Read and apply alignment data base file 
+  if(m_applyAlignment) TBDetector::GetInstance().ApplyAlignmentDB();
+  
 }
 
 
@@ -78,7 +75,12 @@ void Geometry::init() {
 void Geometry::end()
 {
   
-  if ( _updateAlignment ) { 
+  if ( m_overrideAlignment ) { 
+    // Print message
+    streamlog_out(MESSAGE3) << std::endl
+                            << "Override the alignmentDB in path " << m_alignmentDBFilePath
+                            << std::endl;
+    
     TBDetector::GetInstance().WriteAlignmentDB( ); 
   } 
            
@@ -99,7 +101,7 @@ void Geometry::printProcessorParams() const
 
    streamlog_out(MESSAGE3)  << std::endl
                             << " "
-                            << "Geometry Development Version, be carefull!!"
+                            << "Geometry Processor development Version, be carefull!!"
                             << " "
                             << std::endl  << std::endl;   
 

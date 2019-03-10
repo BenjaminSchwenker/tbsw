@@ -30,6 +30,7 @@
 #include "MaterialEffect.h"
 #include "HelixTrackModel.h"
 #include "StraightLineTrackModel.h"
+#include "TBDetector.h"
 
 #include <Eigen/Core>
 using Eigen::Vector3d;
@@ -80,15 +81,6 @@ namespace depfet {
     registerProcessorParameter ("DoFractionalBetheHeitlerEnergyLoss", "Flag (true/false) for simulating fractional Bethe Heitler energy loss",
                                 m_doFractionalBetheHeitlerEnergyLoss,  static_cast < bool > (false));
     
-    registerProcessorParameter ("AlignmentDBFileName",
-                             "This is the name of the file with the alignment constants (add .root)",
-                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) ); 
-    
-    registerProcessorParameter ("NewAlignment",
-                              "Start alignment from scratch (true/false)?",
-                              _newAlignment, static_cast <bool> (true) );  
-    
-    
                                  
   }
 
@@ -104,14 +96,6 @@ namespace depfet {
   
     // CPU time start
     m_timeCPU = clock()/1000;
-
-    // Read detector constants from gear file
-    m_detector.ReadGearConfiguration();  
-    
-    // Read alignment data base file 
-    if(!_newAlignment) m_detector.ReadAlignmentDB( _alignmentDBFileName );
-    // This is needed, because if the AlignmentDB is not read, the detector construct doesn't know the alignmentDB name
-    else  m_detector.SetAlignmentDBName( _alignmentDBFileName );
   }
 
   //
@@ -157,13 +141,15 @@ namespace depfet {
     GenericTrackModel* TrackModel; 
       
     Vector3d field;
-    field<< m_detector.GetBx(), m_detector.GetBy(), m_detector.GetBz();
+    field<< TBDetector::GetInstance().GetBx(), TBDetector::GetInstance().GetBy(), TBDetector::GetInstance().GetBz();
       
     if ( field.norm() == 0 ) {
       TrackModel = new StraightLineTrackModel();    
     } else {
       TrackModel = new HelixTrackModel(field);  
     }   
+
+    int nSensors = TBDetector::GetInstance().GetNSensors();
     
     // Create SimTrackerHit collection  
     LCCollectionVec * simHitVec = new LCCollectionVec(LCIO::SIMTRACKERHIT) ;
@@ -224,7 +210,7 @@ namespace depfet {
         
         if (ipl >= 0 ) { 
                  
-          Det& current_det = m_detector.GetDet(ipl);
+          const Det& current_det = TBDetector::Get(ipl);
           
           // Local track state on sensor == defined as state before scattering and energy loss 
           // --------------------------- 
@@ -255,7 +241,7 @@ namespace depfet {
           simHit->setMomentum(hitMom);
           
           // Set CellID
-          cellIDEnc["sensorID"] = m_detector.GetDet(ipl).GetSensorID();  
+          cellIDEnc["sensorID"] = current_det.GetSensorID();  
           cellIDEnc["isEntry"] = 0;
           cellIDEnc["isExit"] = 0;
           cellIDEnc.setCellID(simHit);
@@ -292,10 +278,10 @@ namespace depfet {
         int jpl = ipl+1;      
             
         // Exit condition   
-        if (jpl == m_detector.GetNSensors() ) {break;}
+        if (jpl == nSensors ) {break;}
         
         // Next sensor along beam line 
-        ReferenceFrame next_frame = m_detector.GetDet(jpl).GetNominal();
+        const ReferenceFrame& next_frame = TBDetector::Get(jpl).GetNominal();
                
         // Check that track really intersects surface
         if (! TrackModel->CheckHitsSurface(state, frame, next_frame) ) {
@@ -343,7 +329,7 @@ namespace depfet {
         frame = next_frame;
         state = next_state;  
            
-      } while ( ipl < m_detector.GetNSensors() ); 
+      } while ( ipl < nSensors ); 
         
     }
     
@@ -363,17 +349,6 @@ namespace depfet {
   //
   void FastSimulation::end()
   {
-    
-    ////////////////////////////////////////////////////////////
-    // Print detector geometrie used for simulation    
-       
-    streamlog_out ( MESSAGE3 ) << "Detector geometry in simulation: " << endl;   
-    m_detector.Print();   
-       
-    //////////////////////////////////////////////////////////////////////  
-    // Save alignment DB used for simulation 
-    
-    m_detector.WriteAlignmentDB( ); 
      
     streamlog_out ( MESSAGE3 ) << endl;
     streamlog_out ( MESSAGE3 ) << "Successfully finished" << endl;
