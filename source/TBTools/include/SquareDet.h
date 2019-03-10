@@ -15,14 +15,36 @@ namespace depfet {
  *  The SquareDet class is a subclass of the Det class and represents a pixel detector 
  *  with a checkerboard type pixel matrix. The pixel pitch may change along the local 
  *  u-axis or v-axis.  
- * 
+ *  
  *  The geometrical 2D layout of pixels is constructed from a product of two 1D 'strip' layouts 
  *  for the u and v axis. As the 'strip' pitch in the 1D layouts changes, also the area of the 
- *  2D pixel cells will change as well.   
+ *  2D pixel cells will change as well. Neighboring 'strips' with the same pitch are called a 
+ *  CellGroup and have the same PixelType.    
  *  
- *  The pixel matrix has pixel at positions vCell, uCell in the range [minUCell,maxUCell] and 
- *  [minVCell,maxVCell]. The center of the pixel is the geometrical center of the square area 
- *  with height GetPitchV(vCell,uCell) and width GetPitch(vCell,uCell). 
+ *  The definition of the 1D layouts is read from the gear file. For example, a Belle II pixel 
+ *  sensor has 768 (vCells) and 250 columns (uCells). The row pitch is large for rows [0,511] 
+ *  and fine for rows [512,767]. The column pitch is constant. 
+ *  
+ *  <pre>
+ *  <vCellGroup
+ *    minCell="0"
+ *    maxCell="511"
+ *    pitch="0.060		 		
+ *  /vCellGroup>
+ *  <vCellGroup
+ *    minCell="512"
+ *    maxCell="767"
+ *    pitch="0.055"
+ *  /vCellGroup>
+ *  <uCellGroup
+ *    minCell="0"
+ *    maxCell="249"
+ *    pitch="0.050"
+ *  /uCellGroup>
+ *  </pre>
+ *
+ *  Note that there is no restriction on the number of vCellGroups or uCellGroups and the above 
+ *  example just demonstrates the simplest non trivial case. 
  *  
  *  @Author B. Schwenker, University of Göttingen
  *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
