@@ -60,16 +60,6 @@ PolyDet::PolyDet(const std::string& typeName, int sensorID, int planeNumber,
 PolyDet::PolyDet(const std::string& typeName, int sensorID, int planeNumber) : Det(typeName, sensorID, planeNumber) {}
 
 
-// set during TH2Poly creation
-int PolyDet::GetMaxUCell()
-{
-  return m_maxCellU;
-}  
-
-int PolyDet::GetMaxVCell()
-{
-  return m_maxCellV;
-}  
 
 // Creates the TH2Poly layout with the center at 0,0
 void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, double> >& cells, const std::vector< std::tuple<int,double,double,std::vector<std::tuple<double,double>>>> & protocells)
@@ -159,17 +149,52 @@ void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, doub
 
 }
 
-double PolyDet::GetSensitiveSizeU()
+// set during TH2Poly creation
+int PolyDet::GetMaxUCell() const
 {
-  return m_sensitiveSizeU; 
+  return m_maxCellU;
+}  
+
+int PolyDet::GetMaxVCell() const
+{
+  return m_maxCellV;
+}  
+
+// set during TH2Poly creation
+int PolyDet::GetMinUCell() const
+{
+  return m_minCellU;
+}  
+
+int PolyDet::GetMinVCell() const
+{
+  return m_minCellV;
+}  
+
+// TODO Helge should check this because it is probably wrong
+double PolyDet::GetSensitiveMaxU() const
+{
+  return m_sensitiveSizeU/2.; 
 }  
   
-double PolyDet::GetSensitiveSizeV()
+double PolyDet::GetSensitiveMaxV() const
 {
-  return m_sensitiveSizeV;  
+  return m_sensitiveSizeV/2.;  
 } 
+
+// TODO Helge should check this because it is probably wrong
+double PolyDet::GetSensitiveMinU() const
+{
+  return -m_sensitiveSizeU/2.; 
+}  
+  
+double PolyDet::GetSensitiveMinV() const
+{
+  return -m_sensitiveSizeV/2.;  
+} 
+
 // TODO different distance comparison?
-bool PolyDet::areNeighbors(int vcell1, int ucell1, int vcell2, int ucell2)
+bool PolyDet::areNeighbors(int vcell1, int ucell1, int vcell2, int ucell2) const
 {
   // get coord, type, make distance, compare to type neighbour distance
   // initialised with maximum distance, so not automatic neighbours as if assigned 0.
@@ -209,7 +234,7 @@ bool PolyDet::areNeighbors(int vcell1, int ucell1, int vcell2, int ucell2)
   return false;
 }
 
-int PolyDet::GetPixelType(int vcell, int ucell)  
+int PolyDet::GetPixelType(int vcell, int ucell)  const
 { 
   for (auto group : m_cells ) {
     int uCell = std::get<0>(group);
@@ -220,7 +245,7 @@ int PolyDet::GetPixelType(int vcell, int ucell)
   return -1; // not pixel match found?
 } 
 
-double PolyDet::GetPitchU(int vcell, int ucell)  
+double PolyDet::GetPitchU(int vcell, int ucell)  const
 {
   int type = GetPixelType(vcell, ucell);
   for (auto group: m_pitch){
@@ -230,7 +255,7 @@ double PolyDet::GetPitchU(int vcell, int ucell)
   return -1.0; // better return value?
 } 
 
-double PolyDet::GetPitchV(int vcell, int ucell)
+double PolyDet::GetPitchV(int vcell, int ucell) const
 {
   int type = GetPixelType(vcell, ucell);
   for (auto group: m_pitch){
@@ -240,18 +265,18 @@ double PolyDet::GetPitchV(int vcell, int ucell)
   return -1.0;
 }  
 
-int PolyDet::encodePixelID(int vcell, int ucell)
+int PolyDet::encodePixelID(int vcell, int ucell) const
 {
   return (m_nCellsU*vcell + ucell);
 }
 
-void PolyDet::decodePixelID(int& vcell, int& ucell, int uniqPixelID)
+void PolyDet::decodePixelID(int& vcell, int& ucell, int uniqPixelID) const
 {
   vcell = uniqPixelID / m_nCellsU;
   ucell = uniqPixelID - vcell*m_nCellsU;
 }
 
-bool PolyDet::SensitiveCrossed(double u, double v, double w)
+bool PolyDet::SensitiveCrossed(double u, double v, double w) const
 {
   int bin = m_layout->FindBin(u, v);
   if (bin < 0 && bin != -5)
@@ -262,7 +287,7 @@ bool PolyDet::SensitiveCrossed(double u, double v, double w)
   return true; 
 }
 
-bool PolyDet::isPointOutOfSensor( double u, double v, double w) 
+bool PolyDet::isPointOutOfSensor( double u, double v, double w) const
 {
   bool isOut = false; 
   
@@ -275,7 +300,7 @@ bool PolyDet::isPointOutOfSensor( double u, double v, double w)
    return isOut;
 }
 
-bool PolyDet::ModuleCrossed(double u, double v)
+bool PolyDet::ModuleCrossed(double u, double v) const
 {  
   if (u < -m_ladderSizeU/2.  || u > m_ladderSizeU/2.) {
    return false;
@@ -287,7 +312,7 @@ bool PolyDet::ModuleCrossed(double u, double v)
   return true; 
 }
 
-double PolyDet::GetThickness(double u, double v)
+double PolyDet::GetThickness(double u, double v) const
 {
   if ( SensitiveCrossed(u, v) ) {
     return m_sensitiveThickness; 
@@ -299,12 +324,12 @@ double PolyDet::GetThickness(double u, double v)
 }  
 
 
-double PolyDet::GetTrackLength(double u, double v, double dudw, double dvdw)
+double PolyDet::GetTrackLength(double u, double v, double dudw, double dvdw) const
 {
   return GetThickness(u,v)*std::sqrt(1 + dudw*dudw + dvdw*dvdw);  
 }
     
-double PolyDet::GetRadLength(double u, double v)
+double PolyDet::GetRadLength(double u, double v) const
 { 
   if ( SensitiveCrossed(u, v) ) {
     return m_sensitiveRadLength; 
@@ -315,7 +340,7 @@ double PolyDet::GetRadLength(double u, double v)
   return materialeffect::X0_air; 
 } 
 
-double PolyDet::GetAtomicNumber(double u, double v)
+double PolyDet::GetAtomicNumber(double u, double v) const
 { 
   if ( SensitiveCrossed(u, v) ) {
     return m_sensitiveAtomicNumber; 
@@ -326,7 +351,7 @@ double PolyDet::GetAtomicNumber(double u, double v)
   return materialeffect::AtomicNumber_air;
 } 
 
-double PolyDet::GetAtomicMass(double u, double v)
+double PolyDet::GetAtomicMass(double u, double v) const
 { 
   if ( SensitiveCrossed(u, v) ) {
     return m_sensitiveAtomicMass;  
@@ -338,7 +363,7 @@ double PolyDet::GetAtomicMass(double u, double v)
 } 
 
 
-double PolyDet::GetPixelCenterCoordV(int vcell, int ucell)
+double PolyDet::GetPixelCenterCoordV(int vcell, int ucell) const
 {    
   // geometric centre of bounding box or charge collection centre as in config file specified?
   for (auto group: m_cells){
@@ -349,7 +374,7 @@ double PolyDet::GetPixelCenterCoordV(int vcell, int ucell)
 }
  
 
-double PolyDet::GetPixelCenterCoordU(int vcell, int ucell)
+double PolyDet::GetPixelCenterCoordU(int vcell, int ucell) const
 {
   for (auto group: m_cells){
     if (ucell == std::get<0>(group) && vcell == std::get<1>(group))
@@ -359,13 +384,13 @@ double PolyDet::GetPixelCenterCoordU(int vcell, int ucell)
 }
 
 
-void PolyDet::GetPixelCenterCoord(double& vcoord, double& ucoord, int vcell, int ucell)
+void PolyDet::GetPixelCenterCoord(double& vcoord, double& ucoord, int vcell, int ucell) const
 {
   vcoord = GetPixelCenterCoordV(vcell, ucell);
   ucoord = GetPixelCenterCoordU(vcell, ucell);
 }
 
-int PolyDet::GetUCellFromCoord( double u, double v )
+int PolyDet::GetUCellFromCoord( double u, double v ) const
 {
   if (u < -m_sensitiveSizeU/2.) {
    return -1;//m_minCellU;
@@ -381,7 +406,7 @@ int PolyDet::GetUCellFromCoord( double u, double v )
 } 
    
    
-int PolyDet::GetVCellFromCoord( double u, double v ) 
+int PolyDet::GetVCellFromCoord( double u, double v ) const
 {
   if (v < -m_sensitiveSizeV/2.) {
    return -1;//m_minCellV; no minCell?

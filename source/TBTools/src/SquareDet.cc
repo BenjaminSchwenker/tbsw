@@ -55,17 +55,6 @@ SquareDet::SquareDet(const std::string& typeName, int sensorID, int planeNumber)
 
 
 
-int SquareDet::GetMaxUCell()
-{
-  return m_nCellsU-1;
-}  
-
-int SquareDet::GetMaxVCell()
-{
-  return m_nCellsV-1;
-}  
-
-
 // TODO this code should be put into the class where the SquareDet get constructed from an XML file
 void SquareDet::SetCellsU( std::vector< std::tuple<int,int,double> > uCells)
 { 
@@ -162,19 +151,48 @@ void SquareDet::SetCellsV( std::vector< std::tuple<int,int,double> > vCells)
 
 }
 
-
-
-double SquareDet::GetSensitiveSizeU()
+int SquareDet::GetMaxUCell() const
 {
-  return m_sensitiveSizeU; 
+  return m_nCellsU-1;
+}  
+
+int SquareDet::GetMaxVCell() const
+{
+  return m_nCellsV-1;
+}  
+
+int SquareDet::GetMinUCell() const
+{
+  return m_minCellU;
+}  
+
+int SquareDet::GetMinVCell() const
+{
+  return m_minCellV;
+}  
+
+
+double SquareDet::GetSensitiveMaxU() const
+{
+  return m_sensitiveSizeU/2.; 
 }  
   
-double SquareDet::GetSensitiveSizeV()
+double SquareDet::GetSensitiveMaxV() const
 {
-  return m_sensitiveSizeV;  
+  return m_sensitiveSizeV/2.;  
 } 
 
-bool SquareDet::areNeighbors(int vcell1, int ucell1, int vcell2, int ucell2)
+double SquareDet::GetSensitiveMinU() const
+{
+  return -m_sensitiveSizeU/2.; 
+}  
+  
+double SquareDet::GetSensitiveMinV() const
+{
+  return -m_sensitiveSizeV/2.;  
+} 
+
+bool SquareDet::areNeighbors(int vcell1, int ucell1, int vcell2, int ucell2) const
 {
   int deltaV = abs(vcell1-vcell2);
   int deltaU = abs(ucell1-ucell2);
@@ -198,7 +216,7 @@ bool SquareDet::areNeighbors(int vcell1, int ucell1, int vcell2, int ucell2)
   return false;
 }
 
-int SquareDet::GetPixelTypeU(int ucell)  
+int SquareDet::GetPixelTypeU(int ucell) const
 {
   int i = 0; 
   for (auto group : m_uCells ) {
@@ -211,7 +229,7 @@ int SquareDet::GetPixelTypeU(int ucell)
   return i; 
 }
 
-int SquareDet::GetPixelTypeV(int vcell)  
+int SquareDet::GetPixelTypeV(int vcell) const 
 {
   int i = 0; 
   for (auto group : m_vCells ) {
@@ -224,7 +242,7 @@ int SquareDet::GetPixelTypeV(int vcell)
   return i; 
 } 
 
-int SquareDet::GetPixelType(int vcell, int ucell)   
+int SquareDet::GetPixelType(int vcell, int ucell) const   
 { 
   int iu = GetPixelTypeU(ucell); 
   int iv = GetPixelTypeV(vcell); 
@@ -232,25 +250,25 @@ int SquareDet::GetPixelType(int vcell, int ucell)
   return (nGroupsU*iv + iu);
 }
 
-double SquareDet::GetPitchU(int /*vcell*/, int ucell)  
+double SquareDet::GetPitchU(int /*vcell*/, int ucell) const
 {
   auto group = m_uCells.at(GetPixelTypeU(ucell));   
   return std::get<2>(group); 
 } 
   
-double SquareDet::GetPitchV(int vcell, int /*ucell*/)
+double SquareDet::GetPitchV(int vcell, int /*ucell*/) const
 {
   auto group = m_vCells.at(GetPixelTypeV(vcell));   
   return std::get<2>(group); 
 }  
 
-int SquareDet::encodePixelID(int vcell, int ucell)
+int SquareDet::encodePixelID(int vcell, int ucell) const
 {
   return (m_nCellsU*vcell + ucell);
 }
 
 
-void SquareDet::decodePixelID(int& vcell, int& ucell, int uniqPixelID)
+void SquareDet::decodePixelID(int& vcell, int& ucell, int uniqPixelID) const
 {
   vcell = uniqPixelID / m_nCellsU;
   ucell = uniqPixelID - vcell*m_nCellsU;
@@ -258,7 +276,7 @@ void SquareDet::decodePixelID(int& vcell, int& ucell, int uniqPixelID)
  
  	
 
-bool SquareDet::SensitiveCrossed(double u, double v, double w)
+bool SquareDet::SensitiveCrossed(double u, double v, double w) const
 {
   if (u < -(m_sensitiveSizeU)/2.  || u > (m_sensitiveSizeU)/2.) {
    return false;
@@ -273,7 +291,7 @@ bool SquareDet::SensitiveCrossed(double u, double v, double w)
 }
 
 
-bool SquareDet::isPointOutOfSensor( double u, double v, double w) 
+bool SquareDet::isPointOutOfSensor( double u, double v, double w) const
 {
   bool isOut = false; 
   
@@ -287,7 +305,7 @@ bool SquareDet::isPointOutOfSensor( double u, double v, double w)
 }
  	
 
-bool SquareDet::ModuleCrossed(double u, double v)
+bool SquareDet::ModuleCrossed(double u, double v) const
 {  
   if (u < -m_ladderSizeU/2.  || u > m_ladderSizeU/2.) {
    return false;
@@ -299,7 +317,7 @@ bool SquareDet::ModuleCrossed(double u, double v)
   return true; 
 }
 
-double SquareDet::GetThickness(double u, double v)
+double SquareDet::GetThickness(double u, double v) const
 {
   if ( SensitiveCrossed(u, v) ) {
     return m_sensitiveThickness; 
@@ -311,12 +329,12 @@ double SquareDet::GetThickness(double u, double v)
 }  
 
 
-double SquareDet::GetTrackLength(double u, double v, double dudw, double dvdw)
+double SquareDet::GetTrackLength(double u, double v, double dudw, double dvdw) const
 {
   return GetThickness(u,v)*std::sqrt(1 + dudw*dudw + dvdw*dvdw);  
 }
     
-double SquareDet::GetRadLength(double u, double v)
+double SquareDet::GetRadLength(double u, double v) const
 { 
   if ( SensitiveCrossed(u, v) ) {
     return m_sensitiveRadLength; 
@@ -327,7 +345,7 @@ double SquareDet::GetRadLength(double u, double v)
   return materialeffect::X0_air; 
 } 
 
-double SquareDet::GetAtomicNumber(double u, double v)
+double SquareDet::GetAtomicNumber(double u, double v) const
 { 
   if ( SensitiveCrossed(u, v) ) {
     return m_sensitiveAtomicNumber; 
@@ -338,7 +356,7 @@ double SquareDet::GetAtomicNumber(double u, double v)
   return materialeffect::AtomicNumber_air;
 } 
 
-double SquareDet::GetAtomicMass(double u, double v)
+double SquareDet::GetAtomicMass(double u, double v) const
 { 
   if ( SensitiveCrossed(u, v) ) {
     return m_sensitiveAtomicMass;  
@@ -350,7 +368,7 @@ double SquareDet::GetAtomicMass(double u, double v)
 } 
 
 
-double SquareDet::GetPixelCenterCoordV(int vcell, int /*ucell*/)
+double SquareDet::GetPixelCenterCoordV(int vcell, int /*ucell*/) const
 {    
   int i = GetPixelTypeV(vcell);   
   double offset = m_offsetsV.at(i);
@@ -367,7 +385,7 @@ double SquareDet::GetPixelCenterCoordV(int vcell, int /*ucell*/)
 }
  
 
-double SquareDet::GetPixelCenterCoordU(int /*vcell*/, int ucell)
+double SquareDet::GetPixelCenterCoordU(int /*vcell*/, int ucell) const
 {
   int i = GetPixelTypeU(ucell);   
   double offset = m_offsetsU.at(i);
@@ -384,7 +402,7 @@ double SquareDet::GetPixelCenterCoordU(int /*vcell*/, int ucell)
 }
 
      
-int SquareDet::GetUCellFromCoord( double u, double /*v*/ )
+int SquareDet::GetUCellFromCoord( double u, double /*v*/ ) const
 {
   if (u < -m_sensitiveSizeU/2.) {
    return m_minCellU;
@@ -412,7 +430,7 @@ int SquareDet::GetUCellFromCoord( double u, double /*v*/ )
 } 
    
    
-int SquareDet::GetVCellFromCoord( double /*u*/, double v ) 
+int SquareDet::GetVCellFromCoord( double /*u*/, double v ) const 
 {
   if (v < -m_sensitiveSizeV/2.) {
    return m_minCellV;

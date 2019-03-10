@@ -46,93 +46,103 @@ class PolyDet : public Det {
 
   /** Get pixel type for pixel at position vcell and ucell. 
    */
-  int GetPixelType(int vcell, int ucell) override;  
+  int GetPixelType(int vcell, int ucell) const override;  
 
   /** Get the maximum uCell on the pixel matrix.   
-   *  The uCell numbers of pixels are in the intervall [0,max].
    */  
-  int GetMaxUCell() override;  
+  int GetMaxUCell() const override;  
 
   /** Get the maximum vCell on the pixel matrix.   
-   *  The vCell numbers of pixels are in the intervall [0,max].
    */  
-  int GetMaxVCell() override;  
+  int GetMaxVCell() const override;  
+
+  /** Get the minimum uCell on the pixel matrix.   
+   */  
+  int GetMinUCell() const override;  
+
+  /** Get the minimum vCell on the pixel matrix.   
+   */  
+  int GetMinVCell() const override;  
   
-  /** Get size u of sensitive area. 
-   *  All pixels must be inside the box 
-   *  [-SensSizeU/2,SensSizeU/2]x[-SensSizeV/2,SensSizeV/2].
+  /** Get maximum u position of sensitive area. 
    */  
-  double GetSensitiveSizeU() override;  
+  double GetSensitiveMaxU() const override;  
   
-  /** Get size v of sensitive area.  
-   *  All pixels must be inside the box 
-   *  [-SensSizeU/2,SensSizeU/2]x[-SensSizeV/2,SensSizeV/2].
+  /** Get maximum v position of sensitive area. 
    */  
-  double GetSensitiveSizeV() override; 
+  double GetSensitiveMaxV() const override;  
+
+  /** Get minimum u position of sensitive area. 
+   */  
+  double GetSensitiveMinU() const override;  
+  
+  /** Get minimum v position of sensitive area. 
+   */  
+  double GetSensitiveMinV() const override;  
       
   /** Get u pitch for pixel at position vcell,ucell.   
    */ 
-  double GetPitchU(int vcell, int ucell) override; 
+  double GetPitchU(int vcell, int ucell) const override; 
   
   /** Get v pitch for pixel at position vcell,ucell.   
    */ 
-  double GetPitchV(int vcell, int ucell) override;  
+  double GetPitchV(int vcell, int ucell) const override;  
    
   /** Returns true if point (u,v,w) is not inside the sensitive volume.  
    */ 
-  bool isPointOutOfSensor( double u , double v , double w = 0) override; 
+  bool isPointOutOfSensor( double u , double v , double w = 0) const override; 
   
   /** Returns true if point (u,v,w) is inside the sensitive volume. 
    */ 
-  bool SensitiveCrossed(double u, double v, double w = 0) override;
+  bool SensitiveCrossed(double u, double v, double w = 0) const override;
       
   /** Get thickness of detector at position (u,v). 
    */ 
-  double GetThickness(double u, double v) override;
+  double GetThickness(double u, double v) const override;
 
   /** Get length of particle track intersecting the detector.  
    */
-  double GetTrackLength(double u, double v, double dudw, double dvdw) override;  
+  double GetTrackLength(double u, double v, double dudw, double dvdw) const override;  
     
   /** Get radlenght at position (u,v).
    */ 
-  double GetRadLength(double u, double v) override;
+  double GetRadLength(double u, double v) const override;
 
   /** Get atomic number at position (u,v).
    */
-  double GetAtomicNumber(double u, double v) override; 
+  double GetAtomicNumber(double u, double v) const override; 
  
   /** Get atomic mass at position (u,v).
    */
-  double GetAtomicMass(double u, double v) override;   
+  double GetAtomicMass(double u, double v) const override;   
   
   /** Returns uCell of pixel at position (u,v). Returns -1 if there is no pixel.    
    */    
-  int GetUCellFromCoord( double u, double v ) override;
+  int GetUCellFromCoord( double u, double v ) const override;
   
   /** Returns vCell of pixel at position (u,v). Returns -1 if there is no pixel.  
    */    
-  int GetVCellFromCoord( double u, double v ) override; 
+  int GetVCellFromCoord( double u, double v ) const override; 
   
   /** Returns u position of pixel center. 
    */
-  double GetPixelCenterCoordU(int vcell, int ucell) override;
+  double GetPixelCenterCoordU(int vcell, int ucell) const override;
   
   /** Returns v position of pixel center.   
    */
-  double GetPixelCenterCoordV(int vcell, int ucell) override;
+  double GetPixelCenterCoordV(int vcell, int ucell) const override;
   
   /** Return unique ID for pixel at position vcell, ucell.  
    */
-  int encodePixelID(int vcell, int ucell) override;
+  int encodePixelID(int vcell, int ucell) const override;
   
   /** Compute ucell and vcell from pixelID.
    */ 
-  void decodePixelID(int& vcell, int& ucell, int uniqPixelID) override;
+  void decodePixelID(int& vcell, int& ucell, int uniqPixelID) const override;
 
   /** Returns true if pixels at position (vcell1,ucell1) and (vcell2,ucell2) are neighbors.
    */ 
-  bool areNeighbors(int vcell1, int ucell1, int vcell2, int ucell2) override;
+  bool areNeighbors(int vcell1, int ucell1, int vcell2, int ucell2) const override;
 
   /** Set nominal sensor frame. This is needed for applying alignment corrections. 
    */
@@ -154,10 +164,11 @@ class PolyDet : public Det {
  
   /** Gets the coordinates of the pixel vcell, ucell, helper function combining the get functions for the individual coordinates.
    */
-  void GetPixelCenterCoord(double& vcoord, double& ucoord, int vcell, int ucell);
+  void GetPixelCenterCoord(double& vcoord, double& ucoord, int vcell, int ucell) const;
+  
   /** Check if module is crossed (including supports)
    */
-  bool ModuleCrossed(double u, double v);
+  bool ModuleCrossed(double u, double v) const;
 
   // TH2Poly object that defines the class, describing the pixel layout
   TH2Poly *m_layout;

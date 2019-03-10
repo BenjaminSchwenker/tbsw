@@ -23,10 +23,10 @@ namespace depfet {
  *     stored in LCIO::TrackerRawData and LCIO::TrackerData collections.  
  *     
  *  2) The vCell/uCell index pair is unique for a geometrical pixel on the pixel matrix. The indices 
- *     must be non negative integers for valid pixels. 
+ *     must be integers in the bounding box [minU,maxU]x[minV,maxV]. 
  *     
  *  3) The vCell (uCell) ID increments in the along the v (u) axis of the local uvw sensor coordinate 
- *     system. The numbering of cells starts at zero. 
+ *     system.  
  * 
  *  4) All pixels have an integer valued type. Pixel with the same type have an identical layout (pixel pitch, electrode 
        position and so forth) and are assumed to have the same spatial resolution.  
@@ -56,113 +56,139 @@ class Det {
   /** Get pixel type for pixel at position vcell and ucell. 
    *  Has to be implemented by subclasses.
    */
-  virtual int GetPixelType(int vcell, int ucell) = 0;  
+  virtual int GetPixelType(int vcell, int ucell) const = 0;  
 
   /** Get the maximum uCell on the pixel matrix.  
    *  Has to be implemented by subclasses. 
-   *  The uCell numbers of pixels are in the intervall [0,max].
+   *  The uCell numbers of pixels are in the intervall [min,max].
    */  
-  virtual int GetMaxUCell() = 0;  
+  virtual int GetMaxUCell() const = 0;  
+
+  /** Get the minimum uCell on the pixel matrix.  
+   *  Has to be implemented by subclasses. 
+   *  The uCell numbers of pixels are in the intervall [min,max].
+   */  
+  virtual int GetMinUCell() const = 0;  
 
   /** Get the maximum vCell on the pixel matrix.  
    *  Has to be implemented by subclasses. 
-   *  The vCell numbers of pixels are in the intervall [0,max].
+   *  The vCell numbers of pixels are in the intervall [min,max].
    */  
-  virtual int GetMaxVCell() = 0;  
+  virtual int GetMaxVCell() const = 0;  
   
-  /** Get size u of sensitive area. 
+  /** Get the minimum vCell on the pixel matrix.  
+   *  Has to be implemented by subclasses. 
+   *  The vCell numbers of pixels are in the intervall [min,max].
+   */  
+  virtual int GetMinVCell() const = 0;  
+  
+  /** Get the maximun u position of sensitive area. 
    *  Has to be implemented by subclasses. 
    *  All pixels must be inside the box 
-   *  [-SensSizeU/2,SensSizeU/2]x[-SensSizeV/2,SensSizeV/2].
+   *  [-SensMinU,SensMaxU]x[-SensMinV,SensMaxV].
    */  
-  virtual double GetSensitiveSizeU() = 0;  
+  virtual double GetSensitiveMaxU() const = 0;  
   
-  /** Get size v of sensitive area. 
+  /** Get minimum u position of sensitive area. 
    *  Has to be implemented by subclasses. 
    *  All pixels must be inside the box 
-   *  [-SensSizeU/2,SensSizeU/2]x[-SensSizeV/2,SensSizeV/2].
+   *  [-SensMinU,SensMaxU]x[-SensMinV,SensMaxV].
    */  
-  virtual double GetSensitiveSizeV() = 0; 
+  virtual double GetSensitiveMinU() const = 0;  
+  
+  /** Get maximum v position of sensitive area. 
+   *  Has to be implemented by subclasses. 
+   *  All pixels must be inside the box 
+   *  [-SensMinU,SensMaxU]x[-SensMinV,SensMaxV].
+   */  
+  virtual double GetSensitiveMaxV() const = 0; 
+  
+  /** Get minimum v position of sensitive area. 
+   *  Has to be implemented by subclasses. 
+   *  All pixels must be inside the box 
+   *  [-SensMinU,SensMaxU]x[-SensMinV,SensMaxV].
+   */  
+  virtual double GetSensitiveMinV() const = 0; 
       
   /** Get u pitch for pixel at position vcell,ucell. 
    *  Has to be implemented by subclasses.  
    */ 
-  virtual double GetPitchU(int vcell, int ucell) = 0; 
+  virtual double GetPitchU(int vcell, int ucell) const = 0; 
   
   /** Get v pitch for pixel at position vcell,ucell. 
    *  Has to be implemented by subclasses.  
    */ 
-  virtual double GetPitchV(int vcell, int ucell) = 0;  
+  virtual double GetPitchV(int vcell, int ucell) const = 0;  
    
   /** Returns true if point (u,v,w) is not inside the sensitive volume. 
    *  Has to be implemented by subclasses.  
    */ 
-  virtual bool isPointOutOfSensor( double u , double v , double w = 0) = 0; 
+  virtual bool isPointOutOfSensor( double u , double v , double w = 0) const = 0; 
   
   /** Returns true if point (u,v,w) is inside the sensitive volume. 
    *  Has to be implemented by subclasses.  
    */ 
-  virtual bool SensitiveCrossed(double u, double v, double w = 0) = 0;
+  virtual bool SensitiveCrossed(double u, double v, double w = 0) const = 0;
       
   /** Get thickness of detector at position (u,v).
    *  Has to be implemented by subclasses.  
    */ 
-  virtual double GetThickness(double u, double v) = 0;
+  virtual double GetThickness(double u, double v) const = 0;
 
   /** Get length of particle track intersecting the detector.
    *  Has to be implemented by subclasses.  
    */
-  virtual double GetTrackLength(double u, double v, double dudw, double dvdw) = 0;  
+  virtual double GetTrackLength(double u, double v, double dudw, double dvdw) const = 0;  
     
   /** Get radlenght at position (u,v).
    *  Has to be implemented by subclasses.  
    */ 
-  virtual double GetRadLength(double u, double v) = 0;
+  virtual double GetRadLength(double u, double v) const = 0;
 
   /** Get atomic number at position (u,v).
    *  Has to be implemented by subclasses.  
    */
-  virtual double GetAtomicNumber(double u, double v) = 0; 
+  virtual double GetAtomicNumber(double u, double v) const = 0; 
  
   /** Get atomic mass at position (u,v).
    *  Has to be implemented by subclasses.  
    */
-  virtual double GetAtomicMass(double u, double v) = 0;   
+  virtual double GetAtomicMass(double u, double v) const = 0;   
   
   /** Returns uCell of pixel at position (u,v). Returns -1 if there is no pixel.  
    *  Has to be implemented by subclasses.  
    */    
-  virtual int GetUCellFromCoord( double u, double v ) = 0;
+  virtual int GetUCellFromCoord( double u, double v ) const = 0;
   
   /** Returns vCell of pixel at position (u,v). Returns -1 if there is no pixel.  
    *  Has to be implemented by subclasses.  
    */    
-  virtual int GetVCellFromCoord( double u, double v ) = 0; 
+  virtual int GetVCellFromCoord( double u, double v ) const = 0; 
   
   /** Returns u position of pixel center. 
    *  Has to be implemented by subclasses.  
    */
-  virtual double GetPixelCenterCoordU(int vcell, int ucell) = 0;
+  virtual double GetPixelCenterCoordU(int vcell, int ucell) const = 0;
   
   /** Returns v position of pixel center. 
    *  Has to be implemented by subclasses.  
    */
-  virtual double GetPixelCenterCoordV(int vcell, int ucell) = 0;
+  virtual double GetPixelCenterCoordV(int vcell, int ucell) const = 0;
   
   /** Return unique ID for pixel at position vcell, ucell.  
    *  Has to be implemented by subclasses.  
    */
-  virtual int encodePixelID(int vcell, int ucell) = 0;
+  virtual int encodePixelID(int vcell, int ucell) const = 0;
   
   /** Compute ucell and vcell from pixelID.
    *  Has to be implemented by subclasses.  
    */ 
-  virtual void decodePixelID(int& vcell, int& ucell, int uniqPixelID) = 0;
+  virtual void decodePixelID(int& vcell, int& ucell, int uniqPixelID) const = 0;
 
   /** Returns true if pixels at position (vcell1,ucell1) and (vcell2,ucell2) are neighbors.
    *  Has to be implemented by subclasses.  
    */ 
-  virtual bool areNeighbors(int vcell1, int ucell1, int vcell2, int ucell2) = 0;
+  virtual bool areNeighbors(int vcell1, int ucell1, int vcell2, int ucell2) const = 0;
   
   /** Get nominal sensor frame (i.e. where the detector is supposed to be)
    */
@@ -196,8 +222,6 @@ class Det {
    */
   const std::string & GetType() const { return m_typeName ; } 
        
-  
-  
  private:
   
   // Type of sensor 
