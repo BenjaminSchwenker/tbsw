@@ -330,7 +330,7 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
         newGroup.push_back(row);
         newGroup.push_back(charge);
         
-        pixGroups.push_back(newGroup);
+        pixGroups.push_back(std::move(newGroup));
         
       }
        
