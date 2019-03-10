@@ -198,7 +198,7 @@ bool SquareDet::areNeighbors(int vcell1, int ucell1, int vcell2, int ucell2)
   return false;
 }
 
-int SquareDet::GetPixelTypeU(int vcell, int ucell)  
+int SquareDet::GetPixelTypeU(int ucell)  
 {
   int i = 0; 
   for (auto group : m_uCells ) {
@@ -211,7 +211,7 @@ int SquareDet::GetPixelTypeU(int vcell, int ucell)
   return i; 
 }
 
-int SquareDet::GetPixelTypeV(int vcell, int ucell)  
+int SquareDet::GetPixelTypeV(int vcell)  
 {
   int i = 0; 
   for (auto group : m_vCells ) {
@@ -226,21 +226,21 @@ int SquareDet::GetPixelTypeV(int vcell, int ucell)
 
 int SquareDet::GetPixelType(int vcell, int ucell)   
 { 
-  int iu = GetPixelTypeU(vcell, ucell); 
-  int iv = GetPixelTypeV(vcell, ucell); 
+  int iu = GetPixelTypeU(ucell); 
+  int iv = GetPixelTypeV(vcell); 
   int nGroupsU = m_uCells.size();
   return (nGroupsU*iv + iu);
 }
 
-double SquareDet::GetPitchU(int vcell, int ucell)  
+double SquareDet::GetPitchU(int /*vcell*/, int ucell)  
 {
-  auto group = m_uCells.at(GetPixelTypeU(vcell, ucell));   
+  auto group = m_uCells.at(GetPixelTypeU(ucell));   
   return std::get<2>(group); 
 } 
   
-double SquareDet::GetPitchV(int vcell, int ucell)
+double SquareDet::GetPitchV(int vcell, int /*ucell*/)
 {
-  auto group = m_vCells.at(GetPixelTypeV(vcell, ucell));   
+  auto group = m_vCells.at(GetPixelTypeV(vcell));   
   return std::get<2>(group); 
 }  
 
@@ -350,9 +350,9 @@ double SquareDet::GetAtomicMass(double u, double v)
 } 
 
 
-double SquareDet::GetPixelCenterCoordV(int vcell, int ucell)
+double SquareDet::GetPixelCenterCoordV(int vcell, int /*ucell*/)
 {    
-  int i = GetPixelTypeV(vcell, ucell);   
+  int i = GetPixelTypeV(vcell);   
   double offset = m_offsetsV.at(i);
   auto group = m_vCells.at(i);
   int minCell = std::get<0>(group);  
@@ -367,9 +367,9 @@ double SquareDet::GetPixelCenterCoordV(int vcell, int ucell)
 }
  
 
-double SquareDet::GetPixelCenterCoordU(int vcell, int ucell)
+double SquareDet::GetPixelCenterCoordU(int /*vcell*/, int ucell)
 {
-  int i = GetPixelTypeU(vcell, ucell);   
+  int i = GetPixelTypeU(ucell);   
   double offset = m_offsetsU.at(i);
   auto group = m_uCells.at(i);
   int minCell = std::get<0>(group);  
@@ -384,7 +384,7 @@ double SquareDet::GetPixelCenterCoordU(int vcell, int ucell)
 }
 
      
-int SquareDet::GetUCellFromCoord( double u, double v )
+int SquareDet::GetUCellFromCoord( double u, double /*v*/ )
 {
   if (u < -m_sensitiveSizeU/2.) {
    return m_minCellU;
@@ -412,7 +412,7 @@ int SquareDet::GetUCellFromCoord( double u, double v )
 } 
    
    
-int SquareDet::GetVCellFromCoord( double u, double v ) 
+int SquareDet::GetVCellFromCoord( double /*u*/, double v ) 
 {
   if (v < -m_sensitiveSizeV/2.) {
    return m_minCellV;

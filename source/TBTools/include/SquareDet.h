@@ -15,12 +15,14 @@ namespace depfet {
  *  The SquareDet class is a subclass of the Det class and represents a pixel detector 
  *  with a checkerboard type pixel matrix. The pixel pitch may change along the local 
  *  u-axis or v-axis.  
+ * 
+ *  The geometrical 2D layout of pixels is constructed from a product of two 1D 'strip' layouts 
+ *  for the u and v axis. As the 'strip' pitch in the 1D layouts changes, also the area of the 
+ *  2D pixel cells will change as well.   
  *  
- *  The pixel matrix has pixel at positions vCell, uCell in the range [0,maxUCell] and 
- *  [0,maxVCell]. The center of the pixel is the geometrical center of the square area 
- *  with height GetPitchV(vCell,uCell) and width GetPitch(vCell,uCell) in local sensor
- *  coordinates. The total sensitve area of the entire pixel matrix has height 
- *  GetSensitiveSizeV() and width GetSensitiveSizeU(). 
+ *  The pixel matrix has pixel at positions vCell, uCell in the range [minUCell,maxUCell] and 
+ *  [minVCell,maxVCell]. The center of the pixel is the geometrical center of the square area 
+ *  with height GetPitchV(vCell,uCell) and width GetPitch(vCell,uCell). 
  *  
  *  @Author B. Schwenker, University of Göttingen
  *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
@@ -74,13 +76,15 @@ class SquareDet : public Det {
    */  
   double GetSensitiveSizeV() override; 
       
-  /** Get u pitch for pixel at position vcell,ucell.   
+  /** Get u pitch for pixel at position vcell,ucell.
+   *  For a SquareDet, the u pitch depends only on the ucell.   
    */ 
-  double GetPitchU(int vcell, int ucell) override; 
+  double GetPitchU(int /*vcell*/, int ucell) override; 
   
   /** Get v pitch for pixel at position vcell,ucell.   
+   *  For a SquareDet, the v pitch depends only on the vcell.   
    */ 
-  double GetPitchV(int vcell, int ucell) override;  
+  double GetPitchV(int vcell, int /*ucell*/) override;  
    
   /** Returns true if point (u,v,w) is not inside the sensitive volume.  
    */ 
@@ -110,21 +114,25 @@ class SquareDet : public Det {
    */
   double GetAtomicMass(double u, double v) override;   
   
-  /** Returns uCell of pixel at position (u,v). Returns -1 if there is no pixel.    
+  /** Returns uCell of pixel at position (u,v). Returns -1 if there is no pixel.  
+   *  For a SquareDet, the ucell depends only on the u position.      
    */    
-  int GetUCellFromCoord( double u, double v ) override;
+  int GetUCellFromCoord( double u, double /*v*/ ) override;
   
   /** Returns vCell of pixel at position (u,v). Returns -1 if there is no pixel.  
+   *  For a SquareDet, the vcell depends only on the v position.   
    */    
-  int GetVCellFromCoord( double u, double v ) override; 
+  int GetVCellFromCoord( double /*u*/, double v ) override; 
   
   /** Returns u position of pixel center. 
+   *  For a SquareDet, the u position depends only on the ucell.   
    */
-  double GetPixelCenterCoordU(int vcell, int ucell) override;
+  double GetPixelCenterCoordU(int /*vcell*/, int ucell) override;
   
-  /** Returns v position of pixel center.   
+  /** Returns v position of pixel center.  
+   *  For a SquareDet, the v position depends only on the vcell.    
    */
-  double GetPixelCenterCoordV(int vcell, int ucell) override;
+  double GetPixelCenterCoordV(int vcell, int /*ucell*/) override;
   
   /** Return unique ID for pixel at position vcell, ucell.  
    */
@@ -164,13 +172,13 @@ class SquareDet : public Det {
    */
   bool ModuleCrossed(double u, double v);
 
-  /** Get u type for pixel at position vcell and ucell. 
+  /** Get u type for pixel at position ucell. 
    */
-  int GetPixelTypeU(int vcell, int ucell);   
+  int GetPixelTypeU(int ucell);   
    
-  /** Get v type for pixel at position vcell and ucell. 
+  /** Get v type for pixel at position vcell. 
    */
-  int GetPixelTypeV(int vcell, int ucell);   
+  int GetPixelTypeV(int vcell);   
 
   
   // Thickness in sensitive volume
