@@ -94,7 +94,7 @@ namespace IMPL{
       return _vec[i]->Particle ;      
     }
     catch( ... ){
-      throw EVENT::Exception(std::string("SimCalorimeterHitImpl::getParticleCont: no particle at " + i ) ) ;
+      throw EVENT::Exception(std::string("SimCalorimeterHitImpl::getParticleCont: no particle at " + std::to_string(i) ) ) ;
     }
   }
 
