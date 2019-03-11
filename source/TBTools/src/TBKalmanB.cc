@@ -27,7 +27,114 @@ using namespace std;
 
 namespace depfet {
 
+inline Eigen::Matrix<double,5,5> invertCholesky5 (const Eigen::Matrix<double,5,5> &in, bool & success) {
+// Modified from CLHEP. Only works if input is a symetric matrix.
+// Invert by
+//
+// a) decomposing M = G*G^T with G lower triangular
+//	(if M is not positive definite this will fail, leaving this unchanged)
+// b) inverting G to form H
+// c) multiplying H^T * H to get M^-1.
+//
+// If the matrix is pos. def. its inverse is returned and  suceess = true is returned.
+// If the matrix is not pos. def. suceess = false and a uninitialized matrix is returned.
+  Eigen::Matrix<double,5,5> ret;
+  double h10;				// below-diagonal elements of H
+  double h20, h21;
+  double h30, h31, h32;
+  double h40, h41, h42, h43;
 
+  double h00, h11, h22, h33, h44;	// 1/diagonal elements of G =
+                    // diagonal elements of H
+
+  double g10;				// below-diagonal elements of G
+  double g20, g21;
+  double g30, g31, g32;
+  double g40, g41, g42, g43;
+
+  success = false;  // We start by assuing we won't succeed...
+
+// Form G -- compute diagonal members of H directly rather than of G
+
+// Scale first column by 1/sqrt(A00)
+  h00 = in(0,0);
+  if (h00 <= 0) return ret;
+  h00 = 1.0 / sqrt(h00);
+
+  g10 = in(1,0) * h00;
+  g20 = in(2,0) * h00;
+  g30 = in(3,0) * h00;
+  g40 = in(4,0) * h00;
+
+// Form G11 (actually, just h11)
+  h11 = in(1,1) - (g10 * g10);
+  if (h11 <= 0) return ret;
+  h11 = 1.0 / sqrt(h11);
+
+// Subtract inter-column column dot products from rest of column 1 and
+// scale to get column 1 of G
+  g21 = (in(2,1) - (g10 * g20)) * h11;
+  g31 = (in(3,1) - (g10 * g30)) * h11;
+  g41 = (in(4,1) - (g10 * g40)) * h11;
+
+// Form G22 (actually, just h22)
+  h22 = in(2,2) - (g20 * g20) - (g21 * g21);
+  if (h22 <= 0) return ret;
+  h22 = 1.0 / sqrt(h22);
+
+// Subtract inter-column column dot products from rest of column 2 and
+// scale to get column 2 of G
+  g32 = (in(3,2) - (g20 * g30) - (g21 * g31)) * h22;
+  g42 = (in(4,2) - (g20 * g40) - (g21 * g41)) * h22;
+
+// Form G33 (actually, just h33)
+  h33 = in(3,3) - (g30 * g30) - (g31 * g31) - (g32 * g32);
+  if (h33 <= 0) return ret;
+  h33 = 1.0 / sqrt(h33);
+
+// Subtract inter-column column dot product from A43 and scale to get G43
+  g43 = (in(4,3) - (g30 * g40) - (g31 * g41) - (g32 * g42)) * h33;
+
+// Finally form h44 - if this is possible inversion succeeds
+  h44 = in(4,4) - (g40 * g40) - (g41 * g41) - (g42 * g42) - (g43 * g43);
+  if (h44 <= 0) return ret;
+  h44 = 1.0 / sqrt(h44);
+
+// Form H = 1/G -- diagonal members of H are already correct
+
+// The order here was like that in CLHEP.
+  h43 = -h33 *  g43 * h44;
+  h32 = -h22 *  g32 * h33;
+  h42 = -h22 * (g32 * h43 + g42 * h44);
+  h21 = -h11 *  g21 * h22;
+  h31 = -h11 * (g21 * h32 + g31 * h33);
+  h41 = -h11 * (g21 * h42 + g31 * h43 + g41 * h44);
+  h10 = -h00 *  g10 * h11;
+  h20 = -h00 * (g10 * h21 + g20 * h22);
+  h30 = -h00 * (g10 * h31 + g20 * h32 + g30 * h33);
+  h40 = -h00 * (g10 * h41 + g20 * h42 + g30 * h43 + g40 * h44);
+
+// Change this to its inverse = H^T*H
+  ret(0,0) = h00 * h00 + h10 * h10 + h20 * h20 + h30 * h30 + h40 * h40;
+  ret(0,1) = h10 * h11 + h20 * h21 + h30 * h31 + h40 * h41;
+  ret(1,1) = h11 * h11 + h21 * h21 + h31 * h31 + h41 * h41;
+  ret(0,2) = h20 * h22 + h30 * h32 + h40 * h42;
+  ret(1,2) = h21 * h22 + h31 * h32 + h41 * h42;
+  ret(2,2) = h22 * h22 + h32 * h32 + h42 * h42;
+  ret(0,3) = h30 * h33 + h40 * h43;
+  ret(1,3) = h31 * h33 + h41 * h43;
+  ret(2,3) = h32 * h33 + h42 * h43;
+  ret(3,3) = h33 * h33 + h43 * h43;
+  ret(0,4) = h40 * h44;
+  ret(1,4) = h41 * h44;
+  ret(2,4) = h42 * h44;
+  ret(3,4) = h43 * h44;
+  ret(4,4) = h44 * h44;
+  //Upper triangle calculated. Copy to lower triangle.
+  ret.triangularView<Eigen::StrictlyLower>()=ret.triangularView<Eigen::StrictlyUpper>().transpose();
+  success = true;
+  return ret;
+}
 
 /** Constructor 
  */
@@ -641,78 +748,68 @@ double TBKalmanB::FilterPass(TBTrack& trk, std::vector<int>& CrossedTEs, std::ve
 bool TBKalmanB::GetSmoothedData( const TrackState& xb, const TrackStateCovariance& Cb, const TrackState& xf, const TrackStateCovariance& Cf,
                TrackState& Smoothed_State, TrackStateCovariance& Smoothed_Cov){
     // Compute forward weight matrix
-    TrackStateCovariance Cb_inv=Cb.llt().solve(TrackStateCovariance::Identity());
-    if(!(Cb* (Cb_inv*xb)).isApprox(xb,1e-5)){
-        streamlog_out(WARNING)<< "Smoothing 1: Matrix inversion failed. Quit fitting!"
-                 << std::endl;
-        streamlog_out(MESSAGE3)<< "Smoothing 1: Original matrix" << std::endl<< Cb << std::endl;
-        streamlog_out(MESSAGE3)<< "Smoothing 1: Inverted matrix" << std::endl<< Cb_inv << std::endl;
-        streamlog_out(MESSAGE3)<< "Smoothing 1: Other inverse function" << std::endl<< Cb.inverse() << std::endl;
-        streamlog_out(MESSAGE3)<< "Smoothing 1: Multiply result" << std::endl<< Cb*Cb_inv << std::endl;
-        streamlog_out(MESSAGE3)<< "Smoothing 1: Vector" << std::endl<< xb.transpose() << std::endl;
-        streamlog_out(MESSAGE3)<< "Smoothing 1: Vector result" << std::endl<< (Cb* (Cb_inv*xb)).transpose() << std::endl;
-        streamlog_out(MESSAGE3)<< "Smoothing 1: Diff " << std::endl<< (xb-Cb* (Cb_inv*xb)).transpose() << std::endl;
-        return true;
-    }
-    // Compute backward weight matrix
-    TrackStateCovariance Cf_inv=Cf.llt().solve(TrackStateCovariance::Identity());
-    if(!(Cf*(Cf_inv*xf)).isApprox(xf,1e-5)){
-        streamlog_out(WARNING)<< "Smoothing 2: Matrix inversion failed. Quit fitting!"
+    static_assert (TrackStateCovariance::RowsAtCompileTime==5,"This works only for 5x5 objects");
+    static_assert (TrackStateCovariance::ColsAtCompileTime==5,"This works only for 5x5 objects" );
+    bool success=0;
+    TrackStateCovariance Cb_inv=invertCholesky5( Cb,success);
+    if(!success){
+        std::cout<< "Smoothing 1: Matrix inversion failed. Quit fitting!"
                  << std::endl;
         return true;
     }
-    // Weighted (smoothed) covariance
-    Smoothed_Cov=(Cf_inv+Cb_inv).llt().solve(TrackStateCovariance::Identity());
-    // Weighted state
+
+    TrackStateCovariance Cf_inv=invertCholesky5( Cf,success);
+    if(!success){
+        std::cout<< "Smoothing 2: Matrix inversion failed. Quit fitting!"
+                 << std::endl;
+        return true;
+    }
+    Smoothed_Cov=invertCholesky5( Cf_inv+Cb_inv,success);
+    if(!success){
+        std::cout<< "Smoothing 3: Matrix inversion failed. Quit fitting!"
+                 << std::endl;
+        return true;
+    }
     Smoothed_State = Smoothed_Cov*(Cf_inv*xf + Cb_inv*xb);
-    if(!((Cf_inv+Cb_inv)* Smoothed_State).isApprox(Cf_inv*xf + Cb_inv*xb,1e-5)){
-        streamlog_out(WARNING)<< "Smoothing 3: Matrix inversion failed. Quit fitting!"
-                 << std::endl;
-        return true;
-    }
+
     return false;
 }
 /* Old implementation*/
-//bool TBKalmanB::GetSmoothedData( TrackState& xb, TrackStateCovariance& Cb, TrackState& xf, TrackStateCovariance& Cf,
-//                                TrackState& Smoothed_State, TrackStateCovariance& Smoothed_Cov)
-//{
-
-//  // Error flag
-//  bool invertible = true;
-
-//  // Compute forward weight matrix
-//  TrackStateWeight fW = Cf.inverse();
-//  //Cf.computeInverseWithCheck(fW,invertible);
-//  if (!invertible) {
-//    streamlog_out(MESSAGE3) << "Smoothing 1: Matrix inversion failed. Quit fitting!"
-//                         << std::endl;
-//    return invertible;
-//  }
-
-//  // Compute backward weight matrix
-//  TrackStateWeight bW = Cb.inverse();
-//  //Cb.computeInverseWithCheck(bW,invertible);
-//  if (!invertible) {
-//    streamlog_out(MESSAGE3) << "Smoothing 2: Matrix inversion failed. Quit fitting!"
-//                         << std::endl;
-//    return invertible;
-//  }
-
-//  // Weighted (smoothed) covariance
-//  Smoothed_Cov = (fW + bW).inverse();
-//  //(fW + bW).computeInverseWithCheck(Smoothed_Cov,invertible);
-//  if (!invertible) {
-//    streamlog_out(MESSAGE3) << "Smoothing 3: Matrix inversion failed. Quit fitting!"
-//                         << std::endl;
-//    return invertible;
-//  }
-
-//  // Weighted state
-//  Smoothed_State = Smoothed_Cov*(fW*xf + bW*xb);
-
-//  // Successfull return
-//  return !invertible;
+//bool TBKalmanB::GetSmoothedData( const TrackState& xb, const TrackStateCovariance& Cb, const TrackState& xf, const TrackStateCovariance& Cf,
+//               TrackState& Smoothed_State, TrackStateCovariance& Smoothed_Cov){
+//    // Compute forward weight matrix
+//    TrackStateCovariance Cb_inv=Cb.llt().solve(TrackStateCovariance::Identity());
+//    if(!(Cb* (Cb_inv*xb)).isApprox(xb,1e-5)){
+//        streamlog_out(WARNING)<< "Smoothing 1: Matrix inversion failed. Quit fitting!"
+//                 << std::endl;
+//        streamlog_out(MESSAGE3)<< "Smoothing 1: Original matrix" << std::endl<< Cb << std::endl;
+//        streamlog_out(MESSAGE3)<< "Smoothing 1: Inverted matrix" << std::endl<< Cb_inv << std::endl;
+//        streamlog_out(MESSAGE3)<< "Smoothing 1: Other inverse function" << std::endl<< Cb.inverse() << std::endl;
+//        streamlog_out(MESSAGE3)<< "Smoothing 1: Multiply result" << std::endl<< Cb*Cb_inv << std::endl;
+//        streamlog_out(MESSAGE3)<< "Smoothing 1: Vector" << std::endl<< xb.transpose() << std::endl;
+//        streamlog_out(MESSAGE3)<< "Smoothing 1: Vector result" << std::endl<< (Cb* (Cb_inv*xb)).transpose() << std::endl;
+//        streamlog_out(MESSAGE3)<< "Smoothing 1: Diff " << std::endl<< (xb-Cb* (Cb_inv*xb)).transpose() << std::endl;
+//        return true;
+//    }
+//    // Compute backward weight matrix
+//    TrackStateCovariance Cf_inv=Cf.llt().solve(TrackStateCovariance::Identity());
+//    if(!(Cf*(Cf_inv*xf)).isApprox(xf,1e-5)){
+//        streamlog_out(WARNING)<< "Smoothing 2: Matrix inversion failed. Quit fitting!"
+//                 << std::endl;
+//        return true;
+//    }
+//    // Weighted (smoothed) covariance
+//    Smoothed_Cov=(Cf_inv+Cb_inv).llt().solve(TrackStateCovariance::Identity());
+//    // Weighted state
+//    Smoothed_State = Smoothed_Cov*(Cf_inv*xf + Cb_inv*xb);
+//    if(!((Cf_inv+Cb_inv)* Smoothed_State).isApprox(Cf_inv*xf + Cb_inv*xb,1e-5)){
+//        streamlog_out(WARNING)<< "Smoothing 3: Matrix inversion failed. Quit fitting!"
+//                 << std::endl;
+//        return true;
+//    }
+//    return false;
 //}
+
 
 int TBKalmanB::MAP_FORWARD(  double theta2, 
                         const TrackState& xref, const ReferenceFrame& Surf, const ReferenceFrame& nSurf,
