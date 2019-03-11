@@ -297,19 +297,13 @@ void KalmanAligner::end()
   ////////////////////////////////////////////////////////////
   // Try to fit alignment corrections from track residuals  
   
- 
   streamlog_out ( MESSAGE3 ) << " Total of " << _nKAATracks << " tracks found" << endl;
   streamlog_out ( MESSAGE3 ) << endl;
   streamlog_out ( MESSAGE3 ) << "Starting alignment ..." << endl;
-
+  
   KalmanAlignmentAlgorithm2 Aligner;
   AlignableDet reco_const = Aligner.Fit(TBDetector::GetInstance(), alignment_data, AlignState, _maxTracks, _annealingTracks, _annealingFactor,  _pValueCut, _deviationCut, _useBC, _logLevel );
   
-  bool error_fim = Aligner.AlignDetector(TBDetector::GetInstance(), reco_const);
-  if ( error_fim ) {
-    streamlog_out ( MESSAGE3 ) << "Alignment failed!" << endl;
-  } 
-
   // Close alignment_data file
   alignment_data->Close();
   delete alignment_data;
@@ -324,11 +318,11 @@ void KalmanAligner::end()
     // Print final geometry constants 
     // ------------------------------  
     
-    // This is the position vector of the sensor
+    // This is the position vector of the sensor after alignment
     auto pos_f = TBDetector::GetInstance().GetDet(ipl).GetNominal().GetPosition(); 
     
-    // This is the rotation matrix of the sensor; it 
-    // contains a discrete and a continuous factor. 
+    // This is the rotation matrix of the sensor after alignment
+    // it contains a discrete and a continuous factor. 
     auto Rot_f = TBDetector::GetInstance().GetDet(ipl).GetNominal().GetRotation();
 
     // This is the discrete factor of sensor rotation. 
@@ -349,27 +343,22 @@ void KalmanAligner::end()
     streamlog_out ( MESSAGE3 ) << endl << "  final alpha [rad] " << alpha_f << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(3,3) ) << endl; 
     streamlog_out ( MESSAGE3 ) << endl << "  final beta  [rad] " << beta_f << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(4,4) ) << endl; 
     streamlog_out ( MESSAGE3 ) << endl << "  final gamma [rad] " << gamma_f << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(5,5) ) << endl; 
-
+    
     // Print incremental alignment corrections 
     // ---------------------------------------  
-    
-    // Initial alignment 
-    auto Rot_i = TBDetector::GetInstance().GetDet(ipl).GetNominal().GetRotation(); 
-    auto pos_i = TBDetector::GetInstance().GetDet(ipl).GetNominal().GetPosition(); 
-
-    // Diff rotation  
-    auto diffRot = Rot_f*Rot_i.transpose();
-    double dalpha, dbeta, dgamma; 
-    GetAnglesKarimaki(diffRot, dalpha, dbeta, dgamma);
-       
-    // Diff shift   
-    auto dr = pos_f - pos_i;
-     
+    SensorAlignmentParameters alignPars = reco_const.GetAlignState(ipl);
+    double dx = alignPars(0);  
+    double dy = alignPars(1);      
+    double dz = alignPars(2);     
+    double dalpha = alignPars(3); 
+    double dbeta  = alignPars(4); 
+    double dgamma = alignPars(5);
+ 
     // Print 
     streamlog_out ( MESSAGE3 ) << endl << "Sensor plane " << ipl << endl << endl;  
-    streamlog_out ( MESSAGE3 ) << endl << "  correction dx [mm] " << dr[0] << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(0,0) ) << endl; 
-    streamlog_out ( MESSAGE3 ) << endl << "  correction dy [mm] " << dr[1] << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(1,1) ) << endl; 
-    streamlog_out ( MESSAGE3 ) << endl << "  correction dz [mm] " << dr[2] << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(2,2) ) << endl; 
+    streamlog_out ( MESSAGE3 ) << endl << "  correction dx [mm] " << dx << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(0,0) ) << endl; 
+    streamlog_out ( MESSAGE3 ) << endl << "  correction dy [mm] " << dy << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(1,1) ) << endl; 
+    streamlog_out ( MESSAGE3 ) << endl << "  correction dz [mm] " << dz << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(2,2) ) << endl; 
     streamlog_out ( MESSAGE3 ) << endl << "  correction dalpha [rad] " << dalpha << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(3,3) ) << endl; 
     streamlog_out ( MESSAGE3 ) << endl << "  correction dbeta [rad] " << dbeta << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(4,4) ) << endl; 
     streamlog_out ( MESSAGE3 ) << endl << "  correction dgamma [rad] " << dgamma << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(5,5) ) << endl; 

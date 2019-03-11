@@ -166,8 +166,8 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
   // Load DUT module    
   const Det & dut = TBDetector::Get(_idut);   
   
-  ShortVec statusVec; 
-  bool isDUTStatusOk = getDUTStatus( evt, statusVec );
+  //ShortVec statusVec; 
+  //bool isDUTStatusOk = getDUTStatus( evt, statusVec );
        
   //
   // Get telescope track collection

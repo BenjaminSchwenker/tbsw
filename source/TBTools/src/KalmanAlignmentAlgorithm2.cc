@@ -78,45 +78,39 @@ SensorAlignmentJacobian KalmanAlignmentAlgorithm2::Jacobian_Alignment(const Trac
   // Apply chain rule 
   Jaq=(Jaq*A).eval(); 
   
-  
-  
   return Jaq;
 }
 
 
-/** Align detector with align constants. Returns error flag. 
- */
-bool KalmanAlignmentAlgorithm2::AlignDetector(TBDetector& detector, AlignableDet& alignconst)
+ReferenceFrame KalmanAlignmentAlgorithm2::ApplyAlignment(const ReferenceFrame& nominal, const SensorAlignmentParameters& alignPars) 
+{
+  double dx = alignPars(0);  
+  double dy = alignPars(1);      
+  double dz = alignPars(2);     
+  double dalpha = alignPars(3); 
+  double dbeta  = alignPars(4); 
+  double dgamma = alignPars(5);
+     
+  // Compute a 'delta' frame from corrections 
+  ReferenceFrame deltaFrame = ReferenceFrame::create_karimaki_delta(dx,dy,dz,dalpha,dbeta,dgamma); 
+    
+  // Merge nominal frame and delta frame 
+  return ReferenceFrame::combine_karimaki(nominal, deltaFrame); 
+}
+
+
+void KalmanAlignmentAlgorithm2::AlignDetector(TBDetector& detector, const AlignableDet& alignconst)
 {
   int nSensors = detector.GetNSensors();  
-  
-  // Align all sub detectors   
   for (int ipl = 0; ipl < nSensors; ipl++) {
-         
-    // Load current pixel module    
     Det & adet = detector.GetDet(ipl);
          
-    // Read alignment corrections for sensor ipl 
-    SensorAlignmentParameters alignPars = alignconst.GetAlignState(ipl);
-    double dx = alignPars(0);  
-    double dy = alignPars(1);      
-    double dz = alignPars(2);     
-    double dalpha = alignPars(3); 
-    double dbeta  = alignPars(4); 
-    double dgamma = alignPars(5);
-     
-    // Compute a 'delta' frame from corrections 
-    ReferenceFrame deltaFrame = ReferenceFrame::create_karimaki_delta(dx,dy,dz,dalpha,dbeta,dgamma); 
+    // Compute aligned position 
+    ReferenceFrame alignFrame = ApplyAlignment(adet.GetNominal(), alignconst.GetAlignState(ipl));
     
-    // Merge nominal frame and delta frame 
-    ReferenceFrame alignFrame = ReferenceFrame::combine_karimaki(adet.GetNominal(), deltaFrame); 
-     
-    // Update nominal sensor reference frame
-    adet.SetNominalFrame(alignFrame); 
-    
+    // and update nominal reference frame
+    adet.SetNominalFrame(alignFrame);   
   }
-  
-  return false;  
 }
 
 
@@ -172,6 +166,16 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
     } 
   }
   
+  // Remember the initial position of the detector. 
+  // The alignment corrections are computed to move
+  // the initial position to the final position 
+  // after processing N tracks
+  std::vector<ReferenceFrame> initialFrames;
+  initialFrames.reserve(nAlignables);
+  for (int ipl = 0; ipl < nAlignables; ipl++) {
+    initialFrames.push_back( detector.GetDet(ipl).GetNominal() );
+  }
+  
   // Get alignment tree 
   TTree * t = (TTree *) AlignmentData->Get("AlignTree");
   if (t == 0) {
@@ -193,13 +197,12 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
   int nOutliers1 = 0;
   int nOutliers2 = 0;
   std::vector<int> nUpdates(nAlignables,0);
-
   
   // Configure track fitter 
   GenericTrackFitter TrackFitter(detector);
   TrackFitter.SetNumIterations(1);     
   TrackFitter.SetUseBeamConstraint(useBC);
-     
+   
   // Loop
   //------
   for (int ii = 0; ii < t->GetEntriesFast(); ii++) {
@@ -211,23 +214,22 @@ AlignableDet KalmanAlignmentAlgorithm2::Fit(TBDetector& detector, TFile * Alignm
      
     t->GetEntry(ii); 
        
-    // This is the nominal detector. Previous tracking was 
-    // done in this 'badly aligned' detector
-    TBDetector aligned_detector = detector;      
-        
     // Next, we update the previous geometry to refit the 
     // track in better aligned detector.  
-    AlignDetector(aligned_detector, AlignStore);
-    
+    for (int ipl = 0; ipl < nAlignables; ipl++) {
+      // Compute aligned position 
+      ReferenceFrame alignFrame = ApplyAlignment(initialFrames[ipl], AlignStore.GetAlignState(ipl));
+      // Apply the alignment 
+      detector.GetDet(ipl).SetNominalFrame(alignFrame); 
+    }
+     
     // Build TBTrack in aligned detector, i.e. after applying 
     // alignment corrections 
     //--------------------------------
     
     KalmanAlignmentInputProvider kaip;       
-    TBTrack trk = kaip.MakeTBTrack( *alignEvent, aligned_detector );  
+    TBTrack trk = kaip.MakeTBTrack( *alignEvent, detector );  
     
-    
-
     // Deterministic annealing (geometric cooling scheme)
     // must be applied before the track is refitted!!
     // 

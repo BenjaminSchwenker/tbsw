@@ -116,6 +116,9 @@ class TBDetector {
   //! Set path to alignment data base file 
   void SetAlignmentDBPath( std::string FilePath );
   
+  //! Get path to alignment data base file 
+  std::string GetAlignmentDBPath() const {return m_alignmentDBFilePath;}
+  
   //! Get number of pixel sensors 
   int GetNSensors() const { return m_numberOfSensors; }
   
