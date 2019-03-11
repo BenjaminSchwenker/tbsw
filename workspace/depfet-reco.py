@@ -563,12 +563,16 @@ if __name__ == '__main__':
   parser.add_argument('--skipReconstruction', dest='skip_reco', default=False, type=bool, help="Skip reconstruction of run")
   parser.add_argument('--profile', dest='profile', action='store_true',
                       help="profile execution time")
+  parser.add_argument('--short', dest='short', action='store_true',
+                      help="profile execution time")
 
   args = parser.parse_args()
   if args.profile:
+    maxRecordNrLong = 40000
+    maxRecordNrShort = 20000
+  if args.short:
     maxRecordNrLong = 3000
     maxRecordNrShort = 3000
-    print "clusterDB Usage",args.use_cluster_db
 
   if args.caltag=='':
     args.caltag = os.path.splitext(os.path.basename(args.rawfile))[0]
