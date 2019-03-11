@@ -12,7 +12,7 @@
 #include <TFile.h>
 
 #include <iomanip>
-
+using namespace std::string_literals;
 // Used namespaces
 using namespace std; 
 using namespace lcio;
@@ -225,7 +225,7 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
     TrackerDataImpl * pixModule = dynamic_cast<TrackerDataImpl* > ( Pix_collection->getElementAt(iDet) );
       
     // DAQ ID for pixel detector
-    int sensorID = PixelID( pixModule ) ["sensorID"];
+    int sensorID = PixelID( pixModule ) ["sensorID"s];
     
     // Read geometry info for sensor 
     int ipl = _detector.GetPlaneNumber(sensorID);      
@@ -407,18 +407,18 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
           streamlog_out(MESSAGE2) << " Stored cluster on sensor " << sensorID << " having total charge " << clusterSignal << std::endl;
           
           // Ok good cluster ... save it   
-          originalDataEncoder["sensorID"] = sensorID;
-          originalDataEncoder["clusterID"] = 0;
-          originalDataEncoder["sparsePixelType"] = static_cast<int> (kSimpleSparsePixel);
-          originalDataEncoder["quality"] = cluQuality;
+          originalDataEncoder["sensorID"s] = sensorID;
+          originalDataEncoder["clusterID"s] = 0;
+          originalDataEncoder["sparsePixelType"s] = static_cast<int> (kSimpleSparsePixel);
+          originalDataEncoder["quality"s] = cluQuality;
           originalDataEncoder.setCellID( sparseCluster );
           originalDataCollection->push_back( sparseCluster );
                              
           TrackerPulseImpl* zsPulse = new TrackerPulseImpl;
-          clusterEncoder["sensorID"]  = sensorID;
-          clusterEncoder["clusterID"] = 0;
-          clusterEncoder["sparsePixelType"] = static_cast<int> (kSimpleSparsePixel);
-          clusterEncoder["quality"] = cluQuality;
+          clusterEncoder["sensorID"s]  = sensorID;
+          clusterEncoder["clusterID"s] = 0;
+          clusterEncoder["sparsePixelType"s] = static_cast<int> (kSimpleSparsePixel);
+          clusterEncoder["quality"s] = cluQuality;
           clusterEncoder.setCellID( zsPulse );
           
           zsPulse->setCharge( clusterSignal );

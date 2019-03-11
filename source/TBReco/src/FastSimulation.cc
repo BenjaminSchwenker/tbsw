@@ -39,7 +39,7 @@ using Eigen::Matrix;
 using namespace std; 
 using namespace lcio ;
 using namespace marlin ;
-
+using namespace std::string_literals;
 
 namespace depfet {
 
@@ -255,9 +255,9 @@ namespace depfet {
           simHit->setMomentum(hitMom);
           
           // Set CellID
-          cellIDEnc["sensorID"] = m_detector.GetDet(ipl).GetDAQID();
-          cellIDEnc["isEntry"] = 0;
-          cellIDEnc["isExit"] = 0;
+          cellIDEnc["sensorID"s] = m_detector.GetDet(ipl).GetDAQID();
+          cellIDEnc["isEntry"s] = 0;
+          cellIDEnc["isExit"s] = 0;
           cellIDEnc.setCellID(simHit);
           
           // Set particle that has interacted in the detector

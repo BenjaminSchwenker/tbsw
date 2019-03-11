@@ -13,7 +13,7 @@
 using namespace std; 
 using namespace lcio;
 using namespace marlin;
-
+using namespace std::string_literals;
 namespace {
   int PIVOTPIXELOFFSET = 64;
 }
@@ -192,8 +192,8 @@ namespace eudaqinput {
        
       // Prepare a new lcio::TrackerData for the ZS data
       lcio::TrackerDataImpl* zsFrame =  new lcio::TrackerDataImpl;
-      outputEncoder["sensorID"] = id;
-      outputEncoder["sparsePixelType"] = 0;
+      outputEncoder["sensorID"s] = id;
+      outputEncoder["sparsePixelType"s] = 0;
       outputEncoder.setCellID( zsFrame );
       
       // Fill ZS data into new lcio::TrackerData object

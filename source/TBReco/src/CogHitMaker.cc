@@ -24,6 +24,7 @@
 #include <TMath.h>
 
 
+using namespace std::string_literals;
 
 // Used namespaces
 using namespace std; 
@@ -138,7 +139,7 @@ void CogHitMaker::processEvent(LCEvent * evt)
       { 
         // Read cluster header
         TrackerPulseImpl* cluster = dynamic_cast<TrackerPulseImpl* > ( clusterCollection->getElementAt(iClu) )  ;       
-        int sensorID = clusterDecoder(cluster)["sensorID"]; 
+        int sensorID = clusterDecoder(cluster)["sensorID"s];
         int ipl = _detector.GetPlaneNumber(sensorID);
         Det& Det = _detector.GetDet(ipl);
         

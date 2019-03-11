@@ -15,7 +15,7 @@
 using namespace std; 
 using namespace lcio;
 using namespace marlin;
-
+using namespace std::string_literals;
 namespace depfet {
 
 //
@@ -165,8 +165,8 @@ void TelUnpacker::processEvent(LCEvent * evt)
      // Add output digits to output collection
      for ( auto& cached :  outputDigitsMap ) 
      { 
-       outputEncoder["sensorID"] = cached.first;
-       outputEncoder["sparsePixelType"] = 0;
+       outputEncoder["sensorID"s] = cached.first;
+       outputEncoder["sparsePixelType"s] = 0;
        outputEncoder.setCellID( cached.second );
        outputCollection->push_back( cached.second );
      }
