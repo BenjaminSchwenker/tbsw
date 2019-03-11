@@ -42,7 +42,7 @@ Geometry::Geometry() : Processor("Geometry")
 
   registerProcessorParameter ("ApplyAlignment",
                               "Apply corrections from alignmentDB (true/false)?",
-                              m_applyAlignment, static_cast <bool> (false) ); 
+                              m_applyAlignment, static_cast <bool> (true) ); 
                                 
 }
 

@@ -62,7 +62,11 @@ class TBTrackElement
   
   /** Set measured hit  
    */
-  void SetHit(const TBHit& aHit) { m_hit = aHit; }
+  void SetHit(const TBHit& aHit) 
+  { 
+    m_hit = aHit;
+    m_hasHit = true; 
+  }
   
   /** Get hit - query HasHit() before 
    */

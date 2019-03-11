@@ -41,6 +41,7 @@ TBTrack::TBTrack(TBDetector& detector)
   Mom = 0; 
   // No track fit done yet   
   ChiSqu = -1;
+  Ndof = 0;
 } 
 
 

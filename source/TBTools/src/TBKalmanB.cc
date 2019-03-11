@@ -953,6 +953,7 @@ double TBKalmanB::GetChi2Increment(const Vector2d& r, const StateHitProjector& H
  */
 void TBKalmanB::SetNdof(TBTrack& trk)
 {
+
   int ndof = 0;
   int nhits = trk.GetNumHits();
 
