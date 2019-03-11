@@ -22,7 +22,7 @@ TBTrackState::TBTrackState()
     Cov=TrackStateCovariance::Zero();
 }
 
-TBTrackState::TBTrackState(TrackState aPars, TrackStateCovariance aCov, int aPlane) 
+TBTrackState::TBTrackState(const TrackState& aPars, const TrackStateCovariance& aCov, int aPlane) 
 { 
   // Set the plane number
   Plane = aPlane;
@@ -33,12 +33,12 @@ TBTrackState::TBTrackState(TrackState aPars, TrackStateCovariance aCov, int aPla
 }
 
 // Get intersection coordinates 
-Eigen::Vector2d TBTrackState::GetXCoord()
+Eigen::Vector2d TBTrackState::GetXCoord() const
 { 
   return Pars.block<2,1>(2,0);
 }
 
-Eigen::Matrix2d TBTrackState::GetXCoordCovariance()
+Eigen::Matrix2d TBTrackState::GetXCoordCovariance() const
 {
   return Cov.block<2,2>(2,2);
 }

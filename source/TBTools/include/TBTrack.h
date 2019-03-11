@@ -25,10 +25,9 @@ namespace depfet {
  * is not possible without a magnetic field and PID detectors.  
  *    
  * In addition, the TBTrack class holds a straight line reference 
- * trajectory. Track Fitters may use the reference trajectory for 
- * pattern recognition (->TrackFinder) and in the track fitter to 
- * initialize and linearize fitting. The reference trajectory is 
- * parametrized at the global Z=0 surface.
+ * trajectory. Track Fitters may use the reference track state 
+ * (TBTrackState) for pattern recognition (->TrackFinder) and in 
+ * the track fitter for linearization. 
  * 
  * @Author B. Schwenker, University of Göttingen
  * <mailto:benjamin.schwenker@phys.uni-goettingen.de>
@@ -44,83 +43,81 @@ class TBTrack {
   
   /* Get particle charge in e
    */ 
-  double GetCharge() 
-    { return Charge; };
+  double GetCharge() const { return Charge; }
   
   /* Set particle charge in e
    */ 
-  void SetCharge( double aCharge) 
-    { Charge = aCharge; };
+  void SetCharge( double aCharge) { Charge = aCharge; }
   
   /* Get particle mass in GeV 
    */ 
-  double GetMass() 
-    { return Mass; };
+  double GetMass() const { return Mass; }
   
   /* Set particle mass in GeV 
    */ 
-  void SetMass( double aMass) 
-    { Mass = aMass; };
+  void SetMass( double aMass) { Mass = aMass; }
   
   /* Set particle abs momentum in GeV 
    */ 
-  void SetMomentum(double aMom)
-    { Mom = aMom; };
+  void SetMomentum(double aMom) { Mom = aMom; }
   
   /* Get particle 3-momentum in GeV 
    */ 
-  double GetMomentum() 
-    { return Mom; }; 
+  double GetMomentum() const { return Mom; } 
    
   /** Get track element by plane number 
    */  
   TBTrackElement& GetTE(int ipl);
   
+  /** Get track element by plane number 
+   */  
+  const TBTrackElement& GetTE(int ipl) const;
+  
   /** Get all track elements  
    */  
   std::vector<TBTrackElement>& GetTEs();
   
+  /** Get all track elements  
+   */  
+  const std::vector<TBTrackElement>& GetTEs() const;
+  
   /** Get number of active hits in track   
   */  
-  int GetNumHits();
+  int GetNumHits() const;
   
   /** Get number of track elements    
   */  
-  int GetNumTEs();
+  int GetNumTEs() const;
    
   /** Get Chisqu of track fit 
   */
-  double GetChiSqu()  
-    { return ChiSqu; }
+  double GetChiSqu() const { return ChiSqu; }
   
   /** Set fit chisqu
   */
-  void SetChiSqu(double aChiSqu) 
-    { ChiSqu = aChiSqu; }
+  void SetChiSqu(double aChiSqu) { ChiSqu = aChiSqu; }
    
   /** Get number degrees of freedom   
    */
-  int GetNDF() 
-    {return Ndof; }
+  int GetNDF() const {return Ndof; }
   
   /** Set fit chisqu
   */
-  void SetNDF(int aNdof) 
-    { Ndof = aNdof; }
+  void SetNDF(int aNdof) { Ndof = aNdof; }
   
-  /** Get reference state at Z=0
+  /** Get reference state 
   */  
-  TBTrackState& GetReferenceState() { return RefState; }; 
- 
-  /** Set reference state at Z=0
+  TBTrackState& GetReferenceState()  { return RefState; }
+  
+  /** Set reference state
   */  
-  void SetReferenceState(TBTrackState& State) {RefState = State;}; 
+  void SetReferenceState(const TBTrackState& State) {RefState = State;} 
   
  private:
   
   // Reference trajectory
   TBTrackState RefState;   
-
+  
   // Particel hypothesis 
   double Mom; 
   double Charge;
@@ -131,7 +128,7 @@ class TBTrack {
    
   // Number of degrees of freedom
   int Ndof; 
-
+  
   // Vector of track elements
   std::vector<TBTrackElement> TEVec;     
 };

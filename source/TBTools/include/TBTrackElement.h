@@ -23,13 +23,12 @@ namespace depfet {
  *  information about material budget and sensor boundaries, position and 
  *  orientation. 
  *  
- *  A TBTrackElement can be assigned one TBHit object. The hit can be removed 
+ *  A TBTrackElement can be assigned one matched TBHit. The hit can be removed 
  *  if it proves incompatible to the track fit. The function HasHit() should 
  *  be queried to see if a hit is assigned.  
  *  
- *  The TBTrackElement owns a TBTrackState object. The track state provides a 
- *  local representation of the track state wrt. to the detector plane. Please
- *  call function IsFit() to see if state is valid. 
+ *  A TBTrackState object. The track state provides a local track parameters 
+ *  and tracl paremater covariance matrix. 
  *   
  *  @Author B. Schwenker, University of Göttingen
  *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
@@ -52,46 +51,58 @@ class TBTrackElement
   /* Get detector 
    */
   Det& GetDet() { return m_det; } 
+
+  /* Get detector 
+   */
+  const Det& GetDet() const { return m_det; } 
   
   /** True if hit is set  
    */
-  bool HasHit(){ return (HitStore.size() == 1); }
-
+  bool HasHit() const { return m_hasHit; }
+  
   /** Set measured hit  
    */
-  void SetHit(TBHit& aHit); 
+  void SetHit(const TBHit& aHit) { m_hit = aHit; }
   
   /** Get hit - query HasHit() before 
    */
-  TBHit& GetHit();
+  TBHit& GetHit() {return m_hit;}
+
+  /** Get hit - query HasHit() before 
+   */
+  const TBHit& GetHit() const {return m_hit;}
   
   /** Remove (bad) hit - Outlier rejection  
    */
-  void RemoveHit();
+  void RemoveHit() { m_hasHit=false;  }
   
   /** Get track state - query IsCrossed() before 
    */
-  TBTrackState& GetState() {return State;}
+  const TBTrackState& GetState() const {return m_state;}
 
+  /** Get track state - query IsCrossed() before 
+   */
+  TBTrackState& GetState() {return m_state;}
+  
   /** Set track state
    */
-  void SetState(TBTrackState& aState); 
+  void SetState(const TBTrackState& aState) {m_state = aState;}
   
-  /** Get fit flag 
+  /** Get sensor crossed flag
    */
-  bool IsCrossed() {return CrossedFlag; }
+  bool IsCrossed() const {return m_isCrossed; }
   
-  /** Set fit flag 
+  /** Set sensor crossed flag 
    */
-  void SetCrossed(bool Flag) { CrossedFlag = Flag; }
+  void SetCrossed(bool Flag) { m_isCrossed = Flag; }
   
   /** Get ChiSqu 
    */
-  double GetChiSqu() {return LocalChiSqu; }
+  double GetChiSqu() const {return m_localChiSqu; }
   
   /** Set ChiSqu 
    */
-  void SetChiSqu(double Chi2) { LocalChiSqu = Chi2; }
+  void SetChiSqu(double Chi2) { m_localChiSqu = Chi2; }
    
  private: 
   
@@ -99,21 +110,25 @@ class TBTrackElement
    */ 
   Det& m_det;
   
-  /* Container for registered hits 
+  /* Hit matched to track  
    */ 
-  std::vector<TBHit> HitStore;   
+  TBHit m_hit;   
      
   /* Track state on surface
    */
-  TBTrackState State; 
+  TBTrackState m_state; 
   
-  /* Flags detector crossed by track  
+  /* Flags detector crossed by track - defaults to false
    */ 
-  bool CrossedFlag; 
+  bool m_isCrossed{false}; 
   
-  /* Local ChiSqu - consistency of hit assignment 
+  /* Flags detector has a matched hit - defaults to false
+   */ 
+  bool m_hasHit{false}; 
+  
+  /* Local ChiSqu - defaults to 0
    */  
-  double LocalChiSqu;   
+  double m_localChiSqu{0};   
 };
 
 } // Namespace

@@ -10,6 +10,9 @@
 #include "TBKalmanB.h"
 #include "TBHit.h"
 #include "TrackInputProvider.h"
+#include "TBDetector.h"
+#include "TBTrack.h"
+#include "HitFactory.h"
 
 // ROOT includes
 #include <TMath.h>
@@ -49,11 +52,11 @@ FastTracker aFastTracker ;
 FastTracker::FastTracker() : Processor("FastTracker")
 { 
 
-// Processor description
+   // Processor description
    _description = "FastTracker: Performs track finding and fitting for beam tests";
    
-//   
-// First of all we need to register the input/output collections
+   //    
+   // First of all we need to register the input/output collections
    
    std::vector< string > inputHitCollectionNameVecExample;
    inputHitCollectionNameVecExample.push_back( "hits" );
@@ -71,13 +74,8 @@ FastTracker::FastTracker() : Processor("FastTracker")
                             _notUsedhitCollectionName, 
                             string("unusedhits"));
    
-// 
-// Next, initialize the processor paramters
-   
-   registerProcessorParameter ("AlignmentDBFileName",
-                             "This is the name of the LCIO file with the alignment constants (add .slcio)",
-                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.slcio" ) );   
-   
+   // 
+   // Next, initialize the processor paramters
    std::vector<float> initMomentumList;
    initMomentumList.push_back(4.0);
    registerProcessorParameter ("ParticleMomentum", "List of particle momenta [GeV]",
@@ -174,13 +172,8 @@ void FastTracker::init() {
   _noOfCandTracks = 0;   
   _noOfAmbiguousHits = 0;
   
-  // Read detector constants from gear file
-  _detector.ReadGearConfiguration();    
             
-  // Read alignment data base file 
-  _detector.ReadAlignmentDB( _alignmentDBFileName );      
-        
-  _nTelPlanes =  _detector.GetNSensors();
+  _nTelPlanes =  TBDetector::GetInstance().GetNSensors();
   _nActivePlanes = _nTelPlanes; 
   _isActive.resize(_nTelPlanes, true);
   
@@ -205,8 +198,8 @@ void FastTracker::init() {
     } else {
         ss << "Passive plane" ;
     }
-    ss << "  ID = " << _detector.GetDet(ipl).GetSensorID()  
-       << "  at Z [mm] = " << setprecision(3) <<  _detector.GetDet(ipl).GetNominal().GetPosition()[2]; 
+    ss << "  ID = " << TBDetector::Get(ipl).GetSensorID()  
+       << "  at Z [mm] = " << setprecision(3) <<  TBDetector::Get(ipl).GetNominal().GetPosition()[2]; 
       
     streamlog_out( MESSAGE3 ) <<  ss.str() << endl;
   }
@@ -266,7 +259,7 @@ void FastTracker::init() {
     } else {
         ss << "Passive plane" ;
     }
-    ss << "  ID = " << _detector.GetDet(ipl).GetSensorID()  
+    ss << "  ID = " << TBDetector::Get(ipl).GetSensorID()  
        << "  maxU/mm= " << setprecision(3) <<  _maxResidualU[ipl]
        << "  maxV/mm= " << setprecision(3) <<  _maxResidualV[ipl]; 
       
@@ -280,7 +273,7 @@ void FastTracker::init() {
 //
 void FastTracker::processRunHeader(LCRunHeader * run)
 {
-// Print run number
+   // Print run number
    streamlog_out(MESSAGE3) << "Processing run: "
                            << (run->getRunNumber())
                            << std::endl << std::endl;
@@ -311,7 +304,7 @@ void FastTracker::processEvent(LCEvent * evt)
    // Loop over all hits and copy hits to HitStore 
    
    // Manage hits in this events 
-   HitFactory HitStore(_detector);   
+   HitFactory HitStore(TBDetector::GetInstance());   
    
    for ( size_t iCol = 0 ; iCol < _hitCollectionNameVec.size(); ++iCol ) {
      
@@ -327,7 +320,7 @@ void FastTracker::processEvent(LCEvent * evt)
          
          // We have to find plane number of the hit 
          int sensorid = RecoHit.GetSensorID();
-         int ipl = _detector.GetPlaneNumber(sensorid);
+         int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorid);
             
          if (ipl == -99 ) continue; 
 
@@ -490,12 +483,14 @@ void FastTracker::processEvent(LCEvent * evt)
    
    // Count stored tracks
    int nStoredTracks=0;
-
-   // Remember the hit ids of used hits
-   vector<vector<int>> usedIDs;
-   usedIDs.resize(_nTelPlanes, vector<int>(0, 0));
-
    
+   // Remember the hit ids of used hits on all sensors 
+   vector<vector<int>> usedIDs(_nTelPlanes);
+   for (auto&& sensor : usedIDs) {
+     // Reserve space for hits on a sensor
+     sensor.resize(8);
+   } 
+    
    for(list<TBTrack>::iterator ctrack=TrackCollector.begin(); ctrack!=TrackCollector.end(); ++ctrack) 
    {
       
@@ -648,16 +643,10 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
      for (int ihit = 0; ihit < HitStore.GetNHits(firstplane); ihit++ ) {
        for (int jhit = 0; jhit < HitStore.GetNHits(secondplane); jhit++ ) {
        
-         // Init new candidate track  
-         TBTrack trk(_detector);
-         trk.SetMass( _mass );
-         trk.SetCharge( my_charge );
-         trk.SetMomentum( my_momentum ); 
-         
          // Compute seed track 
          const TBHit& firsthit = HitStore.GetRecoHitFromID(ihit, firstplane);  
          const TBHit& secondhit = HitStore.GetRecoHitFromID(jhit, secondplane);
-         TBTrackState Seed = TrackSeeder.CreateSeedTrack(firsthit, secondhit, _detector);   
+         TBTrackState Seed = TrackSeeder.CreateSeedTrack(firsthit, secondhit, TBDetector::GetInstance());   
          
          // Skip all candidate tracks with a very 
          // large angle relative to Z axis. 
@@ -670,7 +659,12 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
              continue; 
            }
          }  
-
+         
+         // Init new candidate track  
+         TBTrack trk(TBDetector::GetInstance());
+         trk.SetMass( _mass );
+         trk.SetCharge( my_charge );
+         trk.SetMomentum( my_momentum ); 
          trk.SetReferenceState(Seed);
          
          buildTrackCand(trk, HitStore, TrackCollector,idir);
@@ -713,16 +707,10 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
      SeedGenerator TrackSeeder(my_charge,my_momentum);
      
      for (int ihit = 0; ihit < HitStore.GetNHits(seedplane); ihit++ ) {
-       
-       // Init new candidate track  
-       TBTrack trk(_detector);
-       trk.SetMass( _mass );
-       trk.SetCharge( my_charge );
-       trk.SetMomentum( my_momentum ); 
          
        // Compute seed track 
        const TBHit& seedhit = HitStore.GetRecoHitFromID(ihit, seedplane);  
-       TBTrackState Seed = TrackSeeder.CreateSeedTrack(seedhit, _detector); 
+       TBTrackState Seed = TrackSeeder.CreateSeedTrack(seedhit, TBDetector::GetInstance()); 
        
        // Skip all candidate tracks with a very 
        // large angle relative to Z axis. 
@@ -734,7 +722,13 @@ void FastTracker::findTracks( std::list<TBTrack>& TrackCollector , HitFactory& H
            streamlog_out ( MESSAGE2 ) << "Slope too large. Skipping track candidate!! " << endl; 
            continue; 
          }
-       }         
+       }
+
+       // Init new candidate track  
+       TBTrack trk(TBDetector::GetInstance());
+       trk.SetMass( _mass );
+       trk.SetCharge( my_charge );
+       trk.SetMomentum( my_momentum );          
        trk.SetReferenceState(Seed);
        
        buildTrackCand(trk, HitStore, TrackCollector, idir);
@@ -746,7 +740,7 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
 {
   
   // Configure Kalman track fitter
-  TBKalmanB TrackFitter(_detector);
+  TBKalmanB TrackFitter(TBDetector::GetInstance());
    
   // Extrapolate seed to all planes
   bool exerr = TrackFitter.ExtrapolateSeed(trk);
@@ -931,22 +925,21 @@ void FastTracker::printProcessorParams() const
 // 
 // Check if tracks trk1 and trk2 have common hits
 // 
-bool check_incompatible( TBTrack& trk1, TBTrack& trk2 )
+bool FastTracker::check_incompatible( const TBTrack& trk1, const TBTrack& trk2 )
 {
   // Get all track elements (TEs) in trk1
-  std::vector<TBTrackElement>& TEVec1 = trk1.GetTEs();
+  const std::vector<TBTrackElement>& TEVec1 = trk1.GetTEs();
   int nTE1 = (int) TEVec1.size();  
   
   // Get all track elements (TEs) in trk2
-  std::vector<TBTrackElement>& TEVec2 = trk2.GetTEs();
+  const std::vector<TBTrackElement>& TEVec2 = trk2.GetTEs();
   int nTE2 = (int) TEVec2.size();
   
   if (nTE1!=nTE2) {  
     return false; 
   }  
   
-  // Loop over track elements 
-    
+  // Loop over track elements   
   for(int iTE=0;iTE<nTE1;++iTE) {
      
     // Check both tracks have hits
@@ -968,7 +961,7 @@ bool check_incompatible( TBTrack& trk1, TBTrack& trk2 )
 // 
 // Is track trk1 better than trk2
 // 
-bool compare_tracks ( TBTrack& trk1, TBTrack& trk2 )
+bool FastTracker::compare_tracks ( const TBTrack& trk1, const TBTrack& trk2 )
 {
   // More hits are better 
   if ( trk1.GetNumHits() > trk2.GetNumHits() ) {
@@ -989,10 +982,10 @@ bool compare_tracks ( TBTrack& trk1, TBTrack& trk2 )
 // 
 // mark hits in track as used
 // 
-void mark_hits ( TBTrack& trk, vector<vector<int>>&  usedIDs )
+void FastTracker::mark_hits ( const TBTrack& trk, vector<vector<int>>&  usedIDs )
 { 
   // Loop over track elements 
-  for(TBTrackElement& te : trk.GetTEs() ) {     
+  for(const TBTrackElement& te : trk.GetTEs() ) {     
     // Check both tracks have hits
     if ( te.HasHit() ) {
       // Get unique hitId 
