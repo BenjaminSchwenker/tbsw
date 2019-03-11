@@ -81,7 +81,7 @@ namespace gear{
     if( el == 0 )
       throw ParseException("XMLParser::getAttribute not an XMLElement " ) ;
 
-    const char* at = el->Attribute( name ) ;
+    const std::string* at = el->Attribute( name ) ;
 
     if( at == 0 ){
 
@@ -91,7 +91,7 @@ namespace gear{
       throw ParseException( str.str() ) ;
     }
 
-    return std::string( at )  ;
+    return *at  ;
 
   }
 
