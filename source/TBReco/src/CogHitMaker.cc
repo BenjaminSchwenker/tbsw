@@ -7,6 +7,7 @@
  
 #include "CogHitMaker.h"
 #include "TBHit.h"
+#include "TBDetector.h"
 
 // Include basic C
 #include <limits>
@@ -87,8 +88,7 @@ void CogHitMaker::init() {
    // Print set parameters
    printProcessorParams();
    
-   // Read detector constants from gear file
-   _detector.ReadGearConfiguration();    
+   
     
 }
 
@@ -139,8 +139,8 @@ void CogHitMaker::processEvent(LCEvent * evt)
         // Read cluster header
         TrackerPulseImpl* cluster = dynamic_cast<TrackerPulseImpl* > ( clusterCollection->getElementAt(iClu) )  ;       
         int sensorID = clusterDecoder(cluster)["sensorID"]; 
-        int ipl = _detector.GetPlaneNumber(sensorID);
-        Det& Det = _detector.GetDet(ipl);
+        int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);
+        const Det& Det = TBDetector::Get(ipl);
         
         streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID  << endl; 
         
@@ -151,11 +151,11 @@ void CogHitMaker::processEvent(LCEvent * evt)
         myCluster.getCenterOfGravity(Det, u, v, sig2_u, sig2_v, cov_uv); 
         
         // Override sigmas from user input
-        if ( myCluster.getUSize()-1 < _sigmaUCorrections.size() ) {
+        if ( myCluster.getUSize()-1 < int(_sigmaUCorrections.size()) ) {
           sig2_u *= pow(_sigmaUCorrections[myCluster.getUSize()-1],2);  
         }
         
-        if ( myCluster.getVSize()-1 < _sigmaVCorrections.size() ) {
+        if ( myCluster.getVSize()-1 < int(_sigmaVCorrections.size()) ) {
           sig2_v *= pow(_sigmaVCorrections[myCluster.getVSize()-1],2); 
         }        
         

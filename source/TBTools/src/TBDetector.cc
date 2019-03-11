@@ -1,7 +1,6 @@
 // Local include files
 #include "TBDetector.h"
 #include "ThreeDModel.h"
-#include "SquareDet.h"
 #include "DetCreatorManager.h"
 #include "DetCreatorBase.h"
 
@@ -17,11 +16,7 @@
 
 // Include Gear header files
 #include <gear/GEAR.h>
-#include <gear/GearParameters.h>
-#include <gear/GearMgr.h>
-#include <gear/SiPlanesParameters.h>
-#include <gear/SiPlanesLayerLayout.h>
-#include <gear/BField.h>
+
 
 // Include Marlin
 #include <marlin/Global.h>
@@ -175,160 +170,6 @@ void TBDetector::ReadGearConfiguration( const std::string & geometryXMLFile )
   }
 }
 
-void TBDetector::ReadGearConfiguration( )
-{
-  
-  streamlog_out ( MESSAGE3) << "Construct Test Beam Detector OLD WAY" << std::endl;
-   
-  // Check iff gear file is available  
-  if ( Global::GEAR == 0x0 ) {
-    streamlog_out ( ERROR4 ) <<  "The GearMgr is not available, for an unknown reason." << std::endl;
-    exit(-1);
-  }
-     
-  // 
-  // Read data about constant magnetic field vector 
-   
-  gear::BField * bField = 
-                  const_cast<gear::BField* > (&(Global::GEAR->getBField()));  
-
-  m_Bx = bField->at(gear::Vector3D())[0];
-  m_By = bField->at(gear::Vector3D())[1];
-  m_Bz = bField->at(gear::Vector3D())[2];
-  
-  //
-  // Read data about detectors planes 
-
-  gear::SiPlanesParameters * siPlanesParameters = 
-                  const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters())); 
-  
-  gear::SiPlanesLayerLayout * siPlanesLayerLayout = 
-                  const_cast<gear::SiPlanesLayerLayout*> ( &(siPlanesParameters->getSiPlanesLayerLayout() ));
-     
-  // 
-  // Sorting all sensors according to position along beam 
-  
-  m_numberOfSensors = siPlanesLayerLayout->getNLayers();    
-  std::vector<int> planeSort;  
-  std::vector<double> planeZPosition;
-   
-  for(int ipl=0; ipl < m_numberOfSensors; ipl++) {
-    planeZPosition.push_back( siPlanesLayerLayout->getSensitivePositionZ(ipl) );
-    planeSort.push_back( ipl ); 
-  }
-     
-  bool sorted;
-  do {
-     sorted=false;
-     for(int iz=0; iz<m_numberOfSensors-1 ; iz++) {
-       if( planeZPosition[iz]> planeZPosition[iz+1])   {
-         double posZ = planeZPosition[iz];
-         planeZPosition[iz] = planeZPosition[iz+1];
-         planeZPosition[iz+1] = posZ;
-          
-         int idZ = planeSort[iz];
-         planeSort[iz] = planeSort[iz+1];
-         planeSort[iz+1] = idZ;
-         
-         sorted=true;
-       }
-     }
-  } while(sorted);
-  
-  
-   
-  // Loop over all pixel modules  
-  for (int ipl=0; ipl < m_numberOfSensors ; ipl++) {
-    
-    
-    // TODO: all code in this loop is currently SquareDet specific
-    //       and needs to be move into a SquareDetCreator class
-
-    // Gear layer number is needed to read the layout data  
-    int ilayer = planeSort[ipl];
-     
-    // Set sensorID   
-    int sensorID = siPlanesLayerLayout->getSensitiveID(ilayer);
-    m_indexMap[sensorID] = ipl;
-
-     
-    // Read discrete rotation from mounting frame to global frame.  
-    
-    Matrix3d DiscreteRotation(Matrix3d::Identity()); 
-    int r1 = siPlanesLayerLayout->getSensitiveRotation1(ilayer); 
-    int r2 = siPlanesLayerLayout->getSensitiveRotation2(ilayer); 
-    int r3 = siPlanesLayerLayout->getSensitiveRotation3(ilayer);  
-    int r4 = siPlanesLayerLayout->getSensitiveRotation4(ilayer);
-    
-    DiscreteRotation(0,0) = r1; 
-    DiscreteRotation(0,1) = r2; 
-    DiscreteRotation(1,0) = r3; 
-    DiscreteRotation(1,1) = r4;
-    
-    if ( r1*r4 - r2*r3 == 1 ) {     
-      DiscreteRotation(2,2) = 1;
-    } else if ( r1*r4 - r2*r3 == -1 ) {
-      DiscreteRotation(2,2) = -1;  
-    } else {
-      streamlog_out(MESSAGE3) << std::endl << "Rotation parameters in gear file wrong" << std::endl;  
-    }
-    
-    if ( std::abs( DiscreteRotation.determinant() - 1 ) ==  1.e-5 )  
-      streamlog_out(MESSAGE3) << "Rotation matrix BUG. Discrete matrix determinant is " << DiscreteRotation.determinant() << std::endl;      
-    
-    // Construct discrete reference frame 
-    ReferenceFrame discrete;
-    discrete.SetRotation(DiscreteRotation);   
-    
-    // Read Euler rotation from local to mounting frame
-     
-    const double MYPI = std::atan(1.0)*4;  
-    // Gear file stores angles in degree 
-    double alpha = siPlanesLayerLayout->getSensitiveRotationAlpha(ilayer)*MYPI/180.; 
-    double beta = siPlanesLayerLayout->getSensitiveRotationBeta(ilayer)*MYPI/180.; 
-    double gamma = siPlanesLayerLayout->getSensitiveRotationGamma(ilayer)*MYPI/180.; 
-    Matrix3d EulerRotation;
-    FillRotMatrixKarimaki(EulerRotation, 
-            alpha, 
-            beta,
-            gamma);
-    
-    if ( std::abs( EulerRotation.determinant() - 1 ) ==  1.e-5 )  
-      streamlog_out(MESSAGE3) << "Rotation matrix BUG. Euler rotation matrix determinant is " << EulerRotation.determinant() << std::endl; 
-    
-    // Combine the two factors in proper order
-    Matrix3d NominalRotation = EulerRotation*DiscreteRotation;
-      
-    // Read position of origin of local uvw frame in global coordinates 
-    Vector3d NominalPosition;
-    NominalPosition << siPlanesLayerLayout->getSensitivePositionX(ilayer),  siPlanesLayerLayout->getSensitivePositionY(ilayer), siPlanesLayerLayout->getSensitivePositionZ(ilayer);
-    
-    // Construct nominal reference frame 
-    ReferenceFrame nominal;
-    nominal.SetPosition(NominalPosition);
-    nominal.SetRotation(NominalRotation);   
-    
-    // Create a new Det object, ownership goes with TBDetector 
-    m_Dets.push_back( new SquareDet( "SquareDet",
-                                  sensorID,
-                                  ipl,
-                                  siPlanesLayerLayout->getSensitiveThickness(ilayer), 
-                                  siPlanesLayerLayout->getSensitiveRadLength(ilayer),
-                                  siPlanesLayerLayout->getSensitiveAtomicNumber(ilayer),
-                                  siPlanesLayerLayout->getSensitiveAtomicMass(ilayer), 
-                                  siPlanesLayerLayout->getLayerThickness(ilayer), 
-                                  siPlanesLayerLayout->getLayerRadLength(ilayer), 
-                                  siPlanesLayerLayout->getLayerAtomicNumber(ilayer), 
-                                  siPlanesLayerLayout->getLayerAtomicMass(ilayer),
-                                  siPlanesLayerLayout->getLayerSizeU(ilayer), 
-                                  siPlanesLayerLayout->getLayerSizeV(ilayer),  
-                                  siPlanesLayerLayout->getSensitiveUCells( ilayer ), 
-                                  siPlanesLayerLayout->getSensitiveVCells( ilayer ), 
-                                  discrete, 
-                                  nominal
-                                 ));
-  }
-}
 
 
 void TBDetector::SetAlignmentDBPath( std::string FilePath )

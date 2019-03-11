@@ -7,9 +7,6 @@
 #ifndef GoeHitMaker_H
 #define GoeHitMaker_H 1
 
-// Include TBTools 
-#include "TBDetector.h"
-
 // Include Marlin classes
 #include <marlin/Global.h>
 #include <marlin/Processor.h>
@@ -99,8 +96,7 @@ namespace depfet {
     //!Method searching for clusterID id on sensor sensorID in clusterDB. Returns success.  
     bool searchDB(int sensorID, std::string id, double& u, double& v, double& sig2_u, double& sig2_v, double& cov_uv);
      
-    // Handle to detector data 
-    TBDetector _detector;  
+    
 
     // Store cluster calibration
     TH1F * m_DB_Weight;

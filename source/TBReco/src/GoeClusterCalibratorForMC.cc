@@ -9,6 +9,7 @@
 #include "GoeClusterCalibratorForMC.h"
 
 // TBTools includes
+#include "TBDetector.h"
 #include "TBHit.h"
 #include "PixelCluster.h"
 #include "Det.h"
@@ -113,8 +114,7 @@ namespace depfet {
     // Print set parameters
     printProcessorParams();
     
-    // Read detector constants from gear file
-    _detector.ReadGearConfiguration();  
+   
   }
   
   //
@@ -305,8 +305,8 @@ namespace depfet {
           
           TBHit& hit = RecoHits[ihit];     
           int sensorID = hit.GetSensorID();     
-          int ipl = _detector.GetPlaneNumber(sensorID);
-          Det & Sensor = _detector.GetDet(ipl);   
+          int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);
+          const Det & Sensor = TBDetector::Get(ipl);   
            
           SimTrackerHit * simHit = SimHits[ hit2simhit[ihit] ]; 
           Vector3d momentum;

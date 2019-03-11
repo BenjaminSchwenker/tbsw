@@ -6,8 +6,6 @@
 #ifndef TriggerGenerator_H
 #define TriggerGenerator_H 1
 
-// Include TBTools header files
-#include "TBDetector.h"
 
 // Include Marlin classes
 #include <marlin/Global.h>
@@ -109,9 +107,6 @@ namespace depfet
 
     // Active scintis
     std::vector< TrgScinti > m_scintiVec;
-    
-    // Handle to detector data sheets 
-    TBDetector m_detector;  
     
     double m_timeCPU; //!< CPU time
     int    m_nRun ;   //!< Run number

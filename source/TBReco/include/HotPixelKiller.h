@@ -6,8 +6,6 @@
 #ifndef HotPixelKiller_H
 #define HotPixelKiller_H 1
 
-// TBTools includes 
-#include "TBDetector.h"
 
 // Include Marlin classes
 #include <marlin/Global.h>
@@ -94,9 +92,6 @@ namespace depfet {
     
    private:
     
-    // Handle to detector data sheets 
-    TBDetector _detector;     
-
     //! internally used as storage for input decoding
     UTIL::BitField64 _inputDecodeHelper;
      

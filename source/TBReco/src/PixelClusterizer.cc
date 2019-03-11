@@ -7,6 +7,7 @@
 
 // Include TBTools 
 #include "DEPFET.h" 
+#include "TBDetector.h"
 
 // Include ROOT classes
 #include <TFile.h>
@@ -73,16 +74,14 @@ void PixelClusterizer::init() {
    _nRun = 0 ;
    _nEvt = 0 ;
    
-   // Read detector constants from gear file
-   _detector.ReadGearConfiguration();    
    
    _dummyCollectionName = "original_data_"+_clusterCollectionName;
    
    // Open clusterDB file 
    TFile * noiseDBFile = new TFile(_noiseDBFileName.c_str(), "READ");
     
-   for(int ipl=0;ipl<_detector.GetNSensors();ipl++)  { 
-     int sensorID = _detector.GetDet(ipl).GetSensorID();  
+   for(int ipl=0;ipl<TBDetector::GetInstance().GetNSensors();ipl++)  { 
+     int sensorID = TBDetector::Get(ipl).GetSensorID();  
      string histoName = "hDB_sensor"+to_string(sensorID) + "_mask";
      if ( (TH2F *) noiseDBFile->Get(histoName.c_str()) != nullptr) {
        _DB_Map_Mask[sensorID] = (TH2F *) noiseDBFile->Get(histoName.c_str());  
@@ -228,8 +227,8 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
     int sensorID = PixelID( pixModule ) ["sensorID"];
     
     // Read geometry info for sensor 
-    int ipl = _detector.GetPlaneNumber(sensorID);      
-    Det& adet = _detector.GetDet(ipl);
+    int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);      
+    const Det& adet = TBDetector::Get(ipl);
        
     // Get max channel numbers 
     int maxCol = adet.GetMaxUCell();   

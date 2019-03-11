@@ -6,7 +6,7 @@
 #ifndef TelUnpacke_H
 #define TelUnpacker_H 1
 
-#include "TBDetector.h"
+
 
 // Include LCIO classes
 #include <lcio.h>
@@ -75,8 +75,6 @@ protected:
  	       
  private: 
     
-   // Handle to detector data sheets 
-   TBDetector _detector;    
     
    double _timeCPU; //!< CPU time
    int    _nRun ;   //!< Run number

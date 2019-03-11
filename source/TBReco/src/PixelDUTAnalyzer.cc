@@ -205,7 +205,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     LCCollection* digitcol = evt->getCollection( _digitColName ) ;
     CellIDDecoder<TrackerDataImpl> DigitDecoder(digitcol, &_inputDecodeHelper);
     // Search for digits from DUT 
-    for (unsigned int iDet = 0; iDet < digitcol->getNumberOfElements(); iDet++) {    
+    for (int iDet = 0; iDet < digitcol->getNumberOfElements(); iDet++) {    
       TrackerDataImpl * digits = dynamic_cast<TrackerDataImpl* > ( digitcol->getElementAt(iDet) );
       int sensorID = DigitDecoder( digits ) ["sensorID"];
       if ( sensorID ==  dut.GetSensorID()  ) { 

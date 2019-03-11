@@ -6,7 +6,7 @@
 #ifndef PixelClusterizer_H
 #define PixelClusterizer_H 1
 
-#include "TBDetector.h"
+
 
 // Include LCIO classes
 #include <lcio.h>
@@ -116,8 +116,7 @@ namespace depfet {
    	       
   private: 
     
-   // Handle to detector data sheets 
-   TBDetector _detector;    
+   
    
    //! internally used as storage for input decoding
    UTIL::BitField64 _inputDecodeHelper;

@@ -10,6 +10,7 @@
 #include <iostream>
 #include <iomanip>
 
+#include "TBDetector.h"
 
 // Include LCIO classes
 #include <lcio.h>
@@ -84,18 +85,17 @@ namespace depfet {
     // CPU time start
     m_timeCPU = clock()/1000;
 
-    // Read detector constants from gear file
-    m_detector.ReadGearConfiguration();  
+    
     
     if ( _scintiNo1.size() >= 5 ) {
       int sensorID = (int) _scintiNo1[0];
-      int ipl = m_detector.GetPlaneNumber(sensorID);
+      int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);
       float minU = _scintiNo1[1];
       float maxU = _scintiNo1[3];
       float minV = _scintiNo1[2];
       float maxV = _scintiNo1[4];
       
-      if ( minU < maxU && minV < maxV && ipl >= 0 && ipl < m_detector.GetNSensors() ) {
+      if ( minU < maxU && minV < maxV && ipl >= 0 && ipl < TBDetector::GetInstance().GetNSensors() ) {
         TrgScinti  sct(sensorID, minU, maxU, minV, maxV);
         m_scintiVec.push_back(sct);
       }
@@ -104,13 +104,13 @@ namespace depfet {
     
     if ( _scintiNo2.size() >= 5 ) {
       int sensorID = (int) _scintiNo2[0];
-      int ipl = m_detector.GetPlaneNumber(sensorID);
+      int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);
       float minU = _scintiNo2[1];
       float maxU = _scintiNo2[3];
       float minV = _scintiNo2[2];
       float maxV = _scintiNo2[4];
       
-      if ( minU < maxU && minV < maxV && ipl >= 0 && ipl < m_detector.GetNSensors() ) {
+      if ( minU < maxU && minV < maxV && ipl >= 0 && ipl < TBDetector::GetInstance().GetNSensors() ) {
         TrgScinti  sct(sensorID, minU, maxU, minV, maxV);
         m_scintiVec.push_back(sct);
       }
@@ -118,13 +118,13 @@ namespace depfet {
 
     if ( _scintiNo3.size() >= 5 ) {
       int sensorID = (int) _scintiNo3[0];
-      int ipl = m_detector.GetPlaneNumber(sensorID);
+      int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);
       float minU = _scintiNo3[1];
       float maxU = _scintiNo3[3];
       float minV = _scintiNo3[2];
       float maxV = _scintiNo3[4];
       
-      if ( minU < maxU && minV < maxV && ipl >= 0 && ipl < m_detector.GetNSensors() ) {
+      if ( minU < maxU && minV < maxV && ipl >= 0 && ipl < TBDetector::GetInstance().GetNSensors() ) {
         TrgScinti  sct(sensorID, minU, maxU, minV, maxV);
         m_scintiVec.push_back(sct);
       }
@@ -133,13 +133,13 @@ namespace depfet {
     
     if ( _scintiNo4.size() >= 5 ) {
       int sensorID = (int) _scintiNo4[0];
-      int ipl = m_detector.GetPlaneNumber(sensorID);
+      int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);
       float minU = _scintiNo4[1];
       float maxU = _scintiNo4[3];
       float minV = _scintiNo4[2];
       float maxV = _scintiNo4[4];
       
-      if ( minU < maxU && minV < maxV && ipl >= 0 && ipl < m_detector.GetNSensors() ) {
+      if ( minU < maxU && minV < maxV && ipl >= 0 && ipl < TBDetector::GetInstance().GetNSensors() ) {
         TrgScinti  sct(sensorID, minU, maxU, minV, maxV);
         m_scintiVec.push_back(sct);
       }

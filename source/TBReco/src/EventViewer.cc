@@ -23,6 +23,7 @@
 
 // Include TBTools 
 #include "Utilities.h"
+#include "TBDetector.h"
 
 
 // Used namespaces
@@ -109,8 +110,7 @@ void EventViewer::init() {
    // Print set parameters
    printProcessorParams();
    
-   // Read detector constants from gear file
-   _detector.ReadGearConfiguration();    
+   
    
    // transform the selectDataType string to small letters
    transform(_selectDataType.begin(), _selectDataType.end(), _selectDataType.begin(), ::tolower);
@@ -327,9 +327,9 @@ void EventViewer::dumpRawDataEvent( LCEvent * evt )
       TrackerRawDataImpl * rawmatrix = dynamic_cast<TrackerRawDataImpl* > (frames->getElementAt(iSensor));
       CellIDDecoder<TrackerRawDataImpl> idRawMatrixDecoder( frames );
       int currentSensorID = idRawMatrixDecoder(rawmatrix)["sensorID"];  
-      int ipl = _detector.GetPlaneNumber(currentSensorID);   
-      int noOfXPixels =  _detector.GetDet(ipl).GetMaxUCell()+1;   
-      int noOfYPixels =  _detector.GetDet(ipl).GetMaxVCell()+1;  
+      int ipl = TBDetector::GetInstance().GetPlaneNumber(currentSensorID);   
+      int noOfXPixels =  TBDetector::Get(ipl).GetMaxUCell()+1;   
+      int noOfYPixels =  TBDetector::Get(ipl).GetMaxVCell()+1;  
 
       //
       // skip this sensor 
@@ -406,9 +406,9 @@ void EventViewer::dumpZeroSuppEvent( LCEvent * evt )
       // open data frame
       TrackerDataImpl * matrix = dynamic_cast<TrackerDataImpl* > (frames->getElementAt(iSensor));
       int currentSensorID = idMatrixDecoder(matrix)["sensorID"]; 
-      int ipl = _detector.GetPlaneNumber(currentSensorID);   
-      int noOfXPixels =  _detector.GetDet(ipl).GetMaxUCell()+1;   
-      int noOfYPixels =  _detector.GetDet(ipl).GetMaxVCell()+1;  
+      int ipl = TBDetector::GetInstance().GetPlaneNumber(currentSensorID);   
+      int noOfXPixels =  TBDetector::Get(ipl).GetMaxUCell()+1;   
+      int noOfYPixels =  TBDetector::Get(ipl).GetMaxVCell()+1;  
       
       //
       // skip this sensor 

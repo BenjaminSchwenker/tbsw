@@ -5,10 +5,12 @@
 
 #include "TelUnpacker.h"
 
+
 #include <iomanip>
 
-// Include DEPFETTrackTools 
+// Include TBTools 
 #include "DEPFET.h" 
+#include "TBDetector.h"
 
 
 // Used namespaces
@@ -63,9 +65,7 @@ void TelUnpacker::init() {
    _nRun = 0 ;
    _nEvt = 0 ;
    
-   // Read detector constants from gear file
-   _detector.ReadGearConfiguration();    
-               
+   
    // Print set parameters
    printProcessorParams();
    

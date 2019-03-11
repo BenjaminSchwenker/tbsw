@@ -7,6 +7,7 @@
 
 // Include TBTools 
 #include "DEPFET.h" 
+#include "TBDetector.h"
 
 // Include basic C
 #include <iostream>
@@ -76,8 +77,7 @@ namespace depfet {
     _nEvt = 0 ;
     _timeCPU = clock()/1000;
                
-    // Read detector constants from gear file
-    _detector.ReadGearConfiguration();    
+    
     
     // Print set parameters
     printProcessorParams();
@@ -123,8 +123,8 @@ namespace depfet {
         int sensorID =  DataDecoder( trackerData ) ["sensorID"] ;
         
         // Read geometry info for sensor 
-        int ipl = _detector.GetPlaneNumber(sensorID);      
-        Det& adet = _detector.GetDet(ipl);
+        int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);      
+        const Det& adet = TBDetector::Get(ipl);
     
         int nUCells = adet.GetMaxUCell()+1;
         int nVCells = adet.GetMaxVCell()+1;
@@ -230,8 +230,8 @@ namespace depfet {
       auto&& hitVec = it->second;
         
       // Read geometry info for sensor 
-      int ipl = _detector.GetPlaneNumber(sensorID);      
-      Det& adet = _detector.GetDet(ipl);
+      int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);      
+      const Det& adet = TBDetector::Get(ipl);
        
       int nUCells = adet.GetMaxUCell()+1;
       int nVCells = adet.GetMaxVCell()+1;

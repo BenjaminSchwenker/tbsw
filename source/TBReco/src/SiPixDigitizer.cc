@@ -7,6 +7,7 @@
 
 // Include TBTools  
 #include "PhysicalConstants.h"
+#include "TBDetector.h"
 
 // Include basic C
 #include <cstdlib>
@@ -193,8 +194,7 @@ namespace depfet {
     // Comparator mode needs threshold one
     if (m_frontEndType == 1)  m_zsThreshold = 1;
     
-    // Read detector constants from gear file
-    m_detector.ReadGearConfiguration();      
+    
     
     // Print set parameters
     printProcessorParams();
@@ -261,7 +261,7 @@ namespace depfet {
         
         // Set current - layer ID, ladder ID and sensor ID
         m_sensorID = cellIDDec(simTrkHit)["sensorID"];
-        m_ipl = m_detector.GetPlaneNumber(m_sensorID);
+        m_ipl = TBDetector::GetInstance().GetPlaneNumber(m_sensorID);
          
         streamlog_out(MESSAGE1) << " Found SimTrackerHit with sensorID: " << m_sensorID  
                                 << std::setprecision(10)
@@ -463,7 +463,7 @@ namespace depfet {
     Vector3d exitPoint  = hitLocal.position + hitLocal.direction*trackLength/2.;
       
     // Check entry and exit point are within sensor boundaries  
-    if (  m_detector.GetDet(m_ipl).isPointOutOfSensor( entryPoint(0), entryPoint(1) , entryPoint(2) ) ) {
+    if (  TBDetector::Get(m_ipl).isPointOutOfSensor( entryPoint(0), entryPoint(1) , entryPoint(2) ) ) {
       streamlog_out(MESSAGE2) << std::setiosflags(std::ios::fixed | std::ios::internal )
                               << std::setprecision(3)
                               << "SiPixDigitizer::ProduceIonisationPoints - ionPoint: " << entryPoint/mm << " out of sensor!!!"
@@ -474,7 +474,7 @@ namespace depfet {
             
       return; 
     }
-    if (  m_detector.GetDet(m_ipl).isPointOutOfSensor( exitPoint(0), exitPoint(1) , exitPoint(2) ) ) {
+    if (  TBDetector::Get(m_ipl).isPointOutOfSensor( exitPoint(0), exitPoint(1) , exitPoint(2) ) ) {
       streamlog_out(MESSAGE2) << std::setiosflags(std::ios::fixed | std::ios::internal )
                               << std::setprecision(3)
                               << "SiPixDigitizer::ProduceIonisationPoints - ionPoint: " << exitPoint/mm << " out of sensor!!!"
@@ -538,11 +538,11 @@ namespace depfet {
       IonisationPoint * iPoint = ionisationPoints[i];
       
       //  Charge cloud created at distance to top plane 
-      double w =  m_detector.GetDet(m_ipl).GetThickness(iPoint->position(0), iPoint->position(1))/2. - iPoint->position(2);
+      double w =  TBDetector::Get(m_ipl).GetThickness(iPoint->position(0), iPoint->position(1))/2. - iPoint->position(2);
       w = sqrt( w * w );
       
       // Potential valley is at distance to top plane
-      double w0 = m_detector.GetDet(m_ipl).GetThickness(iPoint->position(0), iPoint->position(1))/2. - 0.02;
+      double w0 = TBDetector::Get(m_ipl).GetThickness(iPoint->position(0), iPoint->position(1))/2. - 0.02;
       double dw = 0.003;  
       
       // Drift time into potential valley -  
@@ -639,13 +639,14 @@ namespace depfet {
         // Initial group position   
         double groupPosU = centreU + gRandom->Gaus(0, sigmaU);
         double groupPosV = centreV + gRandom->Gaus(0, sigmaV);
-            
-        int iV = m_detector.GetDet(m_ipl).GetVCellFromCoord( groupPosU, groupPosV );
-        int iU = m_detector.GetDet(m_ipl).GetUCellFromCoord( groupPosU, groupPosV ); 
+           
+        const  Det  & current_det = TBDetector::Get(m_ipl);
+        int iV = current_det.GetVCellFromCoord( groupPosU, groupPosV );
+        int iU = current_det.GetUCellFromCoord( groupPosU, groupPosV ); 
         
         // Internal pixel borders   
-        double halfwidthU   = m_detector.GetDet(m_ipl).GetPitchU(iV,iU)/2. - m_uSideBorderLength;          
-        double halfwidthV   = m_detector.GetDet(m_ipl).GetPitchV(iV,iU)/2. - m_vSideBorderLength;         
+        double halfwidthU   = current_det.GetPitchU(iV,iU)/2. - m_uSideBorderLength;          
+        double halfwidthV   = current_det.GetPitchV(iV,iU)/2. - m_vSideBorderLength;         
         
         streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
                                 << std::setprecision(3)
@@ -653,8 +654,8 @@ namespace depfet {
                                 << std::setprecision(0)
                                 << std::endl;  
         
-        double pixelPosV = m_detector.GetDet(m_ipl).GetPixelCenterCoordV(iV, iU); 
-        double pixelPosU = m_detector.GetDet(m_ipl).GetPixelCenterCoordU(iV, iU); 
+        double pixelPosV = current_det.GetPixelCenterCoordV(iV, iU); 
+        double pixelPosU = current_det.GetPixelCenterCoordU(iV, iU); 
            
         // control variables 
         double collectionTime = 0;
@@ -681,11 +682,11 @@ namespace depfet {
 
           
           // Update charge cloud posisiton 
-          iV = m_detector.GetDet(m_ipl).GetVCellFromCoord( groupPosU, groupPosV );
-          iU = m_detector.GetDet(m_ipl).GetUCellFromCoord( groupPosU, groupPosV ); 
+          iV = current_det.GetVCellFromCoord( groupPosU, groupPosV );
+          iU = current_det.GetUCellFromCoord( groupPosU, groupPosV ); 
         
-          pixelPosV = m_detector.GetDet(m_ipl).GetPixelCenterCoordV(iV, iU); 
-          pixelPosU = m_detector.GetDet(m_ipl).GetPixelCenterCoordU(iV, iU); 
+          pixelPosV = current_det.GetPixelCenterCoordV(iV, iU); 
+          pixelPosU = current_det.GetPixelCenterCoordU(iV, iU); 
            
                  
         } // end of group tracking
@@ -802,7 +803,7 @@ namespace depfet {
       Digit * digit = *iterDigitVec;
       
       int uniqSensorID = m_sensorID;
-      int uniqPixelID  = m_detector.GetDet(m_ipl).encodePixelID(digit->cellIDV, digit->cellIDU);    
+      int uniqPixelID  = TBDetector::Get(m_ipl).encodePixelID(digit->cellIDV, digit->cellIDU);    
       
       streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
                                 << std::setprecision(3)
@@ -904,10 +905,11 @@ namespace depfet {
     Digit * digit = 0; 
     
     // Go through all sensors & generate noise digits
-    for (short int ipl=0; ipl < m_detector.GetNSensors(); ipl++) {
+    for (short int ipl=0; ipl < TBDetector::GetInstance().GetNSensors(); ipl++) {
       
       m_ipl = ipl;     
-      m_sensorID = m_detector.GetDet(m_ipl).GetSensorID();
+      const Det& current_det = TBDetector::Get(m_ipl);
+      m_sensorID = current_det.GetSensorID();
       
       if ( std::find(m_filterIDs.begin(), m_filterIDs.end(), m_sensorID) == m_filterIDs.end() ) {
         streamlog_out(MESSAGE2) << " Do not create noise hits on sensorID: "  << m_sensorID << std::endl;
@@ -915,7 +917,7 @@ namespace depfet {
       }
       
       // Average number of noise pixels
-      double meanNoisePixels = m_noiseFraction * (m_detector.GetDet(m_ipl).GetMaxUCell() +1) * (m_detector.GetDet(m_ipl).GetMaxVCell()+1);
+      double meanNoisePixels = m_noiseFraction * (current_det.GetMaxUCell() +1) * (current_det.GetMaxVCell()+1);
             
       // Total number of noise pixels has Poison distribution
       int fractionPixels = gRandom->Poisson(meanNoisePixels);  
@@ -923,11 +925,11 @@ namespace depfet {
       // Generate noise digits
       for (int iNoisePixel=0; iNoisePixel<fractionPixels; iNoisePixel++) {
                     
-        int iU  = int(gRandom->Uniform( m_detector.GetDet(m_ipl).GetMaxUCell()+1  ));
-        int iV  = int(gRandom->Uniform( m_detector.GetDet(m_ipl).GetMaxVCell()+1  ));
+        int iU  = int(gRandom->Uniform( current_det.GetMaxUCell()+1  ));
+        int iV  = int(gRandom->Uniform( current_det.GetMaxVCell()+1  ));
                   
         // Describe pixel by unique ID
-        int uniqPixelID  = m_detector.GetDet(m_ipl).encodePixelID(iV, iU);     
+        int uniqPixelID  = current_det.encodePixelID(iV, iU);     
                 
         // Find if pixel doesn't already have some signal+noise or just noise
         if( !(digitsMap[m_sensorID].find(uniqPixelID)!=digitsMap[m_sensorID].end()) ) {

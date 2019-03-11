@@ -5,8 +5,9 @@
 
 #include "HotStripKiller.h"
 
-// Include DEPFETTrackTools 
+// Include TBTools 
 #include "DEPFET.h" 
+#include "TBDetector.h"
 
 // Include basic C
 #include <iostream>
@@ -95,8 +96,7 @@ void HotStripKiller::init() {
    _nEvt = 0 ;
    _timeCPU = clock()/1000;
               
-   // Read detector constants from gear file
-   _detector.ReadGearConfiguration();    
+   
    
    // Print set parameters
    printProcessorParams();
@@ -216,7 +216,7 @@ void HotStripKiller::end()
     
     // Read geometry info for sensor
     int ipl = _planeNumbers[iDetector];       
-    Det& Sensor = _detector.GetDet(ipl);      
+    const Det& Sensor = TBDetector::Get(ipl);      
     int nUCells = Sensor.GetMaxUCell()+1;
     int nVCells = Sensor.GetMaxVCell()+1;
     int sensorID = Sensor.GetSensorID();  
@@ -269,7 +269,7 @@ void HotStripKiller::end()
      
     // Read geometry info for sensor
     int ipl = _planeNumbers[iDetector];       
-    Det& Sensor = _detector.GetDet(ipl);       
+    const Det& Sensor = TBDetector::Get(ipl);       
     int nUCells = Sensor.GetMaxUCell()+1;
     int nVCells = Sensor.GetMaxVCell()+1;
     
@@ -398,8 +398,8 @@ void HotStripKiller::accumulateHits(LCEvent * evt) {
       int sensorID =  DataDecoder( trackerData ) ["sensorID"] ;
       
       // Read geometry info for sensor 
-      int ipl = _detector.GetPlaneNumber(sensorID);      
-      Det& Sensor = _detector.GetDet(ipl);
+      int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);      
+      const Det& Sensor = TBDetector::Get(ipl);
       int nUCells = Sensor.GetMaxUCell()+1;
       int nVCells = Sensor.GetMaxVCell()+1;
           
@@ -533,11 +533,11 @@ void HotStripKiller::initializeAlgorithms(LCEvent * evt) {
       int sensorID =  DataDecoder( trackerData ) ["sensorID"] ;
 
       // Read geometry info for sensor 
-      int ipl = _detector.GetPlaneNumber(sensorID);  
+      int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);  
       _planeNumbers.push_back(ipl); 
 
     
-      Det& Sensor = _detector.GetDet(ipl);
+      const Det& Sensor = TBDetector::Get(ipl);
       int nUCells = Sensor.GetMaxUCell()+1;
       int nVCells = Sensor.GetMaxVCell()+1;
              
@@ -568,8 +568,8 @@ void HotStripKiller::initializeAlgorithms(LCEvent * evt) {
       int sensorID =  DataDecoder( trackerData ) ["sensorID"] ;
        
       // Read geometry info for sensor 
-      int ipl = _detector.GetPlaneNumber(sensorID);      
-      Det& Sensor = _detector.GetDet(ipl);
+      int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);      
+      const Det& Sensor = TBDetector::Get(ipl);
       
       std::string dirName; 
       std::string histoName;
@@ -657,7 +657,7 @@ void HotStripKiller::computeMask() {
               
     // Read geometry info for sensor
     int ipl = _planeNumbers[iDetector];       
-    Det& Sensor = _detector.GetDet(ipl);      
+    const Det& Sensor = TBDetector::Get(ipl);      
     int nUCells = Sensor.GetMaxUCell()+1;
     int nVCells = Sensor.GetMaxVCell()+1;
     int sensorID = Sensor.GetSensorID(); 
@@ -705,7 +705,7 @@ void HotStripKiller::bookHistos()
   _rootFile->cd("");
    
   // Get number of sensors
-  int nSens = _detector.GetNSensors();
+  int nSens = TBDetector::GetInstance().GetNSensors();
   
   std::string histoName;
 

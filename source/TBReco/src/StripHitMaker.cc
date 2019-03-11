@@ -7,6 +7,7 @@
  
 #include "StripHitMaker.h"
 #include "TBHit.h"
+#include "TBDetector.h"
 
 
 // Include basic C
@@ -89,8 +90,7 @@ void StripHitMaker::init() {
    // Print set parameters
    printProcessorParams();
    
-   // Read detector constants from gear file
-   _detector.ReadGearConfiguration();    
+   
     
 }
 
@@ -146,8 +146,8 @@ void StripHitMaker::processEvent(LCEvent * evt)
     // Read cluster header
     TrackerPulseImpl* cluster = dynamic_cast<TrackerPulseImpl* > ( clusterCollection->getElementAt(iClu) )  ;       
     int sensorID = clusterDecoder(cluster)["sensorID"]; 
-    int ipl = _detector.GetPlaneNumber(sensorID);
-    Det& Sensor = _detector.GetDet(ipl);
+    int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);
+    const Det& Sensor = TBDetector::Get(ipl);
     
     streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID  << endl; 
       
