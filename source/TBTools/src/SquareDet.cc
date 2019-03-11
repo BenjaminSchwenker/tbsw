@@ -153,12 +153,12 @@ void SquareDet::SetCellsV( std::vector< std::tuple<int,int,double> > vCells)
 
 int SquareDet::GetMaxUCell() const
 {
-  return m_nCellsU-1;
+  return m_nCellsU+m_minCellU-1;
 }  
 
 int SquareDet::GetMaxVCell() const
 {
-  return m_nCellsV-1;
+  return m_nCellsV+m_minCellV-1;
 }  
 
 int SquareDet::GetMinUCell() const

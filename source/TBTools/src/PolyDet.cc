@@ -69,6 +69,22 @@ void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, doub
   for (auto group: protocells){ // not checking if type already in ?
     m_cells_neighb_dist.emplace_back(std::get<0>(group), std::get<1>(group), std::get<2>(group));
   }
+  
+  // calculate the pitches as bounding box for the protopixel
+  for (auto protopix: protocells){
+    double minx = std::numeric_limits<double>::max();
+    double maxx = -std::numeric_limits<double>::max();
+    double miny = std::numeric_limits<double>::max();
+    double maxy = -std::numeric_limits<double>::max();
+    for (auto points: std::get<3>(protopix)){
+      if (std::get<0>(points) > maxx) maxx = std::get<0>(points);
+      else if (std::get<0>(points) < minx) minx = std::get<0>(points);
+      if (std::get<1>(points) > maxy) maxy = std::get<1>(points);
+      else if (std::get<1>(points) < miny) miny = std::get<1>(points);
+    }
+    m_pitch.emplace_back(std::get<0>(protopix), maxx-minx, maxy-miny);
+  }
+	
   TH2Poly *unshiftedLayout = new TH2Poly();
   unshiftedLayout->SetFloat();
   unshiftedLayout->SetName("helperlayout");
@@ -98,10 +114,10 @@ void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, doub
         TGraph *gpixel = new TGraph(std::get<3>(protopix).size()); 
 	std::string pixelname = std::to_string(std::get<0>(group)) + "," + std::to_string(std::get<1>(group));
         gpixel->SetName(pixelname.c_str());
-	m_maxCellU = (std::get<0>(group) > m_maxCellU) ? std::get<0>(group) : m_maxCellU;
-        m_maxCellV = (std::get<1>(group) > m_maxCellV) ? std::get<1>(group) : m_maxCellV;
-        m_minCellU = (std::get<0>(group) < m_minCellU) ? std::get<0>(group) : m_minCellU;
-        m_minCellV = (std::get<1>(group) < m_minCellV) ? std::get<1>(group) : m_minCellV;
+	if (std::get<0>(group) > m_maxCellU) m_maxCellU = std::get<0>(group);
+	else if (std::get<0>(group) < m_minCellU) m_minCellU = std::get<0>(group);
+        if (std::get<1>(group) > m_maxCellV) m_maxCellV = std::get<1>(group);
+	else if (std::get<1>(group) < m_minCellV) m_minCellV = std::get<1>(group);
         for (auto points: std::get<3>(protopix)){
           double x = std::get<0>(points)+centeru;
 	  double y = std::get<1>(points)+centerv;
@@ -139,6 +155,10 @@ void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, doub
   // sensitive area
   m_sensitiveSizeU = sensSizeUmax - sensSizeUmin;
   m_sensitiveSizeV = sensSizeVmax - sensSizeVmin;
+  m_sensitiveSizeMaxU = sensSizeUmax - shiftu;
+  m_sensitiveSizeMinU = sensSizeUmin - shiftu;
+  m_sensitiveSizeMaxV = sensSizeVmax - shiftv;
+  m_sensitiveSizeMinV = sensSizeVmin - shiftv;
 
   // number of u cells and v cells, assuemed u,v start at min then number is max-minu/v +1
   m_nCellsU = m_maxCellU - m_minCellU + 1;
@@ -171,26 +191,24 @@ int PolyDet::GetMinVCell() const
   return m_minCellV;
 }  
 
-// TODO Helge should check this because it is probably wrong
 double PolyDet::GetSensitiveMaxU() const
 {
-  return m_sensitiveSizeU/2.; 
+  return m_sensitiveSizeMaxU; 
 }  
   
 double PolyDet::GetSensitiveMaxV() const
 {
-  return m_sensitiveSizeV/2.;  
+  return m_sensitiveSizeMaxV;  
 } 
 
-// TODO Helge should check this because it is probably wrong
 double PolyDet::GetSensitiveMinU() const
 {
-  return -m_sensitiveSizeU/2.; 
+  return m_sensitiveSizeMinU; 
 }  
   
 double PolyDet::GetSensitiveMinV() const
 {
-  return -m_sensitiveSizeV/2.;  
+  return m_sensitiveSizeMinV;  
 } 
 
 // TODO different distance comparison?
@@ -198,10 +216,10 @@ bool PolyDet::areNeighbors(int vcell1, int ucell1, int vcell2, int ucell2) const
 {
   // get coord, type, make distance, compare to type neighbour distance
   // initialised with maximum distance, so not automatic neighbours as if assigned 0.
-  double vcoord1 = -m_sensitiveSizeV/2.;
-  double ucoord1 = -m_sensitiveSizeU/2.;
-  double vcoord2 = m_sensitiveSizeV/2.;
-  double ucoord2 = m_sensitiveSizeU/2.;
+  double vcoord1 = m_sensitiveSizeMinV;
+  double ucoord1 = m_sensitiveSizeMinU;
+  double vcoord2 = m_sensitiveSizeMaxV;
+  double ucoord2 = m_sensitiveSizeMaxU;
   GetPixelCenterCoord(vcoord1, ucoord1, vcell1, ucell1);
   GetPixelCenterCoord(vcoord2, ucoord2, vcell2, ucell2);
   
@@ -292,8 +310,8 @@ bool PolyDet::isPointOutOfSensor( double u, double v, double w) const
   bool isOut = false; 
   
   // Boundary set +- epsilon
-  if ( (u < (-m_sensitiveSizeU/2. -0.005)) || (u > (+m_sensitiveSizeU/2. + 0.005)) ||
-       (v < (-m_sensitiveSizeV/2. -0.005)) || (v > (+m_sensitiveSizeV/2. + 0.005)) ||
+  if ( (u < (m_sensitiveSizeMinU -0.005)) || (u > (m_sensitiveSizeMaxU + 0.005)) ||
+       (v < (m_sensitiveSizeMinV -0.005)) || (v > (m_sensitiveSizeMaxV + 0.005)) ||
        (w < (-m_sensitiveThickness/2. -0.005)) || (w > (+m_sensitiveThickness/2. + 0.005)) ) isOut = true;
 
    // Return if out or not
@@ -370,7 +388,7 @@ double PolyDet::GetPixelCenterCoordV(int vcell, int ucell) const
     if (ucell == std::get<0>(group) && vcell == std::get<1>(group))
       return std::get<4>(group);
   }
-  return -m_sensitiveSizeV/2.-0.1; // -1.0 (mm) could be a actual position, so messing this up with this, better something out of sensitive range?! 100 um out off sensitive?
+  return m_sensitiveSizeMinV - 0.1; // -1.0 (mm) could be a actual position, so messing this up with this, better something out of sensitive range?! 100 um out off sensitive?
 }
  
 
@@ -380,7 +398,7 @@ double PolyDet::GetPixelCenterCoordU(int vcell, int ucell) const
     if (ucell == std::get<0>(group) && vcell == std::get<1>(group))
       return std::get<3>(group);
   }
-  return -m_sensitiveSizeU/2.-0.1;
+  return m_sensitiveSizeMinU - 0.1;
 }
 
 
@@ -392,12 +410,11 @@ void PolyDet::GetPixelCenterCoord(double& vcoord, double& ucoord, int vcell, int
 
 int PolyDet::GetUCellFromCoord( double u, double v ) const
 {
-  if (u < -m_sensitiveSizeU/2.) {
-   return -1;//m_minCellU;
-  } else if (u > m_sensitiveSizeU/2.) {
-   return -1;//m_nCellsU-1;
-  } 
-  // ? |
+  if (u < m_sensitiveSizeMinU || u > m_sensitiveSizeMaxU)
+    return -1;
+  if (v < m_sensitiveSizeMinV || v > m_sensitiveSizeMaxV)
+    return -1;
+  
   int bin =  m_layout->FindBin(u, v);
   if (bin < 0) // possible non desribed areas in the sensitive volumne
     return -1;
@@ -408,12 +425,11 @@ int PolyDet::GetUCellFromCoord( double u, double v ) const
    
 int PolyDet::GetVCellFromCoord( double u, double v ) const
 {
-  if (v < -m_sensitiveSizeV/2.) {
-   return -1;//m_minCellV; no minCell?
-  } else if (v > m_sensitiveSizeV/2.) {
-   return -1;//m_nCellsV-1;
-  }
-  // ? | 
+  if (u < m_sensitiveSizeMinU || u > m_sensitiveSizeMaxU)
+    return -1;
+  if (v < m_sensitiveSizeMinV || v > m_sensitiveSizeMaxV)
+    return -1;
+   
   int bin =  m_layout->FindBin(u, v);
   if (bin < 0) // possible non desribed areas in the sensitive volumne
     return -1;
