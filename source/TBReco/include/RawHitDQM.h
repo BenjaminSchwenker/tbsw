@@ -7,9 +7,6 @@
 #ifndef RawHitDQM_H
 #define RawHitDQM_H 1
 
-// Include DEPFETTrackTools 
-#include "TBDetector.h"
-
 // Include LCIO classes
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerHitImpl.h>
@@ -81,8 +78,7 @@ protected:
      
  private:
    
-   // Handle to detector data 
-   TBDetector _detector;    
+   
    
    // Handle to root file
    TFile * _rootFile;

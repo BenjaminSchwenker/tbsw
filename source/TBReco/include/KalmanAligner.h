@@ -8,7 +8,6 @@
 
 
 // TBTools includes   
-#include "TBDetector.h"
 #include "AlignEvent.h"
 
 // Include ROOT classes
@@ -100,17 +99,7 @@ protected:
    
 //! Track collection name
    std::string _trackCollectionName;
-      
-//! AlignmentDB file name 
-   std::string _alignmentDBFileName;
-      
-//! Update alignmentDB   
-   bool _updateAlignment;
-
-//! New alignment  
-/*! Don't use current alignment data base, but start from scratch   
- */
-   bool _newAlignment;
+    
 
 //! Initial errors on alignment x shift [mm] for sensors ordered along beam line
    std::vector<float >  _errorsShiftX;
@@ -160,8 +149,7 @@ protected:
    // Count reco tracks used for alignment 
    int _nKAATracks;
    
-   // Handle to detector data 
-   TBDetector  _detector;        
+   
    
    //! Alignment validation data containers 
    // The file contains trees and histos to 

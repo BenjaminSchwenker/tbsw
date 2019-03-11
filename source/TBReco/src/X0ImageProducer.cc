@@ -8,7 +8,8 @@
 
 #include "X0ImageProducer.h"
 
-// DEPFETTrackTools includes
+// TBTools includes
+#include "TBDetector.h"
 #include "TBTrack.h"
 #include "TBHit.h"
 #include "TBKalmanMSC.h"
@@ -76,9 +77,7 @@ X0ImageProducer::X0ImageProducer() : Processor("X0ImageProducer")
   
   // Processor parameters:
   
-  registerProcessorParameter ("AlignmentDBFileName",
-                             "This is the name of the LCIO file with the alignment constants (add .slcio)",
-                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.slcio" ) );     
+  
   
   registerProcessorParameter ("DUTPlane",
                               "Plane number of DUT along the beam line",
@@ -129,14 +128,10 @@ void X0ImageProducer::init() {
    // Print set parameters
    printProcessorParams();
    
-   // Read detector constants from gear file
-   _detector.ReadGearConfiguration();    
-            
-   // Read alignment data base file 
-   _detector.ReadAlignmentDB( _alignmentDBFileName );    
+   
    
    // Load DUT module    
-   Det & dut = _detector.GetDet(_idut); 
+   const Det & dut = TBDetector::GetInstance().GetDet(_idut); 
           
    // Print out geometry information  
    streamlog_out ( MESSAGE3 )  << "Scatter DUT plane  ID = " << dut.GetSensorID()  
@@ -216,7 +211,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
   } 
   
   // Configure Kalman track fitter
-  TBKalmanMSC TrackFitterMSC(_detector);
+  TBKalmanMSC TrackFitterMSC(TBDetector::GetInstance());
   TrackInputProvider TrackLCIOReader;  
   
   // Store tracks 
@@ -231,7 +226,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     Track * lciotrk = dynamic_cast<Track*> (downtrackcol->getElementAt(itrk));
       
     // Convert LCIO -> TB track  
-    TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, _detector ); 
+    TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, TBDetector::GetInstance() ); 
     
     // Refit track in nominal alignment
     bool trkerr = TrackFitterMSC.ProcessTrack(trk, -1, 0);
@@ -255,7 +250,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     Track * lciotrk = dynamic_cast<Track*> (uptrackcol->getElementAt(itrk));
       
     // Convert LCIO -> TB track  
-    TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, _detector ); 
+    TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, TBDetector::GetInstance() ); 
 
     // Refit track in nominal alignment
     bool trkerr = TrackFitterMSC.ProcessTrack(trk, 1, 0);  
@@ -276,7 +271,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
    
 
    
-  Det & dut = _detector.GetDet(_idut);
+  Det & dut = TBDetector::GetInstance().GetDet(_idut);
 
   // Vertex fit track matching
   if(_vertexfitswitch)
@@ -309,7 +304,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		    TBTrack& downtrack = downTrackStore[idown];
 		
 		    //Initialize Vertex and Vertex Fitter
-		    TBVertexFitter VertexFitter(_idut, _detector);
+		    TBVertexFitter VertexFitter(_idut, TBDetector::GetInstance());
 			TBVertex Vertex;
 
 			// Add upstream track state to vertex
@@ -359,7 +354,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
   // or no hit is close enough to a track!! 
   double distmin=numeric_limits<double >::max();
    
-  Det & dut = _detector.GetDet(_idut);
+  
 
   do{
     int bestup=-1;
@@ -429,11 +424,11 @@ void X0ImageProducer::processEvent(LCEvent * evt)
   _rootEventTree->Fill();    
 
   //Initialize Vertex Fitter
-  TBVertexFitter VertexFitter(_idut, _detector);
+  TBVertexFitter VertexFitter(_idut, TBDetector::GetInstance());
 
   // Average mometum before and after energy loss. 
   double average_mom = 0;
-
+  
 
   for(size_t iup=0;iup<upTrackStore.size(); iup++)
   {

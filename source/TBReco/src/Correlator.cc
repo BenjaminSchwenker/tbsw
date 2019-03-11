@@ -9,6 +9,7 @@
 #include "Correlator.h"
 
 // Include TBTools header files
+#include "TBDetector.h"
 #include "TBHit.h"
 #include "TBTrack.h"
 #include "Det.h"
@@ -65,19 +66,7 @@ Correlator::Correlator() : Processor("Correlator")
    
 //   
 // Define processor parameters 
-   
-   registerProcessorParameter ("AlignmentDBFileName",
-                             "This is the name of the file with the alignment constants (add .root)",
-                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) );   
-                   
-   registerProcessorParameter ("UpdateAlignment",
-                              "Update alignment DB using offset corrections (true/false)?",
-                              _updateAlignment, static_cast <bool> (true) ); 
-
-   registerProcessorParameter ("NewAlignment",
-                              "Start alignment from scratch (true/false)?",
-                              _newAlignment, static_cast <bool> (false) ); 
-   
+  
    registerProcessorParameter ("OutputRootFileName",
                               "This is the name of the output root file",
                               _rootFileName, string("XCorrelator.root"));
@@ -106,13 +95,7 @@ void Correlator::init() {
   _iRun = 0 ;
   _iEvt = 0 ;
    
-  // Read detector constants from gear file   
-    _detector.ReadGearConfiguration(); 
   
-  // Read alignment data base file 
-  if(!_newAlignment) _detector.ReadAlignmentDB( _alignmentDBFileName );
-  // This is needed, because if the AlignmentDB is not read, the detector construct doesn't know the alignmentDB name
-  else  _detector.SetAlignmentDBName( _alignmentDBFileName );
   
   // Book correlation histograms   
   bookHistos();   
@@ -152,7 +135,7 @@ void Correlator::processEvent(LCEvent * evt)
   // ===========================
   
   // Hit factory sorts hits according to plane    
-  HitFactory HitStore( _detector );   
+  HitFactory HitStore( TBDetector::GetInstance() );   
     
   for ( size_t iCol = 0 ; iCol < _inputHitCollectionNameVec.size(); ++iCol ) {
      
@@ -197,7 +180,7 @@ void Correlator::processEvent(LCEvent * evt)
   // BT impact position and HP residuals. 
        
   // Configure track fitter 
-  GenericTrackFitter TrackFitter(_detector);
+  GenericTrackFitter TrackFitter(TBDetector::GetInstance());
   TrackFitter.SetNumIterations(1);   
   
   // Configue seed track generator  
@@ -208,7 +191,7 @@ void Correlator::processEvent(LCEvent * evt)
     //    
     // Create a beam constrained track 
       
-    TBTrack rectrack(_detector);
+    TBTrack rectrack(TBDetector::GetInstance());
     
     // Set particle hypothesis 
     rectrack.SetMass( _mass );
@@ -217,7 +200,7 @@ void Correlator::processEvent(LCEvent * evt)
        
     // Set seed paramaters   
     const TBHit& refhit = HitStore.GetRecoHitFromID(iref, _refPlane);  
-    TBTrackState Seed = TrackSeeder.CreateSeedTrack(refhit, _detector);   
+    TBTrackState Seed = TrackSeeder.CreateSeedTrack(refhit, TBDetector::GetInstance());   
     rectrack.SetReferenceState(Seed);
     
     // Extrapolate seed to all planes
@@ -229,7 +212,7 @@ void Correlator::processEvent(LCEvent * evt)
     //                        
     // Loop over detector planes 
      
-    for(int ipl=0;ipl<_detector.GetNSensors();++ipl)  { 
+    for(int ipl=0;ipl<TBDetector::GetInstance().GetNSensors();++ipl)  { 
        
       // Check iff sensor is  reference sensor
       if ( ipl == _refPlane ) continue;    
@@ -282,13 +265,11 @@ void Correlator::end()
   
   ////////////////////////////////////////////////////////////
   // Try to create a better aligned detector  
-  
-  TBDetector tmp_detector = _detector;
    
   streamlog_out(MESSAGE3) << "Calculating alignment corrections  ... Correlation band method" << endl << endl;        
   
 
-  for ( int ipl = 0 ; ipl < tmp_detector.GetNSensors() ; ++ipl ) 
+  for ( int ipl = 0 ; ipl < TBDetector::GetInstance().GetNSensors() ; ++ipl ) 
   {           
        
     if (ipl == _refPlane) continue; 
@@ -339,7 +320,7 @@ void Correlator::end()
                             << endl << endl;  
       
     
-    Det & adet = tmp_detector.GetDet(ipl);
+    Det & adet = TBDetector::GetInstance().GetDet(ipl);
       
     // We have calculated offset in local coord.
     Vector3d local_offset;
@@ -361,29 +342,10 @@ void Correlator::end()
     adet.SetNominalFrame(alignFrame); 
   
   }
-      
-  //////////////////////////////////////////////////////////////////////  
-  // Save alignment DB
-      
-  _detector = tmp_detector; 
-   
-  if ( _updateAlignment ) { 
-    
-    ////////////////////////////////////////////////////////////
-    // Print detector geometrie after alignment   
-    
-    streamlog_out ( MESSAGE3 ) << "Detector geometry after alignment procedure: " << endl;   
-    _detector.Print();   
        
-    ////////////////////////////////////////////////////////////
-    // Overwrite the alignment data base with new geometry 
-    _detector.WriteAlignmentDB( ); 
-    
-  } else {
-    streamlog_out ( MESSAGE3 ) << endl;
-    streamlog_out ( MESSAGE3 ) << "NO UPDATE OF ALIGNMENT DB" << endl; 
-  }
-  
+  streamlog_out ( MESSAGE3 ) << "Detector geometry after alignment procedure: " << endl;   
+  TBDetector::GetInstance().Print();   
+       
   // Print message
   streamlog_out(MESSAGE3) << std::endl
                           << "Processor succesfully finished!"
@@ -409,7 +371,7 @@ void Correlator::bookHistos() {
   vector< string > dirNames;
   
   // This is the reference detector   
-  Det & refdet = _detector.GetDet(_refPlane); 
+  const Det & refdet = TBDetector::GetInstance().GetDet(_refPlane); 
     
   dirNames.push_back ("HitU");
   dirNames.push_back ("HitV");
@@ -425,13 +387,13 @@ void Correlator::bookHistos() {
   string tempXAxis;
   string tempYAxis; 
   
-  for(int ipl=0; ipl < _detector.GetNSensors(); ++ipl)    
+  for(int ipl=0; ipl < TBDetector::GetInstance().GetNSensors(); ++ipl)    
   {
         
     if ( ipl == _refPlane ) continue; 
                 
     // This is a alignable detector   
-    Det & det = _detector.GetDet(ipl); 
+    const Det & det = TBDetector::GetInstance().GetDet(ipl); 
     
     double safetyFactor = 2.0;  // 2 should be enough because it
                                 // means that the sensor is wrong
@@ -443,17 +405,17 @@ void Correlator::bookHistos() {
               
     _rootFile->cd("/HitU/");
          
-    double  uMin = - safetyFactor * 0.5 * det.GetSensitiveSizeU();               
-    double  uMax = + safetyFactor * 0.5 * det.GetSensitiveSizeU(); 
-    double  PitchU = det.GetSensitiveSizeU()/(det.GetMaxUCell()+2); 
+    double  uMin = safetyFactor  * det.GetSensitiveMinU();               
+    double  uMax = + safetyFactor * det.GetSensitiveMaxU(); 
+    double  PitchU = (det.GetSensitiveMaxU() - det.GetSensitiveMinU() )/(det.GetMaxUCell()+2); 
     int     uBins = static_cast<int>( (uMax - uMin)/(2*PitchU) );     
     
     // avoid too many bins 
     if (uBins > 2000 ) uBins = 2000;            
     
-    double  uMinRef = - safetyFactor * 0.5 * refdet.GetSensitiveSizeU();               
-    double  uMaxRef = + safetyFactor * 0.5 * refdet.GetSensitiveSizeU(); 
-    double  refPitchU = refdet.GetSensitiveSizeU()/(refdet.GetMaxUCell()+2); 
+    double  uMinRef = safetyFactor * refdet.GetSensitiveMinU();               
+    double  uMaxRef = safetyFactor * refdet.GetSensitiveMaxU(); 
+    double  refPitchU = (refdet.GetSensitiveMaxU()  - refdet.GetSensitiveMinU() )/(refdet.GetMaxUCell()+2); 
     int     uBinsRef = static_cast<int>( (uMax - uMin)/(2*refPitchU) );    
     
     // avoid too many bins 
@@ -478,17 +440,17 @@ void Correlator::bookHistos() {
                 
     _rootFile->cd("/HitV/");
      
-    double  vMin = - safetyFactor * 0.5 * det.GetSensitiveSizeV();               
-    double  vMax = + safetyFactor * 0.5 * det.GetSensitiveSizeV(); 
-    double  PitchV = det.GetSensitiveSizeV()/(det.GetMaxVCell()+2); 
+    double  vMin = safetyFactor * det.GetSensitiveMinV();               
+    double  vMax = safetyFactor * det.GetSensitiveMaxV(); 
+    double  PitchV = ( det.GetSensitiveMaxV() - det.GetSensitiveMinV() ) /(det.GetMaxVCell()+2); 
     int     vBins = static_cast<int>( (vMax - vMin)/(2*PitchV) );     
         
     // avoid too many bins 
     if (vBins > 2000 ) vBins = 2000;   
 
-    double  vMinRef = - safetyFactor * 0.5 * refdet.GetSensitiveSizeV();               
-    double  vMaxRef = + safetyFactor * 0.5 * refdet.GetSensitiveSizeV(); 
-    double  refPitchV = refdet.GetSensitiveSizeV()/(refdet.GetMaxVCell()+2); 
+    double  vMinRef = safetyFactor * refdet.GetSensitiveMinV();               
+    double  vMaxRef = safetyFactor * refdet.GetSensitiveMaxV(); 
+    double  refPitchV = ( refdet.GetSensitiveMaxV()- refdet.GetSensitiveMinV() )/(refdet.GetMaxVCell()+2); 
     int     vBinsRef = static_cast<int>( (vMax - vMin)/(2*refPitchV) );     
         
     // avoid too many bins 

@@ -9,6 +9,7 @@
 #include "ClusterShapeToAsciiPrinter.h"
 
 // TBTools includes
+#include "TBDetector.h"
 #include "TBTrack.h"
 #include "TrackInputProvider.h"
 #include "GenericTrackFitter.h"
@@ -57,10 +58,7 @@ namespace depfet {
                                 "File name containing cluster shapes",
                                 _asciiFileName, std::string("ClusterShapes.txt"));  
       
-    registerProcessorParameter ("AlignmentDBFileName",
-                             "This is the name of the file with the alignment constants (add .root)",
-                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) ); 
-
+    
     std::vector<int> initIgnoreIDVec;
     registerProcessorParameter ("IgnoreIDs",
                                 "Ignore clusters from list of sensorIDs",
@@ -81,11 +79,7 @@ namespace depfet {
     // Print set parameters
     printProcessorParams();
     
-    // Read detector constants from gear file
-    _detector.ReadGearConfiguration();  
-    
-    // Read alignment data base file 
-    _detector.ReadAlignmentDB( _alignmentDBFileName );     
+   
 
     // Open file stream
     _outfile.open(_asciiFileName, ios::out | ios::trunc);
@@ -127,7 +121,7 @@ namespace depfet {
     
     TrackInputProvider TrackIO; 
     
-    GenericTrackFitter TrackFitter(_detector);
+    GenericTrackFitter TrackFitter(TBDetector::GetInstance());
     TrackFitter.SetNumIterations(1); 
     
     LCCollection* inputCollection;
@@ -145,7 +139,7 @@ namespace depfet {
       Track * inputtrack = dynamic_cast<Track*> (inputCollection->getElementAt(itrk));
       
       // Convert LCIO -> TB track  
-      TBTrack track = TrackIO.MakeTBTrack( inputtrack, _detector );  
+      TBTrack track = TrackIO.MakeTBTrack( inputtrack, TBDetector::GetInstance() );  
       
       // Refit track 
       bool trkerr = TrackFitter.Fit(track);
@@ -155,12 +149,12 @@ namespace depfet {
       
       //
       // Loop over all clusters in the track
-      for (int ipl= 0; ipl< _detector.GetNSensors(); ++ipl) {   
+      for (int ipl= 0; ipl< TBDetector::GetInstance().GetNSensors(); ++ipl) {   
         
         // Get sensor data 
         //------------------------
         TBTrackElement& TE = track.GetTE(ipl);  
-        Det & Sensor = _detector.GetDet(ipl);  
+        const Det & Sensor = TBDetector::Get(ipl);  
         int sensorID = Sensor.GetSensorID();        
         
         bool ignoreID = false;

@@ -7,8 +7,8 @@
 #ifndef Correlator_H
 #define Correlator_H 1
 
-// Include DEPFETTrackTools header files
-#include "TBDetector.h"
+
+
 
 // Include Marlin classes
 #include <marlin/Global.h>
@@ -102,23 +102,7 @@ protected:
  *  correlations.
  */
    std::vector< std::string >  _inputHitCollectionNameVec; 
-   
-//! Alignment DB file name
-/*! Stores all alignment information (positions + orientations) of 
- *  detector setup. 
- */ 
-   std::string _alignmentDBFileName;
-   
-//! Update alignment  
-/*! Update the alignment data base using correlation band offset 
- *  values.  
- */
-   bool _updateAlignment;
-
-//! New alignment  
-/*! Don't use current alignment data base, but start from scratch   
- */
-   bool _newAlignment;
+  
     
 //! Reference Plane
 /*! Plane number of reference pixel module. Plane numbers are counted
@@ -156,8 +140,7 @@ protected:
 //! Event number
     int _iEvt;
                  
-//! Handle to detector data 
-    TBDetector _detector;    
+
      
 }; // Class
 

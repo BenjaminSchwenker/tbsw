@@ -5,6 +5,8 @@
 // Author: Benjamin Schwenker, Göttingen University 
 // <mailto:benjamin.schwenker@phys.uni-goettingen.de>
  
+#include "TBDetector.h"
+
 #include "RawHitDQM.h"
 #include "TBHit.h"
 #include "Det.h"
@@ -77,8 +79,7 @@ void RawHitDQM::init() {
    // Print set parameters
    printProcessorParams();
    
-   // Read detector constants from gear file
-   _detector.ReadGearConfiguration();    
+   
    
    // Book root histos
    bookHistos();   
@@ -119,7 +120,7 @@ void RawHitDQM::processEvent(LCEvent * evt)
   // ===========================
   
   // Hit factory sorts hits according to plane    
-  HitFactory HitStore( _detector );   
+  HitFactory HitStore( TBDetector::GetInstance() );   
     
   for ( size_t iCol = 0 ; iCol < _inputHitCollectionNameVec.size(); ++iCol ) {
      
@@ -152,7 +153,7 @@ void RawHitDQM::processEvent(LCEvent * evt)
   
   int nhits = 0; 
   
-  for (int iplane = 0; iplane < _detector.GetNSensors(); ++iplane ) {
+  for (int iplane = 0; iplane < TBDetector::GetInstance().GetNSensors(); ++iplane ) {
      
     std::string histoName;
     std::string planeNumber=(to_string( iplane ));
@@ -235,7 +236,7 @@ void RawHitDQM::end()
    // CPU time end
    _timeCPU = clock()/1000 - _timeCPU;
 
-   for (int ipl = 0; ipl < _detector.GetNSensors(); ++ipl ) {
+   for (int ipl = 0; ipl < TBDetector::GetInstance().GetNSensors(); ++ipl ) {
      
      string histoName = "hnhits_sensor"+to_string( ipl );
      double nhits = _histoMap[ histoName ]->GetMean();
@@ -275,7 +276,7 @@ void RawHitDQM::bookHistos() {
    
   // Get number of detectors
   //------------------------
-  int nDet = _detector.GetNSensors();
+  int nDet = TBDetector::GetInstance().GetNSensors();
   
   // Write ROOT Output
   _rootFile = new TFile(_rootFileName.c_str(),"recreate");
@@ -308,18 +309,18 @@ void RawHitDQM::bookHistos() {
     double safetyFactor = 1.1;
           
     // This is a alignable detector   
-    Det & adet = _detector.GetDet(ipl); 
+    const Det & adet = TBDetector::Get(ipl); 
                 
     histoName = "hsigma_hit_u_det"+to_string( ipl );
     histoTitle ="Cluster sigma u"; 
-    max = 10*adet.GetSensitiveSizeU()/(adet.GetMaxUCell()+2); 
+    max = 10*adet.GetSensitiveMaxU()/(adet.GetMaxUCell()+2); 
     _histoMap[ histoName  ] = new TH1D(histoName.c_str(), histoTitle.c_str(), 400, 0, max); 
     _histoMap[ histoName  ]->SetXTitle("cluster sigma u [mm]"); 
     _histoMap[ histoName  ]->SetYTitle("number of cluster");
     
     histoName = "hsigma_hit_v_det"+to_string( ipl );
     histoTitle ="Cluster sigma v"; 
-    max = 10*adet.GetSensitiveSizeV()/(adet.GetMaxVCell()+2); 
+    max = 10*adet.GetSensitiveMaxV()/(adet.GetMaxVCell()+2); 
     _histoMap[ histoName  ] = new TH1D(histoName.c_str(), histoTitle.c_str(), 400, 0, max);
     _histoMap[ histoName  ]->SetXTitle("cluster sigma v [mm]"); 
     _histoMap[ histoName  ]->SetYTitle("number of cluster"); 
@@ -330,25 +331,27 @@ void RawHitDQM::bookHistos() {
     _histoMap[ histoName  ]->SetXTitle("uv correlation coefficient"); 
     _histoMap[ histoName  ]->SetYTitle("number of cluster"); 
    
-    double  uBox = safetyFactor * 0.5 * adet.GetSensitiveSizeU();    
+    double  uMin = safetyFactor * adet.GetSensitiveMinU();
+    double  uMax = safetyFactor * adet.GetSensitiveMaxU();
     int uBins = adet.GetMaxUCell()+1;             
     
     histoName = "hhit_u_det"+to_string( ipl );
     histoTitle ="Cluster u"; 
-    _histoMap[ histoName ] = new TH1D(histoName.c_str(), histoTitle.c_str(), uBins , -uBox, +uBox); 
+    _histoMap[ histoName ] = new TH1D(histoName.c_str(), histoTitle.c_str(), uBins ,  uMin, uMax ); 
     _histoMap[ histoName ]->SetXTitle("cluster u [mm]"); 
-    
-    double  vBox = safetyFactor * 0.5 * adet.GetSensitiveSizeV();   
+       
+    double  vMin = safetyFactor * adet.GetSensitiveMinV();
+    double  vMax = safetyFactor * adet.GetSensitiveMaxV();
     int vBins = adet.GetMaxVCell()+1;
     
     histoName = "hhit_v_det"+to_string( ipl );
     histoTitle ="Cluster v"; 
-    _histoMap[ histoName ] = new TH1D(histoName.c_str(), histoTitle.c_str(), vBins, -vBox, +vBox);
+    _histoMap[ histoName ] = new TH1D(histoName.c_str(), histoTitle.c_str(), vBins, vMin, vMax);
     _histoMap[ histoName ]->SetXTitle("cluster v [mm]"); 
     
     histoName = "hhitmap"+to_string( ipl );
     histoTitle ="Hitmap for plane " +to_string( ipl )+" SensorID " + to_string( adet.GetSensorID()  );
-    _histoMap2D[ histoName] = new TH2D(histoName.c_str(), histoTitle.c_str(),uBins, -uBox, +uBox, vBins, -vBox, +vBox);
+    _histoMap2D[ histoName] = new TH2D(histoName.c_str(), histoTitle.c_str(),uBins, uMin, uMax, vBins, vMin, vMax);
     _histoMap2D[histoName]->SetXTitle("cluster u [mm]"); 
     _histoMap2D[histoName]->SetYTitle("cluster v [mm]");    
     _histoMap2D[histoName]->SetStats( false );  

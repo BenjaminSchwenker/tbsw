@@ -7,8 +7,6 @@
 #ifndef TriplettCorrelator_H
 #define TriplettCorrelator_H 1
 
-// Include TBTools header files
-#include "TBDetector.h"
 
 // Include Marlin classes
 #include <marlin/Global.h>
@@ -102,23 +100,6 @@ protected:
  */
    std::string _trackCollectionName;
 
-//! Alignment DB file name
-/*! Stores all alignment information (positions + orientations) of 
- *  detector setup. 
- */ 
-   std::string _alignmentDBFileName;
-   
-//! Update alignment  
-/*! Update the alignment data base using correlation band offset 
- *  values.  
- */
-   bool _updateAlignment;
-
-//! New alignment  
-/*! Don't use current alignment data base, but start from scratch   
- */
-   bool _newAlignment;
-
     
 //! Output root file name  
 /*!
@@ -148,8 +129,7 @@ protected:
 //! Event number
     int _iEvt;
                  
-//! Handle to detector data 
-    TBDetector _detector;    
+
      
 }; // Class
 

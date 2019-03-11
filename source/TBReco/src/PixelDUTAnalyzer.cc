@@ -9,6 +9,7 @@
 #include "PixelDUTAnalyzer.h"
 
 // TBTools includes
+#include "TBDetector.h"
 #include "TBTrack.h"
 #include "TBHit.h"
 #include "PixelCluster.h"
@@ -80,10 +81,6 @@ PixelDUTAnalyzer::PixelDUTAnalyzer() : Processor("PixelDUTAnalyzer"),_inputDecod
                              "Name of optional unpacker meta info collection for DUT. Set empty string if it does not exist",
                              _metaDataColName  , static_cast< string > ( "" ) );  
   
-  registerProcessorParameter ("AlignmentDBFileName",
-                             "This is the name of the file with the alignment constants (add .root)",
-                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) );     
-  
   registerProcessorParameter ("DUTPlane",
                               "Plane number of DUT along the beam line",
                               _idut,  static_cast < int > (3));
@@ -137,17 +134,8 @@ void PixelDUTAnalyzer::init() {
    // Print set parameters
    printProcessorParams();
    
-   // Read detector constants from gear file
-   _detector.ReadGearConfiguration();    
-            
-   // Read alignment data base file 
-   _detector.ReadAlignmentDB( _alignmentDBFileName );    
-   
-   // Load DUT module    
-   Det & dut = _detector.GetDet(_idut); 
-          
    // Print out geometry information  
-   streamlog_out ( MESSAGE3 )  << "D.U.T. plane  ID = " << dut.GetSensorID() 
+   streamlog_out ( MESSAGE3 )  << "D.U.T. plane  ID = " << TBDetector::Get(_idut).GetSensorID()
                                << "  at position = " << _idut 
                                << endl << endl;
     
@@ -186,11 +174,11 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
   _nEvt ++ ;
   
   // Configure Kalman track fitter
-  GenericTrackFitter TrackFitter(_detector);
+  GenericTrackFitter TrackFitter(TBDetector::GetInstance());
   TrackFitter.SetNumIterations(1); 
      
   // Load DUT module    
-  Det & dut = _detector.GetDet(_idut);   
+  const Det & dut = TBDetector::Get(_idut);   
   
   // 
   //  Get DUT unpacker meta info, if exists
@@ -308,7 +296,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     Track * lciotrk = dynamic_cast<Track*> (trackcol->getElementAt(itrk));
       
     // Convert LCIO -> TB track  
-    TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, _detector );  
+    TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, TBDetector::GetInstance() );  
     
     // Check that track has no hit on the DUT to avoid bias of residuals and efficiency
     if ( trk.GetTE(_idut).HasHit()  ) {
@@ -334,7 +322,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
          
     // We have to find plane number of the hit 
     int sensorid = RecoHit.GetSensorID();      
-    int ipl = _detector.GetPlaneNumber(sensorid);  
+    int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorid);  
       
     // Store all hits on the DUT module  
     if( dut.GetPlaneNumber() == ipl )
@@ -493,7 +481,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
       _rootHitHasTrack = 0;  // matched   
        
       // Check track has a hit on reference (timing) plane
-      if (_iref >= 0 && _iref < _detector.GetNSensors()  ) {
+      if (_iref >= 0 && _iref < TBDetector::GetInstance().GetNSensors()  ) {
         if ( trk.GetTE(_iref).HasHit() ) {
           streamlog_out ( MESSAGE2 ) << "Track has hit on reference plane." << endl;
           _rootHitHasTrackWithRefHit = 0;
@@ -573,7 +561,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     
     // Check track has a hit on reference (timing) plane
     _rootTrackWithRefHit = -1;
-    if (_iref >= 0 && _iref < _detector.GetNSensors()  ) {
+    if (_iref >= 0 && _iref < TBDetector::GetInstance().GetNSensors()  ) {
       if ( trk.GetTE(_iref).HasHit() ) {
         streamlog_out ( MESSAGE2 ) << "Track has hit on reference plane." << endl;
         _rootTrackWithRefHit = 0;
