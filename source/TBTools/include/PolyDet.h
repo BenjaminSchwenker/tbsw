@@ -158,7 +158,7 @@ class PolyDet : public Det {
   
  private:
 
-  /** Set the TH2Poly bins aka pixel, tuple< u,v,type,centreu,centrev >, tuple<type, centreu,centrev, points vector (coordu, coordv)
+  /** Set the TH2Poly bins aka pixel, tuple< u,v,type,centreu,centrev >, protopixel tuple<type, clusterdistu,clusterdistv, points vector (coordu, coordv)>
    */
   void SetCells(const std::vector< std::tuple<int, int, int, double, double> >& cells, const std::vector<std::tuple<int, double, double, std::vector<std::tuple<double, double>>>>& protopix);
  
@@ -176,7 +176,7 @@ class PolyDet : public Det {
   std::vector< std::tuple< int, int, int, double, double > > m_cells;
   // Distance from cell to an other to be counted as neighbour odered by pixel type. tuple< type, distu, distv >
   std::vector< std::tuple< int, double, double> > m_cells_neighb_dist;
-  // Pitch/bounding box of pixeltype
+  // Pitch/bounding box of pixeltype, tuple<type, pitchu, pitchv>
   std::vector< std::tuple< int, double, double > > m_pitch;
   // Thickness in sensitive volume
   double m_sensitiveThickness;
@@ -188,8 +188,16 @@ class PolyDet : public Det {
   double m_sensitiveAtomicMass; 
   // Size along u of sensitive  volume
   double m_sensitiveSizeU;  
+  // Maximum value of u in sensitive area
+  double m_sensitiveSizeMaxU;
+  // Minimum value of u in sensitive area
+  double m_sensitiveSizeMinU;
   // Size along v of sensitive volume  
   double m_sensitiveSizeV; 
+  // Maximum value of v in sensitive area
+  double m_sensitiveSizeMaxV;
+  // Minimum value of v in sensitive area
+  double m_sensitiveSizeMinV;
   // Size along u of sensitive + supports  
   double m_ladderSizeU; 
   // Size along v of sensitive + supports 
