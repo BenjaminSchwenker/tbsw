@@ -1,6 +1,5 @@
 # input directories
 ADD_SUBDIRECTORY( lcio )
-ADD_SUBDIRECTORY( gear )
 ADD_SUBDIRECTORY( Marlin )
 IF (BUILD_EudaqInput)
     ADD_SUBDIRECTORY( EudaqInput )

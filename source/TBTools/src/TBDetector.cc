@@ -14,13 +14,11 @@
 #include <TH1F.h>
 #include <TFile.h>
 
-// Include Gear header files
-#include <gear/GEAR.h>
-
 
 // Include Marlin
 #include <marlin/Global.h>
 #include <marlin/tinyxml.h>
+#include <marlin/Exceptions.h>
 #include <streamlog/streamlog.h>
 
 #include <Eigen/LU>
@@ -38,7 +36,7 @@ namespace {
     
     const TiXmlElement* el = node->ToElement() ;
     if( el == 0 )
-      throw gear::ParseException("XMLParser::getAttribute not an XMLElement " ) ;
+      throw ParseException("XMLParser::getAttribute not an XMLElement " ) ;
     
     const std::string*  at = el->Attribute( name ) ;
     
@@ -46,7 +44,7 @@ namespace {
       std::stringstream str ;
       str  << "XMLParser::getAttribute missing attribute \"" << name
 	   << "\" in element <" << el->Value() << "/> " ;
-      throw gear::ParseException( str.str() ) ;
+      throw ParseException( str.str() ) ;
     }
      
     return std::string( *at )  ;
@@ -93,13 +91,13 @@ void TBDetector::ReadGearConfiguration( const std::string & geometryXMLFile )
 	     << ", row: " << doc.ErrorRow() << ", col: " << doc.ErrorCol() << "] : "
 	     << doc.ErrorDesc() ;
       
-    throw gear::ParseException( str.str() ) ;
+    throw ParseException( str.str() ) ;
   }
   
   TiXmlElement* root = doc.RootElement();
    
   if( root == 0 ){
-    throw gear::ParseException( std::string( "No root tag found in ") + geometryXMLFile  ) ;
+    throw ParseException( std::string( "No root tag found in ") + geometryXMLFile  ) ;
   }
    
   TiXmlNode* global = root->FirstChild("global") ;
@@ -124,7 +122,7 @@ void TBDetector::ReadGearConfiguration( const std::string & geometryXMLFile )
    
   TiXmlNode* detectors = root->FirstChild("detectors")  ;
   if( detectors == 0 ){
-    throw gear::ParseException( std::string( "No detectors tag found in  ") + geometryXMLFile  ) ;
+    throw ParseException( std::string( "No detectors tag found in  ") + geometryXMLFile  ) ;
   }
    
   TiXmlNode* det = 0 ;
@@ -138,7 +136,7 @@ void TBDetector::ReadGearConfiguration( const std::string & geometryXMLFile )
        
       //std::cout << "Reading detector " << name
       //          << " with \"geartype\" " << creatorName << std::endl ;
-    } catch( gear::ParseException& e){
+    } catch( ParseException& e){
       
 	  streamlog_out ( MESSAGE3) << "Igoring detector " << name
                                 << " with missing attribute \"geartype\" " << std::endl ; 
@@ -243,9 +241,9 @@ void TBDetector::ApplyAlignmentDB(  )
     
     int bin = ipl + 1; 
 
-    // Check consistency with gear file 
+    // Check consistency with geometry xml file 
     if ( histoMap["hSensorID"]->GetBinContent(bin) != adet.GetSensorID() ) {
-      streamlog_out ( WARNING ) <<  "Alignment DB inconsistent to Gear file!!" << std::endl;   
+      streamlog_out ( WARNING ) <<  "Alignment DB inconsistent to Geometry XML file!!" << std::endl;   
     }
     
     // Now, read nominal position from DB

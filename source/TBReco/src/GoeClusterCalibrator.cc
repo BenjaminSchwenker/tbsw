@@ -234,9 +234,9 @@ namespace depfet {
           double trk_tv = TE.GetState().GetPars()[1];  // rad
           double trk_u = TE.GetState().GetPars()[2];   // mm
           double trk_v = TE.GetState().GetPars()[3];   // mm
-          double trk_qp = TE.GetState().GetPars()[4];  // 1/GeV
-          double trk_charge = track.GetCharge();
-          double trk_mom = std::abs(trk_charge/trk_qp); 
+          //double trk_qp = TE.GetState().GetPars()[4];  // 1/GeV
+          //double trk_charge = track.GetCharge();
+          //double trk_mom = std::abs(trk_charge/trk_qp); 
            
           double sigma2_u = TE.GetState().GetCov()(2,2); 
           double sigma2_v = TE.GetState().GetCov()(3,3); 

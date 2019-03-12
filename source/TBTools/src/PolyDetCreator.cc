@@ -7,7 +7,7 @@
 
 #include <streamlog/streamlog.h>
 #include <marlin/tinyxml.h>
-#include <gear/GEAR.h>
+#include <marlin/Exceptions.h>
 #include <Eigen/LU>
 
 using namespace depfet;
@@ -19,7 +19,7 @@ namespace {
     
     const TiXmlElement* el = node->ToElement() ;
     if( el == 0 )
-      throw gear::ParseException("XMLParser::getAttribute not an XMLElement " ) ;
+      throw marlin::ParseException("XMLParser::getAttribute not an XMLElement " ) ;
     
     const std::string*  at = el->Attribute( name ) ;
     
@@ -27,7 +27,7 @@ namespace {
       std::stringstream str ;
       str  << "XMLParser::getAttribute missing attribute \"" << name
 	       << "\" in element <" << el->Value() << "/> " ;
-      throw gear::ParseException( str.str() ) ;
+      throw marlin::ParseException( str.str() ) ;
     }
      
     return std::string( *at )  ;
@@ -35,7 +35,7 @@ namespace {
 } 
 
 /** Register the creator */
-// FIXME Decide on a common gear parameter name for this. At the moment PolyPlanesParameters
+// FIXME Decide on a common parameter name for this. At the moment PolyPlanesParameters
 DetCreatorFactory<PolyDetCreator> PolyDetFactory("PolyPlanesParameters");
 
 void PolyDetCreator::create(const TiXmlNode* content, std::vector<Det*>& dets) {
@@ -116,7 +116,7 @@ void PolyDetCreator::create(const TiXmlNode* content, std::vector<Det*>& dets) {
     } else if ( sRotat1*sRotat4 - sRotat2*sRotat3 == -1 ) {
       DiscreteRotation(2,2) = -1;  
     } else {
-      streamlog_out(MESSAGE3) << std::endl << "Rotation parameters in gear file wrong" << std::endl;  
+      streamlog_out(MESSAGE3) << std::endl << "Rotation parameters in geometry XML file wrong" << std::endl;  
     }
         
     if ( std::abs( DiscreteRotation.determinant() - 1 ) ==  1.e-5 )  
@@ -129,7 +129,7 @@ void PolyDetCreator::create(const TiXmlNode* content, std::vector<Det*>& dets) {
     // Read Euler rotation from local to mounting frame
      
     const double MYPI = std::atan(1.0)*4;  
-    // Gear file stores angles in degree 
+    // XML file stores angles in degree 
     double alpha = sAlpha*MYPI/180.; 
     double beta = sBeta*MYPI/180.; 
     double gamma = sGamma*MYPI/180.; 
