@@ -403,7 +403,7 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
   # Create path for correlator
   correlator_path = Env.create_path('correlator_path')
   correlator_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' :  nevents, 'LCIOInputFiles': "tmp.slcio", 'Verbosity': "MESSAGE3"  }) 
-  correlator_path=add_geometry(correlator_path, applyAlignment="true", overrideAlignment="true")
+  correlator_path=add_geometry(correlator_path, applyAlignment="false", overrideAlignment="true")
   correlator_path=add_M26hitmaker(correlator_path,"cog") 
   
   hitdqm = tbsw.Processor(name="RawDQM",proctype="RawHitDQM")
@@ -418,8 +418,6 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
   correlator.param("ParticleCharge","-1")
   correlator.param("ParticleMass","0.000511")
   correlator.param("ParticleMomentum", beamenergy)
-  correlator.param("NewAlignment","true")
-  correlator.param("UpdateAlignment","true")
   correlator_path.add_processor(correlator)  
 
   # Finished with correlator
