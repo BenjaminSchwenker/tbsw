@@ -85,7 +85,7 @@ X0ImageProducer::X0ImageProducer() : Processor("X0ImageProducer")
 
   registerProcessorParameter ("VertexFitSwitch",
                               "Choose upstream-downstream track matching approach. true: vertexfit, false: distance cut",
-                              _vertexfitswitch,  static_cast < bool > (true));
+                              _vertexfitswitch,  static_cast < bool > (false));
 
   registerProcessorParameter ("ToyScatteringSwitch",
                               "Switch to fast toy simulation mode: Replace reconstructed scatter angles from track fitting by angles sampled from a Gauss distribution",
@@ -268,10 +268,11 @@ void X0ImageProducer::processEvent(LCEvent * evt)
   int nMatch=0;	
   vector< vector<int> > up2down(upTrackStore.size() );
   vector< vector<int> > down2up(downTrackStore.size() );
-   
-
-   
+  
   Det & dut = TBDetector::GetInstance().GetDet(_idut);
+
+  //Initialize Vertex Fitter
+  TBVertexFitter VertexFitter(_idut);
 
   // Vertex fit track matching
   if(_vertexfitswitch)
@@ -303,8 +304,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 			// Get upstream track
 		    TBTrack& downtrack = downTrackStore[idown];
 		
-		    //Initialize Vertex and Vertex Fitter
-		    TBVertexFitter VertexFitter(_idut, TBDetector::GetInstance());
+		    //Initialize Vertex 
 			TBVertex Vertex;
 
 			// Add upstream track state to vertex
@@ -423,8 +423,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
   _rootFile->cd("");
   _rootEventTree->Fill();    
 
-  //Initialize Vertex Fitter
-  TBVertexFitter VertexFitter(_idut, TBDetector::GetInstance());
+  
 
   // Average mometum before and after energy loss. 
   double average_mom = 0;
