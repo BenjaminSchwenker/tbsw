@@ -166,7 +166,7 @@ void PixelClusterizer::end()
    _timeCPU = clock()/1000 - _timeCPU;
    
    // Print message
-   streamlog_out(MESSAGE3) << std::endl
+   streamlog_out(MESSAGE) << std::endl
                            << " "
                            << "Time per event: "
                            << std::setiosflags(std::ios::fixed | std::ios::internal )
@@ -405,20 +405,27 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
           clusterID++; 
             
           streamlog_out(MESSAGE2) << " Stored cluster on sensor " << sensorID << " having total charge " << clusterSignal << std::endl;
-          
+          static auto idx_orig_sensorID=originalDataEncoder.index("sensorID"s); //find the address ONCE.
+          static auto idx_orig_clusterID=originalDataEncoder.index("clusterID"s);
+          static auto idx_orig_sparsePixelType=originalDataEncoder.index("sparsePixelType"s);
+          static auto idx_orig_quality=originalDataEncoder.index("quality"s);
           // Ok good cluster ... save it   
-          originalDataEncoder["sensorID"s] = sensorID;
-          originalDataEncoder["clusterID"s] = 0;
-          originalDataEncoder["sparsePixelType"s] = static_cast<int> (kSimpleSparsePixel);
-          originalDataEncoder["quality"s] = cluQuality;
+          originalDataEncoder[idx_orig_sensorID] = sensorID;
+          originalDataEncoder[idx_orig_clusterID] = 0;
+          originalDataEncoder[idx_orig_sparsePixelType] = static_cast<int> (kSimpleSparsePixel);
+          originalDataEncoder[idx_orig_quality] = cluQuality;
           originalDataEncoder.setCellID( sparseCluster );
           originalDataCollection->push_back( sparseCluster );
                              
+          static auto idx_clust_sensorID=clusterEncoder.index("sensorID"s);
+          static auto idx_clust_clusterID=clusterEncoder.index("clusterID"s);
+          static auto idx_clust_sparsePixelType=clusterEncoder.index("sparsePixelType"s);
+          static auto idx_clust_quality=clusterEncoder.index("quality"s);
           TrackerPulseImpl* zsPulse = new TrackerPulseImpl;
-          clusterEncoder["sensorID"s]  = sensorID;
-          clusterEncoder["clusterID"s] = 0;
-          clusterEncoder["sparsePixelType"s] = static_cast<int> (kSimpleSparsePixel);
-          clusterEncoder["quality"s] = cluQuality;
+          clusterEncoder[idx_clust_sensorID]  = sensorID;
+          clusterEncoder[idx_clust_clusterID] = 0;
+          clusterEncoder[idx_clust_sparsePixelType] = static_cast<int> (kSimpleSparsePixel);
+          clusterEncoder[idx_clust_quality] = cluQuality;
           clusterEncoder.setCellID( zsPulse );
           
           zsPulse->setCharge( clusterSignal );

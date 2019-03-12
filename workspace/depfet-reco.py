@@ -571,8 +571,12 @@ if __name__ == '__main__':
     maxRecordNrLong = 40000
     maxRecordNrShort = 20000
   if args.short:
-    maxRecordNrLong = 3000
-    maxRecordNrShort = 3000
+    if args.profile:
+      maxRecordNrLong = 3000
+      maxRecordNrShort = 3000
+    else:
+      maxRecordNrLong = 40000
+      maxRecordNrShort = 20000
 
   if args.caltag=='':
     args.caltag = os.path.splitext(os.path.basename(args.rawfile))[0]

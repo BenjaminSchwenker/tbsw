@@ -6,7 +6,7 @@
 // =========================================================================
 #ifndef EVENT_LCIO_H
 #define EVENT_LCIO_H 1
-
+#include <string>
 namespace EVENT {
 
 
@@ -25,6 +25,7 @@ namespace EVENT {
  * @see LCObject
  * @see LCIO
  */
+
 class LCIO {
 
 public: 
@@ -92,33 +93,33 @@ public:
     static const int WRITE_APPEND = 1 ;
 
     // type names:
-    static const char* LCEVENT ;
-    static const char* LCRUNHEADER ;
-    static const char* LCCOLLECTION ;
-    static const char* MCPARTICLE ;
-    static const char* SIMCALORIMETERHIT ;
-    static const char* RAWCALORIMETERHIT ;
-    static const char* CALORIMETERHIT ;
-    static const char* SIMTRACKERHIT ;
-    static const char* TPCHIT ;
-    static const char* TRACKERRAWDATA ;
-    static const char* TRACKERDATA ;
-    static const char* TRACKERPULSE ;
-    static const char* TRACKERHIT ;
-    static const char* LCSTRVEC ;
-    static const char* LCFLOATVEC ;
-    static const char* LCINTVEC ;
-    static const char* TRACK ;
-    static const char* CLUSTER ;
-    static const char* RECONSTRUCTEDPARTICLE ;
-    static const char* LCRELATION ;
-    static const char* LCGENERICOBJECT ;
-    static const char* PARTICLEID;
-    static const char* VERTEX;
+    static const std::string LCEVENT ;
+    static const std::string LCRUNHEADER ;
+    static const std::string LCCOLLECTION ;
+    static const char*  MCPARTICLE ;
+    static const std::string SIMCALORIMETERHIT ;
+    static const std::string RAWCALORIMETERHIT ;
+    static const std::string CALORIMETERHIT ;
+    static const std::string SIMTRACKERHIT ;
+    static const std::string TPCHIT ;
+    static const std::string TRACKERRAWDATA ;
+    static const std::string TRACKERDATA ;
+    static const std::string TRACKERPULSE ;
+    static const std::string TRACKERHIT ;
+    static const std::string LCSTRVEC ;
+    static const std::string LCFLOATVEC ;
+    static const std::string LCINTVEC ;
+    static const std::string TRACK ;
+    static const std::string CLUSTER ;
+    static const std::string RECONSTRUCTEDPARTICLE ;
+    static const std::string LCRELATION ;
+    static const std::string LCGENERICOBJECT ;
+    static const std::string PARTICLEID;
+    static const std::string VERTEX;
 
     // reserved names, e.g. name of event/collections paramaters
 
-    static const char* CellIDEncoding ;
+    static const std::string CellIDEncoding ;
 }; // class
 } // namespace EVENT
 #endif /* ifndef EVENT_LCIO_H */

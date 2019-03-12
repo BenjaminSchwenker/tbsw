@@ -234,8 +234,11 @@ namespace depfet {
       {
 
         // Read cluster header
+
+
         TrackerPulseImpl* cluster = dynamic_cast<TrackerPulseImpl* > ( clusterCollection->getElementAt(iClu) )  ;       
-        int sensorID = clusterDecoder(cluster)["sensorID"s];
+        static auto idx_clust_sensorID=clusterDecoder(cluster).index("sensorID"s); //find the address ONCE.
+        int sensorID = clusterDecoder(cluster)[idx_clust_sensorID];
         int ipl = _detector.GetPlaneNumber(sensorID);
         Det& Det = _detector.GetDet(ipl);
         
@@ -363,7 +366,7 @@ namespace depfet {
     _timeCPU = clock()/1000 - _timeCPU;
      
     // Print message
-    streamlog_out(MESSAGE3) << std::endl
+    streamlog_out(MESSAGE) << std::endl
                             << " "
                             << "Time per event: "
                             << std::setiosflags(std::ios::fixed | std::ios::internal )
