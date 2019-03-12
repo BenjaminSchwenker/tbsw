@@ -15,7 +15,7 @@ namespace depfet {
 
   //! Class TBDetector   
   /*! 
-   *  The TBDetecor class holds all information about the geometry of a pixel tracking 
+   *  The TBDetecor singleton class holds all information about the geometry of a pixel tracking 
    *  telescope. This includes detector layout data, detector alignment data and 
    *  material budget data. The class defines a common interface to be used in all 
    *  reconstruction modules for analysis of test beam data.  
@@ -98,9 +98,6 @@ class TBDetector {
   
  public:
   
-  //!Constructor 
-  TBDetector( ); 
-  
   //!Destructor
   ~TBDetector( );
   
@@ -151,7 +148,14 @@ class TBDetector {
   static const Det& Get(int planeNumber) { return GetInstance().GetDet(planeNumber); }
      
  private:
-       
+  
+  /** Singleton class, hidden constructor */
+  TBDetector( ); 
+  /** Singleton class, hidden copy constructor */
+  TBDetector(const TBDetector&) = delete;
+  /** Singleton class, hidden assignment operator */
+  TBDetector& operator=(const TBDetector&) = delete; 
+     
   // Cartesian components of magnetic field
   double m_Bx; 
   double m_By; 
