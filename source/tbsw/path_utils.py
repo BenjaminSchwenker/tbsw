@@ -6,6 +6,19 @@ Some helper code to define processor paths for X/X0 studies
 
 import tbsw 
 
+def add_geometry(path, applyAlignment="true", overrideAlignment="true"): 
+  """
+  Adds geometry processor to the path
+  """   
+  
+  geo = tbsw.Processor(name="Geo",proctype="Geometry")
+  geo.param("AlignmentDBFilePath", "localDB/alignmentDB.root")
+  geo.param("ApplyAlignment", applyAlignment)
+  geo.param("OverrideAlignment", overrideAlignment)
+  path.add_processor(geo)
+   
+  return path
+
 def add_rawinputprocessor(path,rawfile):
   """
   Adds raw input processor to the path
@@ -56,7 +69,6 @@ def add_trackfinder(path, beamenergy, excludeplanes="3", minhits=6, maxTrkChi2=2
     
   trackfinder = tbsw.Processor(name="TF",proctype="FastTracker")
   trackfinder.param("InputHitCollectionNameVec","hit_m26")
-  trackfinder.param("AlignmentDBFileName","localDB/alignmentDB.root")
   trackfinder.param("ExcludeDetector", excludeplanes)
   trackfinder.param("MaxTrackChi2", maxTrkChi2)  # loosecut version 10,000,000  
   trackfinder.param("MaximumGap", 0)
@@ -81,7 +93,6 @@ def add_aligner(path, xerrors='0 10 10 0 10 10 0', yerrors='0 10 10 0 10 10 0', 
   Adds aligner to the path
   """  
   aligner = tbsw.Processor(name="PreAligner",proctype="KalmanAligner")
-  aligner.param("AlignmentDBFileName","localDB/alignmentDB.root")
   aligner.param('ErrorsShiftX' , xerrors)
   aligner.param('ErrorsShiftY' , yerrors)
   aligner.param('ErrorsShiftZ' , zerrors)
@@ -121,7 +132,6 @@ def add_clustercalibrator(path):
   
   cluster_calibrator = tbsw.Processor(name="M26ClusterCalibrator",proctype="GoeClusterCalibrator")
   cluster_calibrator.param("ClusterDBFileName","localDB/clusterDB-M26.root")
-  cluster_calibrator.param("AlignmentDBFileName","localDB/alignmentDB.root")
   cluster_calibrator.param("MinClusters", "1000")
   cluster_calibrator.param("MinVarianceU", 1e-06)
   cluster_calibrator.param("MinVarianceV", 1e-06)
@@ -168,6 +178,7 @@ def append_tracklett_aligner(Env, paths, gearfile, nevents, beamenergy, hitmaker
   # Create path for tracklett prealigner 
   tracklett_prealigner_path = Env.create_path(hitmakertype+'hits_'+trackletttype+'_prealigner_path')
   tracklett_prealigner_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' :  nevents, 'LCIOInputFiles': "tmp.slcio"}) 
+  tracklett_prealigner_path=add_geometry(tracklett_prealigner_path, applyAlignment="true", overrideAlignment="true")
   tracklett_prealigner_path=add_M26hitmaker(tracklett_prealigner_path,hitmakertype) 
   tracklett_prealigner_path=add_trackfinder(tracklett_prealigner_path, beamenergy, excludeplanes, minhits, maxTrkChi2=10000000, maxOutlierChi2=10000000)
   tracklett_prealigner_path=add_aligner(tracklett_prealigner_path, xerrors, yerrors, '0 0 0 0 0 0 0', gammaerrors)
@@ -179,6 +190,7 @@ def append_tracklett_aligner(Env, paths, gearfile, nevents, beamenergy, hitmaker
   # Create path for tracklett aligner
   tracklett_aligner_path = Env.create_path(hitmakertype+'hits_'+trackletttype+'_aligner_path')
   tracklett_aligner_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' :  nevents, 'LCIOInputFiles': "tmp.slcio"  }) 
+  tracklett_aligner_path=add_geometry(tracklett_aligner_path, applyAlignment="true", overrideAlignment="true")
   tracklett_aligner_path=add_M26hitmaker(tracklett_aligner_path,hitmakertype) 
   tracklett_aligner_path=add_trackfinder(tracklett_aligner_path, beamenergy, excludeplanes, minhits, maxTrkChi2=20, maxOutlierChi2=10)
   tracklett_aligner_path=add_aligner(tracklett_aligner_path, xerrors, yerrors, zerrors, gammaerrors)
@@ -189,11 +201,11 @@ def append_tracklett_aligner(Env, paths, gearfile, nevents, beamenergy, hitmaker
     
   # Create path for tracklett dqm
   tracklett_dqm_path = Env.create_path(hitmakertype+'hits_'+trackletttype+'_dqm_path')
-  tracklett_dqm_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' :  nevents, 'LCIOInputFiles': "tmp.slcio"  }) 
+  tracklett_dqm_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' :  nevents, 'LCIOInputFiles': "tmp.slcio"  })
+  tracklett_dqm_path=add_geometry(tracklett_dqm_path, applyAlignment="true", overrideAlignment="true") 
   tracklett_dqm_path=add_M26hitmaker(tracklett_dqm_path,hitmakertype) 
   tracklett_dqm_path=add_trackfinder(tracklett_dqm_path, beamenergy, excludeplanes, minhits, maxTrkChi2=20, maxOutlierChi2=10)
   tracklett_dqm = tbsw.Processor(name="TelescopeDQM", proctype="TrackFitDQM") 
-  tracklett_dqm.param("AlignmentDBFileName","localDB/alignmentDB.root")
   tracklett_dqm.param("RootFileName","TelescopeDQM_"+hitmakertype+'hits_'+trackletttype+".root")
   tracklett_dqm_path.add_processor(tracklett_dqm)  
   paths.append(tracklett_dqm_path)
@@ -201,15 +213,13 @@ def append_tracklett_aligner(Env, paths, gearfile, nevents, beamenergy, hitmaker
   # Create path for tracklett correlator
   tracklett_correlator_path = Env.create_path(hitmakertype+'hits_'+trackletttype+'_correlator_path')
   tracklett_correlator_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' :  nevents, 'LCIOInputFiles': "tmp.slcio"  }) 
+  tracklett_correlator_path=add_geometry(tracklett_correlator_path, applyAlignment="true", overrideAlignment="true")
   tracklett_correlator_path=add_M26hitmaker(tracklett_correlator_path,"cog") 
   tracklett_correlator_path=add_trackfinder(tracklett_correlator_path, beamenergy, excludeplanes, minhits , maxTrkChi2=20, maxOutlierChi2=10)
   tracklett_correlator = tbsw.Processor(name="Tracklett_Correlator", proctype="TriplettCorrelator") 
   tracklett_correlator.param("InputHitCollectionNameVec","hit_m26")
   tracklett_correlator.param("OutputRootFileName","Correlator_"+hitmakertype+'hits_'+trackletttype+".root")
   tracklett_correlator.param("TrackCollectionName","tracks")
-  tracklett_correlator.param("UpdateAlignment","true")
-  tracklett_correlator.param("NewAlignment","false")
-  tracklett_correlator.param("AlignmentDBFileName", "localDB/alignmentDB.root")
   tracklett_correlator_path.add_processor(tracklett_correlator)
   paths.append(tracklett_correlator_path)
 
@@ -226,10 +236,12 @@ def create_anglereco_path(Env, rawfile, gearfile, numberofevents, usesinglehitse
   if not mcdata:
     reco_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : numberofevents }) 
     reco_path=add_rawinputprocessor(reco_path,rawfile) 
+    reco_path=add_geometry(reco_path, applyAlignment="true", overrideAlignment="true")
     reco_path=add_M26unpacker(reco_path) 
 
   else:
     reco_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : numberofevents, 'LCIOInputFiles': rawfile })
+    reco_path=add_geometry(reco_path, applyAlignment="true", overrideAlignment="true")
 
   reco_path=add_M26clusterizer(reco_path);
 
@@ -240,7 +252,6 @@ def create_anglereco_path(Env, rawfile, gearfile, numberofevents, usesinglehitse
 
   downstream_TF=tbsw.Processor(name="downstream_TF",proctype="FastTracker")
   downstream_TF.param("InputHitCollectionNameVec","hit_m26")
-  downstream_TF.param("AlignmentDBFileName","localDB/alignmentDB.root")
   downstream_TF.param("HitCollectionName","unusedhits_down")
   downstream_TF.param("OutputTrackCollectionName","down_tracks")
   downstream_TF.param("ExcludeDetector", "0 1 2 3")
@@ -272,7 +283,6 @@ def create_anglereco_path(Env, rawfile, gearfile, numberofevents, usesinglehitse
 
   upstream_TF=tbsw.Processor(name="upstream_TF",proctype="FastTracker")
   upstream_TF.param("InputHitCollectionNameVec","hit_m26")
-  upstream_TF.param("AlignmentDBFileName","localDB/alignmentDB.root")
   upstream_TF.param("HitCollectionName","unusedhits_up")
   upstream_TF.param("OutputTrackCollectionName","up_tracks")
   upstream_TF.param("ExcludeDetector", "3 4 5 6")
@@ -304,7 +314,6 @@ def create_anglereco_path(Env, rawfile, gearfile, numberofevents, usesinglehitse
   x0imageproducer=tbsw.Processor(name="x0imageproducer",proctype="X0ImageProducer")
   x0imageproducer.param("DownStreamTrackCollection","down_tracks")
   x0imageproducer.param("UpStreamTrackCollection","up_tracks")
-  x0imageproducer.param("AlignmentDBFileName","localDB/alignmentDB.root")
   x0imageproducer.param("DUTPlane","3")
   x0imageproducer.param("VertexFitSwitch","false")
   x0imageproducer.param("ToyBetheHeitlerSwitch","true")
@@ -333,9 +342,11 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
   if not mcdata:
     mask_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents, 'Verbosity': "MESSAGE3" }) 
     mask_path=add_rawinputprocessor(mask_path, rawfile) 
+    mask_path=add_geometry(mask_path, applyAlignment="true", overrideAlignment="true")
     mask_path=add_M26unpacker(mask_path) 
   else:
     mask_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents, 'LCIOInputFiles': rawfile }) 
+    mask_path=add_geometry(mask_path, applyAlignment="true", overrideAlignment="true")
   
   m26hotpixelkiller = tbsw.Processor(name="M26HotPixelKiller",proctype="HotPixelKiller")
   m26hotpixelkiller.param("InputCollectionName", "zsdata_m26")
@@ -353,9 +364,11 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
   if not mcdata:
     clusterizer_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents, 'Verbosity': "MESSAGE3" }) 
     clusterizer_path=add_rawinputprocessor(clusterizer_path,rawfile) 
+    clusterizer_path=add_geometry(clusterizer_path, applyAlignment="true", overrideAlignment="true")
     clusterizer_path=add_M26unpacker(clusterizer_path) 
   else:
     clusterizer_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents, 'LCIOInputFiles': rawfile }) 
+    clusterizer_path=add_geometry(clusterizer_path, applyAlignment="true", overrideAlignment="true")
 
   clusterizer_path=add_M26clusterizer(clusterizer_path)
 
@@ -371,7 +384,7 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
   if mcdata:
     mc_clustercal_path = Env.create_path('mc_clustercal_path')
     mc_clustercal_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents, 'LCIOInputFiles': "tmp.slcio" })  
-
+    mc_clustercal_path=add_geometry(mc_clustercal_path, applyAlignment="true", overrideAlignment="true")
     mc_clustercal_path=add_M26hitmaker(mc_clustercal_path,"cog") 
 
     m26clustercalibrationformc = tbsw.Processor(name="M26ClusterCalibrationFromMC", proctype="GoeClusterCalibratorForMC")
@@ -390,7 +403,7 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
   # Create path for correlator
   correlator_path = Env.create_path('correlator_path')
   correlator_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' :  nevents, 'LCIOInputFiles': "tmp.slcio", 'Verbosity': "MESSAGE3"  }) 
-
+  correlator_path=add_geometry(correlator_path, applyAlignment="true", overrideAlignment="true")
   correlator_path=add_M26hitmaker(correlator_path,"cog") 
   
   hitdqm = tbsw.Processor(name="RawDQM",proctype="RawHitDQM")
@@ -400,7 +413,6 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
   
   correlator = tbsw.Processor(name="TelCorrelator", proctype="Correlator")
   correlator.param("InputHitCollectionNameVec","hit_m26")
-  correlator.param("AlignmentDBFileName", "localDB/alignmentDB.root")
   correlator.param("OutputRootFileName","XCorrelator.root")
   correlator.param("ReferencePlane","0")
   correlator.param("ParticleCharge","-1")
@@ -429,6 +441,7 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
     # Compute a first iteration of clusterDB where track fits are done using Center of Gravity 
     cluster_calibration1_path = Env.create_path('cluster_calibration_path')
     cluster_calibration1_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents, 'LCIOInputFiles': "tmp.slcio" }) 
+    cluster_calibration1_path=add_geometry(cluster_calibration1_path, applyAlignment="true", overrideAlignment="true")
     cluster_calibration1_path=add_M26hitmaker(cluster_calibration1_path,"cog")
     cluster_calibration1_path=add_trackfinder(cluster_calibration1_path, beamenergy, excludeplanes="3", minhits=6, maxTrkChi2=20, maxOutlierChi2=10)
     cluster_calibration1_path=add_clustercalibrator(cluster_calibration1_path)
@@ -442,6 +455,7 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
     # This needs to be iterated multiple times
     cluster_calibration2_path = Env.create_path('cluster_calibration2_path')
     cluster_calibration2_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents, 'LCIOInputFiles': "tmp.slcio" }) 
+    cluster_calibration2_path=add_geometry(cluster_calibration2_path, applyAlignment="true", overrideAlignment="true")
     cluster_calibration2_path=add_M26hitmaker(cluster_calibration2_path,"goe")
     cluster_calibration2_path=add_trackfinder(cluster_calibration2_path, beamenergy, excludeplanes="3", minhits=6, maxTrkChi2=20, maxOutlierChi2=10)
     cluster_calibration2_path=add_clustercalibrator(cluster_calibration2_path)
@@ -455,12 +469,12 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
     
     # Create tracking DQM  using cluster calibration
     dqm2_path = Env.create_path('dqm2_path')
-    dqm2_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" })  
+    dqm2_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 100000, 'LCIOInputFiles': "tmp.slcio" }) 
+    dqm2_path=add_geometry(dqm2_path, applyAlignment="true", overrideAlignment="true") 
     dqm2_path=add_M26hitmaker(dqm2_path,"goe")
     dqm2_path=add_trackfinder(dqm2_path, beamenergy, excludeplanes="3", minhits=6, maxTrkChi2=20, maxOutlierChi2=10)
     
     teldqm = tbsw.Processor(name="TelescopeDQM", proctype="TrackFitDQM") 
-    teldqm.param("AlignmentDBFileName","localDB/alignmentDB.root")
     teldqm.param("RootFileName","TelescopeDQM2.root")
     dqm2_path.add_processor(teldqm)  
     
@@ -480,6 +494,12 @@ def create_x0sim_path(Env, name, rawfile, gearfile, nevents, beamenergy):
   infosetter.param("RunNumber","0")
   infosetter.param("DetectorName","EUTelescope") 
   x0sim.add_processor(infosetter)
+  
+  geo_noalign = tbsw.Processor(name="Geo",proctype="Geometry")
+  geo_noalign.param("AlignmentDBFilePath", "localDB/alignmentDB.root")
+  geo_noalign.param("ApplyAlignment", "false")
+  geo_noalign.param("OverrideAlignment", "true")
+  x0sim.add_processor(geo_noalign)
    
   gun = tbsw.Processor(name="ParticleGun",proctype="ParticleGunGenerator")
   gun.param("BeamIntensity","20000")
@@ -505,7 +525,6 @@ def create_x0sim_path(Env, name, rawfile, gearfile, nevents, beamenergy):
   fastsim = tbsw.Processor(name="FastSim",proctype="FastSimulation")
   fastsim.param("MCParticleCollectionName","MCParticles")
   fastsim.param("SimTrackerHitCollectionName","SimTrackerHits")
-  fastsim.param("AlignmentDBFileName","localDB/alignmentDB.root")
   fastsim.param("ScatterModel","0")
   fastsim.param("DoEnergyLossStraggling","false")
   fastsim.param("DoFractionalBetheHeitlerEnergyLoss","false")
