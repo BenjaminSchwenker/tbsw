@@ -759,7 +759,7 @@ struct GlobalEstimator {
   double operator() (const double *par) const {
     double ret =0;
       
-	for(int j=0;j<fEstimatorVec.size();j++)
+	for(size_t j=0;j<fEstimatorVec.size();j++)
 	{
       // read function args
       double p1[num_localparameters];
