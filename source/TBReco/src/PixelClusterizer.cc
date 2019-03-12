@@ -223,7 +223,7 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
     // Get zs pixels from next pixel detector   
     TrackerDataImpl * pixModule = dynamic_cast<TrackerDataImpl* > ( Pix_collection->getElementAt(iDet) );
       
-    // DAQ ID for pixel detector
+    // Sensor ID for pixel detector
     int sensorID = PixelID( pixModule ) ["sensorID"];
     
     // Read geometry info for sensor 
@@ -298,7 +298,7 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
       while( !found && firstGroup!= lastGroup)
       {
         
-        if ( areNeighbours( *firstGroup, col, row, m_acceptDiagonalClusters ) )
+        if ( areNeighbours( *firstGroup, col, row, ipl) )
         {
            
           // If pixel is a duplicate of one in the cluster, do not add it.   
@@ -310,7 +310,7 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
             (*firstGroup).push_back(charge);
             
             // See if col/row is a neighbour to any other groups, if yes perform merging 
-            checkForMerge(col, row, firstGroup, lastGroup);
+            checkForMerge(col, row, ipl, firstGroup, lastGroup);
               
           } else {
             streamlog_out(MESSAGE2) << "  A pixel duplicate found. Skipping it." << std::endl; 
@@ -457,7 +457,7 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
 // Checks if any other pixel group (apart from base group) neighbours col/row. 
 // If so, merge with base group.  
  
-void PixelClusterizer::checkForMerge( int col, int row,
+void PixelClusterizer::checkForMerge( int col, int row,  int planeNumber, 
  Pix_GroupVector::iterator baseGroup,
  Pix_GroupVector::iterator lastGroup) 
 {
@@ -467,7 +467,7 @@ void PixelClusterizer::checkForMerge( int col, int row,
    
   for (; nextGroup!= lastGroup; ++nextGroup)
   {              
-    if (areNeighbours( *nextGroup, col, row, m_acceptDiagonalClusters ))
+    if (areNeighbours( *nextGroup, col, row, planeNumber ))
     {
       // Merge these pixel groups
       int npixels = (*nextGroup).size()/3; 
@@ -503,7 +503,7 @@ void PixelClusterizer::checkForMerge( int col, int row,
 //   = 3: Max distance is a missing diagonal pixel 
 
 
-bool PixelClusterizer::areNeighbours( FloatVec &group, int col, int row, int m_accept ) 
+bool PixelClusterizer::areNeighbours( FloatVec &group, int col, int row, int planeNumber ) 
 {   
   int npixels = group.size()/3; 
   
@@ -512,22 +512,8 @@ bool PixelClusterizer::areNeighbours( FloatVec &group, int col, int row, int m_a
            
     int col1 = static_cast<int> (group[index * 3]);
     int row1 = static_cast<int> (group[index * 3 + 1]);
-    
-    int deltarow = abs(row-row1);
-    int deltacol = abs(col-col1);
-          
-    // A side in common
-    if(deltacol+deltarow < 2) return true;
-     
-    // A corner in common 
-    if(m_accept == 1 && deltacol == 1 && deltarow == 1) return true;
-     
-    // max distance is 2 pixels (includes cases with missing pixels)
-    if(m_accept == 2 && deltacol+deltarow < 3 ) return true;
-     
-    // max distance is 2 pixels along a diagonal (includes cases with missing pixels)
-    if(m_accept == 3 && deltacol < 3 && deltarow < 3) return true;
-                      
+
+    return TBDetector::Get(planeNumber).areNeighbors(row1, col1, row, col);                  
   }
     
   return false;
