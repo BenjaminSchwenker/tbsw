@@ -306,9 +306,19 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     // Refit track in current alignment. Restrict smoothing to DUT plane.
     bool trkerr = TrackFitter.Fit(trk, _idut);
     if ( trkerr ) {
-      streamlog_out ( MESSAGE3 ) << "Fit failed. Skipping track!" << endl;
+      streamlog_out ( MESSAGE2 ) << "Fit failed. Skipping track!" << endl;
       continue;
     } 
+    
+    // Compute intersection point of track with DUT (at w=0 plane)
+    double u_trk = trk.GetTE(_idut).GetState().GetPars()[2];
+    double v_trk = trk.GetTE(_idut).GetState().GetPars()[3];
+    
+    // Check that track intersects with the DUT sensitive volume 
+    if (  dut.isPointOutOfSensor( u_trk, v_trk ) ) {
+      streamlog_out(MESSAGE2) << "Ignore track which does not intersect the DUT."<< std::endl; 
+      continue; 
+    }
         
     TrackStore.push_back(std::move(trk));
   } // End track loop
