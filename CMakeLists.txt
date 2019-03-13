@@ -186,9 +186,21 @@ SET( BUILD_TBReco "${BUILD_TBReco}" CACHE BOOL
 SET( BUILD_X0Tools "${BUILD_X0Tools}" CACHE BOOL
       "Set to ON to build TBReco"  FORCE )
 
+# Get the SHA-1 from the latest commit used for building tbsw
+EXEC_PROGRAM( git 
+            ARGS rev-parse
+            ARGS HEAD
+            OUTPUT_VARIABLE out_tmp
+            RETURN_VALUE out_ret )
+IF( out_ret )
+        MESSAGE( FATAL_ERROR "${out_tmp}" )
+        MESSAGE( FATAL_ERROR "Error moving dictionary! This is strange. Please retry calling CMake. That might fix it." )
+ENDIF()
+
 # Create the init_tbsw.sh file
 
 file(WRITE  "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#!/bin/bash\n")
+file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#tbsw build id: ${out_tmp} \n")
 file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#--------------------------------------------------------------------------------\n")
 file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#    ROOT                                                                        \n")
 file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#--------------------------------------------------------------------------------\n")
