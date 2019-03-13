@@ -192,15 +192,17 @@ EXEC_PROGRAM( git
             ARGS HEAD
             OUTPUT_VARIABLE out_tmp
             RETURN_VALUE out_ret )
+
+
 IF( out_ret )
-        MESSAGE( FATAL_ERROR "${out_tmp}" )
-        MESSAGE( FATAL_ERROR "Error moving dictionary! This is strange. Please retry calling CMake. That might fix it." )
+        MESSAGE( STATUS "Not able to retrieve the commit SHA-1." )
+        Set(out_tmp "??")
 ENDIF()
 
 # Create the init_tbsw.sh file
 
 file(WRITE  "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#!/bin/bash\n")
-file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#tbsw build id: ${out_tmp} \n")
+file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#tbsw commit SHA-1: ${out_tmp} \n")
 file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#--------------------------------------------------------------------------------\n")
 file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#    ROOT                                                                        \n")
 file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#--------------------------------------------------------------------------------\n")
