@@ -365,6 +365,6 @@ References:
 
 [1] F. Gaede, Marlin and LCCD: Software tools for the ILC, Nucl.Instrum.Meth. A559 (2006) 177–180.
 
-[2] S. Aplin, J. Engels, F. Gaede, N. A. Graf, T. Johnson, et al., LCIO: A Persistency Framework and Event Data Model for HEP
+[2] S. Aplin, J. Engels, F. Gaede, N. A. Graf, T. Johnson, et al., LCIO: A Persistency Framework and Event Data Model for HEP, SLAC-PUB-15296
 
 [3] https://eudaq.github.io/
