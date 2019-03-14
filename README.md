@@ -122,9 +122,9 @@ to show what can be done using the hit and track trees.
 
 # What is the output data format of tbsw?
 
-The tbsw framework uses Marlin (http://ilcsoft.desy.de/portal/software_packages/marlin/index_eng.html) to organize the calibration and reconstruction of 
-test beam data into a ```Path``` of small steps handled by so called ```Processors```. The reconstruction path from the example script can illustrate the
-situation:
+The tbsw framework uses Marlin[1] and LCIO[2] to organize the calibration and reconstruction of test beam data into a ```Path``` of small steps 
+handled by so called ```Processors```. In order to read in raw files from EUDAQ a part of the EUDAQ 1 code base [3] is hosted to read files and 
+convert event raw data into LCIO collections for further processing. The reconstruction path from the example script can illustrate the situation:
 
 ```
 #!python
@@ -359,3 +359,12 @@ based on PyRoot showing how to get residuals and efficiencies plots from the roo
 Have fun with test beams ;)  
 
 benjamin.schwenker@phys.uni-goettingen.de
+
+
+References: 
+
+[1] F. Gaede, Marlin and LCCD: Software tools for the ILC, Nucl.Instrum.Meth. A559 (2006) 177–180.
+
+[2] S. Aplin, J. Engels, F. Gaede, N. A. Graf, T. Johnson, et al., LCIO: A Persistency Framework and Event Data Model for HEP
+
+[3] https://eudaq.github.io/
