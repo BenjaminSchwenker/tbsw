@@ -55,6 +55,7 @@ class MeasurementArea
 	double density;				// Density of the target material in the area (in g/cm³)
 	double Z;					// Atomic number of the target material in the area
 	double A; 					// Atomic mass of the target material in the area
+	double X0; 					// Radiation length constant of the target material in the area
 	int run_min; 				// Minimal run number of data, which contains the specified material parameters
 	int run_max;				// Maximal run number of data, which contains the specified material parameters
 	int max_angles;				// Maximal number of scattering angles in the scattering angle distribution
@@ -63,7 +64,7 @@ class MeasurementArea
 
 	// Constructors
 
-	MeasurementArea(double, double, double, double, double, double, double, double, int, int, int);	// Constructor
+	MeasurementArea(double, double, double, double, double, double, double, double, double, int, int, int);	// Constructor
 
 	// Reading parameters of the measurement area
 
@@ -77,6 +78,7 @@ class MeasurementArea
 	double Get_v_length() { return length_v; }				// Return the side length (in v direction) of MA (mm)
 	double Get_thickness()	{ return thickness; }			// Return thickness (mm)
 	double Get_density() { return density; }				// Return density (g/cm³)
+	double Get_X0() { return X0; }							// Return X0 (mm)
 	double Get_Z() { return Z; }							// Return atomic number Z
 	double Get_A() { return A; }							// Return atomic mass A
 
@@ -100,6 +102,7 @@ class MeasurementArea
 		std::cout<<"density: "<<density<<" g/cm³"<<std::endl;
 		std::cout<<"atomic number Z: "<<Z<<std::endl;
 		std::cout<<"atomic mass A: "<<A<<std::endl;
+		std::cout<<"X0: "<<X0<<" mm"<<std::endl;
 
 		std::cout<<"Min. run number: "<<run_min<<std::endl;
 		std::cout<<"Max run number: "<<run_max<<std::endl;
@@ -108,7 +111,7 @@ class MeasurementArea
 	}
 };	
 // Constructor definition
-MeasurementArea::MeasurementArea(double ucenter, double vcenter, double ulength, double vlength, double thick, double dens, double atom_num, double atom_mass, int run_minimum, int run_maximum, int angle_maximum)
+MeasurementArea::MeasurementArea(double ucenter, double vcenter, double ulength, double vlength, double thick, double X0constant, double dens, double atom_num, double atom_mass, int run_minimum, int run_maximum, int angle_maximum)
 {
 	center_u=ucenter;	// mm
 	center_v=vcenter;	// mm
@@ -116,6 +119,7 @@ MeasurementArea::MeasurementArea(double ucenter, double vcenter, double ulength,
 	length_v=vlength;	// mm
 	thickness=thick;	// mm
 	density=dens;		// g/cm³
+	X0=X0constant;		// mm
 	Z=atom_num;
 	A=atom_mass;
 	run_min=run_minimum;
@@ -144,7 +148,7 @@ class Grid
 
 	void PrintGridParameters()
 	{
-        for(size_t i=0;i<m_MeasurementAreas.size();i++)
+		for(size_t i=0;i<m_MeasurementAreas.size();i++) 
 		{
 			cout<<endl<<"-----------------------"<<endl;
 			cout<<"Measurement Area "<<i<<endl;
@@ -191,12 +195,13 @@ Grid::Grid(TEnv* mEnv)
 		double Z=mEnv->GetValue(MAname+".atomicnumber", 13.0);
 		double A=mEnv->GetValue(MAname+".atomicmassnumber", 27.0);
 		double density=mEnv->GetValue(MAname+".density", 2.7);
+		double X0=mEnv->GetValue(MAname+".X0", 88.97);
 		int run_min=mEnv->GetValue(MAname+".minrunnumber", -1);
 		int run_max=mEnv->GetValue(MAname+".maxrunnumber", -1);
 		int max_angle=mEnv->GetValue(MAname+".maxanglenumber", -1);
 
 		// Define measurement area based on these parameters
-		MeasurementArea MA(ucenter,vcenter,ulength,vlength,thickness,density,Z,A,run_min,run_max,max_angle);
+		MeasurementArea MA(ucenter,vcenter,ulength,vlength,thickness,X0,density,Z,A,run_min,run_max,max_angle);
   
 		// Add measurement area to predefined grid
 		m_MeasurementAreas.push_back(MA);
@@ -220,12 +225,13 @@ Grid::Grid(TEnv* mEnv)
 				double Z=mEnv->GetValue(linename+".atomicnumber", 13.0);
 				double A=mEnv->GetValue(linename+".atomicmassnumber", 27.0);
 				double density=mEnv->GetValue(linename+".density", 2.7);
+				double X0=mEnv->GetValue(linename+".X0", 88.97);
 				int run_min=mEnv->GetValue(linename+".minrunnumber", -1);
 				int run_max=mEnv->GetValue(linename+".maxrunnumber", -1);
 				int max_angle=mEnv->GetValue(linename+".maxanglenumber", -1);
 
 				// Define measurement area based on these parameters
-				MeasurementArea MA(ucenter,vcenter,ulength,vlength,thickness,density,Z,A,run_min,run_max,max_angle);
+				MeasurementArea MA(ucenter,vcenter,ulength,vlength,thickness,X0,density,Z,A,run_min,run_max,max_angle);
 			  
 				// Add measurement area to predefined grid
 				m_MeasurementAreas.push_back(MA);
@@ -247,12 +253,13 @@ Grid::Grid(TEnv* mEnv)
 				double Z=mEnv->GetValue(linename+".atomicnumber", 13.0);
 				double A=mEnv->GetValue(linename+".atomicmassnumber", 27.0);
 				double density=mEnv->GetValue(linename+".density", 2.7);
+				double X0=mEnv->GetValue(linename+".X0", 88.97);
 				int run_min=mEnv->GetValue(linename+".minrunnumber", -1);
 				int run_max=mEnv->GetValue(linename+".maxrunnumber", -1);
 				int max_angle=mEnv->GetValue(linename+".maxanglenumber", -1);
 
 				// Define measurement area based on these parameters
-				MeasurementArea MA(ucenter,vcenter,ulength,vlength,thickness,density,Z,A,run_min,run_max,max_angle);
+				MeasurementArea MA(ucenter,vcenter,ulength,vlength,thickness,X0,density,Z,A,run_min,run_max,max_angle);
 		  
 				// Add measurement area to predefined grid
 				m_MeasurementAreas.push_back(MA);
@@ -287,12 +294,13 @@ Grid::Grid(TEnv* mEnv)
 					double Z=mEnv->GetValue(rectanglename+".atomicnumber", 13.0);
 					double A=mEnv->GetValue(rectanglename+".atomicmassnumber", 27.0);
 					double density=mEnv->GetValue(rectanglename+".density", 2.7);
+					double X0=mEnv->GetValue(rectanglename+".X0", 88.97);
 					int run_min=mEnv->GetValue(rectanglename+".minrunnumber", -1);
 					int run_max=mEnv->GetValue(rectanglename+".maxrunnumber", -1);
 					int max_angle=mEnv->GetValue(rectanglename+".maxanglenumber", -1);
 
 					// Define measurement area based on these parameters
-					MeasurementArea MA(ucenter,vcenter,ulength,vlength,thickness,density,Z,A,run_min,run_max,max_angle);
+					MeasurementArea MA(ucenter,vcenter,ulength,vlength,thickness,X0,density,Z,A,run_min,run_max,max_angle);
 				  
 					// Add measurement area to predefined grid
 					m_MeasurementAreas.push_back(MA);
@@ -326,18 +334,19 @@ int** GetParameterMapping(int);
 	* par[0]:  Expected beam energy at u,v=0;
 	* par[1]:  Beam particle charge
 	* par[2]:  Beam particle mass
-	* par[3]:  Target material density
-	* par[4]:  Target material atomic number
-	* par[5]:  Target material atomic weight
+	* par[3]:  Target material density (not used here)
+	* par[4]:  Target material atomic number (not used here)
+	* par[5]:  Target material atomic weight (not used here)
 	* par[6]:  Thickness
 	* par[7]:  Expected angle reconstruction error
 	* par[8]:  reco error calibration factor
-	* par[9]: Normalization
-	* par[10]:  u coordinate
+	* par[9]:  Normalization
+	* par[10]: u coordinate
 	* par[11]: v coordinate
 	* par[12]: u BE gradient
 	* par[13]: v BE gradient
-	* par[14]:  mean of angle distribution
+	* par[14]: mean of angle distribution
+	* par[15]: Target material radiation length 
 
 */
 
@@ -368,9 +377,7 @@ Double_t highlandfunction(Double_t *x, Double_t *par)
 	density=par[3]; 
 
 	// thickness of the target material
-	double dm1=par[6]; // in mm
-	double d1;	// in cm
-	d1=dm1/10.0;
+	double d1=par[6]; // in mm
 
 	// Other parameters
 	double exp_recoerror=par[7];  //expected reconstruction error
@@ -398,7 +405,8 @@ Double_t highlandfunction(Double_t *x, Double_t *par)
 	beta=p/E;
 
 	// Radiation length computed from the other parameters
-	double X0=716.4*A/((Z+1)*Z*density*TMath::Log(287.0/TMath::Sqrt(Z)));
+	//double X0=716.4*A/((Z+1)*Z*density*TMath::Log(287.0/TMath::Sqrt(Z)));  	// This formula should only be used in case X0 is unknown (1-2% deviation from PDG value)
+	double X0=par[15];
 
 	// Combination of Highland width and reconstruction error
 	double sigma=TMath::Sqrt(pow(recoerror,2)+pow(0.0136*charge/(p*beta)*TMath::Sqrt(d1/X0)*(1.0+0.038*TMath::Log(d1/X0)),2));
@@ -428,6 +436,7 @@ Double_t highlandfunction(Double_t *x, Double_t *par)
 	* par[12]:  u BE gradient
 	* par[13]:  v BE gradient
 	* par[14]:  mean of angle distribution
+	* par[15]:  Target material radiation length (not used here)
 
 */
   
@@ -447,6 +456,9 @@ Double_t molierefunction(Double_t *x, Double_t *par)
 	//density of the target material
 	double density;  
 	density=par[3]; 
+
+	// Radiation length (not used here)
+	double X0=par[15];
 
 	// thickness of the target material
 	double dm1=par[6]; // in mm
@@ -734,10 +746,10 @@ Double_t molierefunction(Double_t *x, Double_t *par)
 // a globalEstimator structure
 
 // Number of parameters per fit function
-const int num_localparameters=15;
+const int num_localparameters=16;
 
 // Number of new parameters per fit function
-const int newparsperfunction=8;
+const int newparsperfunction=9;
 
 // Create the GlobalCHi2 structure
 struct GlobalEstimator { 
@@ -747,7 +759,7 @@ struct GlobalEstimator {
   double operator() (const double *par) const {
     double ret =0;
       
-    for(size_t j=0;j<fEstimatorVec.size();j++)
+	for(size_t j=0;j<fEstimatorVec.size();j++)
 	{
       // read function args
       double p1[num_localparameters];
@@ -786,9 +798,9 @@ int **GetParameterMapping(int numfuncs)
             {
                   
 				// There are basically 2 cases: The first function has the Parameters 0-15,
-				//								the other function have a new Parameter number at the 3rd parameter (density), the 4th parameter (Z), the 4th parameter (A)
-				//								the 6th Parameter (thickness of target material), the 9th Parameter (~#tracks), the 10th parameter (u coordinate), the 11th parameter (v coordinate)
-				//								and the 14th parameter (mean value)
+				//								the other function have a new Parameter number at the 3rd parameter (density), the 4th parameter (Z), the 5th parameter (A)
+				//								the 6th Parameter (thickness of target material), the 9th Parameter (~#tracks), the 10th parameter (u coordinate), the 11th parameter (v coordinate),
+				//								the 14th parameter (mean value) and the 15th parameter (X0 value)
 						
 				if(i==0) 
 				{
@@ -796,7 +808,7 @@ int **GetParameterMapping(int numfuncs)
 				}
 				else
 				{
-					if((j!=3)&&(j!=4)&&(j!=5)&&(j!=6)&&(j!=9)&&(j!=10)&&(j!=11)&&(j!=14)) ipar[i][j]=j;
+					if((j!=3)&&(j!=4)&&(j!=5)&&(j!=6)&&(j!=9)&&(j!=10)&&(j!=11)&&(j!=14)&&(j!=15)) ipar[i][j]=j;
 					else if(j==3) ipar[i][j]=num_localparameters+(i-1)*newparsperfunction;
 					else if(j==4) ipar[i][j]=num_localparameters+1+(i-1)*newparsperfunction;
 					else if(j==5) ipar[i][j]=num_localparameters+2+(i-1)*newparsperfunction;
@@ -804,7 +816,8 @@ int **GetParameterMapping(int numfuncs)
 					else if(j==9) ipar[i][j]=num_localparameters+4+(i-1)*newparsperfunction;
 					else if(j==10) ipar[i][j]=num_localparameters+5+(i-1)*newparsperfunction;
 					else if(j==11) ipar[i][j]=num_localparameters+6+(i-1)*newparsperfunction;
-					else ipar[i][j]=num_localparameters+7+(i-1)*newparsperfunction;
+					else if(j==14) ipar[i][j]=num_localparameters+7+(i-1)*newparsperfunction;
+					else ipar[i][j]=num_localparameters+8+(i-1)*newparsperfunction;
 				}
 				cout<<"Parameter mapping: Global parameter number of local parameter "<<j<<" in fit function "<<i<<" is "<<ipar[i][j]<<endl;
             }
@@ -1267,7 +1280,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		{
 			// Use Gaussian function with width corresponding to the calibrated angle resolution, if material is only air or extremely thin
 			// Also in this case the fit range is set to be a little smaller
-			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0002) fitFcn = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13]+[14],[7]*[8])",-fitrange,fitrange);
+			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0002) fitFcn = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13]*[15]+[14],[7]*[8])",-fitrange,fitrange);
 
 
 			// Use Moliere model in case the material is not just air
@@ -1277,7 +1290,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		else
 		{
 			// Use Gaussian function with width corresponding to the calibrated angle resolution, if material is only air or extremely thin
-			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0002) fitFcn = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13]+[14],[7]*[8])",-fitrange,fitrange);
+			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0002) fitFcn = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13]*[15]+[14],[7]*[8])",-fitrange,fitrange);
 			// Use Highland model in case the material is not just air
 			else fitFcn = new TF1(fctname,highlandfunction,-fitrange,fitrange,num_localparameters);
 		}
@@ -1347,7 +1360,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// First fit function has num_localparameters new parameters:
 	double aid_array[num_localparameters]={ BE_mean,z,mass,grid.GetMeasurementAreas().at(0).Get_density(),grid.GetMeasurementAreas().at(0).Get_Z(),grid.GetMeasurementAreas().at(0).Get_A(),
 											grid.GetMeasurementAreas().at(0).Get_thickness(),recoerr,lambda_startvalue,700.0,grid.GetMeasurementAreas().at(0).Get_u_center(),
-											grid.GetMeasurementAreas().at(0).Get_v_center(),BE_ugrad,BE_vgrad,0.0};
+											grid.GetMeasurementAreas().at(0).Get_v_center(),BE_ugrad,BE_vgrad,0.0, grid.GetMeasurementAreas().at(0).Get_X0()};
 	for(int i=0;i<num_localparameters;i++) par0[i]=aid_array[i];
 
 	// Afterwards for each fit functions we get several new parameters
@@ -1361,6 +1374,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		par0[num_localparameters+5+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_u_center();
 		par0[num_localparameters+6+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_v_center();
 		par0[num_localparameters+7+(i-1)*newparsperfunction]=0.0;
+		par0[num_localparameters+8+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_X0();
 	}
 
 	// create before the parameter settings in order to fix or set range on them
@@ -1368,6 +1382,9 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 	// fix constant parameters 1 to 7
 	for(int i=1;i<8;i++) fitter.Config().ParSettings(i).Fix();
+
+	// fix X0 constant
+	fitter.Config().ParSettings(15).Fix();
 
 	// fix u and v position of first measurement area
 	fitter.Config().ParSettings(10).Fix();
@@ -1388,7 +1405,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// The beam energy mean value should also always be positive
 	fitter.Config().ParSettings(0).SetLimits(0.5*BE_mean,1.5*BE_mean);
 
-	// fix density, A, Z, thickness and coordinate parameters for all fitfunctions
+	// fix X0, density, A, Z, thickness and coordinate parameters for all fitfunctions
 	for(int i=1;i<num_fitfunctions;i++)
 	{
 		fitter.Config().ParSettings(num_localparameters+(i-1)*newparsperfunction).Fix();
@@ -1397,6 +1414,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		fitter.Config().ParSettings(num_localparameters+3+(i-1)*newparsperfunction).Fix();
 		fitter.Config().ParSettings(num_localparameters+5+(i-1)*newparsperfunction).Fix();
 		fitter.Config().ParSettings(num_localparameters+6+(i-1)*newparsperfunction).Fix();
+		fitter.Config().ParSettings(num_localparameters+8+(i-1)*newparsperfunction).Fix();
 	}
 
 	if(fixlambda) fitter.Config().ParSettings(8).Fix();				 //fix lambda?
@@ -1447,6 +1465,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	name[12]="#nablaE_{u}[GeV/mm]";
 	name[13]="#nablaE_{v}[GeV/mm]";
 	name[14]="#theta_{mean}[rad]";
+	name[15]="X_{0}[mm]";
 
 	for(int i=0;i<num_fitfunctions;i++)
 	{	
@@ -1593,7 +1612,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		double BE_vgrad=fitresults[6];
 		double parameters_temp[num_localparameters]={ BE_mean,z,mass,grid.GetMeasurementAreas().at(i).Get_density(),grid.GetMeasurementAreas().at(i).Get_Z(),grid.GetMeasurementAreas().at(i).Get_A(),
 											1.0,recoerr,lambda,700.0,grid.GetMeasurementAreas().at(i).Get_u_center(),
-											grid.GetMeasurementAreas().at(i).Get_v_center(),BE_ugrad,BE_vgrad,0.0};
+											grid.GetMeasurementAreas().at(i).Get_v_center(),BE_ugrad,BE_vgrad,0.0,grid.GetMeasurementAreas().at(i).Get_X0()};
    		fitFcn->SetParameters(parameters_temp);
 
 		for(int i=0; i<num_localparameters;i++)
@@ -1795,7 +1814,7 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
 	Grid grid(mEnv);
 
 	// Total number of measurement areas
-    const size_t num_fitfunctions=grid.GetMeasurementAreas().size();
+	const size_t num_fitfunctions=grid.GetMeasurementAreas().size();
 
 	cout<<"Total number of measurement areas: 	"<<num_fitfunctions<<endl;
 
@@ -1806,10 +1825,10 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
     // 12 completely independent measurement areas with completely unreleated thicknesses and positions.
 
 	// u minimum and v maximum values (in mm)
-    //double umin;
-    //double vmin;
-    //double umax;
-    //double vmax;
+	//double umin;
+	//double vmin;
+	//double umax;
+	//double vmax;
 	
 	// Print out the measurement areas, which will be used for the fit
 	grid.PrintGridParameters();
@@ -1819,7 +1838,7 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
     std::vector<TString> inputfiles;
 
     GetInputFiles(inputfiles);
-    for(size_t iinput=0;iinput<inputfiles.size();iinput++)
+	for(size_t iinput=0;iinput<inputfiles.size();iinput++)
 	{
 		cout<<"input file:"<<inputfiles.at(iinput)<<endl;
 	}
@@ -1851,7 +1870,7 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
 	rootfile->mkdir("grid/fit/");
 
 	// Loop over number of measurement areas
-    for(size_t i=0; i<num_fitfunctions; i++)
+	for(size_t i=0; i<num_fitfunctions; i++)
 	{
 			// Set the histogram name as a string
 			histoname.Form("measurementarea%i",i+1);

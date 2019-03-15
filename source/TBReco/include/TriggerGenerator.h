@@ -6,8 +6,6 @@
 #ifndef TriggerGenerator_H
 #define TriggerGenerator_H 1
 
-// Include TBTools header files
-#include "TBDetector.h"
 
 // Include Marlin classes
 #include <marlin/Global.h>
@@ -32,13 +30,13 @@ namespace depfet
     TrgScinti(int sensID, float minU, float maxU, float minV, float maxV) : 
       m_sensID(sensID), m_minU(minU), m_maxU(maxU), m_minV(minV), m_maxV(maxV) {}
         
-    int GetDAQID(){ return m_sensID; };
+    int GetSensorID(){ return m_sensID; };
   
     bool isPointInSensor( double u , double v); 
 
    private:
     
-    // DAQ Id
+    // sensor Id
     int m_sensID;
     // min/max U
     float m_minU; 
@@ -109,9 +107,6 @@ namespace depfet
 
     // Active scintis
     std::vector< TrgScinti > m_scintiVec;
-    
-    // Handle to detector data sheets 
-    TBDetector m_detector;  
     
     double m_timeCPU; //!< CPU time
     int    m_nRun ;   //!< Run number

@@ -100,8 +100,8 @@ TBTrack TrackInputProvider::MakeTBTrack( lcio::Track * lciotrk, TBDetector& dete
     TrackerHitImpl * lciohit = dynamic_cast<TrackerHitImpl*>(trackhits.at(ihit));  
     TBHit Hit(lciohit);   
     // Add TBHit to TBTrack  
-    int daqid = Hit.GetDAQID();
-    int ipl = detector.GetPlaneNumber(daqid);
+    int sensorID = Hit.GetSensorID();
+    int ipl = detector.GetPlaneNumber(sensorID);
     trk.GetTE(ipl).SetHit(Hit); 
   } 
    

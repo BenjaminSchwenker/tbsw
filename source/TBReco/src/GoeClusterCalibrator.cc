@@ -9,6 +9,7 @@
 #include "GoeClusterCalibrator.h"
 
 // TBTools includes
+#include "TBDetector.h"
 #include "Utilities.h"
 #include "TBTrack.h"
 #include "TrackInputProvider.h"
@@ -90,9 +91,6 @@ namespace depfet {
     registerProcessorParameter ("MinVarianceV", "Minimum value of variance for v position measurement [mm^2]",
                                 _minVarianceV, static_cast < float > (1.0E-6) );
      
-    registerProcessorParameter ("AlignmentDBFileName",
-                                "This is the name of the LCIO file with the alignment constants (add .slcio)",
-                                _alignmentDBFileName, static_cast< string > ( "eudet-alignmentDB.slcio" ) ); 
     
     std::vector<int> initIgnoreIDVec;
     registerProcessorParameter ("IgnoreIDs",
@@ -158,11 +156,7 @@ namespace depfet {
     // Print set parameters
     printProcessorParams();
     
-    // Read detector constants from gear file
-    _detector.ReadGearConfiguration();  
-    
-    // Read alignment data base file 
-    _detector.ReadAlignmentDB( _alignmentDBFileName );     
+   
   }
   
   //
@@ -190,7 +184,7 @@ namespace depfet {
     
     TrackInputProvider TrackIO; 
     
-    GenericTrackFitter TrackFitter(_detector);
+    GenericTrackFitter TrackFitter(TBDetector::GetInstance());
     TrackFitter.SetNumIterations(1); 
     
     LCCollection* inputCollection;
@@ -208,7 +202,7 @@ namespace depfet {
       Track * inputtrack = dynamic_cast<Track*> (inputCollection->getElementAt(itrk));
       
       // Convert LCIO -> TB track  
-      TBTrack track = TrackIO.MakeTBTrack( inputtrack, _detector );  
+      TBTrack track = TrackIO.MakeTBTrack( inputtrack, TBDetector::GetInstance() );  
       
       // Refit track 
       bool trkerr = TrackFitter.Fit(track);
@@ -218,14 +212,14 @@ namespace depfet {
       
       //
       // Loop over all clusters in the track
-      for (int ipl= 0; ipl< _detector.GetNSensors(); ++ipl) {   
+      for (int ipl= 0; ipl< TBDetector::GetInstance().GetNSensors(); ++ipl) {   
         
         
         // Get sensor data 
         //------------------------
         TBTrackElement& TE = track.GetTE(ipl);  
-        Det & Sensor = _detector.GetDet(ipl);  
-        int sensorID = Sensor.GetDAQID();        
+        const Det & Sensor = TBDetector::Get(ipl);  
+        int sensorID = Sensor.GetSensorID();        
         
         bool ignoreID = false;
         for (auto id :  _ignoreIDVec)  {
@@ -240,9 +234,9 @@ namespace depfet {
           double trk_tv = TE.GetState().GetPars()[1];  // rad
           double trk_u = TE.GetState().GetPars()[2];   // mm
           double trk_v = TE.GetState().GetPars()[3];   // mm
-          double trk_qp = TE.GetState().GetPars()[4];  // 1/GeV
-          double trk_charge = track.GetCharge();
-          double trk_mom = std::abs(trk_charge/trk_qp); 
+          //double trk_qp = TE.GetState().GetPars()[4];  // 1/GeV
+          //double trk_charge = track.GetCharge();
+          //double trk_mom = std::abs(trk_charge/trk_qp); 
            
           double sigma2_u = TE.GetState().GetCov()(2,2); 
           double sigma2_v = TE.GetState().GetCov()(3,3); 

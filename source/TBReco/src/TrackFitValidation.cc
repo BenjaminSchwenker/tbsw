@@ -9,6 +9,7 @@
 #include "TrackFitValidation.h"
 
 // TBTools includes
+#include "TBDetector.h"
 #include "TBTrack.h"
 #include "GenericTrackFitter.h"
 #include "TrackInputProvider.h"
@@ -70,9 +71,7 @@ namespace depfet {
     
     // Processor parameters:
 
-    registerProcessorParameter ("AlignmentDBFileName",
-                             "This is the name of the file with the alignment constants (add .root)",
-                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) ); 
+    
     
          
     registerProcessorParameter ("MaxResidualU",
@@ -103,11 +102,6 @@ namespace depfet {
     // Print set parameters
     printProcessorParams();
     
-    // Read detector constants from gear file
-    _detector.ReadGearConfiguration();  
-    
-    // Read alignment data base file 
-    _detector.ReadAlignmentDB( _alignmentDBFileName );    
     
     bookHistos(); 
   }
@@ -159,7 +153,7 @@ namespace depfet {
     std::vector<TBTrack> TrackStore; 
 
     // Configure Kalman track fitter
-    GenericTrackFitter TrackFitter(_detector);
+    GenericTrackFitter TrackFitter(TBDetector::GetInstance() );
     TrackFitter.SetNumIterations(1); 
     
     TrackInputProvider TrackLCIOReader;  
@@ -170,7 +164,7 @@ namespace depfet {
       Track * lciotrk = dynamic_cast<Track*> (trackCol->getElementAt(itrk));
       
       // Convert LCIO -> TB track  
-      TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, _detector );  
+      TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, TBDetector::GetInstance() );  
       
       // Refit track in nominal alignment
       bool trkerr = TrackFitter.Fit(trk);
@@ -218,7 +212,7 @@ namespace depfet {
     // Main loop over all sensors (fill sensor level histograms) 
     // 
     
-    for (int ipl=0 ; ipl < _detector.GetNSensors(); ipl++) {
+    for (int ipl=0 ; ipl < TBDetector::GetInstance().GetNSensors(); ipl++) {
                     
      
       
@@ -235,7 +229,7 @@ namespace depfet {
         // Set current - layer ID, ladder ID and sensor ID
         int sensorID = cellIDDec(simHit)["sensorID"];
          
-        if( ipl == _detector.GetPlaneNumber(sensorID))
+        if( ipl == TBDetector::GetInstance().GetPlaneNumber(sensorID))
         {         
           streamlog_out(MESSAGE2) << " SimHit at plane " << ipl << " at: (" << simHit->getPosition()[0] << ", " << simHit->getPosition()[1] << ")" 
                                   << endl;
@@ -383,7 +377,7 @@ namespace depfet {
           auto diff = rec_x-sim_x;
           
           // Case w/o magnetic field is spacial
-          if ( ( std::abs(_detector.GetBx()) + std::abs(_detector.GetBy()) + std::abs(_detector.GetBz()) )  == 0 )  {
+          if ( ( std::abs(TBDetector::GetInstance().GetBx()) + std::abs(TBDetector::GetInstance().GetBy()) + std::abs(TBDetector::GetInstance().GetBz()) )  == 0 )  {
              
             int ierr; //TODO change back to comute with check!
             auto jchisq = diff.block<4,1>(0,0).transpose()*rec_cov.block<4,4>(0,0).inverse()*diff.block<4,1>(0,0);
@@ -529,15 +523,15 @@ namespace depfet {
     _rootFile->cd("");
      
     // Track chi2 histograms 
-    _histoMap["chi2"] = new TH1D("hchi2", "", 30*_detector.GetNSensors(), 0, 10*_detector.GetNSensors() ); 
+    _histoMap["chi2"] = new TH1D("hchi2", "", 30*TBDetector::GetInstance().GetNSensors(), 0, 10*TBDetector::GetInstance().GetNSensors() ); 
     _histoMap["chi2"]->SetYTitle("tracks"); 
     _histoMap["chi2"]->SetXTitle("#chi^{2}");
     
-    _histoMap["nhits"] = new TH1D("hnhits", "", _detector.GetNSensors()+2, 0, _detector.GetNSensors()+2); 
+    _histoMap["nhits"] = new TH1D("hnhits", "", TBDetector::GetInstance().GetNSensors()+2, 0, TBDetector::GetInstance().GetNSensors()+2); 
     _histoMap["nhits"]->SetYTitle("tracks"); 
     _histoMap["nhits"]->SetXTitle("hits"); 
     
-    _histoMap["ndf"] = new TH1D("hndf", "", 2*_detector.GetNSensors(), 0, 2*_detector.GetNSensors()); 
+    _histoMap["ndf"] = new TH1D("hndf", "", 2*TBDetector::GetInstance().GetNSensors(), 0, 2*TBDetector::GetInstance().GetNSensors()); 
     _histoMap["ndf"]->SetYTitle("tracks"); 
     _histoMap["ndf"]->SetXTitle("degrees of freedom"); 
     
@@ -554,15 +548,15 @@ namespace depfet {
      
     // Create subdirs for detectors
     std::string dirName; 
-    for (int ipl=0 ; ipl < _detector.GetNSensors(); ipl++) {
+    for (int ipl=0 ; ipl < TBDetector::GetInstance().GetNSensors(); ipl++) {
       std::string dirName = "Det"+to_string( ipl );
       _rootFile->mkdir(dirName.c_str());     
     }      
   
     // Detector histograms (pulls, residuals ...)
-    for (int ipl=0 ; ipl < _detector.GetNSensors(); ipl++) {
+    for (int ipl=0 ; ipl < TBDetector::GetInstance().GetNSensors(); ipl++) {
                     
-      Det & adet = _detector.GetDet(ipl);
+      const Det & adet = TBDetector::GetInstance().GetDet(ipl);
       
       dirName = "/Det"+to_string(ipl)+"/";
       _rootFile->cd(dirName.c_str());
@@ -572,8 +566,10 @@ namespace depfet {
       
       // Local track parameters 
       
-      double  uBox = 1.1 * 0.5 * adet.GetLadderSizeU();
-      double  vBox = 1.1 * 0.5 * adet.GetLadderSizeV();
+      double  uMin = 1.1 * adet.GetSensitiveMinU();
+      double  uMax = 1.1 * adet.GetSensitiveMaxU();
+      double  vMin = 1.1 * adet.GetSensitiveMinV();
+      double  vMax = 1.1 * adet.GetSensitiveMaxV();
       
       histoName = "htrk_dir_truth_det"+to_string( ipl ); 
       _histoMap2D[ histoName  ] = new TH2D(histoName.c_str(), "",1000, -0.03, 0.03,1000, -0.03, 0.03); 
@@ -583,12 +579,12 @@ namespace depfet {
       _histoMap2D[ histoName  ]->GetYaxis()->SetTitleOffset(1.5); 
       
       histoName = "htrk_u_det"+to_string( ipl ); 
-      _histoMap[ histoName  ] = new TH1D(histoName.c_str(), "", 10000, -uBox, +uBox); 
+      _histoMap[ histoName  ] = new TH1D(histoName.c_str(), "", 10000, uMin, uMax); 
       _histoMap[ histoName  ]->SetXTitle("intersect u [mm]");  
       _histoMap[ histoName  ]->SetYTitle("tracks"); 
       
       histoName = "htrk_v_det"+to_string( ipl );
-      _histoMap[ histoName  ] = new TH1D(histoName.c_str(), "", 10000, -vBox, +vBox);
+      _histoMap[ histoName  ] = new TH1D(histoName.c_str(), "", 10000, vMin, +vMax);
       _histoMap[ histoName  ]->SetXTitle("intersect v [mm]"); 
       _histoMap[ histoName  ]->SetYTitle("tracks"); 
       
@@ -618,12 +614,12 @@ namespace depfet {
       _histoMap[ histoName ]->SetYTitle("tracks");     
       
       histoName = "htrk_u_truth_det"+to_string( ipl ); 
-      _histoMap[ histoName  ] = new TH1D(histoName.c_str(), "", 10000, -uBox, +uBox); 
+      _histoMap[ histoName  ] = new TH1D(histoName.c_str(), "", 10000, uMin, uMax); 
       _histoMap[ histoName  ]->SetXTitle("true intersect u [mm]");  
       _histoMap[ histoName ]->SetYTitle("tracks");         
       
       histoName = "htrk_v_truth_det"+to_string( ipl );
-      _histoMap[ histoName  ] = new TH1D(histoName.c_str(), "", 10000, -vBox, +vBox);
+      _histoMap[ histoName  ] = new TH1D(histoName.c_str(), "", 10000, vMin, vMax);
       _histoMap[ histoName  ]->SetXTitle("true intersect v [mm]"); 
       _histoMap[ histoName ]->SetYTitle("tracks");         
       
@@ -635,13 +631,13 @@ namespace depfet {
       // Local track parameter errors 
       
       histoName = "hsigma_u_det"+to_string( ipl ); 
-      max = 100*adet.GetSensitiveSizeU()/(adet.GetNCellsU()+1); 
+      max = 100*adet.GetSensitiveMaxU()/(adet.GetMaxUCell()+2 ); 
       _histoMap[ histoName  ] = new TH1D(histoName.c_str(), "", 8000, 0, max); 
       _histoMap[ histoName  ]->SetXTitle("sigma u [mm]"); 
       _histoMap[ histoName  ]->SetYTitle("tracks"); 
        
       histoName = "hsigma_v_det"+to_string( ipl );
-      max = 100*adet.GetSensitiveSizeV()/(adet.GetNCellsV()+1); 
+      max = 100*adet.GetSensitiveMaxV()/(adet.GetMaxVCell()+2); 
       _histoMap[ histoName  ] = new TH1D(histoName.c_str(), "", 8000, 0, max);
       _histoMap[ histoName  ]->SetXTitle("sigma v [mm]"); 
       _histoMap[ histoName  ]->SetYTitle("tracks"); 
@@ -700,15 +696,15 @@ namespace depfet {
       _histoMap[histoName]->SetYTitle("tracks");    
     
       histoName = "hresU_det"+to_string( ipl );
-      min = -10*adet.GetSensitiveSizeU()/(adet.GetNCellsU()+1); 
-      max = +10*adet.GetSensitiveSizeU()/(adet.GetNCellsU()+1); 
+      min = -10*adet.GetSensitiveMaxU()/(adet.GetMaxUCell()+2); 
+      max = +10*adet.GetSensitiveMaxU()/(adet.GetMaxUCell()+2); 
       _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 301, min, max);
       _histoMap[ histoName ]->SetXTitle("u residual [mm]"); 
       _histoMap[ histoName ]->SetYTitle("tracks"); 
       
       histoName = "hresV_det"+to_string( ipl );
-      min = -10*adet.GetSensitiveSizeV()/(adet.GetNCellsV()+1); 
-      max = +10*adet.GetSensitiveSizeV()/(adet.GetNCellsV()+1); 
+      min = -10*adet.GetSensitiveMaxV()/(adet.GetMaxVCell()+2); 
+      max = +10*adet.GetSensitiveMaxV()/(adet.GetMaxVCell()+2); 
       _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 301, min, max); 
       _histoMap[ histoName ]->SetXTitle("v residual [mm]"); 
       _histoMap[ histoName ]->SetYTitle("tracks"); 

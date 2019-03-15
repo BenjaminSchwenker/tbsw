@@ -6,9 +6,6 @@
 #ifndef GoeClusterCalibrator_H
 #define GoeClusterCalibrator_H 1
 
-// DEPFETTrackTools includes
-#include "TBDetector.h"
-
 // Include basic C
 #include <vector>
 #include <string>
@@ -78,9 +75,6 @@ namespace depfet {
     //! Input track collection name
     std::string _inputTrackCollectionName;
     
-    //! AlignmentDB file name 
-    std::string _alignmentDBFileName;
-
     //! Name of clusterDB output file   
     std::string _clusterDBFileName;   
        
@@ -138,10 +132,7 @@ namespace depfet {
     float m_positionOffsetU;
     /** Position offset v of cluster */
     float m_positionOffsetV;
-           
-    // Handle to detector data 
-    TBDetector  _detector;    
-     
+            
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number
     int    _nEvt ;   //!< Event number

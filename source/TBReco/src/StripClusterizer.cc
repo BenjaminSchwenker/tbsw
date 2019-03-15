@@ -5,8 +5,9 @@
 
 #include "StripClusterizer.h"
 
-// Include DEPFETTrackTools 
+// Include TBTools 
 #include "DEPFET.h" 
+#include "TBDetector.h"
 
 #include <iomanip>
 
@@ -72,8 +73,7 @@ void StripClusterizer::init() {
    _nRun = 0 ;
    _nEvt = 0 ;
    
-   // Read detector constants from gear file
-   _detector.ReadGearConfiguration();    
+   
    
    _dummyCollectionName = "original_data_"+_clusterCollectionName;
    
@@ -201,7 +201,7 @@ void StripClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
   CellIDDecoder<TrackerDataImpl> StripID( DigitCollection );  
   
   //Open status data
-  LCCollectionVec * StatusCollection = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusCollectionName));
+  //LCCollectionVec * StatusCollection = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusCollectionName));
   
   // The original data collection contains the digits for all clusters
   LCCollectionVec * originalDataCollection = new LCCollectionVec(LCIO::TRACKERDATA);
@@ -219,15 +219,9 @@ void StripClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
     int sensorID = StripID( Digits ) ["sensorID"];
 
     // Read geometry info for sensor 
-    int ipl = _detector.GetPlaneNumber(sensorID);      
-    Det& Sensor = _detector.GetDet(ipl);
+    //int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);      
+    //const Det& Sensor = TBDetector::Get(ipl);
   
-    //int noOfXPixels = Sensor.GetNColumns();
-    //int noOfYPixels = Sensor.GetNRows();
-
-    // Get max channel numbers 
-    //int maxCol = Sensor.GetNColumns() - 1;
-    //int maxRow = Sensor.GetNRows() - 1;
     
     
     FloatVec rawDigits = Digits->getChargeValues();

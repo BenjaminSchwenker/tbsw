@@ -454,7 +454,7 @@ double TBKalmanMSC::KalmanFilter(TBTrack& trk, int idir, int istart, int istop, 
     TBTrackElement& te = TEVec[is];
      
     // Get surface parameters           
-    ReferenceFrame& Surf = te.GetDet().GetNominal();  
+    const ReferenceFrame& Surf = te.GetDet().GetNominal();  
     
     // Get current reference state xref
     TrackState& xref = RStateVec[is];    
@@ -559,7 +559,7 @@ double TBKalmanMSC::KalmanFilter(TBTrack& trk, int idir, int istart, int istop, 
       TBTrackElement& nte = TEVec[inext]; 
       
       // Parameters for next surface          
-      ReferenceFrame& nSurf = nte.GetDet().GetNominal();
+      const ReferenceFrame& nSurf = nte.GetDet().GetNominal();
       
       // Transport matrix
       TrackStateJacobian J;

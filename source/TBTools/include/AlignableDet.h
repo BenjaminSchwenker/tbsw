@@ -35,8 +35,8 @@ class AlignableDet
   
   /** Getter
    */
-  SensorAlignmentParameters GetAlignState(int i);
-  SensorAlignmentCovariance GetAlignCovariance(int i); 
+  SensorAlignmentParameters GetAlignState(int i) const;
+  SensorAlignmentCovariance GetAlignCovariance(int i) const; 
   
   /** Setter
    */

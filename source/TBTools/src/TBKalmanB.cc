@@ -450,10 +450,10 @@ int TBKalmanB::PropagateState(TBTrackElement& te, TBTrackElement& nte, TrackStat
 { 
        
   // Reference frame for next track element          
-  ReferenceFrame& nSurf = nte.GetDet().GetNominal();
+  const ReferenceFrame& nSurf = nte.GetDet().GetNominal();
 
   // Reference frame for current track element          
-  ReferenceFrame& Surf = te.GetDet().GetNominal();
+  const ReferenceFrame& Surf = te.GetDet().GetNominal();
   
   // Direction of propagation (idir > 0 means along beam direction)
   int idir = nte.GetDet().GetPlaneNumber() - te.GetDet().GetPlaneNumber();
@@ -953,6 +953,7 @@ double TBKalmanB::GetChi2Increment(const Vector2d& r, const StateHitProjector& H
  */
 void TBKalmanB::SetNdof(TBTrack& trk)
 {
+
   int ndof = 0;
   int nhits = trk.GetNumHits();
 

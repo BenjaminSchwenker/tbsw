@@ -41,9 +41,13 @@ class KalmanAlignmentAlgorithm2 {
    */
   KalmanAlignmentAlgorithm2();
     
-  /** Align detector with align constants. Returns error flag. 
+  /** Returns new reference frame after applying sensor alignment parameters. 
    */
-  bool AlignDetector(TBDetector& detector, AlignableDet & alignconst);
+  static ReferenceFrame ApplyAlignment(const ReferenceFrame& nominal, const SensorAlignmentParameters& alignPars); 
+   
+  /** Align detector with align constants. 
+   */
+  static void AlignDetector(TBDetector& detector, const  AlignableDet & alignconst);
   
   /** Performs alignment fit. Returns alignment results. 
    */

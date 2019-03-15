@@ -6,8 +6,8 @@
 #ifndef GoeClusterCalibratorForMC_H
 #define GoeClusterCalibratorForMC_H 1
 
-// DEPFETTrackTools includes
-#include "TBDetector.h"
+
+
 
 // Include basic C
 #include <vector>
@@ -108,8 +108,6 @@ namespace depfet {
     
     std::map< std::string, TH1F *> _histoMap;
     
-    // Handle to detector data 
-    TBDetector  _detector;    
      
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number

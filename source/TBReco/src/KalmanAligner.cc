@@ -7,6 +7,7 @@
 #include "KalmanAligner.h"
 
 // TBTools includes
+#include "TBDetector.h"
 #include "TBTrack.h"
 #include "TrackInputProvider.h"
 #include "Utilities.h"
@@ -58,9 +59,7 @@ KalmanAligner::KalmanAligner() : Processor("KalmanAligner")
 // 
 // Processor parameters
   
-  registerProcessorParameter ("AlignmentDBFileName",
-                             "This is the name of the file with the alignment constants (add .root)",
-                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) ); 
+  
 
   registerProcessorParameter ("LogLevel", "LogLever during alignment",
                               _logLevel,  static_cast < int > (2));
@@ -114,13 +113,7 @@ KalmanAligner::KalmanAligner() : Processor("KalmanAligner")
   registerProcessorParameter("ErrorsGamma", "Initial errors on alignment gamma [rad] for sensors ordered along beam line.",
                               _errorsGamma, initErrorsGamma );
 
-  registerProcessorParameter ("UpdateAlignment",
-                              "Update lcio alignmentDB using alignment results (true/false)?",
-                              _updateAlignment, static_cast <bool> (true) ); 
-
-  registerProcessorParameter ("NewAlignment",
-                              "Start alignment from scratch (true/false)?",
-                              _newAlignment, static_cast <bool> (false) ); 
+  
                                 
 }
 
@@ -139,41 +132,35 @@ void KalmanAligner::init() {
   // CPU time start
   _timeCPU = clock()/1000;
   
-  // Read detector constants from gear file
-  _detector.ReadGearConfiguration();    
   
-  // Read alignment data base file 
-  if(!_newAlignment) _detector.ReadAlignmentDB( _alignmentDBFileName );
-  // This is needed, because if the AlignmentDB is not read, the detector construct doesn't know the alignmentDB name
-  else  _detector.SetAlignmentDBName( _alignmentDBFileName );     
   
-  if ( (int)_errorsShiftX.size() != _detector.GetNSensors() ) {
-    _errorsShiftX.resize(_detector.GetNSensors(), 0.0);
+  if ( (int)_errorsShiftX.size() != TBDetector::GetInstance().GetNSensors() ) {
+    _errorsShiftX.resize(TBDetector::GetInstance().GetNSensors(), 0.0);
     streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsShiftX has wrong size. Resize using default error 0.0." << endl;  
   } 
     
-  if ( (int)_errorsShiftY.size() != _detector.GetNSensors() ) {
-    _errorsShiftY.resize(_detector.GetNSensors(), 0.0);
+  if ( (int)_errorsShiftY.size() != TBDetector::GetInstance().GetNSensors() ) {
+    _errorsShiftY.resize(TBDetector::GetInstance().GetNSensors(), 0.0);
     streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsShiftY has wrong size. Resize using default error 0.0." << endl;  
   } 
   
-  if ( (int)_errorsShiftZ.size() != _detector.GetNSensors() ) {
-    _errorsShiftZ.resize(_detector.GetNSensors(), 0.0);
+  if ( (int)_errorsShiftZ.size() != TBDetector::GetInstance().GetNSensors() ) {
+    _errorsShiftZ.resize(TBDetector::GetInstance().GetNSensors(), 0.0);
     streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsShiftZ has wrong size. Resize using default error 0.0." << endl;  
   } 
   
-  if ( (int)_errorsAlpha.size() != _detector.GetNSensors() ) {
-    _errorsAlpha.resize(_detector.GetNSensors(), 0.0);
+  if ( (int)_errorsAlpha.size() != TBDetector::GetInstance().GetNSensors() ) {
+    _errorsAlpha.resize(TBDetector::GetInstance().GetNSensors(), 0.0);
     streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsAlpha has wrong size. Resize using default error 0.0." << endl;  
   } 
   
-  if ( (int)_errorsBeta.size() != _detector.GetNSensors() ) {
-    _errorsBeta.resize(_detector.GetNSensors(), 0.0);
+  if ( (int)_errorsBeta.size() != TBDetector::GetInstance().GetNSensors() ) {
+    _errorsBeta.resize(TBDetector::GetInstance().GetNSensors(), 0.0);
     streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsBeta has wrong size. Resize using default error 0.0." << endl;  
   } 
   
-  if ( (int)_errorsGamma.size() != _detector.GetNSensors() ) {
-    _errorsGamma.resize(_detector.GetNSensors(), 0.0);
+  if ( (int)_errorsGamma.size() != TBDetector::GetInstance().GetNSensors() ) {
+    _errorsGamma.resize(TBDetector::GetInstance().GetNSensors(), 0.0);
     streamlog_out ( MESSAGE3 ) <<  "Bad steering file: Parameter errorsGamma has wrong size. Resize using default error 0.0." << endl;  
   } 
   
@@ -254,7 +241,7 @@ void KalmanAligner::processEvent(LCEvent * evt)
     Track * lciotrk = dynamic_cast<Track*> (collection->getElementAt(itrk));
     
     // Convert LCIO -> TB track  
-    TBTrack rectrack = TrackLCIOReader.MakeTBTrack( lciotrk, _detector );  
+    TBTrack rectrack = TrackLCIOReader.MakeTBTrack( lciotrk, TBDetector::GetInstance() );  
     
     // Added one track
     ++_nKAATracks;
@@ -287,7 +274,7 @@ void KalmanAligner::end()
   ///////////////////////////////////////////////////////////
   // Construct the initial alignment state 
   
-  int nSensors = _detector.GetNSensors();
+  int nSensors = TBDetector::GetInstance().GetNSensors();
   AlignableDet AlignState(nSensors);
   
   for (int iSensor=0; iSensor < nSensors; iSensor++){     
@@ -310,20 +297,13 @@ void KalmanAligner::end()
   ////////////////////////////////////////////////////////////
   // Try to fit alignment corrections from track residuals  
   
-  TBDetector tmp_detector = _detector;
-  
   streamlog_out ( MESSAGE3 ) << " Total of " << _nKAATracks << " tracks found" << endl;
   streamlog_out ( MESSAGE3 ) << endl;
   streamlog_out ( MESSAGE3 ) << "Starting alignment ..." << endl;
-
-  KalmanAlignmentAlgorithm2 Aligner;
-  AlignableDet reco_const = Aligner.Fit(tmp_detector, alignment_data, AlignState, _maxTracks, _annealingTracks, _annealingFactor,  _pValueCut, _deviationCut, _useBC, _logLevel );
   
-  bool error_fim = Aligner.AlignDetector(tmp_detector, reco_const);
-  if ( error_fim ) {
-    streamlog_out ( MESSAGE3 ) << "Alignment failed!" << endl;
-  } 
-
+  KalmanAlignmentAlgorithm2 Aligner;
+  AlignableDet reco_const = Aligner.Fit(TBDetector::GetInstance(), alignment_data, AlignState, _maxTracks, _annealingTracks, _annealingFactor,  _pValueCut, _deviationCut, _useBC, _logLevel );
+  
   // Close alignment_data file
   alignment_data->Close();
   delete alignment_data;
@@ -333,20 +313,20 @@ void KalmanAligner::end()
   
   streamlog_out ( MESSAGE3 )  << endl << "Alignment constants:" << endl << endl; 
     
-  for ( int ipl = 0; ipl < _detector.GetNSensors(); ipl++ ) {
+  for ( int ipl = 0; ipl < TBDetector::GetInstance().GetNSensors(); ipl++ ) {
     
     // Print final geometry constants 
     // ------------------------------  
     
-    // This is the position vector of the sensor
-    auto pos_f = tmp_detector.GetDet(ipl).GetNominal().GetPosition(); 
+    // This is the position vector of the sensor after alignment
+    auto pos_f = TBDetector::GetInstance().GetDet(ipl).GetNominal().GetPosition(); 
     
-    // This is the rotation matrix of the sensor; it 
-    // contains a discrete and a continuous factor. 
-    auto Rot_f = tmp_detector.GetDet(ipl).GetNominal().GetRotation();
+    // This is the rotation matrix of the sensor after alignment
+    // it contains a discrete and a continuous factor. 
+    auto Rot_f = TBDetector::GetInstance().GetDet(ipl).GetNominal().GetRotation();
 
     // This is the discrete factor of sensor rotation. 
-    auto DRot = tmp_detector.GetDet(ipl).GetDiscrete().GetRotation();
+    auto DRot = TBDetector::GetInstance().GetDet(ipl).GetDiscrete().GetRotation();
     
     // This is finally the continous factor of the rotation
     auto CRot_f = Rot_f*DRot.transpose(); 
@@ -363,27 +343,22 @@ void KalmanAligner::end()
     streamlog_out ( MESSAGE3 ) << endl << "  final alpha [rad] " << alpha_f << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(3,3) ) << endl; 
     streamlog_out ( MESSAGE3 ) << endl << "  final beta  [rad] " << beta_f << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(4,4) ) << endl; 
     streamlog_out ( MESSAGE3 ) << endl << "  final gamma [rad] " << gamma_f << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(5,5) ) << endl; 
-
+    
     // Print incremental alignment corrections 
     // ---------------------------------------  
-    
-    // Initial alignment 
-    auto Rot_i = _detector.GetDet(ipl).GetNominal().GetRotation(); 
-    auto pos_i = _detector.GetDet(ipl).GetNominal().GetPosition(); 
-
-    // Diff rotation  
-    auto diffRot = Rot_f*Rot_i.transpose();
-    double dalpha, dbeta, dgamma; 
-    GetAnglesKarimaki(diffRot, dalpha, dbeta, dgamma);
-       
-    // Diff shift   
-    auto dr = pos_f - pos_i;
-     
+    SensorAlignmentParameters alignPars = reco_const.GetAlignState(ipl);
+    double dx = alignPars(0);  
+    double dy = alignPars(1);      
+    double dz = alignPars(2);     
+    double dalpha = alignPars(3); 
+    double dbeta  = alignPars(4); 
+    double dgamma = alignPars(5);
+ 
     // Print 
     streamlog_out ( MESSAGE3 ) << endl << "Sensor plane " << ipl << endl << endl;  
-    streamlog_out ( MESSAGE3 ) << endl << "  correction dx [mm] " << dr[0] << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(0,0) ) << endl; 
-    streamlog_out ( MESSAGE3 ) << endl << "  correction dy [mm] " << dr[1] << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(1,1) ) << endl; 
-    streamlog_out ( MESSAGE3 ) << endl << "  correction dz [mm] " << dr[2] << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(2,2) ) << endl; 
+    streamlog_out ( MESSAGE3 ) << endl << "  correction dx [mm] " << dx << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(0,0) ) << endl; 
+    streamlog_out ( MESSAGE3 ) << endl << "  correction dy [mm] " << dy << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(1,1) ) << endl; 
+    streamlog_out ( MESSAGE3 ) << endl << "  correction dz [mm] " << dz << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(2,2) ) << endl; 
     streamlog_out ( MESSAGE3 ) << endl << "  correction dalpha [rad] " << dalpha << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(3,3) ) << endl; 
     streamlog_out ( MESSAGE3 ) << endl << "  correction dbeta [rad] " << dbeta << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(4,4) ) << endl; 
     streamlog_out ( MESSAGE3 ) << endl << "  correction dgamma [rad] " << dgamma << " +/- " << std::sqrt( reco_const.GetAlignCovariance(ipl)(5,5) ) << endl; 
@@ -393,14 +368,7 @@ void KalmanAligner::end()
   //////////////////////////////////////////////////////////////////////  
   // Create aligned detector 
       
-  _detector = tmp_detector; 
-   
-  if ( _updateAlignment ) { 
-    _detector.WriteAlignmentDB( ); 
-  } else {
-    streamlog_out ( MESSAGE3 ) << endl;
-    streamlog_out ( MESSAGE3 ) << "NO UPDATE OF ALIGNMENT DB" << endl; 
-  }
+  
          
   streamlog_out ( MESSAGE3 ) << endl;
   streamlog_out ( MESSAGE3 ) << "Successfully finished" << endl;

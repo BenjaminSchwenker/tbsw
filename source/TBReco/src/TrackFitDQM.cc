@@ -7,6 +7,7 @@
 #include "TrackFitDQM.h"
 
 // TBTools includes
+#include "TBDetector.h"
 #include "TBTrack.h"
 #include "TrackInputProvider.h"
 #include "GenericTrackFitter.h"
@@ -55,11 +56,6 @@ TrackFitDQM::TrackFitDQM() : Processor("TrackFitDQM")
 // 
 // Processor parameters
   
-  registerProcessorParameter ("AlignmentDBFileName",
-                             "This is the name of the LCIO file with the alignment constants (add .slcio)",
-                             _alignmentDBFileName, 
-                             static_cast< string > ( "alignmentDB.slcio" ) ); 
-  
   registerProcessorParameter( "RootFileName",
                               "Output root file name",
                               _rootFileName, 
@@ -81,12 +77,6 @@ void TrackFitDQM::init() {
   
   // CPU time start
   _timeCPU = clock()/1000;
-  
-  // Read detector constants from gear file
-  _detector.ReadGearConfiguration();    
-      
-  // Read alignment data base file 
-  _detector.ReadAlignmentDB( _alignmentDBFileName ); 
   
   // Book all needed histograms 
   bookHistos();
@@ -127,7 +117,7 @@ void TrackFitDQM::processEvent(LCEvent * evt)
 
   TrackInputProvider TrackIO; 
   
-  GenericTrackFitter TrackFitter(_detector);
+  GenericTrackFitter TrackFitter(TBDetector::GetInstance());
   TrackFitter.SetNumIterations(1); 
    
   LCCollection* inputCollection;
@@ -147,7 +137,7 @@ void TrackFitDQM::processEvent(LCEvent * evt)
     Track * inputtrack = dynamic_cast<Track*> (inputCollection->getElementAt(itrk));
     
     // Convert LCIO -> TB track  
-    TBTrack track = TrackIO.MakeTBTrack( inputtrack, _detector );  
+    TBTrack track = TrackIO.MakeTBTrack( inputtrack, TBDetector::GetInstance() );  
     
     // ReFit track 
     bool trkerr = TrackFitter.Fit(track);
@@ -172,7 +162,7 @@ void TrackFitDQM::processEvent(LCEvent * evt)
     // Sensor level histograms 
   
     // Get number of sensors
-    int nSens = _detector.GetNSensors(); 
+    int nSens = TBDetector::GetInstance().GetNSensors(); 
 
 
     for (int ipl= 0; ipl< nSens; ++ipl) {  
@@ -277,7 +267,7 @@ void TrackFitDQM::end()
 {
 
   // Loop over all sensors
-  for (int ipl=0 ; ipl < _detector.GetNSensors(); ipl++) {
+  for (int ipl=0 ; ipl < TBDetector::GetInstance().GetNSensors(); ipl++) {
     
     // Fill summary histos on telescope resolution 
     auto& _histoMap=_perLayerHistoMap[ipl];
@@ -335,43 +325,22 @@ void TrackFitDQM::end()
     _overviewHistoMap["hfit_res_rms_v"]->SetBinContent(ipl+1, res_rms_v );
     _overviewHistoMap["hfit_res_rms_v"]->SetBinError(ipl+1, res_rms_error_v );
 
-    // Handle to nominal detector data 
-    TBDetector  _detector_nominal;  
-
-    // Read detector constants from gear file
-    _detector_nominal.ReadGearConfiguration();  
-
+    
+    
     _rootFile->cd("");
 
     // Fill summary histos on telescope alignment
     // ------------------------------  
-		
-	// This is the position vector of the sensor in the nominal telescope geometry
-	auto pos_f_nominal = _detector_nominal.GetDet(ipl).GetNominal().GetPosition(); 
-		
-	// This is the rotation matrix of the sensor in the nominal telescope geoemtry; it 
-	// contains a discrete and a continuous factor. 
-	auto Rot_f_nominal = _detector_nominal.GetDet(ipl).GetNominal().GetRotation();
-
-	// This is the discrete factor of sensor rotation in the nominal telescope geometry. 
-	auto DRot_nominal = _detector_nominal.GetDet(ipl).GetDiscrete().GetRotation();
-		
-	// This is finally the continous factor of the rotation in the nominal telescope geometry
-	auto CRot_f_nominal = Rot_f_nominal*DRot_nominal.transpose(); 
-		
-	// Euler angles are defined wrt. the continous rotation in the nominal telescope geometry
-	double alpha_f_nominal, beta_f_nominal, gamma_f_nominal; 
-	GetAnglesKarimaki(CRot_f_nominal, alpha_f_nominal, beta_f_nominal, gamma_f_nominal); 
-
+     
 	// This is the position vector of the sensor in the aligned telescope geometry
-	auto pos_f = _detector.GetDet(ipl).GetNominal().GetPosition(); 
+	auto pos_f = TBDetector::Get(ipl).GetNominal().GetPosition(); 
 		
 	// This is the rotation matrix of the sensor in the aligned telescope geometry; it 
 	// contains a discrete and a continuous factor. 
-	auto Rot_f = _detector.GetDet(ipl).GetNominal().GetRotation();
+	auto Rot_f = TBDetector::Get(ipl).GetNominal().GetRotation();
 
 	// This is the discrete factor of sensor rotation in the aligned telescope geometry. 
-	auto DRot = _detector.GetDet(ipl).GetDiscrete().GetRotation();
+	auto DRot = TBDetector::Get(ipl).GetDiscrete().GetRotation();
 		
 	// This is finally the continous factor of the rotation in the aligned telescope geometry
 	auto CRot_f = Rot_f*DRot.transpose(); 
@@ -382,12 +351,12 @@ void TrackFitDQM::end()
 	//
 	// Fill alignment histograms
 
-    _overviewHistoMap["hxshift_diff"]->SetBinContent(ipl+1,pos_f_nominal[0]-pos_f[0]);
-    _overviewHistoMap["hyshift_diff"]->SetBinContent(ipl+1,pos_f_nominal[1]-pos_f[1]);
-    _overviewHistoMap["hzshift_diff"]->SetBinContent(ipl+1,pos_f_nominal[2]-pos_f[2]);
-    _overviewHistoMap["hxrot_diff"]->SetBinContent(ipl+1,alpha_f_nominal-alpha_f);
-    _overviewHistoMap["hyrot_diff"]->SetBinContent(ipl+1,beta_f_nominal-beta_f);
-    _overviewHistoMap["hzrot_diff"]->SetBinContent(ipl+1,gamma_f_nominal-gamma_f);
+    _overviewHistoMap["hxshift_diff"]->SetBinContent(ipl+1,pos_f[0]);
+    _overviewHistoMap["hyshift_diff"]->SetBinContent(ipl+1,pos_f[1]);
+    _overviewHistoMap["hzshift_diff"]->SetBinContent(ipl+1,pos_f[2]);
+    _overviewHistoMap["hxrot_diff"]->SetBinContent(ipl+1,alpha_f);
+    _overviewHistoMap["hyrot_diff"]->SetBinContent(ipl+1,beta_f);
+    _overviewHistoMap["hzrot_diff"]->SetBinContent(ipl+1,gamma_f);
       
     
   }
@@ -476,7 +445,7 @@ void TrackFitDQM::bookHistos()
   _overviewHistoMap["hchi2prob"]->SetMinimum(0.);
   
   // Get number of sensors
-  int nSens = _detector.GetNSensors();
+  int nSens = TBDetector::GetInstance().GetNSensors();
   
   _overviewHistoMap["hfit_sigma_u"] = new TH1D("hfit_sigma_u","",nSens,0,nSens);
   _overviewHistoMap["hfit_sigma_u"]->SetStats( false );
@@ -570,7 +539,7 @@ void TrackFitDQM::bookHistos()
     std::string histoName;
       
     // Get handle to sensor data
-    Det & Sensor = _detector.GetDet(ipl); 
+    Det & Sensor = TBDetector::GetInstance().GetDet(ipl); 
     
     // Temporary histograms used to compute the mean variance
     // of track parameters. Histograms will not be added to the 
@@ -604,13 +573,13 @@ void TrackFitDQM::bookHistos()
     // Plot residuals U/V 
     
     histoName = "hresU_sensor"+to_string( ipl );
-    max = 5*safetyFactor*Sensor.GetSensitiveSizeU()/(Sensor.GetNCellsU()+1); 
+    max = 5*safetyFactor*( Sensor.GetSensitiveMaxU() - Sensor.GetSensitiveMinU()) /(Sensor.GetMaxUCell()+2); 
     _histoMap[ "hresU_sensor" ] = new TH1D(histoName.c_str(), "", 500, -max, +max);
     _histoMap[ "hresU_sensor" ]->SetXTitle("u residual [mm]");
     _histoMap[ "hresU_sensor" ]->SetYTitle("tracks");
     
     histoName = "hresV_sensor"+to_string( ipl );
-    max = 5*safetyFactor*Sensor.GetSensitiveSizeV()/(Sensor.GetNCellsV()+1); 
+    max = 5*safetyFactor*( Sensor.GetSensitiveMaxV() - Sensor.GetSensitiveMinV())/(Sensor.GetMaxVCell()+2); 
     _histoMap[ "hresV_sensor" ] = new TH1D(histoName.c_str(), "", 500, -max, +max);
     _histoMap[ "hresV_sensor" ]->SetXTitle("v residual [mm]");
     _histoMap[ "hresV_sensor" ]->SetYTitle("tracks");
@@ -630,30 +599,30 @@ void TrackFitDQM::bookHistos()
     // Plot residual profiles 
     
     histoName = "hduvsu_sensor"+to_string( ipl );
-    max = safetyFactor*Sensor.GetSensitiveSizeU()/2; 
+    double maxU = safetyFactor*Sensor.GetSensitiveMaxU(); 
+    double minU = safetyFactor*Sensor.GetSensitiveMinU(); 
     nbins = 100; 
-    _profileMap[ "hduvsu_sensor" ] = new TProfile(histoName.c_str(), "", nbins, -max, +max);
+    _profileMap[ "hduvsu_sensor" ] = new TProfile(histoName.c_str(), "", nbins, minU, maxU);
     _profileMap[ "hduvsu_sensor" ]->SetXTitle("u [mm]");
     _profileMap[ "hduvsu_sensor" ]->SetYTitle("mean residual u [mm]");
       
     histoName = "hdvvsv_sensor"+to_string( ipl );
-    max = safetyFactor*Sensor.GetSensitiveSizeV()/2;  
+    double maxV = safetyFactor*Sensor.GetSensitiveMaxV(); 
+    double minV = safetyFactor*Sensor.GetSensitiveMinV();  
     nbins = 100;  
-    _profileMap[ "hdvvsv_sensor" ] = new TProfile(histoName.c_str(), "", nbins, -max, +max);
+    _profileMap[ "hdvvsv_sensor" ] = new TProfile(histoName.c_str(), "", nbins, minV, +maxV);
     _profileMap[ "hdvvsv_sensor" ]->SetXTitle("v [mm]");
     _profileMap[ "hdvvsv_sensor" ]->SetYTitle("mean residual v [mm]");
     
     histoName = "hduvsv_sensor"+to_string( ipl );
-    max = safetyFactor*Sensor.GetSensitiveSizeV()/2; 
     nbins = 100;  
-    _profileMap[ "hduvsv_sensor" ] = new TProfile(histoName.c_str(), "", nbins, -max, +max);
+    _profileMap[ "hduvsv_sensor" ] = new TProfile(histoName.c_str(), "", nbins, minV, +maxV);
     _profileMap[ "hduvsv_sensor" ]->SetXTitle("v [mm]");
     _profileMap[ "hduvsv_sensor" ]->SetYTitle("mean residual u [mm]");
        
     histoName = "hdvvsu_sensor"+to_string( ipl );
-    max = safetyFactor*Sensor.GetSensitiveSizeU()/2;  
     nbins = 100; 
-    _profileMap[ "hdvvsu_sensor" ] = new TProfile(histoName.c_str(), "", nbins, -max, +max);
+    _profileMap[ "hdvvsu_sensor" ] = new TProfile(histoName.c_str(), "", nbins, minU, +maxU);
     _profileMap[ "hdvvsu_sensor" ]->SetXTitle("u [mm]");
     _profileMap[ "hdvvsu_sensor" ]->SetYTitle("mean residual v [mm]");
           
@@ -688,54 +657,52 @@ void TrackFitDQM::bookHistos()
     _histoMap[ "htrk_tv_sensor" ]->SetXTitle("fit dv/dw [rad]");
     _histoMap[ "htrk_tv_sensor" ]->SetYTitle("tracks");
       
-    double maxU = safetyFactor*Sensor.GetSensitiveSizeU()/2;  
-    double maxV = safetyFactor*Sensor.GetSensitiveSizeV()/2;  
-    nbins = 100;           
     
+    nbins = 100;           
     histoName = "htrk_u_sensor"+to_string( ipl ); 
-    _histoMap[ "htrk_u_sensor" ] = new TH1D(histoName.c_str(), "", nbins, -maxU, +maxU);
+    _histoMap[ "htrk_u_sensor" ] = new TH1D(histoName.c_str(), "", nbins, minU, +maxU);
     _histoMap[ "htrk_u_sensor" ]->SetXTitle("fit u [mm]");
     _histoMap[ "htrk_u_sensor" ]->SetYTitle("tracks");
 
     histoName = "htrk_v_sensor"+to_string( ipl ); 
-    _histoMap[ "htrk_v_sensor" ] = new TH1D(histoName.c_str(), "", nbins, -maxV, +maxV);
+    _histoMap[ "htrk_v_sensor" ] = new TH1D(histoName.c_str(), "", nbins, minV, maxV);
     _histoMap[ "htrk_v_sensor" ]->SetXTitle("fit v [mm]");
     _histoMap[ "htrk_v_sensor" ]->SetYTitle("tracks");
 
     histoName = "hhitmap_sensor"+to_string( ipl );
-    _histoMap2D["hhitmap_sensor"] = new TH2D(histoName.c_str(), "" ,nbins, -maxU, +maxU, nbins, -maxV, +maxV);
+    _histoMap2D["hhitmap_sensor"] = new TH2D(histoName.c_str(), "" ,nbins, minU, +maxU, nbins, minV, +maxV);
     _histoMap2D["hhitmap_sensor"]->SetXTitle("fit u [mm]");
     _histoMap2D["hhitmap_sensor"]->SetYTitle("fit v [mm]");
     _histoMap2D["hhitmap_sensor"]->SetZTitle("tracks");
     _histoMap2D["hhitmap_sensor"]->SetStats( false );
     
     histoName = "htrk_dudw_vs_u_sensor"+to_string( ipl );
-    _profileMap[ "htrk_dudw_vs_u_sensor" ] = new TProfile(histoName.c_str(), "", nbins, -maxU, +maxU);
+    _profileMap[ "htrk_dudw_vs_u_sensor" ] = new TProfile(histoName.c_str(), "", nbins, minU, +maxU);
     _profileMap[ "htrk_dudw_vs_u_sensor" ]->SetYTitle("fit du/dw [rad]");
     _profileMap[ "htrk_dudw_vs_u_sensor" ]->SetXTitle("fit u [mm]");
      
     histoName = "htrk_dvdw_vs_u_sensor"+to_string( ipl );
-    _profileMap[ "htrk_dvdw_vs_u_sensor" ] = new TProfile(histoName.c_str(), "", nbins, -maxU, +maxU);
+    _profileMap[ "htrk_dvdw_vs_u_sensor" ] = new TProfile(histoName.c_str(), "", nbins, minU, +maxU);
     _profileMap[ "htrk_dvdw_vs_u_sensor" ]->SetYTitle("fit dv/dw [rad]");
     _profileMap[ "htrk_dvdw_vs_u_sensor" ]->SetXTitle("fit u [mm]");
     
     histoName = "htrk_dudw_vs_v_sensor"+to_string( ipl );
-    _profileMap[ "htrk_dudw_vs_v_sensor" ] = new TProfile(histoName.c_str(), "", nbins, -maxV, +maxV);
+    _profileMap[ "htrk_dudw_vs_v_sensor" ] = new TProfile(histoName.c_str(), "", nbins, minV, +maxV);
     _profileMap[ "htrk_dudw_vs_v_sensor" ]->SetYTitle("fit du/dw [rad]");
     _profileMap[ "htrk_dudw_vs_v_sensor" ]->SetXTitle("fit v [mm]");
     
     histoName = "htrk_dvdw_vs_v_sensor"+to_string( ipl );
-    _profileMap[ "htrk_dvdw_vs_v_sensor" ] = new TProfile(histoName.c_str(), "", nbins, -maxV, +maxV);
+    _profileMap[ "htrk_dvdw_vs_v_sensor" ] = new TProfile(histoName.c_str(), "", nbins, minV, +maxV);
     _profileMap[ "htrk_dvdw_vs_v_sensor" ]->SetYTitle("dv/dw [rad]");
     _profileMap[ "htrk_dvdw_vs_v_sensor" ]->SetXTitle("v [mm]");
     
     histoName = "htrk_mom_vs_u_sensor"+to_string( ipl );
-    _profileMap[ "htrk_mom_vs_u_sensor" ] = new TProfile(histoName.c_str(), "",  nbins, -maxU, +maxU);
+    _profileMap[ "htrk_mom_vs_u_sensor" ] = new TProfile(histoName.c_str(), "",  nbins, minU, +maxU);
     _profileMap[ "htrk_mom_vs_u_sensor" ]->SetYTitle("momentum [GeV]");
     _profileMap[ "htrk_mom_vs_u_sensor" ]->SetXTitle("u [mm]");
     
     histoName = "htrk_mom_vs_v_sensor"+to_string( ipl );
-    _profileMap[ "htrk_mom_vs_v_sensor" ] = new TProfile(histoName.c_str(), "", nbins, -maxV, +maxV);
+    _profileMap[ "htrk_mom_vs_v_sensor" ] = new TProfile(histoName.c_str(), "", nbins, minV, +maxV);
     _profileMap[ "htrk_mom_vs_v_sensor" ]->SetYTitle("momentum [GeV]");
     _profileMap[ "htrk_mom_vs_v_sensor" ]->SetXTitle("v [mm]");
     

@@ -46,10 +46,8 @@ class TBHit {
   lcio::TrackerHit * RawHitPtr;
   // Unique ID (default -1)
   int UniqueID;
-
-  // DAQ ID
-  short DAQID;
-
+  // Sensor ID
+  short SensorID;
   // Cluster Quality 
   short Quality;
 
@@ -59,24 +57,24 @@ class TBHit {
 
   // Constructors 
   TBHit();
-  TBHit(int newdaqid, double u, double v, double cov_u, double cov_v, double cov_uv, int quality);
-  TBHit(int newdaqid, const Vector2d &coord, const Matrix2d &cov);
+  TBHit(int newSensorID, double u, double v, double cov_u, double cov_v, double cov_uv, int quality);
+  TBHit(int newSensorID, const Vector2d &coord, const Matrix2d &cov);
   TBHit(lcio::TrackerHit* lciohit);
 
   // Build LCIO TrackerHit
-  lcio::TrackerHitImpl * MakeLCIOHit();  
-  static lcio::TrackerHitImpl * MakeLCIOHit(int newdaqid, double u, double v, double cov_u, double cov_v, double cov_uv, int quality);
+  lcio::TrackerHitImpl * MakeLCIOHit() const;  
+  static lcio::TrackerHitImpl * MakeLCIOHit(int newSensorID, double u, double v, double cov_u, double cov_v, double cov_uv, int quality);
   
-  // Get/Set plane number 
-  void SetDAQ(int newdaqid) { DAQID = short(newdaqid); }
-  int GetDAQID()  { return DAQID; }
+  // Get/Set sensorID 
+  void SetSensorID(int newSensorID) { SensorID = short(newSensorID); }
+  int GetSensorID() const { return SensorID; }
   
   // Dimension of a pixel hit
-  int GetDim() { return 2;}
+  int GetDim() const { return 2;}
   
   // Get/Set quality of raw cluster
   void SetQuality(int flag) { Quality=short(flag); }
-  int GetQuality() { return Quality; }
+  int GetQuality() const { return Quality; }
   
   // Get/Set measured hit coord
   void SetCoord(const Vector2d& aCoord) { Coord = aCoord; }
@@ -93,16 +91,16 @@ class TBHit {
   lcio::TrackerHit* GetRawHit()  { return RawHitPtr; }
 
   
-  PixelCluster GetCluster();
+  PixelCluster GetCluster() const;
 
-  StripCluster GetStripCluster(); 
+  StripCluster GetStripCluster() const; 
   
   // Get/Set unique ID for hit  
   void SetUniqueID(int ID ) { UniqueID = ID; }
-  int GetUniqueID() { return UniqueID; }
+  int GetUniqueID() const { return UniqueID; }
    
   // Get 3D point in sensor coordinates 
-  Vector3d GetLocalSpacePoint();
+  Vector3d GetLocalSpacePoint() const;
   
 };
 

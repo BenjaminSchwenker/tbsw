@@ -7,8 +7,8 @@
 #ifndef SiPixDigitizer_H
 #define SiPixDigitizer_H 1
 
-// Include TBTools header files
-#include "TBDetector.h"
+
+#include <Eigen/Core>
 
 // Include basic C
 #include <vector>
@@ -27,6 +27,9 @@
 #include <TRandom.h>
 #include <TRandom3.h>
 #include <TMath.h>
+
+using Eigen::Vector3d;
+using Eigen::Matrix3d;
 
 namespace depfet {
 
@@ -173,8 +176,7 @@ namespace depfet {
     // Magnetic field - obtained from Gear xml file and transformed into local system
     Vector3d m_magField;    //!< Magnetic field in T in detector reference system
     
-    // Handle to detector data sheets 
-    TBDetector m_detector;  
+    
     
     // Current sensor number
     int m_ipl ;   

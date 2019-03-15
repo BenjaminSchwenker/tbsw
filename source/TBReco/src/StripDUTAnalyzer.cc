@@ -9,6 +9,7 @@
 #include "StripDUTAnalyzer.h"
 
 // TBTools includes
+#include "TBDetector.h"
 #include "TBTrack.h"
 #include "TBHit.h"
 #include "StripCluster.h"
@@ -75,9 +76,6 @@ StripDUTAnalyzer::StripDUTAnalyzer() : Processor("StripDUTAnalyzer")
   
   // Processor parameters:
   
-  registerProcessorParameter ("AlignmentDBFileName",
-                             "This is the name of the LCIO file with the alignment constants (add .slcio)",
-                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.slcio" ) );     
   
   registerProcessorParameter ("DUTPlane",
                               "Plane number of DUT along the beam line",
@@ -117,17 +115,13 @@ void StripDUTAnalyzer::init() {
    // Print set parameters
    printProcessorParams();
    
-   // Read detector constants from gear file
-   _detector.ReadGearConfiguration();    
-            
-   // Read alignment data base file 
-   _detector.ReadAlignmentDB( _alignmentDBFileName );    
+   
    
    // Load DUT module    
-   Det & dut = _detector.GetDet(_idut); 
+   const Det & dut = TBDetector::Get(_idut); 
           
    // Print out geometry information  
-   streamlog_out ( MESSAGE3 )  << "D.U.T. plane  ID = " << dut.GetDAQID()
+   streamlog_out ( MESSAGE3 )  << "D.U.T. plane  ID = " << dut.GetSensorID() 
                                << "  at position = " << _idut 
                                << endl << endl;
     
@@ -166,14 +160,14 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
   _nEvt ++ ;
   
   // Configure Kalman track fitter
-  GenericTrackFitter TrackFitter(_detector);
+  GenericTrackFitter TrackFitter(TBDetector::GetInstance());
   TrackFitter.SetNumIterations(1); 
      
   // Load DUT module    
-  Det & dut = _detector.GetDet(_idut);   
+  const Det & dut = TBDetector::Get(_idut);   
   
-  ShortVec statusVec; 
-  bool isDUTStatusOk = getDUTStatus( evt, statusVec );
+  //ShortVec statusVec; 
+  //bool isDUTStatusOk = getDUTStatus( evt, statusVec );
        
   //
   // Get telescope track collection
@@ -236,7 +230,7 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
     Track * lciotrk = dynamic_cast<Track*> (trackcol->getElementAt(itrk));
       
     // Convert LCIO -> TB track  
-    TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, _detector );  
+    TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, TBDetector::GetInstance() );  
       
     // Refit track in nominal alignment
     bool trkerr = TrackFitter.Fit(trk);
@@ -260,8 +254,8 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
     TBHit RecoHit ( lciohit  );        
          
     // We have to find plane number of the hit 
-    int daqid = RecoHit.GetDAQID();      
-    int ipl = _detector.GetPlaneNumber(daqid);  
+    int sensorid = RecoHit.GetSensorID();      
+    int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorid);  
       
     // Store all hits on the DUT module  
     if( dut.GetPlaneNumber() == ipl )
@@ -374,7 +368,7 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
     
     _rootRunNumber = evt->getRunNumber();  
     _rootEventNumber = evt->getEventNumber();  
-    _rootDetectorID = dut.GetDAQID();       
+    _rootDetectorID = dut.GetSensorID();       
     _rootNTelTracks = nTrack; 
     _rootNDUTHits = (int)HitStore.size(); 
     
@@ -476,7 +470,7 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
     
     _rootRunNumber = evt->getRunNumber();  
     _rootEventNumber = evt->getEventNumber();  
-    _rootDetectorID = dut.GetDAQID();   
+    _rootDetectorID = dut.GetSensorID();     
     _rootNTelTracks = nTrack; 
     _rootNDUTHits = (int)HitStore.size(); 
    
@@ -575,10 +569,10 @@ void StripDUTAnalyzer::end()
      
     
    // Load DUT module    
-   Det & dut = _detector.GetDet(_idut); 
+   const Det & dut = TBDetector::Get(_idut); 
 
    // DUT fake rate 
-   double dutNPixels = dut.GetNColumns()*dut.GetNRows(); 
+   double dutNPixels =  (dut.GetMaxUCell()+1)*(dut.GetMaxVCell()+1); 
    double dutFakeRate  = static_cast<double> (_noOfHits - _noOfMatchedTracks) / static_cast<double> ( _nEvt ) / dutNPixels;
    
    // Telescope track effi 
@@ -634,8 +628,7 @@ void StripDUTAnalyzer::end()
 bool StripDUTAnalyzer::getDUTStatus(LCEvent * evt, ShortVec & statusVec) {
   
   // Load DUT module    
-  Det & dut = _detector.GetDet(_idut); 
-  
+  const Det & dut = TBDetector::GetInstance().GetDet(_idut);
   bool isOk = false; 
   
   try {  
@@ -651,7 +644,7 @@ bool StripDUTAnalyzer::getDUTStatus(LCEvent * evt, ShortVec & statusVec) {
       // DAQ ID for pixel detector	
       int sensorID =  Decoder(status)["sensorID"];
          
-      if (sensorID == dut.GetDAQID()) { 
+      if (sensorID == dut.GetSensorID() ) { 
         statusVec = status->getADCValues(); 
         isOk = true; 
         break;

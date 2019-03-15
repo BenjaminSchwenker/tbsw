@@ -20,10 +20,6 @@
 #include <cstring>
 #include <algorithm>
 
-#include "gearimpl/Util.h"
-#include "gearxml/GearXML.h"
-#include "gearimpl/GearMgrImpl.h"
-
 
 using namespace lcio ;
 using namespace marlin ;
@@ -153,18 +149,9 @@ int main(int argc, char** argv ){
   std::string gearFile = Global::parameters->getStringVal("GearXMLFile" ) ;
   
   if( gearFile.size() > 0 ) {
-
-    gear::GearXML gearXML( gearFile ) ;
-    
-    Global::GEAR = gearXML.createGearMgr() ;
-
-    streamlog_out( MESSAGE )  << " ---- instantiated  GEAR from file  " << gearFile  << std::endl 
-			      << *Global::GEAR << std::endl ;
-
+    streamlog_out( MESSAGE )  << " ---- instantiated  GEAR from file  " << gearFile  << std::endl ;
   } else {
-
     streamlog_out( WARNING ) << " ---- no GEAR XML file given  --------- " << std::endl ;
-    Global::GEAR = new gear::GearMgrImpl ;
   }
 
 
@@ -268,8 +255,7 @@ int main(int argc, char** argv ){
 
   }
 
-  if(  Global::GEAR != 0 ) 
-    delete Global::GEAR ; 
+  
  
   return 0 ;
 }

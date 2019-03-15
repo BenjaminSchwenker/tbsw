@@ -22,40 +22,34 @@ namespace depfet {
 SeedGenerator::SeedGenerator( double acharge, double amom ) : charge(acharge), mom(amom) {;}
 
 // Create a seed track state 
-TBTrackState SeedGenerator::CreateSeedTrack(TBHit FirstHit, TBHit SecondHit, TBDetector& Detector)   
+TBTrackState SeedGenerator::CreateSeedTrack(const TBHit& FirstHit, const TBHit& SecondHit, const TBDetector& Detector)  const
 {  
 
   // Check hits are on different detectors 
-  if ( FirstHit.GetDAQID() == SecondHit.GetDAQID() ) {
+  if ( FirstHit.GetSensorID() == SecondHit.GetSensorID() ) {
     return CreateSeedTrack(FirstHit, Detector);  
   }     
 
   // Get plane numbers 
-  int firstplane = Detector.GetPlaneNumber( FirstHit.GetDAQID() );
-  int secondplane = Detector.GetPlaneNumber( SecondHit.GetDAQID() );
+  int firstplane = Detector.GetPlaneNumber( FirstHit.GetSensorID() );
+  int secondplane = Detector.GetPlaneNumber( SecondHit.GetSensorID() );
   
   // Sort hits along beam line 
   if ( firstplane > secondplane ) {
-    TBHit TmpHit = FirstHit; 
-    FirstHit = SecondHit; 
-    SecondHit = TmpHit; 
+    // just call method with swapped order of hits
+    return CreateSeedTrack(SecondHit, FirstHit, Detector); 
   } 
   
   // Compute global space points
-  ReferenceFrame FirstFrame = Detector.GetDet( firstplane ).GetNominal(); 
-  ReferenceFrame SecondFrame = Detector.GetDet( secondplane ).GetNominal(); 
+  const ReferenceFrame& FirstFrame = Detector.GetDet( firstplane ).GetNominal(); 
+  const ReferenceFrame& SecondFrame = Detector.GetDet( secondplane ).GetNominal(); 
    
   Vector3d FirstPoint = FirstHit.GetLocalSpacePoint(); 
-  Vector3d FirstGPoint = FirstFrame.TransformPointToGlobal(FirstPoint);
-  
-  Vector3d SecondPoint = SecondHit.GetLocalSpacePoint(); 
-  Vector3d SecondGPoint = SecondFrame.TransformPointToGlobal(SecondPoint);
-  
-  // Compute global track direction 
-  Vector3d GobalDirection = SecondGPoint - FirstGPoint;
- 
+  Vector3d SecondPoint = SecondHit.GetLocalSpacePoint();
+   
   // Compute local track direction 
-  Vector3d LocalDirection = FirstFrame.TransformVecToLocal(GobalDirection);  
+  Vector3d GobalDirection = SecondFrame.TransformPointToGlobal( SecondPoint ) - FirstFrame.TransformPointToGlobal( FirstPoint );
+  Vector3d LocalDirection = FirstFrame.TransformVecToLocal( GobalDirection );  
   
   // Seed parameters at first sensor
   TrackState Pars;  
@@ -73,14 +67,14 @@ TBTrackState SeedGenerator::CreateSeedTrack(TBHit FirstHit, TBHit SecondHit, TBD
 }
 
 // Create a seed track state  
-TBTrackState SeedGenerator::CreateSeedTrack(TBHit Hit, TBDetector& Detector)
+TBTrackState SeedGenerator::CreateSeedTrack(const TBHit& Hit, const TBDetector& Detector) const
 { 
 
   // Get plane number of hit
-  int planenumber = Detector.GetPlaneNumber( Hit.GetDAQID() );  
+  int planenumber = Detector.GetPlaneNumber( Hit.GetSensorID() );  
 
   // Compute global space point
-  ReferenceFrame Frame = Detector.GetDet( planenumber ).GetNominal(); 
+  const ReferenceFrame& Frame = Detector.GetDet( planenumber ).GetNominal(); 
   
   // Seed follows z direction
   Vector3d GobalDirection;
@@ -105,11 +99,9 @@ TBTrackState SeedGenerator::CreateSeedTrack(TBHit Hit, TBDetector& Detector)
 
 
 // Create a seed track state  
-TBTrackState SeedGenerator::CreateSeedTrack()
+TBTrackState SeedGenerator::CreateSeedTrack() const
 { 
  
-  
-  
   // Seed crosses origin and follows z axis 
   TrackState Pars; 
   Pars[0] = 0; 

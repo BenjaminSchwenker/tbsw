@@ -6,11 +6,6 @@
 #ifndef StripDUTAnalyzer_H
 #define StripDUTAnalyzer_H 1
 
-
-// TBTools includes
-#include "TBDetector.h"
-
-
 // Include basic C
 #include <vector>
 #include <string>
@@ -104,8 +99,7 @@ protected:
 //! Input DUT status data collection name
    std::string _statusColName;
    
-//! Alignment DB file name 
-   std::string _alignmentDBFileName;
+
    
 //! ROOT output file name  
    std::string _rootFileName;  
@@ -188,8 +182,7 @@ protected:
    
  private:
    
-   // Handle to detector data 
-   TBDetector  _detector;    
+   
    
    // Few counter to show the final summary
    
