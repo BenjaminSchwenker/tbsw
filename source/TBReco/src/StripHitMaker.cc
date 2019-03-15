@@ -7,6 +7,7 @@
  
 #include "StripHitMaker.h"
 #include "TBHit.h"
+#include "TBDetector.h"
 
 
 // Include basic C
@@ -89,8 +90,7 @@ void StripHitMaker::init() {
    // Print set parameters
    printProcessorParams();
    
-   // Read detector constants from gear file
-   _detector.ReadGearConfiguration();    
+   
     
 }
 
@@ -146,8 +146,8 @@ void StripHitMaker::processEvent(LCEvent * evt)
     // Read cluster header
     TrackerPulseImpl* cluster = dynamic_cast<TrackerPulseImpl* > ( clusterCollection->getElementAt(iClu) )  ;       
     int sensorID = clusterDecoder(cluster)["sensorID"]; 
-    int ipl = _detector.GetPlaneNumber(sensorID);
-    Det& Sensor = _detector.GetDet(ipl);
+    int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);
+    const Det& Sensor = TBDetector::Get(ipl);
     
     streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID  << endl; 
       
@@ -206,10 +206,10 @@ void StripHitMaker::processEvent(LCEvent * evt)
       TBHit hitU = HitStoreU[iU]; 
       TBHit hitV = HitStoreV[iV];
       
-      if (hitU.GetDAQID() == hitV.GetDAQID() ) {
+      if (hitU.GetSensorID() == hitV.GetSensorID() ) {
         
         // Make LCIO TrackerHit 
-        TBHit hit(hitU.GetDAQID(), hitU.GetCoord()[0], hitV.GetCoord()[1], hitU.GetCov()(0,0), hitV.GetCov()(1,1), 0, 0);
+        TBHit hit(hitU.GetSensorID(), hitU.GetCoord()[0], hitV.GetCoord()[1], hitU.GetCov()(0,0), hitV.GetCov()(1,1), 0, 0);
         TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
             
         // Add link to full cluster data 

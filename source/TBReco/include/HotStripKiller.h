@@ -6,8 +6,6 @@
 #ifndef HotStripKiller_H
 #define HotStripKiller_H 1
 
-// TBTools includes 
-#include "TBDetector.h"
 
 // Include Marlin classes
 #include <marlin/Global.h>
@@ -125,8 +123,7 @@ protected:
 
  private:
   
-  // Handle to detector data sheets 
-  TBDetector _detector;     
+  
    
   // Modules to be processed 
   std::vector<int> _planeNumbers;  

@@ -9,6 +9,7 @@
 #include "TriplettCorrelator.h"
 
 // Include TBTools header files
+#include "TBDetector.h"
 #include "TBHit.h"
 #include "TBTrack.h"
 #include "Det.h"
@@ -62,17 +63,7 @@ TriplettCorrelator::TriplettCorrelator() : Processor("TriplettCorrelator")
                           "Tracklett collection for alignment",
                           _trackCollectionName,std::string("aligntracks"));
       
-   registerProcessorParameter ("AlignmentDBFileName",
-                             "This is the name of the file with the alignment constants (add .root)",
-                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) );   
-                   
-   registerProcessorParameter ("UpdateAlignment",
-                              "Update alignment DB using offset corrections (true/false)?",
-                              _updateAlignment, static_cast <bool> (true) ); 
- 
-   registerProcessorParameter ("NewAlignment",
-                              "Start alignment from scratch (true/false)?",
-                              _newAlignment, static_cast <bool> (false) ); 
+   
    
    registerProcessorParameter ("OutputRootFileName",
                               "This is the name of the output root file",
@@ -93,16 +84,10 @@ void TriplettCorrelator::init() {
   _iRun = 0 ;
   _iEvt = 0 ;
    
-  // Read detector constants from gear file
-  _detector.ReadGearConfiguration();    
   
-  // Read alignment data base file 
-  if(!_newAlignment) _detector.ReadAlignmentDB( _alignmentDBFileName );
-  // This is needed, because if the AlignmentDB is not read, the detector construct doesn't know the alignmentDB name
-  else  _detector.SetAlignmentDBName( _alignmentDBFileName );
   
   // Apply pre-alignment only to active sensors
-  _isActive.resize(_detector.GetNSensors(), true);   
+  _isActive.resize(TBDetector::GetInstance().GetNSensors(), true);   
    
   // Book correlation histograms   
   bookHistos();   
@@ -142,7 +127,7 @@ void TriplettCorrelator::processEvent(LCEvent * evt)
   // ===========================
   
   // Hit factory sorts hits according to plane    
-  HitFactory HitStore( _detector );   
+  HitFactory HitStore( TBDetector::GetInstance() );   
     
   for ( size_t iCol = 0 ; iCol < _inputHitCollectionNameVec.size(); ++iCol ) {
      
@@ -196,7 +181,7 @@ void TriplettCorrelator::processEvent(LCEvent * evt)
   TrackInputProvider TrackLCIOReader;  
 
   // Configure track fitter 
-  GenericTrackFitter TrackFitter(_detector);
+  GenericTrackFitter TrackFitter(TBDetector::GetInstance());
   TrackFitter.SetNumIterations(1);    
 
   for (int itrk = 0; itrk < nTracks; itrk++) {
@@ -205,7 +190,7 @@ void TriplettCorrelator::processEvent(LCEvent * evt)
     Track * lciotrk = dynamic_cast<Track*> (trackcol->getElementAt(itrk));
     
     // Convert LCIO -> TB track  
-    TBTrack rectrack = TrackLCIOReader.MakeTBTrack( lciotrk, _detector );  
+    TBTrack rectrack = TrackLCIOReader.MakeTBTrack( lciotrk, TBDetector::GetInstance() );  
  
     // Fit the track. This also extrapolates to all known detector planes
     bool trkerr = TrackFitter.Fit(rectrack);
@@ -213,7 +198,7 @@ void TriplettCorrelator::processEvent(LCEvent * evt)
       continue;
     }  
     
-    for(int ipl=0;ipl<_detector.GetNSensors();++ipl)  { 
+    for(int ipl=0;ipl<TBDetector::GetInstance().GetNSensors();++ipl)  { 
        
       // Skip track if it does not intersect
       if (!rectrack.GetTE(ipl).IsCrossed()) continue;
@@ -230,7 +215,7 @@ void TriplettCorrelator::processEvent(LCEvent * evt)
       // Loop over all hits on this detector 
       for (int ihit = 0; ihit < HitStore.GetNHits(ipl); ++ihit ) 
       {      
-        TBHit & anyhit = HitStore.GetRecoHitFromID(ihit, ipl);
+        const TBHit & anyhit = HitStore.GetRecoHitFromID(ihit, ipl);
            
         // Measured hit coordinates
         Vector3d anypos = anyhit.GetLocalSpacePoint();
@@ -270,12 +255,12 @@ void TriplettCorrelator::end()
   ////////////////////////////////////////////////////////////
   // Try to create a better aligned detector  
   
-  TBDetector tmp_detector = _detector;
+  
    
   streamlog_out(MESSAGE3) << "Calculating alignment corrections  ... Correlation band method" << endl << endl;        
   
 
-  for ( int ipl = 0 ; ipl < tmp_detector.GetNSensors() ; ++ipl ) 
+  for ( int ipl = 0 ; ipl < TBDetector::GetInstance().GetNSensors() ; ++ipl ) 
   {           
        
     // Only correct position of active sensors
@@ -325,7 +310,7 @@ void TriplettCorrelator::end()
                             << "   V offset is " << offsetV << " mm"
                             << endl << endl; 
 
-    Det & adet = tmp_detector.GetDet(ipl);
+    Det & adet = TBDetector::GetInstance().GetDet(ipl);
       
     // We have calculated offset in local coord.
     Vector3d local_offset;
@@ -349,27 +334,11 @@ void TriplettCorrelator::end()
   
   }
       
-  //////////////////////////////////////////////////////////////////////  
-  // Save alignment DB
+  
       
-  _detector = tmp_detector; 
+  streamlog_out ( MESSAGE3 ) << "Detector geometry after alignment procedure: " << endl;   
+  TBDetector::GetInstance().Print();   
    
-  if ( _updateAlignment ) { 
-    
-    ////////////////////////////////////////////////////////////
-    // Print detector geometrie after alignment   
-    
-    streamlog_out ( MESSAGE3 ) << "Detector geometry after alignment procedure: " << endl;   
-    _detector.Print();   
-       
-    ////////////////////////////////////////////////////////////
-    // Overwrite the alignment data base with new geometry 
-    _detector.WriteAlignmentDB( ); 
-    
-  } else {
-    streamlog_out ( MESSAGE3 ) << endl;
-    streamlog_out ( MESSAGE3 ) << "NO UPDATE OF ALIGNMENT DB" << endl; 
-  }
   
   // Print message
   streamlog_out(MESSAGE3) << std::endl
@@ -410,11 +379,11 @@ void TriplettCorrelator::bookHistos() {
   string tempYAxis; 
   
   
-  for(int ipl=0; ipl < _detector.GetNSensors(); ++ipl)    
+  for(int ipl=0; ipl < TBDetector::GetInstance().GetNSensors(); ++ipl)    
   {
                         
     // This is a alignable detector   
-    Det & det = _detector.GetDet(ipl); 
+    Det & det = TBDetector::GetInstance().GetDet(ipl); 
              
     double safetyFactor = 1.4;  // 2 should be enough because it
                                 // means that the sensor is wrong
@@ -425,9 +394,9 @@ void TriplettCorrelator::bookHistos() {
               
     _rootFile->cd("/HitU/");
          
-    double  uMin = - safetyFactor * 0.5 * det.GetSensitiveSizeU();               
-    double  uMax = + safetyFactor * 0.5 * det.GetSensitiveSizeU(); 
-    double  PitchU = det.GetSensitiveSizeU()/(det.GetNCellsU()+1); 
+    double  uMin = safetyFactor  * det.GetSensitiveMinU();               
+    double  uMax = safetyFactor  * det.GetSensitiveMaxU(); 
+    double  PitchU = det.GetSensitiveMaxU()/(det.GetMaxUCell()+2); 
     int     uBins = static_cast<int>( (uMax - uMin)/(2*PitchU) );     
     
     // avoid too many bins 
@@ -449,9 +418,9 @@ void TriplettCorrelator::bookHistos() {
                 
     _rootFile->cd("/HitV/");
      
-    double  vMin = - safetyFactor * 0.5 * det.GetSensitiveSizeV();               
-    double  vMax = + safetyFactor * 0.5 * det.GetSensitiveSizeV(); 
-    double  PitchV = det.GetSensitiveSizeV()/(det.GetNCellsV()+1); 
+    double  vMin = safetyFactor *  det.GetSensitiveMinV();               
+    double  vMax = safetyFactor *  det.GetSensitiveMaxV(); 
+    double  PitchV = det.GetSensitiveMaxV()/(det.GetMaxVCell()+2); 
     int     vBins = static_cast<int>( (vMax - vMin)/(2*PitchV) );     
         
     // avoid too many bins 

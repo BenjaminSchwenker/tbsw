@@ -134,14 +134,12 @@ def add_clustercalibrators(path):
   """
   
   m26clustdb = tbsw.Processor(name="M26ClusterCalibrator",proctype="GoeClusterCalibrator")   
-  m26clustdb.param("AlignmentDBFileName","localDB/alignmentDB.root")
   m26clustdb.param("ClusterDBFileName","localDB/clusterDB-M26.root")  
   m26clustdb.param("MinClusters","500")
   m26clustdb.param("IgnoreIDs","6 7 21")
   path.add_processor(m26clustdb)  
     
   pxdclustdb = tbsw.Processor(name="PXDClusterCalibrator",proctype="GoeClusterCalibrator")   
-  pxdclustdb.param("AlignmentDBFileName","localDB/alignmentDB.root")
   pxdclustdb.param("ClusterDBFileName","localDB/clusterDB-PXD.root")  
   pxdclustdb.param("MinClusters","500")
   pxdclustdb.param("MaxEtaBins","7")
@@ -149,7 +147,6 @@ def add_clustercalibrators(path):
   path.add_processor(pxdclustdb)  
     
   fei4clustdb = tbsw.Processor(name="FEI4ClusterCalibrator",proctype="GoeClusterCalibrator")   
-  fei4clustdb.param("AlignmentDBFileName","localDB/alignmentDB.root")
   fei4clustdb.param("ClusterDBFileName","localDB/clusterDB-FEI4.root")  
   fei4clustdb.param("MinClusters","500")
   fei4clustdb.param("IgnoreIDs","0 1 2 3 4 5 6 7")
@@ -169,6 +166,12 @@ def create_sim_path(Env):
   infosetter.param("DetectorName","EUTelescope")
   sim_path.add_processor(infosetter)
   
+  geo_noalign = tbsw.Processor(name="Geo",proctype="Geometry")
+  geo_noalign.param("AlignmentDBFilePath", "localDB/alignmentDB.root")
+  geo_noalign.param("ApplyAlignment", "false")
+  geo_noalign.param("OverrideAlignment", "true")
+  sim_path.add_processor(geo_noalign)
+  
   gun = tbsw.Processor(name="ParticleGun",proctype="ParticleGunGenerator")
   gun.param("BeamIntensity","2000")
   gun.param("BeamMomentum",energy)
@@ -183,7 +186,6 @@ def create_sim_path(Env):
   sim_path.add_processor(gun)
   
   fastsim = tbsw.Processor(name="FastSim",proctype="FastSimulation")
-  fastsim.param("AlignmentDBFileName","localDB/alignmentDB.root")
   fastsim.param("ScatterModel","0")
   fastsim.param("DoEnergyLossStraggling","true")
   fastsim.param("DoFractionalBetheHeitlerEnergyLoss","false")
@@ -262,6 +264,12 @@ def create_calibration_path(Env):
   mask_path = Env.create_path('mask_path')
   mask_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : -1, 'LCIOInputFiles': rawfile }) 
    
+  geo = tbsw.Processor(name="Geo",proctype="Geometry")
+  geo.param("AlignmentDBFilePath", "localDB/alignmentDB.root")
+  geo.param("ApplyAlignment", "true")
+  geo.param("OverrideAlignment", "true")
+  mask_path.add_processor(geo)
+
   m26hotpixelkiller = tbsw.Processor(name="M26HotPixelKiller",proctype="HotPixelKiller",)
   m26hotpixelkiller.param("InputCollectionName", "zsdata_m26")
   m26hotpixelkiller.param("MaxOccupancy", 0.001)
@@ -289,7 +297,7 @@ def create_calibration_path(Env):
   # Create path for detector level creation of clusters
   clusterizer_path = Env.create_path('clusterizer_path')
   clusterizer_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' :  nevents, 'LCIOInputFiles': rawfile  }) 
-   
+  clusterizer_path.add_processor(geo) 
   clusterizer_path = add_clusterizers(clusterizer_path)    
    
   lciooutput = tbsw.Processor(name="LCIOOutput",proctype="LCIOOutputProcessor")
@@ -303,7 +311,7 @@ def create_calibration_path(Env):
   # Create path for pre alignmnet and dqm based on hits
   correlator_path = Env.create_path('correlator_path')
   correlator_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
-
+  correlator_path.add_processor(geo)
   correlator_path = add_hitmakers(correlator_path) 
   
   hitdqm = tbsw.Processor(name="RawDQM",proctype="RawHitDQM")
@@ -313,7 +321,6 @@ def create_calibration_path(Env):
   
   correlator = tbsw.Processor(name="TelCorrelator", proctype="Correlator")
   correlator.param("InputHitCollectionNameVec","hit_m26 hit_fei4 hit_pxd hit_h5")
-  correlator.param("AlignmentDBFileName", "localDB/alignmentDB.root")
   correlator.param("OutputRootFileName","XCorrelator.root")
   correlator.param("ReferencePlane","0")
   correlator.param("ParticleCharge","-1")
@@ -327,12 +334,11 @@ def create_calibration_path(Env):
   # Create path for pre alignment with loose cut track sample 
   prealigner_path = Env.create_path('prealigner_path')
   prealigner_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
-  
+  prealigner_path.add_processor(geo)
   prealigner_path = add_hitmakers(prealigner_path) 
 
   trackfinder_loosecut = tbsw.Processor(name="AlignTF_LC",proctype="FastTracker")
   trackfinder_loosecut.param("InputHitCollectionNameVec","hit_m26 hit_fei4 hit_pxd hit_h5")
-  trackfinder_loosecut.param("AlignmentDBFileName","localDB/alignmentDB.root")
   trackfinder_loosecut.param("ExcludeDetector", "")
   trackfinder_loosecut.param("MaxTrackChi2", 10000000)
   trackfinder_loosecut.param("MaximumGap", 1)
@@ -347,7 +353,6 @@ def create_calibration_path(Env):
   prealigner_path.add_processor(trackfinder_loosecut)
   
   prealigner = tbsw.Processor(name="PreAligner",proctype="KalmanAligner")
-  prealigner.param("AlignmentDBFileName","localDB/alignmentDB.root")
   prealigner.param('ErrorsShiftX' , '0 10 10 10 10 10 0 10 10')
   prealigner.param('ErrorsShiftY' , '0 10 10 10 10 10 0 10 10')
   prealigner.param('ErrorsShiftZ' , '0 0 0 0 0 0 0 0 0')
@@ -362,12 +367,11 @@ def create_calibration_path(Env):
   # Create path for alignment with tight cut track sample 
   aligner_path = Env.create_path('aligner_path')
   aligner_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
-  
+  aligner_path.add_processor(geo)  
   aligner_path = add_hitmakers(aligner_path) 
 
   trackfinder_tightcut = tbsw.Processor(name="AlignTF_TC",proctype="FastTracker")
   trackfinder_tightcut.param("InputHitCollectionNameVec","hit_m26 hit_fei4 hit_pxd hit_h5")
-  trackfinder_tightcut.param("AlignmentDBFileName","localDB/alignmentDB.root")
   trackfinder_tightcut.param("ExcludeDetector", "")
   trackfinder_tightcut.param("MaxTrackChi2", 100)
   trackfinder_tightcut.param("MaximumGap", 1)
@@ -382,7 +386,6 @@ def create_calibration_path(Env):
   aligner_path.add_processor(trackfinder_tightcut)
    
   aligner = tbsw.Processor(name="Aligner",proctype="KalmanAligner")
-  aligner.param("AlignmentDBFileName","localDB/alignmentDB.root")
   aligner.param('ErrorsShiftX' , '0 10 10 10 10 10 0 10 10' )
   aligner.param('ErrorsShiftY' , '0 10 10 10 10 10 0 10 10')
   aligner.param('ErrorsShiftZ' , '0 10 10 10 10 10 0 10 10')
@@ -400,12 +403,11 @@ def create_calibration_path(Env):
   # Creeate path for some track based dqm using center of gravity hits
   dqm_path = Env.create_path('dqm_path')
   dqm_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })
-  
+  dqm_path.add_processor(geo)
   dqm_path = add_hitmakers(dqm_path)   
   dqm_path.add_processor(trackfinder_tightcut)  
    
   teldqm = tbsw.Processor(name="TelescopeDQM", proctype="TrackFitDQM") 
-  teldqm.param("AlignmentDBFileName","localDB/alignmentDB.root")
   teldqm.param("RootFileName","TelescopeDQM.root")
   dqm_path.add_processor(teldqm)  
   
@@ -420,6 +422,7 @@ def create_calibration_path(Env):
     # Creeate path for first iteration for computing clusterDBs for all sensors 
     preclustercal_path = Env.create_path('preclustercal_path')
     preclustercal_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : "-1", 'LCIOInputFiles': "tmp.slcio" })  
+    preclustercal_path.add_processor(geo)
     preclustercal_path = add_hitmakers(preclustercal_path) 
     preclustercal_path.add_processor(trackfinder_tightcut)      
     preclustercal_path = add_clustercalibrators(preclustercal_path)
@@ -430,6 +433,7 @@ def create_calibration_path(Env):
     # Create path for alignment with tight cut track sample and cluster DB
     aligner_db_path = Env.create_path('aligner_db_path')
     aligner_db_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
+    aligner_db_path.add_processor(geo)
     aligner_db_path = add_hitmakersDB(aligner_db_path) 
     aligner_db_path.add_processor(trackfinder_tightcut) 
     aligner_db_path.add_processor(aligner)   
@@ -442,6 +446,7 @@ def create_calibration_path(Env):
     # Creeate path for next iterations for computing clusterDBs for all sensors 
     clustercal_path = Env.create_path('clustercal_path')
     clustercal_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : "-1", 'LCIOInputFiles': "tmp.slcio" })   
+    clustercal_path.add_processor(geo)
     clustercal_path = add_hitmakersDB(clustercal_path) 
     clustercal_path.add_processor(trackfinder_tightcut) 
     clustercal_path = add_clustercalibrators(clustercal_path)
@@ -459,12 +464,11 @@ def create_calibration_path(Env):
     # Creeate path for dqm using cluster calibrations
     dqm_db_path = Env.create_path('dqm_db_path')
     dqm_db_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })
-    
+    dqm_db_path.add_processor(geo)
     dqm_db_path = add_hitmakersDB(dqm_db_path)   
     dqm_db_path.add_processor(trackfinder_tightcut)  
     
     teldqm_db = tbsw.Processor(name="TelescopeDQM_DB", proctype="TrackFitDQM") 
-    teldqm_db.param("AlignmentDBFileName","localDB/alignmentDB.root")
     teldqm_db.param("RootFileName","TelescopeDQM_DB.root")
     dqm_db_path.add_processor(teldqm_db)  
     
@@ -482,6 +486,12 @@ def create_reco_path(Env):
   reco_path = Env.create_path('reco_path')
   reco_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents, 'LCIOInputFiles': rawfile  }) 
   
+  geo = tbsw.Processor(name="Geo",proctype="Geometry")
+  geo.param("AlignmentDBFilePath", "localDB/alignmentDB.root")
+  geo.param("ApplyAlignment", "true")
+  geo.param("OverrideAlignment", "true")
+  reco_path.add_processor(geo)  
+  
   # Create path for all reconstruction up to hits
   reco_path = add_clusterizers(reco_path)   
 
@@ -492,7 +502,6 @@ def create_reco_path(Env):
   
   trackfinder = tbsw.Processor(name="TrackFinder",proctype="FastTracker")
   trackfinder.param("InputHitCollectionNameVec","hit_m26 hit_fei4")
-  trackfinder.param("AlignmentDBFileName","localDB/alignmentDB.root")
   trackfinder.param("ExcludeDetector", "3 8")
   trackfinder.param("MaxTrackChi2", "100")
   trackfinder.param("MaximumGap", "1")
@@ -509,7 +518,6 @@ def create_reco_path(Env):
   pxd_analyzer = tbsw.Processor(name="PXDAnalyzer",proctype="PixelDUTAnalyzer")
   pxd_analyzer.param("HitCollection","hit_pxd")  
   pxd_analyzer.param("DigitCollection","zsdata_pxd")
-  pxd_analyzer.param("AlignmentDBFileName","localDB/alignmentDB.root")
   pxd_analyzer.param("DUTPlane","3")
   pxd_analyzer.param("ReferencePlane","7")
   pxd_analyzer.param("MaxResidualU","0.2")

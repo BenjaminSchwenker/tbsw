@@ -7,6 +7,7 @@
 #include "TBHit.h"
 
 // Include TBTools  
+#include "TBDetector.h"
 #include "PhysicalConstants.h"
 
 
@@ -113,9 +114,6 @@ namespace depfet {
     // Set variables in appropriate physical units
     m_startIntegration     *= ns;
     m_stopIntegration      *= ns;
-    
-    // Read detector constants from gear file
-    m_detector.ReadGearConfiguration();      
     
     // Print set parameters
     printProcessorParams();

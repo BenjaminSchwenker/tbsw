@@ -6,9 +6,6 @@
 #ifndef TrackFitValidation_H
 #define TrackFitValidation_H 1
 
-// TBTools includes
-#include "TBDetector.h"
-
 // Include basic C
 #include <vector>
 #include <string>
@@ -81,8 +78,7 @@ namespace depfet {
     //! Input Track collection name
     std::string _trackColName; 
      
-    //! Alignment DB file name 
-    std::string _alignmentDBFileName;
+    
     
     //! ROOT output file name  
     std::string _rootFileName;  
@@ -98,8 +94,7 @@ namespace depfet {
     std::map< std::string, TH1D* > _histoMap;
     std::map< std::string, TH2D* > _histoMap2D;
     
-    // Handle to detector data 
-    TBDetector  _detector;    
+    
      
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number

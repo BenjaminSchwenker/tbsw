@@ -7,9 +7,6 @@
 #ifndef SmearingDigitizer_H
 #define SmearingDigitizer_H 1
 
-// Include TBTools header files
-#include "TBDetector.h"
-
 // Include basic C
 #include <vector>
 
@@ -77,9 +74,6 @@ namespace depfet {
     double m_stopIntegration;                    //!< Stop time of integration of the sensors in ns(everything after this value will not be digitized)
     
    private:
-    
-    // Handle to detector data sheets 
-    TBDetector m_detector;  
     
     double m_timeCPU; //!< CPU time
     int    m_nRun ;   //!< Run number

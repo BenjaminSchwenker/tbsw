@@ -7,8 +7,8 @@
 #ifndef BeamSpotAligner_H
 #define BeamSpotAligner_H 1
 
-// Include DEPFETTrackTools header files
-#include "TBDetector.h"
+
+
 
 
 // Include Marlin classes
@@ -95,22 +95,9 @@ protected:
  */
    std::string _trackCollectionName;
       
-//! Alignment DB file name
-/*! Stores all alignment information (positions + orientations) of 
- *  detector setup. 
- */ 
-   std::string _alignmentDBFileName;
-   
-//! Update alignment  
-/*! Update the alignment data base using correlation band offset 
- *  values.  
- */
-   bool _updateAlignment;
 
-//! New alignment  
-/*! Don't use current alignment data base, but start from scratch   
- */
-   bool _newAlignment;
+   
+
         
 //! Output root file name  
 /*!
@@ -123,8 +110,7 @@ protected:
     int    _nRun ;   //!< Run number
     int    _nEvt ;   //!< Event number
   
-    // Handle to detector data 
-    TBDetector  _detector;    
+    
     
     // Handle to root file
     TFile * _rootFile;

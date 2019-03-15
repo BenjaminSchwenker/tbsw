@@ -4,19 +4,19 @@
 // <mailto:benjamin.schwenker@phys.uni-goettingen.de>
 
 // C++ includes
-#include <iostream>
-#include <cassert>
-#include <cstdlib>
+//#include <iostream>
+//#include <cassert>
+//#include <cstdlib>
 
 // TBTools include
 #include "TBTrack.h"
 
 // Marlin includes 
-#include <marlin/Global.h>
-#include <streamlog/streamlog.h>
+//#include <marlin/Global.h>
+//#include <streamlog/streamlog.h>
 
 // Namespaces
-using namespace marlin;
+//using namespace marlin;
 using namespace std; 
 
 namespace depfet {
@@ -32,16 +32,16 @@ TBTrack::TBTrack(TBDetector& detector)
   for(int ipl=0;ipl<nDet;ipl++)  {  
     // Create track element 
     // Add track element  
-    TEVec.emplace_back(detector.GetDet(ipl));
+    TEVec.push_back(detector.GetDet(ipl));
   }
   
   // Particle hypothesis  
   Mass = 0;
   Charge = 0;
   Mom = 0; 
-
   // No track fit done yet   
   ChiSqu = -1;
+  Ndof = 0;
 } 
 
 
@@ -52,6 +52,14 @@ TBTrackElement& TBTrack::GetTE(int ipl)
   return TEVec.at(ipl);  
 }
 
+/** Get track element by plane number 
+ */  
+const TBTrackElement& TBTrack::GetTE(int ipl) const
+{
+  return TEVec.at(ipl);  
+}
+
+
 /** Get all track elements  
  */  
 std::vector<TBTrackElement>& TBTrack::GetTEs()
@@ -59,9 +67,16 @@ std::vector<TBTrackElement>& TBTrack::GetTEs()
   return TEVec;
 }
 
+/** Get all track elements  
+ */  
+const std::vector<TBTrackElement>& TBTrack::GetTEs() const
+{
+  return TEVec;
+}
+
 /** Get number of hits in track   
  */  
-int TBTrack::GetNumHits()
+int TBTrack::GetNumHits() const
 {
   // Get all track elements (TEs) 
   int nTE = GetNumTEs();
@@ -75,7 +90,7 @@ int TBTrack::GetNumHits()
 
 /** Get number of track elements    
  */  
-int TBTrack::GetNumTEs()
+int TBTrack::GetNumTEs() const
 {
   return (int) TEVec.size();
 }

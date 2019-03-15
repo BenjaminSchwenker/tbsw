@@ -60,32 +60,32 @@ class TBVertex {
   
   // Get/Set local vertex position  
   void SetPos(const VertexParameter& aPos) { Pos= aPos; }; 
-  VertexParameter&  GetPos() { return Pos; };
+  const VertexParameter&  GetPos() const { return Pos; };
 
   // Get/Set global vertex position  
   void SetGlobalPos(const VertexParameter& aPos) { GlobalPos= aPos; }; 
-  VertexParameter&  GetGlobalPos() { return GlobalPos; };
+  const VertexParameter&  GetGlobalPos() const { return GlobalPos; };
    
   // Get/Set local position covariance 
   void SetCov(const VertexCovariance& aCov ) { Cov = aCov; }; 
-  VertexCovariance&  GetCov() { return Cov; };
+  const VertexCovariance&  GetCov() const { return Cov; };
 
   // Get/Set global position covariance 
   void SetGlobalCov(const VertexCovariance& aCov ) { GlobalCov = aCov; }; 
-  VertexCovariance&  GetGlobalCov() { return GlobalCov; };
+  const VertexCovariance&  GetGlobalCov() const { return GlobalCov; };
 
   // Get/Set chi²-value
   void SetChi2(double achi2 ) { chi2 = achi2; }; 
-  double GetChi2() { return chi2; };
-  double GetChi2Ndof() { return chi2/double(ndf); };
+  double GetChi2() const { return chi2; };
+  double GetChi2Ndof() const { return chi2/double(ndf); };
 
   // Get/Set filter residual
   void SetRes(const VertexResidual& aRes ) { Res = aRes; }; 
-  VertexResidual& GetRes() { return Res; };
+  const VertexResidual& GetRes() const { return Res; };
 
   // Get/Set ndf-value
   void SetNdf(int andf ) { ndf = andf; }; 
-  int GetNdf() { return ndf; };
+  int GetNdf() const { return ndf; };
 
   // add state
   void AddTrackState(TBTrackState& state) { States.push_back(state); };
@@ -94,7 +94,7 @@ class TBVertex {
   void RemoveLastTrackState() { States.pop_back(); };
 
   // get States vector
-  std::vector<TBTrackState>& GetStates() { return States; };
+  const std::vector<TBTrackState>& GetStates() const { return States; };
 
 };
 

@@ -151,7 +151,7 @@ namespace depfet {
     
     /** Compute center of gravity hit position and covariance matrix
     */
-    void getCenterOfGravity(Det& Sensor, double& u, double& v, double& cov_u, double& cov_v, double& cov_uv) const;
+    void getCenterOfGravity(const Det& Sensor, double& u, double& v, double& cov_u, double& cov_v, double& cov_uv) const;
 
   protected:
      

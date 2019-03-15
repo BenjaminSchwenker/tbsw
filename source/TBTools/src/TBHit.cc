@@ -23,7 +23,7 @@ namespace depfet {
 
 // Constructors 
 
-TBHit::TBHit() : DAQID(-1)
+TBHit::TBHit() : SensorID(-1)
 {
   // Set hit coordinates 
   Coord<<0, 0;
@@ -39,7 +39,7 @@ TBHit::TBHit() : DAQID(-1)
   Quality = 0; 
 }
  
-TBHit::TBHit(int newdaqid, double u, double v, double cov_u, double cov_v, double cov_uv, int q) : DAQID(newdaqid)
+TBHit::TBHit(int newSensorID, double u, double v, double cov_u, double cov_v, double cov_uv, int q) : SensorID(newSensorID)
 {
   // Set hit coordinates 
   Coord<< u, v;
@@ -56,8 +56,10 @@ TBHit::TBHit(int newdaqid, double u, double v, double cov_u, double cov_v, doubl
 }
 
 
-TBHit::TBHit(int newdaqid, const Vector2d &mcoord, const Matrix2d &mcov) : DAQID(newdaqid)
+TBHit::TBHit(int newSensorID, const Vector2d &mcoord, const Matrix2d &mcov) 
 {
+  // Set SensorID
+  SensorID = short(newSensorID);
   // Set hit coordinates 
   Coord = mcoord;
   // Set hit covariance
@@ -70,10 +72,10 @@ TBHit::TBHit(int newdaqid, const Vector2d &mcoord, const Matrix2d &mcov) : DAQID
   Quality = 0; 
 }
 
-TBHit::TBHit(lcio::TrackerHit* lciohit) : DAQID(-1) 
+TBHit::TBHit(lcio::TrackerHit* lciohit) 
 {
-  // Set DAQID
-  DAQID =  (int) lciohit->getPosition()[2];
+  // Set SensorID
+  SensorID =  short(lciohit->getPosition()[2]);
   // Set hit coordinates 
   Coord<< lciohit->getPosition()[0], lciohit->getPosition()[1];
   // Set covariance
@@ -95,7 +97,7 @@ TBHit::TBHit(lcio::TrackerHit* lciohit) : DAQID(-1)
  * The lcio::TrackerHit class is used to store reco TBHits persistently in 
  * LCIO files.  
  */
-TrackerHitImpl * TBHit::MakeLCIOHit(  ) 
+TrackerHitImpl * TBHit::MakeLCIOHit(  ) const
 {
   
   TrackerHitImpl * trackerhit = new TrackerHitImpl;
@@ -104,7 +106,7 @@ TrackerHitImpl * TBHit::MakeLCIOHit(  )
   double localPos[3] = {0.,0.,0.};
   localPos[0] = Coord[0];
   localPos[1] = Coord[1];
-  localPos[2] = DAQID;
+  localPos[2] = SensorID;
   trackerhit->setPosition( &localPos[0] );   
        
   // Set covariance matrix as (c_uu, c_vv, c_uv=0)
@@ -120,12 +122,12 @@ TrackerHitImpl * TBHit::MakeLCIOHit(  )
   return trackerhit; 
 }
 
-static lcio::TrackerHitImpl * MakeLCIOHit(int newdaqid, double u, double v, double cov_u, double cov_v, double cov_uv, int quality)
+static lcio::TrackerHitImpl * MakeLCIOHit(int newSensorID, double u, double v, double cov_u, double cov_v, double cov_uv, int quality)
 {
   TrackerHitImpl * trackerhit = new TrackerHitImpl;
 
   // Set hit position
-  double localPos[3] = {u,v,double(newdaqid)};
+  double localPos[3] = {u,v,double(newSensorID)};
   trackerhit->setPosition( &localPos[0] );
 
   // Set covariance matrix as (c_uu, c_vv, c_uv=0)
@@ -137,7 +139,7 @@ static lcio::TrackerHitImpl * MakeLCIOHit(int newdaqid, double u, double v, doub
   return trackerhit;
 }
 
-Vector3d TBHit::GetLocalSpacePoint()
+Vector3d TBHit::GetLocalSpacePoint() const
 {
   // Hit coordinates are given wrt. w=0 surface of sensor
   // This is the middle thickness surface containing the 
@@ -149,7 +151,7 @@ Vector3d TBHit::GetLocalSpacePoint()
   return Point; 
 } 
 
-PixelCluster TBHit::GetCluster() 
+PixelCluster TBHit::GetCluster() const
 {
   
   if (RawHitPtr == nullptr ) return PixelCluster();
@@ -160,17 +162,17 @@ PixelCluster TBHit::GetCluster()
   
   TrackerData * clusterDigits = dynamic_cast<TrackerData *> ( clusterVec[0] );
     
-  return PixelCluster(clusterDigits,DAQID);  
+  return PixelCluster(clusterDigits,SensorID);  
 }
 
-StripCluster TBHit::GetStripCluster() 
+StripCluster TBHit::GetStripCluster() const
 {
   
   if (RawHitPtr == nullptr ) return StripCluster();
   
   LCObjectVec clusterVec = RawHitPtr->getRawHits();
   
-  return StripCluster(clusterVec,DAQID,Quality);  
+  return StripCluster(clusterVec,SensorID,Quality);  
 }
 
 
