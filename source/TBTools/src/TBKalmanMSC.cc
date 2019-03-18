@@ -217,7 +217,7 @@ bool TBKalmanMSC::ProcessTrack(TBTrack& trk, int dir, bool biased)
   return false;
 }
 
-TrackScatterKinks TBKalmanMSC::GetScatterKinks(Det& DetUnit, TBTrackState& InState, TBTrackState& OutState)
+TrackScatterKinks TBKalmanMSC::GetScatterKinks(TBTrackState& InState, TBTrackState& OutState)
 {
   double slopes[4];
   slopes[0]=InState.GetPars()(0);
@@ -227,7 +227,7 @@ TrackScatterKinks TBKalmanMSC::GetScatterKinks(Det& DetUnit, TBTrackState& InSta
   return slopestotheta(slopes);  
 } 
 
-TrackScatterKinksCovariance TBKalmanMSC::GetScatterKinkCov(Det& DetUnit, TBTrackState& InState, TBTrackState& OutState)
+TrackScatterKinksCovariance TBKalmanMSC::GetScatterKinkCov(TBTrackState& InState, TBTrackState& OutState)
 {
 
   //define aid varibales

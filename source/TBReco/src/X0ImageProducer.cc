@@ -491,8 +491,8 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		//Here we use the In and Out State and the GetScatterKinks function of the TBKalmanMSC Class
 		
 		//Angles and angle errors
-		auto theta = TrackFitterMSC.GetScatterKinks(dut, InState, OutState); 
-		auto Cov = TrackFitterMSC.GetScatterKinkCov(dut, InState, OutState);
+		auto theta = TrackFitterMSC.GetScatterKinks(InState, OutState); 
+		auto Cov = TrackFitterMSC.GetScatterKinkCov(InState, OutState);
 		
 		// Get the track parameters of the fitted track on the current sensor
 		// The u and v positions are needed for a position-resolved measurement
@@ -584,7 +584,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		  outstate_toy.Pars=toystate;
 
 		  // Calculate scattering angles from
-		  theta = TrackFitterMSC.GetScatterKinks(dut, InState, outstate_toy); 
+		  theta = TrackFitterMSC.GetScatterKinks(InState, outstate_toy); 
 
 		  double reco_error1;
 		  double reco_error2;
