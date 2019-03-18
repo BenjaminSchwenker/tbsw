@@ -378,30 +378,47 @@ namespace depfet {
           
           // Case w/o magnetic field is spacial
           if ( ( std::abs(TBDetector::GetInstance().GetBx()) + std::abs(TBDetector::GetInstance().GetBy()) + std::abs(TBDetector::GetInstance().GetBz()) )  == 0 )  {
-             
-            int ierr; //TODO change back to comute with check!
-            auto jchisq = diff.block<4,1>(0,0).transpose()*rec_cov.block<4,4>(0,0).inverse()*diff.block<4,1>(0,0);
-                
-            histoName = "hJ_det"+to_string( ipl );
-            _histoMap[histoName]->Fill(jchisq[0]);  
             
-            histoName = "hJp_det"+to_string( ipl );
-            _histoMap[histoName]->Fill(TMath::Prob(jchisq[0], 4));
-             
+            // Without a B field, we are fitting a straight line model and the track state is effectively 4D  
+            Eigen::Vector4d red_diff = diff.block<4,1>(0,0);
+            Eigen::Matrix4d red_rec_cov = rec_cov.block<4,4>(0,0);
+            Eigen::Matrix4d red_rec_cov_inv=red_rec_cov.llt().solve(Eigen::Matrix4d::Identity());
+            if(!(red_rec_cov_inv* (red_rec_cov*red_diff)).isApprox(red_diff,1e-6)){
+              histoName = "hJ_det"+to_string( ipl );
+              _histoMap[histoName]->Fill(-1);  
+              
+              histoName = "hJp_det"+to_string( ipl );
+              _histoMap[histoName]->Fill(-1);  
+            } else {
+              double jchisq = (red_diff.transpose()*red_rec_cov_inv*red_diff)[0];
+              
+              histoName = "hJ_det"+to_string( ipl );
+              _histoMap[histoName]->Fill(jchisq);  
+              
+              histoName = "hJp_det"+to_string( ipl );
+              _histoMap[histoName]->Fill(TMath::Prob(jchisq, 4));
+            }
+              
           } else {
+             
+            TrackStateCovariance rec_cov_inv=rec_cov.llt().solve(TrackStateCovariance::Identity());
+            if(!(rec_cov* (rec_cov_inv*diff)).isApprox(diff,1e-6)){
+              histoName = "hJ_det"+to_string( ipl );
+              _histoMap[histoName]->Fill(-1);  
+              
+              histoName = "hJp_det"+to_string( ipl );
+              _histoMap[histoName]->Fill(-1);  
+            } else {
+              double jchisq = (diff.transpose()*rec_cov_inv*diff)[0];
             
-            int ierr;  //TODO change back to comute with check!
-            auto jchisq = diff.transpose()*rec_cov.inverse()*diff;
-            
-            histoName = "hJ_det"+to_string( ipl );
-            _histoMap[histoName]->Fill(jchisq[0]);  
-            
-            histoName = "hJp_det"+to_string( ipl );
-            _histoMap[histoName]->Fill(TMath::Prob(jchisq[0], 5));
-            
+              histoName = "hJ_det"+to_string( ipl );
+              _histoMap[histoName]->Fill(jchisq);  
+              
+              histoName = "hJp_det"+to_string( ipl );
+              _histoMap[histoName]->Fill(TMath::Prob(jchisq, 5)); 
+            }
           }
            
-          
           histoName = "hp1_det"+to_string( ipl );
           _histoMap[ histoName ]->Fill(diff[0]/TMath::Sqrt(rec_cov(0,0) ));
           
