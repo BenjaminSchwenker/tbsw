@@ -27,14 +27,14 @@ def add_unpackers(path):
   
   m26unpacker = tbsw.Processor(name="M26Unpacker",proctype="TelUnpacker")   
   m26unpacker.param("InputCollectionName", "original_zsdata")
-  m26unpacker.param("OutputCollectionName","zsdata_m26")
+  m26unpacker.param("ClusterCollectionName","zsdata_m26")
   m26unpacker.param("FilterIDs", "0 1 2 3 4 5" )
   m26unpacker.param("Modulus", 4)
   path.add_processor(m26unpacker)
   
-  stripunpacker = tbsw.Processor(name="H5Unpacker",proctype="DEPFETUnpacker")
+  stripunpacker = tbsw.Processor(name="StripUnpacker",proctype="TelUnpacker")
   stripunpacker.param('InputCollectionName','original_zsdata')
-  stripunpacker.param('OutputCollectionName','zsdata_strip')
+  stripunpacker.param('ClusterCollectionName','zsdata_strip')
   stripunpacker.param("FilterIDs", "6 7" )
   stripunpacker.param("Modulus", 4)
   path.add_processor(stripunpacker)   
@@ -166,7 +166,7 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB):
   
   geo = tbsw.Processor(name="Geo",proctype="Geometry")
   geo.param("AlignmentDBFilePath", "localDB/alignmentDB.root")
-  geo.param("ApplyAlignment", "false")
+  geo.param("ApplyAlignment", "true")
   geo.param("OverrideAlignment", "true")
   mask_path.add_processor(geo)
   
@@ -473,12 +473,12 @@ if __name__ == '__main__':
    
   import argparse
   parser = argparse.ArgumentParser(description="Perform calibration and reconstruction of a test beam run")
-  parser.add_argument('--rawfile', dest='rawfile', default='/my/path/data_from_kristin/run000282-merger.slcio', type=str, help='Location of rawfile to process')
+  parser.add_argument('--rawfile', dest='rawfile', default='/home/benjamin/Desktop/run002689-merger.slcio', type=str, help='Location of rawfile to process')
   parser.add_argument('--gearfile', dest='gearfile', default='gear_desy_goeid1.xml', type=str, help='Location of gearfile')
   parser.add_argument('--energy', dest='energy', default=4.6, type=float, help='Beam energy in GeV')
   parser.add_argument('--steerfiles', dest='steerfiles', default='steering-files/luise-tb/', type=str, help='Path to steerfiles')
   parser.add_argument('--caltag', dest='caltag', default='', type=str, help='Name of calibration tag to use')
-  parser.add_argument('--useClusterDB', dest='use_cluster_db', default=True, type=bool, help="Use cluster database")
+  parser.add_argument('--useClusterDB', dest='use_cluster_db', default=False, type=bool, help="Use cluster database")
   parser.add_argument('--skipCalibration', dest='skip_calibration', default=False, type=bool, help="Skip creating a new calibration tag")
   parser.add_argument('--skipReconstruction', dest='skip_reco', default=False, type=bool, help="Skip reconstruction of run")
   parser.add_argument('--profile', dest='profile', action='store_true', help="profile execution time")
@@ -490,9 +490,9 @@ if __name__ == '__main__':
     
   if not args.skip_calibration: 
     print("Creating new calibration tag {} from run {}".format(args.caltag, args.rawfile))
-    calibrate((args.rawfile, args.steerfiles, args.gearfile, args.energy, args.caltag, args.use_cluster_db, args.mapping),args.profile)
+    calibrate((args.rawfile, args.steerfiles, args.gearfile, args.energy, args.caltag, args.use_cluster_db),args.profile)
   
   if not args.skip_reco: 
     print("Reconstruct run {} using caltag {}".format(args.rawfile, args.caltag))
-    reconstruct((args.rawfile, args.steerfiles, args.gearfile, args.energy, args.caltag, args.use_cluster_db, args.mapping),args.profile)
+    reconstruct((args.rawfile, args.steerfiles, args.gearfile, args.energy, args.caltag, args.use_cluster_db),args.profile)
 
