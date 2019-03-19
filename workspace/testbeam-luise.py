@@ -32,12 +32,19 @@ def add_unpackers(path):
   m26unpacker.param("Modulus", 4)
   path.add_processor(m26unpacker)
   
-  stripunpacker = tbsw.Processor(name="StripUnpacker",proctype="TelUnpacker")
-  stripunpacker.param('InputCollectionName','original_zsdata')
-  stripunpacker.param('ClusterCollectionName','zsdata_strip')
-  stripunpacker.param("FilterIDs", "6 7" )
-  stripunpacker.param("Modulus", 4)
-  path.add_processor(stripunpacker)   
+  stripid6unpacker = tbsw.Processor(name="StripID6Unpacker",proctype="TelUnpacker")
+  stripid6unpacker.param('InputCollectionName','original_zsdata')
+  stripid6unpacker.param('ClusterCollectionName','zsdata_stripid6')
+  stripid6unpacker.param("FilterIDs", "6" )
+  stripid6unpacker.param("Modulus", 4)
+  path.add_processor(stripid6unpacker)   
+
+  stripid7unpacker = tbsw.Processor(name="StripID7Unpacker",proctype="TelUnpacker")
+  stripid7unpacker.param('InputCollectionName','original_zsdata')
+  stripid7unpacker.param('ClusterCollectionName','zsdata_stripid7')
+  stripid7unpacker.param("FilterIDs", "7" )
+  stripid7unpacker.param("Modulus", 4)
+  path.add_processor(stripid7unpacker)   
   
   return path
 
@@ -55,14 +62,24 @@ def add_clusterizers(path):
   m26clust.param("SparseZSCut", 0)   
   path.add_processor(m26clust)  
   
-  stripclust = tbsw.Processor(name="StripClusterizer",proctype="PixelClusterizer")   
-  stripclust.param("NoiseDBFileName","localDB/NoiseDB-Strip.root")
-  stripclust.param("SparseDataCollectionName","zsdata_strip")
-  stripclust.param("ClusterCollectionName","zscluster_strip")
-  stripclust.param("SparseClusterCut",0)
-  stripclust.param("SparseSeedCut", 0)
-  stripclust.param("SparseZSCut", 30)   
-  path.add_processor(stripclust)  
+  stripid6clust = tbsw.Processor(name="StripID6Clusterizer",proctype="PixelClusterizer")   
+  stripid6clust.param("NoiseDBFileName","localDB/NoiseDB-StripID6.root")
+  stripid6clust.param("SparseDataCollectionName","zsdata_stripid6")
+  stripid6clust.param("ClusterCollectionName","zscluster_stripid6")
+  stripid6clust.param("SparseClusterCut",0)
+  stripid6clust.param("SparseSeedCut", 0)
+  stripid6clust.param("SparseZSCut", 30)   
+  path.add_processor(stripid6clust)  
+
+  stripid7clust = tbsw.Processor(name="StripID7Clusterizer",proctype="PixelClusterizer")   
+  stripid7clust.param("NoiseDBFileName","localDB/NoiseDB-StripID7.root")
+  stripid7clust.param("SparseDataCollectionName","zsdata_stripid7")
+  stripid7clust.param("ClusterCollectionName","zscluster_stripid7")
+  stripid7clust.param("SparseClusterCut",0)
+  stripid7clust.param("SparseSeedCut", 0)
+  stripid7clust.param("SparseZSCut", 30)   
+  path.add_processor(stripid7clust)  
+
 
   return path
 
@@ -78,12 +95,19 @@ def add_hitmakers(path):
   m26hitmaker.param("SigmaVCorrections", "0.698 0.31 0.315")
   path.add_processor(m26hitmaker)
 
-  striphitmaker = tbsw.Processor(name="StripCogHitMaker",proctype="CogHitMaker")
-  striphitmaker.param("ClusterCollection","zscluster_strip")
-  striphitmaker.param("HitCollectionName","hit_strip")
-  striphitmaker.param("SigmaUCorrections", "0.8 0.4 0.3")  
-  striphitmaker.param("SigmaVCorrections", "1.0 1.0 1.0")
-  path.add_processor(striphitmaker)   
+  stripid6hitmaker = tbsw.Processor(name="StripID6CogHitMaker",proctype="CogHitMaker")
+  stripid6hitmaker.param("ClusterCollection","zscluster_stripid6")
+  stripid6hitmaker.param("HitCollectionName","hit_stripid6")
+  stripid6hitmaker.param("SigmaUCorrections", "0.8 0.4 0.3")  
+  stripid6hitmaker.param("SigmaVCorrections", "1.0 1.0 1.0")
+  path.add_processor(stripid6hitmaker)   
+
+  stripid7hitmaker = tbsw.Processor(name="StripID7CogHitMaker",proctype="CogHitMaker")
+  stripid7hitmaker.param("ClusterCollection","zscluster_stripid7")
+  stripid7hitmaker.param("HitCollectionName","hit_stripid7")
+  stripid7hitmaker.param("SigmaUCorrections", "0.8 0.4 0.3")  
+  stripid7hitmaker.param("SigmaVCorrections", "1.0 1.0 1.0")
+  path.add_processor(stripid7hitmaker)   
   
   return path
 
@@ -97,10 +121,13 @@ def add_hitmakersDB(path):
   m26goehitmaker.param("ClusterCollection","zscluster_m26")
   m26goehitmaker.param("HitCollectionName","hit_m26")
   m26goehitmaker.param("ClusterDBFileName","localDB/clusterDB-M26.root")
+  m26goehitmaker.param("UseCenterOfGravityFallback","true")
+  m26goehitmaker.param("SigmaUCorrections", "0.698 0.31 0.315")  
+  m26goehitmaker.param("SigmaVCorrections", "0.698 0.31 0.315")
   path.add_processor(m26goehitmaker)  
     
   stripid6goehitmaker = tbsw.Processor(name="StripID6GoeHitMaker",proctype="GoeHitMaker")   
-  stripid6goehitmaker.param("ClusterCollection","zscluster_strip")
+  stripid6goehitmaker.param("ClusterCollection","zscluster_stripid6")
   stripid6goehitmaker.param("HitCollectionName","hit_stripid6")
   stripid6goehitmaker.param("ClusterDBFileName","localDB/clusterDB-StripID6.root")
   stripid6goehitmaker.param("UseCenterOfGravityFallback","true")
@@ -109,7 +136,7 @@ def add_hitmakersDB(path):
   path.add_processor(stripid6goehitmaker)   
 
   stripid7goehitmaker = tbsw.Processor(name="StripID7GoeHitMaker",proctype="GoeHitMaker")   
-  stripid7goehitmaker.param("ClusterCollection","zscluster_strip")
+  stripid7goehitmaker.param("ClusterCollection","zscluster_stripid7")
   stripid7goehitmaker.param("HitCollectionName","hit_stripid7")
   stripid7goehitmaker.param("ClusterDBFileName","localDB/clusterDB-StripID7.root")
   stripid7goehitmaker.param("UseCenterOfGravityFallback","true")
@@ -126,20 +153,20 @@ def add_clustercalibrators(path):
   
   m26clustdb = tbsw.Processor(name="M26ClusterCalibrator",proctype="GoeClusterCalibrator")   
   m26clustdb.param("ClusterDBFileName","localDB/clusterDB-M26.root")  
-  m26clustdb.param("MinClusters","200")
+  m26clustdb.param("MinClusters","1000")
   m26clustdb.param("IgnoreIDs","6 7 21")
   path.add_processor(m26clustdb)  
    
   stripid6clustdb = tbsw.Processor(name="StripID6ClusterCalibrator",proctype="GoeClusterCalibrator")   
   stripid6clustdb.param("ClusterDBFileName","localDB/clusterDB-StripID6.root")  
-  stripid6clustdb.param("MinClusters","200")
+  stripid6clustdb.param("MinClusters","500")
   stripid6clustdb.param("IgnoreIDs","0 1 2 3 4 5 7")
   stripid6clustdb.param("MaxEtaBins","7")
   path.add_processor(stripid6clustdb)  
 
   stripid7clustdb = tbsw.Processor(name="StripID7ClusterCalibrator",proctype="GoeClusterCalibrator")   
   stripid7clustdb.param("ClusterDBFileName","localDB/clusterDB-StripID7.root")  
-  stripid7clustdb.param("MinClusters","200")
+  stripid7clustdb.param("MinClusters","500")
   stripid7clustdb.param("IgnoreIDs","0 1 2 3 4 5 6")
   stripid7clustdb.param("MaxEtaBins","7")
   path.add_processor(stripid7clustdb)  
@@ -179,12 +206,19 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB):
   m26hotpixelkiller.param("OfflineZSThreshold", 0)
   mask_path.add_processor(m26hotpixelkiller)
 
-  striphotpixelkiller = tbsw.Processor(name="StripHotPixelKiller",proctype="HotPixelKiller")
-  striphotpixelkiller.param("InputCollectionName", "zsdata_strip")
-  striphotpixelkiller.param("MaxOccupancy", 0.5)
-  striphotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-Strip.root")
-  striphotpixelkiller.param("OfflineZSThreshold", 0)
-  mask_path.add_processor(striphotpixelkiller)
+  stripid6hotpixelkiller = tbsw.Processor(name="StripID6HotPixelKiller",proctype="HotPixelKiller")
+  stripid6hotpixelkiller.param("InputCollectionName", "zsdata_stripid6")
+  stripid6hotpixelkiller.param("MaxOccupancy", 0.5)
+  stripid6hotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-StripID6.root")
+  stripid6hotpixelkiller.param("OfflineZSThreshold", 0)
+  mask_path.add_processor(stripid6hotpixelkiller)
+
+  stripid7hotpixelkiller = tbsw.Processor(name="StripID7HotPixelKiller",proctype="HotPixelKiller")
+  stripid7hotpixelkiller.param("InputCollectionName", "zsdata_stripid7")
+  stripid7hotpixelkiller.param("MaxOccupancy", 0.5)
+  stripid7hotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-StripID7.root")
+  stripid7hotpixelkiller.param("OfflineZSThreshold", 0)
+  mask_path.add_processor(stripid7hotpixelkiller)
   
   # Add path for masking
   calpaths.append(mask_path)   
@@ -212,12 +246,12 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB):
   correlator_path = add_hitmakers(correlator_path) 
   
   hitdqm = tbsw.Processor(name="RawDQM",proctype="RawHitDQM")
-  hitdqm.param("InputHitCollectionNameVec","hit_m26 hit_strip")  
+  hitdqm.param("InputHitCollectionNameVec","hit_m26 hit_stripid6 hit_stripid7")  
   hitdqm.param("RootFileName","RawDQM.root")
   correlator_path.add_processor(hitdqm)  
    
   correlator = tbsw.Processor(name="TelCorrelator", proctype="Correlator")
-  correlator.param("InputHitCollectionNameVec","hit_m26 hit_strip")
+  correlator.param("InputHitCollectionNameVec","hit_m26 hit_stripid6 hit_stripid7")
   correlator.param("OutputRootFileName","XCorrelator.root")
   correlator.param("ReferencePlane","0")
   correlator.param("ParticleCharge","-1")
@@ -235,7 +269,7 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB):
   prealigner_path = add_hitmakers(prealigner_path)
    
   trackfinder_loosecut = tbsw.Processor(name="AlignTF_LC",proctype="FastTracker")
-  trackfinder_loosecut.param("InputHitCollectionNameVec","hit_m26 hit_strip")
+  trackfinder_loosecut.param("InputHitCollectionNameVec","hit_m26 hit_stripid6 hit_stripid7")
   trackfinder_loosecut.param("ExcludeDetector", "")
   trackfinder_loosecut.param("MaxTrackChi2", 10000000)
   trackfinder_loosecut.param("MaximumGap", 1)
@@ -268,7 +302,7 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB):
   aligner_path = add_hitmakers(aligner_path)
   
   trackfinder_tightcut = tbsw.Processor(name="AlignTF_TC",proctype="FastTracker")
-  trackfinder_tightcut.param("InputHitCollectionNameVec","hit_m26 hit_strip")
+  trackfinder_tightcut.param("InputHitCollectionNameVec","hit_m26 hit_stripid6 hit_stripid7")
   trackfinder_tightcut.param("ExcludeDetector", "")
   trackfinder_tightcut.param("MaxTrackChi2", 100)
   trackfinder_tightcut.param("MaximumGap", 1)
@@ -413,17 +447,9 @@ def create_reco_path(Env, rawfile, gearfile, energy, useClusterDB):
   trackfinder.param("MaxResidualU","0.4")
   trackfinder.param("MaxResidualV","0.4")
   reco_path.add_processor(trackfinder)  
-
-  if useClusterDB: 
-    hit_collection_id6 = "hit_stripid6"
-    hit_collection_id7 = "hit_stripid7"
-  else: 
-    hit_collection_id6 = "hit_strip"
-    hit_collection_id7 = "hit_strip" 
-    
-
+  
   stripid6_analyzer = tbsw.Processor(name="StripID6Analyzer",proctype="PixelDUTAnalyzer")
-  stripid6_analyzer.param("HitCollection",hit_collection_id6)  
+  stripid6_analyzer.param("HitCollection","hit_stripid6")  
   stripid6_analyzer.param("DUTPlane","3")
   stripid6_analyzer.param("MaxResidualU","0.2")
   stripid6_analyzer.param("MaxResidualV","-1")
@@ -431,7 +457,7 @@ def create_reco_path(Env, rawfile, gearfile, energy, useClusterDB):
   reco_path.add_processor(stripid6_analyzer)    
   
   stripid7_analyzer = tbsw.Processor(name="StripID7Analyzer",proctype="PixelDUTAnalyzer")
-  stripid7_analyzer.param("HitCollection",hit_collection_id7)  
+  stripid7_analyzer.param("HitCollection","hit_stripid7")  
   stripid7_analyzer.param("DUTPlane","4")
   stripid7_analyzer.param("MaxResidualU","0.2")
   stripid7_analyzer.param("MaxResidualV","-1")
@@ -478,7 +504,7 @@ if __name__ == '__main__':
   parser.add_argument('--energy', dest='energy', default=4.6, type=float, help='Beam energy in GeV')
   parser.add_argument('--steerfiles', dest='steerfiles', default='steering-files/luise-tb/', type=str, help='Path to steerfiles')
   parser.add_argument('--caltag', dest='caltag', default='', type=str, help='Name of calibration tag to use')
-  parser.add_argument('--useClusterDB', dest='use_cluster_db', default=False, type=bool, help="Use cluster database")
+  parser.add_argument('--useClusterDB', dest='use_cluster_db', default=True, type=bool, help="Use cluster database")
   parser.add_argument('--skipCalibration', dest='skip_calibration', default=False, type=bool, help="Skip creating a new calibration tag")
   parser.add_argument('--skipReconstruction', dest='skip_reco', default=False, type=bool, help="Skip reconstruction of run")
   parser.add_argument('--profile', dest='profile', action='store_true', help="profile execution time")
