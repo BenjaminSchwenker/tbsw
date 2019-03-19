@@ -113,6 +113,7 @@ def add_M26hitmaker(path, hitmakertype):
     m26goehitmaker.param("ClusterCollection","zscluster_m26")
     m26goehitmaker.param("HitCollectionName","hit_m26")
     m26goehitmaker.param("ClusterDBFileName","localDB/clusterDB-M26.root")
+    m26goehitmaker.param("UseCenterOfGravityFallback","false")
     path.add_processor(m26goehitmaker)  
   else:
     m26coghitmaker = tbsw.Processor(name="M26CogHitMaker",proctype="CogHitMaker")
