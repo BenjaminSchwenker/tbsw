@@ -6,7 +6,7 @@ The installation procedure is tested on ubuntu 16.04. The requirements for an in
 
 # Prerequisites 
 
-Make sure the following packages are installed on your local machine before you try to install TBSW. 
+Make sure the following packages are installed on your local machine before you try to install tbsw. 
 
 # Cmake 
 
@@ -72,7 +72,7 @@ $ root
 
 # TBSW   
  
-You can get the TBSW source code from a puplic git repository at bitbucket.
+You can get the tbsw source code from a puplic git repository at bitbucket.
 
 ```
 $ git clone https://BenjaminSchwenker@bitbucket.org/BenjaminSchwenker/tbsw.git
@@ -113,7 +113,7 @@ The script init_tbsw.sh sets all needed environment variables. The script tbsw_e
 
 ```
 $ . init_tbsw.sh 
-$ python tbsw_example.py
+$ python example.py
 ```
 
 # INSTALL test beam software on Scientific Linux 7

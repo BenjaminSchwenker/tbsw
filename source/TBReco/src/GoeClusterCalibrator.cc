@@ -315,7 +315,7 @@ namespace depfet {
     double thetaV = _trackDvDwHisto->GetMean();
     
     streamlog_out(MESSAGE3) << std::setprecision(5)
-                            << "Average telescope sigmaU=" << sqrt(trk_covU) << ", sigmaV=" << sqrt(trk_covV) << ", rho=" << trk_covUV/sqrt(trk_covU)/sqrt(trk_covV)  << endl
+                            << "Average telescope sigmaU=" << sqrt(trk_covU) << ", sigmaV=" << sqrt(trk_covV) << endl
                             << "Average track incidence angles on DUT are du/dw=" << thetaU  << ", dvdw=" << thetaV  << endl;
 
     // Enumerate all types by unique name and count their
@@ -492,6 +492,11 @@ namespace depfet {
       streamlog_out(MESSAGE3) << "Truncated track sigmaV is  " << sqrt(trk_covV)  << std::endl;  
     }  
     
+    // Close collector file
+    _rootCollectorOutputFile->Write();
+    _rootCollectorOutputFile->Close();
+    delete _rootCollectorOutputFile;   
+    
     if (nShapes > 0) {
       
       streamlog_out(MESSAGE3) << "Create the clusterDB ... " << endl; 
@@ -658,10 +663,6 @@ namespace depfet {
       _rootClusterDBFile->Close();
       delete _rootClusterDBFile;
       
-      // Close collector file
-      _rootCollectorOutputFile->Write();
-      _rootCollectorOutputFile->Close();
-      delete _rootCollectorOutputFile;   
     }
   }
   
