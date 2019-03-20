@@ -512,8 +512,8 @@ bool PixelClusterizer::areNeighbours( FloatVec &group, int col, int row, int pla
            
     int col1 = static_cast<int> (group[index * 3]);
     int row1 = static_cast<int> (group[index * 3 + 1]);
-
-    return TBDetector::Get(planeNumber).areNeighbors(row1, col1, row, col);                  
+ 
+    if(TBDetector::Get(planeNumber).areNeighbors(row1, col1, row, col)) return true;               
   }
     
   return false;
