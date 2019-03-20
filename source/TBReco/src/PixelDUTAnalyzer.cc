@@ -187,7 +187,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
   
   // Configure Kalman track fitter
   GenericTrackFitter TrackFitter(_detector);
-  TrackFitter.SetNumIterations(2); 
+  TrackFitter.SetNumIterations(1); 
      
   // Load DUT module    
   Det & dut = _detector.GetDet(_idut);   
@@ -315,8 +315,8 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
       streamlog_out ( MESSAGE3 ) << "Track has already hit on dut plane. Danger to bias final results" << endl;
     } 
     
-    // Refit track in nominal alignment
-    bool trkerr = TrackFitter.Fit(trk);
+    // Refit track in current alignment. Restrict smoothing to DUT plane.
+    bool trkerr = TrackFitter.Fit(trk, _idut);
     if ( trkerr ) {
       streamlog_out ( MESSAGE3 ) << "Fit failed. Skipping track!" << endl;
       continue;

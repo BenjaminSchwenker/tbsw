@@ -160,7 +160,7 @@ namespace depfet {
 
     // Configure Kalman track fitter
     GenericTrackFitter TrackFitter(_detector);
-    TrackFitter.SetNumIterations(2); 
+    TrackFitter.SetNumIterations(1); 
     
     TrackInputProvider TrackLCIOReader;  
     

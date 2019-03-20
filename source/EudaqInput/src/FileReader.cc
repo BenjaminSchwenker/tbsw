@@ -28,6 +28,7 @@ namespace eudaqinput {
       }
       return true;
     }
+    return true;
   }
   
   FileReader::FileReader(const std::string & file, const std::string & filepattern, bool synctriggerid)

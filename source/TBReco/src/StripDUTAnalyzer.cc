@@ -167,7 +167,7 @@ void StripDUTAnalyzer::processEvent(LCEvent * evt)
   
   // Configure Kalman track fitter
   GenericTrackFitter TrackFitter(_detector);
-  TrackFitter.SetNumIterations(2); 
+  TrackFitter.SetNumIterations(1); 
      
   // Load DUT module    
   Det & dut = _detector.GetDet(_idut);   

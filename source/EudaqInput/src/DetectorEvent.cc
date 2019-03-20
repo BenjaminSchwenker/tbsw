@@ -54,6 +54,7 @@ namespace eudaqinput {
       }
     }
     std::cout << "DetectorEvent::GetRawSubEvent: could not find " << subtype << ":" << to_string(n) << std::endl;  
+    throw std::out_of_range("DetectorEvent::GetRawSubEvent: could not find subtype in raw event");
   }
 
 }

@@ -128,7 +128,7 @@ void TrackFitDQM::processEvent(LCEvent * evt)
   TrackInputProvider TrackIO; 
   
   GenericTrackFitter TrackFitter(_detector);
-  TrackFitter.SetNumIterations(2); 
+  TrackFitter.SetNumIterations(1); 
    
   LCCollection* inputCollection;
   try {

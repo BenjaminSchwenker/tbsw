@@ -462,11 +462,11 @@ void ProcessorMgr::end(){
     //    for( ProcessorList::iterator it = _list.begin() ; it != _list.end() ; ++it ) {
     //      TimeMap::iterator itT = tMap.find( *it ) ;
 
-    // sort procs wrt processing time :
+    // do not sort procs wrt processing time :
     typedef std::list< TimeMap::value_type > TMList  ;
     TMList l ;
     std::copy(  tMap.begin() , tMap.end() , std::back_inserter( l ) )  ;
-    l.sort( Cmp() ) ;
+    //l.sort( Cmp() ) ;
     
     double tTotal = 0.0 ;
     int evtTotal = 0 ;
@@ -476,9 +476,10 @@ void ProcessorMgr::end(){
         // fg: this does not work  w/ streamlog !?
         //      streamlog_out(MESSAGE) << std::ios_base::left << std::setw(30)  <<  (*it)->name() ;
         // copy string to fixed size char* ->
-        char cName[40] = "                                     "  ;
+
+        char cName[40] = "                           ";
         const std::string& sName = itT->first->name()  ;
-        unsigned nChar = ( sName.size() > 30 ?  30 : sName.size() )  ;
+        unsigned nChar = ( sName.size() > 25 ?  25 : sName.size() )  ;
         for(unsigned  i=0 ; i< nChar ; i++ ) {
             cName[i] = sName[i] ;
         }
@@ -494,13 +495,13 @@ void ProcessorMgr::end(){
             evtTotal = evtProc ;
 
         streamlog_out(MESSAGE3)  <<  cName
-                                  <<  std::setw(12)   <<std::setprecision (3)  <<tProc  << " s in "
-                                   <<  std::setw(12) << evtProc << " events  ==> " ;
+                                  <<  std::setw(10)   <<std::setprecision (3)  <<tProc  << " s in "
+                                   <<  std::setw(10) << evtProc << " events  ==> " ;
 
         if( evtProc > 0 ){
-            streamlog_out(MESSAGE3)  <<  std::setw(12)<<std::setprecision (6)   << 1000.*tProc / evtProc << " [ ms/evt.] "  ;
+            streamlog_out(MESSAGE3)  <<  std::setw(10) <<std::setprecision (6)   << 1000.*tProc / evtProc << " [ ms/evt.] "  ;
         }else{
-            streamlog_out(MESSAGE3)  <<  std::setw(12)   << "NaN"  << " [ s/evt.] "  ;
+            streamlog_out(MESSAGE3)  <<  std::setw(10)   << "NaN"  << " [ s/evt.] "  ;
         }
         streamlog_out(MESSAGE3)  <<  std::endl ;
 
@@ -509,29 +510,29 @@ void ProcessorMgr::end(){
     _time_startup=_time_startup/ double(CLOCKS_PER_SEC);
     tTotal+=_time_outsideProcessors;
     streamlog_out(MESSAGE3)  <<  "Time spent outside processor         "
-                              <<  std::setw(12)    <<std::setprecision (3) << _time_outsideProcessors << " s in "
-                               <<  std::setw(12) << evtTotal << " events  ==> " ;
+                              <<  std::setw(10)    <<std::setprecision (3) << _time_outsideProcessors << " s in "
+                               <<  std::setw(10) << evtTotal << " events  ==> " ;
     if( evtTotal > 0 ){
-        streamlog_out(MESSAGE3)  <<  std::setw(12)<<std::setprecision (6) << 1000.*_time_outsideProcessors / evtTotal << " [ ms/evt.] "  ;
+        streamlog_out(MESSAGE3)  <<  std::setw(10) <<std::setprecision (6) << 1000.*_time_outsideProcessors / evtTotal << " [ ms/evt.] "  ;
     }else{
-        streamlog_out(MESSAGE3)  <<  std::setw(12)   << "NaN"  << " [ s/evt.] "  ;
+        streamlog_out(MESSAGE3)  <<  std::setw(10)   << "NaN"  << " [ s/evt.] "  ;
     }
     streamlog_out(MESSAGE3)  <<  std::endl ;
     streamlog_out(MESSAGE3)  <<  "Time for startup                     "
-                              <<  std::setw(12)    <<std::setprecision (3) << _time_startup <<  std::endl ;
+                              <<  std::setw(10)    <<std::setprecision (3) << _time_startup <<  std::endl ;
 
     _time_end=double(clock()-end_t)/ double(CLOCKS_PER_SEC);
     streamlog_out(MESSAGE3)  <<  "Time spent in end()                  "
-                              <<  std::setw(12)   <<std::setprecision (3)  << _time_end << std::endl;
+                              <<  std::setw(10)   <<std::setprecision (3)  << _time_end << std::endl;
 
 
     streamlog_out(MESSAGE3)  <<  "            Total:                   "
-                              <<  std::setw(12)   <<std::setprecision (3)  << tTotal << " s in "
-                               <<  std::setw(12) << evtTotal << " events  ==> " ;
+                              <<  std::setw(10)   <<std::setprecision (3)  << tTotal << " s in "
+                               <<  std::setw(10) << evtTotal << " events  ==> " ;
     if( evtTotal > 0 ){
-        streamlog_out(MESSAGE3)  <<  std::setw(12)<<std::setprecision (6) << 1000.*tTotal / evtTotal << " [ ms/evt.] "  ;
+        streamlog_out(MESSAGE3)  <<  std::setw(10) <<std::setprecision (6) << 1000.*tTotal / evtTotal << " [ ms/evt.] "  ;
     }else{
-        streamlog_out(MESSAGE3)  <<  std::setw(12)   << "NaN"  << " [ s/evt.] "  ;
+        streamlog_out(MESSAGE3)  <<  std::setw(10)   << "NaN"  << " [ s/evt.] "  ;
     }
     streamlog_out(MESSAGE3)  <<  std::endl ;
     

@@ -847,17 +847,23 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
         // Try to compute the predicted hit chi2. This involves a matrix 
         // inversion and may fail -> returns chi2<0.         
         TBHit& BestHit = HitStore.GetRecoHitFromID(besthitid, ipl);
-        double hitchi2 = TrackFitter.GetPredictedChi2(x, C0, BestHit);
+        double hitchi2 = TrackFitter.FilterHit(BestHit, xref, x0, C0); 
          
         if ( hitchi2 < _outlierChi2Cut && hitchi2 >= 0  ) {
           // Add closest hit to candidate track
-          TrackFitter.FilterHit(BestHit, xref, x0, C0);
           BestHit.SetUniqueID(besthitid);             
           trk.GetTE(ipl).SetHit(BestHit);               
           // Some bookkeeping   
           finderChi2 += hitchi2; 
           nhits++;  
           ngap = 0;
+        } else {
+          // Failed to add best matching hit 
+          ngap++;    
+          if( ngap > _maxGap ) {
+            streamlog_out(MESSAGE1) << "Too many missing hits. Skip seed track! " << endl;  
+            return;       
+          }         
         }          
       } else {
         // No matching hit found on this sensor
