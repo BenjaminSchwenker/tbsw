@@ -289,12 +289,12 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		chi2min=numeric_limits<double >::max();
 
 		  
-		for(int iup=0;iup<(int)upTrackStore.size(); iup++)
+		for(size_t iup=0;iup< upTrackStore.size(); iup++)
 		{
 		  // Get upstream track
 		  TBTrack& uptrack = upTrackStore[iup];
 		      
-		  for(int idown=0; idown< (int)downTrackStore.size() ; idown++)
+		  for(size_t idown=0; idown< downTrackStore.size() ; idown++)
 		  {
 
 		    // If downtrack matched to some uptrack, skip downtrack
@@ -312,7 +312,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 
 			// Additionally add any downstream tracks, which have already been sucessfully matched with this upstream track
 			// This ensures that all matched downstream tracks really come from the same vertex
-			for(int n=0;n<up2down[iup].size();n++) Vertex.AddTrackState(downTrackStore[up2down[iup][n]].GetTE(_idut).GetState());
+			for(size_t n=0;n<up2down[iup].size();n++) Vertex.AddTrackState(downTrackStore[up2down[iup][n]].GetTE(_idut).GetState());
 
 			// Add current downstream track state to vertex
 			Vertex.AddTrackState(downtrack.GetTE(_idut).GetState());
@@ -362,7 +362,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     
     distmin=numeric_limits<double >::max();
       
-    for(int iup=0;iup<(int)upTrackStore.size(); iup++)
+    for(size_t iup=0;iup<upTrackStore.size(); iup++)
     {
             
       // if ( up2down[iup].size() > 0 ) continue;    
@@ -447,10 +447,13 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 	{
 		Vertex.AddTrackState(downTrackStore[up2down[iup][idown]].GetTE(_idut).GetState());
 	}
-
+    
 	// Calculate vertex parameters
 	// In case the vertex multiplicity is larger than 1, these values will be set for every upstream downstream track combination 
 	bool vfiterr = VertexFitter.FitVertex(Vertex);
+    if (vfiterr) {
+      streamlog_out(MESSAGE3) << "Vertex fit failed." << endl;   
+    }
 	auto vertexpos = Vertex.GetPos();
 	auto vertexcov = Vertex.GetCov();
 	auto vertexglobalpos = Vertex.GetGlobalPos();
@@ -491,8 +494,8 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		//Here we use the In and Out State and the GetScatterKinks function of the TBKalmanMSC Class
 		
 		//Angles and angle errors
-		auto theta = TrackFitterMSC.GetScatterKinks(dut, InState, OutState); 
-		auto Cov = TrackFitterMSC.GetScatterKinkCov(dut, InState, OutState);
+		auto theta = TrackFitterMSC.GetScatterKinks(InState, OutState); 
+		auto Cov = TrackFitterMSC.GetScatterKinkCov(InState, OutState);
 		
 		// Get the track parameters of the fitted track on the current sensor
 		// The u and v positions are needed for a position-resolved measurement
@@ -584,7 +587,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		  outstate_toy.Pars=toystate;
 
 		  // Calculate scattering angles from
-		  theta = TrackFitterMSC.GetScatterKinks(dut, InState, outstate_toy); 
+		  theta = TrackFitterMSC.GetScatterKinks(InState, outstate_toy); 
 
 		  double reco_error1;
 		  double reco_error2;
