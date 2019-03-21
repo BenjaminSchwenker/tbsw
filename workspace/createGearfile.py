@@ -22,8 +22,7 @@
         return: No return, all created elements are written to file directly
         Elements: name is 'pixel'
                   attributes = {"type": "0",  # global type of the pixel
-                                "u": , "v",   # column, row coordinates of the pixel, pixel address in raw data
-                                "adjacent": , # list of u, v addresses that are considered adjacent to the pixel, comma seperated u v value pares that are separated by whitespaces: "u0 v0, u1 v1, ..."
+                                "u": , "v",   # column, row coordinates of the pixel, pixel address in raw data, or pseudo coordinates but then a conversion processor needs to be used when reading in the raw data
                                 "centreu": ,  # centre coordinate u of pixel in mm, collection point of the charges, assigned hit position in calibration and reconstruction 
                                 "centrev": ,  # centre coordinate v of pixel in mm
                                }
@@ -39,7 +38,41 @@
 import xml.etree.ElementTree as ET
 from copy import deepcopy 
 import os
+import array
 
+from ROOT import TFile, TGraph, TH2Poly
+
+# pixel prototypes
+protoFEI4 = dict(type="0", distu="0.3", distv="0.01", points="-0.125 -0.025, -0.125 0.025, 0.125 0.025, 0.125 -0.025")
+
+protoRect = dict(type="1", distu="0.14", distv="0.12", points="-0.0625 -0.05, -0.0625 0.05, 0.0625 0.05, 0.0625 -0.05")
+
+protoRectHalf = dict(type="2", distu="0.1", distv="0.12", points="-0.03125 -0.05, -0.03125 0.05, 0.03125 0.05, 0.03125 -0.05")
+
+protoRectHalfHalf = dict(type="8", distu="0.1", distv="0.12", points="-0.03125 -0.025, -0.03125 0.025, 0.03125 0.025, 0.03125 -0.025")
+
+protoHex = dict(type="3", distu="0.14", distv="0.12", points="0.0 -0.0666, -0.0569 -0.0333, -0.0569 0.0333, 0.0 0.0666, 0.0569 0.0333, 0.0569 -0.0333")
+
+protoRectHex = dict(type="4", distu="0.162", distv="0.12", points="0.0 -0.0666, -0.0793 -0.0666, -0.0793 0.0666, 0.0 0.0666, 0.0569 0.0333, 0.0569 -0.0333")
+
+protoRectHexFlipped = dict(type="9", distu="0.162", distv="0.12", points="0.0 -0.0666, -0.0569 -0.0333, -0.0569 0.0333, 0.0 0.0666, 0.0793 0.0666, 0.0793 -0.0666")
+
+protoHexRectSmall = dict(type="5", distu="0.1", distv="0.12", points="-0.03965 -0.0333, -0.03965 0.0333, 0.03965 0.0333, 0.03965 -0.0333")
+
+protoHexCut = dict(type="6", distu="0.14", distv="0.12", points="-0.0569 0.05833, -0.0569 -0.0333, 0.0 0.0666, 0.0569 -0.0333, 0.0569 0.05833")
+
+protoHexRectLastRows = dict(type="7", distu="0.1", distv="0.1", points="-0.03965 -0.022915, -0.03965 0.022915, 0.03965 0.022915, 0.03965 -0.022915")
+
+protoFEI4points = [[-0.125, -0.025],[-0.125, 0.025], [0.125, 0.025], [0.125, -0.025]]
+protoRectpoints = [[-0.0625, -0.05], [-0.0625, 0.05], [0.0625, 0.05], [0.0625, -0.05]]
+protoRectHalfpoints = [[-0.03125, -0.05], [-0.03125, 0.05], [0.03125, 0.05], [0.03125, -0.05]]
+protoRectHalfHalfpoints = [[-0.03125, -0.025], [-0.03125, 0.025], [0.03125, 0.025], [0.03125, -0.025]]
+protoHexpoints = [[0.0, -0.0666], [-0.0569, -0.0333], [-0.0569, 0.0333], [0.0, 0.0666], [0.0569, 0.0333], [0.0569, -0.0333]]
+protoRectHexpoints = [[0.0, -0.0666], [-0.0793, -0.0666], [-0.0793, 0.0666], [0.0, 0.0666], [0.0569, 0.0333], [0.0569, -0.0333]]
+protoRectHexFlippedpoints = [[0.0, -0.0666], [-0.0569, -0.0333], [-0.0569, 0.0333], [0.0, 0.0666], [0.0793, 0.0666], [0.0793, -0.0666]]
+protoHexRectSmallpoints = [[-0.03965, -0.0333], [-0.03965, 0.0333], [0.03965, 0.0333], [0.03965, -0.0333]]
+protoHexCutpoints = [[-0.0569, 0.05833], [-0.0569, -0.0333], [0.0, -0.0666], [0.0569, -0.0333], [0.0569, 0.05833]]
+protoHexRectLastRowpoints = [[-0.03965, -0.022915], [-0.03965, 0.022915], [0.03965, 0.022915], [0.03965, -0.022915]]
 
 def createPixelM26(self):
   pixelList = []
@@ -48,35 +81,304 @@ def createPixelM26(self):
   npixelsU = 1151
   npixelsV = 575
   basepoints = self.basePointListList[0]
+  npoints = len(basepoints)
+  pitch = 0.0184
+  shiftu = -0.5*npixelsU*pitch+0.5*pitch # 0.5 pitch because prototype has centre at 0|0 so need to correct for the half pitch to centre the whole layout at 0|0
+  shiftv = -0.5*npixelsV*pitch+0.5*pitch
   count = 0
   for i in range(npixelsU):
     for j in range(npixelsV):
       attributes["u"] = str(i)
       attributes["v"] = str(j)
      
-      npoints = len(basepoints)
-      pitch = 0.0184
-      shiftu = -0.5*npixelsU*pitch+0.5*pitch # 0.5 pitch because prototype has centre at 0|0 so need to correct for the half pitch to centre the whole layout at 0|0
-      shiftv = -0.5*npixelsV*pitch+0.5*pitch
       centreu = pitch*i+shiftu 
       centrev = pitch*j+shiftv 
-      adjacentstring = ""
-      for adju in range(i-1, i+2):
-        if adju < 0 or adju > npixelsU:
-          continue
-        for adjv in range(j-1, j+2):
-          if adjv < 0 or adjv > npixelsV:
-            continue
-          if adju == i and adjv == j:
-            continue
-          adjacentstring += "{} {}, ".format(adju, adjv)
-
-      attributes["adjacent"] = adjacentstring
       attributes["centreu"] = str(centreu)
       attributes["centrev"] = str(centrev)
       pixelList.append(ET.Element('pixel', attributes))
       count += 1
       if count == 1000 or (i == npixelsU-1 and j == npixelsV-1):
+        with open(self.xmloutfile, "a") as f:
+          for element in pixelList:
+            f.write(ET.tostring(element))
+          f.flush()
+          os.fsync(f.fileno())
+        pixelList[:] = []
+        count = 0
+
+# creates the pixel layout for a mixture of rectangular and hexagonal pixel used by H. C. Beck
+def createPixel2Ddiamond(self):
+   
+  createFEI42DDiamond(self)
+  createRect2DDiamond(self)
+  createHex2DDiamond(self)
+
+
+def createFEI42DDiamond(self):
+  pixelList = []
+  attribute = {}
+  attribute["type"] = "0"
+  layoutStartX = 61 
+  layoutEndX = 78
+  layoutStartY = 0
+  layoutEndY = 92
+  metalStartX = 64
+  metalEndX = 76
+  metalStartY = 12#13
+  metalEndY = 76
+  pitchx = 0.25
+  pitchy = 0.05
+  shiftx = 2.25 #global shift of FEI4 area into the layout: half x size
+  shifty = 2.325 # half y size
+  count = 0
+  for x in range(layoutStartX, layoutEndX+1): # +1 for inclusive
+    for y in range(layoutStartY, layoutEndY+1):
+      if x >= metalStartX and x < metalEndX and y >= metalStartY and y < metalEndY:
+        continue;
+      attribute["u"] = str(x)
+      attribute["v"] = str(y)
+      centeru = 0.5*pitchx + (x-layoutStartX)*pitchx - shiftx
+      centerv = 0.5*pitchy + (y-layoutStartY)*pitchy - shifty
+      attribute["centeru"] = str(centeru)
+      attribute["centerv"] = str(centerv)
+      pixelList.append(ET.Element('pixel', attribute))
+      
+      # test TH2Poly layout
+      gpixel = TGraph(4)
+      gpixel.SetName("{},{}".format(x,y))
+      i = 0
+      for point in protoFEI4points:
+        gpixel.SetPoint(i, point[0]+centeru, point[1]+centerv)
+        i +=1
+      layout.AddBin(gpixel)
+
+      count += 1
+      if count == 500 or (x == layoutEndX and y == layoutEndY):
+        with open(self.xmloutfile, "a") as f:
+          for element in pixelList:
+            f.write(ET.tostring(element))
+          f.flush()
+          os.fsync(f.fileno())
+        pixelList[:] = []
+        count = 0
+
+def createRect2DDiamond(self):
+  pixelList = []
+  attribute = {}
+  
+  count = 0
+  metalStartX = 64
+  metalEndX = 76
+  metalStartY = 12#13
+  hexStartY = 43
+  rectperiod = 4 # 4*0.125 is one 0.5 block
+  pitchx = 0.125
+  pitchy = 0.1
+  shiftx = 1.500 # shift rect area middle to 0,0, is also x middle in total layout
+  shifty = 0.775 + 0.950 # shift rect area middle to 0,0, then shift to total layout middle
+  for x in range(metalStartX, metalEndX):
+    for y in range(metalStartY, hexStartY):
+      attribute["type"] = "1"
+      attribute["u"] = str(x)
+      attribute["v"] = str(y)
+      centeru = 0.0
+      centerv = 0.0
+      # v coordinate first because small rect will shift this a bit but everything else is ok
+      if (y-metalStartY)%2 == 0: # even row, first row later
+        centerv = (y-metalStartY)/2*pitchy - shifty
+      else: #odd row
+        centerv = (y+1-metalStartY)/2*pitchy - shifty
+      
+      # first row is special
+      if y == metalStartY: # first row only metal dot on solder bump no trace -> smallest rectangle
+        attribute["type"] = "8"
+        if (x-metalStartX)%2 == 0: # right column
+          centeru = 0.25*pitchx + rectperiod*pitchx*((x-metalStartX)/2) - shiftx
+        else: # left column
+          centeru = -0.25*pitchx + rectperiod*pitchx*((x+1-metalStartX)/2) - shiftx
+        centerv = 0.25*pitchy - shifty
+      # not first row, normal pixel
+      elif (x-metalStartX)%2 == 0: #right column
+        if (y-metalStartY)%2 == 1: # right column, odd row
+          centeru = pitchx + rectperiod*pitchx*((x-metalStartX)/2) - shiftx
+        elif ((x-metalStartX)/2)%2 == 0: #even right dcolumn, even row
+          centeru = 2.0*pitchx + rectperiod*pitchx*((x-metalStartX)/2) - shiftx
+        else: # odd right dcolumn, even row
+          attribute["type"] = "2" # small rect
+          centeru = 0.25*pitchx + rectperiod*pitchx*((x-metalStartX)/2) - shiftx
+          #centerv += 0.25*pitchy # no shift because center is not in upper or lower half of rectangle
+      else : #left column
+        if ((x+1-metalStartX)/2)%2 == 0: #even left dcolumn
+          if (y-metalStartY)%2 == 1: # even left dcolumn, odd row
+            centeru = -pitchx + rectperiod*pitchx*((x+1-metalStartX)/2) - shiftx
+          else: # second row
+            centeru = -2.0*pitchx + rectperiod*pitchx*((x+1-metalStartX)/2) - shiftx
+        else: # odd left dcolumn
+          if (y-metalStartY)%2 == 1: # odd row, small rect
+            attribute["type"] = "2"
+            centeru = -0.25*pitchx + rectperiod*pitchx*((x+1-metalStartX)/2) - shiftx
+            #centerv -= 0.25*pitchy
+          else: # even row
+            centeru = -pitchx + rectperiod*pitchx*((x+1-metalStartX)/2) - shiftx
+             
+      attribute["centeru"] = str(centeru)
+      attribute["centerv"] = str(centerv)
+      pixelList.append(ET.Element('pixel', attribute))
+
+      gpixel = TGraph(4)
+      gpixel.SetName("{},{}".format(x, y))
+      i = 0
+      if attribute["type"] == "1":
+        for point in protoRectpoints:
+          gpixel.SetPoint(i, point[0]+centeru, point[1]+centerv)
+          i += 1
+      elif attribute["type"] == "2":
+        for point in protoRectHalfpoints:
+          gpixel.SetPoint(i, point[0]+centeru, point[1]+centerv)
+          i += 1
+      elif attribute["type"] == "8":
+        for point in protoRectHalfHalfpoints:
+          gpixel.SetPoint(i, point[0]+centeru, point[1]+centerv)
+          i += 1
+      layout.AddBin(gpixel)
+
+      count += 1
+      if count == 200 or (x == metalEndX-1 and y == hexStartY-1):
+        with open(self.xmloutfile, "a") as f:
+          for element in pixelList:
+            f.write(ET.tostring(element))
+          f.flush()
+          os.fsync(f.fileno())
+        pixelList[:] = []
+        count = 0
+
+def createHex2DDiamond(self):
+  pixelList = []
+  attribute = {}
+  
+  count = 0
+  metalStartX = 64
+  metalEndX = 76
+  hexStartY = 43
+  metalEndY = 76
+  hexperiod = 4
+  periodlengthx = 0.5
+  pitchx = 0.1138
+  pitchy = 0.1333
+  hexRectX = 0.0793
+  lastRowRectY = 0.09166
+  shiftx = 1.500 # same local and total layout middle
+  shifty = 0.825 - 0.675 # already gap of 0.25 between rect and hex calculated
+  for x in range(metalStartX, metalEndX):
+    for y in range(hexStartY, metalEndY):
+      attribute["type"] = "3" # hex, 4 recthex, 5 small rect
+      attribute["u"] = str(x)
+      attribute["v"] = str(y)
+      centeru = 0.0
+      centerv = 0.0
+
+      if (y-hexStartY)%2 == 0: # first row
+        centerv = 0.5*pitchy + 0.75*(y-hexStartY)/2*pitchy - shifty
+      else : # second row
+        centerv = 0.5*pitchy + 0.75*(y-1-hexStartY)/2*pitchy - shifty
+
+      if (x-metalStartX)%2 == 0: # right column
+        if (y-hexStartY)%4 == 0: #first row, hex
+          centeru = hexRectX + pitchx + periodlengthx*(x-metalStartX)/2 - shiftx
+        elif (y-hexStartY)%4 == 1: # second row, recthex
+          attribute["type"] = "4"
+          centeru = hexRectX + periodlengthx*(x-metalStartX)/2 - shiftx
+        elif (y-hexStartY)%4 == 2: # third row, hex
+          centeru = hexRectX + 0.5*pitchx + periodlengthx*(x-metalStartX)/2 - shiftx
+        elif (y-hexStartY)%4 == 3: # forth row
+          if (x-metalStartX)/2%2 == 0: # even right dcolumn, small rect
+            attribute["type"] = "5"
+            centeru = 0.5*hexRectX + periodlengthx*(x-metalStartX)/2 - shiftx
+          else: # odd right dcolumn, hex
+            centeru = hexRectX + 1.5*pitchx + periodlengthx*(x-metalStartX)/2 - shiftx
+      else: # left column
+        if (y-hexStartY)%4 == 0: #first row, hex
+          centeru = -hexRectX - pitchx + periodlengthx*(x+1-metalStartX)/2 - shiftx
+        elif (y-hexStartY)%4 == 1: # second row, recthex
+          attribute["type"] = "9"
+          centeru = -hexRectX + periodlengthx*(x+1-metalStartX)/2 - shiftx
+        elif (y-hexStartY)%4 == 2: # third row, hex
+          centeru = -hexRectX - 0.5*pitchx + periodlengthx*(x+1-metalStartX)/2 - shiftx
+        elif (y-hexStartY)%4 == 3: # forth row
+          if (x+1-metalStartX)/2%2 == 0: # even left dcolumn, small rect
+            attribute["type"] = "5"
+            centeru = -0.5*hexRectX + periodlengthx*(x+1-metalStartX)/2 - shiftx
+          else: # odd left dcolum, hex
+            centeru = -hexRectX - 1.5*pitchx + periodlengthx*(x+1-metalStartX)/2 - shiftx
+      if y == metalEndY-3: # second pixel in last recthex no trace but assign to cut off hex in last row, center ok from general sorting
+        attribute["type"] = "6"
+      elif y == metalEndY-2: # first row in smaller rectangles in last rows
+        attribute["type"] = "7"
+        if (x-metalStartX)%2 == 0: #right column
+          centeru = 0.5*hexRectX + periodlengthx*(x-metalStartX)/2 - shiftx
+        else: # left column
+          centeru = -0.5*hexRectX + periodlengthx*(x+1-metalStartX)/2 - shiftx
+        centerv = centerv - 0.25*pitchy + 0.25*lastRowRectY
+      elif y == metalEndY-1: # last row no metal
+        attribute["type"] = "7"
+        if (x-metalStartX)%2 == 0: #right column
+          centeru = 0.5*hexRectX + periodlengthx*(x-metalStartX)/2 - shiftx
+        else: # left column
+          centeru = -0.5*hexRectX + periodlengthx*(x+1-metalStartX)/2 - shiftx
+        centerv = centerv -(0.75+0.25)*pitchy + 0.75*lastRowRectY # normaly is assigned to next row so substract that and correct for small rect center
+
+      attribute["centeru"] = str(centeru)
+      attribute["centerv"] = str(centerv)
+      pixelList.append(ET.Element('pixel', attribute))
+
+      
+      i = 0
+      if attribute["type"] == "3":
+        gpixel = TGraph(6)
+        gpixel.SetName("{},{}".format(x, y))
+        for point in protoHexpoints:
+          gpixel.SetPoint(i, point[0]+centeru, point[1]+centerv)
+          i += 1
+        layout.AddBin(gpixel)
+      elif attribute["type"] == "4":
+        gpixel = TGraph(6)
+        gpixel.SetName("{},{}".format(x, y))
+        for point in protoRectHexpoints:
+          gpixel.SetPoint(i, point[0]+centeru, point[1]+centerv)
+          i += 1
+        layout.AddBin(gpixel)
+      elif attribute["type"] == "9":
+        gpixel = TGraph(6)
+        gpixel.SetName("{},{}".format(x, y))
+        for point in protoRectHexFlippedpoints:
+          gpixel.SetPoint(i, point[0]+centeru, point[1]+centerv)
+          i += 1
+        layout.AddBin(gpixel)
+      elif attribute["type"] == "5":
+        gpixel = TGraph(4)
+        gpixel.SetName("{},{}".format(x, y))
+        for point in protoHexRectSmallpoints:
+          gpixel.SetPoint(i, point[0]+centeru, point[1]+centerv)
+          i += 1
+        layout.AddBin(gpixel)
+      elif attribute["type"] == "6":
+        gpixel = TGraph(5)
+        gpixel.SetName("{},{}".format(x, y))
+        for point in protoHexCutpoints:
+          gpixel.SetPoint(i, point[0]+centeru, point[1]+centerv)
+          i += 1
+        layout.AddBin(gpixel)
+      elif attribute["type"] == "7":
+        gpixel = TGraph(4)
+        gpixel.SetName("{},{}".format(x, y))
+        for point in protoHexRectLastRowpoints:
+          gpixel.SetPoint(i, point[0]+centeru, point[1]+centerv)
+          i += 1
+        layout.AddBin(gpixel)
+      
+
+      count += 1
+      if count == 200 or (x == metalEndX-1 and y == metalEndY-1):
         with open(self.xmloutfile, "a") as f:
           for element in pixelList:
             f.write(ET.tostring(element))
@@ -116,8 +418,8 @@ class Detector:
   #vCellGroup default 
   vCellGroupdefault = dict(minCell="0", maxCell="575", pitch="0.0184")
 
-  #pixel prototyp
-  protopixdefault = dict(type="0", npoints="4", points="-0.0092 -0.0092, -0.0092 0.0092, 0.0092 0.0092, 0.0092 -0.0092")
+  #pixel prototyp, within dist pixels are counted as neigbouring, default 0.02 a bit larger then 0.0184 pixel pitch
+  protopixdefault = dict(type="0", distu="0.02", distv="0.02", points="-0.0092 -0.0092, -0.0092 0.0092, 0.0092 0.0092, 0.0092 -0.0092")
 
   #pixel matrix
   #createPixel
@@ -294,9 +596,16 @@ class Detector:
       os.fsync(f.fileno())
 
 
-outfile = 'gearTest.xml'
+outfile = 'gear_dia_planar_batch2_alltype.xml'
 
-telPositionZ = [0, 100, 200, 350, 500, 600, 700, 800]
+#batch2 2d dia
+telPositionZ = [0, 150, 300, 653, 743, 898]
+dutPositionZ = [403, 494] # dia, ref
+dutID = [21, 22] #dia, ref
+
+rootoutfile = 'gear_dia_planar_batch2_alltype.root'
+layout = TH2Poly()
+layout.SetName("FullPlanarTest")
 
 def createGearStructure():
   gearTag = ET.Element('gear')
@@ -326,30 +635,46 @@ if __name__ == '__main__':
   spList = []
   uCGpList = []
   vCGpList = []
-  planesNo = 0
-  for i in range(len(telPositionZ)-1):
-    if i != 3:
-      spList.append({"ID":str(planesNo), "positionZ":str(telPositionZ[i])})
-      uCGpList.append({})
-      vCGpList.append({})
-    if i == 3:
-      spList.append({"ID":str(21), "positionZ":str(telPositionZ[i])})
-      uCGpList.append({"minCell":"0", "maxCell":"80", "pitch":"0.25"})
-      vCGpList.append({"minCell":"0", "maxCell":"336", "pitch":"0.05"})
-      planesNo -= 1
-    planesNo += 1
+  for i in range(len(telPositionZ)):
+    spList.append({"ID":str(i), "positionZ":str(telPositionZ[i])})
+    uCGpList.append({})
+    vCGpList.append({})
+
+  spList.append({"ID":str(dutID[1]), "positionZ":str(dutPositionZ[1]), "thickness":"1.0"})
+  uCGpList.append({"minCell":"0", "maxCell":"80", "pitch":"0.25"})
+  vCGpList.append({"minCell":"0", "maxCell":"336", "pitch":"0.05"})
 
   dparams = {"number":"7"}
   detector = Detector(xmloutfile=outfile, sensparamsList=spList, detectorparams=dparams, uCellGroupparamsList=uCGpList, vCellGroupparamsList=vCGpList)
   detector.createDetectorElement()
 
-  # 8th plane in full PolyGear description
-  cpfList = [createPixelM26]
+  # 2D dia plane in full PolyGear description
+  cpfList = [createPixel2Ddiamond]
   dparams = {"geartype":"PolyPlanesParameters", "number":"1"}
-  spList = [{"ID":"7", "positionZ":str(telPositionZ[7])}]
-  #pppList = [[{}]] use default 
-  detector = Detector(xmloutfile=outfile, createPixelfunctionList=cpfList, sensparamsList=spList, detectorparams=dparams)
+  spList = [{"ID":str(dutID[0]), "positionZ":str(dutPositionZ[0]), "thickness":"0.824", "radLength":"121.3068", "atomicNumber":"6", "atomicMass":"12"}]
+  pppList = []
+  ppp = []
+  ppp.append(protoFEI4)
+  ppp.append(protoRect)
+  ppp.append(protoRectHalf)
+  ppp.append(protoHex)
+  ppp.append(protoRectHex)
+  ppp.append(protoHexRectSmall)
+  ppp.append(protoHexCut)
+  ppp.append(protoHexRectLastRows)
+  pppList.append(ppp)
+  detector = Detector(xmloutfile=outfile, createPixelfunctionList=cpfList, sensparamsList=spList, detectorparams=dparams, pixelPrototypeparamsList=pppList)
   detector.createDetectorElement()
+
+  rootfile = TFile(rootoutfile, "RECREATE")
+
+  for x in range(61,79):
+    for y in range(93):
+      layout.Fill("{},{}".format(x,y),1)
+  layout.Draw()
+  layout.Write()
+  rootfile.Write()
+  rootfile.Close()
 
   with open(outfile, "a") as f:
     f.write(gearBaseTags[1])
