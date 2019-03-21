@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# coding: utf8
 """
 Script for processing depfet testbeam November 2018.
 
@@ -7,6 +9,9 @@ Author: Benjamin Schwenker <benjamin.schwenker@phys.uni-goettingen.de>
 import tbsw 
 import os
 
+
+maxRecordNrLong  = -1
+maxRecordNrShort = 200000
 def add_unpackers(path):
   """
   Adds unpackers to the path
@@ -160,14 +165,12 @@ def add_clustercalibrators(path):
   """
   
   m26clustdb = tbsw.Processor(name="M26ClusterCalibrator",proctype="GoeClusterCalibrator")   
-  m26clustdb.param("AlignmentDBFileName","localDB/alignmentDB.root")
   m26clustdb.param("ClusterDBFileName","localDB/clusterDB-M26.root")  
   m26clustdb.param("MinClusters","200")
   m26clustdb.param("IgnoreIDs","6 7 21")
   path.add_processor(m26clustdb)  
     
   pxdclustdb = tbsw.Processor(name="PXDClusterCalibrator",proctype="GoeClusterCalibrator")   
-  pxdclustdb.param("AlignmentDBFileName","localDB/alignmentDB.root")
   pxdclustdb.param("ClusterDBFileName","localDB/clusterDB-PXD.root")  
   pxdclustdb.param("MinClusters","200")
   pxdclustdb.param("MaxEtaBins","7")
@@ -175,7 +178,6 @@ def add_clustercalibrators(path):
   path.add_processor(pxdclustdb)  
     
   h5clustdb = tbsw.Processor(name="H5ClusterCalibrator",proctype="GoeClusterCalibrator")   
-  h5clustdb.param("AlignmentDBFileName","localDB/alignmentDB.root")
   h5clustdb.param("ClusterDBFileName","localDB/clusterDB-H5.root")  
   h5clustdb.param("MinClusters","200")
   h5clustdb.param("IgnoreIDs","0 1 2 3 4 5 6 21")
@@ -183,7 +185,6 @@ def add_clustercalibrators(path):
   path.add_processor(h5clustdb)  
 
   fei4clustdb = tbsw.Processor(name="FEI4ClusterCalibrator",proctype="GoeClusterCalibrator")   
-  fei4clustdb.param("AlignmentDBFileName","localDB/alignmentDB.root")
   fei4clustdb.param("ClusterDBFileName","localDB/clusterDB-FEI4.root")  
   fei4clustdb.param("MinClusters","200")
   fei4clustdb.param("IgnoreIDs","0 1 2 3 4 5 6 7")
@@ -202,11 +203,17 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB, mappin
   
   # Create path for detector level masking of hot channels 
   mask_path = Env.create_path('mask_path')
-  mask_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : -1 })  
+  mask_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : maxRecordNrLong })
   
   rawinput = tbsw.Processor(name="RawInputProcessor",proctype="EudaqInputProcessor")
   rawinput.param('FileNames', rawfile)
   mask_path.add_processor(rawinput)
+  
+  geo = tbsw.Processor(name="Geo",proctype="Geometry")
+  geo.param("AlignmentDBFilePath", "localDB/alignmentDB.root")
+  geo.param("ApplyAlignment", "true")
+  geo.param("OverrideAlignment", "true")
+  mask_path.add_processor(geo)
   
   mask_path = add_unpackers(mask_path)
    
@@ -243,9 +250,10 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB, mappin
 
   # Create path for detector level creation of clusters
   clusterizer_path = Env.create_path('clusterizer_path')
-  clusterizer_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' :  -1}) 
+  clusterizer_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' :  maxRecordNrLong})
   
   clusterizer_path.add_processor(rawinput)  
+  clusterizer_path.add_processor(geo)
   clusterizer_path = add_unpackers(clusterizer_path) 
   clusterizer_path = add_clusterizers(clusterizer_path)    
    
@@ -259,8 +267,8 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB, mappin
   
   # Create path for pre alignmnet and dqm based on hits
   correlator_path = Env.create_path('correlator_path')
-  correlator_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
-  
+  correlator_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : maxRecordNrShort, 'LCIOInputFiles': "tmp.slcio" })
+  correlator_path.add_processor(geo)
   correlator_path = add_hitmakers(correlator_path) 
   
   hitdqm = tbsw.Processor(name="RawDQM",proctype="RawHitDQM")
@@ -270,7 +278,6 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB, mappin
    
   correlator = tbsw.Processor(name="TelCorrelator", proctype="Correlator")
   correlator.param("InputHitCollectionNameVec","hit_m26 hit_fei4 hit_pxd hit_h5")
-  correlator.param("AlignmentDBFileName", "localDB/alignmentDB.root")
   correlator.param("OutputRootFileName","XCorrelator.root")
   correlator.param("ReferencePlane","0")
   correlator.param("ParticleCharge","-1")
@@ -283,13 +290,12 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB, mappin
   
   # Create path for pre alignment with loose cut track sample 
   prealigner_path = Env.create_path('prealigner_path')
-  prealigner_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
-  
+  prealigner_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : maxRecordNrShort, 'LCIOInputFiles': "tmp.slcio" })
+  prealigner_path.add_processor(geo)
   prealigner_path = add_hitmakers(prealigner_path)
    
   trackfinder_loosecut = tbsw.Processor(name="AlignTF_LC",proctype="FastTracker")
   trackfinder_loosecut.param("InputHitCollectionNameVec","hit_m26 hit_fei4 hit_pxd hit_h5")
-  trackfinder_loosecut.param("AlignmentDBFileName","localDB/alignmentDB.root")
   trackfinder_loosecut.param("ExcludeDetector", "")
   trackfinder_loosecut.param("MaxTrackChi2", 10000000)
   trackfinder_loosecut.param("MaximumGap", 1)
@@ -304,7 +310,6 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB, mappin
   prealigner_path.add_processor(trackfinder_loosecut)
  
   prealigner = tbsw.Processor(name="PreAligner",proctype="KalmanAligner")
-  prealigner.param("AlignmentDBFileName","localDB/alignmentDB.root")
   prealigner.param('ErrorsShiftX' , '0 10 10 10 10 10 0 10 10')
   prealigner.param('ErrorsShiftY' , '0 10 10 10 10 10 0 10 10')
   prealigner.param('ErrorsShiftZ' , '0 0 0 0 0 0 0 0 0')
@@ -318,13 +323,12 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB, mappin
   
   # Create path for alignment with tight cut track sample 
   aligner_path = Env.create_path('aligner_path')
-  aligner_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
-  
+  aligner_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : maxRecordNrShort, 'LCIOInputFiles': "tmp.slcio" })
+  aligner_path.add_processor(geo)
   aligner_path = add_hitmakers(aligner_path)
   
   trackfinder_tightcut = tbsw.Processor(name="AlignTF_TC",proctype="FastTracker")
   trackfinder_tightcut.param("InputHitCollectionNameVec","hit_m26 hit_fei4 hit_pxd hit_h5")
-  trackfinder_tightcut.param("AlignmentDBFileName","localDB/alignmentDB.root")
   trackfinder_tightcut.param("ExcludeDetector", "")
   trackfinder_tightcut.param("MaxTrackChi2", 100)
   trackfinder_tightcut.param("MaximumGap", 1)
@@ -339,7 +343,6 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB, mappin
   aligner_path.add_processor(trackfinder_tightcut)
    
   aligner = tbsw.Processor(name="Aligner",proctype="KalmanAligner")
-  aligner.param("AlignmentDBFileName","localDB/alignmentDB.root")
   aligner.param('ErrorsShiftX' , '0 10 10 10 10 10 0 10 10' )
   aligner.param('ErrorsShiftY' , '0 10 10 10 10 10 0 10 10')
   aligner.param('ErrorsShiftZ' , '0 10 10 10 10 10 0 10 10')
@@ -356,13 +359,12 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB, mappin
    
   # Creeate path for some track based dqm using current calibrations
   dqm_path = Env.create_path('dqm_path')
-  dqm_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
-
+  dqm_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : maxRecordNrShort, 'LCIOInputFiles': "tmp.slcio" })
+  dqm_path.add_processor(geo)
   dqm_path = add_hitmakers(dqm_path)
   dqm_path.add_processor(trackfinder_tightcut)
 
   teldqm = tbsw.Processor(name="TelescopeDQM", proctype="TrackFitDQM") 
-  teldqm.param("AlignmentDBFileName","localDB/alignmentDB.root")
   teldqm.param("RootFileName","TelescopeDQM.root")
   dqm_path.add_processor(teldqm)  
   
@@ -376,7 +378,8 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB, mappin
     
     # Creeate path for first iteration for computing clusterDBs for all sensors 
     preclustercal_path = Env.create_path('preclustercal_path')
-    preclustercal_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : -1, 'LCIOInputFiles': "tmp.slcio" })  
+    preclustercal_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : maxRecordNrLong, 'LCIOInputFiles': "tmp.slcio" })
+    preclustercal_path.add_processor(geo)
     preclustercal_path = add_hitmakers(preclustercal_path) 
     preclustercal_path.add_processor(trackfinder_tightcut)      
     preclustercal_path = add_clustercalibrators(preclustercal_path)
@@ -386,8 +389,8 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB, mappin
     
     # Create path for alignment with tight cut track sample and cluster DB
     aligner_db_path = Env.create_path('aligner_db_path')
-    aligner_db_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })  
-    
+    aligner_db_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : maxRecordNrShort, 'LCIOInputFiles': "tmp.slcio" })
+    aligner_db_path.add_processor(geo)
     aligner_db_path = add_hitmakersDB(aligner_db_path) 
     aligner_db_path.add_processor(trackfinder_tightcut) 
     aligner_db_path.add_processor(aligner)   
@@ -399,7 +402,8 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB, mappin
     
     # Creeate path for next iterations for computing clusterDBs for all sensors 
     clustercal_path = Env.create_path('clustercal_path')
-    clustercal_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : -1, 'LCIOInputFiles': "tmp.slcio" })   
+    clustercal_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : maxRecordNrLong, 'LCIOInputFiles': "tmp.slcio" })
+    clustercal_path.add_processor(geo)
     clustercal_path = add_hitmakersDB(clustercal_path) 
     clustercal_path.add_processor(trackfinder_tightcut) 
     clustercal_path = add_clustercalibrators(clustercal_path)
@@ -416,13 +420,12 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB, mappin
     
     # Creeate path for dqm using cluster calibrations
     dqm_db_path = Env.create_path('dqm_db_path')
-    dqm_db_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 200000, 'LCIOInputFiles': "tmp.slcio" })
-    
+    dqm_db_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : maxRecordNrShort, 'LCIOInputFiles': "tmp.slcio" })
+    dqm_db_path.add_processor(geo)
     dqm_db_path = add_hitmakersDB(dqm_db_path)   
     dqm_db_path.add_processor(trackfinder_tightcut)  
     
     teldqm_db = tbsw.Processor(name="TelescopeDQM_DB", proctype="TrackFitDQM") 
-    teldqm_db.param("AlignmentDBFileName","localDB/alignmentDB.root")
     teldqm_db.param("RootFileName","TelescopeDQM_DB.root")
     dqm_db_path.add_processor(teldqm_db)  
     
@@ -444,16 +447,22 @@ def create_reco_path(Env, rawfile, gearfile, energy, useClusterDB, mapping):
   linkpixel["IB"] = "765:123 765:248 767:61 767:186"
   
   reco_path = Env.create_path('reco_path')
-  reco_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : -1 }) 
+  reco_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : maxRecordNrLong })
   
   rawinput = tbsw.Processor(name="RawInputProcessor",proctype="EudaqInputProcessor")
   rawinput.param('FileNames', rawfile) 
   reco_path.add_processor(rawinput)
   
+  geo = tbsw.Processor(name="Geo",proctype="Geometry")
+  geo.param("AlignmentDBFilePath", "localDB/alignmentDB.root")
+  geo.param("ApplyAlignment", "true")
+  geo.param("OverrideAlignment", "true")
+  reco_path.add_processor(geo)  
+  
   # Create path for all reconstruction up to hits
   reco_path = add_unpackers(reco_path)    
   reco_path = add_clusterizers(reco_path)    
-  
+   
   if useClusterDB: 
     reco_path = add_hitmakersDB(reco_path)   
   else: 
@@ -461,7 +470,6 @@ def create_reco_path(Env, rawfile, gearfile, energy, useClusterDB, mapping):
 
   trackfinder = tbsw.Processor(name="TrackFinder",proctype="FastTracker")
   trackfinder.param("InputHitCollectionNameVec","hit_m26 hit_fei4")
-  trackfinder.param("AlignmentDBFileName","localDB/alignmentDB.root")
   trackfinder.param("ExcludeDetector", "3 8")
   trackfinder.param("MaxTrackChi2", "100")
   trackfinder.param("MaximumGap", "1")
@@ -478,7 +486,6 @@ def create_reco_path(Env, rawfile, gearfile, energy, useClusterDB, mapping):
   hybrid_analyzer = tbsw.Processor(name="HybridAnalyzer",proctype="PixelDUTAnalyzer")
   hybrid_analyzer.param("HitCollection","hit_h5")  
   hybrid_analyzer.param("DigitCollection","zsdata_h5")
-  hybrid_analyzer.param("AlignmentDBFileName","localDB/alignmentDB.root")
   hybrid_analyzer.param("DUTPlane","8")
   hybrid_analyzer.param("ReferencePlane","7")
   hybrid_analyzer.param("MaxResidualU","0.2")
@@ -491,7 +498,6 @@ def create_reco_path(Env, rawfile, gearfile, energy, useClusterDB, mapping):
   pxd_analyzer = tbsw.Processor(name="PXDAnalyzer",proctype="PixelDUTAnalyzer")
   pxd_analyzer.param("HitCollection","hit_pxd")  
   pxd_analyzer.param("DigitCollection","zsdata_pxd")
-  pxd_analyzer.param("AlignmentDBFileName","localDB/alignmentDB.root")
   pxd_analyzer.param("DUTPlane","3")
   pxd_analyzer.param("ReferencePlane","7")
   pxd_analyzer.param("MaxResidualU","0.2")
@@ -504,29 +510,28 @@ def create_reco_path(Env, rawfile, gearfile, energy, useClusterDB, mapping):
   return [ reco_path ]  
   
   
-def calibrate(params):
+def calibrate(params,profile):
   
   rawfile, steerfiles, gearfile, energy, caltag, useClusterDB, mapping = params
    
   # Calibrate of the run using beam data. Creates a folder cal-files/caltag 
   # containing all calibration data. 
-  CalObj = tbsw.Calibration(steerfiles=steerfiles, name=os.path.splitext(os.path.basename(rawfile))[0] + '-cal') 
-  
+  CalObj = tbsw.Calibration(steerfiles=steerfiles, name=os.path.splitext(os.path.basename(rawfile))[0] + '-cal')
+  CalObj.profile = profile
   # Create list of calibration paths
   calpaths = create_calibration_path(CalObj, rawfile, gearfile, energy, useClusterDB, mapping)
-  
   # Run the calibration steps 
-  CalObj.calibrate(paths=calpaths,ifile=rawfile,caltag=caltag)  
+  CalObj.calibrate(paths=calpaths,ifile=rawfile,caltag=caltag)
    
   
-def reconstruct(params):
+def reconstruct(params,profile):
   
   rawfile, steerfiles, gearfile, energy, caltag, useClusterDB, mapping = params 
    
   # Reconsruct the rawfile using caltag. Resulting root files are 
   # written to folder root-files/
   RecObj = tbsw.Reconstruction(steerfiles=steerfiles, name=os.path.splitext(os.path.basename(rawfile))[0] + '-reco' )
-  
+  RecObj.profile = profile
   # Create reconstuction path
   recopath = create_reco_path(RecObj, rawfile, gearfile, energy, useClusterDB, mapping)  
   
@@ -546,6 +551,9 @@ if __name__ == '__main__':
   parser.add_argument('--useClusterDB', dest='use_cluster_db', default=True, type=bool, help="Use cluster database")
   parser.add_argument('--skipCalibration', dest='skip_calibration', default=False, type=bool, help="Skip creating a new calibration tag")
   parser.add_argument('--skipReconstruction', dest='skip_reco', default=False, type=bool, help="Skip reconstruction of run")
+  parser.add_argument('--profile', dest='profile', action='store_true',
+                      help="profile execution time")
+
   args = parser.parse_args()
   
   if args.caltag=='':
@@ -553,9 +561,9 @@ if __name__ == '__main__':
     
   if not args.skip_calibration: 
     print("Creating new calibration tag {} from run {}".format(args.caltag, args.rawfile))
-    calibrate((args.rawfile, args.steerfiles, args.gearfile, args.energy, args.caltag, args.use_cluster_db, args.mapping))
+    calibrate((args.rawfile, args.steerfiles, args.gearfile, args.energy, args.caltag, args.use_cluster_db, args.mapping),args.profile)
   
   if not args.skip_reco: 
     print("Reconstruct run {} using caltag {}".format(args.rawfile, args.caltag))
-    reconstruct((args.rawfile, args.steerfiles, args.gearfile, args.energy, args.caltag, args.use_cluster_db, args.mapping))
+    reconstruct((args.rawfile, args.steerfiles, args.gearfile, args.energy, args.caltag, args.use_cluster_db, args.mapping),args.profile)
   

@@ -69,7 +69,7 @@ std::string
 // Validate the name.
 //
 block = SIO_blockManager::get( i_name );
-if( block == NULL )
+if( block == nullptr )
 {
     if( verbosity >= SIO_ERRORS )
     {
@@ -104,12 +104,12 @@ std::string
 //
 // Validate the block pointer.
 //
-if( block == NULL )
+if( block == nullptr )
 {
     if( verbosity >= SIO_ERRORS )
     {
         std::cout << "SIO: [/"  << name << "/] "
-                  << "SIO: Block not connected (pointer is NULL)"
+                  << "SIO: Block not connected (pointer is nullptr)"
                   << std::endl;
     }
     return( SIO_RECORD_BADARGUMENT );
@@ -218,7 +218,7 @@ std::string
 // Validate the name.
 //
 block = SIO_blockManager::get( i_name );
-if( block == NULL )
+if( block == nullptr )
 {
     if( verbosity >= SIO_ERRORS )
     {
@@ -253,12 +253,12 @@ std::string
 //
 // Validate the block pointer.
 //
-if( block == NULL )
+if( block == nullptr )
 {
     if( verbosity >= SIO_ERRORS )
     {
         std::cout << "SIO: [/"  << name << "/] "
-                  << "Not disconnected (pointer is NULL)"
+                  << "Not disconnected (pointer is nullptr)"
                   << std::endl;
     }
     return( SIO_RECORD_BADARGUMENT );
@@ -277,7 +277,7 @@ return( disconnect( &s_name, block ) );
 unsigned int SIO_record::disconnect
 (
     std::string*          s_name,
-    SIO_block*            block
+    SIO_block*
 )
 {
 
@@ -338,7 +338,7 @@ std::string
     s_name = i_name;
 
 //
-// Use the map's find function.  It the name doesn't exist, return NULL.
+// Use the map's find function.  It the name doesn't exist, return nullptr.
 //
 if( (iter = connectMap.find( s_name )) == connectMap.end() )
 {
@@ -348,7 +348,7 @@ if( (iter = connectMap.find( s_name )) == connectMap.end() )
                   << "Block is not connected" 
                   << std::endl;
     }
-    return( NULL );
+    return( nullptr );
 }
 
 if( verbosity >= SIO_ALL )
@@ -478,7 +478,7 @@ while( stream->buffer < stream->recmax )
     SIO_DATA( stream, &tmplen, 1 );
 
     tmploc = static_cast<char *>(malloc( tmplen + 1 ));
-    if( tmploc == NULL )
+    if( tmploc == nullptr )
     {
         if( verbosity >= SIO_ERRORS )
         {
@@ -498,7 +498,7 @@ while( stream->buffer < stream->recmax )
     //
     // Try to unpack the block.
     //
-    if( block != NULL )
+    if( block != nullptr )
     {
         status = block->xfer( stream, SIO_OP_READ, version );
         if( !(status & 1) )

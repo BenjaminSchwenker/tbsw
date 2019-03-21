@@ -241,49 +241,7 @@ namespace marlin{
 
   void ProcessorMgr::processRunHeader( LCRunHeader* run){ 
 
-    // check if gear file is consistent with detector model in lcio run header 
-    std::string lcioDetName = run->getDetectorName() ;
-
-    
-    std::string gearDetName("unknwon_gear_detector") ;
-
-    bool doConsistencyCheck = true ;
-
-    try{
-
-      gearDetName = Global::GEAR->getDetectorName()  ; 
-
-    }
-    catch( gear::UnknownParameterException ){ 
-
-      streamlog_out( WARNING ) << std::endl
-			       << " ======================================================== " << std::endl
-			       << "   Detector name  not found in Gear file     " << std::endl
-			       << "    - can't check consistency with lcio file " << std::endl
-			       << " ======================================================== " << std::endl
-			       << std::endl ;
-
-      doConsistencyCheck = false ;
-    }
-
-
-
-    if( doConsistencyCheck  && lcioDetName != gearDetName ) {
-
-      std::stringstream sstr ;
-
-      sstr  << std::endl
-	    << " ============================================================= " << std::endl
-	    << " ProcessorMgr::processRunHeader : inconsistent detector models : " << std::endl 
-	    << " in lcio : " << lcioDetName << " <=> in gear file : "  << gearDetName << std::endl
-	    << " ============================================================= " << std::endl
-	    << std::endl ;
-      
-      //throw lcio::Exception( sstr.str() )  ;
-
-      throw ProcMgrStopProcessing( sstr.str() ) ;
-    }
-      
+  
     
 //     for_each( _list.begin() , _list.end() ,  std::bind2nd(  std::mem_fun( &Processor::processRunHeader ) , run ) ) ;
     for( ProcessorList::iterator it = _list.begin() ; it != _list.end() ; ++it ) {
@@ -483,17 +441,17 @@ namespace marlin{
       int evtProc = itT->second.second ;
       
       if( evtProc > evtTotal ) 
-	evtTotal = evtProc ;
+         evtTotal = evtProc ;
       
       streamlog_out(MESSAGE)  <<  cName 
 			      <<  std::setw(12) << std::scientific  << tProc  << " s in " 
 			      <<  std::setw(12) << evtProc << " events  ==> " ;
 
-      if( evtProc > 0 )
-	streamlog_out(MESSAGE)  <<  std::setw(12) << std::scientific  << tProc / evtProc << " [ s/evt.] "  ;
-      else
-	streamlog_out(MESSAGE)  <<  std::setw(12) << std::scientific  << "NaN"  << " [ s/evt.] "  ;
-	
+      if( evtProc > 0 ){
+        streamlog_out(MESSAGE)  <<  std::setw(12) << std::scientific  << tProc / evtProc << " [ s/evt.] "  ;
+      }else{
+        streamlog_out(MESSAGE)  <<  std::setw(12) << std::scientific  << "NaN"  << " [ s/evt.] "  ;
+      }
       streamlog_out(MESSAGE)  <<  std::endl ;
 
     }
@@ -502,11 +460,11 @@ namespace marlin{
 			    <<  std::setw(12) << std::scientific  << tTotal << " s in " 
 			    <<  std::setw(12) << evtTotal << " events  ==> " ;
 
-    if( evtTotal > 0 )
+    if( evtTotal > 0 ){
       streamlog_out(MESSAGE)  <<  std::setw(12) << std::scientific  << tTotal / evtTotal << " [ s/evt.] "  ;
-    else
+    }else{
       streamlog_out(MESSAGE)  <<  std::setw(12) << std::scientific  << "NaN"  << " [ s/evt.] "  ;
-    
+    }
     streamlog_out(MESSAGE)  <<  std::endl ;
     
     

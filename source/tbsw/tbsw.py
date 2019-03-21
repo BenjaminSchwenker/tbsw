@@ -83,8 +83,7 @@ class Path(object):
     Create xml steerfile for Marlin 
     """      
      
-    # Create a xml tree from the template file processors.xml 
-    # Never change the variable basetree 
+    # Create a xml tree from the template file processors.xml
     basetree = xml.etree.ElementTree.parse(os.path.join(self.tmpdir,'processors.xml'))
     
     # Create a xml tree from the template file processors.xml 
@@ -122,9 +121,13 @@ class Path(object):
         processor_node.remove(parameter)      
       
       # override processor parameter as needed 
-      for key, value in processor.params.items():   
+      for key, value in processor.params.items():
+
         parameter = processor_node.find("./parameter[@name='%s']" % str(key))
-        parameter.set('value', str(value)) 
+        if(parameter is not None):
+          parameter.set('value', str(value))
+        else:
+          raise IOError("Setting", key,"not in xml file")
        
       # add processor to xml tree
       root.append(processor_node)
@@ -163,7 +166,8 @@ class Environment(object):
     self.name = name
     self.cwdir = os.getcwd() 
     self.tmpdir = os.path.join(self.cwdir+'/tmp-runs',self.name)  
-    
+
+    self.profile=False
     # create tmp-runs if not exist
     if not os.path.isdir(self.cwdir+'/tmp-runs'):
       os.mkdir(self.cwdir+'/tmp-runs')
@@ -179,11 +183,15 @@ class Environment(object):
       raise ValueError('Steerfiles {} cannot be found.'.format(steerfiles) )
     
     # create file processors.xml 
-    subprocess.call('/$MARLIN/bin/Marlin -x > {}'.format(self.tmpdir+'/processors.xml'), shell=True)
-    
+    retval = subprocess.call('/$MARLIN/bin/Marlin -x > {}'.format(self.tmpdir+'/processors.xml'), shell=True)
+    if retval < 0:
+      raise RuntimeError("While creating xmlfile, Marlin was killed by signal %d " % ( -retval))
+    elif retval > 0:
+      raise RuntimeError("Process Marlin failed with exit code %d " % (retval))
+
     # create localDB folder 
     os.mkdir(self.tmpdir+'/localDB')
-    
+
   def create_path(self, name='main'):
     return Path( name=name, tmpdir=self.tmpdir)
   
@@ -201,8 +209,16 @@ class Environment(object):
     for path in pathlist:
       xmlfile = path.get_steerfile()
       logfile = path.get_name() + '.log'
-      action = '/$MARLIN/bin/Marlin ' + xmlfile + ' > ' + logfile + ' 2>&1'
-      subprocess.call(action, shell=True)
+      if self.profile:
+        action = 'LD_BIND_NOW=yes valgrind --tool=callgrind --callgrind-out-file='+path.get_name()+'.out.%p /$MARLIN/bin/Marlin ' + xmlfile + ' > ' + logfile + ' 2>&1'
+      else:
+        action = '/$MARLIN/bin/Marlin ' + xmlfile + ' > ' + logfile + ' 2>&1'
+
+      retval=subprocess.call(action, shell=True)
+      if retval < 0:
+        raise RuntimeError("Process %s killed by signal %d "%(xmlfile, -retval))
+      elif retval > 0:
+        raise RuntimeError("Process %s failed with exit code %d "%(xmlfile, retval))
       print ('[INFO] Marlin ' + xmlfile + ' is done')    
     
     # remove tmp* files 

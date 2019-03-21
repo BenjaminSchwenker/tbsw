@@ -6,10 +6,10 @@ using namespace std;
 
 namespace marlin{
     
-    CMProcessor* CMProcessor::_me = NULL;
+    CMProcessor* CMProcessor::_me = nullptr;
     
     CMProcessor* CMProcessor::instance() {
-	if( _me == NULL ){
+	if( _me == nullptr ){
 	    _me = new CMProcessor;
 	}
 	return _me ;
@@ -65,7 +65,7 @@ namespace marlin{
 	    }
 	    //this processor type is not installed
 	    else{
-		_mProcs[ (*p) ] = NULL;
+		_mProcs[ (*p) ] = nullptr;
 		
 		//set it's status
 		_mpStatus[ (*p) ] = false;
@@ -74,7 +74,7 @@ namespace marlin{
 		_mpDescriptions[ (*p) ] = "This processor is NOT installed!! Please install it before using it...";
 
 		//set string parameters
-		_mpSParameters[ (*p) ] = NULL;
+		_mpSParameters[ (*p) ] = nullptr;
 	    }
     	}
     } //end constructor
@@ -93,14 +93,14 @@ namespace marlin{
 	if( isInstalled( type )){
 	    return _mProcs[ type ];
 	}
-	return NULL;
+	return nullptr;
     }
     
     StringParameters* CMProcessor::getSParams( const string& type ){
 	if( isInstalled( type )){
 	    return _mpSParameters[ type ];
 	}
-	return NULL;
+	return nullptr;
     }
     
     StringParameters* CMProcessor::mergeParams( const string& type, StringParameters* sp ){
@@ -159,7 +159,7 @@ namespace marlin{
 		}
 	    }
 	}
-	return NULL;
+	return nullptr;
     }
 
     const string CMProcessor::getParamD( const string& type, const string& key ){

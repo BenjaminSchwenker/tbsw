@@ -192,7 +192,7 @@ def x0imaging(rootfilelist=[],caltag='',steerfiles='',nametag=''):
          config.write(configfile)
   
       print ('[INFO] Create x0image for image part {} {}'.format(i,j))    
-      subprocess.call( "$X0TOOLS/bin/x0imaging > x0-imaging_{}_{}.log 2>&1".format(i,j), shell=True)
+      subprocess.call( "$MARLIN/bin/x0imaging > x0-imaging_{}_{}.log 2>&1".format(i,j), shell=True)
       
   # Open new cfg txt file
   open('x0merge.cfg', 'a').close()
@@ -220,7 +220,7 @@ def x0imaging(rootfilelist=[],caltag='',steerfiles='',nametag=''):
     #config.write(configfile,space_around_delimiters=False)
     config.write(configfile)
    
-  subprocess.call( "$X0TOOLS/bin/MergeImages > merger.log 2>&1", shell=True)            
+  subprocess.call( "$MARLIN/bin/MergeImages > merger.log 2>&1", shell=True)            
   print ('[Print] All partial images created and merged... ')  
 
   # clean up partial image scripts 
