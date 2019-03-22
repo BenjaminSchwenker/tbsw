@@ -20,8 +20,11 @@
 #include "marlin/Exceptions.h"
 
 // Include ROOT classes
+#include <TFile.h>
 #include <TH1F.h>
 #include <TH2F.h>
+#include <TTree.h>
+
 
 namespace depfet {
 
@@ -67,12 +70,12 @@ namespace depfet {
     
     //!Method called after all data processing
     virtual void end();
-     
+      
    protected:
-   
+    
     //!Method printing processor parameters
     void printProcessorParams() const;
-   
+    
     // Processor Parameters
     
     //! Input Track collection name
@@ -86,7 +89,13 @@ namespace depfet {
     
     //! Minimum number of clusters occurances 
     int _minClusters; 
-      
+    
+    //! Periodicity for vCells used for clusterDB
+    int _vCellPeriod;
+     
+    //! Periodicity for uCells used for clusterDB
+    int _uCellPeriod; 
+    
     //! Max number of eta bins  
     int _maxEtaBins; 
 
@@ -97,22 +106,46 @@ namespace depfet {
     //! Ignore clusters from these sensorIDs 
     std::vector<int>  _ignoreIDVec;
     
+    //! Name of temporary file for collector output
+    std::string _collectorOutputFileName; 
+    
    private:
-  
-    // Intermediate histos to compute calibrated measurements 
-    // Key is cluster label
-    std::map<std::string, int>   _sensorMap;  
-    std::map<std::string, TH1F *>  _clusterUMap;
-    std::map<std::string, TH1F *>  _clusterVMap;
-    std::map<std::string, TH2F *>  _clusterUVMap;
     
+    /** Collector output file */ 
+    TFile * _rootCollectorOutputFile;
+    /** Histogram for track covariance matrix element UU */
+    TH1F * _trackVarUHisto;
+    /** Histogram for track covariance matrix element VV */
+    TH1F * _trackVarVHisto;
+    /** Histogram for track covariance matrix element UV */
+    TH1F * _trackCovUVHisto;
+    /** Histograms for track incident angle DuDw */
+    TH1F * _trackDuDwHisto;
+    /**Histograms for track incident angle DvDw */
+    TH1F * _trackDvDwHisto;
+    /**Container for histos*/
     std::map< std::string, TH1F *> _histoMap;
-    
-     
+    /** Name of cluster tree */
+    TTree * m_rootTree; 
+    /** Name of cluster type */
+    std::string m_typeName;
+    /** Eta value of cluster for sector (+,+)*/
+    float m_clusterEtaPP;
+    /** Eta value of cluster for sector (-,+)*/
+    float m_clusterEtaNP;
+    /** Eta value of cluster for sector (+,-)*/
+    float m_clusterEtaPN;
+    /** Eta value of cluster for sector (-,-)*/
+    float m_clusterEtaNN; 
+    /** Position offset u of cluster */
+    float m_positionOffsetU;
+    /** Position offset v of cluster */
+    float m_positionOffsetV;
+            
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number
     int    _nEvt ;   //!< Event number
-     
+ 
   }; // Class
 
 } // Namespace
