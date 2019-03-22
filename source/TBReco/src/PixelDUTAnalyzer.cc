@@ -289,7 +289,8 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
   HitStore.clear();
   // Get tracks from the lcio file 
   TrackInputProvider TrackLCIOReader;  
-    
+  int nTrackWithRefHit = 0;     
+
   for(int itrk=0; itrk< nTrack ; itrk++)
   {  
     // Retrieve track from LCIO 
@@ -301,6 +302,11 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     // Check that track has no hit on the DUT to avoid bias of residuals and efficiency
     if ( trk.GetTE(_idut).HasHit()  ) {
       streamlog_out ( MESSAGE3 ) << "Track has already hit on dut plane. Danger to bias final results" << endl;
+    } 
+
+    // Count tracks having hit on reference (timing) plane
+    if ( trk.GetTE(_iref).HasHit()  ) {
+      nTrackWithRefHit += 1;  
     } 
     
     // Refit track in current alignment. Restrict smoothing to DUT plane.
@@ -449,6 +455,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
   _rootEventNumber = evt->getEventNumber();  
   _rootSensorID = dut.GetSensorID();        
   _rootNTelTracks = nTrack; 
+  _rootNTelTracksWithRefHit = nTrackWithRefHit; 
   _rootNDUTDigits = nDUTDigits;
   _rootDUTHasTestPixels = hasTestPixels;
   _rootDUTGoodEvent = isGoodEvent; 
@@ -793,6 +800,7 @@ void PixelDUTAnalyzer::bookHistos()
    _rootEventTree->Branch("iEvt"            ,&_rootEventNumber    ,"iEvt/I");
    _rootEventTree->Branch("sensorID"        ,&_rootSensorID       ,"sensorID/I");   
    _rootEventTree->Branch("nTelTracks"      ,&_rootNTelTracks     ,"nTelTracks/I"); 
+   _rootEventTree->Branch("nTelTracksWithRefHit" ,&_rootNTelTracksWithRefHit ,"nTelTracksWithRefHit/I");  
    _rootEventTree->Branch("nDutDigits"      ,&_rootNDUTDigits       ,"nDutDigits/I");
    _rootEventTree->Branch("hasTestPixels"   ,&_rootDUTHasTestPixels, "hasTestPixels/O");
    _rootEventTree->Branch("isGoodEvent"     ,&_rootDUTGoodEvent,  "isGoodEvent/O");
