@@ -118,7 +118,7 @@ def x0calibration(rootfilelist=[],imagefile='',caltag='',steerfiles=''):
     # Create X0image root file link in the current work dir
     os.symlink(fullpath+'/'+imagefile,'X0image')
      
-    subprocess.call( "$X0TOOLS/bin/DrawBoxes > x0-drawboxes.log  2>&1", shell=True)   
+    subprocess.call( "$MARLIN/bin/DrawBoxes > x0-drawboxes.log  2>&1", shell=True)   
     print ('[INFO] Marking of measurement areas done... ')
   else:
     print ('[Print] No Image file found... Skip marking measurement areas! ')
@@ -130,7 +130,7 @@ def x0calibration(rootfilelist=[],imagefile='',caltag='',steerfiles=''):
     shutil.copy(cfgfile, cfgfilename)
   
   print ('[INFO] Start X0 Calibration fit ... ')  
-  subprocess.call( "$X0TOOLS/bin/calibrationfit > x0cal.log  2>&1", shell=True)            
+  subprocess.call( "$MARLIN/bin/calibrationfit > x0cal.log  2>&1", shell=True)            
   print ('[INFO] X0 Calibration fit done! ')  
   
   caldir=fullpath+'/localDB/'+caltag

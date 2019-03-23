@@ -127,7 +127,7 @@ namespace marlin{
     
   }
   
-  void TestProcessor::check( LCEvent * evt ) { 
+  void TestProcessor::check( LCEvent * evt ) {
     
     streamlog_out(DEBUG) << " check() "  // << dummy_method() 
 			 << evt->getEventNumber() 
