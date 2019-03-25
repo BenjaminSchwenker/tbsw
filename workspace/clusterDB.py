@@ -5,42 +5,28 @@ Author: Benjamin Schwenker <benjamin.schwenker@phys.uni-goettingen.de>
 """
 
 import tbsw 
-import os
-import glob
 import yaml
-import shutil
-import ROOT
+import os
 
-
-fullpath = os.getcwd() 
 
 # Read experiment db
-db = yaml.load(open("expdb.yaml", "r"),  Loader=yaml.FullLoader)  
+expdb = yaml.load(open("expdb.yaml", "r"),  Loader=yaml.FullLoader)  
 
-# Create a folder for clusterDB plots 
-if os.path.isdir("resolution_study"):
-  shutil.rmtree("resolution_study")
-
-os.mkdir("resolution_study")
-
-for expName in db.keys(): 
-
-  if not os.path.isfile("{:}/localDB/{:s}/clusterDB-PXD.root".format(fullpath, expName)):
-    print("Cannot find " + "{:}/localDB/{:s}/clusterDB-PXD.root".format(fullpath, expName) )
+for expName in expdb.keys(): 
+  
+  if not os.path.isfile("localDB/{:s}/clusterDB-PXD.root".format(expName)):
+    print("Cannot find " + "localDB/{:s}/clusterDB-PXD.root".format(expName) )
     continue
   
-  # Create folder for experiment specific plots
-  os.mkdir("{:s}/resolution_study/{:s}".format(fullpath, expName))
-
-  # Go into this folder for plotting
-  os.chdir("{:s}/resolution_study/{:s}".format(fullpath, expName))
-
-  print("Plotting {:}".format(expName))
+  print("Analyzing clusterDB {:} with phi={}, theta={}:".format(expName, expdb[expName]["phi"], expdb[expName]["theta"]))
   
-  # and plot 
-  tbsw.DQMplots.plot_clusterDB_parameters('{:}/localDB/{:s}/clusterDB-PXD.root'.format(fullpath, expName) )   
-   
-  os.chdir("{:s}".format(fullpath))
+  pxdDB = tbsw.clusterDB.ClusterDB("localDB/{:s}/clusterDB-PXD.root".format(expName))
+  
+  sigU, sigUError = pxdDB.getSigmaU()
+  sigV, sigVError = pxdDB.getSigmaV()
+  
+  print("  SigmaU={:.4f}+/- {:.5f}mm".format(sigU, sigUError))
+  print("  SigmaU={:.4f}+/- {:.5f}mm".format(sigV, sigVError))
     
     
     
