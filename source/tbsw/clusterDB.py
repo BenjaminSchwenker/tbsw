@@ -2,7 +2,6 @@ import re
 import ROOT
 import math
 
-example = 'E0P0.0.1D0.0'
 
 class ClusterDB(object):
   """
@@ -17,19 +16,67 @@ class ClusterDB(object):
     """    
     self.dbpath = dbpath
     self.shapes = []
-    
+    self.pixelTypes = []
+    self.uPeriods = []
+    self.vPeriods = []  
+    self.coverage = 0.0  
+
     dbfile = ROOT.TFile( self.dbpath, 'READ' ) 
     histo = dbfile.Get("hDB_Weight")
+    
+    self.coverage = dbfile.Get("hDB_Coverage").GetBinContent(1)
     
     for bin in range(1,histo.GetNbinsX()+1):
       shape = histo.GetXaxis().GetBinLabel(bin)
       self.shapes.append(shape) 
-     
+
+      # Parse the shape to obtain pixelType and periods 
+      header = shape.split('D')[0].split('P')[1].split('.')
+      self.pixelTypes.append(int(header[2]))
+      self.uPeriods.append(int(header[1]))
+      self.vPeriods.append(int(header[0]))
+    
+    self.pixelTypes = list(set(self.pixelTypes))  
+    self.uPeriods = list(set(self.uPeriods))  
+    self.vPeriods = list(set(self.vPeriods))        
+    
     dbfile.Close()
     
+  def getCoverage(self):
+    """
+    Get coverage efficiency in percent for clusterDB.
+    Coverage efficiency is defined as fraction of clusters from training that could be calibrated. 
+    """
+    return self.coverage  
+    
+  def getPixelTypes(self): 
+    """
+    Get list of all pixel types found in the clusterDB
+    """
+    return self.pixelTypes
+  
+  def getPeriodsU(self): 
+    """
+    Get list of u periods found in the clusterDB
+    """
+    return self.uPeriods
+  
+  def getPeriodsV(self): 
+    """
+    Get list of u periods found in the clusterDB
+    """
+    return self.vPeriods
+  
+  def getSelectedShapes(self, shape=''): 
+    """
+    Get get list of selected shapes 
+    """
+    regex = re.compile(shape)       
+    return filter(regex.match, self.shapes)
+
   def getNClusters(self, shape=''): 
     """
-    Get number of clusters used in calibration for a given selection of cluster shapes. 
+    Get number of training clusters for selected shapes. 
     """
     dbfile = ROOT.TFile( self.dbpath, 'READ' ) 
     histo  = dbfile.Get("hDB_Weight")
@@ -46,10 +93,11 @@ class ClusterDB(object):
     dbfile.Close()
     
     return nClusters
+
     
   def getFraction(self, shape=''): 
     """
-    Get fraction of clusters for a given selection of cluster shapes. 
+    Get fraction selected shapes among all shapes. 
     """
     dbfile = ROOT.TFile( self.dbpath, 'READ' ) 
     histo  = dbfile.Get("hDB_Weight")
@@ -76,8 +124,8 @@ class ClusterDB(object):
 
   def getSigmaU(self, shape=''): 
     """
-    Get pair of sigma (and sigma error) along the u axis as weighted mean of 
-    all calibrated cluster shapes in the db. 
+    Get cluster sigma (and sigma error) along the u axis as weighted mean 
+    over all selected shapes. 
     """
     dbfile = ROOT.TFile( self.dbpath, 'READ' ) 
     histo_weights  = dbfile.Get("hDB_Weight")
@@ -90,8 +138,8 @@ class ClusterDB(object):
     regex = re.compile(shape)       
     selected_shapes = filter(regex.match, self.shapes)
     
-    for bin in range(1,histo_sigmas2.GetNbinsX()+1):    
-      if histo_sigmas2.GetXaxis().GetBinLabel(bin) in selected_shapes:        
+    for bin in range(1,histo_weights.GetNbinsX()+1):    
+      if histo_weights.GetXaxis().GetBinLabel(bin) in selected_shapes:        
         weight = histo_weights.GetBinContent(bin)
         norm += weight   
         mean2 += weight*histo_sigmas2.GetBinContent(bin)
@@ -106,8 +154,8 @@ class ClusterDB(object):
 
   def getSigmaV(self, shape=''): 
     """
-    Get pair of sigma (and sigma error) along the v axis as weighted mean of 
-    all calibrated cluster shapes in the db. 
+    Get cluster sigma (and sigma error) along the v axis as weighted mean  
+    over all selected shapes.
     """
     dbfile = ROOT.TFile( self.dbpath, 'READ' ) 
     histo_weights  = dbfile.Get("hDB_Weight")
@@ -120,8 +168,8 @@ class ClusterDB(object):
     regex = re.compile(shape)       
     selected_shapes = filter(regex.match, self.shapes)
      
-    for bin in range(1,histo_sigmas2.GetNbinsX()+1):  
-      if histo_sigmas2.GetXaxis().GetBinLabel(bin) in selected_shapes:        
+    for bin in range(1,histo_weights.GetNbinsX()+1):  
+      if histo_weights.GetXaxis().GetBinLabel(bin) in selected_shapes:        
         weight = histo_weights.GetBinContent(bin)
         norm += weight   
         mean2 += weight*histo_sigmas2.GetBinContent(bin)
@@ -133,5 +181,92 @@ class ClusterDB(object):
       return math.sqrt(mean2/norm) , math.sqrt(error2/norm/norm)
     else: 
       return float('nan'), float('nan') 
+  
+  def getRho(self, shape=''): 
+    """
+    Get uv correlation coefficient as weighted mean over  
+    all selected shapes. 
+    """
+    dbfile = ROOT.TFile( self.dbpath, 'READ' ) 
+    histo_weights  = dbfile.Get("hDB_Weight")
+    histo_cov  = dbfile.Get("hDB_Cov_UV")
     
+    mean_cov = 0.0
+    norm = 0.0
     
+    regex = re.compile(shape)       
+    selected_shapes = filter(regex.match, self.shapes)
+     
+    for bin in range(1,histo_weights.GetNbinsX()+1):  
+      if histo_weights.GetXaxis().GetBinLabel(bin) in selected_shapes:        
+        weight = histo_weights.GetBinContent(bin)
+        norm += weight   
+        mean_cov += weight*histo_cov.GetBinContent(bin)
+      
+    dbfile.Close()
+    
+    sigmaU, _ = self.getSigmaU(shape)
+    sigmaV, _ = self.getSigmaV(shape)
+    
+    if norm >0 and sigmaU>0 and sigmaV>0 :
+      return mean_cov/sigmaU/sigmaV/norm
+    else: 
+      return float('nan') 
+  
+  def getPositionU(self, shape=''): 
+    """
+    Get pair of position (and position error) along the u axis as weighted mean of 
+    all calibrated cluster shapes in the db. 
+    """
+    dbfile = ROOT.TFile( self.dbpath, 'READ' ) 
+    histo_weights  = dbfile.Get("hDB_Weight")
+    histo_position  = dbfile.Get("hDB_U")
+    
+    mean = 0.0
+    norm = 0.0
+    
+    regex = re.compile(shape)       
+    selected_shapes = filter(regex.match, self.shapes)
+    
+    for bin in range(1,histo_weights.GetNbinsX()+1):    
+      if histo_weights.GetXaxis().GetBinLabel(bin) in selected_shapes:        
+        weight = histo_weights.GetBinContent(bin)
+        norm += weight   
+        mean += weight*histo_position.GetBinContent(bin)
+        
+    dbfile.Close()
+  
+    if norm >0:
+      return mean/norm 
+    else: 
+      return float('nan')
+
+  def getPositionV(self, shape=''): 
+    """
+    Get pair of position (and position error) along the v axis as weighted mean of 
+    all calibrated cluster shapes in the db. 
+    """
+    dbfile = ROOT.TFile( self.dbpath, 'READ' ) 
+    histo_weights  = dbfile.Get("hDB_Weight")
+    histo_position  = dbfile.Get("hDB_V")
+    
+    mean = 0.0
+    norm = 0.0
+    
+    regex = re.compile(shape)       
+    selected_shapes = filter(regex.match, self.shapes)
+    
+    for bin in range(1,histo_weights.GetNbinsX()+1):    
+      if histo_weights.GetXaxis().GetBinLabel(bin) in selected_shapes:        
+        weight = histo_weights.GetBinContent(bin)
+        norm += weight   
+        mean += weight*histo_position.GetBinContent(bin)
+        
+    dbfile.Close()
+  
+    if norm >0:
+      return mean/norm 
+    else: 
+      return float('nan')
+
+

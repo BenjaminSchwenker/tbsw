@@ -22,6 +22,12 @@ for expName in expdb.keys():
   
   pxdDB = tbsw.clusterDB.ClusterDB("localDB/{:s}/clusterDB-PXD.root".format(expName))
   
+  # The coverage efficiency gives the fraction of training clusters that could be succefully 
+  # calibrated. Only for these clusters we can make statements for sigma's etc. 
+  
+  coverage = pxdDB.getCoverage()
+  print("ClusterDB coverage={:.1f}".format(coverage))
+  
   for pixelType in range(2):
     
     # You can querry the ClusterDB to get estimates for the spatial 
@@ -51,12 +57,14 @@ for expName in expdb.keys():
     sigU, sigUError = pxdDB.getSigmaU(shape)
     sigV, sigVError = pxdDB.getSigmaV(shape)
     frac = pxdDB.getFraction(shape) 
-    
+   
     print("  PixelType={:d}".format(pixelType))
     print("  Fraction={:.3f}%".format(frac))
+    print("  PositionU={:.4f} mm".format(pxdDB.getPositionU(shape)))
+    print("  PositionV={:.4f} mm".format(pxdDB.getPositionV(shape)))
     print("  SigmaU={:.4f}+/- {:.5f} mm".format(sigU, sigUError))
     print("  SigmaV={:.4f}+/- {:.5f} mm".format(sigV, sigVError))
-    
+    print("  Rho={:.4f}".format(pxdDB.getRho(shape)))
     
     
 
