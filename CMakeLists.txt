@@ -64,7 +64,7 @@ ADD_DEFINITIONS( "-std=c++14" )
 #------ correct C++
 ADD_DEFINITIONS( "-Wall -pedantic" )
 #------ performance
-ADD_DEFINITIONS( "-march=native -mtune=native" )
+#ADD_DEFINITIONS( "-march=native -mtune=native" )  #TODO we want this line back
 #ADD_DEFINITIONS( "-mtune=native -mno-avx -mno-avx2" )
 #------ lets get real pedantic as a test...
 ADD_DEFINITIONS( "-Wextra -Wno-unused-macros -Wno-shadow ")# -Wdouble-promotion ")
@@ -187,9 +187,23 @@ SET( BUILD_TBReco "${BUILD_TBReco}" CACHE BOOL
 SET( BUILD_X0Tools "${BUILD_X0Tools}" CACHE BOOL
       "Set to ON to build TBReco"  FORCE )
 
+# Get the SHA-1 from the latest commit used for building tbsw
+EXEC_PROGRAM( git 
+            ARGS rev-parse
+            ARGS HEAD
+            OUTPUT_VARIABLE out_tmp
+            RETURN_VALUE out_ret )
+
+
+IF( out_ret )
+        MESSAGE( STATUS "Not able to retrieve the commit SHA-1." )
+        Set(out_tmp "??")
+ENDIF()
+
 # Create the init_tbsw.sh file
 
 file(WRITE  "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#!/bin/bash\n")
+file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#tbsw commit SHA-1: ${out_tmp} \n")
 file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#--------------------------------------------------------------------------------\n")
 file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#    ROOT                                                                        \n")
 file(APPEND "${PROJECT_BINARY_DIR}/init_tbsw.sh" "#--------------------------------------------------------------------------------\n")

@@ -23,7 +23,7 @@
 #include <TFile.h>
 #include <TH2D.h>
 
-#include "TBDetector.h"
+
 
 
 namespace depfet {
@@ -115,8 +115,7 @@ protected:
    // ROOT_OUTPUT variables
    TFile * _rootFile;
 
-   //! Handle to detector data 
-   TBDetector _detector;   
+   
 
    
 }; // Class

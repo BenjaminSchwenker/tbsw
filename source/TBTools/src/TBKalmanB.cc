@@ -915,9 +915,12 @@ int TBKalmanB::MAP_FORWARD(  double theta2,
   // noise.
         
   // Time update of covariance  matrix  
+  int ierr = 0; 
   TrackStateJacobian J;      
-  TrackModel->TrackJacobian( xref, Surf, nSurf, J);  
-
+  ierr = TrackModel->TrackJacobian( xref, Surf, nSurf, J);  
+  if (ierr != 0) {
+    return -1;
+  }	
 
   // Add scatter noise
   // -----------------------------------
@@ -967,10 +970,14 @@ int TBKalmanB::MAP_BACKWARD(  double theta2,
   // we can estimate the amount of added uncertainty due to multiple scatter
   // noise.
   
-  // Time update of covariance  matrix        
+  // Time update of covariance  matrix 
+  int ierr = 0;         
   TrackStateJacobian Jinv;
-  TrackModel->TrackJacobian( xref, Surf, nSurf, Jinv);  
-        
+  ierr = TrackModel->TrackJacobian( xref, Surf, nSurf, Jinv);  
+  if (ierr != 0) {
+    return -1;
+  }	
+       
   // Add scatter noise
   // -----------------------------------
         
@@ -1053,6 +1060,7 @@ double TBKalmanB::GetChi2Increment(const Vector2d& r, const StateHitProjector& H
  */
 void TBKalmanB::SetNdof(TBTrack& trk)
 {
+
   int ndof = 0;
   int nhits = trk.GetNumHits();
 

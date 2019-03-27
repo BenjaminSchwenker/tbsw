@@ -124,11 +124,11 @@ class TBKalmanMSC {
   
   /** Get scatter kink angles (as 2x1 matrix) 
    */
-  TrackScatterKinks GetScatterKinks(Det& DetUnit, TBTrackState& InState, TBTrackState& OutState);
+  TrackScatterKinks GetScatterKinks(TBTrackState& InState, TBTrackState& OutState);
 
   /** Get covariance of scatter kinks (as 2x2 sym matrix)
    */
-  TrackScatterKinksCovariance GetScatterKinkCov(Det& DetUnit, TBTrackState& InState, TBTrackState& OutState);
+  TrackScatterKinksCovariance GetScatterKinkCov(TBTrackState& InState, TBTrackState& OutState);
 
   /** Help function to get thetas from slope vector
    */

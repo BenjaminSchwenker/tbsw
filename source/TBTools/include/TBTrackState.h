@@ -43,17 +43,19 @@ class TBTrackState {
    
   // Constructors
   TBTrackState(); 
-  TBTrackState(TrackState aPars, TrackStateCovariance aCov=TrackStateCovariance::Zero(), int aPlane=0);
+  TBTrackState(const TrackState& aPars, const TrackStateCovariance& aCov=TrackStateCovariance::Zero(), int aPlane=0);
   
   // Dimension of track state 
-  int GetDim() { return 5;}
+  int GetDim() const { return 5;}
   
   // Get/Set track parameters  
   void SetPars(const TrackState& aPars) { Pars= aPars; }
   TrackState&  GetPars() { return Pars; }
+  const TrackState&  GetPars() const { return Pars; }
    
   // Get/Set parameter covariance 
   void SetCov(const TrackStateCovariance& aCov ) { Cov = aCov; }
+  const TrackStateCovariance&  GetCov() const { return Cov; }
   TrackStateCovariance&  GetCov() { return Cov; }
 
   // Get/Set plane number 
@@ -61,10 +63,10 @@ class TBTrackState {
   int  GetPlane() const { return Plane; }
   
   // Get intersection coordinates 
-  Eigen::Vector2d GetXCoord();
+  Eigen::Vector2d GetXCoord() const;
 
   // Get covariance for intersection coordinates 
-  Eigen::Matrix2d GetXCoordCovariance();
+  Eigen::Matrix2d GetXCoordCovariance() const;
   
 };
 

@@ -41,7 +41,7 @@ void KalmanAlignmentInputProvider::FillEvent(TBTrack& trk, AlignEvent& event)
   // Track has nHits hits  
   const int nHits = trk.GetNumHits();
   
-  // Maps daqid of hit to index
+  // Maps sensorid of hit to index
   int * ids = new int[nHits];
   
   ////////////////////////////////////////////////////////
@@ -79,7 +79,7 @@ void KalmanAlignmentInputProvider::FillEvent(TBTrack& trk, AlignEvent& event)
     if ( !TE.HasHit() ) continue;
             
     // Ok, register hit on this detector  
-    ids[index] = TE.GetDet().GetDAQID(); 
+    ids[index] = TE.GetDet().GetSensorID(); 
     
     // Fill measurments + cov 
     Vector2d hitCoord = TE.GetHit().GetCoord();
@@ -146,8 +146,8 @@ TBTrack KalmanAlignmentInputProvider::MakeTBTrack( AlignEvent& event, TBDetector
   
   for (int ihit=0; ihit<nHit; ihit++) {
     // Create a TBHit 
-    int daqid = ids[ihit]; 
-    int ipl = detector.GetPlaneNumber(daqid); 
+    int SensorID = ids[ihit]; 
+    int ipl = detector.GetPlaneNumber(SensorID); 
     Vector2d mCoord;
     mCoord << Measurements[ihit*2+0] , Measurements[ihit*2+1]; 
     Matrix2d mCov;
@@ -157,7 +157,7 @@ TBTrack KalmanAlignmentInputProvider::MakeTBTrack( AlignEvent& event, TBDetector
     mCov(1,1) = MeasuredCovariance[ihit*2+1][1];  
     
     // Add hit to track 
-    TBHit Hit(daqid, mCoord, mCov);    
+    TBHit Hit(SensorID, mCoord, mCov);    
     trk.GetTE(ipl).SetHit(Hit);     
   }
   

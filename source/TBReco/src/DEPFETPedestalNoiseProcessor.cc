@@ -1054,7 +1054,7 @@ void DEPFETPedestalNoiseProcessor::processRawDataDHP2(LCEvent * evt) {
             int iPixel = matrixDecoder.getIndexFromXY(xPixel, yPixel);  
                     
             // Rough signal estimate using intermediate pedestal 
-            float Isig = adcValues[iPixel] - _tmpPede[iDetector][iPixel] - CommonMode;
+            //float Isig = adcValues[iPixel] - _tmpPede[iDetector][iPixel] - CommonMode;
             
             // Hit filter for final noise + pedestal estimation  
             //bool isHit = std::abs( Isig ) > _hitThresholdPre *_tmpNoise[iDetector][iPixel];

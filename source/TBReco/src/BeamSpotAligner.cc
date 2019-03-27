@@ -9,6 +9,7 @@
 #include "BeamSpotAligner.h"
 
 // Include TBTools header files
+#include "TBDetector.h"
 #include "TBHit.h"
 #include "TBTrack.h"
 #include "TrackInputProvider.h"
@@ -63,17 +64,8 @@ BeamSpotAligner::BeamSpotAligner() : Processor("BeamSpotAligner")
 //   
 // Define processor parameters 
    
-   registerProcessorParameter ("AlignmentDBFileName",
-                             "This is the name of the file with the alignment constants (add .root)",
-                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.root" ) );   
-                   
-   registerProcessorParameter ("UpdateAlignment",
-                              "Update alignment DB using offset corrections (true/false)?",
-                              _updateAlignment, static_cast <bool> (true) ); 
    
-   registerProcessorParameter ("NewAlignment",
-                              "Start alignment from scratch (true/false)?",
-                              _newAlignment, static_cast <bool> (false) ); 
+  
    
    registerProcessorParameter ("OutputRootFileName",
                               "This is the name of the output root file",
@@ -90,13 +82,6 @@ void BeamSpotAligner::init() {
   _nRun = 0 ;
   _nEvt = 0 ;
    
-  // Read detector constants from gear file
-  _detector.ReadGearConfiguration();    
-  
-  // Read alignment data base file 
-  if(!_newAlignment) _detector.ReadAlignmentDB( _alignmentDBFileName );
-  // This is needed, because if the AlignmentDB is not read, the detector construct doesn't know the alignmentDB name
-  else  _detector.SetAlignmentDBName( _alignmentDBFileName );   
   
   // Book all needed histograms 
   bookHistos();
@@ -154,9 +139,9 @@ void BeamSpotAligner::processEvent(LCEvent * evt)
     Track * lciotrk = dynamic_cast<Track*> (trackcol->getElementAt(itrk));
     
     // Convert LCIO -> TB track  
-    TBTrack rectrack = TrackLCIOReader.MakeTBTrack( lciotrk, _detector );  
+    TBTrack rectrack = TrackLCIOReader.MakeTBTrack( lciotrk, TBDetector::GetInstance() );  
 
-    for(int ipl=0;ipl<_detector.GetNSensors();++ipl)  { 
+    for(int ipl=0;ipl<TBDetector::GetInstance().GetNSensors();++ipl)  { 
       
       if ( rectrack.GetTE(ipl).HasHit() ) {
       
@@ -189,11 +174,11 @@ void BeamSpotAligner::end()
   ////////////////////////////////////////////////////////////
   // Try to create a better aligned detector  
   
-  TBDetector tmp_detector = _detector;
+  
   
   streamlog_out(MESSAGE3) << "Calculating alignment corrections  ... Beam spot method" << endl << endl;   
     
-  for ( int ipl = 0 ; ipl < tmp_detector.GetNSensors() ; ++ipl ) 
+  for ( int ipl = 0 ; ipl < TBDetector::GetInstance().GetNSensors() ; ++ipl ) 
   {           
        
     if (ipl != 0) continue; 
@@ -203,14 +188,13 @@ void BeamSpotAligner::end()
     // First the center of the beam spot is fitted using the local hit 
     // map. We assume a 2d Gaussian beam density. 
 
-    double sizeU = _detector.GetDet(ipl).GetSensitiveSizeU();  
-    double sizeV = _detector.GetDet(ipl).GetSensitiveSizeV(); 
+    
     
     // Get range for beam spot fitting 
-    double MinU = -0.5*sizeU;  
-    double MaxU = +0.5*sizeU;  
-    double MinV = -0.5*sizeV;  
-    double MaxV = +0.5*sizeV;  
+    double MinU = TBDetector::GetInstance().GetDet(ipl).GetSensitiveMinU();  
+    double MaxU = TBDetector::GetInstance().GetDet(ipl).GetSensitiveMaxU();  
+    double MinV = TBDetector::GetInstance().GetDet(ipl).GetSensitiveMinV();  
+    double MaxV = TBDetector::GetInstance().GetDet(ipl).GetSensitiveMaxV();  
      
     // Define the fit function with ranges and initial parameters 
     const int npar = 5;  
@@ -228,7 +212,7 @@ void BeamSpotAligner::end()
     double offsetV = f2->GetParameter(3);
     
     // Discard fit result, if beam spot outside sensor area
-    if ( ! _detector.GetDet(ipl).SensitiveCrossed(offsetU, offsetV)) continue;
+    if ( ! TBDetector::GetInstance().GetDet(ipl).SensitiveCrossed(offsetU, offsetV)) continue;
     
     streamlog_out(MESSAGE3) << "Plane number : " << ipl << endl  
                             << "   U offset is " << offsetU << " mm"
@@ -246,7 +230,7 @@ void BeamSpotAligner::end()
 
       
     // Transform local offset to global offset   
-    Vector3d global_offset = _detector.GetDet(ipl).GetNominal().GetRotation().transpose() * local_offset ;
+    Vector3d global_offset = TBDetector::GetInstance().GetDet(ipl).GetNominal().GetRotation().transpose() * local_offset ;
     double dx = global_offset[0]; 
     double dy = global_offset[1];      
     double dz = global_offset[2];   
@@ -255,34 +239,16 @@ void BeamSpotAligner::end()
     ReferenceFrame deltaFrame = ReferenceFrame::create_karimaki_delta(dx,dy,dz,0,0,0); 
       
     // Merge nominal frame and delta frame 
-    ReferenceFrame alignFrame = ReferenceFrame::combine_karimaki(_detector.GetDet(ipl).GetNominal(), deltaFrame); 
+    ReferenceFrame alignFrame = ReferenceFrame::combine_karimaki(TBDetector::GetInstance().GetDet(ipl).GetNominal(), deltaFrame); 
       
     // Update nominal sensor reference frame
-    _detector.GetDet(ipl).SetNominalFrame(alignFrame); 
+    TBDetector::GetInstance().GetDet(ipl).SetNominalFrame(alignFrame); 
   }
      
+  streamlog_out ( MESSAGE3 ) << "Detector geometry after alignment procedure: " << endl;   
+  TBDetector::GetInstance().Print();   
  
-  //////////////////////////////////////////////////////////////////////  
-  // Save alignment DB
-      
-  _detector = tmp_detector; 
-   
-  if ( _updateAlignment ) { 
-    
-    ////////////////////////////////////////////////////////////
-    // Print detector geometrie after alignment   
-    
-    streamlog_out ( MESSAGE3 ) << "Detector geometry after alignment procedure: " << endl;   
-    _detector.Print();   
-       
-    ////////////////////////////////////////////////////////////
-    // Overwrite the alignment data base with new geometry 
-    _detector.WriteAlignmentDB( ); 
-    
-  } else {
-    streamlog_out ( MESSAGE3 ) << endl;
-    streamlog_out ( MESSAGE3 ) << "NO UPDATE OF ALIGNMENT DB LCIO FILE" << endl; 
-  }
+  
   
   // Print message
   streamlog_out(MESSAGE3) << std::endl
@@ -305,20 +271,22 @@ void BeamSpotAligner::bookHistos() {
 
   string histoName;
 
-  for(int ipl=0; ipl < _detector.GetNSensors(); ++ipl)    
+  for(int ipl=0; ipl < TBDetector::GetInstance().GetNSensors(); ++ipl)    
   {
     
     // Get handle to sensor data
-    Det & Sensor = _detector.GetDet(ipl); 
+    const Det & Sensor = TBDetector::GetInstance().GetDet(ipl); 
     
-    double  uBox = 1.0 * 0.5 * Sensor.GetSensitiveSizeU();   
-    int uBins = Sensor.GetNColumns()/12;    
+    double  minU = 1.0 * Sensor.GetSensitiveMinU(); 
+    double  maxU = 1.0 * Sensor.GetSensitiveMaxU();     
+    int uBins = (Sensor.GetMaxUCell()+1)/12;    
     
-    double  vBox = 1.0 * 0.5 * Sensor.GetSensitiveSizeV();
-    int vBins = Sensor.GetNRows()/12; 
+    double  minV = 1.0 * Sensor.GetSensitiveMinV();
+    double  maxV = 1.0 * Sensor.GetSensitiveMaxV();
+    int vBins = (Sensor.GetMaxVCell()+1)/12; 
 
     histoName = "hhitmap_sensor"+to_string( ipl );
-    _histoMap2D[ histoName] = new TH2D(histoName.c_str(), "" ,uBins, -uBox, +uBox, vBins, -vBox, +vBox);
+    _histoMap2D[ histoName] = new TH2D(histoName.c_str(), "" ,uBins, minU, maxU, vBins, minV, maxV);
     _histoMap2D[histoName]->SetXTitle("u [mm]"); 
     _histoMap2D[histoName]->SetYTitle("v [mm]");    
     _histoMap2D[histoName]->SetStats( false );  

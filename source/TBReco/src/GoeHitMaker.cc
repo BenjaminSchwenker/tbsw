@@ -7,6 +7,7 @@
  
 #include "GoeHitMaker.h"
 #include "TBHit.h"
+#include "TBDetector.h"
 
 // Include basic C
 #include <limits>
@@ -69,7 +70,7 @@ namespace depfet {
     
     registerProcessorParameter("UseCenterOfGravityFallback",
                                "Set true to use center of gravity hit when no correction available from clusterDB",
-                               _useCoGFallback, static_cast< bool > ( false ) ); 
+                               _useCoGFallback, static_cast< bool > ( true ) ); 
      
     std::vector<float> initSigmaUCorrrections;
     initSigmaUCorrrections.push_back(1.0);
@@ -98,8 +99,7 @@ namespace depfet {
     // Print set parameters
     printProcessorParams();
     
-    // Read detector constants from gear file
-    _detector.ReadGearConfiguration();    
+    
     
     // Open clusterDB file 
     TFile * clusterDBFile = new TFile(_clusterDBFileName.c_str(), "READ");
@@ -182,8 +182,8 @@ namespace depfet {
     // delete pointer
     delete clusterDBFile;
     
-    for(int ipl=0;ipl<_detector.GetNSensors();ipl++)  { 
-      int sensorID = _detector.GetDet(ipl).GetDAQID();
+    for(int ipl=0;ipl<TBDetector::GetInstance().GetNSensors();ipl++)  { 
+      int sensorID = TBDetector::Get(ipl).GetSensorID();
       _countAllMap[sensorID] = 0;   
       _countCalMap[sensorID] = 0;  
     }
@@ -237,10 +237,12 @@ namespace depfet {
 
 
         TrackerPulseImpl* cluster = dynamic_cast<TrackerPulseImpl* > ( clusterCollection->getElementAt(iClu) )  ;       
+
         static auto idx_clust_sensorID=clusterDecoder(cluster).index("sensorID"s); //find the address ONCE.
         int sensorID = clusterDecoder(cluster)[idx_clust_sensorID];
-        int ipl = _detector.GetPlaneNumber(sensorID);
-        Det& Det = _detector.GetDet(ipl);
+        int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);
+        const Det& Det = TBDetector::Get(ipl);
+
         
         // Increment the cluster counter
         _countAllMap[sensorID]++;
@@ -295,12 +297,12 @@ namespace depfet {
           aCluster.getCenterOfGravity(Det, u, v, sig2_u, sig2_v, cov_uv); 
           
           // Override sigma u from user input
-          if ( aCluster.getUSize()-1 < _sigmaUCorrections.size() ) {
+          if ( aCluster.getUSize()-1 < int(_sigmaUCorrections.size()) ) {
             sig2_u *= pow(_sigmaUCorrections[aCluster.getUSize()-1],2);  
           }
            
           // Override sigma v from user input    
-          if ( aCluster.getVSize()-1 < _sigmaVCorrections.size() ) {
+          if ( aCluster.getVSize()-1 < int(_sigmaVCorrections.size()) ) {
             sig2_v *= pow(_sigmaVCorrections[aCluster.getVSize()-1],2); 
           }        
           
@@ -345,8 +347,8 @@ namespace depfet {
   void GoeHitMaker::end()
   {
     
-    for(int ipl=0;ipl<_detector.GetNSensors();ipl++)  { 
-      int sensorID = _detector.GetDet(ipl).GetDAQID();
+    for(int ipl=0;ipl<TBDetector::GetInstance().GetNSensors();ipl++)  { 
+      int sensorID = TBDetector::Get(ipl).GetSensorID();
       
       float coverage_efficiency = 100.0*((float)_countCalMap[sensorID]/_countAllMap[sensorID]);
       
@@ -380,7 +382,7 @@ namespace depfet {
                             << std::endl;
   }
   
-  bool GoeHitMaker::searchDB(int sensorID, string id, double& u, double& v, double& sig2_u, double& sig2_v, double& cov_uv)
+  bool GoeHitMaker::searchDB(int /*sensorID*/, string id, double& u, double& v, double& sig2_u, double& sig2_v, double& cov_uv)
   {
    
     if ( m_DB_Weight == nullptr ) {

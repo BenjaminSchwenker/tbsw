@@ -7,6 +7,7 @@
 
 // Include TBTools 
 #include "DEPFET.h" 
+#include "TBDetector.h"
 
 // Include basic C
 #include <iostream>
@@ -77,8 +78,7 @@ namespace depfet {
     _nEvt = 0 ;
     _timeCPU = clock()/1000;
                
-    // Read detector constants from gear file
-    _detector.ReadGearConfiguration();    
+    
     
     // Print set parameters
     printProcessorParams();
@@ -124,12 +124,16 @@ namespace depfet {
         int sensorID =  DataDecoder( trackerData ) ["sensorID"s] ;
         
         // Read geometry info for sensor 
-        int ipl = _detector.GetPlaneNumber(sensorID);      
-        Det& adet = _detector.GetDet(ipl);
+        int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);      
+        const Det& adet = TBDetector::Get(ipl);
+    
+        int nUCells = adet.GetMaxUCell()+1;
+        int nVCells = adet.GetMaxVCell()+1;
         
         // Register counter variables for new sensorID 
         if (_hitCounterMap.find(sensorID) == _hitCounterMap.end() ) {
-          int nPixel = adet.GetNColumns() * adet.GetNRows() ;
+          
+          int nPixel = nUCells * nVCells ;
           
           // Initialize hit counter 
           _hitCounterMap[sensorID] = FloatVec( nPixel, 0.);    
@@ -156,7 +160,7 @@ namespace depfet {
           }
           
           // Check if digit cellIDs are valid
-          if ( iU < 0 || iU >= adet.GetNColumns() || iV < 0 || iV >= adet.GetNRows() ) 
+          if ( iU < 0 || iU >= nUCells || iV < 0 || iV >= nVCells ) 
           {   
             streamlog_out(MESSAGE2) << "Digit on sensor " << sensorID 
                                       << "   iU:" << iU << ", iV:" << iV 
@@ -227,11 +231,14 @@ namespace depfet {
       auto&& hitVec = it->second;
         
       // Read geometry info for sensor 
-      int ipl = _detector.GetPlaneNumber(sensorID);      
-      Det& adet = _detector.GetDet(ipl);
+      int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);      
+      const Det& adet = TBDetector::Get(ipl);
        
+      int nUCells = adet.GetMaxUCell()+1;
+      int nVCells = adet.GetMaxVCell()+1;
+
       string histoName = "hDB_sensor"+to_string(sensorID) + "_mask";
-      _histoMap[histoName] = new TH2F(histoName.c_str(), "" ,adet.GetNColumns(), 0, adet.GetNColumns(), adet.GetNRows(), 0, adet.GetNRows());
+      _histoMap[histoName] = new TH2F(histoName.c_str(), "" ,nUCells, 0, nUCells, nVCells, 0, nVCells);
       _histoMap[histoName]->SetXTitle("uCell [cellID]"); 
       _histoMap[histoName]->SetYTitle("vCell [cellID]"); 
       _histoMap[histoName]->SetZTitle("mask");     
@@ -240,8 +247,8 @@ namespace depfet {
       int nMasked = 0; 
        
       // Loop over all pixels 
-      for (int iV = 0; iV < adet.GetNRows(); iV++) {
-        for (int iU = 0; iU < adet.GetNColumns(); iU++) {
+      for (int iV = 0; iV < nVCells; iV++) {
+        for (int iU = 0; iU < nUCells; iU++) {
             
           int uniqPixelID  = adet.encodePixelID(iV, iU);   
           

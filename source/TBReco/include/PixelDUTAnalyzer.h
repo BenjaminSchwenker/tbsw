@@ -6,9 +6,6 @@
 #ifndef PixelDUTAnalyzer_H
 #define PixelDUTAnalyzer_H 1
 
-
-// TBTools includes
-#include "TBDetector.h"
 #include "TBTrack.h"
 #include "TBHit.h"
 
@@ -65,7 +62,8 @@ namespace depfet {
  *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
  */
    
-  
+
+
 class PixelDUTAnalyzer : public marlin::Processor {
    
  public:
@@ -109,9 +107,6 @@ class PixelDUTAnalyzer : public marlin::Processor {
 
    //! Input digit collection name
    std::string _digitColName;
-   
-   //! Alignment DB file name 
-   std::string _alignmentDBFileName;
    
    //! ROOT output file name  
    std::string _rootFileName;  
@@ -207,8 +202,7 @@ class PixelDUTAnalyzer : public marlin::Processor {
    
  private:
    
-   // Handle to detector data 
-   TBDetector  _detector;    
+   
    
    //! internally used as storage for input decoding
    UTIL::BitField64 _inputDecodeHelper;

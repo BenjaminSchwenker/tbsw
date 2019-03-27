@@ -15,7 +15,7 @@ namespace depfet {
 
   //! Class TBDetector   
   /*! 
-   *  The TBDetecor class holds all information about the geometry of a pixel tracking 
+   *  The TBDetecor singleton class holds all information about the geometry of a pixel tracking 
    *  telescope. This includes detector layout data, detector alignment data and 
    *  material budget data. The class defines a common interface to be used in all 
    *  reconstruction modules for analysis of test beam data.  
@@ -70,21 +70,6 @@ namespace depfet {
    *  the DUT, alpha and/or beta may be large in so called tilt angle scans using rotation
    *  stages.  
    *   
-   *  PIXEL DATA
-   *  
-   *  The pixel data coming from the DAQ is addressed by an integer column and row 
-   *  number counting from zero. The measured raw signals are integer valued. 
-   *  Calibrated signal values may be doubles or integers. 
-   *  
-   *  The position of the center of pixel p=(col,row,0) in local coordinates depends on 
-   *  the physical arrangement of pixel. In case the pixels form a rectangular grid with 
-   *  pixel size pitch_u and pitch_v it is  
-   *  
-   *  q = PITCH * (p - p0 ) ; p = (col, row, 0) 
-   *   
-   *  where PITCH=diag(pitch_u,pitch_v,0) and shift vector p0 = (nxpixels/2,nypixels/2,0)  
-   *  pointing from lower left edge (0,0) to the center of the active sensor area.  
-   *  
    *  COORDINATE TRANSFORMATIONS 
    *  
    *  The concept of a reference frame (RotationMatrix + TranslationVector) is 
@@ -113,59 +98,80 @@ class TBDetector {
   
  public:
   
-  //!Constructor 
-  TBDetector( ); 
-  
   //!Destructor
   ~TBDetector( );
   
   //! Write alignment data base file - overwrites old DB file
   void WriteAlignmentDB( );
     
-  //! Build detector from gear file 
-  void ReadGearConfiguration( );
+  //! Build detector from geometry file 
+  void ReadGearConfiguration( const std::string & geometryXMLFile );
   
-  //! Read alignment data base file 
-  void ReadAlignmentDB( std::string FileName );
+  //! Read alignment data base  
+  void ApplyAlignmentDB( );
 
-  //! Read alignment data base file name 
-  void SetAlignmentDBName( std::string FileName );
+  //! Set path to alignment data base file 
+  void SetAlignmentDBPath( std::string FilePath );
+  
+  //! Get path to alignment data base file 
+  std::string GetAlignmentDBPath() const {return m_alignmentDBFilePath;}
   
   //! Get number of pixel sensors 
-  int GetNSensors() { return _numberOfSensors; };
+  int GetNSensors() const { return m_numberOfSensors; }
   
   //! Translate DAQ (Sensor) ID to plane number  
-  int GetPlaneNumber(int sensorID);
+  int GetPlaneNumber(int sensorID) const;
   
   //! Get detector at plane number ipl
   Det& GetDet(int ipl);
-
-  //! Get components of magnetic field in Tesla
-  double GetBx() { return _Bx;};
-  double GetBy() { return _By;};
-  double GetBz() { return _Bz;};
   
-  //! Method printing general Gear parameters
-  void Print() ;
+  //! Get detectors
+  std::vector<Det*>& GetDets() {return m_Dets; } 
+  
+  //! Get detector at plane number ipl
+  const Det& GetDet(int ipl) const;
+
+  //! Get components of magnetic field in tesla
+  double GetBx() const { return m_Bx;}
+  double GetBy() const { return m_By;}
+  double GetBz() const { return m_Bz;}
+  
+  //! Method printing general geometry parameters
+  void Print();
+
+  /** Return a reference to the singleton instance */
+  static TBDetector& GetInstance();
+   
+  /** Return a reference to the SensorInfo of a given SensorID.
+   *  This function is a shorthand for TBDetect::GetInstance().GetDet(planeNumber)
+   */
+  static const Det& Get(int planeNumber) { return GetInstance().GetDet(planeNumber); }
      
  private:
-       
+  
+  /** Singleton class, hidden constructor */
+  TBDetector( ); 
+  /** Singleton class, hidden copy constructor */
+  TBDetector(const TBDetector&) = delete;
+  /** Singleton class, hidden assignment operator */
+  TBDetector& operator=(const TBDetector&) = delete; 
+     
   // Cartesian components of magnetic field
-  double _Bx; 
-  double _By; 
-  double _Bz; 
+  double m_Bx; 
+  double m_By; 
+  double m_Bz; 
 
-  // Name of LCIO data base file 
-  std::string _alignmentDBFileName;
+  // Path to data base file 
+  std::string m_alignmentDBFilePath;
   
   // Total number of sensors  
-  int _numberOfSensors;       
+  int m_numberOfSensors;       
   
   // Maps sensorID to planeNumber 
-  std::map< int, int > _indexMap;   
+  std::map< int, int > m_indexMap;   
   
-  // Vector of pixel detector in beam 
-  std::vector<Det> _DetVec;      
+  // Vector of pointers to Det objects 
+  std::vector<Det*> m_Dets;      
   
 }; // End class TBDetector
  

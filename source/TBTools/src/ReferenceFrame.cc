@@ -24,7 +24,7 @@ ReferenceFrame::ReferenceFrame() : fPosition(Eigen::Vector3d::Zero()), fRotation
 // 
 // Constructur - Define Local Sensor Reference Frame 
 //  	
-ReferenceFrame::ReferenceFrame(Vector3d& position, Matrix3d& rotation) : fPosition(position), fRotation(rotation)
+ReferenceFrame::ReferenceFrame(const Vector3d& position, const Matrix3d& rotation) : fPosition(position), fRotation(rotation)
 {
 }
 
@@ -39,7 +39,7 @@ bool ReferenceFrame::operator==(const ReferenceFrame& other) const
 // 
 // Get direction cosines of local ref. unit vectors
 //  
-Vector3d ReferenceFrame::GetU()
+Vector3d ReferenceFrame::GetU() const
 {
   Vector3d  localU;
   localU << 1, 0, 0;
@@ -47,14 +47,14 @@ Vector3d ReferenceFrame::GetU()
 }
 
 
-Vector3d ReferenceFrame::GetV()
+Vector3d ReferenceFrame::GetV() const
 {
   Vector3d  localV;
   localV << 0, 1, 0;
   return  fRotation.transpose() * localV;
 }
 
-Vector3d ReferenceFrame::GetW()
+Vector3d ReferenceFrame::GetW() const
 {
   Vector3d localW;
   localW << 0, 0, 1;
@@ -92,27 +92,13 @@ ReferenceFrame ReferenceFrame::create_karimaki_delta(double dx, double dy, doubl
 } 
 
 
-void ReferenceFrame::PrintHepMatrix()  const
+
+void ReferenceFrame::PrintHepMatrix() const
 {
   streamlog_out(MESSAGE3) << " Frame Position [mm]:   "    << std::endl
                           << GetPosition()  << std::endl
                           << " Frame Rotation Matrix:   "    << std::endl 
                           << GetRotation()  << std::endl;
-} 
-
-
-void ReferenceFrame::PrintParams()  const
-{
-
-  Matrix3d rot = GetRotation();
-  double alpha, beta, gamma; 
-  GetAnglesKarimaki(rot, alpha, beta, gamma); 
-  streamlog_out(MESSAGE3) << " Frame Position [mm]:   "    << std::endl
-                          << GetPosition()  << std::endl
-                          << " Karimaki Alpha [rad]:   " << alpha  << std::endl
-                          << " Karimaki Beta  [rad]:   " << beta   << std::endl 
-                          << " Karimaki Gamma [rad]:   " << gamma  << std::endl 
-                          << std::endl;
 } 
 
 

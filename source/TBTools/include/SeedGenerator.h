@@ -38,13 +38,13 @@ class SeedGenerator {
   SeedGenerator( double acharge, double amom );
 
   // Create a seed track state 
-  TBTrackState CreateSeedTrack(TBHit Hit, TBDetector& Detector);   
+  TBTrackState CreateSeedTrack(const TBHit& Hit, const TBDetector& Detector) const;   
     
   // Create a seed track state 
-  TBTrackState CreateSeedTrack(TBHit FirstHit, TBHit SecondHit, TBDetector& Detector);   
+  TBTrackState CreateSeedTrack(const TBHit& FirstHit, const TBHit& SecondHit, const TBDetector& Detector) const;   
   
   // Create a seed track state  
-  TBTrackState CreateSeedTrack();
+  TBTrackState CreateSeedTrack() const;
 
  private:
 

@@ -1,48 +1,41 @@
 #ifndef DET_H
 #define DET_H 1
 
-// Include basic C
 #include <string>
-#include <vector>
-#include <tuple>
 
 // Include TBTools 
 #include "ReferenceFrame.h"
 
 namespace depfet {
-	
+
 /** Class Det
  *  
- *  A pixel detector module
+ *  Base class for pixel detector planes in tbsw.
  *  
- *  The Det class represents a pixel module in a pixel tracking telescope. Its 
- *  main purpose is to provide a functional interface to the detector data 
- *  for reconstruction algorithms. The class interfaces all data fields for a 
- *  gear layer in the gear file. Most fields are self explanatory. Some need a
- *  little bit of explanation
- * 
- *  ID: Unique index to match geometry information to detector raw data 
- *  UCellID: Index of readout cells along u axis, also called column. Column i neignbors columns i-1 and i+1  
- *  VCellID: Index of readout cells along v axis, also called rows. Row i neignbors rows i-1 and i+1  
- *   
- *  The position and orientation of the detector is represented by an object
- *  of class ReferenceFrame called 'Nominal'. In short, the 'Nominal' reference 
- *  frame manages the transformation from local UVW to global XYZ coordinates. 
- *  The 'Nominal' reference frame is loaded from the alignment data base, if it
- *  is available. Otherwise, it is loaded from the gear file. 
- *  
- *  A special instance of class ReferenceFrame called 'Discrete' is used to  
- *  represent the discrete 'flips' from the local UVW to global XYZ axes. 
- *  The 'Discrete' reference frame represents the different possibolities 
- *  to install the detector in the beam line,i.e. is the detector front 
- *  side pointing into the beam? Or, is the local u axis pointing upwards? 
- *  
- *  The Det class also provides an advanced interface to detector data for 
- *  reconstruction methodes. This includes: 
+ *  The Det class provides a user interface for detector information to 
+ *  reconstruction algorithms and Marlin processors. In order to provide 
+ *  support for new detector types, developers must override all  
+ *  pure virtual members.   
  *    
- *  A) Transform between local coord and readout channels 
- *  B) Position resolved detector material profile data  
- *  C) Boundary intersection tests for partical tracking 
+ *  The Det class contains some objects with a special meaning in tbsw: 
+ *     
+ *  1) The SensorID index is unique for a pixel detector in a telescope. This number must be the same as the sensorID 
+ *     stored in LCIO::TrackerRawData and LCIO::TrackerData collections.  
+ *     
+ *  2) The vCell/uCell index pair is unique for a geometrical pixel on the pixel matrix. The indices 
+ *     must be integers in the bounding box [minU,maxU]x[minV,maxV]. 
+ *     
+ *  3) The vCell (uCell) ID increments in the along the v (u) axis of the local uvw sensor coordinate 
+ *     system.  
+ * 
+ *  4) All pixels have an integer valued type. Pixel with the same type have an identical layout (pixel pitch, electrode 
+       position and so forth) and are assumed to have the same spatial resolution.  
+ *  
+ *  5) The nominal reference frame encodes the trafo from global xyz to local uvw coordinates. The nomal reference
+ *     frame is first loaded from the gear file and, if available, updated from the alignment data base.
+ *  
+ *  Other global conventions in tbsw regarding the telescope geometry are detailed in TBDetector.h. 
+ * 
  *  
  *  @Author B. Schwenker, University of Göttingen
  *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
@@ -51,205 +44,195 @@ namespace depfet {
 class Det {
    	
  public:
-   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  // Constructors 
-  Det();
-   
-  // Get/Set functions to implement interface to gear layer 
-  // ------------------------------------------------------
- 
-  // Get/Set detector DAQ ID
-  int GetDAQID()const { return _ID; };
-  void SetDAQID (int ID){ _ID = ID; };
   
-  // Get/Set plane number   
-  int GetPlaneNumber() const { return _PlaneNumber; } ;
-  void SetPlaneNumber(int ipl)  { _PlaneNumber = ipl; } ;
-
-  // Get/Set thickness in sensitive volume
-  double GetSensitiveThickness() const { return _SensitiveThickness; };
-  void SetSensitiveThickness(double thickness)  { _SensitiveThickness = thickness; };
-
-  // Get/Set radiation length in sensitive volume
-  double GetSensitiveRadLength() const { return _SensitiveRadLength; };
-  void SetSensitiveRadLength(double X0) { _SensitiveRadLength=X0; };
-
-  // Get/Set atomic number in sensitive volume 
-  double GetSensitiveAtomicNumber() const { return _SensitiveAtomicNumber; };
-  void SetSensitiveAtomicNumber(double Z) { _SensitiveAtomicNumber=Z; };
-
-  // Get/Set atomic mass in sensitive volume 
-  double GetSensitiveAtomicMass() const { return _SensitiveAtomicMass; };
-  void SetSensitiveAtomicMass(double A) { _SensitiveAtomicMass=A; };
-
-  // Get/Set size u of ladder (sensitive + supports)  
-  double GetLadderSizeU()  const { return _LadderSizeU; };
-  void SetLadderSizeU(double size)  { _LadderSizeU = size; };
-   
-  // Get/Set size V of ladder (sensitive + supports)  
-  double GetLadderSizeV()  const { return _LadderSizeV; };
-  void SetLadderSizeV(double size)  { _LadderSizeV = size; };
-
-  // Get/Set thickness of ladder in nonsentive volume    
-  double GetLadderThickness() const { return _LadderThickness; };
-  void SetLadderThickness(double thickness) { _LadderThickness=thickness; };
+  /** Default constructor - subclasses need to call this in their
+   *  default constructor.
+   */
+  Det(const std::string& typeName, int sensorID, int planeNumber) ; 
   
-  // Get/Set radiation length in nonsentive volume    
-  double GetLadderRadLength() const { return _LadderRadLength; };
-  void SetLadderRadLength(double X0)  { _LadderRadLength = X0; };
-   
-  // Get/Set atomic number in nonsensitive volume 
-  double GetLadderAtomicNumber() const { return _LadderAtomicNumber; };
-  void SetLadderAtomicNumber(double Z) { _LadderAtomicNumber=Z; };
-
-  // Get/Set atomic mass in nonsensitive volume 
-  double GetLadderAtomicMass() const { return _LadderAtomicMass; };
-  void SetLadderAtomicMass(double A) { _LadderAtomicMass=A; };
+  /** Destructor */
+  virtual ~Det() {}
   
-  // Set the u cells  
-  void SetCellsU( std::vector< std::tuple<int,int,double> > uCells); 
+  /** Get pixel type for pixel at position vcell and ucell. 
+   *  Has to be implemented by subclasses.
+   */
+  virtual int GetPixelType(int vcell, int ucell) const = 0;  
+
+  /** Get the maximum uCell on the pixel matrix.  
+   *  Has to be implemented by subclasses. 
+   *  The uCell numbers of pixels are in the intervall [min,max].
+   */  
+  virtual int GetMaxUCell() const = 0;  
+
+  /** Get the minimum uCell on the pixel matrix.  
+   *  Has to be implemented by subclasses. 
+   *  The uCell numbers of pixels are in the intervall [min,max].
+   */  
+  virtual int GetMinUCell() const = 0;  
+
+  /** Get the maximum vCell on the pixel matrix.  
+   *  Has to be implemented by subclasses. 
+   *  The vCell numbers of pixels are in the intervall [min,max].
+   */  
+  virtual int GetMaxVCell() const = 0;  
   
-  // Set the v cells  
-  void SetCellsV( std::vector< std::tuple<int,int,double> > vCells); 
-       
-  // Get/Set nominal sensor frame (i.e. where the detector is supposed to be)
-  const ReferenceFrame & GetNominal() const { return _Nominal; };
-  void SetNominalFrame(ReferenceFrame nominal) { _Nominal  = nominal; };   
-   	
-  // Get/Set discrete rotation (mounting orientation of sensor) 
-  const ReferenceFrame & GetDiscrete() const { return _Discrete; };
-  void SetDiscreteFrame(ReferenceFrame discrete) {_Discrete  = discrete;};   
- 
-  // These functions are relevant for tracking and DUT analysis
-  // ----------------------------------------------------------
-  // Their implementation will typically depend on the actual 
-  // sensor design. 
- 
-  // Print methods 
-  virtual void Print();
-
-  // Get pixel type u axis
-  virtual int GetPixelTypeU(int vcell, int ucell);  
-   
-  // Get pixel type v axis
-  virtual int GetPixelTypeV(int vcell, int ucell);  
-
-  // Get pixel type
-  virtual int GetPixelType(int vcell, int ucell);  
-
-  // Get number of ucells  
-  virtual int GetNCellsU() const;
-
-  // Get number of vcells  
-  virtual int GetNCellsV() const;
-
-  // Get number of ucells  
-  virtual int GetNColumns() { return _nCellsU; }  
-
-  // Get number of vcells  
-  virtual int GetNRows() { return _nCellsV; }
-
-  // Get size u of active area  
-  virtual double GetSensitiveSizeU() const;
+  /** Get the minimum vCell on the pixel matrix.  
+   *  Has to be implemented by subclasses. 
+   *  The vCell numbers of pixels are in the intervall [min,max].
+   */  
+  virtual int GetMinVCell() const = 0;  
   
-  // Get size v of active area  
-  virtual double GetSensitiveSizeV() const;
+  /** Get the maximun u position of sensitive area. 
+   *  Has to be implemented by subclasses. 
+   *  All pixels must be inside the box 
+   *  [-SensMinU,SensMaxU]x[-SensMinV,SensMaxV].
+   */  
+  virtual double GetSensitiveMaxU() const = 0;  
+  
+  /** Get minimum u position of sensitive area. 
+   *  Has to be implemented by subclasses. 
+   *  All pixels must be inside the box 
+   *  [-SensMinU,SensMaxU]x[-SensMinV,SensMaxV].
+   */  
+  virtual double GetSensitiveMinU() const = 0;  
+  
+  /** Get maximum v position of sensitive area. 
+   *  Has to be implemented by subclasses. 
+   *  All pixels must be inside the box 
+   *  [-SensMinU,SensMaxU]x[-SensMinV,SensMaxV].
+   */  
+  virtual double GetSensitiveMaxV() const = 0; 
+  
+  /** Get minimum v position of sensitive area. 
+   *  Has to be implemented by subclasses. 
+   *  All pixels must be inside the box 
+   *  [-SensMinU,SensMaxU]x[-SensMinV,SensMaxV].
+   */  
+  virtual double GetSensitiveMinV() const = 0; 
       
-  // Get column/u pixel pitch 
-  virtual double GetPitchU(int vcell, int ucell); 
+  /** Get u pitch for pixel at position vcell,ucell. 
+   *  Has to be implemented by subclasses.  
+   */ 
+  virtual double GetPitchU(int vcell, int ucell) const = 0; 
   
-  // Get row/v pixel pitch  
-  virtual double GetPitchV(int vcell, int ucell);  
+  /** Get v pitch for pixel at position vcell,ucell. 
+   *  Has to be implemented by subclasses.  
+   */ 
+  virtual double GetPitchV(int vcell, int ucell) const = 0;  
    
-  // Check if module box crossed
-  virtual bool ModuleCrossed(double u, double v, double w = 0) const;
-
-  virtual bool isPointOutOfSensor( double u , double v , double w = 0); 
+  /** Returns true if point (u,v,w) is not inside the sensitive volume. 
+   *  Has to be implemented by subclasses.  
+   */ 
+  virtual bool isPointOutOfSensor( double u , double v , double w = 0) const = 0; 
   
-  // Check if sensitive volume crossed
-  virtual bool SensitiveCrossed(double u, double v, double w = 0) const;
+  /** Returns true if point (u,v,w) is inside the sensitive volume. 
+   *  Has to be implemented by subclasses.  
+   */ 
+  virtual bool SensitiveCrossed(double u, double v, double w = 0) const = 0;
       
-  // Get thickness at coordinates (u,v) 
-  virtual double GetThickness(double u, double v) const;
+  /** Get thickness of detector at position (u,v).
+   *  Has to be implemented by subclasses.  
+   */ 
+  virtual double GetThickness(double u, double v) const = 0;
 
-  // Get length of particle track (mm)
-  virtual double GetTrackLength(double u, double v, double dudw, double dvdw) const;
+  /** Get length of particle track intersecting the detector.
+   *  Has to be implemented by subclasses.  
+   */
+  virtual double GetTrackLength(double u, double v, double dudw, double dvdw) const = 0;  
     
-  // Get radlenght at coordinates (u,v) 
-  virtual double GetRadLength(double u, double v) const;
+  /** Get radlenght at position (u,v).
+   *  Has to be implemented by subclasses.  
+   */ 
+  virtual double GetRadLength(double u, double v) const = 0;
 
-  // Get atomic number at coordinates (u,v)
-  virtual double GetAtomicNumber(double u, double v) const;
+  /** Get atomic number at position (u,v).
+   *  Has to be implemented by subclasses.  
+   */
+  virtual double GetAtomicNumber(double u, double v) const = 0; 
  
-  // Get atomic mass at coordinates (u,v)
-  virtual double GetAtomicMass(double u, double v) const;
+  /** Get atomic mass at position (u,v).
+   *  Has to be implemented by subclasses.  
+   */
+  virtual double GetAtomicMass(double u, double v) const = 0;   
   
-  // Calculate pixel column from coord (u,v)   
-  virtual int GetUCellFromCoord( double u, double v );
+  /** Returns uCell of pixel at position (u,v). Returns -1 if there is no pixel.  
+   *  Has to be implemented by subclasses.  
+   */    
+  virtual int GetUCellFromCoord( double u, double v ) const = 0;
   
-  // Calculate pixel vcell from coord (u,v)  
-  virtual int GetVCellFromCoord( double u, double v ); 
+  /** Returns vCell of pixel at position (u,v). Returns -1 if there is no pixel.  
+   *  Has to be implemented by subclasses.  
+   */    
+  virtual int GetVCellFromCoord( double u, double v ) const = 0; 
   
-  // Get u coord of pixel center 
-  virtual double GetPixelCenterCoordU(int vcell, int ucell);
+  /** Returns u position of pixel center. 
+   *  Has to be implemented by subclasses.  
+   */
+  virtual double GetPixelCenterCoordU(int vcell, int ucell) const = 0;
   
-  // Get v coord of pixel center 
-  virtual double GetPixelCenterCoordV(int vcell, int ucell);
+  /** Returns v position of pixel center. 
+   *  Has to be implemented by subclasses.  
+   */
+  virtual double GetPixelCenterCoordV(int vcell, int ucell) const = 0;
+  
+  /** Return unique ID for pixel at position vcell, ucell.  
+   *  Has to be implemented by subclasses.  
+   */
+  virtual int encodePixelID(int vcell, int ucell) const = 0;
+  
+  /** Compute ucell and vcell from pixelID.
+   *  Has to be implemented by subclasses.  
+   */ 
+  virtual void decodePixelID(int& vcell, int& ucell, int uniqPixelID) const = 0;
 
-  // Encode pixelID
-  virtual int encodePixelID(int vcell, int ucell);
+  /** Returns true if pixels at position (vcell1,ucell1) and (vcell2,ucell2) are neighbors.
+   *  Has to be implemented by subclasses.  
+   */ 
+  virtual bool areNeighbors(int vcell1, int ucell1, int vcell2, int ucell2) const = 0;
+  
+  /** Get nominal sensor frame (i.e. where the detector is supposed to be)
+   */
+  virtual const ReferenceFrame & GetNominal() const = 0;    
 
-  // Decode pixelID
-  virtual void decodePixelID(int vcell, int ucell, int uniqPixelID);
- 
- private:
-   
-  // ID
-  int _ID;
-  // Plane number along beam line 
-  int _PlaneNumber; 
-  // Cells along sensor u axis  
-  std::vector< std::tuple<int,int,double> > _uCells;
-  // Cells along sensor v axis   
-  std::vector< std::tuple<int,int,double> > _vCells ; 
-  // Thickness in sensitive volume
-  double _SensitiveThickness;
-  // Rad. length in sensitive volume
-  double _SensitiveRadLength;
-  // Atomic number in sensitive volume
-  double _SensitiveAtomicNumber;  
-  // Atomic mass in sensitive volume
-  double _SensitiveAtomicMass; 
-  // Size along u of sensitive + supports  
-  double _LadderSizeU; 
-  // Size along v of sensitive + supports 
-  double _LadderSizeV; 
-  // Thickness in nonsensitive volume
-  double _LadderThickness;
-  // Rad. length in nonsensitive volume
-  double _LadderRadLength;
-  // Atomic number in nonsensitive volume
-  double _LadderAtomicNumber;  
-  // Atomic mass in nonsensitive volume
-  double _LadderAtomicMass; 
+  /** Set nominal sensor frame. This is needed for applying alignment corrections. 
+   */
+  virtual void SetNominalFrame(const ReferenceFrame& nominal) = 0;  
+	
+  /** Get discrete rotation (mounting orientation of sensor) 
+   */
+  virtual const ReferenceFrame & GetDiscrete() const = 0;
+  
+  /** Print method.   
+   */ 
+  virtual void Print() const;
+  
+  /** Get SensorID 
+  */
+  int GetSensorID() const { return m_sensorID; }
+  
+  /** Get plane number
+   */   
+  int GetPlaneNumber() const { return m_planeNumber; }
+
+  /** Set plane number
+   */   
+  void SetPlaneNumber(int planeNumber)  { m_planeNumber=planeNumber; }
+  
+  /** Get type name (as set in constructor)
+   */
+  const std::string & GetType() const { return m_typeName ; } 
        
-  // Nominal reference frame
-  ReferenceFrame _Nominal;
-  // Mounting rotations  
-  ReferenceFrame _Discrete; 
-
-  // Some helper variables
-  int _nCellsU; 
-  int _nCellsV; 
-  int _minCellU;
-  int _minCellV; 
-  double _sensitiveSizeU;  
-  double _sensitiveSizeV; 
-  std::vector<double> _offsetsU;
-  std::vector<double> _offsetsV; 
+ private:
+  
+  // Type of sensor 
+  std::string m_typeName; 
+  // SensorID
+  int m_sensorID;
+  // Plane number along beam line 
+  int m_planeNumber; 
+  
 };
  
 } // Namespace
-#include<Eigen/StdVector>
-EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(depfet::Det)
+
 #endif // DET_H

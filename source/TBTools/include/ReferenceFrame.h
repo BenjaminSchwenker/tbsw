@@ -35,40 +35,40 @@ class ReferenceFrame {
   // Constructors - Identity Transformation 
   ReferenceFrame();
 
+  // Constructor 
+  ReferenceFrame(const Vector3d& position, const Matrix3d& rotation);
+
   // Comparison operator
   bool operator==(const ReferenceFrame& other) const; 
 
-  
-  ReferenceFrame(Vector3d& position, Matrix3d& rotation);
-  	
   // Methods for access to member variables
   Vector3d GetPosition() const { return fPosition; }
   Matrix3d GetRotation() const { return fRotation; }
-  void SetPosition(Vector3d position) { fPosition = position; }
-  void SetRotation(Matrix3d rotation) { fRotation = rotation; }
-  const Vector3d& GetPosRef()  { return fPosition; }
-  const Matrix3d& GetRotRef()  { return fRotation; }
+  void SetPosition(const Vector3d& position) { fPosition = position; }
+  void SetRotation(const Matrix3d& rotation) { fRotation = rotation; }
+  const Vector3d& GetPosRef() const  { return fPosition; }
+  const Matrix3d& GetRotRef() const { return fRotation; }
 
   // Method transforming given point from global ref. system to local ref. system
-  Vector3d TransformPointToLocal(Vector3d& global) const
+  Vector3d TransformPointToLocal(const Vector3d& global) const
     { return fRotation * (global - fPosition); }
   
   // Method transforming given point from local ref. system to global ref. system
-  Vector3d TransformPointToGlobal(Vector3d& local) const
+  Vector3d TransformPointToGlobal(const Vector3d& local) const
     { return fRotation.transpose() * local + fPosition; }
    
   // Method transforming given vector from global ref. system to local ref. system
-  Vector3d TransformVecToLocal(Vector3d& globalVec)  const
+  Vector3d TransformVecToLocal(const Vector3d& globalVec)  const
     { return fRotation * globalVec; }
   
   // Method transforming given vector from global ref. system to local ref. system
-  Vector3d TransformVecToGlobal(Vector3d& localVec) const
+  Vector3d TransformVecToGlobal(const Vector3d& localVec) const
     { return fRotation.transpose() * localVec;  }
    
   // Get direction cosines of local unit vectors UVW wrt. global XYZ  
-  Vector3d GetU() ;
-  Vector3d GetV() ;
-  Vector3d GetW() ;
+  Vector3d GetU() const;
+  Vector3d GetV() const;
+  Vector3d GetW() const;
 
   // Get Z position of surface 
   double GetZPosition() const
@@ -88,8 +88,7 @@ class ReferenceFrame {
   // may be merged with a 'regular' sensor frame using function combine_karimaki. 
   static ReferenceFrame create_karimaki_delta(double dx, double dy, double dz, double dalpha, double dbeta, double dgamma); 
   
-  void PrintHepMatrix() const ;
-  void PrintParams() const;
+  void PrintHepMatrix() const; 
 
 };  // End class ReferenceFrame
  	

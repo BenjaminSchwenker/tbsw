@@ -8,7 +8,8 @@
 
 #include "X0ImageProducer.h"
 
-// DEPFETTrackTools includes
+// TBTools includes
+#include "TBDetector.h"
 #include "TBTrack.h"
 #include "TBHit.h"
 #include "TBKalmanMSC.h"
@@ -76,9 +77,7 @@ X0ImageProducer::X0ImageProducer() : Processor("X0ImageProducer")
   
   // Processor parameters:
   
-  registerProcessorParameter ("AlignmentDBFileName",
-                             "This is the name of the LCIO file with the alignment constants (add .slcio)",
-                             _alignmentDBFileName, static_cast< string > ( "alignmentDB.slcio" ) );     
+  
   
   registerProcessorParameter ("DUTPlane",
                               "Plane number of DUT along the beam line",
@@ -86,7 +85,7 @@ X0ImageProducer::X0ImageProducer() : Processor("X0ImageProducer")
 
   registerProcessorParameter ("VertexFitSwitch",
                               "Choose upstream-downstream track matching approach. true: vertexfit, false: distance cut",
-                              _vertexfitswitch,  static_cast < bool > (true));
+                              _vertexfitswitch,  static_cast < bool > (false));
 
   registerProcessorParameter ("ToyScatteringSwitch",
                               "Switch to fast toy simulation mode: Replace reconstructed scatter angles from track fitting by angles sampled from a Gauss distribution",
@@ -129,17 +128,13 @@ void X0ImageProducer::init() {
    // Print set parameters
    printProcessorParams();
    
-   // Read detector constants from gear file
-   _detector.ReadGearConfiguration();    
-            
-   // Read alignment data base file 
-   _detector.ReadAlignmentDB( _alignmentDBFileName );    
+   
    
    // Load DUT module    
-   Det & dut = _detector.GetDet(_idut); 
+   const Det & dut = TBDetector::GetInstance().GetDet(_idut); 
           
    // Print out geometry information  
-   streamlog_out ( MESSAGE3 )  << "Scatter DUT plane  ID = " << dut.GetDAQID()
+   streamlog_out ( MESSAGE3 )  << "Scatter DUT plane  ID = " << dut.GetSensorID()  
                                << "  at position = " << _idut 
                                << endl << endl;
 
@@ -216,7 +211,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
   } 
   
   // Configure Kalman track fitter
-  TBKalmanMSC TrackFitterMSC(_detector);
+  TBKalmanMSC TrackFitterMSC(TBDetector::GetInstance());
   TrackInputProvider TrackLCIOReader;  
   
   // Store tracks 
@@ -231,7 +226,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     Track * lciotrk = dynamic_cast<Track*> (downtrackcol->getElementAt(itrk));
       
     // Convert LCIO -> TB track  
-    TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, _detector ); 
+    TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, TBDetector::GetInstance() ); 
     
     // Refit track in nominal alignment
     bool trkerr = TrackFitterMSC.ProcessTrack(trk, -1, 0);
@@ -255,7 +250,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     Track * lciotrk = dynamic_cast<Track*> (uptrackcol->getElementAt(itrk));
       
     // Convert LCIO -> TB track  
-    TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, _detector ); 
+    TBTrack trk = TrackLCIOReader.MakeTBTrack( lciotrk, TBDetector::GetInstance() ); 
 
     // Refit track in nominal alignment
     bool trkerr = TrackFitterMSC.ProcessTrack(trk, 1, 0);  
@@ -273,10 +268,11 @@ void X0ImageProducer::processEvent(LCEvent * evt)
   int nMatch=0;	
   vector< vector<int> > up2down(upTrackStore.size() );
   vector< vector<int> > down2up(downTrackStore.size() );
-   
+  
+  Det & dut = TBDetector::GetInstance().GetDet(_idut);
 
-   
-  Det dut = _detector.GetDet(_idut);
+  //Initialize Vertex Fitter
+  TBVertexFitter VertexFitter(_idut);
 
   // Vertex fit track matching
   if(_vertexfitswitch)
@@ -293,12 +289,12 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		chi2min=numeric_limits<double >::max();
 
 		  
-		for(int iup=0;iup<(int)upTrackStore.size(); iup++)
+		for(size_t iup=0;iup< upTrackStore.size(); iup++)
 		{
 		  // Get upstream track
 		  TBTrack& uptrack = upTrackStore[iup];
 		      
-		  for(int idown=0; idown< (int)downTrackStore.size() ; idown++)
+		  for(size_t idown=0; idown< downTrackStore.size() ; idown++)
 		  {
 
 		    // If downtrack matched to some uptrack, skip downtrack
@@ -308,8 +304,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 			// Get upstream track
 		    TBTrack& downtrack = downTrackStore[idown];
 		
-		    //Initialize Vertex and Vertex Fitter
-		    TBVertexFitter VertexFitter(_idut, _detector);
+		    //Initialize Vertex 
 			TBVertex Vertex;
 
 			// Add upstream track state to vertex
@@ -317,7 +312,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 
 			// Additionally add any downstream tracks, which have already been sucessfully matched with this upstream track
 			// This ensures that all matched downstream tracks really come from the same vertex
-			for(int n=0;n<up2down[iup].size();n++) Vertex.AddTrackState(downTrackStore[up2down[iup][n]].GetTE(_idut).GetState());
+			for(size_t n=0;n<up2down[iup].size();n++) Vertex.AddTrackState(downTrackStore[up2down[iup][n]].GetTE(_idut).GetState());
 
 			// Add current downstream track state to vertex
 			Vertex.AddTrackState(downtrack.GetTE(_idut).GetState());
@@ -359,7 +354,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
   // or no hit is close enough to a track!! 
   double distmin=numeric_limits<double >::max();
    
-  Det dut = _detector.GetDet(_idut);
+  
 
   do{
     int bestup=-1;
@@ -367,7 +362,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
     
     distmin=numeric_limits<double >::max();
       
-    for(int iup=0;iup<(int)upTrackStore.size(); iup++)
+    for(size_t iup=0;iup<upTrackStore.size(); iup++)
     {
             
       // if ( up2down[iup].size() > 0 ) continue;    
@@ -428,12 +423,11 @@ void X0ImageProducer::processEvent(LCEvent * evt)
   _rootFile->cd("");
   _rootEventTree->Fill();    
 
-  //Initialize Vertex Fitter
-  TBVertexFitter VertexFitter(_idut, _detector);
+  
 
   // Average mometum before and after energy loss. 
   double average_mom = 0;
-
+  
 
   for(size_t iup=0;iup<upTrackStore.size(); iup++)
   {
@@ -453,10 +447,13 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 	{
 		Vertex.AddTrackState(downTrackStore[up2down[iup][idown]].GetTE(_idut).GetState());
 	}
-
+    
 	// Calculate vertex parameters
 	// In case the vertex multiplicity is larger than 1, these values will be set for every upstream downstream track combination 
 	bool vfiterr = VertexFitter.FitVertex(Vertex);
+    if (vfiterr) {
+      streamlog_out(MESSAGE3) << "Vertex fit failed." << endl;   
+    }
 	auto vertexpos = Vertex.GetPos();
 	auto vertexcov = Vertex.GetCov();
 	auto vertexglobalpos = Vertex.GetGlobalPos();
@@ -497,8 +494,8 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		//Here we use the In and Out State and the GetScatterKinks function of the TBKalmanMSC Class
 		
 		//Angles and angle errors
-		auto theta = TrackFitterMSC.GetScatterKinks(dut, InState, OutState); 
-		auto Cov = TrackFitterMSC.GetScatterKinkCov(dut, InState, OutState);
+		auto theta = TrackFitterMSC.GetScatterKinks(InState, OutState); 
+		auto Cov = TrackFitterMSC.GetScatterKinkCov(InState, OutState);
 		
 		// Get the track parameters of the fitted track on the current sensor
 		// The u and v positions are needed for a position-resolved measurement
@@ -590,7 +587,7 @@ void X0ImageProducer::processEvent(LCEvent * evt)
 		  outstate_toy.Pars=toystate;
 
 		  // Calculate scattering angles from
-		  theta = TrackFitterMSC.GetScatterKinks(dut, InState, outstate_toy); 
+		  theta = TrackFitterMSC.GetScatterKinks(InState, outstate_toy); 
 
 		  double reco_error1;
 		  double reco_error2;

@@ -60,7 +60,7 @@ ADD_LIBRARY( lib_Marlin ${lib_srcs}  ${marlin_hdrs})
 
 
 # link to libstreamlog
-TARGET_LINK_LIBRARIES( lib_Marlin lib_streamlog  lib_LCIO lib_GEARXML)
+TARGET_LINK_LIBRARIES( lib_Marlin lib_streamlog  lib_LCIO)
 TARGET_INCLUDE_DIRECTORIES(lib_Marlin INTERFACE
   "${Marlin_SOURCE_DIR}/include"
 )

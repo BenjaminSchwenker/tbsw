@@ -6,8 +6,8 @@
 #ifndef ClusterShapeToAsciiPrinter_H
 #define ClusterShapeToAsciiPrinter_H 1
 
-// TBTools includes
-#include "TBDetector.h"
+
+
 
 // Include basic C
 #include <vector>
@@ -65,9 +65,6 @@ namespace depfet {
     
     //! Input track collection name
     std::string _inputTrackCollectionName;
-    
-    //! AlignmentDB file name 
-    std::string _alignmentDBFileName;
        
     //! Output file name  
     std::string _asciiFileName;    
@@ -76,10 +73,7 @@ namespace depfet {
     std::vector<int >  _ignoreIDVec;
         
    private:
-          
-    // Handle to detector data 
-    TBDetector  _detector;    
-
+         
     // Handle to ascii file
     std::ofstream _outfile;
      

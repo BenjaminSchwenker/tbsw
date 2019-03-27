@@ -7,9 +7,6 @@
 #ifndef StripHitMaker_H
 #define StripHitMaker_H 1
 
-// Include DEPFETTrackTools 
-#include "TBDetector.h"
-
 // Include Marlin classes
 #include <marlin/Global.h>
 #include <marlin/Processor.h>
@@ -78,9 +75,7 @@ protected:
 
  private:
    
-   // Handle to detector data 
-   TBDetector _detector;    
-    
+   
    double _timeCPU; //!< CPU time
    int    _nRun ;   //!< Run number
    int    _nEvt ;   //!< Event number

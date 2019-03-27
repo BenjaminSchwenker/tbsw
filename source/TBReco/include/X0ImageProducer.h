@@ -6,8 +6,8 @@
 #ifndef X0ImageProducer_H
 #define X0ImageProducer_H 1
 
-// DEPFETTrackTools includes
-#include "TBDetector.h"
+
+
 
 
 // Include basic C
@@ -103,8 +103,7 @@ protected:
    std::string _upStreamTrackColName; 
   
       
-//! Alignment DB file name 
-   std::string _alignmentDBFileName;
+
    
 //! ROOT output file name  
    std::string _rootFileName;  
@@ -195,8 +194,7 @@ protected:
 
  private:
    
-   // Handle to detector data 
-   TBDetector  _detector;    
+   
    
    // Few counter to show the final summary   
 

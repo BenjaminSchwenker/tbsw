@@ -152,7 +152,7 @@ namespace depfet {
   
   int PixelCluster::getLastPixelWithVOffset(int vOffset) const
   {
-    for (auto index = 0; index < m_sortedDigits.size(); ++index) {
+    for (size_t index = 0; index < m_sortedDigits.size(); ++index) {
       int v = m_sortedDigits[index].m_cellIDV - m_vStart;
       if (vOffset < v) {
         if (index == 0) {
@@ -167,7 +167,7 @@ namespace depfet {
   
   int PixelCluster::getFirstPixelWithVOffset(int vOffset) const
   {
-    for (auto index = 0; index < m_sortedDigits.size(); ++index) {
+    for (size_t index = 0; index < m_sortedDigits.size(); ++index) {
       int v = m_sortedDigits[index].m_cellIDV - m_vStart;
       if (vOffset == v) {
         return index;
@@ -176,7 +176,7 @@ namespace depfet {
     return 0;
   }
   
-  void PixelCluster::getCenterOfGravity(Det& Sensor, double& u, double& v, double& cov_u, double& cov_v, double& cov_uv) const { 
+  void PixelCluster::getCenterOfGravity(const Det& Sensor, double& u, double& v, double& cov_u, double& cov_v, double& cov_uv) const { 
     // Calculate hit coord in local frame in mm
     u = 0; 
     v = 0;  
@@ -191,7 +191,7 @@ namespace depfet {
       v /= m_clsCharge; 
     } 
         
-    // Compute the diagonal elements of the hit covariance matrix in mm2
+    // Compute the 2x2 hit covariance matrix 
     cov_u = pow(getUSize()*Sensor.GetPitchU(getVStart(), getUStart())/sqrt(12),2);
     cov_v = pow(getVSize()*Sensor.GetPitchV(getVStart(), getUStart())/sqrt(12),2); 
     cov_uv = 0.0;   

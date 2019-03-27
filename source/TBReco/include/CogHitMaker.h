@@ -7,8 +7,8 @@
 #ifndef CogHitMaker_H
 #define CogHitMaker_H 1
 
-// Include DEPFETTrackTools 
-#include "TBDetector.h"
+
+
 
 // Include Marlin classes
 #include <marlin/Global.h>
@@ -79,8 +79,7 @@ protected:
     
  private:
    
-   // Handle to detector data 
-   TBDetector _detector;    
+   
    //! internally used as storage for input decoding
    UTIL::BitField64 _inputDecodeHelper;
 

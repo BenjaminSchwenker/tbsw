@@ -6,17 +6,12 @@
 #ifndef FastSimulation_H
 #define FastSimulation_H 1
 
-// Include TBTools header files
-#include "TBDetector.h"
-
 
 // Include Marlin classes
 #include <marlin/Global.h>
 #include <marlin/Processor.h>
 #include <marlin/ProcessorMgr.h>
 #include <marlin/Exceptions.h>
-
-// lcio includes <.h>
 
 // system includes <>
 #include <string>
@@ -31,7 +26,7 @@ namespace depfet
    * a new lcio::SimTrackerHits collection to the event. 
    * 
    * The processor uses the very same track extrapolation code as the 
-   * track fitter. It is not a Geant4 based simulation.
+   * track fitter. It is not a Geant4 based simulation but a toy simulation. 
    * 
    * Author: Benjamin Schwenker, Göttingen University 
    * <mailto:benjamin.schwenker@phys.uni-goettingen.de> 
@@ -73,14 +68,6 @@ namespace depfet
     //! Output SimTrackerHit collection name
     std::string m_SimTrackerHitCollectionName;
     
-    //! Alignment DB file name 
-    std::string _alignmentDBFileName;
-     
-    //! New alignment  
-    /*! Don't use current alignment data base, but start from scratch   
-     */
-    bool _newAlignment;
-    
     // Choose model for multiple scattering ( Highland:0 )
     int m_scatterModel;  
  
@@ -91,10 +78,7 @@ namespace depfet
     bool m_doFractionalBetheHeitlerEnergyLoss; 
    
    private: 
-    
-    // Handle to detector data sheets 
-    TBDetector m_detector;  
-    
+     
     double m_timeCPU; //!< CPU time
     int    m_nRun ;   //!< Run number
     int    m_nEvt ;   //!< Event number

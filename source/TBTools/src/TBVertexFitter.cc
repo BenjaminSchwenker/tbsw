@@ -8,6 +8,7 @@
 #include <streamlog/streamlog.h>
   
 // TBTool includes
+#include "TBDetector.h"
 #include "TBVertexFitter.h"
 
 // C++ STL includes 
@@ -26,11 +27,10 @@ namespace depfet {
 
 /** Constructor 
  */
-TBVertexFitter::TBVertexFitter(int ipl, TBDetector det)
+TBVertexFitter::TBVertexFitter(int ipl) 
 {                   
   
   plnr = ipl; //plane number of DUT
-  detector = det; // TBDetector object
   
   //Define Matrices used for vertex fit
   //Jacobian B = dh/dq for slope states q = (a,b,(q/p))
@@ -109,7 +109,7 @@ bool TBVertexFitter::FitVertex(TBVertex& Vertex)
   // Transform vertex position and vertex position covariance into global coordinates
 
   // First get the reference frame of the DUT
-  ReferenceFrame localframe = detector.GetDet(plnr).GetNominal();
+  const ReferenceFrame& localframe = TBDetector::Get(plnr).GetNominal();
 
   // Get rotation matrix and position offset of local coordinate system of DUT plane
   auto Rotation = localframe.GetRotRef().transpose();

@@ -20,12 +20,12 @@ AlignableDet::AlignableDet(int nAlignables)
 
 /** Getter
  */
-SensorAlignmentParameters AlignableDet::GetAlignState(int ipl) 
+SensorAlignmentParameters AlignableDet::GetAlignState(int ipl) const
 {
   return alignmentParametersVec.at(ipl); 
 }
 
-SensorAlignmentCovariance AlignableDet::GetAlignCovariance(int ipl)
+SensorAlignmentCovariance AlignableDet::GetAlignCovariance(int ipl) const
 {
   return alignmentCovarianceVec.at(ipl); 
 } 

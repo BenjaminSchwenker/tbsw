@@ -6,7 +6,7 @@
 #ifndef StripClusterizer_H
 #define StripClusterizer_H 1
 
-#include "TBDetector.h"
+
 
 // Include LCIO classes
 #include <lcio.h>
@@ -115,8 +115,7 @@ protected:
    	       
  private: 
     
-   // Handle to detector data sheets 
-   TBDetector _detector;    
+   
    
    //! Status ready switch
    bool _isStatusReady;
