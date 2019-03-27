@@ -70,7 +70,7 @@ namespace depfet {
     
     registerProcessorParameter("UseCenterOfGravityFallback",
                                "Set true to use center of gravity hit when no correction available from clusterDB",
-                               _useCoGFallback, static_cast< bool > ( false ) ); 
+                               _useCoGFallback, static_cast< bool > ( true ) ); 
      
     std::vector<float> initSigmaUCorrrections;
     initSigmaUCorrrections.push_back(1.0);

@@ -17,6 +17,9 @@
 #include <cmath>
 #include <limits>
 
+#include <Eigen/Dense>
+#include <Eigen/LU>
+
 // Namespaces
 using namespace marlin;
 using namespace std; 
@@ -28,8 +31,6 @@ namespace depfet {
 TBKalmanMSC::TBKalmanMSC(TBDetector& detector)
 {                   
   
-  ndim = 5; // dimension of state vector
-
   // Project hit coord out of track state
   H = StateHitProjector::Zero();
   H(0,2) = 1.;
@@ -217,7 +218,7 @@ bool TBKalmanMSC::ProcessTrack(TBTrack& trk, int dir, bool biased)
   return false;
 }
 
-TrackScatterKinks TBKalmanMSC::GetScatterKinks(Det& DetUnit, TBTrackState& InState, TBTrackState& OutState)
+TrackScatterKinks TBKalmanMSC::GetScatterKinks(TBTrackState& InState, TBTrackState& OutState)
 {
   double slopes[4];
   slopes[0]=InState.GetPars()(0);
@@ -227,7 +228,7 @@ TrackScatterKinks TBKalmanMSC::GetScatterKinks(Det& DetUnit, TBTrackState& InSta
   return slopestotheta(slopes);  
 } 
 
-TrackScatterKinksCovariance TBKalmanMSC::GetScatterKinkCov(Det& DetUnit, TBTrackState& InState, TBTrackState& OutState)
+TrackScatterKinksCovariance TBKalmanMSC::GetScatterKinkCov(TBTrackState& InState, TBTrackState& OutState)
 {
 
   //define aid varibales
@@ -473,29 +474,26 @@ double TBKalmanMSC::KalmanFilter(TBTrack& trk, int idir, int istart, int istop, 
     if (te.HasHit()) {
              
       // Measured hit coordinates, 2x1 matrix 
-      auto m = te.GetHit().GetCoord();
-      
+      const Vector2d& m = te.GetHit().GetCoord();
+
       // Covariance for hit coordinates, 2x2 matrix 
-      auto V = te.GetHit().GetCov();
-      
-      // Measured deviation from the 
-      // reference trajectory
-      m -= H*xref;
-               
+      const Matrix2d& V = te.GetHit().GetCov();
+
       // Weigth matrix of measurment 
-      auto W = (V + H*C0*H.transpose()).inverse();
-      if (ierr != 0) {
-        streamlog_out(ERROR) << "ERR: Matrix inversion failed. Quit fitting!"
+      bool invertible = true;
+      Matrix2d W = Matrix2d::Zero(); // = (V + H*C0*H.transpose()).inverse();
+      (V + H*C0*H.transpose()).computeInverseWithCheck(W,invertible);  // HCH^T is only one 2x2 block from C if H is a simple projectior. That could be done better i guess.
+      if (!invertible) {
+        streamlog_out(MESSAGE3) << "Hit filtering: Matrix inversion failed. Quit filter pass!"
                              << std::endl;
         return -1;
       }	
-       
+
       // This is the predicted residual 
-      auto r = m - H*x0; 
-      
-      // This is the predicted chi2 
-      auto chi2mat = r.transpose()*W*r;
-      predchi2 = chi2mat[0];   
+      Vector2d r = m - H*(x0 + xref); 
+
+      // This is the predicted chi2  
+      predchi2 = (r.transpose()*W*r) [0];
       
       // Kalman gain matrix K 
       auto K = C0 * H.transpose() * W; 
@@ -503,7 +501,7 @@ double TBKalmanMSC::KalmanFilter(TBTrack& trk, int idir, int istart, int istop, 
       // This is the filtered deviation from the 
       // reference trajectory.  
       x0 += K * r;
-      C0 -=  C0*H.transpose()*W*H*C0.transpose();  
+      C0 -= ( C0*H.transpose()*W*H*C0.transpose() ).eval();       
     }  
       
     
@@ -561,7 +559,7 @@ double TBKalmanMSC::KalmanFilter(TBTrack& trk, int idir, int istart, int istop, 
       // Parameters for next surface          
       const ReferenceFrame& nSurf = nte.GetDet().GetNominal();
       
-      // Transport matrix
+      // Time update of covariance  matrix   
       TrackStateJacobian J;
       ierr = TrackModel->TrackJacobian( xref, Surf, nSurf, J);
       if (ierr != 0) {
@@ -620,7 +618,7 @@ double TBKalmanMSC::KalmanFilter(TBTrack& trk, int idir, int istart, int istop, 
        
       // Extrap covariance to next detector
       // ----------------------------------    
-      TrackStateJacobian J_air2det(ndim, ndim);
+      TrackStateJacobian J_air2det;
       ierr = TrackModel->TrackJacobian( xref_air, Surf_air, nSurf, J_air2det);
       if (ierr != 0) {
         streamlog_out(ERROR) << "ERR: Problem with track extrapolation. Quit fitting!"
