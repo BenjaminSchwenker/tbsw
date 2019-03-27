@@ -14,7 +14,7 @@
 
 using namespace std ;
 
-int main(int argc, char **argv)
+int main(int, char **)
 //void DrawBoxes()
 {
 
@@ -144,27 +144,27 @@ int main(int argc, char **argv)
     hX0map->Draw("colz");
 
     hX0map->GetZaxis()->SetTitle("X/X_{0}[%]");
-    hX0map->GetZaxis()->SetLabelSize(0.07);
-    hX0map->GetZaxis()->SetTitleSize(0.07);
-    hX0map->GetZaxis()->SetTitleOffset(0.10);
+    hX0map->GetZaxis()->SetLabelSize(0.07f);
+    hX0map->GetZaxis()->SetTitleSize(0.07f);
+    hX0map->GetZaxis()->SetTitleOffset(0.10f);
 
     hX0map->GetXaxis()->SetTitle("u[mm]");
-    hX0map->GetXaxis()->SetLabelSize(0.07);
-    hX0map->GetXaxis()->SetTitleSize(0.07);
-    hX0map->GetXaxis()->SetTitleOffset(0.6);
+    hX0map->GetXaxis()->SetLabelSize(0.07f);
+    hX0map->GetXaxis()->SetTitleSize(0.07f);
+    hX0map->GetXaxis()->SetTitleOffset(0.6f);
 
 	hX0map->GetYaxis()->SetTitle("v[mm]");
-    hX0map->GetYaxis()->SetLabelSize(0.07);
-    hX0map->GetYaxis()->SetTitleSize(0.07);
+    hX0map->GetYaxis()->SetLabelSize(0.07f);
+    hX0map->GetYaxis()->SetTitleSize(0.07f);
     hX0map->GetYaxis()->SetTitleOffset(0.5);
 
     hX0map->SetTitle("");
 
-	for(int i=0;i<umin.size();i++)
+    for(size_t i=0;i<umin.size();i++)
 	{
 	 	TBox* box=new TBox(umin[i], vmin[i], umax[i], vmax[i]); 
 		TString number;
-		number.Form("%i",i+1);
+        number.Form("%lu",i+1);
 	 	TText* text=new TText(0.5*(umax[i]+umin[i])-0.25*(umax[i]-umin[i]),0.5*(vmax[i]+vmin[i])-0.25*(vmax[i]-vmin[i]),number);
 		text->SetTextColor(1);
 

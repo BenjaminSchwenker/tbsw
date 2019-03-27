@@ -90,7 +90,7 @@ using namespace std ;
 
 
   // This function fills histograms corresponding to certain u v values with msc angle distributions 
-  void getcorrection(std::vector<TString> filenames, TFile* file2, std::vector<double> means, std::vector<double> plotranges, int numberofbins, const int numcol, const int numrow, double umin, double vmin, double umax, double vmax, int vertex_multiplicity_min, int vertex_multiplicity_max)
+  void getcorrection(std::vector<TString> filenames, TFile* file2, std::vector<double> means, std::vector<double> plotranges, int numberofbins, const size_t numcol, const size_t numrow, double umin, double vmin, double umax, double vmax, int vertex_multiplicity_min, int vertex_multiplicity_max)
   {
 	// parameters which are read out from the root file
 	Double_t theta1;
@@ -102,12 +102,14 @@ using namespace std ;
 	// arrays of msc angle histograms
 	file2->cd("");
 	file2->cd("raw");
-	TH1F *histo_theta1[numcol][numrow];
-	TH1F *histo_theta2[numcol][numrow];
+    //TH1F *histo_theta1[numcol][numrow];
+    //TH1F *histo_theta2[numcol][numrow];
 
-	for (int i=0; i<numcol; i++)
+    auto histo_theta1 =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
+    auto histo_theta2 =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
+    for (size_t i=0; i<numcol; i++)
 	{
-		for (int j=0; j<numrow; j++)
+        for (size_t j=0; j<numrow; j++)
 		{
 			 	histo_theta1[i][j] = new TH1F("","",numberofbins,means.at(0)-1.0*plotranges.at(0),means.at(0)+plotranges.at(0));
 			 	histo_theta2[i][j] = new TH1F("","",numberofbins,means.at(1)-1.0*plotranges.at(1),means.at(1)+plotranges.at(1));
@@ -117,12 +119,12 @@ using namespace std ;
 	cout<<endl<<"Selecting raw angle distributions"<<endl;
 
 
-    for(int ifile=0;ifile<filenames.size();ifile++)
+    for(size_t ifile=0;ifile<filenames.size();ifile++)
 	{
 
 		//TTree in input root file, that contains the MSC projected angle distributions and reconstruction error distribution
 		TFile* inputfile= new TFile(filenames.at(ifile), "READ");
-		TTree * msc_tree = (TTree*) inputfile->Get("MSCTree");
+        TTree * msc_tree = static_cast<TTree*>( inputfile->Get("MSCTree"));
 
 		msc_tree->SetBranchAddress("theta1",&theta1);
 		msc_tree->SetBranchAddress("theta2",&theta2);
@@ -154,8 +156,8 @@ using namespace std ;
 		    if (vertex_multiplicity>vertex_multiplicity_max||vertex_multiplicity<vertex_multiplicity_min) continue;
 
 			// Determine column and row number from the position within the map area and the number of rows and columns
-			int col=floor(u_pos*numcol/u_length);
-			int row=floor(v_pos*numrow/v_length);
+            size_t col=size_t(u_pos*numcol/u_length);
+            size_t row=size_t(v_pos*numrow/v_length);
 
 			// Fill histograms
 			histo_theta1[col][row]->Fill(theta1);
@@ -168,13 +170,13 @@ using namespace std ;
 	file2->cd("");
 	file2->cd("raw");
 
-	for (int i=0; i<numcol; i++)
+    for (size_t i=0; i<numcol; i++)
 	{
-		for (int j=0; j<numrow; j++)
+        for (size_t j=0; j<numrow; j++)
 		{
 			// Name of the histograms
 			TString histoname;
-			histoname.Form("area(%i,%i)",i,j);
+            histoname.Form("area(%lu,%lu)",i,j);
 
 			histo_theta1[i][j]->Write("theta1_uncorrected_"+histoname);
 			histo_theta2[i][j]->Write("theta2_uncorrected_"+histoname);
@@ -187,7 +189,7 @@ using namespace std ;
 
 
   // This function fills histograms corresponding to certain u v values with msc angle distributions 
-  void savehistos(std::vector<TString> filenames, TFile* file2, int numberofbins, double histo_range, const int numcol, const int numrow, double umin, double vmin, double umax, double vmax, int vertex_multiplicity_min, int vertex_multiplicity_max)
+  void savehistos(std::vector<TString> filenames, TFile* file2, int numberofbins, double histo_range, const size_t numcol, const size_t numrow, double umin, double vmin, double umax, double vmax, int vertex_multiplicity_min, int vertex_multiplicity_max)
   {
 	// parameters which are read out from the root file
 	Double_t theta1;
@@ -206,38 +208,39 @@ using namespace std ;
 	Double_t vertex_v;
 
 	// Array of mean theta1 and theta2 values in each map pixel
-	double mean1[numcol][numrow];
-	double mean2[numcol][numrow];
+    auto mean1 =std::vector<std::vector<double>>(numcol, std::vector<double>(numrow,0));
+    auto mean2 =std::vector<std::vector<double>>(numcol, std::vector<double>(numrow,0));
 
 	file2->cd("");
 	file2->cd("raw");
 
 	// arrays of msc angle histograms
-	TH1F *histo_theta1[numcol][numrow];
-	TH1F *histo_theta2[numcol][numrow];
-	TH1F *histo_scatteroffset_u[numcol][numrow];
-	TH1F *histo_scatteroffset_v[numcol][numrow];
-	TH1F *histo_thetasum[numcol][numrow];
-	TH2F *histo_2d[numcol][numrow];
+    auto histo_theta1 =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
+    auto histo_theta2 =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
+    auto histo_scatteroffset_u =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
+    auto histo_scatteroffset_v =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
+    auto histo_thetasum =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
+    auto histo_2d =std::vector<std::vector<TH2F *>>(numcol, std::vector<TH2F *>(numrow,nullptr));
 
 	// arrays of vertex parameter histograms
-	TH1F *histo_vertex_w[numcol][numrow];
-	TH1F *histo_vertex_multiplicity[numcol][numrow];
-	TH1F *histo_vertex_chi2[numcol][numrow];
-	TH1F *histo_vtx_trk_u_res[numcol][numrow];
-	TH1F *histo_vtx_trk_v_res[numcol][numrow];
+    auto histo_vertex_w =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
+    auto histo_vertex_multiplicity =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
+    auto histo_vertex_chi2 =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
+    auto histo_vtx_trk_u_res =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
+    auto histo_vtx_trk_v_res =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
+
 
 	cout<<endl<<"Determining mean values from raw histograms"<<endl;
 
-	for (int i=0; i<numcol; i++)
+    for (size_t i=0; i<numcol; i++)
 	{
-		for (int j=0; j<numrow; j++)
+        for (size_t j=0; j<numrow; j++)
 		{
 
 				// Get the histograms generated in the getcorrection function
 				// Name of the histograms
 				TString aidhistoname;
-				aidhistoname.Form("area(%i,%i)",i,j);
+                aidhistoname.Form("area(%lu,%lu)",i,j);
 
 				// Get histogram
 				TH1F* histogram1=(TH1F*)file2->Get("raw/theta1_uncorrected_"+aidhistoname);
@@ -275,7 +278,7 @@ using namespace std ;
 	cout<<endl<<"Selecting corrected angle distributions"<<endl;
 
 	//TTree in input root file, that contains the MSC projected angle distributions and reconstruction error distribution
-    for(int ifile=0;ifile<filenames.size();ifile++)
+    for(size_t ifile=0;ifile<filenames.size();ifile++)
 	{
 
 		//TTree in input root file, that contains the MSC projected angle distributions and reconstruction error distribution
@@ -328,8 +331,8 @@ using namespace std ;
 		    if (vertex_multiplicity>vertex_multiplicity_max||vertex_multiplicity<vertex_multiplicity_min) continue;
 
 			// Determine column and row number from the position within the map area and the number of rows and columns
-			int col=floor(u_pos*numcol/u_length);
-			int row=floor(v_pos*numrow/v_length);
+            size_t col=size_t(u_pos*numcol/u_length);
+            size_t row=size_t(v_pos*numrow/v_length);
 
 			// mean correction of theta
 			theta1=theta1-mean1[col][row];
@@ -359,13 +362,13 @@ using namespace std ;
 	file2->cd("");
 	file2->cd("raw");
 
-	for (int i=0; i<numcol; i++)
+    for (size_t i=0; i<numcol; i++)
 	{
-		for (int j=0; j<numrow; j++)
+        for (size_t j=0; j<numrow; j++)
 		{
 			// Name of the histograms
 			TString histoname;
-			histoname.Form("area(%i,%i)",i,j);
+            histoname.Form("area(%lu,%lu)",i,j);
 
 			histo_theta1[i][j]->Write("theta1_"+histoname);
 			histo_theta1[i][j]->Delete();
@@ -495,7 +498,7 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 	double uncorrected_mean1=histogram1->GetMean();
 	double uncorrected_mean2=histogram2->GetMean();
 
-    if((file->Get("raw/theta1_uncorrected_"+histoname)!=NULL)&&(file->Get("raw/theta2_uncorrected_"+histoname)!=NULL))
+    if((file->Get("raw/theta1_uncorrected_"+histoname)!=nullptr)&&(file->Get("raw/theta2_uncorrected_"+histoname)!=nullptr))
 	{
 
 		TH1F* histogram_uncorrected1=(TH1F*)file->Get("raw/theta1_uncorrected_"+histoname);
@@ -529,15 +532,15 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 
 	// mean of the gaussian and its error
 	double mean1, mean2, meansum;
-	double mean_error1,mean_error2, mean_errorsum;
+    //double mean_error1,mean_error2, mean_errorsum;
 
 	// quality parameters of the fit
 	double chi2ndof1,chi2ndof2,chi2ndofsum;
-	double prob1,prob2,probsum;
+    double prob1=0.,prob2=0.,probsum=0.;
 
 	// X/X0 values from the fit
-	double XX01,XX02,XX0sum;
-	double XX0err1,XX0err2,XX0errsum;
+    double XX01=0.,XX02=0.,XX0sum=0.;
+    double XX0err1=0.,XX0err2=0.,XX0errsum=0.;
 
 	// vertex parameters
 	double vertex_chi2,vertex_w_mean,vertex_w_rms;
@@ -546,8 +549,8 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 
 
 	// Variables used to calculate the fit range of the histograms
-	int bin1;
-	int bin2;
+    //int bin1;
+    //int bin2;
 	double fitrange;
 
 	double scatteroffset_u_mean;
@@ -555,9 +558,9 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 	double scatteroffset_u_rms;
 	double scatteroffset_v_rms;
 
-	double minvalue=1.0/(rangevalue*2.7);
+    //double minvalue=1.0/(rangevalue*2.7);
 
-	int NumberOfTracks=fithistogram1->GetEntries();
+    int NumberOfTracks=int(fithistogram1->GetEntries());
 
 	// Get residual values for this image bin from histogram
 	scatteroffset_u_mean=histogramu->GetMean();
@@ -1089,7 +1092,7 @@ Double_t GetMomentum(double meanvalue,double ugrad,double vgrad, double u, doubl
 
 // This script is used to create a map of a plane in a test beam telescope. The input is a TTree including 
 // MSC projected scattering angle distributions and reconstruction errors.
-int main(int argc, char **argv)
+int main(int , char **)
 //int x0imaging()
 {
 
@@ -1098,8 +1101,8 @@ int main(int argc, char **argv)
 	// display mode
 	gStyle->SetPalette(1);
 	gStyle->SetOptStat(11111111);
-    gStyle->SetPadRightMargin(0.15);
-    gStyle->SetPadLeftMargin(0.15);
+    gStyle->SetPadRightMargin(0.15f);
+    gStyle->SetPadLeftMargin(0.15f);
 
     gROOT->ForceStyle();
 
@@ -1140,7 +1143,7 @@ int main(int argc, char **argv)
 	imagefile->mkdir("result/fitDQM");
 
 	// Number of Rows and Columns of the sensor map
-	int numcol = mEnv.GetValue("maxupixels", 100);
+    int numcol = mEnv.GetValue("maxupixels", 100);
 	int numrow = mEnv.GetValue("maxvpixels", 50);
 
 	// u minimum and v maximum value (in mm)
@@ -1160,7 +1163,7 @@ int main(int argc, char **argv)
 	double vmin=vmax-vlength;
 
     // calculate the u value of the center of the image
-    double u_center=umin+0.5*ulength;
+    //double u_center=umin+0.5*ulength;
 
 	// Print map parameters
 	cout<<endl<<"Column and Row values of the whole area:"<<endl;
@@ -1268,9 +1271,9 @@ int main(int argc, char **argv)
     hscatt_theta1_vs_resu->GetXaxis()->SetTitle("u residual[mm]");
     hscatt_theta1_vs_resu->GetYaxis()->SetTitle("theta1[rad]");
     hscatt_theta1_vs_resu->GetZaxis()->SetTitle("Number of tracks");
-    hscatt_theta1_vs_resu->GetZaxis()->SetTitleOffset(1.4);
-    hscatt_theta1_vs_resu->GetZaxis()->SetTitleSize(0.02);
-    hscatt_theta1_vs_resu->GetZaxis()->SetLabelSize(0.02);
+    hscatt_theta1_vs_resu->GetZaxis()->SetTitleOffset(1.4f);
+    hscatt_theta1_vs_resu->GetZaxis()->SetTitleSize(0.02f);
+    hscatt_theta1_vs_resu->GetZaxis()->SetLabelSize(0.02f);
 
 	// Scatter theta2 vs residual u
 	TH2F * hscatt_theta2_vs_resu = new TH2F("hscatt_theta2_vs_resu","hscatt_theta2_vs_resu",100,-0.1,0.1,150,means.at(1)-plotranges.at(1),means.at(1)+plotranges.at(1));
@@ -1278,9 +1281,9 @@ int main(int argc, char **argv)
     hscatt_theta2_vs_resu->GetXaxis()->SetTitle("u residual[mm]");
     hscatt_theta2_vs_resu->GetYaxis()->SetTitle("theta2[rad]");
     hscatt_theta2_vs_resu->GetZaxis()->SetTitle("Number of tracks");
-    hscatt_theta2_vs_resu->GetZaxis()->SetTitleOffset(1.4);
-    hscatt_theta2_vs_resu->GetZaxis()->SetTitleSize(0.02);
-    hscatt_theta2_vs_resu->GetZaxis()->SetLabelSize(0.02);
+    hscatt_theta2_vs_resu->GetZaxis()->SetTitleOffset(1.4f);
+    hscatt_theta2_vs_resu->GetZaxis()->SetTitleSize(0.02f);
+    hscatt_theta2_vs_resu->GetZaxis()->SetLabelSize(0.02f);
 
 	// Scatter theta1 vs residual v
 	TH2F * hscatt_theta1_vs_resv = new TH2F("hscatt_theta1_vs_resv","hscatt_theta1_vs_resv",100,-0.1,0.1,150,means.at(0)-plotranges.at(0),means.at(0)+plotranges.at(0));
@@ -1288,9 +1291,9 @@ int main(int argc, char **argv)
     hscatt_theta1_vs_resv->GetXaxis()->SetTitle("v residual[mm]");
     hscatt_theta1_vs_resv->GetYaxis()->SetTitle("theta1[rad]");
     hscatt_theta1_vs_resv->GetZaxis()->SetTitle("Number of tracks");
-    hscatt_theta1_vs_resv->GetZaxis()->SetTitleOffset(1.4);
-    hscatt_theta1_vs_resv->GetZaxis()->SetTitleSize(0.02);
-    hscatt_theta1_vs_resv->GetZaxis()->SetLabelSize(0.02);
+    hscatt_theta1_vs_resv->GetZaxis()->SetTitleOffset(1.4f);
+    hscatt_theta1_vs_resv->GetZaxis()->SetTitleSize(0.02f);
+    hscatt_theta1_vs_resv->GetZaxis()->SetLabelSize(0.02f);
 
 	// Scatter theta2 vs residual v
 	TH2F * hscatt_theta2_vs_resv = new TH2F("hscatt_theta2_vs_resv","hscatt_theta2_vs_resv",100,-0.1,0.1,150,means.at(1)-plotranges.at(1),means.at(1)+plotranges.at(1));
@@ -1298,9 +1301,9 @@ int main(int argc, char **argv)
     hscatt_theta2_vs_resv->GetXaxis()->SetTitle("v residual[mm]");
     hscatt_theta2_vs_resv->GetYaxis()->SetTitle("theta2[rad]");
     hscatt_theta2_vs_resv->GetZaxis()->SetTitle("Number of tracks");
-    hscatt_theta2_vs_resv->GetZaxis()->SetTitleOffset(1.4);
-    hscatt_theta2_vs_resv->GetZaxis()->SetTitleSize(0.02);
-    hscatt_theta2_vs_resv->GetZaxis()->SetLabelSize(0.02);
+    hscatt_theta2_vs_resv->GetZaxis()->SetTitleOffset(1.4f);
+    hscatt_theta2_vs_resv->GetZaxis()->SetTitleSize(0.02f);
+    hscatt_theta2_vs_resv->GetZaxis()->SetLabelSize(0.02f);
 
 	tree->Draw("theta1:(u_out-u_in)>>hscatt_theta1_vs_resu","","colz");
 	hscatt_theta1_vs_resu->Write();
