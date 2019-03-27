@@ -559,8 +559,8 @@ if __name__ == '__main__':
   parser.add_argument('--caltag', dest='caltag', default='', type=str, help='Name of calibration tag to use')
   parser.add_argument('--mapping', dest='mapping', default='OF', type=str, help='OF,OB,IF,IB')
   parser.add_argument('--useClusterDB', dest='use_cluster_db', default=True, type=str2bool, help="Use cluster database")
-  parser.add_argument('--skipCalibration', dest='skip_calibration', default=False, type=bool, help="Skip creating a new calibration tag")
-  parser.add_argument('--skipReconstruction', dest='skip_reco', default=False, type=bool, help="Skip reconstruction of run")
+  parser.add_argument('--skipCalibration', dest='skip_calibration', default=False, type=str2bool, help="Skip creating a new calibration tag")
+  parser.add_argument('--skipReconstruction', dest='skip_reco', default=False, type=str2bool, help="Skip reconstruction of run")
   parser.add_argument('--profile', dest='profile', action='store_true',
                       help="profile execution time")
   parser.add_argument('--short', dest='short', action='store_true',
