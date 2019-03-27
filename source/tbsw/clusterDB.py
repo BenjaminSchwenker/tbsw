@@ -19,17 +19,18 @@ class ClusterDB(object):
     self.pixelTypes = []
     self.uPeriods = []
     self.vPeriods = []  
-    self.coverage = 0.0  
-
+    
     dbfile = ROOT.TFile( self.dbpath, 'READ' ) 
-    histo = dbfile.Get("hDB_Weight")
     
     self.coverage = dbfile.Get("hDB_Coverage").GetBinContent(1)
-    
+    self.thetaU = math.atan(dbfile.Get("DB_angles")[0])*180/math.pi
+    self.thetaV = math.atan(dbfile.Get("DB_angles")[1])*180/math.pi 
+     
+    histo = dbfile.Get("hDB_Weight")
     for bin in range(1,histo.GetNbinsX()+1):
       shape = histo.GetXaxis().GetBinLabel(bin)
       self.shapes.append(shape) 
-
+      
       # Parse the shape to obtain pixelType and periods 
       header = shape.split('D')[0].split('P')[1].split('.')
       self.pixelTypes.append(int(header[2]))
@@ -48,6 +49,18 @@ class ClusterDB(object):
     Coverage efficiency is defined as fraction of clusters from training that could be calibrated. 
     """
     return self.coverage  
+
+  def getThetaU(self):
+    """
+    Get mean track incidence angle thetaU into sensor. 
+    """
+    return self.thetaU 
+
+  def getThetaV(self):
+    """
+    Get mean track incidence angle thetaV into sensor. 
+    """
+    return self.thetaV
     
   def getPixelTypes(self): 
     """
