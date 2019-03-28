@@ -725,6 +725,12 @@ namespace depfet {
       DB_angles[1] = thetaV;
       DB_angles.Write("DB_angles");
       
+      TVectorD DB_telcov( 3 );
+      DB_telcov[0] = 0.001;
+      DB_telcov[1] = 0.001;
+      DB_telcov[2] = 0;
+      DB_telcov.Write("DB_telcov");
+      
       streamlog_out(MESSAGE3) << "Created clusterDB with coverage " << 100 * coverage << " percent on training data sample." << std::endl; 
       
       streamlog_out(MESSAGE3) << "ClusterDB written to file " << _clusterDBFileName << std::endl; 

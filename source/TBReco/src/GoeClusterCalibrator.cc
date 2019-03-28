@@ -653,6 +653,12 @@ namespace depfet {
       DB_angles[0] = thetaU;
       DB_angles[1] = thetaV;
       DB_angles.Write("DB_angles");
+
+      TVectorD DB_telcov( 3 );
+      DB_telcov[0] = trk_covU;
+      DB_telcov[1] = trk_covV;
+      DB_telcov[2] = trk_covUV;
+      DB_telcov.Write("DB_telcov");
       
       streamlog_out(MESSAGE3) << "Created clusterDB with coverage " << 100 * coverage << " percent on training data sample." << std::endl; 
       
