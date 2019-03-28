@@ -25,7 +25,16 @@ class ClusterDB(object):
     self.coverage = dbfile.Get("hDB_Coverage").GetBinContent(1)
     self.thetaU = math.atan(dbfile.Get("DB_angles")[0])*180/math.pi
     self.thetaV = math.atan(dbfile.Get("DB_angles")[1])*180/math.pi 
-     
+
+    if dbfile.Get("DB_telcov"): 
+      self.telsigmaU = math.sqrt(dbfile.Get("DB_telcov")[0])
+      self.telsigmaV = math.sqrt(dbfile.Get("DB_telcov")[1]) 
+      self.telrho =  dbfile.Get("DB_telcov")[2]/self.telsigmaU/self.telsigmaV  
+    else: 
+      self.telsigmaU = float('nan')
+      self.telsigmaV = float('nan')
+      self.telrho = float('nan') 
+
     histo = dbfile.Get("hDB_Weight")
     for bin in range(1,histo.GetNbinsX()+1):
       shape = histo.GetXaxis().GetBinLabel(bin)
@@ -79,6 +88,24 @@ class ClusterDB(object):
     Get list of u periods found in the clusterDB
     """
     return self.vPeriods
+ 
+  def getTelescopeSigmaU(self):
+    """
+    Get get the unbiased mean telelscope sigmaU. 
+    """  
+    return self.telsigmaU
+
+  def getTelescopeSigmaV(self):
+    """
+    Get get the unbiased mean telelscope sigmaU. 
+    """  
+    return self.telsigmaV
+
+  def getTelescopeRho(self):
+    """
+    Get get the unbiased mean telelscope rho. 
+    """  
+    return self.telrho
   
   def getSelectedShapes(self, shape=''): 
     """

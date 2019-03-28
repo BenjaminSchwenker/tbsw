@@ -20,7 +20,14 @@ for dbpath in glob.glob("./localDB/**/clusterDB*.root"):
   # calibrated. Only for these clusters we can make statements for sigma's etc. 
   
   coverage = sensorDB.getCoverage()
+  telsigmaU = sensorDB.getTelescopeSigmaU()
+  telsigmaV = sensorDB.getTelescopeSigmaV()
+  telrho = sensorDB.getTelescopeRho() 
+
   print("ClusterDB coverage={:.1f}".format(coverage))
+  #print("Telescope sigmaU={:.5f}".format(telsigmaU))
+  #print("Telescope sigmaV={:.5f}".format(telsigmaV))
+  #print("Telescope rho={:.5f}".format(telrho))
   
   
   for pixelType in sensorDB.getPixelTypes():
