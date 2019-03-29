@@ -16,15 +16,10 @@ using namespace marlin;
 namespace depfet {
 
 
-
 Det::Det(const std::string& typeName, int sensorID, int planeNumber) :  
   m_typeName(typeName),
   m_sensorID(sensorID),
   m_planeNumber(planeNumber) {}
-
-
-
-
 /**  Print methods
  */ 
 void Det::Print() const

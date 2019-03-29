@@ -52,7 +52,7 @@ class TBTrackElement
    */
   Det& GetDet() { return m_det; } 
 
-  /* Get detector 
+  /* Get detector
    */
   const Det& GetDet() const { return m_det; } 
   
@@ -84,14 +84,14 @@ class TBTrackElement
    */
   const TBTrackState& GetState() const {return m_state;}
 
-  /** Get track state - query IsCrossed() before 
+  /** Get track state - query IsCrossed() before
    */
   TBTrackState& GetState() {return m_state;}
   
-  /** Set track state
+  /** Set track state     TODO:: Why do we need this, if there is a non-const GetState?
    */
   void SetState(const TBTrackState& aState) {m_state = aState;}
-  
+
   /** Get sensor crossed flag
    */
   bool IsCrossed() const {return m_isCrossed; }
@@ -136,5 +136,6 @@ class TBTrackElement
 };
 
 } // Namespace
-
+//#include<Eigen/StdVector>
+//EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(depfet::TBTrackElement)
 #endif

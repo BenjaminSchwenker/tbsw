@@ -48,7 +48,7 @@ TBVertexFitter::TBVertexFitter(int ipl)
 
 bool TBVertexFitter::FitVertex(TBVertex& Vertex)
 {
-  int ierr = 0; 
+  //int ierr = 0;
   
   //Initial vertex guess at (0,0,0) and large covariance
   VertexParameter r = VertexParameter::Zero();   

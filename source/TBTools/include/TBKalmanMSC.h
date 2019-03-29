@@ -79,7 +79,10 @@ namespace depfet {
 class KalFilterDetMSC
 {
  public:
-  
+  KalFilterDetMSC():Pr_x(TrackState::Zero()),Pr_C(TrackStateCovariance::Zero()),
+    Up_x(TrackState::Zero()),Up_C(TrackStateCovariance::Zero()){ }
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   /* Predicted estimator 
    */
   TrackState Pr_x;    

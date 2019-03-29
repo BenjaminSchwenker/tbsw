@@ -20,7 +20,7 @@
 using namespace std; 
 using namespace lcio;
 using namespace marlin;
-
+using namespace std::string_literals;
 namespace {
 
 
@@ -154,7 +154,7 @@ namespace eudaqinput {
         TrackerRawDataImpl* rawDataBlock = dynamic_cast<TrackerRawDataImpl* > ( source->getElementAt(iPlane) );
         
         // Get blockID 
-        int blockID = inputDecoder(rawDataBlock)["blockID"]; 
+        int blockID = inputDecoder(rawDataBlock)["blockID"s];
         
         // FIXME: This is only needed, because i do not know how to put 
         // vector<unsigned char> directly into the lcio::LCEvent. 
@@ -204,8 +204,8 @@ namespace eudaqinput {
         TrackerDataImpl* zsFrame = new TrackerDataImpl;
       
         // Set description for zsFrame
-        outputEncoder["sensorID"] = data.getModuleNr();
-        outputEncoder["sparsePixelType"] = 0;
+        outputEncoder["sensorID"s] = data.getModuleNr();
+        outputEncoder["sparsePixelType"s] = 0;
         outputEncoder.setCellID( zsFrame );
         
         int nPixel = (int) data.at(0).size(); 

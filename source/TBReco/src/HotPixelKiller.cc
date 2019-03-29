@@ -29,6 +29,7 @@
 using namespace std; 
 using namespace lcio ;
 using namespace marlin ;
+using namespace std::string_literals;
 
 namespace depfet {
 
@@ -120,7 +121,7 @@ namespace depfet {
         
         // Get DAQ ID of sensor 
         CellIDDecoder< TrackerDataImpl > DataDecoder( collectionVec,&_inputDecodeHelper);
-        int sensorID =  DataDecoder( trackerData ) ["sensorID"] ;
+        int sensorID =  DataDecoder( trackerData ) ["sensorID"s] ;
         
         // Read geometry info for sensor 
         int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);      

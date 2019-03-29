@@ -18,9 +18,12 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
-
+#include <iomanip>
 #include "SIO_stream.h"
 #include "SIO_functions.h"
+#if defined(__GNUC__) && (__GNUC__ >= 5)
+#include <byteswap.h>
+#endif
 
 // ----------------------------------------------------------------------------
 // Deal with 'endian-ness'.  Try to base this on the processor type (because
@@ -113,6 +116,7 @@ void SIO_functions::copy
     const int          count
 )
 {
+//std::cout<<"copy size "<<size << ", count "<< count<<std::endl;
 
 //
 // Local variables.
@@ -122,18 +126,46 @@ int
     ibyt,
     jump;
 
-//
-// Just do it!
-//
-dest += size;
-jump  = size << 1;
-for( icnt = 0; icnt < count; icnt++ )
-{
-    for( ibyt = 0; ibyt < size; ibyt++  )
+switch (size) {
+case 1:
+    memcpy( dest, from, count );
+    break;
+
+#if defined(__GNUC__) && (__GNUC__>=5)
+case 2:{ // Most common case: short
+    unsigned short * fr=reinterpret_cast<unsigned short *>(from);
+    unsigned short * de=reinterpret_cast<unsigned short *>(dest);
+    for( icnt = 0; icnt < count; icnt++ ) *de++=bswap_16(*fr++);
+    break;
+}
+case 4:{ // Most common case: float / int
+    unsigned int * fr=reinterpret_cast<unsigned int *>(from);
+    unsigned int * de=reinterpret_cast<unsigned int *>(dest);
+    for( icnt = 0; icnt < count; icnt++ ) *de++=bswap_32(*fr++);
+}
+    break;
+case 8:{// Most common case: Double / long int
+    unsigned long * fr=reinterpret_cast<unsigned long *>(from);
+    unsigned long * de=reinterpret_cast<unsigned long *>(dest);
+    for( icnt = 0; icnt < count; icnt++ )  *de++=bswap_64(*fr++);
+}
+    break;
+#endif
+
+default:
+    //
+    // Just do it stupidly!
+    //
+    dest += size;
+    jump  = size << 1;
+    for( icnt = 0; icnt < count; icnt++ )
     {
-        *--dest = *from++;
+        for( ibyt = 0; ibyt < size; ibyt++  )
+        {
+            *--dest = *from++;
+        }
+        dest += jump;
     }
-    dest += jump;
 }
 
 //

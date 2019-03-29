@@ -107,7 +107,7 @@ namespace IMPL {
       return _parents[i] ;
     }catch( std::out_of_range ){
       throw Exception(std::string("MCParticleImpl::getParent(): out_of_range :" 
-				  + i ) );
+                  + std::to_string(i)) );
     }
   }
   
@@ -142,7 +142,7 @@ namespace IMPL {
       return _daughters[i] ;
     }catch( std::out_of_range ){
       throw Exception(std::string("MCParticleImpl::getDaughter(): out_of_range :" 
-				  + i ) );
+                  + std::to_string(i) ) );
     }
     
   }

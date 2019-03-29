@@ -38,7 +38,7 @@
 using namespace std;
 using namespace marlin;
 using namespace eudaqinput;
-
+using namespace std::string_literals;
 namespace {
   typedef std::vector<unsigned char> datavect;
   typedef std::vector<unsigned char>::const_iterator datait;
@@ -151,7 +151,7 @@ void EudaqInputProcessor::readDataSource (int Ntrig) {
               const datavect & data = rawev->GetBlock(j);
               // prepare lcio::TrackerRawData
               lcio::TrackerRawDataImpl* lcBlock =  new lcio::TrackerRawDataImpl;
-              lcEncoder["blockID"] = rawev->GetID(j); 
+              lcEncoder["blockID"s] = rawev->GetID(j);
               lcEncoder.setCellID( lcBlock );
               
               // loop over the data block
