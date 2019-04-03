@@ -831,9 +831,9 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, c
             break;
         default:
             printf("invalid frametype %d !\n",dhh_hdr->DataType);
-            exit(-1);
-
-
+            return_data.clear();
+            return 0;  
+            //exit(-1);
         }
     }
 
