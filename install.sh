@@ -8,16 +8,14 @@ then
       exit -1
 fi
 
-# make sure we stop immediately on errors
-set -e
- 
 
-mkdir -p build
+ 
+mkdir -p build || exit
 pushd build
 echo "Setting up build: >>cmake ..<<"
-cmake ..
+cmake .. || exit
 echo "Building: >>make -j8<<"
-make -j8
+make -j8 || exit
 popd
 
 echo "Copying init script: workspace/init_tbsw.sh "
