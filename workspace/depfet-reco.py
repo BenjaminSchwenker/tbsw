@@ -297,6 +297,9 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB, mappin
   trackfinder_loosecut = tbsw.Processor(name="AlignTF_LC",proctype="FastTracker")
   trackfinder_loosecut.param("InputHitCollectionNameVec","hit_m26 hit_fei4 hit_pxd hit_h5")
   trackfinder_loosecut.param("ExcludeDetector", "")
+  # HitQualitySelection==1: use cog hits and goehits for tracking
+  # HitQualitySelection==0: only use goehits for tracking
+  trackfinder_loosecut.param("HitQualitySelection", 1)
   trackfinder_loosecut.param("MaxTrackChi2", 10000000)
   trackfinder_loosecut.param("MaximumGap", 1)
   trackfinder_loosecut.param("MinimumHits",7)
@@ -330,6 +333,9 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB, mappin
   trackfinder_tightcut = tbsw.Processor(name="AlignTF_TC",proctype="FastTracker")
   trackfinder_tightcut.param("InputHitCollectionNameVec","hit_m26 hit_fei4 hit_pxd hit_h5")
   trackfinder_tightcut.param("ExcludeDetector", "")
+  # HitQualitySelection==1: use cog hits and goehits for tracking
+  # HitQualitySelection==0: only use goehits for tracking
+  trackfinder_tightcut.param("HitQualitySelection", 1)
   trackfinder_tightcut.param("MaxTrackChi2", 100)
   trackfinder_tightcut.param("MaximumGap", 1)
   trackfinder_tightcut.param("MinimumHits",7)
@@ -471,6 +477,9 @@ def create_reco_path(Env, rawfile, gearfile, energy, useClusterDB, mapping):
   trackfinder = tbsw.Processor(name="TrackFinder",proctype="FastTracker")
   trackfinder.param("InputHitCollectionNameVec","hit_m26 hit_fei4")
   trackfinder.param("ExcludeDetector", "3 8")
+  # HitQualitySelection==1: use cog hits and goehits for tracking
+  # HitQualitySelection==0: only use goehits for tracking
+  trackfinder.param("HitQualitySelection", 1) 
   trackfinder.param("MaxTrackChi2", "100")
   trackfinder.param("MaximumGap", "1")
   trackfinder.param("MinimumHits","6")

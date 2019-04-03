@@ -12,15 +12,14 @@
 #include "TBDetector.h"
 #include "TBHit.h"
 #include "PixelCluster.h"
-#include "Det.h"
-#include "Utilities.h" 
-
+#include "Utilities.h"
 
 // Include basic C
 #include <iostream>
 #include <limits>
 #include <iomanip>
 #include <algorithm>
+#include <sstream>
 
 // Include LCIO classes
 #include "lcio.h"
@@ -31,9 +30,11 @@
 
 
 // Include ROOT classes
-#include <TFile.h>
 #include <TMath.h>
+#include <TFile.h>
 #include <TVectorD.h>
+#include <TMatrixDSym.h>
+#include <TMatrixDSymEigen.h>
 
 
 // Used namespaces
@@ -88,16 +89,24 @@ namespace depfet {
                                 "Minimum number of cluster ID occurances for clusterDB",
                                 _minClusters,  static_cast < int > (2000));
     
+    registerProcessorParameter ("MaxEtaBins",
+                                "Maximum number of eta bins for clusterDB",
+                                _maxEtaBins,  static_cast < int > (1));
+    
+    registerProcessorParameter ("vCellPeriod",
+                                "Periodicity for vCells used for clusterDB",
+                                _vCellPeriod,  static_cast < int > (1));
+     
+    registerProcessorParameter ("uCellPeriod",
+                                "Periodicity for uCells used for clusterDB",
+                                _uCellPeriod,  static_cast < int > (1));
+    
+    
     std::vector<int> initIgnoreIDVec;
     registerProcessorParameter ("IgnoreIDs",
                                 "Ignore clusters from list of sensorIDs",
                                 _ignoreIDVec, initIgnoreIDVec);
     
-  
-    registerProcessorParameter ("MaxEtaBins",
-                                "Maximum number of eta bins for clusterDB",
-                                _maxEtaBins,  static_cast < int > (1));
-        
   }
   
   //
@@ -110,7 +119,42 @@ namespace depfet {
     _nEvt = 0 ;
     _timeCPU = clock()/1000 ;
     
-   
+    if ( _maxEtaBins<=0) _maxEtaBins=1;
+    
+    // Create a useful name for a file that should be deleted after Marlin is finished
+    // There should be one collector output for each clusterDB
+    // Add prefix "tmp" to indicate that the file is temporary 
+    
+    std::set<char> delims{'/'};
+    _collectorOutputFileName = "tmpCollectorOutputFor_" + splitpath(_clusterDBFileName, delims).back();
+    
+    _rootCollectorOutputFile = new TFile( _collectorOutputFileName.c_str(),"recreate");
+    _rootCollectorOutputFile->cd("");
+    
+    _trackVarUHisto = new TH1F("trackVarUHisto","trackVarUHisto",1,0,1);
+    _trackVarUHisto->StatOverflows(); 	            
+    
+    _trackVarVHisto = new TH1F("trackVarVHisto","trackVarVHisto",1,0,1); 
+    _trackVarVHisto->StatOverflows();         
+    
+    _trackCovUVHisto = new TH1F("trackCovUVHisto","trackCovUVHisto",1,0,1);
+    _trackCovUVHisto->StatOverflows(); 	
+
+    _trackDuDwHisto = new TH1F("trackDuDwHisto","trackDuDwHisto",1,0,1);
+    _trackDuDwHisto->StatOverflows(); 
+     
+    _trackDvDwHisto = new TH1F("trackDvDwHisto","trackDvDwHisto",1,0,1);
+    _trackDuDwHisto->StatOverflows();      
+    
+    m_rootTree = new TTree("tree","Cluster info");
+    m_rootTree->Branch<string>("TypeName", &m_typeName);
+    m_rootTree->Branch<float>("ClusterEtaPP", &m_clusterEtaPP);
+    m_rootTree->Branch<float>("ClusterEtaNP", &m_clusterEtaNP);
+    m_rootTree->Branch<float>("ClusterEtaPN", &m_clusterEtaPN);
+    m_rootTree->Branch<float>("ClusterEtaNN", &m_clusterEtaNN);
+    m_rootTree->Branch<float>("OffsetU", &m_positionOffsetU);
+    m_rootTree->Branch<float>("OffsetV", &m_positionOffsetV);
+    
     // Print set parameters
     printProcessorParams();
     
@@ -313,45 +357,32 @@ namespace depfet {
           momentum << simHit->getMomentum()[0], simHit->getMomentum()[1],simHit->getMomentum()[2];
           
           // Get local track parameters 
-          //double trk_tu = momentum[0]/momentum[2];    // rad
-          //double trk_tv = momentum[1]/momentum[2];    // rad
+          double trk_tu = momentum[0]/momentum[2];    // rad
+          double trk_tv = momentum[1]/momentum[2];    // rad
           double trk_u = simHit->getPosition()[0];    // mm
           double trk_v = simHit->getPosition()[1];    // mm
           //double trk_mom = momentum.norm();            // GeV
           
-          // Get cluster label  
-          PixelCluster Cluster = hit.GetCluster(); 
-          string id = Cluster.getShape(); 
+           
+          _trackDuDwHisto->Fill(trk_tu);  
+          _trackDvDwHisto->Fill(trk_tv);  
 
-          // Register new cluster if needed
-          if (_sensorMap.find(id) == _sensorMap.end() ) {
-            _sensorMap[id] = 0;
-            
-            _clusterUMap[id] = new TH1F("","",1,0,1);
-            _clusterUMap[id]->SetDirectory(0);
-            _clusterUMap[id]->StatOverflows(); 	
-             
-            _clusterVMap[id] = new TH1F("","",1,0,1);
-            _clusterVMap[id]->SetDirectory(0); 
-            _clusterVMap[id]->StatOverflows(); 	
-            
-            _clusterUVMap[id] = new TH2F("","",1,0,1,1,0,1);
-            _clusterUVMap[id]->SetDirectory(0);
-            _clusterUVMap[id]->StatOverflows(); 	
-          }
-          
-          trk_u -= Sensor.GetPixelCenterCoordU( Cluster.getVStart(), Cluster.getUStart()); 
-          trk_v -= Sensor.GetPixelCenterCoordV( Cluster.getVStart(), Cluster.getUStart()); 
-          
-          // Count how many times a label appear 
-          _sensorMap[id]++;  
-          _clusterUMap[id]->Fill( trk_u ); 
-          _clusterVMap[id]->Fill( trk_v );     
-          _clusterUVMap[id]->Fill( trk_u, trk_v ); 
-          
+          PixelCluster Cluster = hit.GetCluster(); 
+          int pixeltype = Sensor.GetPixelType(Cluster.getVStart(), Cluster.getUStart()); 
+
+          // Fill collector output
+          m_typeName = Cluster.getType(pixeltype,_vCellPeriod, _uCellPeriod);
+          m_clusterEtaPP = Cluster.computeEta(+1, +1);
+          m_clusterEtaPN = Cluster.computeEta(+1, -1);
+          m_clusterEtaNP = Cluster.computeEta(-1, +1);
+          m_clusterEtaNN = Cluster.computeEta(-1, -1);   
+          m_positionOffsetU = trk_u - Sensor.GetPixelCenterCoordU( Cluster.getVStart(), Cluster.getUStart()); 
+          m_positionOffsetV = trk_v - Sensor.GetPixelCenterCoordV( Cluster.getVStart(), Cluster.getUStart()); 
+          m_rootTree->Fill(); 
         }
       }
-    }
+    }  
+    
     return;
   }
   
@@ -384,161 +415,332 @@ namespace depfet {
                             << " "
                             << "Processor succesfully finished!"
                             << std::endl;
+     
+    // Compute the average incidence angles into the sensor
+    // We assume a strongly collimated beam and the rms of the 
+    // should be small (< few mrad) 
+    double thetaU = _trackDuDwHisto->GetMean();
+    double thetaV = _trackDvDwHisto->GetMean();
     
-    // We remove all cluster IDs which have to few counts and cannot be 
-    // calibrated :(  
+    // Enumerate all types by unique name and count their
+    // occurence in training data.
+    vector< pair<string, float> > typeList;
     
-    // Count all clusters
-    double countAll = 0;
-    
-    // Count reject clusters
-    int countReject = 0;
-    
-    for(auto iter = _sensorMap.begin(); iter != _sensorMap.end(); ) {
-      auto id = iter->first; 
-      auto counter = iter->second;
+    const auto nEntries = m_rootTree->GetEntries();
+    for (int i = 0; i < nEntries; ++i) {
+      m_rootTree->GetEntry(i);
       
-      countAll += counter;
-        
-      if(counter < _minClusters ) {
-        streamlog_out(MESSAGE3) << "  Deleting label:  " << id << " because too few counts (" << counter << ")" << endl;
-        iter = _sensorMap.erase(iter);
-        countReject += counter;
-      } else {
-        ++iter;
+      auto it = std::find_if(typeList.begin(), typeList.end(),
+                             [&](const pair<string, float>& element) { return element.first == m_typeName;});
+      
+      //Shape name exists in vector
+      if (it != typeList.end()) {
+        //increment key in map
+        it->second++;
+      }
+      //Shape name does not exist
+      else {
+        //Not found, insert in vector
+        typeList.push_back(pair<string, int>(m_typeName, 1));
       }
     }
     
-    streamlog_out(MESSAGE3) << "Number of rejected clusters is: " 
-                            << countReject << " (" << 100.0*countReject/countAll  << "%)"  << endl; 
+    // Loop over typeList to select types with enough data for
+    // next calibration step
     
-    streamlog_out(MESSAGE3) << "Create the clusterDB ... " << endl; 
+    // Vector with eta histograms for selected shapes
+    vector< pair<string, TH1D> > etaHistos;
+ 
+    // Coverage of position offsets on training data
+    double coverage = 0.0;
     
-    TFile * _rootFile = new TFile( _clusterDBFileName.c_str(),"recreate");
-    _rootFile->cd("");   
-      
-    // Book histograms for clusterDB
-    int NCLUSTERS = _sensorMap.size(); 
-    string histoName;  
-       
-    _rootFile->cd("");
+    for (auto iter : typeList) {
+      auto name = iter.first;
+      auto counter = iter.second;
+      if (counter >=  _minClusters) {
+        coverage += counter / nEntries;
+        string etaname = "eta_" + name;     
+        TH1D etaHisto(etaname.c_str(), etaname.c_str(), 301, 0, 1);
+        etaHisto.SetDirectory(0);
+        etaHistos.push_back(pair<string, TH1D>(name, etaHisto));
+      } else {
+        streamlog_out(MESSAGE3) << "  Unable to calibrate cluster type:  " << name << " because too few counts (" << counter  << ")" << endl;
+      } 
+    }     
     
-    histoName = "hDB_Coverage";
-    _histoMap[histoName] = new TH1F(histoName.c_str(),"",1,0,1);
-    _histoMap[histoName]->SetStats( false );
-    _histoMap[histoName]->SetYTitle("coverage [%]");
-    _histoMap[histoName]->SetBinContent( 1, 100.0 - 100.0*countReject/countAll );
-    _histoMap[histoName]->GetXaxis()->SetBinLabel( 1, "cluster found in clusterDB" );
+    // Loop over the tree is to fill the eta histograms for
+    // selected shapes.
+    for (int i = 0; i < nEntries; ++i) {
+      m_rootTree->GetEntry(i);
+      auto it = std::find_if(etaHistos.begin(), etaHistos.end(),
+                    [&](const pair<string, TH1D>& element) { return element.first == m_typeName;});
+      //Item exists in map
+      if (it != etaHistos.end()) {
+        // increment key in map
+        auto clusterEta = m_clusterEtaPP;
+        if (thetaU > 0 && thetaV < 0) {clusterEta = m_clusterEtaPN;}
+        else if (thetaU < 0 && thetaV > 0) {clusterEta = m_clusterEtaNP;}
+        else if (thetaU < 0 && thetaV < 0) {clusterEta = m_clusterEtaNN;}   
+        it->second.Fill(clusterEta);
+      }
+    }
+    
+    // Vector for eta bin edges stored by type name 
+    vector< pair< string, vector<double> > > etaBinEdgesVec;
+    
+    // Vector for offset histograms storing pairs of typename and a vector of 2d histos for different eta bins
+    vector< pair< string, vector<TH2D> > > offsetHistosVec;
+    
+    for (auto iter : etaHistos) {
+      auto name = iter.first;
+      auto& histo = iter.second;
+      int nClusters = histo.GetEntries();
       
-    histoName = "hDB_Weight";
-    _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-    _histoMap[histoName]->SetStats( false );
-    _histoMap[histoName]->SetYTitle("label weight");  
+      streamlog_out(MESSAGE3) << "Eta histogram " << name << " has " << nClusters << " entries" << std::endl; 
       
-    histoName = "hDB_U";
-    _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-    _histoMap[histoName]->SetStats( false );
-    _histoMap[histoName]->SetYTitle("offset u [mm]");  
+      // Try to split clusters into n bins with _minClusters clusters
+      int nEtaBins  = std::max(int(nClusters / _minClusters), 1);
+      nEtaBins =  std::min(nEtaBins, _maxEtaBins);  
       
-    histoName = "hDB_V";
-    _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-    _histoMap[histoName]->SetStats( false );
-    _histoMap[histoName]->SetYTitle("offset v [mm]");  
+      // We have to check for singular cases where eta distribution is concentrated is concentrated in 
+      // less bins than required number of eta bins 
+      int nFilledBins = 0;  
+      for (auto ibin = 1; ibin <= histo.GetXaxis()->GetNbins(); ibin++) {  
+        if (histo.GetBinContent(ibin) > 0) nFilledBins++;  
+      }
+      if (nFilledBins <= nEtaBins) {
+        nEtaBins = 1; 
+        streamlog_out(MESSAGE3) << "Eta histogram " << name << " is a delta spike" << std::endl;   
+      }
       
-    histoName = "hDB_Sigma2_U";
-    _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-    _histoMap[histoName]->SetStats( false );
-    _histoMap[histoName]->SetYTitle("sigma2 offset u [mm^2]");        
+      vector<double> etaBinEdges;
+      vector< TH2D > offsetHistos;
+      
+      for (int i = 0; i < nEtaBins; i++) {
+        // Position where to compute the quantiles in [0,1]
+        double xq = double(i) / nEtaBins;
+        // Double to contain the quantile
+        double yq = 0;
+        histo.GetQuantiles(1, &yq, &xq);
+        streamlog_out(MESSAGE3) << " Quantile at xq =" << xq << " is yq=" << yq << std::endl;
+        etaBinEdges.push_back(yq);
+        
+        string offsetname = "E" + std::to_string(i) + name;         
+        TH2D offsetHisto(offsetname.c_str(), offsetname.c_str(), 1, 0, 1, 1, 0, 1);
+        offsetHisto.StatOverflows();
+        offsetHistos.push_back(offsetHisto);
+      }
+      etaBinEdgesVec.push_back(pair< string, vector<double> >(name, etaBinEdges));
+      offsetHistosVec.push_back(pair< string, vector<TH2D> >(name, offsetHistos));
+    }
+    
+    // Loop over the tree is to fill offset histograms
+    for (int i = 0; i < nEntries; ++i) {
+      m_rootTree->GetEntry(i); 
+      
+      auto it = std::find_if(offsetHistosVec.begin(), offsetHistosVec.end(),
+                        [&](const pair<string, vector<TH2D>>& element) { return element.first == m_typeName;});
 
-    histoName = "hDB_Sigma2_V";
-    _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-    _histoMap[histoName]->SetStats( false );
-    _histoMap[histoName]->SetYTitle("sigma2 offset v [mm^2]"); 
+      auto it2 = std::find_if(etaBinEdgesVec.begin(), etaBinEdgesVec.end(),
+                        [&](const pair<string, vector<double>>& element) { return element.first == m_typeName;});
+
+      //Item exists in maps
+      if (it != offsetHistosVec.end()  && it2 != etaBinEdgesVec.end() ) {
+        auto clusterEta = m_clusterEtaPP;
+        if (thetaU > 0 && thetaV < 0) {clusterEta = m_clusterEtaPN;}
+        else if (thetaU < 0 && thetaV > 0) {clusterEta = m_clusterEtaNP;}
+        else if (thetaU < 0 && thetaV < 0) {clusterEta = m_clusterEtaNN;}   
+        PixelCluster aCluster;
+        auto etaBin = aCluster.computeEtaBin(clusterEta, it2->second);
+        it->second.at(etaBin).Fill(m_positionOffsetU, m_positionOffsetV);
+      }
+    }
+    
+    // Count total number of types
+    int nTypes = 0;
+ 
+    // Count total number of shapes 
+    int nShapes = 0; 
       
-    histoName = "hDB_Cov_UV";
-    _histoMap[histoName] = new TH1F(histoName.c_str(),"",NCLUSTERS,0,NCLUSTERS);
-    _histoMap[histoName]->SetStats( false );
-    _histoMap[histoName]->SetYTitle("covariance u-v [mm^2]"); 
-                   
-    // Go through all cluster shapes
-    int i = 0; 
-    for (auto iter =_sensorMap.begin(); iter!=_sensorMap.end(); iter++ ) {
-      int counter = iter->second;  
-      string id = iter->first;
-      i++; 
+    // Compute the moments of the offset histograms 
+    for (auto iter : offsetHistosVec) {
+      nShapes += iter.second.size();
+      nTypes += 1;
+    }
         
-      // Perform the calibration for u position 
-      double clu_mean_u = _clusterUMap[id]->GetMean();
-      double clu_mean_u_error = _clusterUMap[id]->GetMeanError();        
-      double clu_rms_u = _clusterUMap[id]->GetRMS();
-      double clu_rms_u_error = _clusterUMap[id]->GetRMSError();
-        
-      double clu_rms2_u = clu_rms_u*clu_rms_u;
-      double clu_rms2_u_error = 2*clu_rms_u*clu_rms_u_error;
-         
-      // Perform the calibration for v position  
-      double clu_mean_v = _clusterVMap[id]->GetMean();
-      double clu_mean_v_error = _clusterVMap[id]->GetMeanError();   
-      double clu_rms_v = _clusterVMap[id]->GetRMS();
-      double clu_rms_v_error = _clusterVMap[id]->GetRMSError();   
-        
-      double clu_rms2_v = clu_rms_v*clu_rms_v;  
-      double clu_rms2_v_error = 2*clu_rms_v*clu_rms_v_error;
-         
-      // Perform the calibration for uv covariance   
-      double clu_cov_uv = _clusterUVMap[id]->GetCovariance();
-                 
-      // Store calibration result   
+    // Close collector file
+    _rootCollectorOutputFile->Write();
+    _rootCollectorOutputFile->Close();
+    delete _rootCollectorOutputFile;   
+    
+    if (nShapes > 0) {
+      
+      streamlog_out(MESSAGE3) << "Create the clusterDB ... " << endl; 
+      
+      TFile * _rootClusterDBFile = new TFile( _clusterDBFileName.c_str(),"recreate");
+      _rootClusterDBFile->cd("");
+      
+      // Book histograms for clusterDB
+      
+      string histoName;  
+      
+      histoName = "hDB_Coverage";
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",1,0,1);
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("coverage [%]");
+      _histoMap[histoName]->SetBinContent( 1, 100 * coverage );
+      _histoMap[histoName]->GetXaxis()->SetBinLabel( 1, "cluster found in clusterDB" );
+      
+      histoName = "hDB_Types";
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",nTypes,0,nTypes);
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("type");  
+      
       histoName = "hDB_Weight";
-      _histoMap[histoName]->SetBinContent( i, counter );
-      _histoMap[histoName]->SetBinError( i, TMath::Sqrt(counter) );
-      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
-        
-      histoName = "hDB_U";
-      _histoMap[histoName]->SetBinContent( i, clu_mean_u );
-      _histoMap[histoName]->SetBinError( i, clu_mean_u_error );
-      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
-        
-      histoName = "hDB_V"; 
-      _histoMap[histoName]->SetBinContent( i, clu_mean_v );
-      _histoMap[histoName]->SetBinError( i, clu_mean_v_error );
-      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
-        
-      histoName = "hDB_Sigma2_U";
-      _histoMap[histoName]->SetBinContent( i, clu_rms2_u );
-      _histoMap[histoName]->SetBinError( i, clu_rms2_u_error );
-      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
-         
-      histoName = "hDB_Sigma2_V";
-      _histoMap[histoName]->SetBinContent( i, clu_rms2_v );
-      _histoMap[histoName]->SetBinError( i, clu_rms2_v_error );
-      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );  
-        
-      histoName = "hDB_Cov_UV";
-      _histoMap[histoName]->SetBinContent( i, clu_cov_uv );
-      _histoMap[histoName]->SetBinError( i, 0 );
-      _histoMap[histoName]->GetXaxis()->SetBinLabel( i, id.c_str() );
-        
-      streamlog_out(MESSAGE3) << "  Label:  " << id  << endl
-                              << std::setiosflags(std::ios::fixed | std::ios::internal )
-                              << std::setprecision(8)
-                              << "  u: " << clu_mean_u  << ", sigma2: " << clu_rms2_u << endl
-                              << "  v: " << clu_mean_v  << ", sigma2: " << clu_rms2_v << endl
-                              << "  cov: " << clu_cov_uv
-                              << std::setprecision(3)
-                              << endl;
-         
-    }  
-            
-    
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",nShapes,0,nShapes);
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("label weight");  
       
-    streamlog_out(MESSAGE3) << "ClusterDB written to file " << _clusterDBFileName 
-                            << endl; 
-    
-    // Close root  file
-    _rootFile->Write();
-    _rootFile->Close();
-    delete _rootFile;    
+      histoName = "hDB_U";
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",nShapes,0,nShapes);
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("offset u [mm]");  
+      
+      histoName = "hDB_V";
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",nShapes,0,nShapes);
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("offset v [mm]");  
+      
+      histoName = "hDB_Sigma2_U";
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",nShapes,0,nShapes);
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("sigma2 offset u [mm^2]");        
+      
+      histoName = "hDB_Sigma2_V";
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",nShapes,0,nShapes);
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("sigma2 offset v [mm^2]"); 
+      
+      histoName = "hDB_Cov_UV";
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",nShapes,0,nShapes);
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("covariance u-v [mm^2]"); 
+      
+      
+      // Compute the moments of the offset histograms 
+      int offsetBin = 0;
+      int typeBin = 0; 
+      for (auto iter : offsetHistosVec) {
+        typeBin++;
+        auto name = iter.first;
+        auto& histovec = iter.second;
+        int typeCounter = 0; 
+        
+        // Loop over eta bins
+        int etaBin = -1; 
+        for (auto& histo : histovec) {
+          // Compute offset moments
+          offsetBin++;
+          etaBin++; 
+          auto shapeName = "E" + std::to_string(etaBin) + name; 
+          int counter = histo.GetEntries();
+          typeCounter += counter;
+          double offsetU = histo.GetMean(1);
+          double offsetV = histo.GetMean(2);
+          double covUV = histo.GetCovariance();
+          double covU = pow(histo.GetRMS(1), 2);
+          double covV = pow(histo.GetRMS(2), 2);
+          
+          streamlog_out(MESSAGE3) << "Name " << shapeName  << " entries=" << counter << ", posU=" << offsetU << ", posV=" << offsetV 
+                                  << ", sigmaU=" << sqrt(covU) << ", sigmaV=" << sqrt(covV) << ", corrUV=" << covUV/sqrt(covU)/sqrt(covV) << std::endl;
+          
+          TMatrixDSym HitCov(2);
+          HitCov(0, 0) = covU;
+          HitCov(1, 0) = covUV;
+          HitCov(0, 1) = covUV;
+          HitCov(1, 1) = covV;
+          
+          TMatrixDSymEigen HitCovE(HitCov);
+          TVectorD eigenval = HitCovE.GetEigenValues();
+          if (eigenval(0) <= 0 || eigenval(1) <= 0) {
+            streamlog_out(MESSAGE3) << "Estimated covariance matrix not positive definite." << std::endl;
+          }
+          
+          // Store calibration result   
+          histoName = "hDB_Weight";
+          _histoMap[histoName]->SetBinContent( offsetBin, counter );
+          _histoMap[histoName]->GetXaxis()->SetBinLabel( offsetBin, shapeName.c_str() );
+          
+          histoName = "hDB_U";
+          _histoMap[histoName]->SetBinContent( offsetBin, offsetU );
+          _histoMap[histoName]->SetBinError( offsetBin, histo.GetMeanError(1) );
+          _histoMap[histoName]->GetXaxis()->SetBinLabel( offsetBin, shapeName.c_str() );
+          
+          histoName = "hDB_V"; 
+          _histoMap[histoName]->SetBinContent( offsetBin, offsetV );
+          _histoMap[histoName]->SetBinError( offsetBin, histo.GetMeanError(2) );
+          _histoMap[histoName]->GetXaxis()->SetBinLabel( offsetBin, shapeName.c_str() );
+               
+          histoName = "hDB_Sigma2_U";
+          _histoMap[histoName]->SetBinContent( offsetBin, covU );
+          _histoMap[histoName]->SetBinError( offsetBin, 2 * histo.GetRMS(1) * histo.GetRMSError(1) );
+          _histoMap[histoName]->GetXaxis()->SetBinLabel( offsetBin, shapeName.c_str() );
+          
+          histoName = "hDB_Sigma2_V";
+          _histoMap[histoName]->SetBinContent( offsetBin, covV );
+          _histoMap[histoName]->SetBinError( offsetBin, 2 * histo.GetRMS(2) * histo.GetRMSError(2) );
+          _histoMap[histoName]->GetXaxis()->SetBinLabel( offsetBin, shapeName.c_str() );  
+        
+          histoName = "hDB_Cov_UV";
+          _histoMap[histoName]->SetBinContent( offsetBin, covUV );
+          _histoMap[histoName]->SetBinError( offsetBin, 0 );
+          _histoMap[histoName]->GetXaxis()->SetBinLabel( offsetBin, shapeName.c_str() );  
+        }
+
+        // Add cluster type 
+        histoName = "hDB_Types";
+        _histoMap[histoName]->SetBinContent( typeBin, typeCounter );
+        _histoMap[histoName]->GetXaxis()->SetBinLabel( typeBin, name.c_str() ); 
+      }
+      
+      for (auto iter : etaBinEdgesVec) {
+        auto name = iter.first;
+        auto& etaBinEdges = iter.second;
+        
+        // Add eta bin edges for type
+        TVectorD DB_etaBinEdges( etaBinEdges.size() );
+        for ( size_t iBin=0; iBin < etaBinEdges.size(); iBin++) {
+          DB_etaBinEdges[iBin] = etaBinEdges[iBin];
+        }
+        DB_etaBinEdges.Write(  string("DB_etaBinEdges_"+name).c_str() );
+      }
+               
+      TVectorD DB_periods( 2 );
+      DB_periods[0] = _vCellPeriod;
+      DB_periods[1] = _uCellPeriod;
+      DB_periods.Write("DB_periods");
+      
+      TVectorD DB_angles( 2 );
+      DB_angles[0] = thetaU;
+      DB_angles[1] = thetaV;
+      DB_angles.Write("DB_angles");
+      
+      TVectorD DB_telcov( 3 );
+      DB_telcov[0] = 0.001;
+      DB_telcov[1] = 0.001;
+      DB_telcov[2] = 0;
+      DB_telcov.Write("DB_telcov");
+      
+      streamlog_out(MESSAGE3) << "Created clusterDB with coverage " << 100 * coverage << " percent on training data sample." << std::endl; 
+      
+      streamlog_out(MESSAGE3) << "ClusterDB written to file " << _clusterDBFileName << std::endl; 
+      
+      // Close clusterDB  file
+      _rootClusterDBFile->Write();
+      _rootClusterDBFile->Close();
+      delete _rootClusterDBFile;
+      
+    }
   }
   
   //
@@ -555,8 +757,6 @@ namespace depfet {
     
   }
   
-  
-
 } // Namespace
 
 
