@@ -252,9 +252,10 @@ void EventViewer::dumpDataEvent( LCEvent * evt )
         // open data frame
         TrackerDataImpl * matrix = dynamic_cast<TrackerDataImpl* > (frames->getElementAt(iSensor));
         CellIDDecoder<TrackerDataImpl> idMatrixDecoder(frames);
-        int currentSensorID = idMatrixDecoder(matrix)["sensorID"]; 
-        int noOfXPixels =  idMatrixDecoder(matrix)["xMax"]+1;    
-        int noOfYPixels =  idMatrixDecoder(matrix)["yMax"]+1;   
+        int currentSensorID = idMatrixDecoder(matrix)["sensorID"];
+        int ipl = TBDetector::GetInstance().GetPlaneNumber(currentSensorID);   
+        int noOfXPixels =  TBDetector::Get(ipl).GetMaxUCell()-TBDetector::Get(ipl).GetMinUCell()+1;   
+        int noOfYPixels =  TBDetector::Get(ipl).GetMaxVCell()-TBDetector::Get(ipl).GetMinVCell()+1; 
 
         //
         // skip this sensor 
@@ -328,8 +329,8 @@ void EventViewer::dumpRawDataEvent( LCEvent * evt )
       CellIDDecoder<TrackerRawDataImpl> idRawMatrixDecoder( frames );
       int currentSensorID = idRawMatrixDecoder(rawmatrix)["sensorID"];  
       int ipl = TBDetector::GetInstance().GetPlaneNumber(currentSensorID);   
-      int noOfXPixels =  TBDetector::Get(ipl).GetMaxUCell()+1;   
-      int noOfYPixels =  TBDetector::Get(ipl).GetMaxVCell()+1;  
+      int noOfXPixels =  TBDetector::Get(ipl).GetMaxUCell()-TBDetector::Get(ipl).GetMinUCell()+1;   
+      int noOfYPixels =  TBDetector::Get(ipl).GetMaxVCell()-TBDetector::Get(ipl).GetMinVCell()+1;  
 
       //
       // skip this sensor 
@@ -407,8 +408,8 @@ void EventViewer::dumpZeroSuppEvent( LCEvent * evt )
       TrackerDataImpl * matrix = dynamic_cast<TrackerDataImpl* > (frames->getElementAt(iSensor));
       int currentSensorID = idMatrixDecoder(matrix)["sensorID"]; 
       int ipl = TBDetector::GetInstance().GetPlaneNumber(currentSensorID);   
-      int noOfXPixels =  TBDetector::Get(ipl).GetMaxUCell()+1;   
-      int noOfYPixels =  TBDetector::Get(ipl).GetMaxVCell()+1;  
+      int noOfXPixels =  TBDetector::Get(ipl).GetMaxUCell()-TBDetector::Get(ipl).GetMinUCell()+1;   
+      int noOfYPixels =  TBDetector::Get(ipl).GetMaxVCell()-TBDetector::Get(ipl).GetMinVCell()+1;  
       
       //
       // skip this sensor 

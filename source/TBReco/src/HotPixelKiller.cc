@@ -125,9 +125,13 @@ namespace depfet {
         // Read geometry info for sensor 
         int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);      
         const Det& adet = TBDetector::Get(ipl);
-    
-        int nUCells = adet.GetMaxUCell()+1;
-        int nVCells = adet.GetMaxVCell()+1;
+   
+        int minCol = adet.GetMinUCell();
+        int maxCol = adet.GetMaxUCell();
+        int minRow = adet.GetMinVCell();
+        int maxRow = adet.GetMaxVCell();	
+        int nUCells = maxCol-minCol+1;
+        int nVCells = maxRow-minRow+1;
         
         // Register counter variables for new sensorID 
         if (_hitCounterMap.find(sensorID) == _hitCounterMap.end() ) {
@@ -159,7 +163,7 @@ namespace depfet {
           }
           
           // Check if digit cellIDs are valid
-          if ( iU < 0 || iU >= nUCells || iV < 0 || iV >= nVCells ) 
+          if ( iU < minCol || iU > maxCol || iV < minRow || iV > maxRow ) 
           {   
             streamlog_out(MESSAGE2) << "Digit on sensor " << sensorID 
                                       << "   iU:" << iU << ", iV:" << iV 
@@ -232,12 +236,16 @@ namespace depfet {
       // Read geometry info for sensor 
       int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);      
       const Det& adet = TBDetector::Get(ipl);
-       
-      int nUCells = adet.GetMaxUCell()+1;
-      int nVCells = adet.GetMaxVCell()+1;
+      
+      int minCol = adet.GetMinUCell();
+      int maxCol = adet.GetMaxUCell();
+      int minRow = adet.GetMinVCell();
+      int maxRow = adet.GetMaxVCell();	
+      int nUCells = maxCol-minCol+1;
+      int nVCells = maxRow-minRow+1; 
 
       string histoName = "hDB_sensor"+to_string(sensorID) + "_mask";
-      _histoMap[histoName] = new TH2F(histoName.c_str(), "" ,nUCells, 0, nUCells, nVCells, 0, nVCells);
+      _histoMap[histoName] = new TH2F(histoName.c_str(), "" ,nUCells, minCol, maxCol, nVCells, minRow, maxRow);
       _histoMap[histoName]->SetXTitle("uCell [cellID]"); 
       _histoMap[histoName]->SetYTitle("vCell [cellID]"); 
       _histoMap[histoName]->SetZTitle("mask");     
@@ -245,9 +253,9 @@ namespace depfet {
       
       int nMasked = 0; 
        
-      // Loop over all pixels 
-      for (int iV = 0; iV < nVCells; iV++) {
-        for (int iU = 0; iU < nUCells; iU++) {
+      // Loop over all pixels / histogram bins 
+      for (int iV = minRow; iV < maxRow; iV++) {
+        for (int iU = minCol; iU < maxCol; iU++) {
             
           int uniqPixelID  = adet.encodePixelID(iV, iU);   
           
@@ -260,9 +268,9 @@ namespace depfet {
                                     << "   iU: " << iU << ", iV: " << iV 
                                     << "   (" << occupancy <<  ")" << endl;
             
-            _histoMap[histoName]->SetBinContent(iU+1,iV+1, 1 );                      
+            _histoMap[histoName]->SetBinContent(iU-minCol+1,iV-minRow+1, 1 );                      
           } else {
-            _histoMap[histoName]->SetBinContent(iU+1,iV+1, 0 ); 
+            _histoMap[histoName]->SetBinContent(iU-minCol+1,iV-minRow+1, 0 ); 
           }      
         }
       } 

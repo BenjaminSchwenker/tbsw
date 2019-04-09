@@ -172,7 +172,7 @@ class Detector:
 
   def createPixelPrototype(self):
     for i in range(self.nprotopixel): 
-      self.writeFile(ET.Element('pixelProtoype', self.protopixlistdic[i]))
+      self.writeFile(ET.Element('pixelPrototype', self.protopixlistdic[i]))
 
   def createPixelMatrix(self):
     matrixstart = '<pixelMatrix>'#indentation

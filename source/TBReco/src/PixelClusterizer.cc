@@ -229,7 +229,10 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
     // Read geometry info for sensor 
     int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);      
     const Det& adet = TBDetector::Get(ipl);
-       
+
+    // Get min channel numbers
+    int minCol = adet.GetMinUCell();
+    int minRow = adet.GetMinVCell();    
     // Get max channel numbers 
     int maxCol = adet.GetMaxUCell();   
     int maxRow = adet.GetMaxVCell(); 
@@ -260,7 +263,7 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
       // Try to get status code for pixel 
       float status = 0; 
       if ( _DB_Map_Mask.find(sensorID) != _DB_Map_Mask.end() ) {
-        status = _DB_Map_Mask[sensorID]->GetBinContent(col+1, row+1);  
+        status = _DB_Map_Mask[sensorID]->GetBinContent(col-minCol+1, row-minRow+1); // FIXME bins do not need to have the same(+1) number as the columns/rows if the minCol/Row is not 0. Fix with minCol/Row? How are mask ranges set? Now set with min, max and max-min+1 bins
       }
       
       // Print detailed pixel summary, for testing/debugging only !!! 
@@ -277,7 +280,7 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
       }
        
       // If a pixel is out of range, skip it in clusterization
-      if ( col < 0 || col > maxCol || row < 0 || row > maxRow ) {
+      if ( col < minCol || col > maxCol || row < minRow || row > maxRow ) {
         streamlog_out(MESSAGE2) << "  Invalid pixel address found. Skipping it." << std::endl; 
         continue;
       }

@@ -90,6 +90,7 @@ void PolyDetCreator::create(const TiXmlNode* content, std::vector<Det*>& dets) {
 	pointsvec.emplace_back(x, y);
       }
       protopixGroupVec.emplace_back(type, distu, distv, pointsvec);
+
     }
     
     const TiXmlNode* xmlPixelMatrix = xmlLayer->FirstChildElement( "pixelMatrix" );
