@@ -14,8 +14,8 @@ namespace depfet {
 
 /* Constructor 
  */
-TBTrackElement::TBTrackElement(Det& aDet) : m_det(aDet) {}
 
+TBTrackElement::TBTrackElement(Det& aDet) : m_det(aDet) {}
 
 } // Namespace;
 

@@ -5,19 +5,17 @@
 if [ -z "$ROOTSYS" ]
 then
       echo "\$ROOTSYS is not set (or empty). Please source ROOTSYS"
-      return -1
+      exit -1
 fi
 
-# make sure we stop immediately on errors
-# set -e
- 
 
-mkdir -p build
+ 
+mkdir -p build || exit
 pushd build
 echo "Setting up build: >>cmake ..<<"
-cmake ..
+cmake .. || exit
 echo "Building: >>make -j8<<"
-make -j8
+make -j8 || exit
 popd
 
 echo "Copying init script: workspace/init_tbsw.sh "

@@ -178,13 +178,15 @@ std::string LCSIO::getValidSIOName(const std::string& aName ) {
 
   for( name += 1; *name != '\0'; name++ ){
     
-    if( *name == '\\' || *name == '/' || *name=='.' )
+    if( *name == '\\' || *name == '/' || *name=='.' ){
       *newName++ = '_' ;
-
-    else if( (*name>=0) && ( isalnum( (int)*name ) || *name == '_' ) )
+     }
+    else if( (*name>=0) && ( isalnum( (int)*name ) || *name == '_' ) ){
       *newName++ = *name ;
-    else
-    ; // ignore
+    }
+    else{
+        ; // ignore
+    }
   } 
   
   *newName = '\0' ;

@@ -142,6 +142,7 @@ class PixelDUTAnalyzer : public marlin::Processor {
    int _rootRunNumber;               // Run number from lcio file 
    int _rootSensorID;                // SensorID from lcio file (this is typically NOT the plane number!!)
    int _rootNTelTracks;              // Number of tracks in reference telescope in same event 
+   int _rootNTelTracksWithRefHit;    // Number of tracks in reference telescope with hit on reference plane in same event  
    int _rootNDUTDigits;              // Number of DUT digits in the same event  
    bool _rootDUTGoodEvent;           // Flag for events without format errors during unpacking 
    int _rootHitQuality;              // GoodCluster == 0, BadCluster != 0

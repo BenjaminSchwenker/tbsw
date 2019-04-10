@@ -154,7 +154,7 @@ namespace lcrtrel_helper{
     inline static void add( T& t, S s) { t = s ; }
 
     template <class T, class S>
-    inline static void remove( T& t, S s) { t = 0 ; }
+    inline static void remove( T& t, S ) { t = 0 ; }
   };
 
   //-----------end of  internal helper typdefs, function and classes ----------
@@ -250,12 +250,12 @@ namespace lcrtrel{
     
     static const int allowed_to_call_ext = 1 ;
     
-    static void clean(void *v) { }
+    static void clean(void *) { }
 
     static ptr init() { 
       return 0 ; 
     }
-    static DeleteFPtr deletePtr() { return  &clean ; }  ;
+    static DeleteFPtr deletePtr() { return  &clean ; }
 
     typedef int& ext_type ;                
   };
@@ -271,9 +271,9 @@ namespace lcrtrel{
     typedef float& ext_type ;     // return value of  ext<>()
   
     static const int allowed_to_call_ext = 1 ;
-    static void clean(void *v) { }
+    static void clean(void *) { }
     static ptr init() { return 0 ; }
-    static DeleteFPtr deletePtr() { return  &clean ; }  ;
+    static DeleteFPtr deletePtr() { return  &clean ; }
   };
 
 
@@ -563,12 +563,12 @@ namespace lcrtrel{
   
     if( f != 0 ){
     
-      LCRTRelations* t = f->LCRTRelations::rel<typename R::to>() ;
+      LCRTRelations* t = f->LCRTRelations::template rel<typename R::to>() ;
     
       if( t != 0 ) 
 	t->LCRTRelations::ptr<typename R::from>() = 0 ;
     
-      f->LCRTRelations::ptr<typename R::to>() = 0 ;
+      f->LCRTRelations::template ptr<typename R::to>() = 0 ;
     }
   }
 
@@ -577,10 +577,10 @@ namespace lcrtrel{
   
     // clear old relations first
     unset_relation<R>( f ) ;
-    unset_relation<R>(t->LCRTRelations::rel<typename R::from>() ) ; 
+    unset_relation<R>(t->LCRTRelations::template rel<typename R::from>() ) ;
   
-    f->LCRTRelations::ptr<typename R::to>() =  t ;
-    t->LCRTRelations::ptr<typename R::from>() =  f ;
+    f->LCRTRelations::template ptr<typename R::to>() =  t ;
+    t->LCRTRelations::template ptr<typename R::from>() =  f ;
   }
 
 
@@ -590,10 +590,10 @@ namespace lcrtrel{
   void add_relation(  typename R::from::obj_ptr f, 
 		      typename R::to::obj_ptr t){
 
-    f->LCRTRelations::ptr<typename R::to>()->push_back( t ) ;
+    f->LCRTRelations::template ptr<typename R::to>()->push_back( t ) ;
 
     //   std::cout << " ask to assign " << f << " to " << t << std::endl ;
-    objorcont<R::from::is_container>::add( t->LCRTRelations::ptr<typename R::from>() , f ) ; 
+    objorcont<R::from::is_container>::add( t->LCRTRelations::template ptr<typename R::from>() , f ) ;
   }
 
 
@@ -603,20 +603,20 @@ namespace lcrtrel{
   void remove_relation( typename R::from::obj_ptr f, 
 			typename R::to::obj_ptr t ) {
   
-    f->LCRTRelations::ptr<typename R::to>()->remove( t ) ;
+    f->LCRTRelations::template ptr<typename R::to>()->remove( t ) ;
 
-    objorcont<R::from::is_container>::remove( t->LCRTRelations::ptr<typename R::from>() , f ) ; 
+    objorcont<R::from::is_container>::remove( t->LCRTRelations::template ptr<typename R::from>() , f ) ;
   }
 
 
   template <class R> 
   void remove_relations( typename R::from::obj_ptr f ) {
   
-    typename R::to::ptr cl = f->LCRTRelations::ptr<typename R::to>() ;
+    typename R::to::ptr cl = f->LCRTRelations::template ptr<typename R::to>() ;
   
     for( typename R::to::iterator it = cl->begin(); it!=cl->end(); ++it){
     
-      objorcont<R::from::is_container>::remove((*it)->LCRTRelations::ptr<typename R::from>(), f ) ; 
+      objorcont<R::from::is_container>::remove((*it)->LCRTRelations::template ptr<typename R::from>(), f ) ;
 
     }
     cl->clear() ;
@@ -626,15 +626,15 @@ namespace lcrtrel{
   void merge_relations(typename R::from::obj_ptr f1, 
 		       typename R::from::obj_ptr f2 ) {
   
-    typename R::to::ptr  lt2 = f2->LCRTRelations::ptr<typename R::to>() ;
+    typename R::to::ptr  lt2 = f2->LCRTRelations::template ptr<typename R::to>() ;
   
     for( typename R::to::iterator it = lt2->begin() ;it !=  lt2->end() ; it++ ){
     
-      objorcont<R::from::is_container>::remove( (*it)->LCRTRelations::ptr<typename R::from>(), f2 ) ; 
-      objorcont<R::from::is_container>::add( (*it)->LCRTRelations::ptr<typename R::from>(), f1 ) ; 
+      objorcont<R::from::is_container>::remove( (*it)->LCRTRelations::template ptr<typename R::from>(), f2 ) ;
+      objorcont<R::from::is_container>::add( (*it)->LCRTRelations::template ptr<typename R::from>(), f1 ) ;
     }
 
-    f1->LCRTRelations::ptr<typename R::to>()->merge( *lt2 ) ;
+    f1->LCRTRelations::template ptr<typename R::to>()->merge( *lt2 ) ;
   }
 #endif // __CINT__
 

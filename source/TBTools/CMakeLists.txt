@@ -57,7 +57,7 @@ ENDIF()
 
 # Include directories
 
-INCLUDE_DIRECTORIES( include ${Eigen_INCLUDE_PATH})
+INCLUDE_DIRECTORIES( include ${Eigen_INCLUDE_PATH} ${fmt_INCLUDE_PATH})
 INCLUDE_DIRECTORIES(SYSTEM ${ROOT_INCLUDE_DIRS})
 # Set list of sources
 AUX_SOURCE_DIRECTORY( src lib_srcs)
@@ -89,4 +89,6 @@ if (VERBOSE)
 MESSAGE( STATUS )
 MESSAGE( STATUS "------------------------- ${PROJECT_NAME} --------------------------------------" )
 MESSAGE( STATUS "${PROJECT_NAME}_VERSION = ${${PROJECT_NAME}_VERSION}" )
+MESSAGE( STATUS "fmt_INCLUDE_PATH = ${fmt_INCLUDE_PATH}" )
+
 ENDIF()

@@ -297,6 +297,9 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB, mappin
   trackfinder_loosecut = tbsw.Processor(name="AlignTF_LC",proctype="FastTracker")
   trackfinder_loosecut.param("InputHitCollectionNameVec","hit_m26 hit_fei4 hit_pxd hit_h5")
   trackfinder_loosecut.param("ExcludeDetector", "")
+  # HitQualitySelection==1: use cog hits and goehits for tracking
+  # HitQualitySelection==0: only use goehits for tracking
+  trackfinder_loosecut.param("HitQualitySelection", 1)
   trackfinder_loosecut.param("MaxTrackChi2", 10000000)
   trackfinder_loosecut.param("MaximumGap", 1)
   trackfinder_loosecut.param("MinimumHits",7)
@@ -330,6 +333,9 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB, mappin
   trackfinder_tightcut = tbsw.Processor(name="AlignTF_TC",proctype="FastTracker")
   trackfinder_tightcut.param("InputHitCollectionNameVec","hit_m26 hit_fei4 hit_pxd hit_h5")
   trackfinder_tightcut.param("ExcludeDetector", "")
+  # HitQualitySelection==1: use cog hits and goehits for tracking
+  # HitQualitySelection==0: only use goehits for tracking
+  trackfinder_tightcut.param("HitQualitySelection", 1)
   trackfinder_tightcut.param("MaxTrackChi2", 100)
   trackfinder_tightcut.param("MaximumGap", 1)
   trackfinder_tightcut.param("MinimumHits",7)
@@ -471,6 +477,9 @@ def create_reco_path(Env, rawfile, gearfile, energy, useClusterDB, mapping):
   trackfinder = tbsw.Processor(name="TrackFinder",proctype="FastTracker")
   trackfinder.param("InputHitCollectionNameVec","hit_m26 hit_fei4")
   trackfinder.param("ExcludeDetector", "3 8")
+  # HitQualitySelection==1: use cog hits and goehits for tracking
+  # HitQualitySelection==0: only use goehits for tracking
+  trackfinder.param("HitQualitySelection", 1) 
   trackfinder.param("MaxTrackChi2", "100")
   trackfinder.param("MaximumGap", "1")
   trackfinder.param("MinimumHits","6")
@@ -541,6 +550,16 @@ def reconstruct(params,profile):
 if __name__ == '__main__':
   
   import argparse
+
+
+  def str2bool(v):
+    if v.lower() in ('yes', 'true', 'on','t', 'y', '1'):
+      return True
+    elif v.lower() in ('no', 'false', 'off','f', 'n', '0'):
+      return False
+    else:
+      raise argparse.ArgumentTypeError('Boolean value expected.')
+
   parser = argparse.ArgumentParser(description="Perform calibration and reconstruction of a test beam run")
   parser.add_argument('--rawfile', dest='rawfile', default='/home/benjamin/Desktop/run000020.raw', type=str, help='Location of rawfile to process')
   parser.add_argument('--gearfile', dest='gearfile', default='gear_desy_W11OF2_perp_geoid2.xml', type=str, help='Location of gearfile')
@@ -548,14 +567,26 @@ if __name__ == '__main__':
   parser.add_argument('--steerfiles', dest='steerfiles', default='steering-files/depfet-tb/', type=str, help='Path to steerfiles')
   parser.add_argument('--caltag', dest='caltag', default='', type=str, help='Name of calibration tag to use')
   parser.add_argument('--mapping', dest='mapping', default='OF', type=str, help='OF,OB,IF,IB')
-  parser.add_argument('--useClusterDB', dest='use_cluster_db', default=True, type=bool, help="Use cluster database")
-  parser.add_argument('--skipCalibration', dest='skip_calibration', default=False, type=bool, help="Skip creating a new calibration tag")
-  parser.add_argument('--skipReconstruction', dest='skip_reco', default=False, type=bool, help="Skip reconstruction of run")
+  parser.add_argument('--useClusterDB', dest='use_cluster_db', default=True, type=str2bool, help="Use cluster database")
+  parser.add_argument('--skipCalibration', dest='skip_calibration', default=False, type=str2bool, help="Skip creating a new calibration tag")
+  parser.add_argument('--skipReconstruction', dest='skip_reco', default=False, type=str2bool, help="Skip reconstruction of run")
   parser.add_argument('--profile', dest='profile', action='store_true',
+                      help="profile execution time")
+  parser.add_argument('--short', dest='short', action='store_true',
                       help="profile execution time")
 
   args = parser.parse_args()
-  
+  if args.profile:
+    maxRecordNrLong = 40000
+    maxRecordNrShort = 20000
+  if args.short:
+    if args.profile:
+      maxRecordNrLong = 3000
+      maxRecordNrShort = 3000
+    else:
+      maxRecordNrLong = 40000
+      maxRecordNrShort = 20000
+
   if args.caltag=='':
     args.caltag = os.path.splitext(os.path.basename(args.rawfile))[0]
     

@@ -48,7 +48,7 @@ TBVertexFitter::TBVertexFitter(int ipl)
 
 bool TBVertexFitter::FitVertex(TBVertex& Vertex)
 {
-  int ierr = 0; 
+  //int ierr = 0;
   
   //Initial vertex guess at (0,0,0) and large covariance
   VertexParameter r = VertexParameter::Zero();   
@@ -65,7 +65,7 @@ bool TBVertexFitter::FitVertex(TBVertex& Vertex)
   zeta = TrackState::Zero();
    
   //Loop over trackstates
-  for (int i=0; i < Vertex.GetStates().size(); i++) {
+  for (size_t i=0; i < Vertex.GetStates().size(); i++) {
 
     //Copy current trackstate
     auto p = Vertex.GetStates()[i].GetPars();

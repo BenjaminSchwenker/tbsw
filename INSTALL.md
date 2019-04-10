@@ -35,40 +35,8 @@ sudo apt-get install python-scipy
 
 # Root 
 
-The project home page can be found at this URL https://root.cern.ch/downloading-root. One approach to get the source code is to use the public GIT
-repository to get the latest version.
+Install a recent version of root from looking at the project home page URL https://root.cern.ch/downloading-root. The release 6.16/00 was tested to be working fine. 
 
-```
-$ git clone http://root.cern.ch/git/root.git
-```
-
-The release specific tag can be obtained using for example:
-
-```
-$ cd root
-$ git checkout -b v6-17-01 v6-17-01  
-$ cd ..
-```
-
-You want to install in a generic directory, depending on environment variables ROOTSYS, LD_LIBRARY_PATH, and PATH.
-
-```
-$ mkdir <root-installdir>
-$ mkdir <root-builddir>
-$ cd <root-builddir>
-$ cmake -DCMAKE_INSTALL_PREFIX=<root-installdir>  ../root
-$ cmake --build . --target install
-```
-
-The folder <root-builddir> may be deleted afterwards. In the end, the folder <root-installdir> should contain bin/ include/ and lib/ subfolders.
-In order to test the root installation, just do:
-
- 
-```  
-$ cd <absolute-path-to-root-installdir>
-$ . bin/thisroot.sh
-$ root 
-```
 
 # TBSW   
  
@@ -83,14 +51,14 @@ Please make sure that the path to your ROOT instalation is set in $ROOTSYS
 Run the install script:
 
 ```
-$ . install.sh
+$ ./install.sh
 ```
 
 This script will create a build folder "build" and will compile tbsw.
 If you want to clean the tbsw directory for a complete rebuild, you can clean the tbsw directory with:
 
 ```
-$ . make_clean.sh
+$ ./make_clean.sh
 ```
 
 Alternative:

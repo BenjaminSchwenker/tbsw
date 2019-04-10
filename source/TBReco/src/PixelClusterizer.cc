@@ -13,7 +13,7 @@
 #include <TFile.h>
 
 #include <iomanip>
-
+using namespace std::string_literals;
 // Used namespaces
 using namespace std; 
 using namespace lcio;
@@ -165,7 +165,7 @@ void PixelClusterizer::end()
    _timeCPU = clock()/1000 - _timeCPU;
    
    // Print message
-   streamlog_out(MESSAGE3) << std::endl
+   streamlog_out(MESSAGE) << std::endl
                            << " "
                            << "Time per event: "
                            << std::setiosflags(std::ios::fixed | std::ios::internal )
@@ -222,9 +222,9 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
      
     // Get zs pixels from next pixel detector   
     TrackerDataImpl * pixModule = dynamic_cast<TrackerDataImpl* > ( Pix_collection->getElementAt(iDet) );
-      
+
     // Sensor ID for pixel detector
-    int sensorID = PixelID( pixModule ) ["sensorID"];
+    int sensorID = PixelID( pixModule ) ["sensorID"s];
     
     // Read geometry info for sensor 
     int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);      
@@ -328,11 +328,12 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
       if(!found)
       {
         FloatVec newGroup;
+        newGroup.reserve(6);
         newGroup.push_back(iU);
         newGroup.push_back(iV);
         newGroup.push_back(charge);
         
-        pixGroups.push_back(newGroup);
+        pixGroups.push_back(std::move(newGroup));
         
       }
        
@@ -407,20 +408,27 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
           clusterID++; 
             
           streamlog_out(MESSAGE2) << " Stored cluster on sensor " << sensorID << " having total charge " << clusterSignal << std::endl;
-          
+          static auto idx_orig_sensorID=originalDataEncoder.index("sensorID"s); //find the address ONCE.
+          static auto idx_orig_clusterID=originalDataEncoder.index("clusterID"s);
+          static auto idx_orig_sparsePixelType=originalDataEncoder.index("sparsePixelType"s);
+          static auto idx_orig_quality=originalDataEncoder.index("quality"s);
           // Ok good cluster ... save it   
-          originalDataEncoder["sensorID"] = sensorID;
-          originalDataEncoder["clusterID"] = 0;
-          originalDataEncoder["sparsePixelType"] = static_cast<int> (kSimpleSparsePixel);
-          originalDataEncoder["quality"] = cluQuality;
+          originalDataEncoder[idx_orig_sensorID] = sensorID;
+          originalDataEncoder[idx_orig_clusterID] = 0;
+          originalDataEncoder[idx_orig_sparsePixelType] = static_cast<int> (kSimpleSparsePixel);
+          originalDataEncoder[idx_orig_quality] = cluQuality;
           originalDataEncoder.setCellID( sparseCluster );
           originalDataCollection->push_back( sparseCluster );
                              
+          static auto idx_clust_sensorID=clusterEncoder.index("sensorID"s);
+          static auto idx_clust_clusterID=clusterEncoder.index("clusterID"s);
+          static auto idx_clust_sparsePixelType=clusterEncoder.index("sparsePixelType"s);
+          static auto idx_clust_quality=clusterEncoder.index("quality"s);
           TrackerPulseImpl* zsPulse = new TrackerPulseImpl;
-          clusterEncoder["sensorID"]  = sensorID;
-          clusterEncoder["clusterID"] = 0;
-          clusterEncoder["sparsePixelType"] = static_cast<int> (kSimpleSparsePixel);
-          clusterEncoder["quality"] = cluQuality;
+          clusterEncoder[idx_clust_sensorID]  = sensorID;
+          clusterEncoder[idx_clust_clusterID] = 0;
+          clusterEncoder[idx_clust_sparsePixelType] = static_cast<int> (kSimpleSparsePixel);
+          clusterEncoder[idx_clust_quality] = cluQuality;
           clusterEncoder.setCellID( zsPulse );
           
           zsPulse->setCharge( clusterSignal );
