@@ -46,7 +46,7 @@ import xml.etree.ElementTree as ET
 import os
 import sys
 
-import DetLayoutGen
+import tbsw
 
 """
 # Example (incomplete) of the basics that should be in a createPixel function for creating a PolyPlaneParameters detector layout with the Detector class.
@@ -88,7 +88,7 @@ def createPixelBase(self):
 def writePixelListToFile(xmlfilename, pixelList):
   with open(xmlfilename, "a") as f:
     for element in pixelList:
-      DetLayoutGen.indent(element)
+      tbsw.DetLayoutGen.indent(element)
       f.write(ET.tostring(element)+"\n")
     f.flush()
     os.fsync(f.fileno())
@@ -367,7 +367,7 @@ if __name__ == '__main__':
   f = open(outfile, "w") # reset the file to empty because use append mode later
   f.close()
   # create the basic xml file structure, for paramters see DetLayoutGen.py
-  gearBaseTags = DetLayoutGen.createGearStructure()
+  gearBaseTags = tbsw.DetLayoutGen.createGearStructure()
   # write the opening tags of the basic xml structure. This is needed because the xml nodes are itterativly created and written to file to reduce memory consumption
   with open(outfile, "a") as f:
     f.write(gearBaseTags[0])
@@ -391,7 +391,7 @@ if __name__ == '__main__':
 
   dparams = {"number":"7"}
   # create and initialise the Detector object
-  detector = DetLayoutGen.Detector(xmloutfile=outfile, sensparamsList=spList, detectorparams=dparams, uCellGroupparamsList=uCGpList, vCellGroupparamsList=vCGpList)
+  detector = tbsw.DetLayoutGen.Detector(xmloutfile=outfile, sensparamsList=spList, detectorparams=dparams, uCellGroupparamsList=uCGpList, vCellGroupparamsList=vCGpList)
   # create the detector with the planes and write it to outfile
   detector.createDetectorElement()
 
@@ -415,7 +415,7 @@ if __name__ == '__main__':
   pppList.append(ppp)
   # There are two errors raised on __init__ of detector both if something with the createPixelfunctionList parameter is not correct, no list or to few list items. It is not needed to use this try-except because the exception in Detector class cancels the program then, but it is neater.
   try: 
-    detector = DetLayoutGen.Detector(xmloutfile=outfile, ladderparamsList=lpList, sensparamsList=spList, createPixelfunctionList=cpfList, detectorparams=dparams, pixelPrototypeparamsList=pppList)
+    detector = tbsw.DetLayoutGen.Detector(xmloutfile=outfile, ladderparamsList=lpList, sensparamsList=spList, createPixelfunctionList=cpfList, detectorparams=dparams, pixelPrototypeparamsList=pppList)
   except ValueError as ex:
     sys.exit(str(ex)+ " Aborting!")
   detector.createDetectorElement()
