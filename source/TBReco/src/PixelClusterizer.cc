@@ -231,13 +231,13 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
     const Det& adet = TBDetector::Get(ipl);
 
     // Get min channel numbers
-    int minCol = adet.GetMinUCell();
-    int minRow = adet.GetMinVCell();    
+    int minUCell = adet.GetMinUCell();
+    int minVCell = adet.GetMinVCell();    
     // Get max channel numbers 
-    int maxCol = adet.GetMaxUCell();   
-    int maxRow = adet.GetMaxVCell(); 
+    int maxUCell = adet.GetMaxUCell();   
+    int maxVCell = adet.GetMaxVCell(); 
     
-    // List of firing pixels. Each pixel has a col, row and charge 
+    // List of firing pixels. Each pixel has a iU, iV and charge 
     FloatVec pixVector = pixModule->getChargeValues();
     int npixels = pixVector.size()/3; 
         
@@ -256,20 +256,21 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
     for (int iPix = 0; iPix < npixels; iPix++) 
     {   
       
-      int col = static_cast<int> (pixVector[iPix * 3]);
-      int row = static_cast<int> (pixVector[iPix * 3 + 1]);
+      int iU = static_cast<int> (pixVector[iPix * 3]);
+      int iV = static_cast<int> (pixVector[iPix * 3 + 1]);
       float charge =  pixVector[iPix * 3 + 2];     
        
       // Try to get status code for pixel 
       float status = 0; 
       if ( _DB_Map_Mask.find(sensorID) != _DB_Map_Mask.end() ) {
-        status = _DB_Map_Mask[sensorID]->GetBinContent(col-minCol+1, row-minRow+1); // FIXME bins do not need to have the same(+1) number as the columns/rows if the minCol/Row is not 0. Fix with minCol/Row? How are mask ranges set? Now set with min, max and max-min+1 bins
+        // Here we use the same numbering convention as in the HotPixelKiller processor to map iu, iv to a bin in the mask. 
+        status = _DB_Map_Mask[sensorID]->GetBinContent(iU-minUCell+1, iV-minVCell+1); 
       }
       
       // Print detailed pixel summary, for testing/debugging only !!! 
       streamlog_out(MESSAGE1) << "Pixel Nr. " << iPix << " on sensor " << sensorID  
                               << std::endl;  
-      streamlog_out(MESSAGE1) << "   column:" << col << ", row:" << row
+      streamlog_out(MESSAGE1) << "   iU:" << iU << ", iV:" << iV
                               << ", charge:" << charge
                               << std::endl;
       
@@ -280,7 +281,7 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
       }
        
       // If a pixel is out of range, skip it in clusterization
-      if ( col < minCol || col > maxCol || row < minRow || row > maxRow ) {
+      if ( iU < minUCell || iU > maxUCell || iV < minVCell || iV > maxVCell ) {
         streamlog_out(MESSAGE2) << "  Invalid pixel address found. Skipping it." << std::endl; 
         continue;
       }
@@ -301,19 +302,19 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
       while( !found && firstGroup!= lastGroup)
       {
         
-        if ( areNeighbours( *firstGroup, col, row, ipl) )
+        if ( areNeighbours( *firstGroup, iU, iV, ipl) )
         {
            
           // If pixel is a duplicate of one in the cluster, do not add it.   
-          if(!isDuplicated( *firstGroup, col, row )){
+          if(!isDuplicated( *firstGroup, iU, iV )){
             
             // Add this pixel to this pixel group 
-            (*firstGroup).push_back(col);
-            (*firstGroup).push_back(row);
+            (*firstGroup).push_back(iU);
+            (*firstGroup).push_back(iV);
             (*firstGroup).push_back(charge);
             
-            // See if col/row is a neighbour to any other groups, if yes perform merging 
-            checkForMerge(col, row, ipl, firstGroup, lastGroup);
+            // See if iU/iV is a neighbour to any other groups, if yes perform merging 
+            checkForMerge(iU, iV, ipl, firstGroup, lastGroup);
               
           } else {
             streamlog_out(MESSAGE2) << "  A pixel duplicate found. Skipping it." << std::endl; 
@@ -327,8 +328,8 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
       if(!found)
       {
         FloatVec newGroup;
-        newGroup.push_back(col);
-        newGroup.push_back(row);
+        newGroup.push_back(iU);
+        newGroup.push_back(iV);
         newGroup.push_back(charge);
         
         pixGroups.push_back(newGroup);
@@ -376,8 +377,8 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
         for ( int index=0; index < npixels; index++)
         {
            
-          int col = static_cast<int> ( (*group)[index * 3]);
-          int row = static_cast<int> ( (*group)[index * 3 + 1]);
+          int iU = static_cast<int> ( (*group)[index * 3]);
+          int iV = static_cast<int> ( (*group)[index * 3 + 1]);
           float charge = ( (*group)[index * 3 + 2]);
                    
           clusterSignal += charge;
@@ -387,8 +388,8 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
           }
              
           // Store pixel data int EUTelescope format 
-          chargeVec.push_back( col );
-          chargeVec.push_back( row );
+          chargeVec.push_back( iU );
+          chargeVec.push_back( iV );
           chargeVec.push_back( charge );
           
         }
@@ -457,10 +458,10 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
 
 
 
-// Checks if any other pixel group (apart from base group) neighbours col/row. 
+// Checks if any other pixel group (apart from base group) neighbours iU/iV. 
 // If so, merge with base group.  
  
-void PixelClusterizer::checkForMerge( int col, int row,  int planeNumber, 
+void PixelClusterizer::checkForMerge( int iU, int iV,  int planeNumber, 
  Pix_GroupVector::iterator baseGroup,
  Pix_GroupVector::iterator lastGroup) 
 {
@@ -470,19 +471,19 @@ void PixelClusterizer::checkForMerge( int col, int row,  int planeNumber,
    
   for (; nextGroup!= lastGroup; ++nextGroup)
   {              
-    if (areNeighbours( *nextGroup, col, row, planeNumber ))
+    if (areNeighbours( *nextGroup, iU, iV, planeNumber ))
     {
       // Merge these pixel groups
       int npixels = (*nextGroup).size()/3; 
        
       for ( int index=0; index < npixels; index++)      
       {
-        float coltmp = (*nextGroup)[index * 3];
-        float rowtmp = (*nextGroup)[index * 3 + 1];
+        float iUtmp = (*nextGroup)[index * 3];
+        float iVtmp = (*nextGroup)[index * 3 + 1];
         float chargetmp =  (*nextGroup)[index * 3 + 2];     
         // Copy pixel to base group 
-        (*baseGroup).push_back(coltmp);
-        (*baseGroup).push_back(rowtmp);
+        (*baseGroup).push_back(iUtmp);
+        (*baseGroup).push_back(iVtmp);
         (*baseGroup).push_back(chargetmp);
       }
       (*nextGroup).clear();
@@ -493,30 +494,20 @@ void PixelClusterizer::checkForMerge( int col, int row,  int planeNumber,
 
 
 // This method is called inside the clusterize() method in order to 
-// determine if the pixel cell at address (col,row) should be added 
+// determine if the pixel cell at address (iU,iV) should be added 
 // to the candidate cluster passed as first argument.  
-//
-// Different clustering strategies are foreseen: 
-// 
-// m_accept Clusters
-//   = 0: Accept pixels which have a side in common with a pixel cell 
-//        in the list
-//   = 1: A common corner suffices (default setting)
-//   = 2: Max distance is a missing pixel in a row or a column
-//   = 3: Max distance is a missing diagonal pixel 
 
-
-bool PixelClusterizer::areNeighbours( FloatVec &group, int col, int row, int planeNumber ) 
+bool PixelClusterizer::areNeighbours( FloatVec &group, int iU, int iV, int planeNumber ) 
 {   
   int npixels = group.size()/3; 
   
   for ( int index=0; index < npixels; index++)
   {
            
-    int col1 = static_cast<int> (group[index * 3]);
-    int row1 = static_cast<int> (group[index * 3 + 1]);
+    int iU1 = static_cast<int> (group[index * 3]);
+    int iV1 = static_cast<int> (group[index * 3 + 1]);
  
-    if(TBDetector::Get(planeNumber).areNeighbors(row1, col1, row, col)) return true;               
+    if(TBDetector::Get(planeNumber).areNeighbors(iV1, iU1, iV, iU)) return true;               
   }
     
   return false;
@@ -524,21 +515,21 @@ bool PixelClusterizer::areNeighbours( FloatVec &group, int col, int row, int pla
 
 
 // This method is called inside the clusterize() method in order to 
-// determine if the pixel cell with addess col/row is already part 
+// determine if the pixel cell with addess iU/iV is already part 
 // of cluster candidate passed as first argument.  
                                         
-bool PixelClusterizer::isDuplicated( FloatVec &group, int col, int row ) 
+bool PixelClusterizer::isDuplicated( FloatVec &group, int iU, int iV ) 
 { 
   bool duplicate = false;
   int npixels = group.size()/3; 
    
   for ( int index=0; index < npixels; index++)
   {
-    int col1 = static_cast<int> (group[index * 3]);
-    int row1 = static_cast<int> (group[index * 3 + 1]);  
+    int iU1 = static_cast<int> (group[index * 3]);
+    int iV1 = static_cast<int> (group[index * 3 + 1]);  
      
     // Duplicate?? 
-    if(row1 == row && col1 == col){
+    if(iV1 == iV && iU1 == iU){
       duplicate = true;
       break; 
     }

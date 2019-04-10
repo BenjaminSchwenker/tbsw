@@ -331,13 +331,13 @@ void RawHitDQM::bookHistos() {
     _histoMap[ histoName  ]->SetXTitle("uv correlation coefficient"); 
     _histoMap[ histoName  ]->SetYTitle("number of cluster"); 
    
-    int minCol = adet.GetMinUCell();
-    int maxCol = adet.GetMaxUCell();
-    int minRow = adet.GetMinVCell();
-    int maxRow = adet.GetMaxVCell();
+    int minUCell = adet.GetMinUCell();
+    int maxUCell = adet.GetMaxUCell();
+    int minVCell = adet.GetMinVCell();
+    int maxVCell = adet.GetMaxVCell();
     double  uMin = safetyFactor * adet.GetSensitiveMinU();
     double  uMax = safetyFactor * adet.GetSensitiveMaxU();
-    int uBins = maxCol-minCol+1;             
+    int uBins = maxUCell-minUCell+1;             
     
     histoName = "hhit_u_det"+to_string( ipl );
     histoTitle ="Cluster u"; 
@@ -346,7 +346,7 @@ void RawHitDQM::bookHistos() {
        
     double  vMin = safetyFactor * adet.GetSensitiveMinV();
     double  vMax = safetyFactor * adet.GetSensitiveMaxV();
-    int vBins = maxRow-minRow+1;
+    int vBins = maxVCell-minVCell+1;
     
     histoName = "hhit_v_det"+to_string( ipl );
     histoTitle ="Cluster v"; 
@@ -362,7 +362,7 @@ void RawHitDQM::bookHistos() {
     
     histoName = "hdigitmap"+to_string( ipl );
     histoTitle ="Hitmap for plane " +to_string( ipl )+" SensorID " + to_string( adet.GetSensorID() );
-    _histoMap2D[ histoName] = new TH2D(histoName.c_str(), histoTitle.c_str(),uBins, minCol, maxCol+1, vBins, minRow, maxRow+1);// +1 for max with same bincount before, max is not included upper bin edge
+    _histoMap2D[ histoName] = new TH2D(histoName.c_str(), histoTitle.c_str(),uBins, minUCell, maxUCell+1, vBins, minVCell, maxVCell+1);// +1 for max with same bincount before, max is not included upper bin edge
     _histoMap2D[histoName]->SetXTitle("cluster u start [cellID]"); 
     _histoMap2D[histoName]->SetYTitle("cluster v start [cellID]");    
     _histoMap2D[histoName]->SetStats( false ); 
