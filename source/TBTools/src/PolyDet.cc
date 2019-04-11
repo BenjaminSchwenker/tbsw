@@ -134,8 +134,7 @@ void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, doub
       }
     } 
   }
-  streamlog_out(MESSAGE2) << "  In PolyDet SetCells: m_maxCellU " << m_maxCellU << " , m_maxCellV " << m_maxCellV << std::endl; 
-
+  
   // layout not necessary centred around origin, so shift it
   double shiftu = sensSizeUmax - (sensSizeUmax-sensSizeUmin)/2.;
   double shiftv = sensSizeVmax - (sensSizeVmax-sensSizeVmin)/2.;
@@ -155,6 +154,13 @@ void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, doub
     }
     m_layout->AddBin(gpoly->Clone());    
   }
+
+  // also shift the centers in the m_cells lookup vector, needed for coord lookup
+  for (auto &group: m_cells){ 
+    std::get<3>(group) -= shiftu;
+    std::get<4>(group) -= shiftv;
+  }
+
   // sensitive area
   m_sensitiveSizeU = sensSizeUmax - sensSizeUmin;
   m_sensitiveSizeV = sensSizeVmax - sensSizeVmin;

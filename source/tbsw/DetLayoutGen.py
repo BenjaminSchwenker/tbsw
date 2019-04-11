@@ -338,7 +338,7 @@ class Detector:
       # fill every bin with 1
       nobins = polyhist.GetNumberOfBins()
       if nobins > 0:
-        for i in range(nobins):
+        for i in range(1, nobins+1): # bins start at 1 and end at including nobins
           polyhist.Fill(polyhist.GetBinName(i), 1)
         polyhist.Draw("COLZ")
         polyhist.Write()
