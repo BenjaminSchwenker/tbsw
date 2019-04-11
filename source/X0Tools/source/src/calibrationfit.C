@@ -328,6 +328,15 @@ void shiftbins(TH1F*, double);
 //void calibrationfit();
 int** GetParameterMapping(int);
 
+// Function, which returns beam momentum value for every point on the target plane
+// This is necessary because the beam profile at DESY often have beam energy gradients in the order of a few MeV/mm
+Double_t GetMomentum(double meanvalue,double ugrad,double vgrad, double u, double v)
+{
+	double p;
+	p=meanvalue+u*ugrad+v*vgrad;
+	return p;
+}
+
   // Highland model of a MSC angle distribution, the parameters are:
 
   /*
@@ -347,35 +356,15 @@ int** GetParameterMapping(int);
 	* par[13]: v BE gradient
 	* par[14]: mean of angle distribution
 	* par[15]: Target material radiation length 
+    * x: Variable of the 1D function, corresponds to the scattering angle
 
 */
-
-// Function, which returns beam momentum value for every point on the target plane
-// This is necessary because the beam profile at DESY often have beam energy gradients in the order of a few MeV/mm
-Double_t GetMomentum(double meanvalue,double ugrad,double vgrad, double u, double v)
-{
-	double p;
-	p=meanvalue+u*ugrad+v*vgrad;
-	return p;
-}
   
 // Highland model of multiple scattering: Simple gaussian with a well defined standard deviation depending on X/X0 and the beam energy.
-// The overall function describing the kink angle distributions is the Highland function convoluted with a gaussian function due to the finite angle resolution on the target plane. 
+// The overall function describing the kink angle distributions is the Highland function convoluted with a gaussian function due to the finite angle resolution on the target plane.
+// The formula for the Highland standard deviation taken from the Particle Data Group Tanabashi et al. 2018  (eq. 33.15)
 Double_t highlandfunction(Double_t *x, Double_t *par)
 {  
-
-	// atomic number of target material
-    //double Z;
-    //Z=par[4];
-
-	// atomic weight of target material
-    //double A;
-    //A=par[5];
-
-	//density of the target material
-    //double density;
-    //density=par[3];
-
 	// thickness of the target material
 	double d1=par[6]; // in mm
 
@@ -437,12 +426,14 @@ Double_t highlandfunction(Double_t *x, Double_t *par)
 	* par[13]:  v BE gradient
 	* par[14]:  mean of angle distribution
 	* par[15]:  Target material radiation length (not used here)
+    * x: Variable of the 1D function, corresponds to the scattering angle
 
 */
   
 // Moliere model of multiple scattering: Function also describing the tails of multiple scattering distributions. The function depends on material properties, which
 // can be reduced to X0, the material thickness and the beam energy.
-// The overall function describing the kink angle distributions is the Moliere function convoluted with a gaussian function due to the finite angle resolution on the target plane. 
+// The overall function describing the kink angle distributions is the Moliere function convoluted with a gaussian function due to the finite angle resolution on the target plane.
+// The formula and calculations are taken from Bethe 1953 "Moliere's Theory of Multiple Scattering" 
 Double_t molierefunction(Double_t *x, Double_t *par)
 {  
 	// atomic number of target material
@@ -499,7 +490,6 @@ Double_t molierefunction(Double_t *x, Double_t *par)
 
 	// aid variable for thickness 1
 	double log_omega_b1=8.215+log(pow(Z,(-0.6667))*(arealdensity1/A)*pow(alpha,2)/(1.13+3.76*pow(alpha,2)))/log(10.0); 
-	//cout<<"log Omega 1 is "<<log_omega_b1<<endl;
 
 	// parameter that will be used in the masterformula of the overall angle distribution (thickness1)
 	double B1=calculateB(log_omega_b1);
@@ -1511,10 +1501,6 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// Save BE v gradient as result
 	fitresults[6]=result.Parameter(13);
 	fitresults[7]=result.Error(13);
-
-	
-	// output of the single fit function chi2 values and the quadratic sum of them
-    //double chi2_summation=0.0;
 
     for(size_t i=0; i<num_fitfunctions;i++)
 	{

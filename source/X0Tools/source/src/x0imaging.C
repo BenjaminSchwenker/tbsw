@@ -26,7 +26,12 @@ using namespace std ;
    * par[4]:  Expected angle reconstruction error
    * par[5]:  Normalization
    * par[6]:  mean value
+   * x: Variable of the 1D function, corresponds to the scattering angle
    */
+
+  // Highland model of multiple scattering: Simple gaussian with a well defined standard deviation depending on X/X0 and the beam energy.
+  // The overall function describing the kink angle distributions is the Highland function convoluted with a gaussian function due to the finite angle resolution on the target plane.
+  // The formula for the Highland standard deviation taken from the Particle Data Group Tanabashi et al. 2018  (eq. 33.15)
   Double_t highlandfunction(Double_t *x, Double_t *par)
   { 
 
@@ -532,7 +537,6 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 
 	// mean of the gaussian and its error
 	double mean1, mean2, meansum;
-    //double mean_error1,mean_error2, mean_errorsum;
 
 	// quality parameters of the fit
 	double chi2ndof1,chi2ndof2,chi2ndofsum;
@@ -549,16 +553,12 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 
 
 	// Variables used to calculate the fit range of the histograms
-    //int bin1;
-    //int bin2;
 	double fitrange;
 
 	double scatteroffset_u_mean;
 	double scatteroffset_v_mean;
 	double scatteroffset_u_rms;
 	double scatteroffset_v_rms;
-
-    //double minvalue=1.0/(rangevalue*2.7);
 
     int NumberOfTracks=int(fithistogram1->GetEntries());
 
