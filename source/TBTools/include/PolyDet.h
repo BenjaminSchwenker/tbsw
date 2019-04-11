@@ -172,7 +172,7 @@ class PolyDet : public Det {
 
   // TH2Poly object that defines the class, describing the pixel layout
   TH2Poly *m_layout;
-  // Cells, tuple< u,v,type,centreu, centrev >
+  // Cells, tuple< type,u,v,centreu, centrev >
   std::vector< std::tuple< int, int, int, double, double > > m_cells;
   // Distance from cell to an other to be counted as neighbour odered by pixel type. tuple< type, distu, distv >
   std::vector< std::tuple< int, double, double> > m_cells_neighb_dist;

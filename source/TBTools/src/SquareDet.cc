@@ -262,16 +262,17 @@ double SquareDet::GetPitchV(int vcell, int /*ucell*/) const
   return std::get<2>(group); 
 }  
 
+// The encoding needs to be unique for every pixel and for usage in array types it needs to start at 0 and max value has to be npixel=m_nCellsU*m_nCellsV
 int SquareDet::encodePixelID(int vcell, int ucell) const
 {
-  return (m_nCellsU*vcell + ucell);
+  return (m_nCellsU*(vcell-m_minCellV) + ucell-m_minCellU);
 }
 
 
 void SquareDet::decodePixelID(int& vcell, int& ucell, int uniqPixelID) const
 {
-  vcell = uniqPixelID / m_nCellsU;
-  ucell = uniqPixelID - vcell*m_nCellsU;
+  vcell = uniqPixelID / m_nCellsU + m_minCellV;
+  ucell = uniqPixelID - (vcell-m_minCellV)*m_nCellsU + m_minCellU;
 }
  
  	

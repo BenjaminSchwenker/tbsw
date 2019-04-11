@@ -9,3 +9,4 @@ import efficiency
 import inpixel
 import DQMplots
 import clusterDB
+import DetLayoutGen

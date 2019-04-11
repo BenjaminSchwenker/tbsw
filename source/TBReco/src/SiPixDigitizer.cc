@@ -917,7 +917,7 @@ namespace depfet {
       }
       
       // Average number of noise pixels
-      double meanNoisePixels = m_noiseFraction * (current_det.GetMaxUCell() +1) * (current_det.GetMaxVCell()+1);
+      double meanNoisePixels = m_noiseFraction * (current_det.GetMaxUCell()-current_det.GetMinUCell() +1) * (current_det.GetMaxVCell()-current_det.GetMinVCell()+1);
             
       // Total number of noise pixels has Poison distribution
       int fractionPixels = gRandom->Poisson(meanNoisePixels);  
@@ -925,8 +925,8 @@ namespace depfet {
       // Generate noise digits
       for (int iNoisePixel=0; iNoisePixel<fractionPixels; iNoisePixel++) {
                     
-        int iU  = int(gRandom->Uniform( current_det.GetMaxUCell()+1  ));
-        int iV  = int(gRandom->Uniform( current_det.GetMaxVCell()+1  ));
+        int iU  = int(gRandom->Uniform(current_det.GetMinUCell(), current_det.GetMaxUCell()+1  ));
+        int iV  = int(gRandom->Uniform(current_det.GetMinVCell(), current_det.GetMaxVCell()+1  ));// TODO is +1 needed to get the right interval? inclusive min to max -> [min,max]?
                   
         // Describe pixel by unique ID
         int uniqPixelID  = current_det.encodePixelID(iV, iU);     

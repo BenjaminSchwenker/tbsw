@@ -279,11 +279,11 @@ void BeamSpotAligner::bookHistos() {
     
     double  minU = 1.0 * Sensor.GetSensitiveMinU(); 
     double  maxU = 1.0 * Sensor.GetSensitiveMaxU();     
-    int uBins = (Sensor.GetMaxUCell()+1)/12;    
+    int uBins = (Sensor.GetMaxUCell()-Sensor.GetMinUCell()+1)/12;    
     
     double  minV = 1.0 * Sensor.GetSensitiveMinV();
     double  maxV = 1.0 * Sensor.GetSensitiveMaxV();
-    int vBins = (Sensor.GetMaxVCell()+1)/12; 
+    int vBins = (Sensor.GetMaxVCell()-Sensor.GetMinVCell()+1)/12; 
 
     histoName = "hhitmap_sensor"+to_string( ipl );
     _histoMap2D[ histoName] = new TH2D(histoName.c_str(), "" ,uBins, minU, maxU, vBins, minV, maxV);
