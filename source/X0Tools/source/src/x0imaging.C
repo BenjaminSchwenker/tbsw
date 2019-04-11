@@ -303,7 +303,8 @@ using namespace std ;
 		// Set branch adresses for parameters connected to the vertex fit
 		msc_tree->SetBranchAddress("vertex_w",&vertex_w);
 		msc_tree->SetBranchAddress("vertex_chi2ndf",&vertex_chi2);
-		int test=msc_tree->SetBranchAddress("vertex_multiplicity",&vertex_multiplicity);
+        // FIXME: can this be removed
+		//int test=msc_tree->SetBranchAddress("vertex_multiplicity",&vertex_multiplicity);
 		msc_tree->SetBranchAddress("vertex_u",&vertex_u);
 		msc_tree->SetBranchAddress("vertex_v",&vertex_v);
 
@@ -536,7 +537,11 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 	// Fit result parameters of both angle distribution
 
 	// mean of the gaussian and its error
+<<<<<<< HEAD
 	double mean1, mean2, meansum;
+=======
+	double mean1=0., mean2=0., meansum=0.;
+>>>>>>> d9a974f00a9b0a1672019713e5a2be62e2e0b7c8
 
 	// quality parameters of the fit
 	double chi2ndof1,chi2ndof2,chi2ndofsum;
@@ -1093,7 +1098,6 @@ Double_t GetMomentum(double meanvalue,double ugrad,double vgrad, double u, doubl
 // This script is used to create a map of a plane in a test beam telescope. The input is a TTree including 
 // MSC projected scattering angle distributions and reconstruction errors.
 int main(int , char **)
-//int x0imaging()
 {
 
 	gROOT->Reset(); 

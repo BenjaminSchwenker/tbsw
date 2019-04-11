@@ -1225,7 +1225,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// Fit range
 	double fitrange;
 
-	const int num_fitfunctions=grid.GetMeasurementAreas().size();
+	const size_t num_fitfunctions=grid.GetMeasurementAreas().size();
 
 	// fitresults Array
 	double *fitresults = new double[8];
@@ -1235,10 +1235,10 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	TH1F * histogramsum;
 
 	// Copy raw histograms
-	for(int i=0; i< num_fitfunctions; i++)
+	for(size_t i=0; i< num_fitfunctions; i++)
 	{
 		// histogram name
-		histoname.Form("measurementarea%i",i+1);
+		histoname.Form("measurementarea%lu",i+1);
 		file->cd("");
 
 		histogramsum=(TH1F*)file->Get("grid/raw/sumhisto_"+histoname);
@@ -1260,11 +1260,11 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	std::vector<double> range_vec;
 
 	// loop for definition of the fit functions, the fitrange is determined for every one of them
-	for(int i=0;i<num_fitfunctions;i++)
+	for(size_t i=0;i<num_fitfunctions;i++)
 	{
 
 		fitrange=DetermineFitrange(histo_vec.at(i),rangevalue);
-		fctname.Form("fitFcn%i",i);
+		fctname.Form("fitFcn%lu",i);
 
 		if(model=="moliere")
 		{
@@ -1303,7 +1303,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
     // Total datasize
 	int datasize = 0;
      
-    for(int i=0;i<num_fitfunctions;i++) 
+    for(size_t i=0;i<num_fitfunctions;i++) 
 	{ 
       // Create wrapped multi function entry
 	  ROOT::Math::WrappedMultiTF1 * wf_entry = new ROOT::Math::WrappedMultiTF1(*fitFcn_vec.at(i),1);
@@ -1354,7 +1354,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	for(int i=0;i<num_localparameters;i++) par0[i]=aid_array[i];
 
 	// Afterwards for each fit functions we get several new parameters
-	for(int i=1;i<num_fitfunctions;i++)
+	for(size_t i=1;i<num_fitfunctions;i++)
 	{
 		par0[num_localparameters+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_density();
 		par0[num_localparameters+1+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_Z();
@@ -1396,7 +1396,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	fitter.Config().ParSettings(0).SetLimits(0.5*BE_mean,1.5*BE_mean);
 
 	// fix X0, density, A, Z, thickness and coordinate parameters for all fitfunctions
-	for(int i=1;i<num_fitfunctions;i++)
+	for(size_t i=1;i<num_fitfunctions;i++)
 	{
 		fitter.Config().ParSettings(num_localparameters+(i-1)*newparsperfunction).Fix();
 		fitter.Config().ParSettings(num_localparameters+1+(i-1)*newparsperfunction).Fix();
@@ -1415,7 +1415,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	//Set limits on fit function Normalizations and mean angle values
 	fitter.Config().ParSettings(9).SetLimits(10.0,200000.0);
 	fitter.Config().ParSettings(14).SetLimits(-0.0001,+0.0001);
-	for(int i=1;i<num_fitfunctions;i++) 
+	for(size_t i=1;i<num_fitfunctions;i++) 
 	{
 		fitter.Config().ParSettings(num_localparameters+4+(i-1)*newparsperfunction).SetLimits(10.0,200000.0);
 		fitter.Config().ParSettings(num_localparameters+7+(i-1)*newparsperfunction).SetLimits(-0.0001,+0.0001);
@@ -1457,7 +1457,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	name[14]="#theta_{mean}[rad]";
 	name[15]="X_{0}[mm]";
 
-	for(int i=0;i<num_fitfunctions;i++)
+	for(size_t i=0;i<num_fitfunctions;i++)
 	{	
 
 		int parameters[num_localparameters];
@@ -1474,7 +1474,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		fitfunc->SetLineColor(kRed);
 
 		histo_vec.at(i)->GetListOfFunctions()->Add(fitFcn_vec.at(i));
-		histoname.Form("gridpoint%i",i+1);
+		histoname.Form("gridpoint%lu",i+1);
 		// display mode
 		gStyle->SetOptFit(1111);
 		histo_vec.at(i)->Write("thetasum_"+histoname+"_fit");
@@ -1534,12 +1534,12 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		pad4->Draw();
 		pads.push_back(pad4);
 
-		for(int j=0;j<4;j++)
+		for(size_t j=0;j<4;j++)
 		{
 		   	pads.at(j)->cd();
 			if(((4*i)+j)<num_fitfunctions)
 			{
-				Title.Form("Area %i: d=%fmm",(4*i)+j,grid.GetMeasurementAreas().at((4*i)+j).Get_thickness());
+				Title.Form("Area %lu: d=%fmm",(4*i)+j,grid.GetMeasurementAreas().at((4*i)+j).Get_thickness());
 				histo_vec.at((4*i)+j)->SetTitle(Title);
 				histo_vec.at((4*i)+j)->Draw();
                 cout<<"fitfunction "<<(4*i)+j<<" of "<<num_fitfunctions<<endl;
@@ -1734,7 +1734,6 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
   // measurement data of a plane with a precisely known material distribution ( for example a aluminum grid with a set 
   // of holes with different thicknesses.
   int main(int , char **)
-  //void calibrationfit()
   {     
     // Read config file
     //------------------
