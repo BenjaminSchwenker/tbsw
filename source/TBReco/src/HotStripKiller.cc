@@ -217,8 +217,8 @@ void HotStripKiller::end()
     // Read geometry info for sensor
     int ipl = _planeNumbers[iDetector];       
     const Det& Sensor = TBDetector::Get(ipl);      
-    int nUCells = Sensor.GetMaxUCell()+1;
-    int nVCells = Sensor.GetMaxVCell()+1;
+    int nUCells = Sensor.GetMaxUCell()-Sensor.GetMinUCell()+1;
+    int nVCells = Sensor.GetMaxVCell()-Sensor.GetMinVCell()+1;
     int sensorID = Sensor.GetSensorID();  
     
     TrackerRawDataImpl * statusMatrix   = new TrackerRawDataImpl;
@@ -226,8 +226,8 @@ void HotStripKiller::end()
     CellIDEncoder<TrackerRawDataImpl> idStatusEncoder(DEPFET::MATRIXDEFAULTENCODING, statusCollection);
   
     idStatusEncoder["sensorID"]   = sensorID;
-    idStatusEncoder["uMax"]       = nUCells-1;
-    idStatusEncoder["vMax"]       = nVCells-1;
+    idStatusEncoder["uMax"]       = Sensor.GetMaxUCell();
+    idStatusEncoder["vMax"]       = Sensor.GetMaxVCell();
     idStatusEncoder.setCellID(statusMatrix);
 
     // Concatenate u/v masks 
@@ -270,8 +270,8 @@ void HotStripKiller::end()
     // Read geometry info for sensor
     int ipl = _planeNumbers[iDetector];       
     const Det& Sensor = TBDetector::Get(ipl);       
-    int nUCells = Sensor.GetMaxUCell()+1;
-    int nVCells = Sensor.GetMaxVCell()+1;
+    int nUCells = Sensor.GetMaxUCell()-Sensor.GetMinUCell()+1;
+    int nVCells = Sensor.GetMaxVCell()-Sensor.GetMinVCell()+1;
     
     // Count masked channels 
     double nmaskedU = 0;  
@@ -400,8 +400,8 @@ void HotStripKiller::accumulateHits(LCEvent * evt) {
       // Read geometry info for sensor 
       int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);      
       const Det& Sensor = TBDetector::Get(ipl);
-      int nUCells = Sensor.GetMaxUCell()+1;
-      int nVCells = Sensor.GetMaxVCell()+1;
+      //int nUCells = Sensor.GetMaxUCell()-Sensor.GetMinUCell()+1;
+      //int nVCells = Sensor.GetMaxVCell()-Sensor.GetMinVCell()+1;
           
       FloatVec sparseDigits = trackerData->getChargeValues();
       int nDigits = sparseDigits.size()/3; 
@@ -428,7 +428,7 @@ void HotStripKiller::accumulateHits(LCEvent * evt) {
             continue;
           }
                
-          if ( cell < 0 || cell >= nUCells  ) {
+          if ( cell < Sensor.GetMinUCell() || cell > Sensor.GetMaxUCell()  ) {
             streamlog_out(MESSAGE2) << "Digit on sensor " << sensorID 
                                     << " uCell: " << cell 
                                     << " in event " << evt->getEventNumber() 
@@ -437,7 +437,7 @@ void HotStripKiller::accumulateHits(LCEvent * evt) {
           }
           
           // Count the digit
-          _hitCounterU[ iDetector ][ cell ]++; 
+          _hitCounterU[ iDetector ][ cell ]++; //seg fault for cell min-max not 0-ncell? TODO
         
           // Count number of good hits per frame  
           if (_statusU[iDetector][cell] == 0 ) ++nGoodDigitsU;
@@ -456,7 +456,7 @@ void HotStripKiller::accumulateHits(LCEvent * evt) {
             continue;
           }
                
-          if ( cell < 0 || cell >= nVCells  ) {
+          if ( cell < Sensor.GetMinVCell() || cell > Sensor.GetMaxVCell()  ) {
             streamlog_out(MESSAGE2) << "Digit on sensor " << sensorID 
                                     << " vCell: " << cell 
                                     << " in event " << evt->getEventNumber() 
@@ -465,7 +465,7 @@ void HotStripKiller::accumulateHits(LCEvent * evt) {
           }
           
           // Count the digit
-          _hitCounterV[ iDetector ][ cell ]++; 
+          _hitCounterV[ iDetector ][ cell ]++; // seg fault? TODO
         
           // Count number of good hits per frame  
           if (_statusV[iDetector][cell] == 0 ) ++nGoodDigitsV;
@@ -538,8 +538,8 @@ void HotStripKiller::initializeAlgorithms(LCEvent * evt) {
 
     
       const Det& Sensor = TBDetector::Get(ipl);
-      int nUCells = Sensor.GetMaxUCell()+1;
-      int nVCells = Sensor.GetMaxVCell()+1;
+      int nUCells = Sensor.GetMaxUCell()-Sensor.GetMinUCell()+1;
+      int nVCells = Sensor.GetMaxVCell()-Sensor.GetMinVCell()+1;
              
       // Initialize all u strips as GOOD
       _statusU.push_back(ShortVec( nUCells, 0 ));
@@ -580,31 +580,34 @@ void HotStripKiller::initializeAlgorithms(LCEvent * evt) {
       dirName = "/Sensor"+to_string(ipl)+"/";
       _rootFile->cd(dirName.c_str());
       
-     
-      int uBins = Sensor.GetMaxUCell()+1;
-      int vBins = Sensor.GetMaxVCell()+1;
+      int uMin = Sensor.GetMinUCell();
+      int uMax = Sensor.GetMaxUCell();
+      int vMin = Sensor.GetMinVCell();
+      int vMax = Sensor.GetMaxVCell();
+      int uBins = uMax-uMin+1;
+      int vBins = vMax-vMin+1;
       
       
       histoName = "hmaskU_sensor"+to_string( ipl );
-      _histoMap[histoName] = new TH1D(histoName.c_str(), "" ,uBins, 0, uBins);
+      _histoMap[histoName] = new TH1D(histoName.c_str(), "" ,uBins, uMin, uMax);
       _histoMap[histoName]->SetXTitle("uCell [cellID]"); 
       _histoMap[histoName]->SetYTitle("mask");      
       _histoMap[histoName]->SetStats( false );   
       
       histoName = "hmaskV_sensor"+to_string( ipl );
-      _histoMap[histoName] = new TH1D(histoName.c_str(), "" ,vBins, 0, vBins);
+      _histoMap[histoName] = new TH1D(histoName.c_str(), "" ,vBins, vMin, vMax);
       _histoMap[histoName]->SetXTitle("vCell [cellID]"); 
       _histoMap[histoName]->SetYTitle("mask");      
       _histoMap[histoName]->SetStats( false );   
       
       histoName = "hoccU_sensor"+to_string( ipl );
-      _histoMap[histoName] = new TH1D(histoName.c_str(), "" ,uBins, 0, uBins);
+      _histoMap[histoName] = new TH1D(histoName.c_str(), "" ,uBins, uMin, uMax);
       _histoMap[histoName]->SetXTitle("uCell [cellID]");  
       _histoMap[histoName]->SetYTitle("hit occupancy");       
       _histoMap[histoName]->SetStats( false );    
 
       histoName = "hoccV_sensor"+to_string( ipl );
-      _histoMap[histoName] = new TH1D(histoName.c_str(), "" ,vBins, 0, vBins);
+      _histoMap[histoName] = new TH1D(histoName.c_str(), "" ,vBins, vMin, vMax);
       _histoMap[histoName]->SetXTitle("vCell [cellID]");  
       _histoMap[histoName]->SetYTitle("hit occupancy");       
       _histoMap[histoName]->SetStats( false );   
@@ -631,12 +634,12 @@ void HotStripKiller::initializeAlgorithms(LCEvent * evt) {
       
       histoName = "hnhitsU_mask_sensor"+to_string( ipl );
       _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 200, 0, 200);
-      _histoMap[ histoName ]->SetXTitle("maked u hits per event"); 
+      _histoMap[ histoName ]->SetXTitle("masked u hits per event"); 
       _histoMap[ histoName ]->SetYTitle("events");
 
       histoName = "hnhitsV_mask_sensor"+to_string( ipl );
       _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 200, 0, 200);
-      _histoMap[ histoName ]->SetXTitle("maked v hits per event"); 
+      _histoMap[ histoName ]->SetXTitle("masked v hits per event"); 
       _histoMap[ histoName ]->SetYTitle("events");
             
     }
@@ -658,12 +661,12 @@ void HotStripKiller::computeMask() {
     // Read geometry info for sensor
     int ipl = _planeNumbers[iDetector];       
     const Det& Sensor = TBDetector::Get(ipl);      
-    int nUCells = Sensor.GetMaxUCell()+1;
-    int nVCells = Sensor.GetMaxVCell()+1;
+    int nUCells = Sensor.GetMaxUCell()-Sensor.GetMinUCell()+1;
+    int nVCells = Sensor.GetMaxVCell()-Sensor.GetMinVCell()+1;
     int sensorID = Sensor.GetSensorID(); 
         
     // Loop over all vStrips  
-    for (int cell = 0; cell < nVCells; cell++) {
+    for (int cell = 0; cell < nVCells; cell++) {//TODO loop from min to max, how vectors?
           
       double occupancy =  _hitCounterV[ iDetector ][ cell ] / _nEvt;
       if ( occupancy  > _maxOccupancy ) {

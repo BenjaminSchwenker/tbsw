@@ -65,18 +65,18 @@ namespace depfet {
     void clusterize( LCEvent * evt , LCCollectionVec * clusterCollection );  
     
     // This method is called inside the clusterize() method in order to 
-    // determine if the pixel cell at address (col,row) should be added 
+    // determine if the pixel cell at address (iU,iV) should be added 
     // to the pixel group passed as first argument.  
-    bool areNeighbours( FloatVec &group, int col, int row, int planeNumber ); 
+    bool areNeighbours( FloatVec &group, int iU, int iV, int planeNumber ); 
        
     // This method is called inside the clusterize() method in order to 
-    // determine if the pixel cell with address col/row is already part 
+    // determine if the pixel cell with address iU/iV is already part 
     // of pixel group passed as first argument.  
-    bool isDuplicated( FloatVec &group, int col, int row ) ;
+    bool isDuplicated( FloatVec &group, int iU, int iV ) ;
     
-    // Checks if any other pixel group (apart from base group) neighbours (col,row). 
+    // Checks if any other pixel group (apart from base group) neighbours (iU,iV). 
     // If so, merge with base group.   
-    void checkForMerge( int col, int row, int planeNumber, 
+    void checkForMerge( int iU, int iV, int planeNumber, 
            Pix_GroupVector::iterator baseGroup,
            Pix_GroupVector::iterator lastGroup); 
            
@@ -110,7 +110,7 @@ namespace depfet {
     //!   = 0: Add pixels which have a side in common with a pixel cell 
     //!        in the list
     //!   = 1: A common corner suffices
-    //!    = 2: Max distance is a missing pixel in a row or a column
+    //!    = 2: Max distance is a missing pixel in a iV or a iU
     //!    = 3: Max distance is a missing diagonal pixel 
    int m_acceptDiagonalClusters; 
    	       

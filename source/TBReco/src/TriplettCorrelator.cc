@@ -396,7 +396,7 @@ void TriplettCorrelator::bookHistos() {
          
     double  uMin = safetyFactor  * det.GetSensitiveMinU();               
     double  uMax = safetyFactor  * det.GetSensitiveMaxU(); 
-    double  PitchU = det.GetSensitiveMaxU()/(det.GetMaxUCell()+2); 
+    double  PitchU = det.GetSensitiveMaxU()/(det.GetMaxUCell()-det.GetMinUCell()+1); 
     int     uBins = static_cast<int>( (uMax - uMin)/(2*PitchU) );     
     
     // avoid too many bins 
@@ -420,7 +420,7 @@ void TriplettCorrelator::bookHistos() {
      
     double  vMin = safetyFactor *  det.GetSensitiveMinV();               
     double  vMax = safetyFactor *  det.GetSensitiveMaxV(); 
-    double  PitchV = det.GetSensitiveMaxV()/(det.GetMaxVCell()+2); 
+    double  PitchV = det.GetSensitiveMaxV()/(det.GetMaxVCell()-det.GetMinVCell()+1); 
     int     vBins = static_cast<int>( (vMax - vMin)/(2*PitchV) );     
         
     // avoid too many bins 
