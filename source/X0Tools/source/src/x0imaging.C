@@ -537,11 +537,8 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 	// Fit result parameters of both angle distribution
 
 	// mean of the gaussian and its error
-<<<<<<< HEAD
-	double mean1, mean2, meansum;
-=======
+
 	double mean1=0., mean2=0., meansum=0.;
->>>>>>> d9a974f00a9b0a1672019713e5a2be62e2e0b7c8
 
 	// quality parameters of the fit
 	double chi2ndof1,chi2ndof2,chi2ndofsum;
