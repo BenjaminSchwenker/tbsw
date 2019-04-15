@@ -31,6 +31,10 @@ import tbsw
 import os
 import multiprocessing
 
+import sys
+sys.argv.append('-b-')
+import ROOT
+
 # Path to steering files 
 # Folder contains a gear file detailing the detector geometry and a config file
 # for x0 calibration. Users will likely want to rename this folder. 
