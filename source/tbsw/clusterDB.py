@@ -51,6 +51,13 @@ class ClusterDB(object):
     self.vPeriods = list(set(self.vPeriods))        
     
     dbfile.Close()
+   
+  def getClusterTypes(self):
+    """
+    Get list of unique cluster types found in the clusterDB.
+    """ 
+    clusterTypes = set( ['P'+re.split('P',shape)[1] for shape in self.shapes ] ) 
+    return list(clusterTypes)
     
   def getCoverage(self):
     """
@@ -330,14 +337,14 @@ class ClusterDB(object):
       return uCells, vCells
     
     def create_pixels(ucells, vcells, pitchU, pitchV):
-      size = ucells.shape[0]
+      size = len(ucells)
       pixels = []
       for i in range(size): 
-      pix = Rectangle( (-pitchU/2. + ucells[i]*pitchU, -pitchV/2. + vcells[i]*pitchV), pitchU, pitchV,)		
-      pix.set_alpha(0.1)
-      pix.set_facecolor('blue')
-      pix.set_edgecolor('blue')
-      pixels.append(pix)
+        pix = Rectangle( (-pitchU/2. + ucells[i]*pitchU, -pitchV/2. + vcells[i]*pitchV), pitchU, pitchV,)		
+        pix.set_alpha(0.1)
+        pix.set_facecolor('blue')
+        pix.set_edgecolor('blue')
+        pixels.append(pix)
       return pixels
       
     def create_error_ellipse(u, v, cov):
@@ -352,8 +359,9 @@ class ClusterDB(object):
       ell.set_facecolor('none')
       return ell
       
-    # Compute fraction for cluster type
-    dprob = self.getFraction('^E[0-9]'+clusterType) 
+    # Compute fraction for all shape belonging to the cluster type
+    # Note that we do not want to match shapes with more digits
+    dprob = self.getFraction('^E[0-9]'+clusterType+'$') 
     
     # Compute list of uCells and vCells 
     uCells, vCells = get_cells(clusterType)
@@ -367,7 +375,7 @@ class ClusterDB(object):
     ax.set_xlabel('offset u / mm')
     ax.set_ylabel('offset v / mm')
     ax.set_title(clusterType)
-    ax.text(0.5, 0.9, 'prob={:.2f}%'.format(100*dprob),
+    ax.text(0.5, 0.9, 'prob={:.2f}%'.format(dprob),
           style='italic',
           bbox={'facecolor':'red', 'alpha':0.5, 'pad':10},
           horizontalalignment='center',
@@ -381,16 +389,15 @@ class ClusterDB(object):
       ax.add_artist(pixel)
       
     # Loop over all shapes   
-    for shape in self.getSelectedShapes('^E[0-9]'+clusterType) :
-      prob = self.getFraction(shape)
-      sigU = self.getSigmaU(shape)
-      sigV = self.getSigmaV(shape)
-      rho = self.getRho(shape)           
-      posU = self.getPositionU(shape)
-      posV = self.getPositionV(shape)
-       
-      cov = np.array( [ [sigU, rho*sigU*sigV], [rho*sigU*sigV, sigV]] )
-    
+    for shape in self.getSelectedShapes('^E[0-9]'+clusterType+'$') :
+      prob = self.getFraction('^'+shape+'$')
+      sigU, _ = self.getSigmaU('^'+shape+'$')
+      sigV, _ = self.getSigmaV('^'+shape+'$')
+      rho = self.getRho('^'+shape+'$')           
+      posU = self.getPositionU('^'+shape+'$')
+      posV = self.getPositionV('^'+shape+'$') 
+      cov = np.array( [ [sigU*sigU, rho*sigU*sigV], [rho*sigU*sigV, sigV*sigV]] )
+      
       # Draw 68% error ellipse 
       ell = create_error_ellipse(posU, posV, cov)
       ell.set_clip_box(ax.bbox)
