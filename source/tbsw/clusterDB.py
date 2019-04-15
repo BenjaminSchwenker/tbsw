@@ -51,6 +51,13 @@ class ClusterDB(object):
     self.vPeriods = list(set(self.vPeriods))        
     
     dbfile.Close()
+   
+  def getClusterTypes(self):
+    """
+    Get list of unique cluster types found in the clusterDB.
+    """ 
+    clusterTypes = set( ['P'+re.split('P',shape)[1] for shape in self.shapes ] ) 
+    return list(clusterTypes)
     
   def getCoverage(self):
     """
@@ -308,5 +315,97 @@ class ClusterDB(object):
       return mean/norm 
     else: 
       return float('nan')
+  
+  def plotClusterType(self, clusterType, imagePath, pitchU, pitchV):
+    """
+    Create an image of the pixel cells of the given cluster type 
+    overlaid with 68% error ellipses of position estimators. 
+    """
+     
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Ellipse
+    from matplotlib.patches import Rectangle
+    import numpy as np
+    
+    def get_cells(clusterType):
+      uCells = list()
+      vCells = list()
+      digits = re.split('D',clusterType)[1:] 
+      for digit in digits:
+        uCells.append( int(re.split('\.',digit)[1]) )  
+        vCells.append( int(re.split('\.',digit)[0]) )      
+      return uCells, vCells
+    
+    def create_pixels(ucells, vcells, pitchU, pitchV):
+      size = len(ucells)
+      pixels = []
+      for i in range(size): 
+        pix = Rectangle( (-pitchU/2. + ucells[i]*pitchU, -pitchV/2. + vcells[i]*pitchV), pitchU, pitchV,)		
+        pix.set_alpha(0.1)
+        pix.set_facecolor('blue')
+        pix.set_edgecolor('blue')
+        pixels.append(pix)
+      return pixels
+      
+    def create_error_ellipse(u, v, cov):
+      vals, vecs = np.linalg.eigh(cov)
+      order = vals.argsort()[::-1]
+      vals = vals[order]
+      vecs = vecs[:,order]
+      theta = np.degrees(np.arctan2(*vecs[:,0][::-1]))
+      w, h = 2 * math.sqrt(2.30) * np.sqrt(vals)
+      ell = Ellipse( (u, v), width=w, height=h, angle=theta,)
+      ell.set_alpha(0.4)
+      ell.set_facecolor('none')
+      return ell
+      
+    # Compute fraction for all shape belonging to the cluster type
+    # Note that we do not want to match shapes with more digits
+    dprob = self.getFraction('^E[0-9]'+clusterType+'$') 
+    
+    # Compute list of uCells and vCells 
+    uCells, vCells = get_cells(clusterType)
+       
+    # Prepare new figure 
+    fig = plt.figure(0)
+    
+    ax = fig.add_subplot(111, aspect='equal')
+    ax.set_xlim(-pitchU, (np.max(uCells)+1)*pitchU)
+    ax.set_ylim(-pitchV, (np.max(vCells)+1)*pitchV)
+    ax.set_xlabel('offset u / mm')
+    ax.set_ylabel('offset v / mm')
+    ax.set_title(clusterType)
+    ax.text(0.5, 0.9, 'prob={:.2f}%'.format(dprob),
+          style='italic',
+          bbox={'facecolor':'red', 'alpha':0.5, 'pad':10},
+          horizontalalignment='center',
+          verticalalignment='center',
+          transform = ax.transAxes)
+    
+    # Draw the cluster outline
+    pixels = create_pixels(uCells, vCells, pitchU, pitchV)      
+    for pixel in pixels:
+      pixel.set_clip_box(ax.bbox)
+      ax.add_artist(pixel)
+      
+    # Loop over all shapes   
+    for shape in self.getSelectedShapes('^E[0-9]'+clusterType+'$') :
+      prob = self.getFraction('^'+shape+'$')
+      sigU, _ = self.getSigmaU('^'+shape+'$')
+      sigV, _ = self.getSigmaV('^'+shape+'$')
+      rho = self.getRho('^'+shape+'$')           
+      posU = self.getPositionU('^'+shape+'$')
+      posV = self.getPositionV('^'+shape+'$') 
+      cov = np.array( [ [sigU*sigU, rho*sigU*sigV], [rho*sigU*sigV, sigV*sigV]] )
+      
+      # Draw 68% error ellipse 
+      ell = create_error_ellipse(posU, posV, cov)
+      ell.set_clip_box(ax.bbox)
+      ell.set_color('black')
+      ax.add_artist(ell)
+      ax.scatter(posU, posV, color='black')
+        
+    fig.savefig(imagePath)
+    fig.clf()
 
 
