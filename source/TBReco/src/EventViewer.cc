@@ -260,7 +260,7 @@ void EventViewer::dumpDataEvent( LCEvent * evt )
  
         streamlog_out(MESSAGE3) << "Dump sensor data wo status "<<currentSensorID<<endl;  
  
- 	int ipl = TBDetector::GetInstance().GetPlaneNumber(currentSensorID);   
+        int ipl = TBDetector::GetInstance().GetPlaneNumber(currentSensorID);   
         int noOfXPixels =  TBDetector::Get(ipl).GetMaxUCell()-TBDetector::Get(ipl).GetMinUCell()+1;   
         int noOfYPixels =  TBDetector::Get(ipl).GetMaxVCell()-TBDetector::Get(ipl).GetMinVCell()+1; 
        
@@ -288,7 +288,7 @@ void EventViewer::dumpDataEvent( LCEvent * evt )
           for ( int xPixel = 0; xPixel < noOfXPixels; xPixel++) {
         
             double chargeValue = charges[iPixel]; 
-            eventMap->Fill(xPixel+xmin+0.5,yPixel+ymin+0.5,chargeValue); 
+            eventMap->Fill(xPixel+xmin,yPixel+ymin,chargeValue); 
             
             iPixel++;  
       
@@ -429,7 +429,7 @@ void EventViewer::dumpZeroSuppEvent( LCEvent * evt )
       double ymin = TBDetector::Get(ipl).GetMinVCell();
       double ymax = noOfYPixels + ymin;
       int ynbins = noOfYPixels; 
-      	   
+   
       TH2D * eventMap = new TH2D(Form("evt%d_mod%d",eventID,currentSensorID),Form("Data Event %d",eventID),xnbins,xmin-0.5,xmax-0.5,ynbins,ymin-0.5,ymax-0.5);
       eventMap->SetXTitle("columns"); 
       eventMap->SetYTitle("rows");
