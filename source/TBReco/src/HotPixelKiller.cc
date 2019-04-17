@@ -246,7 +246,7 @@ namespace depfet {
       int nVCells = maxVCell-minVCell+1; 
 
       string histoName = "hDB_sensor"+to_string(sensorID) + "_mask";
-      _histoMap[histoName] = new TH2F(histoName.c_str(), "" ,nUCells, minUCell, maxUCell, nVCells, minVCell, maxVCell);
+      _histoMap[histoName] = new TH2F(histoName.c_str(), "" ,nUCells, minUCell, maxUCell+1, nVCells, minVCell, maxVCell+1); // +1 because maxCell is the not included upper border of the last bin, but maxCell should have a bin
       _histoMap[histoName]->SetXTitle("uCell [cellID]"); 
       _histoMap[histoName]->SetYTitle("vCell [cellID]"); 
       _histoMap[histoName]->SetZTitle("mask");     

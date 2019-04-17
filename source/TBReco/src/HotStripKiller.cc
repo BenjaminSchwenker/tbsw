@@ -589,25 +589,25 @@ void HotStripKiller::initializeAlgorithms(LCEvent * evt) {
       
       
       histoName = "hmaskU_sensor"+to_string( ipl );
-      _histoMap[histoName] = new TH1D(histoName.c_str(), "" ,uBins, uMin, uMax);
+      _histoMap[histoName] = new TH1D(histoName.c_str(), "" ,uBins, uMin, uMax+1);
       _histoMap[histoName]->SetXTitle("uCell [cellID]"); 
       _histoMap[histoName]->SetYTitle("mask");      
       _histoMap[histoName]->SetStats( false );   
       
       histoName = "hmaskV_sensor"+to_string( ipl );
-      _histoMap[histoName] = new TH1D(histoName.c_str(), "" ,vBins, vMin, vMax);
+      _histoMap[histoName] = new TH1D(histoName.c_str(), "" ,vBins, vMin, vMax+1);
       _histoMap[histoName]->SetXTitle("vCell [cellID]"); 
       _histoMap[histoName]->SetYTitle("mask");      
       _histoMap[histoName]->SetStats( false );   
       
       histoName = "hoccU_sensor"+to_string( ipl );
-      _histoMap[histoName] = new TH1D(histoName.c_str(), "" ,uBins, uMin, uMax);
+      _histoMap[histoName] = new TH1D(histoName.c_str(), "" ,uBins, uMin, uMax+1);
       _histoMap[histoName]->SetXTitle("uCell [cellID]");  
       _histoMap[histoName]->SetYTitle("hit occupancy");       
       _histoMap[histoName]->SetStats( false );    
 
       histoName = "hoccV_sensor"+to_string( ipl );
-      _histoMap[histoName] = new TH1D(histoName.c_str(), "" ,vBins, vMin, vMax);
+      _histoMap[histoName] = new TH1D(histoName.c_str(), "" ,vBins, vMin, vMax+1);
       _histoMap[histoName]->SetXTitle("vCell [cellID]");  
       _histoMap[histoName]->SetYTitle("hit occupancy");       
       _histoMap[histoName]->SetStats( false );   

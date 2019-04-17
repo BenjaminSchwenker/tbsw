@@ -386,8 +386,8 @@ if __name__ == '__main__':
 
   # Atlas FEi4 plane
   spList.append({"ID":str(dutID[1]), "positionZ":str(dutPositionZ[1]), "thickness":"1.0"})
-  uCGpList.append([{"minCell":"0", "maxCell":"80", "pitch":"0.25"}])
-  vCGpList.append([{"minCell":"0", "maxCell":"336", "pitch":"0.05"}])
+  uCGpList.append([{"minCell":"0", "maxCell":"79", "pitch":"0.25"}])
+  vCGpList.append([{"minCell":"0", "maxCell":"335", "pitch":"0.05"}])
 
   dparams = {"number":"7"}
   # create and initialise the Detector object
