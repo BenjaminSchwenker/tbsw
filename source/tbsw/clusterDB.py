@@ -61,7 +61,7 @@ class ClusterDB(object):
     
   def getCoverage(self):
     """
-    Get coverage efficiency in percent for clusterDB.
+    Get coverage (in percent) efficiency in percent for clusterDB.
     Coverage efficiency is defined as fraction of clusters from training that could be calibrated. 
     """
     return self.coverage  
@@ -123,7 +123,7 @@ class ClusterDB(object):
 
   def getNClusters(self, shape=''): 
     """
-    Get number of training clusters for selected shapes. 
+    Get number of training clusters used to train selected shapes. 
     """
     dbfile = ROOT.TFile( self.dbpath, 'READ' ) 
     histo  = dbfile.Get("hDB_Weight")
@@ -144,7 +144,8 @@ class ClusterDB(object):
     
   def getFraction(self, shape=''): 
     """
-    Get fraction selected shapes among all shapes. 
+    Get fraction (in percent) selected shapes among all clusters seen in training. 
+    All clusters includes those which could not be calibrated. 
     """
     dbfile = ROOT.TFile( self.dbpath, 'READ' ) 
     histo  = dbfile.Get("hDB_Weight")
@@ -166,7 +167,7 @@ class ClusterDB(object):
     if norm==0: 
       return 0
     else:  
-      return 100*fraction/norm
+      return fraction*self.getCoverage()/norm  
     
 
   def getSigmaU(self, shape=''): 
