@@ -359,9 +359,15 @@ class ClusterDB(object):
       ell.set_facecolor('none')
       return ell
       
-    # Compute fraction for all shape belonging to the cluster type
+    # Sum the fractions for all shape belonging to the cluster type
     # Note that we do not want to match shapes with more digits
-    dprob = self.getFraction('^E[0-9]'+clusterType+'$') 
+    sum_prob = self.getFraction('^E[0-9]'+clusterType+'$') 
+    
+    # Compute the sigmaU, sigmaV and rho for the weighted avarage 
+    # of the covariance matrices of all contributing shapes. 
+    av_sigU, _ = self.getSigmaU('^E[0-9]'+clusterType+'$')
+    av_sigV, _ = self.getSigmaV('^E[0-9]'+clusterType+'$')
+    av_rho = self.getRho('^E[0-9]'+clusterType+'$')    
     
     # Compute list of uCells and vCells 
     uCells, vCells = get_cells(clusterType)
@@ -375,7 +381,7 @@ class ClusterDB(object):
     ax.set_xlabel('offset u / mm')
     ax.set_ylabel('offset v / mm')
     ax.set_title(clusterType)
-    ax.text(0.5, 0.9, 'prob={:.2f}%'.format(dprob),
+    ax.text(0.5, 0.9, 'prob={:.2f}% \n $\sigma_u$={:.1f}$\mu$m, $\sigma_v$={:.1f}$\mu$m, $\\rho$={:.2f}'.format(sum_prob, 1000*av_sigU, 1000*av_sigV, av_rho),
           style='italic',
           bbox={'facecolor':'red', 'alpha':0.5, 'pad':10},
           horizontalalignment='center',
