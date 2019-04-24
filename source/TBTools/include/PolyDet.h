@@ -27,9 +27,7 @@ namespace depfet {
 class PolyDet : public Det {
    	
  public:
-//  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
- 
-   
+    
   /** Constructor
    */
   PolyDet(const std::string& typeName, int sensorID, int planeNumber) ; 
@@ -228,6 +226,4 @@ class PolyDet : public Det {
 };
  
 } // Namespace
-//#include<Eigen/StdVector>
-//EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(depfet::PolyDet)
 #endif // POLYDET_H

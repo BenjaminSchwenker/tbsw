@@ -53,7 +53,6 @@ namespace depfet {
 class SquareDet : public Det {
    	
  public:
-//  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
    
   /** Constructor
    */
@@ -259,6 +258,4 @@ class SquareDet : public Det {
 };
  
 } // Namespace
-//#include<Eigen/StdVector>
-//EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(depfet::SquareDet)
 #endif // SQUAREDET_H
