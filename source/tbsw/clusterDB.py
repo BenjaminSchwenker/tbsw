@@ -19,6 +19,7 @@ class ClusterDB(object):
     self.pixelTypes = []
     self.uPeriods = []
     self.vPeriods = []  
+    self.protoPixels = {}
     
     dbfile = ROOT.TFile( self.dbpath, 'READ' ) 
     
@@ -34,7 +35,7 @@ class ClusterDB(object):
       self.telsigmaU = float('nan')
       self.telsigmaV = float('nan')
       self.telrho = float('nan') 
-
+    
     histo = dbfile.Get("hDB_Weight")
     for bin in range(1,histo.GetNbinsX()+1):
       shape = histo.GetXaxis().GetBinLabel(bin)
@@ -50,8 +51,15 @@ class ClusterDB(object):
     self.uPeriods = list(set(self.uPeriods))  
     self.vPeriods = list(set(self.vPeriods))        
     
+    for pixelType in self.pixelTypes:
+      if dbfile.Get("DB_protopixel_{}".format(pixelType)): 
+        self.protoPixels[pixelType] = []
+        points = dbfile.Get("DB_protopixel_{}".format(pixelType))
+        for i in range(points.GetNoElements()/2):
+          self.protoPixels[pixelType].append( (points[2*i+0],points[2*i+1]) )
+    
     dbfile.Close()
-   
+    
   def getClusterTypes(self):
     """
     Get list of unique cluster types found in the clusterDB.
@@ -317,17 +325,20 @@ class ClusterDB(object):
     else: 
       return float('nan')
   
-  def plotClusterType(self, clusterType, imagePath, pitchU, pitchV):
+  def plotClusterType(self, clusterType, imagePath, pitchU=None, pitchV=None):
     """
     Create an image of the pixel cells of the given cluster type 
     overlaid with 68% error ellipses of position estimators. 
     """
-     
+    
     import matplotlib.pyplot as plt
     from matplotlib.patches import Ellipse
     from matplotlib.patches import Rectangle
     import numpy as np
     
+    def get_pixeltype(clusterType):
+      return int(clusterType.split('D')[0].split('P')[1].split('.')[2])
+      
     def get_cells(clusterType):
       uCells = list()
       vCells = list()
@@ -337,7 +348,7 @@ class ClusterDB(object):
         vCells.append( int(re.split('\.',digit)[0]) )      
       return uCells, vCells
     
-    def create_pixels(ucells, vcells, pitchU, pitchV):
+    def create_pixels(ucells, vcells, pixelType, pitchU, pitchV):  
       size = len(ucells)
       pixels = []
       for i in range(size): 
@@ -359,7 +370,17 @@ class ClusterDB(object):
       ell.set_alpha(0.4)
       ell.set_facecolor('none')
       return ell
-      
+    
+    # Compute pixeltype
+    pixelType = get_pixeltype(clusterType)
+    
+    if pitchU == None or pitchV == None: 
+      if not pixelType in self.protoPixels: 
+        print("Cannot find pixel pitch for pixelType {}. Ignore cluster type!".format(pixelType))
+        return     
+      pitchU = self.protoPixels[pixelType][1][0] - self.protoPixels[pixelType][0][0]
+      pitchV = self.protoPixels[pixelType][1][1] - self.protoPixels[pixelType][2][1]
+    
     # Sum the fractions for all shape belonging to the cluster type
     # Note that we do not want to match shapes with more digits
     sum_prob = self.getFraction('^E[0-9]'+clusterType+'$') 
@@ -372,7 +393,7 @@ class ClusterDB(object):
     
     # Compute list of uCells and vCells 
     uCells, vCells = get_cells(clusterType)
-       
+    
     # Prepare new figure 
     fig = plt.figure(0)
     
@@ -390,7 +411,7 @@ class ClusterDB(object):
           transform = ax.transAxes)
     
     # Draw the cluster outline
-    pixels = create_pixels(uCells, vCells, pitchU, pitchV)      
+    pixels = create_pixels(uCells, vCells, pixelType, pitchU, pitchV)      
     for pixel in pixels:
       pixel.set_clip_box(ax.bbox)
       ax.add_artist(pixel)
