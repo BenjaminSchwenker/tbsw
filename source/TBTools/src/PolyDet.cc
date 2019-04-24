@@ -67,12 +67,16 @@ void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, doub
   m_cells = cells;
   streamlog_out(MESSAGE2) << "  In PolyDet SetCells: length of cells " << cells.size() << " , length of protopixel " << protocells.size()<< std::endl; 
 
-  for (auto group: protocells){ // not checking if type already in ?
-    m_cells_neighb_dist.emplace_back(std::get<0>(group), std::get<1>(group), std::get<2>(group));
-  }
-  
-  // calculate the pitches as bounding box for the protopixel
-  for (auto protopix: protocells){
+  for (auto protopix: protocells){ // not checking if type already in ?
+    int pixeltype = std::get<0>(protopix);
+      
+    // extract the distances for neighbors for protopixel
+    m_cells_neighb_dist.emplace_back(pixeltype, std::get<1>(protopix), std::get<2>(protopix));
+    
+    // extract the edges (vertices) of the bounding polygon for protopixel
+    m_protopixels[pixeltype] = std::get<3>(protopix);
+    
+    // calculate the pitches as bounding box for the protopixel
     double minx = std::numeric_limits<double>::max();
     double maxx = -std::numeric_limits<double>::max();
     double miny = std::numeric_limits<double>::max();
@@ -83,9 +87,9 @@ void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, doub
       if (std::get<1>(points) > maxy) maxy = std::get<1>(points);
       else if (std::get<1>(points) < miny) miny = std::get<1>(points);
     }
-    m_pitch.emplace_back(std::get<0>(protopix), maxx-minx, maxy-miny);
+    m_pitch.emplace_back(pixeltype, maxx-minx, maxy-miny);
   }
-	
+  
   TH2Poly *unshiftedLayout = new TH2Poly();
   unshiftedLayout->SetFloat();
   unshiftedLayout->SetName("helperlayout");

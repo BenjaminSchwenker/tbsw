@@ -4,6 +4,7 @@
 // Include basic C
 #include <vector>
 #include <tuple>
+#include <map>
 
 // Include TBTools 
 #include "Det.h"
@@ -19,7 +20,7 @@ namespace depfet {
  *  The geometrical 2D layout of pixels is constructed from a product of two 1D 'strip' layouts 
  *  for the u and v axis. As the 'strip' pitch in the 1D layouts changes, also the area of the 
  *  2D pixel cells will change as well. Neighboring 'strips' with the same pitch are called a 
- *  CellGroup and have the same PixelType.    
+ *  CellGroup.     
  *  
  *  The definition of the 1D layouts is read from the gear file. For example, a Belle II pixel 
  *  sensor has 768 (vCells) and 250 columns (uCells). The row pitch is large for rows [0,511] 
@@ -72,6 +73,10 @@ class SquareDet : public Det {
   /** Get pixel type for pixel at position vcell and ucell. 
    */
   int GetPixelType(int vcell, int ucell) const override;  
+
+  /** Get map of protopixels. The map keys are the pixeltypes and values are the vectors of polygon edges.  
+   */
+  const std::map<int, std::vector<std::tuple<double,double>>> & GetProtopixels() const override {return m_protopixels;}  
 
   /** Get the maximum uCell on the pixel matrix.   
    *  The uCell numbers of pixels are in the intervall [min,max].
@@ -255,6 +260,8 @@ class SquareDet : public Det {
   std::vector< std::tuple<int,int,double> > m_vCells ; 
   std::vector<double> m_offsetsU;
   std::vector<double> m_offsetsV; 
+  // Map containing the protopixels of the layout
+  std::map<int, std::vector<std::tuple<double,double>>> m_protopixels;
 };
  
 } // Namespace

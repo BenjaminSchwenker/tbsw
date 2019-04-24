@@ -35,7 +35,23 @@ SquareDet::SquareDet(const std::string& typeName, int sensorID, int planeNumber,
       
   // Set v cells 
   SetCellsV( vCells );
-
+  
+  // TODO This is a rather inefficient solution. But it should not matter much      
+  for (int iv = GetMinVCell(); iv <= GetMaxVCell(); iv++) {
+    for ( int iu = GetMinUCell(); iu <= GetMaxUCell(); iu++) { 
+      int pixeltype = GetPixelType(iv, iu);
+      double halfPitchU = 0.5*GetPitchU(iv, iu);   
+      double halfPitchV = 0.5*GetPitchV(iv, iu);   
+      std::vector<std::tuple<double,double>> pointsvec; 
+      pointsvec.reserve(4);    
+      pointsvec.push_back( std::tuple<double, double>(-halfPitchU, halfPitchV) );
+      pointsvec.push_back( std::tuple<double, double>( halfPitchU, halfPitchV) );     
+      pointsvec.push_back( std::tuple<double, double>( halfPitchU,-halfPitchV) );
+      pointsvec.push_back( std::tuple<double, double>(-halfPitchU,-halfPitchV) );
+      m_protopixels[pixeltype] = pointsvec;
+    }
+  }
+  
   m_sensitiveThickness = sensThick;
   m_sensitiveRadLength = sensRadLenght;
   m_sensitiveAtomicNumber = sensAtomicNumber;

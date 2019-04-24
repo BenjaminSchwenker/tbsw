@@ -2,6 +2,9 @@
 #define DET_H 1
 
 #include <string>
+#include <vector>
+#include <tuple>
+#include <map>
 
 // Include TBTools 
 #include "ReferenceFrame.h"
@@ -21,17 +24,20 @@ namespace depfet {
  *     
  *  1) The SensorID index is unique for a pixel detector in a telescope. This number must be the same as the sensorID 
  *     stored in LCIO::TrackerRawData and LCIO::TrackerData collections.  
- *     
- *  2) The vCell/uCell index pair is unique for a geometrical pixel on the pixel matrix. The indices 
- *     must be integers in the bounding box [minU,maxU]x[minV,maxV]. 
+ * 
+ *  2) The sensitive area is divided in non overlapping geometrical pixels addressed by an unique vCell/uCell index 
+ *     pair. The indices must be integers in the bounding box [minU,maxU]x[minV,maxV]. 
  *     
  *  3) The vCell (uCell) ID increments in the along the v (u) axis of the local uvw sensor coordinate 
  *     system.  
- * 
- *  4) All pixels have an integer valued type. Pixel with the same type have an identical layout (pixel pitch, electrode 
-       position and so forth) and are assumed to have the same spatial resolution.  
  *  
- *  5) The nominal reference frame encodes the trafo from global xyz to local uvw coordinates. The nomal reference
+ *  4) All pixels have an integer valued pixeltype. Pixels with identical type are copies of a protopixel
+ *     placed a certain position on the sensor area, called the pixel center. 
+ *  
+ *  5) The outline (circumference) of a protopixel on the sensor are is approximated as a 2d polygon. In the 
+ *     simplest case, this is just a square. 
+ *   
+ *  6) The nominal reference frame encodes the trafo from global xyz to local uvw coordinates. The nomal reference
  *     frame is first loaded from the gear file and, if available, updated from the alignment data base.
  *  
  *  Other global conventions in tbsw regarding the telescope geometry are detailed in TBDetector.h. 
@@ -57,7 +63,11 @@ class Det {
    *  Has to be implemented by subclasses.
    */
   virtual int GetPixelType(int vcell, int ucell) const = 0;  
-
+  
+  /** Get map of protopixels. The map keys are the pixeltypes and values are the vectors of polygon edges.  
+   */
+  virtual const std::map<int, std::vector<std::tuple<double,double>>> & GetProtopixels() const = 0;  
+  
   /** Get the maximum uCell on the pixel matrix.  
    *  Has to be implemented by subclasses. 
    *  The uCell numbers of pixels are in the intervall [min,max].
