@@ -4,6 +4,7 @@
 // Include basic C
 #include <vector>
 #include <tuple>
+#include <map>
 
 // Include TBTools 
 #include "Det.h"
@@ -27,9 +28,7 @@ namespace depfet {
 class PolyDet : public Det {
    	
  public:
-//  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
- 
-   
+    
   /** Constructor
    */
   PolyDet(const std::string& typeName, int sensorID, int planeNumber) ; 
@@ -43,11 +42,15 @@ class PolyDet : public Det {
                  double ladderSizeV, const std::vector< std::tuple<int,int,int,double,double> >& cells, 
 		         const std::vector< std::tuple<int,double,double,std::vector<std::tuple<double,double>>>> & protocells,
                  const ReferenceFrame& discrete, const ReferenceFrame& nominal );
-
+  
   /** Get pixel type for pixel at position vcell and ucell. 
    */
   int GetPixelType(int vcell, int ucell) const override;  
-
+  
+  /** Get map of protopixels. The map keys are the pixeltypes and values are the vectors of polygon edges.  
+   */
+  const std::map<int, std::vector<std::tuple<double,double>>> & GetProtopixels() const override {return m_protopixels;}  
+   
   /** Get the maximum uCell on the pixel matrix.   
    */  
   int GetMaxUCell() const override;  
@@ -225,9 +228,9 @@ class PolyDet : public Det {
   int m_maxCellV; 
   std::vector<double> m_offsetsU;
   std::vector<double> m_offsetsV; 
+  // Map containing the protopixels of the layout
+  std::map<int, std::vector<std::tuple<double,double>>> m_protopixels;
 };
  
 } // Namespace
-//#include<Eigen/StdVector>
-//EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(depfet::PolyDet)
 #endif // POLYDET_H
