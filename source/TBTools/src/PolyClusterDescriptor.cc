@@ -31,9 +31,9 @@ namespace depfet {
     m_originV = std::numeric_limits<float>::max();
     
     for ( auto&& digit : rawDigits ) {
-      float posU = Sensor.GetPixelCenterCoordU(digit.m_cellIDV, digit.m_cellIDV);
-      float posV = Sensor.GetPixelCenterCoordV(digit.m_cellIDV, digit.m_cellIDV);
-      int pixelType = Sensor.GetPixelType(digit.m_cellIDV, digit.m_cellIDV);
+      float posU = Sensor.GetPixelCenterCoordU(digit.m_cellIDV, digit.m_cellIDU);
+      float posV = Sensor.GetPixelCenterCoordV(digit.m_cellIDV, digit.m_cellIDU);
+      int pixelType = Sensor.GetPixelType(digit.m_cellIDV, digit.m_cellIDU);
       m_sortedDigits.push_back(PolyRawDigit(posU,posV,digit.m_charge,pixelType));
       
       if (posU < m_originU) m_originU = posU; 
@@ -49,7 +49,7 @@ namespace depfet {
     ret.reserve(9+12*m_sortedDigits.size());
     ret.append(fmt::format("E{}P{}.{}.{}",etaBin,0,0,m_sortedDigits[0].m_pixelType));
     for (auto&& digit : m_sortedDigits ) {
-      ret.append(fmt::format("D{:.0f}.{:.0f}.{}", 10000*(digit.m_cellPosV - m_originV), 10000*(digit.m_cellPosU - m_originU), digit.m_pixelType));
+      ret.append(fmt::format("D{}.{}.{}", int(10000*(digit.m_cellPosV - m_originV)), int(10000*(digit.m_cellPosU - m_originU)), digit.m_pixelType));
     }
     return ret;
   }
@@ -60,7 +60,7 @@ namespace depfet {
     ret.reserve(7+12*m_sortedDigits.size());
     ret.append(fmt::format("P{}.{}.{}",0,0,m_sortedDigits[0].m_pixelType));
     for (auto&& digit : m_sortedDigits ) {
-      ret.append(fmt::format("D{:.0f}.{:.0f}.{}", 10000*(digit.m_cellPosV - m_originV), 10000*(digit.m_cellPosU - m_originU), digit.m_pixelType));
+      ret.append(fmt::format("D{}.{}.{}", int(10000*(digit.m_cellPosV - m_originV)), int(10000*(digit.m_cellPosU - m_originU)), digit.m_pixelType));
     }
     return ret;
   }  
