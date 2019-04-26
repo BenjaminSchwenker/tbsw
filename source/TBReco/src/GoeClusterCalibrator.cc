@@ -15,6 +15,7 @@
 #include "TrackInputProvider.h"
 #include "GenericTrackFitter.h"
 #include "PixelCluster.h"
+#include "PolyClusterDescriptor.h"
 
 // Include basic C
 #include <iostream>
@@ -256,14 +257,20 @@ namespace depfet {
           _trackDvDwHisto->Fill(trk_tv);       
              
           PixelCluster Cluster = TE.GetHit().GetCluster();  
+          
+          // FIXME: this needs to be the type of the first pixel in the cluster in PolyCluster sorting!
+          // FIXME: the pixel at Cluster.getVStart(), Cluster.getUStart() may not even exist for non square detectors!
           int pixeltype = Sensor.GetPixelType(Cluster.getVStart(), Cluster.getUStart()); 
-
+          
           // Fill collector output
+          // FIXME: this needs to be a call to ClusterDescriptor.getType()
           m_typeName = Cluster.getType(pixeltype,_vCellPeriod, _uCellPeriod);
+          // FIXME: this needs to be a call to ClusterDescriptor.computeEta()
           m_clusterEtaPP = Cluster.computeEta(+1, +1);
           m_clusterEtaPN = Cluster.computeEta(+1, -1);
           m_clusterEtaNP = Cluster.computeEta(-1, +1);
-          m_clusterEtaNN = Cluster.computeEta(-1, -1);   
+          m_clusterEtaNN = Cluster.computeEta(-1, -1); 
+          // FIXME: this should be call to  ClusterDescriptor.getOriginU() / V()   
           m_positionOffsetU = trk_u - Sensor.GetPixelCenterCoordU( Cluster.getVStart(), Cluster.getUStart()); 
           m_positionOffsetV = trk_v - Sensor.GetPixelCenterCoordV( Cluster.getVStart(), Cluster.getUStart()); 
           m_rootTree->Fill(); 
@@ -466,6 +473,7 @@ namespace depfet {
         else if (thetaU < 0 && thetaV > 0) {clusterEta = m_clusterEtaNP;}
         else if (thetaU < 0 && thetaV < 0) {clusterEta = m_clusterEtaNN;}   
         PixelCluster aCluster;
+        // FIXME: this should be call to  ClusterDescriptor.computeEtaBin() 
         auto etaBin = aCluster.computeEtaBin(clusterEta, it2->second);
         it->second.at(etaBin).Fill(m_positionOffsetU, m_positionOffsetV);
       }

@@ -8,6 +8,7 @@
 #include "GoeHitMaker.h"
 #include "TBHit.h"
 #include "TBDetector.h"
+#include "PolyClusterDescriptor.h"
 
 // Include basic C
 #include <limits>
@@ -248,9 +249,15 @@ namespace depfet {
         _countAllMap[sensorID]++;
        
         // Compute the cluster ID string
-        PixelCluster aCluster(cluster->getTrackerData());    
-        int pixeltype = Det.GetPixelType(aCluster.getVStart(), aCluster.getUStart()); 
-        string typeName = aCluster.getType(pixeltype, _vCellPeriod, _uCellPeriod); 
+        PixelCluster aCluster(cluster->getTrackerData());  
+
+        // FIXME: this needs to be the type of the first pixel in the cluster in PolyCluster sorting!
+        // FIXME: the pixel at Cluster.getVStart(), Cluster.getUStart() may not even exist for non square detectors!  
+        int pixeltype = Det.GetPixelType(aCluster.getVStart(), aCluster.getUStart());
+
+        // FIXME: this needs to be a call to ClusterDescriptor.getType() 
+        string typeName = aCluster.getType(pixeltype, _vCellPeriod, _uCellPeriod);
+        // FIXME: this needs to be a call to ClusterDescriptor.computeEta() 
         double eta = aCluster.computeEta(_thetaU, _thetaV);
         int etaBin = aCluster.computeEtaBin(eta, m_etaBinEdgesMap[typeName]);
         string shapeName = aCluster.getEtaBinString(etaBin)+typeName;
@@ -267,6 +274,7 @@ namespace depfet {
           // Count matched clusters
           _countCalMap[sensorID]++; 
           // Shift position into local sensor coordinates
+          // FIXME: this should be call to  ClusterDescriptor.getOriginU() / V()   
           u += Det.GetPixelCenterCoordU( aCluster.getVStart(), aCluster.getUStart()); 
           v += Det.GetPixelCenterCoordV( aCluster.getVStart(), aCluster.getUStart()); 
           
