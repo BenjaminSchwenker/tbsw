@@ -20,27 +20,22 @@ namespace depfet {
   
     
   /** Constructor */
-  PolyClusterDescriptor::PolyClusterDescriptor( TrackerData * Digits, const Det& Sensor) : 
+  PolyClusterDescriptor::PolyClusterDescriptor( const PixelCluster& Cluster, const Det& Sensor) : 
                                   m_originU(0), m_originV(0)
-  {
-    
-    const EVENT::FloatVec &rawDigits = Digits->getChargeValues();
-    int size = rawDigits.size()/3; 
+  {  
+    const vector<RawDigit>& rawDigits = Cluster.getRawDigits();
+    int size = rawDigits.size(); 
     m_sortedDigits.reserve(size);
-
+    
     m_originU = std::numeric_limits<float>::max();
     m_originV = std::numeric_limits<float>::max();
     
-    for ( int index=0; index<size;  index++) { 
-      unsigned short iU = static_cast<unsigned short> (rawDigits[index * 3]);
-      unsigned short iV = static_cast<unsigned short> (rawDigits[index * 3 + 1]);
-      unsigned short charge = static_cast<unsigned short> (rawDigits[index * 3 + 2]);   
+    for ( auto&& digit : rawDigits ) {
+      float posU = Sensor.GetPixelCenterCoordU(digit.m_cellIDV, digit.m_cellIDV);
+      float posV = Sensor.GetPixelCenterCoordV(digit.m_cellIDV, digit.m_cellIDV);
+      int pixelType = Sensor.GetPixelType(digit.m_cellIDV, digit.m_cellIDV);
+      m_sortedDigits.push_back(PolyRawDigit(posU,posV,digit.m_charge,pixelType));
       
-      float posU = Sensor.GetPixelCenterCoordU(iV, iU);
-      float posV = Sensor.GetPixelCenterCoordV(iV, iU);
-      int pixelType = Sensor.GetPixelType(iV, iU);
-      m_sortedDigits.push_back(PolyRawDigit(posU,posV,charge,pixelType));
-
       if (posU < m_originU) m_originU = posU; 
       if (posV < m_originV) m_originV = posV; 
     }
@@ -48,24 +43,24 @@ namespace depfet {
     std::sort(m_sortedDigits.begin(), m_sortedDigits.end());
   }
   
-  std::string PolyClusterDescriptor::getShape(int pixeltype, int /*vCellPeriod*/, int /*uCellPeriod*/, int etaBin) const 
+  std::string PolyClusterDescriptor::getShape(int /*vCellPeriod*/, int /*uCellPeriod*/, int etaBin) const 
   {
     std::string ret;
     ret.reserve(9+12*m_sortedDigits.size());
-    ret.append(fmt::format("E{}P{}.{}.{}",etaBin,0,0,pixeltype));
-    for (auto digit : m_sortedDigits ) {
-        ret.append(fmt::format("D{:.0f}.{:.0f}.{}", 10000*(digit.m_cellPosV - m_originV), 10000*(digit.m_cellPosU - m_originU), digit.m_pixelType));
+    ret.append(fmt::format("E{}P{}.{}.{}",etaBin,0,0,m_sortedDigits[0].m_pixelType));
+    for (auto&& digit : m_sortedDigits ) {
+      ret.append(fmt::format("D{:.0f}.{:.0f}.{}", 10000*(digit.m_cellPosV - m_originV), 10000*(digit.m_cellPosU - m_originU), digit.m_pixelType));
     }
     return ret;
   }
   
-  std::string PolyClusterDescriptor::getType(int pixeltype, int /*vCellPeriod*/, int /*uCellPeriod*/) const 
+  std::string PolyClusterDescriptor::getType(int /*vCellPeriod*/, int /*uCellPeriod*/) const 
   { 
     std::string ret;
     ret.reserve(7+12*m_sortedDigits.size());
-    ret.append(fmt::format("P{}.{}.{}",0,0,pixeltype));
-    for (auto digit : m_sortedDigits ) {
-        ret.append(fmt::format("D{:.0f}.{:.0f}.{}", 10000*(digit.m_cellPosV - m_originV), 10000*(digit.m_cellPosU - m_originU), digit.m_pixelType));
+    ret.append(fmt::format("P{}.{}.{}",0,0,m_sortedDigits[0].m_pixelType));
+    for (auto&& digit : m_sortedDigits ) {
+      ret.append(fmt::format("D{:.0f}.{:.0f}.{}", 10000*(digit.m_cellPosV - m_originV), 10000*(digit.m_cellPosU - m_originU), digit.m_pixelType));
     }
     return ret;
   }  
@@ -92,7 +87,7 @@ namespace depfet {
     return eta;
   }
   
-  int PolyClusterDescriptor::computeEtaBin(double eta, const vector<double>& etaBinEdges) const
+  int PolyClusterDescriptor::computeEtaBin(double eta, const vector<double>& etaBinEdges) 
   {
     for (int i = etaBinEdges.size() - 1; i >= 0; --i) {
       if (eta >= etaBinEdges[i])

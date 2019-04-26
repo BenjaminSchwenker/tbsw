@@ -248,20 +248,28 @@ namespace depfet {
         // Increment the cluster counter
         _countAllMap[sensorID]++;
        
-        // Compute the cluster ID string
         PixelCluster aCluster(cluster->getTrackerData());  
 
-        // FIXME: this needs to be the type of the first pixel in the cluster in PolyCluster sorting!
-        // FIXME: the pixel at Cluster.getVStart(), Cluster.getUStart() may not even exist for non square detectors!  
-        int pixeltype = Det.GetPixelType(aCluster.getVStart(), aCluster.getUStart());
+        // Compute the cluster ID string
+        // FIXME add a switch to choose among descriptors
+        PolyClusterDescriptor Descriptor(aCluster, Det);
+        
+        // A string to identify the cluster type, it quantifies the configuration of firing pixels 
+        // but does not using the measured pixel signals. Details depend on the implementation of 
+        // the cluster descriptor. 
+        string typeName = Descriptor.getType(_vCellPeriod, _uCellPeriod);
+        
+        // The eta value is a scalar computed from the pixel charges. It value may depend on the sign 
+        // of the incidence angles of the beam into the sensor. But details depend on the implementation of 
+        // the cluster descriptor. 
+        double eta = Descriptor.computeEta(_thetaU, _thetaV);
+        
+        // The eta values are quantized. The optimal bin edges have been computed during the cluster 
+        // calibration and are read back from the clusterDB.  
+        int etaBin = PolyClusterDescriptor::computeEtaBin(eta, m_etaBinEdgesMap[typeName]);
 
-        // FIXME: this needs to be a call to ClusterDescriptor.getType() 
-        string typeName = aCluster.getType(pixeltype, _vCellPeriod, _uCellPeriod);
-        // FIXME: this needs to be a call to ClusterDescriptor.computeEta() 
-        double eta = aCluster.computeEta(_thetaU, _thetaV);
-        int etaBin = aCluster.computeEtaBin(eta, m_etaBinEdgesMap[typeName]);
-        string shapeName = aCluster.getEtaBinString(etaBin)+typeName;
-
+        // A string to identify the cluster shape, including the information from analog pixel charges. 
+        string shapeName = Descriptor.getEtaBinString(etaBin)+typeName;
         
         streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID << " with shape " << shapeName << endl; 
         
@@ -274,9 +282,8 @@ namespace depfet {
           // Count matched clusters
           _countCalMap[sensorID]++; 
           // Shift position into local sensor coordinates
-          // FIXME: this should be call to  ClusterDescriptor.getOriginU() / V()   
-          u += Det.GetPixelCenterCoordU( aCluster.getVStart(), aCluster.getUStart()); 
-          v += Det.GetPixelCenterCoordV( aCluster.getVStart(), aCluster.getUStart()); 
+          u += Descriptor.getOriginU();  
+          v += Descriptor.getOriginV();  
           
           streamlog_out(MESSAGE2) << "  Shape " << shapeName << " found: " << endl
                                 << std::setprecision(8)

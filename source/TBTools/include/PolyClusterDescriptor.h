@@ -2,6 +2,7 @@
 #define PolyClusterDescriptor_H
 
 #include "Det.h"
+#include "PixelCluster.h"
 
 // Include LCIO header files 
 #include "lcio.h"
@@ -66,7 +67,7 @@ namespace depfet {
     {}
     
     /** Constructor */
-    PolyClusterDescriptor(lcio::TrackerData * Digits, const Det& Sensor) ;
+    PolyClusterDescriptor(const PixelCluster& Cluster, const Det& Sensor) ;
 
     /** Get origin coordinate
      */
@@ -79,12 +80,12 @@ namespace depfet {
     /** Get cluster shape string 
      * @return shape string containing all features of cluster used for position reconstruction 
      */
-    std::string getShape(int pixeltype = 1, int vCellPeriod = 1, int uCellPeriod = 1, int etaBin=0) const; 
+    std::string getShape(int vCellPeriod = 1, int uCellPeriod = 1, int etaBin=0) const; 
      
     /** Get cluster type string. 
      * @return type string, same as shape but without eta information
      */
-    std::string getType(int pixeltype = 1, int vCellPeriod = 1, int uCellPeriod = 1) const;
+    std::string getType(int vCellPeriod = 1, int uCellPeriod = 1) const;
 
     /** Get cluster shape string
      * @return shape string containing all features of cluster used for position reconstruction
@@ -97,7 +98,7 @@ namespace depfet {
     
     /** Get cluster eta bin  
     */
-    int computeEtaBin(double eta, const std::vector<double>& etaBinEdges) const; 
+    static int computeEtaBin(double eta, const std::vector<double>& etaBinEdges); 
 
     /** Get index of head pixel in cluster
     */
