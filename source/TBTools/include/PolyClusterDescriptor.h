@@ -1,5 +1,5 @@
-#ifndef PolyPixelCluster_H
-#define PolyPixelCluster_H
+#ifndef PolyClusterDescriptor_H
+#define PolyClusterDescriptor_H
 
 #include "Det.h"
 
@@ -49,71 +49,32 @@ namespace depfet {
   };
 
 
-  //! PolyPixelCluster
+  //! PolyClusterDescriptor
   /*! This class represents a sorted poly pixel cluster 
    * 
    *  @Author Benjamin Schwenker, Universitaet Goettingen
    *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
    */ 
   
-  class PolyPixelCluster  {
+  class PolyClusterDescriptor  {
   
   public:
 
     /** Default constructor */
-    PolyPixelCluster():
-      m_sensorID(0), m_clsCharge(0), m_seedCharge(0),
-      m_clsSize(0), m_uSize(0), m_vSize(0), m_uStart(0), m_vStart(0)
+    PolyClusterDescriptor():
+      m_originU(0), m_originV(0)
     {}
     
     /** Constructor */
-    PolyPixelCluster(lcio::TrackerData * Digits, const Det& Sensor) ;
-    
-    //! Destructor
-    virtual ~PolyPixelCluster() { /* NOOP */ ; }
-    
-    /** Convert to string */
-    operator std::string() const;
-    
-    /** Get the sensor ID.
-     * @return ID of the sensor.
+    PolyClusterDescriptor(lcio::TrackerData * Digits, const Det& Sensor) ;
+
+    /** Get origin coordinate
      */
-    unsigned short getSensorID() const { return m_sensorID; }
-    
-    /** Get collected charge.
-     * @return charge collected in the cluster.
+    float getOriginU() const { return  m_originU; }
+
+    /** Get origin coordinate
      */
-    unsigned short getCharge() const { return m_clsCharge; }
-    
-    /** Get seed charge.
-     * @return seed charge of the cluster.
-     */
-    unsigned short getSeedCharge() const { return m_seedCharge; }
-    
-    /** Get cluster size.
-     * @return number of pixels contributing to the cluster.
-     */
-    unsigned short getSize() const { return m_clsSize; }
-    
-    /** Get cluster size in u direction.
-     * @return number of uCells contributing to the cluster.
-     */
-    unsigned short getUSize() const { return m_uSize; }
-    
-    /** Get cluster size in v direction.
-     * @return number of vCells contributing to the cluster.
-     */
-    unsigned short getVSize() const { return m_vSize; }
-    
-    /** Get cluster start cell in u direction.
-     * @return first uCell contributing to the cluster.
-     */
-    unsigned short getUStart() const { return m_uStart; }
-    
-    /** Get cluster start cell in v direction.
-     * @return first vCell contributing to the cluster.
-     */
-    unsigned short getVStart() const { return m_vStart; }
+    float getOriginV() const { return  m_originV; }
     
     /** Get cluster shape string 
      * @return shape string containing all features of cluster used for position reconstruction 
@@ -129,11 +90,7 @@ namespace depfet {
      * @return shape string containing all features of cluster used for position reconstruction
      */
     std::string getEtaBinString(int etaBin=0) const;
-
-    /** Get sorted vector of raw digits 
-     */
-    const std::vector<PolyRawDigit>& getRawDigits() const { return m_sortedDigits; }
-
+    
     /** Get cluster eta
     */
     double computeEta(double thetaU, double thetaV) const; 
@@ -150,29 +107,12 @@ namespace depfet {
     */
     int getTailPixelIndex(double thetaU, double thetaV) const;
     
-    /** Compute center of gravity hit position and covariance matrix
-    */
-    void getCenterOfGravity(const Det& Sensor, double& u, double& v, double& cov_u, double& cov_v, double& cov_uv) const;
-
   protected:
-     
-    // SensorID 
-    unsigned short m_sensorID;  
-    // Cluster charge charge in ADC units 
-    unsigned short m_clsCharge;  
-    // Seed charge in ADC units 
-    unsigned short m_seedCharge; 
-    // Cluster size in digits 
-    unsigned short m_clsSize;   
-    // Cluster size in ucells 
-    unsigned short m_uSize;  
-    // Cluster size in vcells     
-    unsigned short m_vSize; 
-    // Start ucell of the cluster      
-    unsigned short m_uStart;   
-    // Start vcell of the cluster   
-    unsigned short m_vStart;   
     
+    // Origin of cluster coordinates
+    float m_originU;   
+    // Origin of cluster coordinates
+    float m_originV;   
     
     // Sorted vector of raw digits 
     std::vector<PolyRawDigit> m_sortedDigits;
