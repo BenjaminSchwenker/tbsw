@@ -430,7 +430,7 @@ Double_t highlandfunction(Double_t *x, Double_t *par)
 	* par[12]:  u BE gradient
 	* par[13]:  v BE gradient
 	* par[14]:  mean of angle distribution
-	* par[15]:  Target material radiation length (not used here)
+	* par[15]:  Target material radiation length
     * par[16]: weight of bremsstrahlung energy loss (set to 0 to disable)
     * x: Variable of the 1D function, corresponds to the scattering angle
 
@@ -455,7 +455,7 @@ Double_t molierefunction(Double_t *x, Double_t *par)
 	density=par[3]; 
 
 	// Radiation length (not used here)
-    //double X0=par[15];
+    double X0=par[15];
 
 	// thickness of the target material
 	double dm1=par[6]; // in mm
