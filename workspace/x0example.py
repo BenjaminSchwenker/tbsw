@@ -286,7 +286,9 @@ if __name__ == '__main__':
   
   # Create a simulated lcio for run with no target (air run) and 
   # multiple run s with a Al plate as scattering material
-  simulate( )
+  if Script_purpose_option !=0 and Script_purpose_option !=1:
+    simulate( )
+  
   
   # Calibrate the telescope 
   # In case you already have all the DB files from another telescope calibration 
