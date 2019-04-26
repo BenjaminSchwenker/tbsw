@@ -385,6 +385,10 @@ Double_t highlandfunction(Double_t *x, Double_t *par)
 	double charge;   
 	charge=par[1];
 
+	// Radiation length computed from the other parameters
+	//double X0=716.4*A/((Z+1)*Z*density*TMath::Log(287.0/TMath::Sqrt(Z)));  	// This formula should only be used in case X0 is unknown (1-2% deviation from PDG value)
+	double X0=par[15];
+
 	// beam energy, modified by the energy loss due to bremsstrahlung
     // A weighted mean of the average particle energy before and after the material transition is calculated
 	// Additionally a linear beam model is employed to account for possible beam energy gradients due to beam test energy selection with dipole magnets
@@ -397,10 +401,6 @@ Double_t highlandfunction(Double_t *x, Double_t *par)
 
 	double beta;  //relative velocity
 	beta=p/E;
-
-	// Radiation length computed from the other parameters
-	//double X0=716.4*A/((Z+1)*Z*density*TMath::Log(287.0/TMath::Sqrt(Z)));  	// This formula should only be used in case X0 is unknown (1-2% deviation from PDG value)
-	double X0=par[15];
 
 	// Combination of Highland width and reconstruction error
 	double sigma=TMath::Sqrt(pow(recoerror,2)+pow(0.0136*charge/(p*beta)*TMath::Sqrt(d1/X0)*(1.0+0.038*TMath::Log(d1/X0)),2));
