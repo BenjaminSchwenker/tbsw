@@ -356,6 +356,7 @@ Double_t GetMomentum(double meanvalue,double ugrad,double vgrad, double u, doubl
 	* par[13]: v BE gradient
 	* par[14]: mean of angle distribution
 	* par[15]: Target material radiation length 
+    * par[16]: weight of bremsstrahlung energy loss (set to 0 to disable)
     * x: Variable of the 1D function, corresponds to the scattering angle
 
 */
@@ -384,8 +385,12 @@ Double_t highlandfunction(Double_t *x, Double_t *par)
 	double charge;   
 	charge=par[1];
 
-	// beam energy
-	double p=GetMomentum(par[0],par[10],par[11],par[12],par[13]);
+	// beam energy, modified by the energy loss due to bremsstrahlung
+    // A weighted mean of the average particle energy before and after the material transition is calculated
+	// Additionally a linear beam model is employed to account for possible beam energy gradients due to beam test energy selection with dipole magnets
+	double p0=GetMomentum(par[0],par[10],par[11],par[12],par[13]);
+	double epsilon=par[16];
+	double p=p0*((1-epsilon)+epsilon*exp(-d1/X0));
 
 	// calibrated momentum
 	double E=TMath::Sqrt(p*p+mass*mass);  // energy in GeV
@@ -426,6 +431,7 @@ Double_t highlandfunction(Double_t *x, Double_t *par)
 	* par[13]:  v BE gradient
 	* par[14]:  mean of angle distribution
 	* par[15]:  Target material radiation length (not used here)
+    * par[16]: weight of bremsstrahlung energy loss (set to 0 to disable)
     * x: Variable of the 1D function, corresponds to the scattering angle
 
 */
@@ -472,8 +478,12 @@ Double_t molierefunction(Double_t *x, Double_t *par)
 	double charge;   
 	charge=par[1];
 
-	// beam energy
-	double p=GetMomentum(par[0],par[10],par[11],par[12],par[13]);   // Energy in GeV
+	// beam energy, modified by the energy loss due to bremsstrahlung
+    // A weighted mean of the average particle energy before and after the material transition is calculated
+	// Additionally a linear beam model is employed to account for possible beam energy gradients due to beam test energy selection with dipole magnets
+	double p0=GetMomentum(par[0],par[10],par[11],par[12],par[13]);
+	double epsilon=par[16];
+	double p=p0*((1-epsilon)+epsilon*exp(-d1/X0));
 
 	double E=TMath::Sqrt(p*p+mass*mass);
 
@@ -736,7 +746,7 @@ Double_t molierefunction(Double_t *x, Double_t *par)
 // a globalEstimator structure
 
 // Number of parameters per fit function
-const int num_localparameters=16;
+const int num_localparameters=17;
 
 // Number of new parameters per fit function
 const int newparsperfunction=9;
@@ -1216,8 +1226,8 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 
 	// Some parameter definitions
-
 	double lambda_startvalue=beamoptions.at(5);
+	double epsilon=beamoptions.at(6);
 
 	// histogram name
 	TString histoname;
@@ -1350,7 +1360,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// First fit function has num_localparameters new parameters:
 	double aid_array[num_localparameters]={ BE_mean,z,mass,grid.GetMeasurementAreas().at(0).Get_density(),grid.GetMeasurementAreas().at(0).Get_Z(),grid.GetMeasurementAreas().at(0).Get_A(),
 											grid.GetMeasurementAreas().at(0).Get_thickness(),recoerr,lambda_startvalue,700.0,grid.GetMeasurementAreas().at(0).Get_u_center(),
-											grid.GetMeasurementAreas().at(0).Get_v_center(),BE_ugrad,BE_vgrad,0.0, grid.GetMeasurementAreas().at(0).Get_X0()};
+											grid.GetMeasurementAreas().at(0).Get_v_center(),BE_ugrad,BE_vgrad,0.0, grid.GetMeasurementAreas().at(0).Get_X0(), epsilon};
 	for(int i=0;i<num_localparameters;i++) par0[i]=aid_array[i];
 
 	// Afterwards for each fit functions we get several new parameters
@@ -1375,6 +1385,9 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 	// fix X0 constant
 	fitter.Config().ParSettings(15).Fix();
+
+	// fix epsilon
+	fitter.Config().ParSettings(16).Fix();
 
 	// fix u and v position of first measurement area
 	fitter.Config().ParSettings(10).Fix();
@@ -1438,7 +1451,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	int ** parameter_mapping=GetParameterMapping(num_fitfunctions);
 
 
-	// Names of the 14 local parameters
+	// Names of the 17 local parameters
 	TString name[num_localparameters];
 	name[0]="E[GeV]";
 	name[1]="z[e]";
@@ -1456,6 +1469,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	name[13]="#nablaE_{v}[GeV/mm]";
 	name[14]="#theta_{mean}[rad]";
 	name[15]="X_{0}[mm]";
+	name[16]="#epsilon";
 
 	for(size_t i=0;i<num_fitfunctions;i++)
 	{	
@@ -1785,6 +1799,8 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
 	double BE_ugrad_default=mEnv->GetValue("momentumugradient", 99.0);			// energy slope in GeV/mm in u direction
     double BE_vgrad_default=mEnv->GetValue("momentumvgradient", 99.0);			// energy slope in GeV/mm in u direction
 
+    double epsilon=mEnv->GetValue("epsilon", 0.0);								// weight of the energy loss formula (see fit models)
+
 	int vertexmultiplicitymin=mEnv->GetValue("vertexmultiplicitymin", 1);			// energy slope in GeV/mm in u direction
 	int vertexmultiplicitymax=mEnv->GetValue("vertexmultiplicitymax", 1);			// energy slope in GeV/mm in u direction
 
@@ -1911,8 +1927,9 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
 	beamoptions.push_back(abs(BE_mean));
 	beamoptions.push_back(BE_ugrad);
 	beamoptions.push_back(BE_vgrad);
-	// lambda is not really a beam parameter, but this is the only place this fits in
+	// lambda and epsilon are not really a beam parameters, but this is the only place this fits in
 	beamoptions.push_back(lambda_start);
+	beamoptions.push_back(epsilon);
 	
 
 	std::vector<bool> fitoptions;

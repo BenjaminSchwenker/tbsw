@@ -76,6 +76,9 @@ def x0imaging(rootfilelist=[],caltag='',steerfiles='',nametag=''):
   # u momentum slope of the beam particles
   momentumvgradient = config.getfloat('general', 'momentumvgradient')
 
+  # Weight of energy loss calculation
+  epsilon = config.get('general', 'epsilon')
+
   # Name of the results file
   resultsfilename = config.get('x0image', 'resultsfilename')
 
@@ -180,6 +183,7 @@ def x0imaging(rootfilelist=[],caltag='',steerfiles='',nametag=''):
       config.set('image', 'momentumoffset', str(momentumoffset))
       config.set('image', 'momentumugradient', str(momentumugradient))
       config.set('image', 'momentumvgradient', str(momentumvgradient))
+      config.set('image', 'epsilon', str(epsilon))
       config.set('image', 'vertexmultiplicitymin', vertex_multiplicity_min)
       config.set('image', 'vertexmultiplicitymax', vertex_multiplicity_max)
       config.set('image', 'num_bins', str(num_bins))

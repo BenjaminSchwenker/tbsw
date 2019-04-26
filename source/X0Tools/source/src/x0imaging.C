@@ -26,6 +26,7 @@ using namespace std ;
    * par[4]:  Expected angle reconstruction error
    * par[5]:  Normalization
    * par[6]:  mean value
+   * par[7]:  weight of bremsstrahlung energy loss (set to 0 to disable)
    * x: Variable of the 1D function, corresponds to the scattering angle
    */
 
@@ -48,17 +49,19 @@ using namespace std ;
 	double charge;   
 	charge=par[1];
 
-	// beam energy
-	double p=par[0];
+	// Radiation length computed from the other parameters
+	double XX0=par[3];
+
+	// beam energy, modified by the energy loss due to bremsstrahlung
+    // A weighted mean of the average particle energy before and after the material transition is calculated
+	double epsilon=par[7];
+	double p=par[0]*((1-epsilon)+epsilon*exp(-XX0));
 
 	// calibrated momentum
 	double E=TMath::Sqrt(p*p+mass*mass);  // energy in GeV
 
 	double beta;  //relative velocity
 	beta=p/E;
-
-	// Radiation length computed from the other parameters
-	double XX0=par[3];
 
 	// Combination of Highland width and reconstruction error
 	double sigma=TMath::Sqrt(pow(0.0136*charge/(p*beta)*TMath::Sqrt(XX0)*(1.0+0.038*TMath::Log(XX0)),2)+pow(recoerror,2));
@@ -477,7 +480,7 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
   void fithisto( TFile* file, int fittype, double maxchi2ndof_fit, double rangevalue, int col, int numcol, int row,int numrow, double* parameters, TString fitoptions)
   { 
 	// Calculate number of parameters
-	int num_parameters = 7;
+	int num_parameters = 8;
 	//cout<<num_parameters<<endl;
 
 	// Open the histograms
@@ -679,9 +682,9 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 			if(!fitrsum->IsValid()&&fittype==1) cout<<"Fit of combined angle distribution failed a second time with status: "<<fitrsum<<" !"<< " X/X0 cannot be calculated!"<<endl<<endl<<endl;
 		}
 
-		// Names of the 14 local parameters
-		const int num_localparameters=7;
-		TString name[num_localparameters];
+		// Names of the 8 local parameters
+		const int num_parameters=8;
+		TString name[num_parameters];
 		name[0]="E";
 		name[1]="z[e]";
 		name[2]="m";
@@ -689,10 +692,11 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 		name[4]="reco err";
 		name[5]="norm";
 		name[6]="mean";
+		name[7]="epsilon";
 
 		gStyle->SetOptFit(1111);
 
-		for(int iname=0;iname<num_localparameters;iname++) 
+		for(int iname=0;iname<num_parameters;iname++) 
 		{
 			fit1->SetParName(iname,name[iname]);			
 			fit2->SetParName(iname,name[iname]);
@@ -1194,6 +1198,9 @@ int main(int , char **)
     // Fit options
 	TString fitoptions=mEnv.GetValue("fit_options", "RMELS");
 
+    // epsilon value (weight of the weighted mean that it used to calculate the energy loss due to bremsstrahlung)
+	double epsilon=mEnv.GetValue("epsilon", 0.0);
+
 	// Choose the type of fit
 	// 0: gaussian fit function with cuts on the tails, both kink distributions are used seperately
 	// 1: gaussian fit function with cuts on the tails, use only 1 fit on the merged histogram consisting of both distributions
@@ -1652,7 +1659,7 @@ int main(int , char **)
 				* par[4]:  Calibrated angle reconstruction error
 			*/
 
-			double parameters[7]={mom,charge,mass,0.01,recoerror,300,0.0};
+			double parameters[8]={mom,charge,mass,0.01,recoerror,300,0.0, epsilon};
 
 			// fit the histograms
 			fithisto(imagefile, fittype, maxchi2ndof_fit, rangevalue, col,numcol,row,numrow,parameters,fitoptions);
