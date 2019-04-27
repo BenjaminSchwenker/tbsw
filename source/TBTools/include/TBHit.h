@@ -88,7 +88,7 @@ class TBHit {
 
   // Get/Set original raw cluster data   
   void SetRawHit(lcio::TrackerHit* lciohit ) { RawHitPtr = lciohit; }
-  lcio::TrackerHit* GetRawHit()  { return RawHitPtr; }
+  lcio::TrackerHit* GetRawHit() const  { return RawHitPtr; }
 
   
   PixelCluster GetCluster() const;

@@ -130,6 +130,12 @@ void PixelDUTAnalyzer::init() {
    _noOfHitsWTrack = 0; 
    _iLastMatchedEvent = 0; 
    _iFirstMatchedEvent = -1; 
+
+   if (_iref < 0 && _iref >= TBDetector::GetInstance().GetNSensors()) {
+     streamlog_out ( MESSAGE3 )  << "Steering parameter reference plane has invalid value and will be ignored."
+                                 << endl << endl;  
+     _iref = -1;
+   }
    
    // Print set parameters
    printProcessorParams();
@@ -289,7 +295,8 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
   HitStore.clear();
   // Get tracks from the lcio file 
   TrackInputProvider TrackLCIOReader;  
-    
+  int nTrackWithRefHit = 0;     
+
   for(int itrk=0; itrk< nTrack ; itrk++)
   {  
     // Retrieve track from LCIO 
@@ -302,6 +309,11 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     if ( trk.GetTE(_idut).HasHit()  ) {
       streamlog_out ( MESSAGE3 ) << "Track has already hit on dut plane. Danger to bias final results" << endl;
     } 
+    
+    // Count tracks having hit on reference (timing) plane
+    if (_iref >= 0) {
+      if ( trk.GetTE(_iref).HasHit()  ) nTrackWithRefHit += 1;   
+    }
     
     // Refit track in current alignment. Restrict smoothing to DUT plane.
     bool trkerr = TrackFitter.Fit(trk, _idut);
@@ -449,6 +461,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
   _rootEventNumber = evt->getEventNumber();  
   _rootSensorID = dut.GetSensorID();        
   _rootNTelTracks = nTrack; 
+  _rootNTelTracksWithRefHit = nTrackWithRefHit; 
   _rootNDUTDigits = nDUTDigits;
   _rootDUTHasTestPixels = hasTestPixels;
   _rootDUTGoodEvent = isGoodEvent; 
@@ -491,7 +504,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
       _rootHitHasTrack = 0;  // matched   
        
       // Check track has a hit on reference (timing) plane
-      if (_iref >= 0 && _iref < TBDetector::GetInstance().GetNSensors()  ) {
+      if ( _iref >= 0 ) {
         if ( trk.GetTE(_iref).HasHit() ) {
           streamlog_out ( MESSAGE2 ) << "Track has hit on reference plane." << endl;
           _rootHitHasTrackWithRefHit = 0;
@@ -571,7 +584,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     
     // Check track has a hit on reference (timing) plane
     _rootTrackWithRefHit = -1;
-    if (_iref >= 0 && _iref < TBDetector::GetInstance().GetNSensors()  ) {
+    if ( _iref >= 0 ) {
       if ( trk.GetTE(_iref).HasHit() ) {
         streamlog_out ( MESSAGE2 ) << "Track has hit on reference plane." << endl;
         _rootTrackWithRefHit = 0;
@@ -793,6 +806,7 @@ void PixelDUTAnalyzer::bookHistos()
    _rootEventTree->Branch("iEvt"            ,&_rootEventNumber    ,"iEvt/I");
    _rootEventTree->Branch("sensorID"        ,&_rootSensorID       ,"sensorID/I");   
    _rootEventTree->Branch("nTelTracks"      ,&_rootNTelTracks     ,"nTelTracks/I"); 
+   _rootEventTree->Branch("nTelTracksWithRefHit" ,&_rootNTelTracksWithRefHit ,"nTelTracksWithRefHit/I");  
    _rootEventTree->Branch("nDutDigits"      ,&_rootNDUTDigits       ,"nDutDigits/I");
    _rootEventTree->Branch("hasTestPixels"   ,&_rootDUTHasTestPixels, "hasTestPixels/O");
    _rootEventTree->Branch("isGoodEvent"     ,&_rootDUTGoodEvent,  "isGoodEvent/O");

@@ -172,7 +172,7 @@ namespace UTIL{
 
     if( it == _cpmInv.end() ){
       
-      throw UnknownAlgorithm(  std::string(""+algoID) ) ;
+      throw UnknownAlgorithm(  std::string(""+std::to_string(algoID)) ) ;
     }
     
     return it->second ;
@@ -187,7 +187,7 @@ namespace UTIL{
     
     if( nit == _pNames.end() ){
 
-      throw UnknownAlgorithm( std::string(""+algorithmID) ) ;
+      throw UnknownAlgorithm( std::string(""+std::to_string(algorithmID)) ) ;
     }
     // brute force search:
     
@@ -212,7 +212,7 @@ namespace UTIL{
     
     if( nit == _pNames.end() ){
 
-      throw UnknownAlgorithm( std::string(""+id ) ) ;
+      throw UnknownAlgorithm( std::string(""+std::to_string(id)) ) ;
     }
 
     return nit->second ;
@@ -231,7 +231,7 @@ namespace UTIL{
     
     if( nit == _pNames.end() ){
 
-      throw UnknownAlgorithm( std::string(""+id ) ) ;
+      throw UnknownAlgorithm( std::string(""+std::to_string(id) ) ) ;
     }
 
     ParticleID* pid = 0 ;
@@ -263,7 +263,7 @@ namespace UTIL{
     
     if( pid == 0 ) {
 
-      throw UnknownAlgorithm( std::string("pid object not found in particle for algorithmId: "+id ) ) ;
+      throw UnknownAlgorithm( std::string("pid object not found in particle for algorithmId: "+std::to_string(id) ) ) ;
     }
 
     p->setParticleIDUsed( pid ) ;
@@ -277,7 +277,7 @@ namespace UTIL{
     
     if( nit == _pNames.end() ){
 
-      throw UnknownAlgorithm( std::string(""+id ) ) ;
+      throw UnknownAlgorithm( std::string(""+std::to_string(id) ) ) ;
     }
 
     
@@ -336,7 +336,7 @@ namespace UTIL{
     
     if( nit == _pNames.end() ){
       
-      throw UnknownAlgorithm( std::string(""+id ) ) ;
+      throw UnknownAlgorithm( std::string(""+std::to_string(id) ) ) ;
     }
     
 

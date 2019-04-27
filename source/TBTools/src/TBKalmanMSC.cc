@@ -181,15 +181,15 @@ bool TBKalmanMSC::ProcessTrack(TBTrack& trk, int dir, bool biased)
       TBTrackElement& TE = TEVec[iTE];
       TE.SetChiSqu(KalmanFilterData[iTE].Chi2Pred); 
        
-      if (!biased) { 
-        TE.GetState().GetPars() = KalmanFilterData[iTE].Pr_x;  
-        TE.GetState().GetCov() =  KalmanFilterData[iTE].Pr_C;  
+      if (!biased) {
+        TE.GetState().SetPars(KalmanFilterData[iTE].Pr_x);
+        TE.GetState().SetCov(KalmanFilterData[iTE].Pr_C);
       } else {
-        TE.GetState().GetPars() = KalmanFilterData[iTE].Up_x;  
-        TE.GetState().GetCov() = KalmanFilterData[iTE].Up_C; 
+        TE.GetState().SetPars(KalmanFilterData[iTE].Up_x);
+        TE.GetState().SetCov(KalmanFilterData[iTE].Up_C);
       }
        
-      // Do not forget to add reference state         
+      // Do not forget to add reference state
       TE.GetState().GetPars() += RefStateVec[iTE];
     }
 
@@ -455,10 +455,11 @@ double TBKalmanMSC::KalmanFilter(TBTrack& trk, int idir, int istart, int istop, 
     TBTrackElement& te = TEVec[is];
      
     // Get surface parameters           
-    const ReferenceFrame& Surf = te.GetDet().GetNominal();  
+
+    const ReferenceFrame& Surf = te.GetDet().GetNominal();
     
     // Get current reference state xref
-    TrackState& xref = RStateVec[is];    
+    const TrackState& xref = RStateVec[is];
     
     
     // Copy predicted [x0,C0]

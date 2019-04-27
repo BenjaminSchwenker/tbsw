@@ -110,7 +110,7 @@ namespace depfet {
      * @return first vCell contributing to the cluster.
      */
     unsigned short getVStart() const { return m_vStart; }
-    
+
     /** Get cluster shape string 
      * @return shape string containing all features of cluster used for position reconstruction 
      */
@@ -120,7 +120,12 @@ namespace depfet {
      * @return type string, same as shape but without eta information
      */
     std::string getType(int pixeltype = 1, int vCellPeriod = 1, int uCellPeriod = 1) const;
-    
+
+    /** Get cluster shape string
+     * @return shape string containing all features of cluster used for position reconstruction
+     */
+    std::string getEtaBinString(int etaBin=0) const;
+
     /** Get sorted vector of raw digits 
      */
     const std::vector<RawDigit>& getRawDigits() const { return m_sortedDigits; }
@@ -132,7 +137,7 @@ namespace depfet {
     /** Get cluster eta bin  
     */
     int computeEtaBin(double eta, const std::vector<double>& etaBinEdges) const; 
-    
+
     /** Get index of head pixel in cluster
     */
     int getHeadPixelIndex(double thetaU, double thetaV) const; 
@@ -173,6 +178,8 @@ namespace depfet {
     unsigned short m_vStart;     
     // Sorted vector of raw digits 
     std::vector<RawDigit> m_sortedDigits;
+    // ClusterType
+    unsigned short tmpType;
   };
 }
 #endif

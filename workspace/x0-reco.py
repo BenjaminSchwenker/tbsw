@@ -56,7 +56,7 @@ Use_clusterDB=True
 # Use Single Hit seeding to speed up track finding?
 Use_SingleHitSeeding=False
 
-# Use Single Hit seeding to speed up track finding?
+# Long telescopes may require a sensor by sensor alignment approach
 Use_LongTelescopeCali=True
 
 # Flag to indicate that real EUTelescope data is used (raw format)
@@ -193,6 +193,15 @@ def reconstruct(params):
   
   # Run the reconstuction  
   RecObj.reconstruct(paths=recopath,ifile=rawfile,caltag=caltag) 
+
+
+# Create angle reconstruction DQM plots
+def reconstruction_DQM(params):
+
+  rawfile, caltag = params
+
+  # Set cal tag that includes run name
+  name = os.path.splitext(os.path.basename(rawfile))[0] + '-' + caltag
   
   # Create DQM plots
   tbsw.DQMplots.anglereco_DQMPlots(filepath='root-files/X0-{}.root'.format(name)) 
@@ -328,6 +337,10 @@ if __name__ == '__main__':
     count = multiprocessing.cpu_count()
     pool = multiprocessing.Pool(processes=count)
     pool.map(reconstruct, params_reco)
+
+    for rawfile in RawfileList_reco:
+      params=(rawfile, caltag)
+      reconstruction_DQM(params)
 
   # Start x0 calibration
   # In case you already have the x0 calibration DB file from a previous x0 calibration 

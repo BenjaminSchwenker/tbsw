@@ -35,7 +35,23 @@ SquareDet::SquareDet(const std::string& typeName, int sensorID, int planeNumber,
       
   // Set v cells 
   SetCellsV( vCells );
-
+  
+  // TODO This is a rather inefficient solution. But it should not matter much      
+  for (int iv = GetMinVCell(); iv <= GetMaxVCell(); iv++) {
+    for ( int iu = GetMinUCell(); iu <= GetMaxUCell(); iu++) { 
+      int pixeltype = GetPixelType(iv, iu);
+      double halfPitchU = 0.5*GetPitchU(iv, iu);   
+      double halfPitchV = 0.5*GetPitchV(iv, iu);   
+      std::vector<std::tuple<double,double>> pointsvec; 
+      pointsvec.reserve(4);    
+      pointsvec.push_back( std::tuple<double, double>(-halfPitchU, halfPitchV) );
+      pointsvec.push_back( std::tuple<double, double>( halfPitchU, halfPitchV) );     
+      pointsvec.push_back( std::tuple<double, double>( halfPitchU,-halfPitchV) );
+      pointsvec.push_back( std::tuple<double, double>(-halfPitchU,-halfPitchV) );
+      m_protopixels[pixeltype] = pointsvec;
+    }
+  }
+  
   m_sensitiveThickness = sensThick;
   m_sensitiveRadLength = sensRadLenght;
   m_sensitiveAtomicNumber = sensAtomicNumber;
@@ -262,16 +278,17 @@ double SquareDet::GetPitchV(int vcell, int /*ucell*/) const
   return std::get<2>(group); 
 }  
 
+// The encoding needs to be unique for every pixel and for usage in array types it needs to start at 0 and max value has to be npixel=m_nCellsU*m_nCellsV
 int SquareDet::encodePixelID(int vcell, int ucell) const
 {
-  return (m_nCellsU*vcell + ucell);
+  return (m_nCellsU*(vcell-m_minCellV) + ucell-m_minCellU);
 }
 
 
 void SquareDet::decodePixelID(int& vcell, int& ucell, int uniqPixelID) const
 {
-  vcell = uniqPixelID / m_nCellsU;
-  ucell = uniqPixelID - vcell*m_nCellsU;
+  vcell = uniqPixelID / m_nCellsU + m_minCellV;
+  ucell = uniqPixelID - (vcell-m_minCellV)*m_nCellsU + m_minCellU;
 }
  
  	

@@ -25,6 +25,7 @@
 #include <TMath.h>
 
 
+using namespace std::string_literals;
 
 // Used namespaces
 using namespace std; 

@@ -38,7 +38,7 @@ PolyDet::PolyDet(const std::string& typeName, int sensorID, int planeNumber,
                  const ReferenceFrame& discrete, const ReferenceFrame& nominal )
   : Det(typeName, sensorID, planeNumber) 
 {
-  
+  streamlog_out(MESSAGE2) << "  In PolyDet constructor length of cells " << cells.size() << " , length of protopixel " << protocells.size()<< std::endl; 
   // Set cells and layout
   SetCells(cells, protocells);
 
@@ -65,13 +65,18 @@ PolyDet::PolyDet(const std::string& typeName, int sensorID, int planeNumber) : D
 void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, double> >& cells, const std::vector< std::tuple<int,double,double,std::vector<std::tuple<double,double>>>> & protocells)
 {
   m_cells = cells;
-  
-  for (auto group: protocells){ // not checking if type already in ?
-    m_cells_neighb_dist.emplace_back(std::get<0>(group), std::get<1>(group), std::get<2>(group));
-  }
-  
-  // calculate the pitches as bounding box for the protopixel
-  for (auto protopix: protocells){
+  streamlog_out(MESSAGE2) << "  In PolyDet SetCells: length of cells " << cells.size() << " , length of protopixel " << protocells.size()<< std::endl; 
+
+  for (auto protopix: protocells){ // not checking if type already in ?
+    int pixeltype = std::get<0>(protopix);
+      
+    // extract the distances for neighbors for protopixel
+    m_cells_neighb_dist.emplace_back(pixeltype, std::get<1>(protopix), std::get<2>(protopix));
+    
+    // extract the edges (vertices) of the bounding polygon for protopixel
+    m_protopixels[pixeltype] = std::get<3>(protopix);
+    
+    // calculate the pitches as bounding box for the protopixel
     double minx = std::numeric_limits<double>::max();
     double maxx = -std::numeric_limits<double>::max();
     double miny = std::numeric_limits<double>::max();
@@ -82,9 +87,9 @@ void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, doub
       if (std::get<1>(points) > maxy) maxy = std::get<1>(points);
       else if (std::get<1>(points) < miny) miny = std::get<1>(points);
     }
-    m_pitch.emplace_back(std::get<0>(protopix), maxx-minx, maxy-miny);
+    m_pitch.emplace_back(pixeltype, maxx-minx, maxy-miny);
   }
-	
+  
   TH2Poly *unshiftedLayout = new TH2Poly();
   unshiftedLayout->SetFloat();
   unshiftedLayout->SetName("helperlayout");
@@ -105,19 +110,19 @@ void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, doub
   m_minCellV = std::numeric_limits<int>::max();
   // generate the pixel in the layout from the center position and the prototype pixel.
   for (auto group: cells){
-    int type = std::get<2>(group);
+    int type = std::get<0>(group);
     double centeru = std::get<3>(group);
     double centerv = std::get<4>(group);
     for (auto protopix: protocells){
       if (type == std::get<0>(protopix)){
         int i = 0;
         TGraph *gpixel = new TGraph(std::get<3>(protopix).size()); 
-	std::string pixelname = std::to_string(std::get<0>(group)) + "," + std::to_string(std::get<1>(group));
+	std::string pixelname = std::to_string(std::get<1>(group)) + "," + std::to_string(std::get<2>(group));
         gpixel->SetName(pixelname.c_str());
-	if (std::get<0>(group) > m_maxCellU) m_maxCellU = std::get<0>(group);
-	else if (std::get<0>(group) < m_minCellU) m_minCellU = std::get<0>(group);
-        if (std::get<1>(group) > m_maxCellV) m_maxCellV = std::get<1>(group);
-	else if (std::get<1>(group) < m_minCellV) m_minCellV = std::get<1>(group);
+	if (std::get<1>(group) > m_maxCellU) m_maxCellU = std::get<1>(group);
+	else if (std::get<1>(group) < m_minCellU) m_minCellU = std::get<1>(group);
+        if (std::get<2>(group) > m_maxCellV) m_maxCellV = std::get<2>(group);
+	else if (std::get<2>(group) < m_minCellV) m_minCellV = std::get<2>(group);
         for (auto points: std::get<3>(protopix)){
           double x = std::get<0>(points)+centeru;
 	  double y = std::get<1>(points)+centerv;
@@ -133,6 +138,7 @@ void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, doub
       }
     } 
   }
+  
   // layout not necessary centred around origin, so shift it
   double shiftu = sensSizeUmax - (sensSizeUmax-sensSizeUmin)/2.;
   double shiftv = sensSizeVmax - (sensSizeVmax-sensSizeVmin)/2.;
@@ -152,6 +158,13 @@ void PolyDet::SetCells(const std::vector< std::tuple<int, int, int, double, doub
     }
     m_layout->AddBin(gpoly->Clone());    
   }
+
+  // also shift the centers in the m_cells lookup vector, needed for coord lookup
+  for (auto &group: m_cells){ 
+    std::get<3>(group) -= shiftu;
+    std::get<4>(group) -= shiftv;
+  }
+
   // sensitive area
   m_sensitiveSizeU = sensSizeUmax - sensSizeUmin;
   m_sensitiveSizeV = sensSizeVmax - sensSizeVmin;
@@ -255,10 +268,10 @@ bool PolyDet::areNeighbors(int vcell1, int ucell1, int vcell2, int ucell2) const
 int PolyDet::GetPixelType(int vcell, int ucell)  const
 { 
   for (auto group : m_cells ) {
-    int uCell = std::get<0>(group);
-    int vCell = std::get<1>(group);
+    int uCell = std::get<1>(group);
+    int vCell = std::get<2>(group);
     if (ucell == uCell && vcell == vCell)
-      return std::get<3>(group);
+      return std::get<0>(group);
   }
   return -1; // not pixel match found?
 } 
@@ -283,15 +296,16 @@ double PolyDet::GetPitchV(int vcell, int ucell) const
   return -1.0;
 }  
 
+// The encoding needs to be unique for every pixel and for usage in array types it needs to start at 0 and max value has to be npixel=m_nCellsU*m_nCellsV
 int PolyDet::encodePixelID(int vcell, int ucell) const
 {
-  return (m_nCellsU*vcell + ucell);
+  return (m_nCellsU*(vcell-m_minCellV) + ucell-m_minCellU);
 }
 
 void PolyDet::decodePixelID(int& vcell, int& ucell, int uniqPixelID) const
 {
-  vcell = uniqPixelID / m_nCellsU;
-  ucell = uniqPixelID - vcell*m_nCellsU;
+  vcell = uniqPixelID / m_nCellsU + m_minCellV;
+  ucell = uniqPixelID - (vcell-m_minCellV)*m_nCellsU + m_minCellU;
 }
 
 bool PolyDet::SensitiveCrossed(double u, double v, double w) const
@@ -385,7 +399,7 @@ double PolyDet::GetPixelCenterCoordV(int vcell, int ucell) const
 {    
   // geometric centre of bounding box or charge collection centre as in config file specified?
   for (auto group: m_cells){
-    if (ucell == std::get<0>(group) && vcell == std::get<1>(group))
+    if (ucell == std::get<1>(group) && vcell == std::get<2>(group))
       return std::get<4>(group);
   }
   return m_sensitiveSizeMinV - 0.1; // -1.0 (mm) could be a actual position, so messing this up with this, better something out of sensitive range?! 100 um out off sensitive?
@@ -395,7 +409,7 @@ double PolyDet::GetPixelCenterCoordV(int vcell, int ucell) const
 double PolyDet::GetPixelCenterCoordU(int vcell, int ucell) const
 {
   for (auto group: m_cells){
-    if (ucell == std::get<0>(group) && vcell == std::get<1>(group))
+    if (ucell == std::get<1>(group) && vcell == std::get<2>(group))
       return std::get<3>(group);
   }
   return m_sensitiveSizeMinU - 0.1;

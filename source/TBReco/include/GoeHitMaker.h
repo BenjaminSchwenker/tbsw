@@ -17,7 +17,8 @@
 
 // Include ROOT classes
 #include <TH1F.h>
-
+//LCIO
+#include <UTIL/CellIDDecoder.h>
 
 
 namespace depfet {
@@ -97,6 +98,9 @@ namespace depfet {
     bool searchDB(int sensorID, std::string id, double& u, double& v, double& sig2_u, double& sig2_v, double& cov_uv);
      
     
+
+    //! internally used as storage for input decoding
+    UTIL::BitField64 _inputDecodeHelper;
 
     // Store cluster calibration
     TH1F * m_DB_Weight;

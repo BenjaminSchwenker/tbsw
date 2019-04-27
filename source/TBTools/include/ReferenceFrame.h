@@ -89,7 +89,6 @@ class ReferenceFrame {
   static ReferenceFrame create_karimaki_delta(double dx, double dy, double dz, double dalpha, double dbeta, double dgamma); 
   
   void PrintHepMatrix() const; 
-  
 
 };  // End class ReferenceFrame
  	

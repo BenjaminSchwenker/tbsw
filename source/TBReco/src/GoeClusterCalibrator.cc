@@ -118,7 +118,7 @@ namespace depfet {
     } 
     
     if ( _maxEtaBins<=0) _maxEtaBins=1;
-    
+
     // Create a useful name for a file that should be deleted after Marlin is finished
     // There should be one collector output for each clusterDB
     // Add prefix "tmp" to indicate that the file is temporary 
@@ -229,6 +229,10 @@ namespace depfet {
         // Ignore track elements w/o measurment
         if ( TE.HasHit() && !ignoreID ) { 
           
+          // This is the plane number of one plane to which 
+          // the clusterDB would be applied
+          _setOfPlaneNumbers.insert(ipl);
+          
           // Get local track parameters 
           double trk_tu = TE.GetState().GetPars()[0];  // rad
           double trk_tv = TE.GetState().GetPars()[1];  // rad
@@ -299,7 +303,22 @@ namespace depfet {
                             << " "
                             << "Processor succesfully finished!"
                             << std::endl;
-     
+    
+    // Make sure that all data was collected for a set of planes 
+    // have the same protopixels. 
+    bool consistencyTestPassed = true;
+    std::vector<int> planeNumbersVec(_setOfPlaneNumbers.begin(), _setOfPlaneNumbers.end()); 
+    for(auto i : planeNumbersVec ) {
+      for(auto j : planeNumbersVec ) {    
+        if ( TBDetector::Get(i).GetProtopixels() ==  TBDetector::Get(j).GetProtopixels() ) {
+          streamlog_out(MESSAGE3) << "Plane " << i << " and plane " << j << " have identical map of protopixels." << std::endl;   
+        } else {
+          streamlog_out(MESSAGE3) << "Plane " << i << " and plane " << j << " have different map of protopixels!" << std::endl;   
+          consistencyTestPassed = false;
+        } 
+      }  
+    }  
+    
     // Compute the average 2x2 covariance matrix for the 
     // estimated track states. We assume the track state
     // to be unbiased and will later subtract this number
@@ -497,7 +516,7 @@ namespace depfet {
     _rootCollectorOutputFile->Close();
     delete _rootCollectorOutputFile;   
     
-    if (nShapes > 0) {
+    if (nShapes > 0 and consistencyTestPassed) {
       
       streamlog_out(MESSAGE3) << "Create the clusterDB ... " << endl; 
       
@@ -653,6 +672,33 @@ namespace depfet {
       DB_angles[0] = thetaU;
       DB_angles[1] = thetaV;
       DB_angles.Write("DB_angles");
+      
+      TVectorD DB_telcov( 3 );
+      DB_telcov[0] = trk_covU;
+      DB_telcov[1] = trk_covV;
+      DB_telcov[2] = trk_covUV;
+      DB_telcov.Write("DB_telcov");
+      
+      if (not planeNumbersVec.empty()) {
+        // Loop over all protopixel for one sensor to which the cluseterDB is going to 
+        // be used. 
+        for (auto protopixel : TBDetector::Get(planeNumbersVec[0]).GetProtopixels())  {
+          auto pixeltype = protopixel.first;
+          auto points = protopixel.second;
+          
+          // Add eta bin edges for type
+          TVectorD DB_protopixel( 2*points.size() );
+          int iBin = 0;
+          for (auto point: points){
+            DB_protopixel[iBin] = std::get<0>(point);
+            DB_protopixel[iBin+1] = std::get<1>(point);
+            iBin+=2;
+          }
+          DB_protopixel.Write( string("DB_protopixel_"+std::to_string(pixeltype)).c_str() ); 
+        }
+      } else {
+        streamlog_out(ERROR3) << "No information about protopixels is available. This is strange! "  << endl;   
+      }
       
       streamlog_out(MESSAGE3) << "Created clusterDB with coverage " << 100 * coverage << " percent on training data sample." << std::endl; 
       

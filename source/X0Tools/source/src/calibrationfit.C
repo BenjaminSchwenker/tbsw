@@ -328,6 +328,15 @@ void shiftbins(TH1F*, double);
 //void calibrationfit();
 int** GetParameterMapping(int);
 
+// Function, which returns beam momentum value for every point on the target plane
+// This is necessary because the beam profile at DESY often have beam energy gradients in the order of a few MeV/mm
+Double_t GetMomentum(double meanvalue,double ugrad,double vgrad, double u, double v)
+{
+	double p;
+	p=meanvalue+u*ugrad+v*vgrad;
+	return p;
+}
+
   // Highland model of a MSC angle distribution, the parameters are:
 
   /*
@@ -347,35 +356,16 @@ int** GetParameterMapping(int);
 	* par[13]: v BE gradient
 	* par[14]: mean of angle distribution
 	* par[15]: Target material radiation length 
+    * par[16]: weight of bremsstrahlung energy loss (set to 0 to disable)
+    * x: Variable of the 1D function, corresponds to the scattering angle
 
 */
-
-// Function, which returns beam momentum value for every point on the target plane
-// This is necessary because the beam profile at DESY often have beam energy gradients in the order of a few MeV/mm
-Double_t GetMomentum(double meanvalue,double ugrad,double vgrad, double u, double v)
-{
-	double p;
-	p=meanvalue+u*ugrad+v*vgrad;
-	return p;
-}
   
 // Highland model of multiple scattering: Simple gaussian with a well defined standard deviation depending on X/X0 and the beam energy.
-// The overall function describing the kink angle distributions is the Highland function convoluted with a gaussian function due to the finite angle resolution on the target plane. 
+// The overall function describing the kink angle distributions is the Highland function convoluted with a gaussian function due to the finite angle resolution on the target plane.
+// The formula for the Highland standard deviation taken from the Particle Data Group Tanabashi et al. 2018  (eq. 33.15)
 Double_t highlandfunction(Double_t *x, Double_t *par)
 {  
-
-	// atomic number of target material
-	double Z; 
-	Z=par[4];  
-
-	// atomic weight of target material
-	double A;
-	A=par[5];
-
-	//density of the target material
-	double density;  
-	density=par[3]; 
-
 	// thickness of the target material
 	double d1=par[6]; // in mm
 
@@ -395,18 +385,22 @@ Double_t highlandfunction(Double_t *x, Double_t *par)
 	double charge;   
 	charge=par[1];
 
-	// beam energy
-	double p=GetMomentum(par[0],par[10],par[11],par[12],par[13]);
+	// Radiation length computed from the other parameters
+	//double X0=716.4*A/((Z+1)*Z*density*TMath::Log(287.0/TMath::Sqrt(Z)));  	// This formula should only be used in case X0 is unknown (1-2% deviation from PDG value)
+	double X0=par[15];
+
+	// beam energy, modified by the energy loss due to bremsstrahlung
+    // A weighted mean of the average particle energy before and after the material transition is calculated
+	// Additionally a linear beam model is employed to account for possible beam energy gradients due to beam test energy selection with dipole magnets
+	double p0=GetMomentum(par[0],par[10],par[11],par[12],par[13]);
+	double epsilon=par[16];
+	double p=p0*((1-epsilon)+epsilon*exp(-d1/X0));
 
 	// calibrated momentum
 	double E=TMath::Sqrt(p*p+mass*mass);  // energy in GeV
 
 	double beta;  //relative velocity
 	beta=p/E;
-
-	// Radiation length computed from the other parameters
-	//double X0=716.4*A/((Z+1)*Z*density*TMath::Log(287.0/TMath::Sqrt(Z)));  	// This formula should only be used in case X0 is unknown (1-2% deviation from PDG value)
-	double X0=par[15];
 
 	// Combination of Highland width and reconstruction error
 	double sigma=TMath::Sqrt(pow(recoerror,2)+pow(0.0136*charge/(p*beta)*TMath::Sqrt(d1/X0)*(1.0+0.038*TMath::Log(d1/X0)),2));
@@ -436,13 +430,16 @@ Double_t highlandfunction(Double_t *x, Double_t *par)
 	* par[12]:  u BE gradient
 	* par[13]:  v BE gradient
 	* par[14]:  mean of angle distribution
-	* par[15]:  Target material radiation length (not used here)
+	* par[15]:  Target material radiation length
+    * par[16]: weight of bremsstrahlung energy loss (set to 0 to disable)
+    * x: Variable of the 1D function, corresponds to the scattering angle
 
 */
   
 // Moliere model of multiple scattering: Function also describing the tails of multiple scattering distributions. The function depends on material properties, which
 // can be reduced to X0, the material thickness and the beam energy.
-// The overall function describing the kink angle distributions is the Moliere function convoluted with a gaussian function due to the finite angle resolution on the target plane. 
+// The overall function describing the kink angle distributions is the Moliere function convoluted with a gaussian function due to the finite angle resolution on the target plane.
+// The formula and calculations are taken from Bethe 1953 "Moliere's Theory of Multiple Scattering" 
 Double_t molierefunction(Double_t *x, Double_t *par)
 {  
 	// atomic number of target material
@@ -458,7 +455,7 @@ Double_t molierefunction(Double_t *x, Double_t *par)
 	density=par[3]; 
 
 	// Radiation length (not used here)
-	double X0=par[15];
+    double X0=par[15];
 
 	// thickness of the target material
 	double dm1=par[6]; // in mm
@@ -481,8 +478,12 @@ Double_t molierefunction(Double_t *x, Double_t *par)
 	double charge;   
 	charge=par[1];
 
-	// beam energy
-	double p=GetMomentum(par[0],par[10],par[11],par[12],par[13]);   // Energy in GeV
+	// beam energy, modified by the energy loss due to bremsstrahlung
+    // A weighted mean of the average particle energy before and after the material transition is calculated
+	// Additionally a linear beam model is employed to account for possible beam energy gradients due to beam test energy selection with dipole magnets
+	double p0=GetMomentum(par[0],par[10],par[11],par[12],par[13]);
+	double epsilon=par[16];
+	double p=p0*((1-epsilon)+epsilon*exp(-d1/X0));
 
 	double E=TMath::Sqrt(p*p+mass*mass);
 
@@ -499,7 +500,6 @@ Double_t molierefunction(Double_t *x, Double_t *par)
 
 	// aid variable for thickness 1
 	double log_omega_b1=8.215+log(pow(Z,(-0.6667))*(arealdensity1/A)*pow(alpha,2)/(1.13+3.76*pow(alpha,2)))/log(10.0); 
-	//cout<<"log Omega 1 is "<<log_omega_b1<<endl;
 
 	// parameter that will be used in the masterformula of the overall angle distribution (thickness1)
 	double B1=calculateB(log_omega_b1);
@@ -746,7 +746,7 @@ Double_t molierefunction(Double_t *x, Double_t *par)
 // a globalEstimator structure
 
 // Number of parameters per fit function
-const int num_localparameters=16;
+const int num_localparameters=17;
 
 // Number of new parameters per fit function
 const int newparsperfunction=9;
@@ -1014,7 +1014,7 @@ void savehisto(std::vector<TString> inputfiles, TFile* file2, TString histoname,
 
     // Find relevant input files for the given run number range
     std::vector<TString> relevantfiles;
-    for(int ifile=0;ifile<inputfiles.size();ifile++)
+    for(size_t ifile=0;ifile<inputfiles.size();ifile++)
 	{
         TString tmpstring;
         tmpstring=inputfiles.at(ifile);
@@ -1051,7 +1051,7 @@ void savehisto(std::vector<TString> inputfiles, TFile* file2, TString histoname,
 	tmp_anglehisto[0]=new TH1F("theta1_histo","theta1_histo",numbins,-limits,limits);
 	tmp_anglehisto[1]=new TH1F("theta2_histo","theta2_histo",numbins,-limits,limits);
 
-    for(int ifile=0;ifile<relevantfiles.size();ifile++)
+    for(size_t ifile=0;ifile<relevantfiles.size();ifile++)
 	{
 
 		TFile* inputfile=new TFile(relevantfiles.at(ifile),"READ");
@@ -1226,8 +1226,8 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
 
 	// Some parameter definitions
-
 	double lambda_startvalue=beamoptions.at(5);
+	double epsilon=beamoptions.at(6);
 
 	// histogram name
 	TString histoname;
@@ -1235,7 +1235,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// Fit range
 	double fitrange;
 
-	const int num_fitfunctions=grid.GetMeasurementAreas().size();
+	const size_t num_fitfunctions=grid.GetMeasurementAreas().size();
 
 	// fitresults Array
 	double *fitresults = new double[8];
@@ -1245,10 +1245,10 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	TH1F * histogramsum;
 
 	// Copy raw histograms
-	for(int i=0; i< num_fitfunctions; i++)
+	for(size_t i=0; i< num_fitfunctions; i++)
 	{
 		// histogram name
-		histoname.Form("measurementarea%i",i+1);
+		histoname.Form("measurementarea%lu",i+1);
 		file->cd("");
 
 		histogramsum=(TH1F*)file->Get("grid/raw/sumhisto_"+histoname);
@@ -1270,11 +1270,11 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	std::vector<double> range_vec;
 
 	// loop for definition of the fit functions, the fitrange is determined for every one of them
-	for(int i=0;i<num_fitfunctions;i++)
+	for(size_t i=0;i<num_fitfunctions;i++)
 	{
 
 		fitrange=DetermineFitrange(histo_vec.at(i),rangevalue);
-		fctname.Form("fitFcn%i",i);
+		fctname.Form("fitFcn%lu",i);
 
 		if(model=="moliere")
 		{
@@ -1313,7 +1313,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
     // Total datasize
 	int datasize = 0;
      
-    for(int i=0;i<num_fitfunctions;i++) 
+    for(size_t i=0;i<num_fitfunctions;i++) 
 	{ 
       // Create wrapped multi function entry
 	  ROOT::Math::WrappedMultiTF1 * wf_entry = new ROOT::Math::WrappedMultiTF1(*fitFcn_vec.at(i),1);
@@ -1353,18 +1353,18 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	// Then there are 8 parameters, which are used in all fit functions (beam energy calibration factor, angle calibration factor, material properties, etc)
 	static const int num_globalparameters = num_fitfunctions*newparsperfunction+(num_localparameters-newparsperfunction);
 
-	double par0[num_globalparameters];
+    std::vector<double> par0(num_globalparameters,0);
 
 	// Set the entries of the globalparameters array
 
 	// First fit function has num_localparameters new parameters:
 	double aid_array[num_localparameters]={ BE_mean,z,mass,grid.GetMeasurementAreas().at(0).Get_density(),grid.GetMeasurementAreas().at(0).Get_Z(),grid.GetMeasurementAreas().at(0).Get_A(),
 											grid.GetMeasurementAreas().at(0).Get_thickness(),recoerr,lambda_startvalue,700.0,grid.GetMeasurementAreas().at(0).Get_u_center(),
-											grid.GetMeasurementAreas().at(0).Get_v_center(),BE_ugrad,BE_vgrad,0.0, grid.GetMeasurementAreas().at(0).Get_X0()};
+											grid.GetMeasurementAreas().at(0).Get_v_center(),BE_ugrad,BE_vgrad,0.0, grid.GetMeasurementAreas().at(0).Get_X0(), epsilon};
 	for(int i=0;i<num_localparameters;i++) par0[i]=aid_array[i];
 
 	// Afterwards for each fit functions we get several new parameters
-	for(int i=1;i<num_fitfunctions;i++)
+	for(size_t i=1;i<num_fitfunctions;i++)
 	{
 		par0[num_localparameters+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_density();
 		par0[num_localparameters+1+(i-1)*newparsperfunction]=grid.GetMeasurementAreas().at(i).Get_Z();
@@ -1378,13 +1378,16 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	}
 
 	// create before the parameter settings in order to fix or set range on them
-	fitter.Config().SetParamsSettings(num_globalparameters,par0);
+    fitter.Config().SetParamsSettings(num_globalparameters,&par0[0]);
 
 	// fix constant parameters 1 to 7
 	for(int i=1;i<8;i++) fitter.Config().ParSettings(i).Fix();
 
 	// fix X0 constant
 	fitter.Config().ParSettings(15).Fix();
+
+	// fix epsilon
+	fitter.Config().ParSettings(16).Fix();
 
 	// fix u and v position of first measurement area
 	fitter.Config().ParSettings(10).Fix();
@@ -1406,7 +1409,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	fitter.Config().ParSettings(0).SetLimits(0.5*BE_mean,1.5*BE_mean);
 
 	// fix X0, density, A, Z, thickness and coordinate parameters for all fitfunctions
-	for(int i=1;i<num_fitfunctions;i++)
+	for(size_t i=1;i<num_fitfunctions;i++)
 	{
 		fitter.Config().ParSettings(num_localparameters+(i-1)*newparsperfunction).Fix();
 		fitter.Config().ParSettings(num_localparameters+1+(i-1)*newparsperfunction).Fix();
@@ -1425,7 +1428,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	//Set limits on fit function Normalizations and mean angle values
 	fitter.Config().ParSettings(9).SetLimits(10.0,200000.0);
 	fitter.Config().ParSettings(14).SetLimits(-0.0001,+0.0001);
-	for(int i=1;i<num_fitfunctions;i++) 
+	for(size_t i=1;i<num_fitfunctions;i++) 
 	{
 		fitter.Config().ParSettings(num_localparameters+4+(i-1)*newparsperfunction).SetLimits(10.0,200000.0);
 		fitter.Config().ParSettings(num_localparameters+7+(i-1)*newparsperfunction).SetLimits(-0.0001,+0.0001);
@@ -1448,7 +1451,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	int ** parameter_mapping=GetParameterMapping(num_fitfunctions);
 
 
-	// Names of the 14 local parameters
+	// Names of the 17 local parameters
 	TString name[num_localparameters];
 	name[0]="E[GeV]";
 	name[1]="z[e]";
@@ -1466,8 +1469,9 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	name[13]="#nablaE_{v}[GeV/mm]";
 	name[14]="#theta_{mean}[rad]";
 	name[15]="X_{0}[mm]";
+	name[16]="#epsilon";
 
-	for(int i=0;i<num_fitfunctions;i++)
+	for(size_t i=0;i<num_fitfunctions;i++)
 	{	
 
 		int parameters[num_localparameters];
@@ -1484,7 +1488,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		fitfunc->SetLineColor(kRed);
 
 		histo_vec.at(i)->GetListOfFunctions()->Add(fitFcn_vec.at(i));
-		histoname.Form("gridpoint%i",i+1);
+		histoname.Form("gridpoint%lu",i+1);
 		// display mode
 		gStyle->SetOptFit(1111);
 		histo_vec.at(i)->Write("thetasum_"+histoname+"_fit");
@@ -1512,13 +1516,9 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	fitresults[6]=result.Parameter(13);
 	fitresults[7]=result.Error(13);
 
-	
-	// output of the single fit function chi2 values and the quadratic sum of them
-	double chi2_summation=0.0;
-
-	for(int i=0; i<num_fitfunctions;i++)
+    for(size_t i=0; i<num_fitfunctions;i++)
 	{
-		fctname.Form("fitFcn%i",i);
+        fctname.Form("fitFcn%lu",i);
 
 		cout<<"--------------------------"<<endl;
 		cout<<"Fit function "<<i<<endl;
@@ -1548,12 +1548,12 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		pad4->Draw();
 		pads.push_back(pad4);
 
-		for(int j=0;j<4;j++)
+		for(size_t j=0;j<4;j++)
 		{
 		   	pads.at(j)->cd();
 			if(((4*i)+j)<num_fitfunctions)
 			{
-				Title.Form("Area %i: d=%fmm",(4*i)+j,grid.GetMeasurementAreas().at((4*i)+j).Get_thickness());
+				Title.Form("Area %lu: d=%fmm",(4*i)+j,grid.GetMeasurementAreas().at((4*i)+j).Get_thickness());
 				histo_vec.at((4*i)+j)->SetTitle(Title);
 				histo_vec.at((4*i)+j)->Draw();
                 cout<<"fitfunction "<<(4*i)+j<<" of "<<num_fitfunctions<<endl;
@@ -1593,11 +1593,11 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 	h_d_true->SetTitle("Self-consistency check");
     
 	// loop for definition of the fit functions, the fitrange is determined for every one of them
-	for(int i=0;i<num_fitfunctions;i++)
+    for(size_t i=0;i<num_fitfunctions;i++)
 	{
 
 		fitrange=range_vec.at(i);
-		fctname.Form("fitFcn%i",i);
+        fctname.Form("fitFcn%lu",i);
         
 		if(model=="moliere") {
           fitFcn = new TF1(fctname,molierefunction,-fitrange,fitrange,num_localparameters);
@@ -1610,16 +1610,17 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		double BE_mean=fitresults[2];
 		double BE_ugrad=fitresults[4];
 		double BE_vgrad=fitresults[6];
-		double parameters_temp[num_localparameters]={ BE_mean,z,mass,grid.GetMeasurementAreas().at(i).Get_density(),grid.GetMeasurementAreas().at(i).Get_Z(),grid.GetMeasurementAreas().at(i).Get_A(),
-											1.0,recoerr,lambda,700.0,grid.GetMeasurementAreas().at(i).Get_u_center(),
-											grid.GetMeasurementAreas().at(i).Get_v_center(),BE_ugrad,BE_vgrad,0.0,grid.GetMeasurementAreas().at(i).Get_X0()};
-   		fitFcn->SetParameters(parameters_temp);
+        std::vector<double> parameters_temp{ BE_mean,z,mass,grid.GetMeasurementAreas().at(i).Get_density(),grid.GetMeasurementAreas().at(i).Get_Z(),grid.GetMeasurementAreas().at(i).Get_A(),
+                    1.0,recoerr,lambda,700.0,grid.GetMeasurementAreas().at(i).Get_u_center(),
+                    grid.GetMeasurementAreas().at(i).Get_v_center(),BE_ugrad,BE_vgrad,0.0,grid.GetMeasurementAreas().at(i).Get_X0()};
+        parameters_temp.resize(num_localparameters);
+        fitFcn->SetParameters(&parameters_temp[0]);
 
-		for(int i=0; i<num_localparameters;i++)
+        for(int ii=0; ii<num_localparameters;ii++)
 		{
-			if(i!=6&&i!=9&&i!=14)
+            if(ii!=6&&ii!=9&&ii!=14)
 			{
-   				fitFcn->FixParameter(i,parameters_temp[i]);
+                fitFcn->FixParameter(ii,parameters_temp[ii]);
 			}
 		}	
  
@@ -1632,10 +1633,10 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 
     
 
-	for(int i=0;i<TMath::Ceil(double(num_fitfunctions)/4.0);i++)
+    for(size_t i=0;i<TMath::Ceil(double(num_fitfunctions)/4.0);i++)
 	{
 		TString canvasname;
-		canvasname.Form("c%i",i);
+        canvasname.Form("c%lu",i);
 		TCanvas *c = new TCanvas(canvasname,canvasname,900,1000);
 		std::vector<TPad*> pads;
 		TPad *pad1 = new TPad("pad1","pad1",0.01,0.51,0.49,0.99);
@@ -1651,12 +1652,12 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		pad4->Draw();
 		pads.push_back(pad4);
 
-		for(int j=0;j<4;j++)
+        for(size_t j=0;j<4;j++)
 		{
 		   	pads.at(j)->cd();
 			if(((4*i)+j)<num_fitfunctions)
 			{
-				Title.Form("Area %i: d=%fmm",(4*i)+j,grid.GetMeasurementAreas().at((4*i)+j).Get_thickness());
+                Title.Form("Area %lu: d=%fmm",(4*i)+j,grid.GetMeasurementAreas().at((4*i)+j).Get_thickness());
 				histo_vec.at((4*i)+j)->SetTitle(Title);
 
 
@@ -1746,8 +1747,7 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
   // perform a moliere fit on the distributions to estimate the calibrationfactors mu and lambda. Usually this script is used on 
   // measurement data of a plane with a precisely known material distribution ( for example a aluminum grid with a set 
   // of holes with different thicknesses.
-  int main(int argc, char **argv)
-  //void calibrationfit()
+  int main(int , char **)
   {     
     // Read config file
     //------------------
@@ -1789,7 +1789,7 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
 	// Define and set the parameters used in the Moliere fit
 	// BE: beam energy (GeV), z: charge of beam particle (e), mass: mass of beam particle (GeV),
 	// d_layer: thickness per layer(mm), num_layers: total number of layers, recoerr: angle reconstruction error (rad)
-	double z,p,mass,recoerr;
+    double z,mass,recoerr;
 	
 	cout<<"---------------------------------------------------"<<endl;
 	cout<<"-----------------Parameter settings----------------"<<endl;
@@ -1797,7 +1797,9 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
 	// Set mean beam energy (GeV) and slope
 	double BE_mean_default=mEnv->GetValue("momentumoffset", 99.0);
 	double BE_ugrad_default=mEnv->GetValue("momentumugradient", 99.0);			// energy slope in GeV/mm in u direction
-	double BE_vgrad_default=mEnv->GetValue("momentumvgradient", 99.0);			// energy slope in GeV/mm in u direction
+    double BE_vgrad_default=mEnv->GetValue("momentumvgradient", 99.0);			// energy slope in GeV/mm in u direction
+
+    double epsilon=mEnv->GetValue("epsilon", 0.0);								// weight of the energy loss formula (see fit models)
 
 	int vertexmultiplicitymin=mEnv->GetValue("vertexmultiplicitymin", 1);			// energy slope in GeV/mm in u direction
 	int vertexmultiplicitymax=mEnv->GetValue("vertexmultiplicitymax", 1);			// energy slope in GeV/mm in u direction
@@ -1873,7 +1875,7 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
 	for(size_t i=0; i<num_fitfunctions; i++)
 	{
 			// Set the histogram name as a string
-			histoname.Form("measurementarea%i",i+1);
+            histoname.Form("measurementarea%lu",i+1);
 
 			cout<<endl<<endl<<"Measurement area "<<i+1<<endl;
 
@@ -1915,7 +1917,7 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
 	double lambda_start=mEnv_res->GetValue("lambda_start", lambda_start_default);
 	double BE_mean=mEnv_res->GetValue("momentumoffset", BE_mean_default);
 	double BE_ugrad=mEnv_res->GetValue("momentumugradient", BE_ugrad_default);	
-	double BE_vgrad=mEnv_res->GetValue("momentumvgradient", BE_ugrad_default);
+    double BE_vgrad=mEnv_res->GetValue("momentumvgradient", BE_vgrad_default);
 
 
 	std::vector<double> beamoptions;
@@ -1925,8 +1927,9 @@ void GetInputFiles(std::vector<TString>& inputfiles, const char *dirname=".", co
 	beamoptions.push_back(abs(BE_mean));
 	beamoptions.push_back(BE_ugrad);
 	beamoptions.push_back(BE_vgrad);
-	// lambda is not really a beam parameter, but this is the only place this fits in
+	// lambda and epsilon are not really a beam parameters, but this is the only place this fits in
 	beamoptions.push_back(lambda_start);
+	beamoptions.push_back(epsilon);
 	
 
 	std::vector<bool> fitoptions;

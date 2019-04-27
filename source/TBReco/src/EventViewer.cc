@@ -252,29 +252,31 @@ void EventViewer::dumpDataEvent( LCEvent * evt )
         // open data frame
         TrackerDataImpl * matrix = dynamic_cast<TrackerDataImpl* > (frames->getElementAt(iSensor));
         CellIDDecoder<TrackerDataImpl> idMatrixDecoder(frames);
-        int currentSensorID = idMatrixDecoder(matrix)["sensorID"]; 
-        int noOfXPixels =  idMatrixDecoder(matrix)["xMax"]+1;    
-        int noOfYPixels =  idMatrixDecoder(matrix)["yMax"]+1;   
+        int currentSensorID = idMatrixDecoder(matrix)["sensorID"];
 
         //
         // skip this sensor 
         if ( _displaySensorID != currentSensorID  && _displaySensorID != -1 ) continue;     
  
         streamlog_out(MESSAGE3) << "Dump sensor data wo status "<<currentSensorID<<endl;  
-        
+ 
+        int ipl = TBDetector::GetInstance().GetPlaneNumber(currentSensorID);   
+        int noOfXPixels =  TBDetector::Get(ipl).GetMaxUCell()-TBDetector::Get(ipl).GetMinUCell()+1;   
+        int noOfYPixels =  TBDetector::Get(ipl).GetMaxVCell()-TBDetector::Get(ipl).GetMinVCell()+1; 
+       
         // 
         // create histo in local root file
         _rootFile->cd("");  
         std::string histoName = _rootFileName+"_evt_"+to_string(eventID)+"_mod_"+to_string(currentSensorID); 
         std::string  histoTitle = "Evt:"+to_string(eventID)+" Mod:"+to_string(currentSensorID);
       	   
-        double xmin = 0 - 0.5;
-        double xmax = noOfXPixels -1 + 0.5;
+        double xmin = TBDetector::Get(ipl).GetMinUCell();
+        double xmax = noOfXPixels + xmin;
         int xnbins = noOfXPixels;
-        double ymin = 0 - 0.5;
-        double ymax = noOfYPixels -1 + 0.5;
+        double ymin = TBDetector::Get(ipl).GetMinVCell();
+        double ymax = noOfYPixels + ymin;
         int ynbins = noOfYPixels; 
-        TH2D * eventMap = new TH2D(histoName.c_str(),histoTitle.c_str(),xnbins,xmin,xmax,ynbins,ymin,ymax);
+        TH2D * eventMap = new TH2D(histoName.c_str(),histoTitle.c_str(),xnbins,xmin-0.5,xmax-0.5,ynbins,ymin-0.5,ymax-0.5);
         eventMap->SetXTitle("X Axis"); 
         eventMap->SetYTitle("Y Axis");
 
@@ -286,7 +288,7 @@ void EventViewer::dumpDataEvent( LCEvent * evt )
           for ( int xPixel = 0; xPixel < noOfXPixels; xPixel++) {
         
             double chargeValue = charges[iPixel]; 
-            eventMap->Fill(xPixel,yPixel,chargeValue); 
+            eventMap->Fill(xPixel+xmin,yPixel+ymin,chargeValue); 
             
             iPixel++;  
       
@@ -328,32 +330,33 @@ void EventViewer::dumpRawDataEvent( LCEvent * evt )
       CellIDDecoder<TrackerRawDataImpl> idRawMatrixDecoder( frames );
       int currentSensorID = idRawMatrixDecoder(rawmatrix)["sensorID"];  
       int ipl = TBDetector::GetInstance().GetPlaneNumber(currentSensorID);   
-      int noOfXPixels =  TBDetector::Get(ipl).GetMaxUCell()+1;   
-      int noOfYPixels =  TBDetector::Get(ipl).GetMaxVCell()+1;  
 
       //
       // skip this sensor 
       if ( _displaySensorID != currentSensorID  && _displaySensorID != -1 ) continue;     
       
       streamlog_out(MESSAGE3) << "Dump sensor plane " << ipl << " with sensorID " << currentSensorID << endl;  
-      
+ 
+      int noOfXPixels =  TBDetector::Get(ipl).GetMaxUCell()-TBDetector::Get(ipl).GetMinUCell()+1;   
+      int noOfYPixels =  TBDetector::Get(ipl).GetMaxVCell()-TBDetector::Get(ipl).GetMinVCell()+1;  
+     
       // 
       // prepare histo 
       _rootFile->cd(""); 
       std::string histoName = _rootFileName+"_rawEvt_"+to_string(eventID)+"_mod_"+to_string(currentSensorID); 
       std::string  histoTitle = "Raw Evt:"+to_string(eventID)+" Mod:"+to_string(currentSensorID);
       	   
-      double xmin = 0 - 0.5;
-      double xmax = noOfXPixels -1 + 0.5;
+      double xmin = TBDetector::Get(ipl).GetMinUCell();
+      double xmax = noOfXPixels + xmin;
       int xnbins = noOfXPixels;
-      double ymin = 0 - 0.5;
-      double ymax = noOfYPixels -1 + 0.5;
+      double ymin = TBDetector::Get(ipl).GetMinVCell();
+      double ymax = noOfYPixels + ymin;
       int ynbins = noOfYPixels; 
-      TH2D * eventMap = new TH2D(histoName.c_str(),histoTitle.c_str(),xnbins,xmin,xmax,ynbins,ymin,ymax);
+      TH2D * eventMap = new TH2D(histoName.c_str(),histoTitle.c_str(),xnbins,xmin-0.5,xmax-0.5,ynbins,ymin-0.5,ymax-0.5);
       eventMap->SetXTitle("X Axis"); 
       eventMap->SetYTitle("Y Axis");
 
-      //
+      // 
       // fill 2D histo    
       ShortVec charges = rawmatrix->getADCValues();
       int iPixel = 0; 
@@ -361,7 +364,7 @@ void EventViewer::dumpRawDataEvent( LCEvent * evt )
         for ( int xPixel = 0; xPixel < noOfXPixels; xPixel++) {
         
           double chargeValue = charges[iPixel];   
-          eventMap->Fill(xPixel,yPixel,chargeValue);   
+          eventMap->Fill(xPixel+xmin,yPixel+ymin,chargeValue);   
           iPixel++;  
       
         }
@@ -406,27 +409,28 @@ void EventViewer::dumpZeroSuppEvent( LCEvent * evt )
       // open data frame
       TrackerDataImpl * matrix = dynamic_cast<TrackerDataImpl* > (frames->getElementAt(iSensor));
       int currentSensorID = idMatrixDecoder(matrix)["sensorID"]; 
-      int ipl = TBDetector::GetInstance().GetPlaneNumber(currentSensorID);   
-      int noOfXPixels =  TBDetector::Get(ipl).GetMaxUCell()+1;   
-      int noOfYPixels =  TBDetector::Get(ipl).GetMaxVCell()+1;  
       
       //
       // skip this sensor 
       if ( _displaySensorID != currentSensorID  && _displaySensorID != -1 ) continue;     
 
       streamlog_out(MESSAGE3) << "Dump sensor iDetector " << iSensor << " with sensorID " << currentSensorID << endl;  
-      
+
+      int ipl = TBDetector::GetInstance().GetPlaneNumber(currentSensorID);   
+      int noOfXPixels =  TBDetector::Get(ipl).GetMaxUCell()-TBDetector::Get(ipl).GetMinUCell()+1;   
+      int noOfYPixels =  TBDetector::Get(ipl).GetMaxVCell()-TBDetector::Get(ipl).GetMinVCell()+1;  
+     
       // 
       // prepare histo 
       _rootFile->cd(""); 
-      double xmin = 0 - 0.5;
-      double xmax = noOfXPixels -1 + 0.5;
+      double xmin = TBDetector::Get(ipl).GetMinUCell();
+      double xmax = noOfXPixels + xmin;
       int xnbins = noOfXPixels;
-      double ymin = 0 - 0.5;
-      double ymax = noOfYPixels -1 + 0.5;
+      double ymin = TBDetector::Get(ipl).GetMinVCell();
+      double ymax = noOfYPixels + ymin;
       int ynbins = noOfYPixels; 
-      	   
-      TH2D * eventMap = new TH2D(Form("evt%d_mod%d",eventID,currentSensorID),Form("Data Event %d",eventID),xnbins,xmin,xmax,ynbins,ymin,ymax);
+   
+      TH2D * eventMap = new TH2D(Form("evt%d_mod%d",eventID,currentSensorID),Form("Data Event %d",eventID),xnbins,xmin-0.5,xmax-0.5,ynbins,ymin-0.5,ymax-0.5);
       eventMap->SetXTitle("columns"); 
       eventMap->SetYTitle("rows");
 

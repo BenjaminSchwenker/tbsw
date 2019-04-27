@@ -106,7 +106,7 @@ protected:
   std::set< std::string > getAvailableProcessorTypes() ;
   
 //   ProcessorMgr() : _outputProcessor(0) {}
-  ProcessorMgr() {}
+  ProcessorMgr();
 
 private:
   static ProcessorMgr*  _me ;
@@ -114,6 +114,10 @@ private:
   ProcessorMap _activeMap ;
   ProcessorList _list ;
   SkippedEventMap _skipMap ;
+  double _time_outsideProcessors;
+  double _time_startup;
+  double _time_end;
+  bool _isFirstEvent;
 
   LogicalExpressions _conditions ;
 //   LCIOOutputProcessor* _outputProcessor ;

@@ -572,7 +572,7 @@ void StripDUTAnalyzer::end()
    const Det & dut = TBDetector::Get(_idut); 
 
    // DUT fake rate 
-   double dutNPixels =  (dut.GetMaxUCell()+1)*(dut.GetMaxVCell()+1); 
+   double dutNPixels =  (dut.GetMaxUCell()-dut.GetMinUCell()+1)*(dut.GetMaxVCell()-dut.GetMinVCell()+1); 
    double dutFakeRate  = static_cast<double> (_noOfHits - _noOfMatchedTracks) / static_cast<double> ( _nEvt ) / dutNPixels;
    
    // Telescope track effi 
