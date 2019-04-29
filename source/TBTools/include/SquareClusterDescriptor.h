@@ -1,69 +1,33 @@
-#ifndef PolyClusterDescriptor_H
-#define PolyClusterDescriptor_H
+#ifndef SquareClusterDescriptor_H
+#define SquareClusterDescriptor_H
 
 #include "Det.h"
 #include "PixelCluster.h"
-
 
 #include <string>
 
 
 namespace depfet {
   
-  //! PolyRawDigit
-  /*! This class represents raw measurements from the pixel sensor
-   *  
-   *  A PolyRawDigit stores the pixel charge as well as the position of 
-   *  of the pixel center in sensor uv coordinates and the pixelType. 
-   *  
-   *  @Author Benjamin Schwenker, Universitaet Goettingen
-   *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
-   */ 
-  
-  class PolyRawDigit
-  {
-    public: 
-     
-     /** Default constructor */
-     PolyRawDigit(float u=0, float v=0, unsigned short charge=1, int type=0) : m_cellPosU(u), m_cellPosV(v), m_charge(charge), m_pixelType(type)
-     {}
-     
-     /** Sorting PolyRawDigits */
-     bool operator < (const PolyRawDigit& other) const
-     {
-       if ( m_cellPosV < other.m_cellPosV ) 
-         return true;  
-       else if (  other.m_cellPosV < m_cellPosV)
-         return false;
-       else 
-	     return m_cellPosU < other.m_cellPosU;  
-     }
-     
-     float m_cellPosU;
-     float m_cellPosV;
-     unsigned short m_charge;
-     int m_pixelType;
-  };
-
-
-  //! PolyClusterDescriptor
-  /*! This class represents a sorted poly pixel cluster 
+ 
+  //! SquareClusterDescriptor
+  /*! This class represents a sorted square pixel cluster 
    * 
    *  @Author Benjamin Schwenker, Universitaet Goettingen
    *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
    */ 
   
-  class PolyClusterDescriptor  {
+  class SquareClusterDescriptor  {
   
   public:
 
     /** Default constructor */
-    PolyClusterDescriptor():
+    SquareClusterDescriptor():
       m_originU(0), m_originV(0)
     {}
     
     /** Constructor */
-    PolyClusterDescriptor(const PixelCluster& Cluster, const Det& Sensor) ;
+    SquareClusterDescriptor(const PixelCluster& Cluster, const Det& Sensor) ;
 
     /** Get origin coordinate
      */
@@ -95,7 +59,7 @@ namespace depfet {
     /** Get cluster eta bin  
     */
     static int computeEtaBin(double eta, const std::vector<double>& etaBinEdges); 
-
+    
     /** Get index of head pixel in cluster
     */
     int getHeadPixelIndex(double thetaU, double thetaV) const; 
@@ -104,15 +68,32 @@ namespace depfet {
     */
     int getTailPixelIndex(double thetaU, double thetaV) const;
     
+    /** Get indes of last pixel of local row vOffset  
+    */
+    int getLastPixelWithVOffset(int vOffset) const; 
+     
+    /** Get index of first pixel of local row vOffset 
+    */
+    int getFirstPixelWithVOffset(int vOffset) const; 
+    
   protected:
     
     // Origin of cluster coordinates
     float m_originU;   
     // Origin of cluster coordinates
-    float m_originV;   
-    
+    float m_originV; 
+    // Cluster size in vcells     
+    unsigned short m_vSize;  
+    // Start ucell of the cluster      
+    unsigned short m_uStart; 
+    // Start vcell of the cluster      
+    unsigned short m_vStart;   
+    // Pixeltype 
+    int m_pixelType;
+   
+     
     // Sorted vector of raw digits 
-    std::vector<PolyRawDigit> m_sortedDigits;
+    std::vector<RawDigit> m_sortedDigits;
   };
 }
 #endif

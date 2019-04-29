@@ -7,10 +7,6 @@
 #include "lcio.h"
 #include <IMPL/TrackerDataImpl.h>
 
-#include <string>
-#include <ostream>
-#include <sstream>
-
 namespace depfet {
   
   //! RawDigits
@@ -66,10 +62,7 @@ namespace depfet {
     PixelCluster(lcio::TrackerData * Digits, unsigned short sensorID = 0) ;
     
     //! Destructor
-    virtual ~PixelCluster() { /* NOOP */ ; }
-    
-    /** Convert to string */
-    operator std::string() const;
+    ~PixelCluster() { /* NOOP */ ; }
     
     /** Get the sensor ID.
      * @return ID of the sensor.
@@ -110,50 +103,11 @@ namespace depfet {
      * @return first vCell contributing to the cluster.
      */
     unsigned short getVStart() const { return m_vStart; }
-
-    /** Get cluster shape string 
-     * @return shape string containing all features of cluster used for position reconstruction 
-     */
-    std::string getShape(int pixeltype = 1, int vCellPeriod = 1, int uCellPeriod = 1, int etaBin=0) const; 
-     
-    /** Get cluster type string. 
-     * @return type string, same as shape but without eta information
-     */
-    std::string getType(int pixeltype = 1, int vCellPeriod = 1, int uCellPeriod = 1) const;
-
-    /** Get cluster shape string
-     * @return shape string containing all features of cluster used for position reconstruction
-     */
-    std::string getEtaBinString(int etaBin=0) const;
-
+    
     /** Get sorted vector of raw digits 
      */
     const std::vector<RawDigit>& getRawDigits() const { return m_sortedDigits; }
 
-    /** Get cluster eta
-    */
-    double computeEta(double thetaU, double thetaV) const; 
-    
-    /** Get cluster eta bin  
-    */
-    int computeEtaBin(double eta, const std::vector<double>& etaBinEdges) const; 
-
-    /** Get index of head pixel in cluster
-    */
-    int getHeadPixelIndex(double thetaU, double thetaV) const; 
-    
-    /** Get index of tail pixel in cluster
-    */
-    int getTailPixelIndex(double thetaU, double thetaV) const;
-    
-    /** Get indes of last pixel of local row vOffset  
-    */
-    int getLastPixelWithVOffset(int vOffset) const; 
-
-    /** Get index of first pixel of local row vOffset 
-    */
-    int getFirstPixelWithVOffset(int vOffset) const; 
-    
     /** Compute center of gravity hit position and covariance matrix
     */
     void getCenterOfGravity(const Det& Sensor, double& u, double& v, double& cov_u, double& cov_v, double& cov_uv) const;
@@ -178,8 +132,6 @@ namespace depfet {
     unsigned short m_vStart;     
     // Sorted vector of raw digits 
     std::vector<RawDigit> m_sortedDigits;
-    // ClusterType
-    unsigned short tmpType;
   };
 }
 #endif
