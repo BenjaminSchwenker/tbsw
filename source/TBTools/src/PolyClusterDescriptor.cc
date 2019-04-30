@@ -48,7 +48,9 @@ namespace depfet {
     ret.reserve(9+12*m_sortedDigits.size());
     ret.append(fmt::format("E{}P{}.{}.{}",etaBin,0,0,m_sortedDigits[0].m_pixelType));
     for (auto&& digit : m_sortedDigits ) {
-      ret.append(fmt::format("D{}.{}.{}", int(10000*(digit.m_cellPosV - m_originV)), int(10000*(digit.m_cellPosU - m_originU)), digit.m_pixelType));
+      int tmpV = int(std::round( 10000*(digit.m_cellPosV - m_originV) ));
+      int tmpU = int(std::round( 10000*(digit.m_cellPosU - m_originU) ));
+      ret.append(fmt::format("D{}.{}.{}", tmpV, tmpU, digit.m_pixelType));
     }
     return ret;
   }
@@ -59,7 +61,9 @@ namespace depfet {
     ret.reserve(7+12*m_sortedDigits.size());
     ret.append(fmt::format("P{}.{}.{}",0,0,m_sortedDigits[0].m_pixelType));
     for (auto&& digit : m_sortedDigits ) {
-      ret.append(fmt::format("D{}.{}.{}", int(10000*(digit.m_cellPosV - m_originV)), int(10000*(digit.m_cellPosU - m_originU)), digit.m_pixelType));
+      int tmpV = int(std::round( 10000*(digit.m_cellPosV - m_originV) ));
+      int tmpU = int(std::round( 10000*(digit.m_cellPosU - m_originU) ));
+      ret.append(fmt::format("D{}.{}.{}", tmpV, tmpU, digit.m_pixelType));
     }
     return ret;
   }  
