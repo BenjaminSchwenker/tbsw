@@ -6,13 +6,11 @@
 #ifndef GoeClusterCalibratorForMC_H
 #define GoeClusterCalibratorForMC_H 1
 
-
-
-
 // Include basic C
 #include <vector>
 #include <string>
 #include <map>
+#include <set>
 
 // Include Marlin classes
 #include <marlin/Global.h>
@@ -145,6 +143,8 @@ namespace depfet {
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number
     int    _nEvt ;   //!< Event number
+
+    std::set<int> _setOfPlaneNumbers; //!< Set of plane numbers to be corrected  
  
   }; // Class
 
