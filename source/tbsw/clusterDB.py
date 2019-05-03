@@ -325,118 +325,8 @@ class ClusterDB(object):
     else: 
       return float('nan')
   
-  def plotClusterType(self, clusterType, imagePath, pitchU=None, pitchV=None):
-    """
-    Create an image of the pixel cells of the given cluster type 
-    overlaid with 68% error ellipses of position estimators. 
-    """
-    
-    import matplotlib.pyplot as plt
-    from matplotlib.patches import Ellipse
-    from matplotlib.patches import Rectangle
-    import numpy as np
-    
-    def get_pixeltype(clusterType):
-      return int(clusterType.split('D')[0].split('P')[1].split('.')[2])
-      
-    def get_cells(clusterType):
-      uCells = list()
-      vCells = list()
-      digits = re.split('D',clusterType)[1:] 
-      for digit in digits:
-        uCells.append( int(re.split('\.',digit)[1]) )  
-        vCells.append( int(re.split('\.',digit)[0]) )      
-      return uCells, vCells
-    
-    def create_pixels(ucells, vcells, pixelType, pitchU, pitchV):  
-      size = len(ucells)
-      pixels = []
-      for i in range(size): 
-        pix = Rectangle( (-pitchU/2. + ucells[i]*pitchU, -pitchV/2. + vcells[i]*pitchV), pitchU, pitchV,)		
-        pix.set_alpha(0.1)
-        pix.set_facecolor('blue')
-        pix.set_edgecolor('blue')
-        pixels.append(pix)
-      return pixels
-      
-    def create_error_ellipse(u, v, cov):
-      vals, vecs = np.linalg.eigh(cov)
-      order = vals.argsort()[::-1]
-      vals = vals[order]
-      vecs = vecs[:,order]
-      theta = np.degrees(np.arctan2(*vecs[:,0][::-1]))
-      w, h = 2 * math.sqrt(2.30) * np.sqrt(vals)
-      ell = Ellipse( (u, v), width=w, height=h, angle=theta,)
-      ell.set_alpha(0.4)
-      ell.set_facecolor('none')
-      return ell
-    
-    # Compute pixeltype
-    pixelType = get_pixeltype(clusterType)
-    
-    if pitchU == None or pitchV == None: 
-      if not pixelType in self.protoPixels: 
-        print("Cannot find pixel pitch for pixelType {}. Ignore cluster type!".format(pixelType))
-        return     
-      pitchU = self.protoPixels[pixelType][1][0] - self.protoPixels[pixelType][0][0]
-      pitchV = self.protoPixels[pixelType][1][1] - self.protoPixels[pixelType][2][1]
-    
-    # Sum the fractions for all shape belonging to the cluster type
-    # Note that we do not want to match shapes with more digits
-    sum_prob = self.getFraction('^E[0-9]'+clusterType+'$') 
-    
-    # Compute the sigmaU, sigmaV and rho for the weighted avarage 
-    # of the covariance matrices of all contributing shapes. 
-    av_sigU, _ = self.getSigmaU('^E[0-9]'+clusterType+'$')
-    av_sigV, _ = self.getSigmaV('^E[0-9]'+clusterType+'$')
-    av_rho = self.getRho('^E[0-9]'+clusterType+'$')    
-    
-    # Compute list of uCells and vCells 
-    uCells, vCells = get_cells(clusterType)
-    
-    # Prepare new figure 
-    fig = plt.figure(0)
-    
-    ax = fig.add_subplot(111, aspect='equal')
-    ax.set_xlim(-pitchU, (np.max(uCells)+1)*pitchU)
-    ax.set_ylim(-pitchV, (np.max(vCells)+1)*pitchV)
-    ax.set_xlabel('offset u / mm')
-    ax.set_ylabel('offset v / mm')
-    ax.set_title(clusterType)
-    ax.text(0.5, 0.9, 'prob={:.2f}% \n $\sigma_u$={:.1f}$\mu$m, $\sigma_v$={:.1f}$\mu$m, $\\rho$={:.2f}'.format(sum_prob, 1000*av_sigU, 1000*av_sigV, av_rho),
-          style='italic',
-          bbox={'facecolor':'red', 'alpha':0.5, 'pad':10},
-          horizontalalignment='center',
-          verticalalignment='center',
-          transform = ax.transAxes)
-    
-    # Draw the cluster outline
-    pixels = create_pixels(uCells, vCells, pixelType, pitchU, pitchV)      
-    for pixel in pixels:
-      pixel.set_clip_box(ax.bbox)
-      ax.add_artist(pixel)
-      
-    # Loop over all shapes   
-    for shape in self.getSelectedShapes('^E[0-9]'+clusterType+'$') :
-      prob = self.getFraction('^'+shape+'$')
-      sigU, _ = self.getSigmaU('^'+shape+'$')
-      sigV, _ = self.getSigmaV('^'+shape+'$')
-      rho = self.getRho('^'+shape+'$')           
-      posU = self.getPositionU('^'+shape+'$')
-      posV = self.getPositionV('^'+shape+'$') 
-      cov = np.array( [ [sigU*sigU, rho*sigU*sigV], [rho*sigU*sigV, sigV*sigV]] )
-      
-      # Draw 68% error ellipse 
-      ell = create_error_ellipse(posU, posV, cov)
-      ell.set_clip_box(ax.bbox)
-      ell.set_color('black')
-      ax.add_artist(ell)
-      ax.scatter(posU, posV, color='black')
-        
-    fig.savefig(imagePath)
-    fig.clf()
-
-  def plotPolyClusterType(self, clusterType, imagePath, pitchU=None, pitchV=None, scale=10000):
+   
+  def plotClusterType(self, clusterType, imagePath, scale=10000, poly=True):
     """
     Create an image of the pixel cells of the given cluster type 
     overlaid with 68% error ellipses of position estimators. 
@@ -446,6 +336,7 @@ class ClusterDB(object):
     from matplotlib.patches import Ellipse
     from matplotlib.patches import Polygon
     import numpy as np
+    import textwrap
       
     def get_poly_cells(clusterType):
       cells = list() 
@@ -454,16 +345,20 @@ class ClusterDB(object):
         cells.append( (float(re.split('\.',digit)[1])/scale, float(re.split('\.',digit)[0])/scale, int(re.split('\.',digit)[2]) ) )  
       return cells
     
-    def get_bounding_box(cells):  
-      edges = list()
-      for originU, originV, pixelType in cells: 
-        if not pixelType in self.protoPixels: 
-          print("Cannot find pixel pitch for pixelType {}. Ignore cluster type!".format(pixelType))
-          return     
-        edges.extend([(u+originU, v+originV ) for u,v in self.protoPixels[pixelType]])
-      edges = np.array(edges)
-      return np.min(edges[:,0]), np.max(edges[:,0]), np.min(edges[:,1]), np.max(edges[:,1])
+    def get_square_cells(clusterType):
+      cells = list()
+      pixelType = int(clusterType.split('D')[0].split('P')[1].split('.')[2]) 
+      if not pixelType in self.protoPixels: 
+        print("Cannot find pixel pitch for pixelType {}. Ignore cluster type!".format(pixelType))
+        return cells    
+      pitchU = self.protoPixels[pixelType][1][0] - self.protoPixels[pixelType][0][0]
+      pitchV = self.protoPixels[pixelType][1][1] - self.protoPixels[pixelType][2][1]
       
+      digits = re.split('D',clusterType)[1:] 
+      for digit in digits:		
+        cells.append( float(re.split('\.',digit)[1])*pitchU , float(re.split('\.',digit)[0])*pitchV, pixeltype ) 
+      return cells
+     
     def create_poly_pixels(cells):  
       pixels = []
       for originU, originV, pixelType in cells: 
@@ -478,7 +373,17 @@ class ClusterDB(object):
         pix.set_edgecolor('blue')
         pixels.append(pix)
       return pixels
-      
+     
+    def get_bounding_box(cells):  
+      edges = list()
+      for originU, originV, pixelType in cells: 
+        if not pixelType in self.protoPixels: 
+          print("Cannot find pixel pitch for pixelType {}. Ignore cluster type!".format(pixelType))
+          return     
+        edges.extend([(u+originU, v+originV ) for u,v in self.protoPixels[pixelType]])
+      edges = np.array(edges)
+      return np.min(edges[:,0]), np.max(edges[:,0]), np.min(edges[:,1]), np.max(edges[:,1])
+        
     def create_error_ellipse(u, v, cov):
       vals, vecs = np.linalg.eigh(cov)
       order = vals.argsort()[::-1]
@@ -502,18 +407,29 @@ class ClusterDB(object):
     av_rho = self.getRho('^E[0-9]'+clusterType+'$')    
     
     # Compute list of cells and bounding box
-    cells = get_poly_cells(clusterType)
-    umin, umax, vmin, vmax = get_bounding_box(cells)  
+    if poly: 
+      cells = get_poly_cells(clusterType)
+    else: 
+      cells = get_square_cells(clusterType)    
     
     # Prepare new figure 
     fig = plt.figure(0)
     
-    ax = fig.add_subplot(111, aspect='equal')
-    ax.set_xlim(1.5*umin, 1.5*umax)
-    ax.set_ylim(1.5*vmin, 1.5*vmax)
+    # Set margins for plotting 
+    umin, umax, vmin, vmax = get_bounding_box(cells)  
+    marginU = 1.5*min(abs(umin), abs(umax))
+    marginV = 1.5*min(abs(vmin), abs(vmax))
+    
+
+    #ax = fig.add_subplot(111, aspect='equal')
+    ax = fig.add_subplot(111)
+    ax.set_xlim(umin - marginU, umax + marginU)
+    ax.set_ylim(vmin - marginV, vmax + marginV)
+    
     ax.set_xlabel('offset u / mm')
     ax.set_ylabel('offset v / mm')
-    ax.set_title(clusterType)
+    #ax.set_title(clusterType)
+    ax.set_title("\n".join(textwrap.wrap(clusterType, 50)))
     ax.text(0.5, 0.9, 'prob={:.2f}% \n $\sigma_u$={:.1f}$\mu$m, $\sigma_v$={:.1f}$\mu$m, $\\rho$={:.2f}'.format(sum_prob, 1000*av_sigU, 1000*av_sigV, av_rho),
           style='italic',
           bbox={'facecolor':'red', 'alpha':0.5, 'pad':10},
@@ -543,6 +459,8 @@ class ClusterDB(object):
       ell.set_color('black')
       ax.add_artist(ell)
       ax.scatter(posU, posV, color='black')
-        
+  
+    plt.tight_layout()          
+    
     fig.savefig(imagePath)
     fig.clf()
