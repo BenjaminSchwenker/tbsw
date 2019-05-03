@@ -128,9 +128,9 @@ def plot_clusterDB_sigmas(histo1, histo2, entry1, entry2, paramname, ytitle):
   
 def plot_clusterDB_parameters(inputfilename):
   
-  oldlabels=["E0P0.0.0D0.0","E0P0.0.0D0.0D0.1","E0P0.0.0D0.0D1.0",
-             "E0P0.0.0D0.0D0.1D1.0","E0P0.0.0D0.0D0.1D1.1",
-             "E0P0.0.0D0.0D1.0D1.1","E0P0.0.0D0.1D1.0D1.1","E0P0.0.0D0.0D0.1D1.0D1.1"]
+  oldlabels=["E0P0.0.0D0.0.0","E0P0.0.0D0.0.0D0.184.0","E0P0.0.0D0.0.0D184.0.0",
+             "E0P0.0.0D0.0.0D0.184.0D184.0.0","E0P0.0.0D0.0.0D0.184.0D184.184.0",
+             "E0P0.0.0D0.0.0D184.0.0D184.184.0","E0P0.0.0D0.184.0D184.0.0D184.184.0","E0P0.0.0D0.0.0D0.184.0D184.0.0D184.184.0"]
   newlabels=["1p","2pu","2pv","3p1","3p2","3p3","3p4","4p"]
   
   rootfile = ROOT.TFile( inputfilename, 'READ' )
