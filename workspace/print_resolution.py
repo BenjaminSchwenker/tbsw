@@ -23,7 +23,7 @@ if __name__ == '__main__':
   # Create a db object 
   sensorDB = tbsw.clusterDB.ClusterDB(args.dbpath)
     
-  print("Analyzing clusterDB {:} with thetaU={:.1f} degree, thetaV={:.1f} degree.".format(args.dbpath, sensorDB.getThetaU(), sensorDB.getThetaV() ))
+  print("Analyzing clusterDB {:} with thetaU={:.3f} degree, thetaV={:.3} degree.".format(args.dbpath, sensorDB.getThetaU(), sensorDB.getThetaV() ))
   
   # The coverage efficiency gives the fraction of training clusters that could be succefully 
   # calibrated. Only for these clusters we can make statements for sigma's etc. 

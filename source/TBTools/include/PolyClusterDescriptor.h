@@ -59,7 +59,7 @@ namespace depfet {
 
     /** Default constructor */
     PolyClusterDescriptor():
-      m_originU(0), m_originV(0)
+      m_originU(0), m_originV(0), m_uStart(0), m_vStart(0), m_lowerRight(0), m_upperLeft(0)
     {}
     
     /** Constructor */
@@ -104,13 +104,21 @@ namespace depfet {
     */
     int getTailPixelIndex(double thetaU, double thetaV) const;
     
-  protected:
+  private:
     
     // Origin of cluster coordinates
     float m_originU;   
     // Origin of cluster coordinates
-    float m_originV;   
-    
+    float m_originV;  
+    // Start ucell of the cluster      
+    unsigned short m_uStart;   
+    // Start vcell of the cluster   
+    unsigned short m_vStart;   
+    // Index of digit at lower right corner
+    int m_lowerRight;
+    // Index of digit at upper left corner
+    int m_upperLeft; 
+      
     // Sorted vector of raw digits 
     std::vector<PolyRawDigit> m_sortedDigits;
   };

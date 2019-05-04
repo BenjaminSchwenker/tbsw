@@ -20,14 +20,18 @@ namespace depfet {
     
   /** Constructor */
   PolyClusterDescriptor::PolyClusterDescriptor( const PixelCluster& Cluster, const Det& Sensor) : 
-                                  m_originU(0), m_originV(0)
+                                  m_originU(0), m_originV(0), m_uStart(0), m_vStart(0), m_lowerRight(0), m_upperLeft(0)
   {  
-    const vector<RawDigit>& rawDigits = Cluster.getRawDigits();
-    int size = rawDigits.size(); 
-    m_sortedDigits.reserve(size);
-    
+    m_uStart = Cluster.getUStart(); 
+    m_vStart = Cluster.getVStart(); 
+
     m_originU = std::numeric_limits<float>::max();
     m_originV = std::numeric_limits<float>::max();
+    
+    // Create PolyRawDigit vector 
+    const vector<RawDigit>& rawDigits = Cluster.getRawDigits();
+    size_t size = rawDigits.size(); 
+    m_sortedDigits.reserve(size);
     
     for ( auto&& digit : rawDigits ) {
       float posU = Sensor.GetPixelCenterCoordU(digit.m_cellIDV, digit.m_cellIDU);
@@ -39,14 +43,33 @@ namespace depfet {
       if (posV < m_originV) m_originV = posV; 
     }
     
+    // Sort PolyRawDigit according to position of pixel centers
     std::sort(m_sortedDigits.begin(), m_sortedDigits.end());
+    
+    // Find index of lower right digit 
+    m_lowerRight = size-1; 
+    for (size_t index = 0; index < size-1; ++index) {
+      if (m_sortedDigits[index+1].m_cellPosV > m_sortedDigits[0].m_cellPosV) {
+        m_lowerRight = index;
+        break;   
+      }
+    }    
+    
+    // Find index of upper left digit
+    m_upperLeft = 0; 
+    for (size_t index = size-1; index >0 ; --index) {
+      if (m_sortedDigits[index-1].m_cellPosV < m_sortedDigits[size-1].m_cellPosV) {
+        m_upperLeft = index;
+        break;   
+      }
+    }    
   }
   
-  std::string PolyClusterDescriptor::getShape(int /*vCellPeriod*/, int /*uCellPeriod*/, int etaBin) const 
+  std::string PolyClusterDescriptor::getShape(int vCellPeriod, int uCellPeriod, int etaBin) const 
   {
     std::string ret;
     ret.reserve(9+12*m_sortedDigits.size());
-    ret.append(fmt::format("E{}P{}.{}.{}",etaBin,0,0,m_sortedDigits[0].m_pixelType));
+    ret.append(fmt::format("E{}P{}.{}.{}",etaBin,m_vStart%vCellPeriod,m_uStart%uCellPeriod,m_sortedDigits[0].m_pixelType));
     for (auto&& digit : m_sortedDigits ) {
       int tmpV = int(std::round( 10000*(digit.m_cellPosV - m_originV) ));
       int tmpU = int(std::round( 10000*(digit.m_cellPosU - m_originU) ));
@@ -55,11 +78,11 @@ namespace depfet {
     return ret;
   }
   
-  std::string PolyClusterDescriptor::getType(int /*vCellPeriod*/, int /*uCellPeriod*/) const 
+  std::string PolyClusterDescriptor::getType(int vCellPeriod, int uCellPeriod) const 
   { 
     std::string ret;
     ret.reserve(7+12*m_sortedDigits.size());
-    ret.append(fmt::format("P{}.{}.{}",0,0,m_sortedDigits[0].m_pixelType));
+    ret.append(fmt::format("P{}.{}.{}",m_vStart%vCellPeriod,m_uStart%uCellPeriod,m_sortedDigits[0].m_pixelType));
     for (auto&& digit : m_sortedDigits ) {
       int tmpV = int(std::round( 10000*(digit.m_cellPosV - m_originV) ));
       int tmpU = int(std::round( 10000*(digit.m_cellPosU - m_originU) ));
@@ -101,38 +124,38 @@ namespace depfet {
   
   int PolyClusterDescriptor::getHeadPixelIndex(double thetaU, double thetaV) const
   {
-    // This is a simplfied logic compared to PixelCluster. But it should work ok 
-    // in most cases ... and can serve as a starting point. 
+    // This logic estimates at which digit the particle leaves the sensor
+    // Most meaningfull when thetaU and theta are not both zero.  
     if (thetaV >= 0) {
       if (thetaU >= 0) {
-        return m_sortedDigits.size()-1;
+        return m_sortedDigits.size()-1; // This is the index of upper right digit 
       } else {
-        return m_sortedDigits.size()-1;
+        return m_upperLeft; 
       }
     } else {
       if (thetaU >= 0) {
-        return 0;
+        return m_lowerRight; 
       } else {
-        return 0;
+        return 0; // This is the index of lower left digit
       }
     }
   }
   
   int PolyClusterDescriptor::getTailPixelIndex(double thetaU, double thetaV) const
   {
-    // This is a simplfied logic compared to PixelCluster. But it should work ok 
-    // in most cases ... and can serve as a starting point. 
+    // This logic estimates at which digit the particle enters the sensor
+    // Most meaningfull when thetaU and theta are not both zero.  
     if (thetaV >= 0) {
       if (thetaU >= 0) {
-        return 0;
+        return 0; // This is the index of lower left digit
       } else {
-        return 0;
+        return m_lowerRight;
       }
     } else {
       if (thetaU >= 0) {
-        return m_sortedDigits.size()-1;
+        return m_upperLeft;
       } else {
-        return m_sortedDigits.size()-1;
+        return m_sortedDigits.size()-1; // This is the index of upper right digit 
       }
     }
   }
