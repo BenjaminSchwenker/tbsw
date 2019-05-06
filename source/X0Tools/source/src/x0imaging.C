@@ -187,7 +187,10 @@ using namespace std ;
             histoname.Form("area(%lu,%lu)",i,j);
 
 			histo_theta1[i][j]->Write("theta1_uncorrected_"+histoname);
+			histo_theta1[i][j]->Delete();
 			histo_theta2[i][j]->Write("theta2_uncorrected_"+histoname);
+			histo_theta2[i][j]->Delete();
+
 
 			cout<<"Raw angle distributions in pixel area (col="<<i<<", row="<<j<<") written to disk!"<<endl;
 		}
@@ -547,6 +550,8 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 	double chi2ndof1,chi2ndof2,chi2ndofsum;
     double prob1=0.,prob2=0.,probsum=0.;
 
+	int status1=0,status2=0,statussum=0;
+
 	// X/X0 values from the fit
     double XX01=0.,XX02=0.,XX0sum=0.;
     double XX0err1=0.,XX0err2=0.,XX0errsum=0.;
@@ -555,7 +560,6 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 	double vertex_chi2,vertex_w_mean,vertex_w_rms;
 	double vertex_multiplicity;
 	double vtx_trk_res_u_mean,vtx_trk_res_v_mean,vtx_trk_res_u_rms,vtx_trk_res_v_rms;
-
 
 	// Variables used to calculate the fit range of the histograms
 	double fitrange;
@@ -651,7 +655,11 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 			fitr1=fithistogram1->Fit("theta1_fit",fitoptions);
 		    cout<<endl<<"Fit is valid: "<<fitr1->IsValid()<<endl;
 		    cout<<"Fit status: "<<fitr1->Status()<<endl;
-			if(!fitr1->IsValid()&&fittype==0) cout<<"Fit of second angle distribution failed a second time with status: "<<fitr1<<" !"<< " X/X0 cannot be calculated!"<<endl<<endl<<endl;
+			if(!fitr1->IsValid()&&fittype==0) 
+			{
+				cout<<"Fit of second angle distribution failed a second time with status: "<<fitr1<<" !"<< " X/X0 cannot be calculated!"<<endl<<endl<<endl;
+				status1=2;
+			}
 		}
 
 		TFitResultPtr fitr2=fithistogram2->Fit("theta2_fit",fitoptions);
@@ -665,7 +673,11 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 			fitr2=fithistogram2->Fit("theta2_fit",fitoptions);
 		    cout<<endl<<"Fit is valid: "<<fitr2->IsValid()<<endl;
 		    cout<<"Fit status: "<<fitr2->Status()<<endl;
-			if(!fitr2->IsValid()&&fittype==0) cout<<"Fit of second angle distribution failed a second time with status: "<<fitr2<<" !"<< " X/X0 cannot be calculated!"<<endl<<endl<<endl;
+			if(!fitr2->IsValid()&&fittype==0) 
+			{
+				cout<<"Fit of second angle distribution failed a second time with status: "<<fitr2<<" !"<< " X/X0 cannot be calculated!"<<endl<<endl<<endl;
+				status2=2;
+			}
 		}
 
 		TFitResultPtr fitrsum=fithistogramsum->Fit("thetasum_fit",fitoptions);
@@ -679,7 +691,11 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 			fitrsum=fithistogramsum->Fit("thetasum_fit",fitoptions);
 		    cout<<endl<<"Fit is valid: "<<fitrsum->IsValid()<<endl;
 		    cout<<"Fit status: "<<fitrsum->Status()<<endl;
-			if(!fitrsum->IsValid()&&fittype==1) cout<<"Fit of combined angle distribution failed a second time with status: "<<fitrsum<<" !"<< " X/X0 cannot be calculated!"<<endl<<endl<<endl;
+			if(!fitrsum->IsValid()&&fittype==1) 
+			{
+				cout<<"Fit of combined angle distribution failed a second time with status: "<<fitrsum<<" !"<< " X/X0 cannot be calculated!"<<endl<<endl<<endl;
+				statussum=2;
+			}
 		}
 
 		// Names of the 8 local parameters
@@ -710,6 +726,10 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 
 		// define chi2 cut, if the cut value is below 0 the cut is deactivated
 		double chi2_cut=maxchi2ndof_fit;
+
+		if((chi2_cut > 0)&&(chi2ndofsum>chi2_cut)) statussum=1;
+		if((chi2_cut > 0)&&(chi2ndof1>chi2_cut)) status1=1;
+		if((chi2_cut > 0)&&(chi2ndof2>chi2_cut)) status2=1;
 
 		// Use the chi2 values for quality cuts
 		if(((fittype==0)&&(chi2_cut > 0)&&((chi2ndof1+chi2ndof2)>chi2_cut*2.0))||(!fitr1->IsValid())||(!fitr2->IsValid()))
@@ -814,6 +834,9 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 		chi2ndofsum=-99.0;
 		probsum=-1.0;
 
+		statussum=3;
+		status1=3;
+		status2=3;
 
 		cout<<"Too few tracks in this pixel... no fit done!"<<endl;
 	}
@@ -829,6 +852,10 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 	TH1F* chi2ndofsumhisto=(TH1F*)file->Get("result/fitDQM/fitsumchi2ndof_histo");
 	TH1F* chi2ndof1histo=(TH1F*)file->Get("result/fitDQM/fit1chi2ndof_histo");
 	TH1F* chi2ndof2histo=(TH1F*)file->Get("result/fitDQM/fit2chi2ndof_histo");
+
+    TH1F* fitstatus_sumhisto=(TH1F*)file->Get("result/fitDQM/fitsumstatus_histo");
+    TH1F* fitstatus_1histo=(TH1F*)file->Get("result/fitDQM/fit1status_histo");
+    TH1F* fitstatus_2histo=(TH1F*)file->Get("result/fitDQM/fit2status_histo");
 
 	// Get the mean histogram
 	TH2F* meanmap1=(TH2F*)file->Get("result/theta1mean_image");
@@ -887,6 +914,10 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
     chi2ndof2histo->Fill(chi2ndof2);
 	chi2ndofsummap->SetBinContent(col+1,row+1,chi2ndofsum);
     chi2ndofsumhisto->Fill(chi2ndofsum);
+
+    fitstatus_sumhisto->Fill(statussum);
+    fitstatus_1histo->Fill(status1);
+    fitstatus_2histo->Fill(status2);
 
     // Fill the momentum image
 	mommap->SetBinContent(col+1,row+1,parameters[0]);
@@ -1002,6 +1033,10 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
         chi2ndof1histo->Write();
         chi2ndof2histo->Write();
         chi2ndofsumhisto->Write();
+
+        fitstatus_sumhisto->Write();
+        fitstatus_1histo->Write();
+        fitstatus_2histo->Write();
 
 		probmap1->Write();
 		probmap2->Write();
@@ -1382,6 +1417,15 @@ int main(int , char **)
     fitsumchi2ndof_histo->GetXaxis()->SetTitle("#chi^{2}_{ndof}");
     fitsumchi2ndof_histo->GetYaxis()->SetTitle("number of fits");
 
+    // Fit Status of merged angle dist
+	TH1F * fitsumstatus_histo = new TH1F("fitsumstatus_histo","fitsumstatus_histo",4,0,4);
+    fitsumstatus_histo->GetXaxis()->SetTitle("Fit status");
+    fitsumstatus_histo->GetXaxis()->SetBinLabel(1, "fit worked" );
+    fitsumstatus_histo->GetXaxis()->SetBinLabel(2, "bad chi2" );
+    fitsumstatus_histo->GetXaxis()->SetBinLabel(3, "fit error" );
+    fitsumstatus_histo->GetXaxis()->SetBinLabel(4, "low statistics" );
+    fitsumstatus_histo->GetYaxis()->SetTitle("number of fits");
+
 	// Fit Chi2 image of the first angle distribution
 	TH2F * fit1chi2ndof_image = new TH2F("fit1chi2ndof_image","fit1chi2ndof_image",numcol,umin,umax,numrow,vmin,vmax);
     fit1chi2ndof_image->SetStats(kFALSE);
@@ -1396,6 +1440,15 @@ int main(int , char **)
     fit1chi2ndof_histo->GetXaxis()->SetTitle("#chi^{2}_{ndof}");
     fit1chi2ndof_histo->GetYaxis()->SetTitle("number of fits");
 
+    // Fit Status of angle dist 1
+	TH1F * fit1status_histo = new TH1F("fit1status_histo","fit1status_histo",4,0,4);
+    fit1status_histo->GetXaxis()->SetTitle("Fit status");
+    fit1status_histo->GetXaxis()->SetBinLabel(1, "fit worked" );
+    fit1status_histo->GetXaxis()->SetBinLabel(2, "bad chi2" );
+    fit1status_histo->GetXaxis()->SetBinLabel(3, "fit error" );
+    fit1status_histo->GetXaxis()->SetBinLabel(4, "low statistics" );
+    fit1status_histo->GetYaxis()->SetTitle("number of fits");
+
 	// Fit Chi2 image of the second angle distribution
 	TH2F * fit2chi2ndof_image = new TH2F("fit2chi2ndof_image","fit2chi2ndof_image",numcol,umin,umax,numrow,vmin,vmax);
     fit2chi2ndof_image->SetStats(kFALSE);
@@ -1409,6 +1462,15 @@ int main(int , char **)
 	TH1F * fit2chi2ndof_histo = new TH1F("fit2chi2ndof_histo","fit2chi2ndof_histo",100,0.0,20.0);
     fit2chi2ndof_histo->GetXaxis()->SetTitle("#chi^{2}_{ndof}");
     fit2chi2ndof_histo->GetYaxis()->SetTitle("number of fits");
+
+    // Fit Status of angle dist 2
+	TH1F * fit2status_histo = new TH1F("fit2status_histo","fit2status_histo",4,0,4);
+    fit2status_histo->GetXaxis()->SetTitle("Fit status");
+    fit2status_histo->GetXaxis()->SetBinLabel(1, "fit worked" );
+    fit2status_histo->GetXaxis()->SetBinLabel(2, "bad chi2" );
+    fit2status_histo->GetXaxis()->SetBinLabel(3, "fit error" );
+    fit2status_histo->GetXaxis()->SetBinLabel(4, "low statistics" );
+    fit2status_histo->GetYaxis()->SetTitle("number of fits");
 
     // Fit Probability distribution for first angle dist
 	TH1F * fit1prob_histo = new TH1F("fit1prob_histo","fit1prob_histo",50,0.0,1.0);
