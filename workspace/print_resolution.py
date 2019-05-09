@@ -15,6 +15,8 @@ if __name__ == '__main__':
   parser.add_argument('--dbpath', dest='dbpath', default='', type=str, help='Location of clusterDB file')
   parser.add_argument('--output', dest='output', default='', type=str, help='Location of outputs')
   parser.add_argument('--size', dest='size', default='', type=str, help='Cluster size string')
+  parser.add_argument('--dettype', dest='dtype', default=False, type=bool, help='Detector type poly True or False (default)')
+
   args = parser.parse_args()
   
   # Make folder for output plots 
@@ -62,7 +64,7 @@ if __name__ == '__main__':
   
   # Plot hit estimators for all available cluster types
   for typeID, clusterType in enumerate(sensorDB.getClusterTypes()):
-    sensorDB.plotClusterType(clusterType=clusterType, imagePath="{}/typeID_{:d}.png".format(args.output, typeID))
+    sensorDB.plotClusterType(clusterType=clusterType, imagePath="{}/typeID_{:d}.png".format(args.output, typeID), poly=args.dtype)
   
   # Print hit estimator for selected cluster type
   for uPeriod in sensorDB.getPeriodsU(): 
