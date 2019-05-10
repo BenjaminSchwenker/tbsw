@@ -356,7 +356,7 @@ class ClusterDB(object):
       
       digits = re.split('D',clusterType)[1:] 
       for digit in digits:		
-        cells.append( float(re.split('\.',digit)[1])*pitchU , float(re.split('\.',digit)[0])*pitchV, pixeltype ) 
+        cells.append( (float(re.split('\.',digit)[1])*pitchU , float(re.split('\.',digit)[0])*pitchV, pixelType) ) 
       return cells
      
     def create_poly_pixels(cells):  

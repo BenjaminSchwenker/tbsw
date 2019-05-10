@@ -4,6 +4,13 @@ This is an example script prints the extracted cluster resolutions (sigmas) from
 Author: Benjamin Schwenker <benjamin.schwenker@phys.uni-goettingen.de>  
 """
 
+def str2bool(v):
+  if v.lower() in ('yes', 'true', 'on', 't', 'y', '1'):
+    return True
+  elif v.lower() in ('no', 'false', 'off', 'f', 'n', '0'):
+    return False
+  else:
+    raise argparse.ArgumentTypeError('Boolean value expected')
 
 if __name__ == '__main__':
   import tbsw 
@@ -15,7 +22,7 @@ if __name__ == '__main__':
   parser.add_argument('--dbpath', dest='dbpath', default='', type=str, help='Location of clusterDB file')
   parser.add_argument('--output', dest='output', default='', type=str, help='Location of outputs')
   parser.add_argument('--size', dest='size', default='', type=str, help='Cluster size string')
-  parser.add_argument('--dettype', dest='dtype', default=False, type=bool, help='Detector type poly True or False (default)')
+  parser.add_argument('--clustype', dest='cltype', default=True, type=str2bool, help='Cluster descriptor type poly True (default) or False')
 
   args = parser.parse_args()
   
@@ -64,7 +71,7 @@ if __name__ == '__main__':
   
   # Plot hit estimators for all available cluster types
   for typeID, clusterType in enumerate(sensorDB.getClusterTypes()):
-    sensorDB.plotClusterType(clusterType=clusterType, imagePath="{}/typeID_{:d}.png".format(args.output, typeID), poly=args.dtype)
+    sensorDB.plotClusterType(clusterType=clusterType, imagePath="{}/typeID_{:d}.png".format(args.output, typeID), poly=args.cltype)
   
   # Print hit estimator for selected cluster type
   for uPeriod in sensorDB.getPeriodsU(): 
