@@ -55,7 +55,7 @@ namespace depfet {
     /** Default constructor */
     PixelCluster():
       m_sensorID(0), m_clsCharge(0), m_seedCharge(0),
-      m_clsSize(0), m_uSize(0), m_vSize(0), m_uStart(0), m_vStart(0)
+      m_clsSize(0), m_uSize(0), m_vSize(0), m_uStart(0), m_vStart(0), m_uSeed(0), m_vSeed(0)
     {}
     
     /** Constructor */
@@ -104,10 +104,20 @@ namespace depfet {
      */
     unsigned short getVStart() const { return m_vStart; }
     
+    /** Get seed pixel cell in u direction.
+     * @return uCell of seed pixel.
+     */
+    short getUSeed() const { return m_uSeed; }
+    
+    /** Get seed pixel cell in v direction.
+     * @return vCell of seed pixel.
+     */
+    short getVSeed() const { return m_vSeed; }
+    
     /** Get sorted vector of raw digits 
      */
     const std::vector<RawDigit>& getRawDigits() const { return m_sortedDigits; }
-
+    
     /** Compute center of gravity hit position and covariance matrix
     */
     void getCenterOfGravity(const Det& Sensor, double& u, double& v, double& cov_u, double& cov_v, double& cov_uv) const;
@@ -130,6 +140,11 @@ namespace depfet {
     unsigned short m_uStart;   
     // Start vcell of the cluster   
     unsigned short m_vStart;     
+    // Seed pixel uCell address   
+    short m_uSeed;
+    // Seed pixel vCell address  
+    short m_vSeed;
+
     // Sorted vector of raw digits 
     std::vector<RawDigit> m_sortedDigits;
   };

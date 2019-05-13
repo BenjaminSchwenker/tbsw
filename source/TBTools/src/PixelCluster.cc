@@ -22,7 +22,7 @@ namespace depfet {
   /** Constructor */
   PixelCluster::PixelCluster( TrackerData * Digits, unsigned short sensorID) : 
                                   m_sensorID(sensorID), m_clsCharge(0), m_seedCharge(0),
-                                  m_clsSize(0), m_uSize(0), m_vSize(0), m_uStart(0), m_vStart(0)
+                                  m_clsSize(0), m_uSize(0), m_vSize(0), m_uStart(0), m_vStart(0), m_uSeed(0), m_vSeed(0)
   {
     const EVENT::FloatVec &rawDigits = Digits->getChargeValues();
     int size = rawDigits.size()/3; 
@@ -40,7 +40,11 @@ namespace depfet {
       
       m_clsCharge += charge;
       
-      if ( m_seedCharge < charge ) m_seedCharge = charge;  
+      if ( m_seedCharge < charge ) {
+        m_seedCharge = charge;
+        m_uSeed = iU;
+        m_vSeed = iV;
+      }  
       if (iV < vMin) vMin = iV; 
       if (iV > vMax) vMax = iV;
       if (iU < uMin) uMin = iU;

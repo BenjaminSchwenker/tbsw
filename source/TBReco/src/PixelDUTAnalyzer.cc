@@ -478,15 +478,19 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
       
     TBHit& hit = HitStore[ihit];
     
+    // Get uv hit coordinate of hit in mm 
     _rootHitU = hit.GetCoord()[0];         
     _rootHitV = hit.GetCoord()[1];   
     
-    _rootHitCellU= dut.GetUCellFromCoord( _rootHitU, _rootHitV );  
-    _rootHitCellV = dut.GetVCellFromCoord( _rootHitU, _rootHitV );  
-    _rootHitPixelType = dut.GetPixelType(_rootHitCellV, _rootHitCellU);   
-
+    // Compute pixel cell which covers the hit coordinates 
+    _rootHitCellU = dut.GetUCellFromCoord( _rootHitU, _rootHitV );  
+    _rootHitCellV = dut.GetVCellFromCoord( _rootHitU, _rootHitV ); 
+    
     // Cluster shape variables   
     PixelCluster Cluster = hit.GetCluster();
+    _rootHitSeedCellU = Cluster.getUSeed();     
+    _rootHitSeedCellV = Cluster.getUSeed();    
+    _rootHitSeedPixelType = dut.GetPixelType(_rootHitSeedCellV, _rootHitSeedCellU);   
        
     _rootHitQuality = 0; 
     _rootHitClusterCharge = Cluster.getCharge() ; 
@@ -494,8 +498,6 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     _rootHitSize = Cluster.getSize();  
     _rootHitSizeU = Cluster.getUSize();     
     _rootHitSizeV = Cluster.getVSize();     
-    _rootClusterStartCellU = Cluster.getUStart();
-    _rootClusterStartCellV = Cluster.getVStart();
     
     // Add variables for matched track 
     if ( hit2track[ihit] >= 0 ) {  
@@ -758,10 +760,10 @@ void PixelDUTAnalyzer::bookHistos()
    _rootHitTree->Branch("pull_resv"       ,&_rootHitPullResidualV    ,"pull_resv/D");  
    _rootHitTree->Branch("cellU_fit"       ,&_rootHitFitCellU           ,"cellU_fit/I");
    _rootHitTree->Branch("cellV_fit"       ,&_rootHitFitCellV           ,"cellV_fit/I");
-   _rootHitTree->Branch("cellU_hit"       ,&_rootHitCellU           ,"cellU_hit/I");
-   _rootHitTree->Branch("cellV_hit"       ,&_rootHitCellV           ,"cellV_hit/I");
-   _rootHitTree->Branch("startCellU_cluster"       ,&_rootClusterStartCellU           ,"startCellU_cluster/I");
-   _rootHitTree->Branch("srartCellV_cluster"       ,&_rootClusterStartCellV           ,"startCellV_cluster/I");
+   _rootHitTree->Branch("cellU_hit"       ,&_rootHitCellU              ,"cellU_hit/I");
+   _rootHitTree->Branch("cellV_hit"       ,&_rootHitCellV              ,"cellV_hit/I");
+   _rootHitTree->Branch("cellU_seed"      ,&_rootHitSeedCellU          ,"cellU_seed/I");
+   _rootHitTree->Branch("cellV_seed"      ,&_rootHitSeedCellV          ,"cellV_seed/I");
    _rootHitTree->Branch("cellUCenter_fit" ,&_rootHitFitCellUCenter  ,"cellUCenter_fit/D");
    _rootHitTree->Branch("cellVCenter_fit" ,&_rootHitFitCellVCenter  ,"cellVCenter_fit/D");                                      
    _rootHitTree->Branch("trackChi2"       ,&_rootHitTrackChi2      ,"trackChi2/D");
@@ -769,7 +771,7 @@ void PixelDUTAnalyzer::bookHistos()
    _rootHitTree->Branch("trackNHits"      ,&_rootHitTrackNHits     ,"trackNHits/I");  
    _rootHitTree->Branch("momentum"        ,&_rootHitFitMomentum      ,"momentum/D");    
    _rootHitTree->Branch("localChi2"       ,&_rootHitLocalChi2       ,"localChi2/D"); 
-   _rootHitTree->Branch("pixeltype"       ,&_rootHitPixelType     ,"pixeltype/I");  
+   _rootHitTree->Branch("pixeltype"       ,&_rootHitSeedPixelType     ,"pixeltype/I");  
     
    // 
    // Track Tree 
