@@ -194,7 +194,7 @@ void RawHitDQM::processEvent(LCEvent * evt)
       PixelCluster Cluster = Hit.GetCluster(); 
       
       histoName = "hdigitmap"+planeNumber;
-      _histoMap2D[ histoName  ]->Fill(Cluster.getUStart(),Cluster.getVStart()); 
+      _histoMap2D[ histoName  ]->Fill(Cluster.getUSeed(),Cluster.getVSeed()); 
       
       histoName = "hcls_charge_sensor"+planeNumber;
       _histoMap[ histoName  ]->Fill(Cluster.getCharge()); 
@@ -363,8 +363,8 @@ void RawHitDQM::bookHistos() {
     histoName = "hdigitmap"+to_string( ipl );
     histoTitle ="Hitmap for plane " +to_string( ipl )+" SensorID " + to_string( adet.GetSensorID() );
     _histoMap2D[ histoName] = new TH2D(histoName.c_str(), histoTitle.c_str(),uBins, minUCell, maxUCell+1, vBins, minVCell, maxVCell+1);// +1 for max with same bincount before, max is not included upper bin edge
-    _histoMap2D[histoName]->SetXTitle("cluster u start [cellID]"); 
-    _histoMap2D[histoName]->SetYTitle("cluster v start [cellID]");    
+    _histoMap2D[histoName]->SetXTitle("cluster u seed [cellID]"); 
+    _histoMap2D[histoName]->SetYTitle("cluster v seed [cellID]");    
     _histoMap2D[histoName]->SetStats( false ); 
    
     histoName = "hcls_charge_sensor"+to_string( ipl );
