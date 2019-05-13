@@ -228,127 +228,88 @@ example. The main advantage of this choice is that we can always work in the loc
 The structure of the root trees is always the same: 
 
 ```c
-int _rootEventNumber;             // Event number from lcio file
-int _rootRunNumber;               // Run number from lcio file 
-int _rootSensorID;                // SensorID from lcio file (this is typically NOT the plane number!!)
-int _rootNTelTracks;              // Number of tracks in reference telescope in same event as hit
-int nDutDigits;                   // Number of DUT digits in the same event as hit   
-int _rootHitQuality;              // GoodCluster == 0, BadCluster != 0
-double _rootHitU;                 // Hit coordinate u reconstructed from DUT cluster in mm, in local DUT uvw coordinates       
-double _rootHitV;                 // Hit coordinate v reconstructed from DUT cluster in mm, in local DUT uvw coordinates     
-double _rootHitClusterCharge;     // Sum over all charges in the cluster 
-double _rootHitSeedCharge;        // Highest charge in cluster
-int _rootHitSize;                 // Number of hit cells (pixels/strips) in cluster
-int _rootHitSizeU;                // Number of hit cells along u direction in cluster
-int _rootHitSizeV;                // Number of hit cells along v direction in cluster
-int _rootHitCellU;                // Hit u coordinate lies on this u cell
-int _rootHitCellV;                // Hit v coordinate lies on this v cell
-int _rootHitHasTrack;             // Hit can be matched to track (== 0)     
-double _rootHitFitMomentum;       // Estimated track momentum from fit, only filled in case HasTrack==0            
-double _rootHitFitU;              // Estimated track intersection u coordimate in mm, in local DUT uvw coordinates        
-double _rootHitFitV;              // Estimated track intersection v coordimate in mm, in local DUT uvw coordinates                  
-double _rootHitFitdUdW;           // Estimated track slope du/dw in radians, in local DUT uvw coordinates       
-double _rootHitFitdVdW;           // Estimated track slope dv/dw in radians, in local DUT uvw coordinates    
-double _rootHitFitErrorU;         // Estimated 1x sigma uncertainty for track intersection u coordinate
-double _rootHitFitErrorV;         // Estimated 1x sigma uncertainty for track intersection v coordinate
-double _rootHitPullResidualU;     // Standardized residual in u direction, should have mean = 0 and rms = 1
-double _rootHitPullResidualV;     // Standardized residual in v direction, should have mean = 0 and rms = 1        
-int _rootHitFitCellU;             // Estimated track intersection u coordinate lies on this u cell      
-int _rootHitFitCellV;             // Estimated track intersection v coordinate lies on this v cell         
-double _rootHitFitCellUCenter;    // Central coordinate of cell 'FitCellU' in mm        
-double _rootHitFitCellVCenter;    // Central coordinate of cell 'FitCellV' in mm 
-double _rootHitTrackChi2 ;        // Chi2 value from fit of reference track
-double _rootHitLocalChi2;         // Chi2 value from hit-track residual on device under test 
-int _rootHitTrackNDF;             // Number of degrees of freedom of track fit
-int _rootHitTrackNHits;           // Number of telescope hits used for track fitting 
-int _rootTrackHasHit;             // Track can be matched to a DUT hit (== 0) 
-double _rootTrackFitMomentum;     // Estimated track momentum from fit    
-int _rootTrackNDF;                // Number of degrees of freedom of track fit
-double _rootTrackChi2;            // Chi2 value from fit of reference track
-double _rootTrackLocalChi2;       // Chi2 value from hit-track residual on device under test 
-double _rootTrackFitU ;           // Estimated track intersection u coordimate in mm, in local DUT uvw coordinates 
-double _rootTrackFitV ;           // Estimated track intersection v coordimate in mm, in local DUT uvw coordinates 
-double _rootTrackFitdUdW;         // Estimated track slope du/dw in radians, in local DUT uvw coordinates     
-double _rootTrackFitdVdW;         // Estimated track slope dv/dw in radians, in local DUT uvw coordinates     
-int _rootTrackFitCellU;           // Estimated track intersection u coordinate lies on this u cell  
-int _rootTrackFitCellV;           // Estimated track intersection v coordinate lies on this v cell   
-int _rootTrackNHits;              // Number of telescope hits used for track fitting 
-double _rootTrackFitCellUCenter;  // Central coordinate of cell 'FitCellU' in mm 
-double _rootTrackFitCellVCenter;  // Central coordinate of cell 'FitCellV' in mm 
-double _rootTrackSeedCharge;      // Highest charge in cluster, only filled if cluster matched
-
-// Hit Tree, filled once per DUT cluster 
+// 
+// Hit Tree  filled once per hit (potentially multiple times per event)
 _rootHitTree = new TTree("Hit","Hit info");
-_rootHitTree->Branch("iRun"            ,&_rootRunNumber        ,"iRun/I");
-_rootHitTree->Branch("iEvt"            ,&_rootEventNumber      ,"iEvt/I");
-_rootHitTree->Branch("sensorID"        ,&_rootSensorID       ,"sensorID/I");
-_rootHitTree->Branch("nTelTracks"      ,&_rootNTelTracks       ,"nTelTracks/I"); 
-_rootHitTree->Branch("nDutDigits"        ,&_rootNDUTDigits          ,"nDutDigits/I");
-_rootHitTree->Branch("clusterQuality"  ,&_rootHitQuality   ,"clusterQuality/I");
-_rootHitTree->Branch("u_hit"           ,&_rootHitU             ,"u_hit/D");
-_rootHitTree->Branch("v_hit"           ,&_rootHitV             ,"v_hit/D");     
-_rootHitTree->Branch("clusterCharge"   ,&_rootHitClusterCharge ,"clusterCharge/D");
-_rootHitTree->Branch("seedCharge"      ,&_rootHitSeedCharge       ,"seedCharge/D");
-_rootHitTree->Branch("sizeU"           ,&_rootHitSizeU        ,"sizeU/I");
-_rootHitTree->Branch("sizeV"           ,&_rootHitSizeV        ,"sizeV/I");
-_rootHitTree->Branch("size"            ,&_rootHitSize         ,"size/I");
-_rootHitTree->Branch("hasTrack"        ,&_rootHitHasTrack         ,"hasTrack/I");  
-_rootHitTree->Branch("hasTrackWithRefHit", &_rootHitHasTrackWithRefHit,"hasTrackWithRefHit/I"); 
-_rootHitTree->Branch("u_fit"           ,&_rootHitFitU             ,"u_fit/D");
-_rootHitTree->Branch("v_fit"           ,&_rootHitFitV             ,"v_fit/D"); 
-_rootHitTree->Branch("dudw_fit"        ,&_rootHitFitdUdW          ,"dudw_fit/D");
-_rootHitTree->Branch("dvdw_fit"        ,&_rootHitFitdVdW          ,"dvdw_fit/D");    
-_rootHitTree->Branch("u_fiterr"        ,&_rootHitFitErrorU        ,"u_fiterr/D");
-_rootHitTree->Branch("v_fiterr"        ,&_rootHitFitErrorV        ,"v_fiterr/D");   
-_rootHitTree->Branch("pull_resu"       ,&_rootHitPullResidualU    ,"pull_resu/D");
-_rootHitTree->Branch("pull_resv"       ,&_rootHitPullResidualV    ,"pull_resv/D");  
-_rootHitTree->Branch("cellU_fit"       ,&_rootHitFitCellU           ,"cellU_fit/I");
-_rootHitTree->Branch("cellV_fit"       ,&_rootHitFitCellV           ,"cellV_fit/I");
-_rootHitTree->Branch("cellU_hit"       ,&_rootHitCellU           ,"cellU_hit/I");
-_rootHitTree->Branch("cellV_hit"       ,&_rootHitCellV           ,"cellV_hit/I");
-_rootHitTree->Branch("startCellU_cluster"       ,&_rootClusterStartCellU           ,"startCellU_cluster/I");
-_rootHitTree->Branch("srartCellV_cluster"       ,&_rootClusterStartCellV           ,"startCellV_cluster/I");
-_rootHitTree->Branch("cellUCenter_fit" ,&_rootHitFitCellUCenter  ,"cellUCenter_fit/D");
-_rootHitTree->Branch("cellVCenter_fit" ,&_rootHitFitCellVCenter  ,"cellVCenter_fit/D");                                      
-_rootHitTree->Branch("trackChi2"       ,&_rootHitTrackChi2      ,"trackChi2/D");
-_rootHitTree->Branch("trackNdof"       ,&_rootHitTrackNDF       ,"trackNdof/I");
-_rootHitTree->Branch("trackNHits"      ,&_rootHitTrackNHits     ,"trackNHits/I");  
-_rootHitTree->Branch("momentum"        ,&_rootHitFitMomentum      ,"momentum/D");    
-_rootHitTree->Branch("localChi2"       ,&_rootHitLocalChi2       ,"localChi2/D"); 
-_rootHitTree->Branch("pixeltype"       ,&_rootHitPixelType     ,"pixeltype/I");  
-   
-// Track tree, filled once per reference track 
+_rootHitTree->Branch("iRun"            ,&_rootRunNumber        ,"iRun/I");         // Run number from lcio file 
+_rootHitTree->Branch("iEvt"            ,&_rootEventNumber      ,"iEvt/I");         // Event number from lcio file
+_rootHitTree->Branch("sensorID"        ,&_rootSensorID       ,"sensorID/I");       // DUT SensorID 
+_rootHitTree->Branch("nTelTracks"      ,&_rootNTelTracks     ,"nTelTracks/I");     // Number of tracks in same event 
+_rootHitTree->Branch("nDutDigits"      ,&_rootNDUTDigits     ,"nDutDigits/I");     // Number of DUT digits in the same event  
+_rootHitTree->Branch("hasTestPixels"   ,&_rootDUTHasTestPixels, "hasTestPixels/O");// Flag if DUT sent test digits in event 
+_rootHitTree->Branch("isGoodEvent"     ,&_rootDUTGoodEvent,  "isGoodEvent/O");     // Flag if DUT unpacking w/o errors   
+_rootHitTree->Branch("clusterQuality"  ,&_rootHitQuality   ,"clusterQuality/I");   // GoodCluster == 0, BadCluster != 0
+_rootHitTree->Branch("u_hit"           ,&_rootHitU             ,"u_hit/D");        // Hit coordinate u from DUT cluster in mm      
+_rootHitTree->Branch("v_hit"           ,&_rootHitV             ,"v_hit/D");        // Hit coordinate v from DUT cluster in mm      
+_rootHitTree->Branch("clusterCharge"   ,&_rootHitClusterCharge ,"clusterCharge/D");// Sum over all charges in the cluster 
+_rootHitTree->Branch("seedCharge"      ,&_rootHitSeedCharge    ,"seedCharge/D");   // Highest charge in cluster
+_rootHitTree->Branch("sizeU"           ,&_rootHitSizeU        ,"sizeU/I");         // Number of hit pixels projected on u direction
+_rootHitTree->Branch("sizeV"           ,&_rootHitSizeV        ,"sizeV/I");         // Number of hit pixels projected on v direction 
+_rootHitTree->Branch("size"            ,&_rootHitSize         ,"size/I");          // Number of hit pixels in cluster
+_rootHitTree->Branch("pixeltype"       ,&_rootHitSeedPixelType  ,"pixeltype/I");   // PixelType of seed pixel cell 
+_rootHitTree->Branch("cellU_hit"       ,&_rootHitCellU            ,"cellU_hit/I");  // Hit u coordinate lies on this u cell
+_rootHitTree->Branch("cellV_hit"       ,&_rootHitCellV            ,"cellV_hit/I");  // Hit v coordinate lies on this v cell
+_rootHitTree->Branch("cellU_seed"      ,&_rootHitSeedCellU        ,"cellU_seed/I"); // Seed pixel has this u cell
+_rootHitTree->Branch("cellV_seed"      ,&_rootHitSeedCellV        ,"cellV_seed/I"); // Seed pixel has this u cell
+_rootHitTree->Branch("hasTrack"        ,&_rootHitHasTrack         ,"hasTrack/I");  // Hit can be matched to track (== 0)     
+_rootHitTree->Branch("hasTrackWithRefHit", &_rootHitHasTrackWithRefHit,"hasTrackWithRefHit/I"); // Number of tracks with hit on reference plane in same event
+_rootHitTree->Branch("u_fit"           ,&_rootHitFitU             ,"u_fit/D");     // Estimated track intersection u coordinate in mm, defautls to -1 when HasTrack!=0    
+_rootHitTree->Branch("v_fit"           ,&_rootHitFitV             ,"v_fit/D");     // Estimated track intersection v coordinate in mm, defautls to -1 when HasTrack!=0  
+_rootHitTree->Branch("dudw_fit"        ,&_rootHitFitdUdW          ,"dudw_fit/D");  // Estimated track slope du/dw in radians, defautls to -1 when HasTrack!=0      
+_rootHitTree->Branch("dvdw_fit"        ,&_rootHitFitdVdW          ,"dvdw_fit/D");  // Estimated track slope dv/dw in radians, defautls to -1 when HasTrack!=0  
+_rootHitTree->Branch("momentum"        ,&_rootHitFitMomentum    ,"momentum/D");     // Estimated track momentum from fit, defautls to -1 when HasTrack!=0
+_rootHitTree->Branch("u_fiterr"        ,&_rootHitFitErrorU        ,"u_fiterr/D");  // Estimated 1x sigma uncertainty for track intersection u coordinate, defautls to -1 when HasTrack!=0
+_rootHitTree->Branch("v_fiterr"        ,&_rootHitFitErrorV        ,"v_fiterr/D");  // Estimated 1x sigma uncertainty for track intersection v coordinate, defautls to -1 when HasTrack!=0 
+_rootHitTree->Branch("pull_resu"       ,&_rootHitPullResidualU    ,"pull_resu/D"); // Standardized residual in u direction, defautls to -1 when HasTrack!=0 
+_rootHitTree->Branch("pull_resv"       ,&_rootHitPullResidualV    ,"pull_resv/D"); // Standardized residual in v direction, defautls to -1 when HasTrack!=0 
+_rootHitTree->Branch("cellU_fit"       ,&_rootHitFitCellU         ,"cellU_fit/I"); // Estimated track intersection u coordinate lies on this u cell, defautls to -1 when HasTrack!=0         
+_rootHitTree->Branch("cellV_fit"       ,&_rootHitFitCellV         ,"cellV_fit/I"); // Estimated track intersection v coordinate lies on this v cell, defautls to -1 when HasTrack!=0         
+_rootHitTree->Branch("cellUCenter_fit" ,&_rootHitFitCellUCenter  ,"cellUCenter_fit/D"); // Central coordinate of cell 'FitCellU' in mm, defautls to -1 when HasTrack!=0           
+_rootHitTree->Branch("cellVCenter_fit" ,&_rootHitFitCellVCenter  ,"cellVCenter_fit/D"); // Central coordinate of cell 'FitCellV' in mm, defautls to -1 when HasTrack!=0          
+_rootHitTree->Branch("trackChi2"       ,&_rootHitTrackChi2      ,"trackChi2/D");        // Chi2 value from fit of reference track, defautls to -1 when HasTrack!=0   
+_rootHitTree->Branch("trackNdof"       ,&_rootHitTrackNDF       ,"trackNdof/I");        // Number of degrees of freedom of track fit, defautls to -1 when HasTrack!=0   
+_rootHitTree->Branch("trackNHits"      ,&_rootHitTrackNHits     ,"trackNHits/I");       // Number of telescope hits used for track fitting, defautls to -1 when HasTrack!=0    
+_rootHitTree->Branch("localChi2"       ,&_rootHitLocalChi2      ,"localChi2/D");        // Chi2 value from hit-track residual on device under test, defautls to -1 when HasTrack!=0    
+  
+// 
+// Track Tree filled once per track (potentially multiple times per event)
 _rootTrackTree = new TTree("Track","Track info");
-_rootTrackTree->Branch("iRun"            ,&_rootRunNumber        ,"iRun/I");
-_rootTrackTree->Branch("iEvt"            ,&_rootEventNumber      ,"iEvt/I");
-_rootTrackTree->Branch("sensorID"        ,&_rootSensorID         ,"sensorID/I");
-_rootTrackTree->Branch("nTelTracks"      ,&_rootNTelTracks       ,"nTelTracks/I"); 
-_rootTrackTree->Branch("nDutDigits"      ,&_rootNDUTDigits       ,"nDutDigits/I");
-_rootTrackTree->Branch("hasHit"          ,&_rootTrackHasHit         ,"hasHit/I");
-_rootTrackTree->Branch("hasRefHit"       ,&_rootTrackWithRefHit     ,"hasRefHit/I");
-_rootTrackTree->Branch("momentum"        ,&_rootTrackFitMomentum    ,"momentum/D");                                                           
-_rootTrackTree->Branch("u_fit"           ,&_rootTrackFitU           ,"u_fit/D");
-_rootTrackTree->Branch("v_fit"           ,&_rootTrackFitV           ,"v_fit/D");
-_rootTrackTree->Branch("dudw_fit"        ,&_rootTrackFitdUdW        ,"dudw_fit/D");
-_rootTrackTree->Branch("dvdw_fit"        ,&_rootTrackFitdVdW        ,"dvdw_fit/D");
-_rootTrackTree->Branch("cellU_fit"       ,&_rootTrackFitCellU       ,"cellU_fit/I");
-_rootTrackTree->Branch("cellV_fit"       ,&_rootTrackFitCellV       ,"cellV_fit/I");
-_rootTrackTree->Branch("cellUCenter_fit" ,&_rootTrackFitCellUCenter ,"cellUCenter_fit/D");
-_rootTrackTree->Branch("cellVCenter_fit" ,&_rootTrackFitCellVCenter ,"cellVCenter_fit/D");
-_rootTrackTree->Branch("trackChi2"       ,&_rootTrackChi2           ,"trackChi2/D");
-_rootTrackTree->Branch("trackNdof"       ,&_rootTrackNDF            ,"trackNdof/I");
-_rootTrackTree->Branch("trackNHits"      ,&_rootTrackNHits          ,"trackNHits/I");  
-_rootTrackTree->Branch("seedCharge"      ,&_rootTrackSeedCharge     ,"seedCharge/D");  
-_rootTrackTree->Branch("localChi2"       ,&_rootTrackLocalChi2      ,"localChi2/D"); 
-_rootTrackTree->Branch("pixeltype"       ,&_rootTrackPixelType      ,"pixeltype/I");     
-      
-// Event tree, filled once per event 
+_rootTrackTree->Branch("iRun"            ,&_rootRunNumber      ,"iRun/I");             // Run number from lcio file 
+_rootTrackTree->Branch("iEvt"            ,&_rootEventNumber    ,"iEvt/I");             // Event number from lcio file
+_rootTrackTree->Branch("sensorID"        ,&_rootSensorID        ,"sensorID/I");        // DUT SensorID
+_rootTrackTree->Branch("nTelTracks"      ,&_rootNTelTracks     ,"nTelTracks/I");       // Number of tracks in same event 
+_rootTrackTree->Branch("nDutDigits"      ,&_rootNDUTDigits       ,"nDutDigits/I");     // Number of DUT digits in the same event  
+_rootTrackTree->Branch("isGoodEvent"     ,&_rootDUTGoodEvent,  "isGoodEvent/O");       // Flag if DUT unpacking w/o errors  
+_rootTrackTree->Branch("hasTestPixels"   ,&_rootDUTHasTestPixels, "hasTestPixels/O");  // Flag if DUT sent test digits in event 
+_rootTrackTree->Branch("hasRefHit"       ,&_rootTrackWithRefHit     ,"hasRefHit/I");   // Track has hit on reference plane (== 0) 
+_rootTrackTree->Branch("trackChi2"       ,&_rootTrackChi2           ,"trackChi2/D");   // Chi2 value from fit of reference track
+_rootTrackTree->Branch("trackNdof"       ,&_rootTrackNDF            ,"trackNdof/I");   // Number of degrees of freedom of track fit
+_rootTrackTree->Branch("trackNHits"      ,&_rootTrackNHits          ,"trackNHits/I");  // Number of telescope hits used for track fitting 
+_rootTrackTree->Branch("momentum"        ,&_rootTrackFitMomentum    ,"momentum/D");    // Estimated track momentum from fit (GeV)   
+_rootTrackTree->Branch("u_fit"           ,&_rootTrackFitU           ,"u_fit/D");       // Estimated track intersection u coordimate in mm
+_rootTrackTree->Branch("v_fit"           ,&_rootTrackFitV           ,"v_fit/D");       // Estimated track intersection v coordimate in mm
+_rootTrackTree->Branch("dudw_fit"        ,&_rootTrackFitdUdW        ,"dudw_fit/D");    // Estimated track slope du/dw in radians
+_rootTrackTree->Branch("dvdw_fit"        ,&_rootTrackFitdVdW        ,"dvdw_fit/D");    // Estimated track slope dv/dw in radians,
+_rootTrackTree->Branch("cellU_fit"       ,&_rootTrackFitCellU       ,"cellU_fit/I");   // Estimated track intersection u coordinate lies on this u cell  
+_rootTrackTree->Branch("cellV_fit"       ,&_rootTrackFitCellV       ,"cellV_fit/I");   // Estimated track intersection v coordinate lies on this v cell   
+_rootTrackTree->Branch("cellUCenter_fit" ,&_rootTrackFitCellUCenter ,"cellUCenter_fit/D");   // Central coordinate of cell 'FitCellU' in mm 
+_rootTrackTree->Branch("cellVCenter_fit" ,&_rootTrackFitCellVCenter ,"cellVCenter_fit/D");   // Central coordinate of cell 'FitCellV' in mm 
+_rootTrackTree->Branch("hasHit"          ,&_rootTrackHasHit         ,"hasHit/I");      // Track can be matched to a DUT hit (== 0) 
+_rootTrackTree->Branch("localChi2"       ,&_rootTrackLocalChi2      ,"localChi2/D");   // Chi2 value from hit-track residual on device under test                                                
+_rootTrackTree->Branch("seedCharge"      ,&_rootTrackSeedCharge     ,"seedCharge/D");  // Highest charge in cluster, only filled if cluster matched
+_rootTrackTree->Branch("pixeltype"      ,&_rootTrackPixelType     ,"pixeltype/I");     // PixelType of pixel cell intersected by track 
+
+// 
+// Event Summay Tree filled once per event
 _rootEventTree = new TTree("Event","Event info");
-_rootEventTree->Branch("iRun"            ,&_rootRunNumber      ,"iRun/I");
-_rootEventTree->Branch("iEvt"            ,&_rootEventNumber    ,"iEvt/I");
-_rootEventTree->Branch("sensorID"        ,&_rootSensorID       ,"sensorID/I");   
-_rootEventTree->Branch("nTelTracks"      ,&_rootNTelTracks     ,"nTelTracks/I"); 
-_rootEventTree->Branch("nDutDigits"      ,&_rootNDUTDigits     ,"nDutDigits/I");
+_rootEventTree->Branch("iRun"            ,&_rootRunNumber      ,"iRun/I");            // Run number from lcio file 
+_rootEventTree->Branch("iEvt"            ,&_rootEventNumber    ,"iEvt/I");            // Event number from lcio file
+_rootEventTree->Branch("sensorID"        ,&_rootSensorID       ,"sensorID/I");        // DUT SensorID  
+_rootEventTree->Branch("nTelTracks"      ,&_rootNTelTracks     ,"nTelTracks/I");      // Number of tracks 
+_rootEventTree->Branch("nTelTracksWithRefHit" ,&_rootNTelTracksWithRefHit ,"nTelTracksWithRefHit/I");  // Number of tracks with reference hit
+_rootEventTree->Branch("nDutDigits"      ,&_rootNDUTDigits       ,"nDutDigits/I");    // Number of DUT digits 
+_rootEventTree->Branch("hasTestPixels"   ,&_rootDUTHasTestPixels, "hasTestPixels/O"); // Flag if DUT sent test digits 
+_rootEventTree->Branch("isGoodEvent"     ,&_rootDUTGoodEvent,  "isGoodEvent/O");      // Flag if DUT unpacking w/o errors    
 
 ```
 
