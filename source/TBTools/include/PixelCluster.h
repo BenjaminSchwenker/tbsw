@@ -7,10 +7,6 @@
 #include "lcio.h"
 #include <IMPL/TrackerDataImpl.h>
 
-#include <string>
-#include <ostream>
-#include <sstream>
-
 namespace depfet {
   
   //! RawDigits
@@ -59,17 +55,14 @@ namespace depfet {
     /** Default constructor */
     PixelCluster():
       m_sensorID(0), m_clsCharge(0), m_seedCharge(0),
-      m_clsSize(0), m_uSize(0), m_vSize(0), m_uStart(0), m_vStart(0)
+      m_clsSize(0), m_uSize(0), m_vSize(0), m_uStart(0), m_vStart(0), m_uSeed(0), m_vSeed(0)
     {}
     
     /** Constructor */
     PixelCluster(lcio::TrackerData * Digits, unsigned short sensorID = 0) ;
     
     //! Destructor
-    virtual ~PixelCluster() { /* NOOP */ ; }
-    
-    /** Convert to string */
-    operator std::string() const;
+    ~PixelCluster() { /* NOOP */ ; }
     
     /** Get the sensor ID.
      * @return ID of the sensor.
@@ -110,49 +103,20 @@ namespace depfet {
      * @return first vCell contributing to the cluster.
      */
     unsigned short getVStart() const { return m_vStart; }
-
-    /** Get cluster shape string 
-     * @return shape string containing all features of cluster used for position reconstruction 
+    
+    /** Get seed pixel cell in u direction.
+     * @return uCell of seed pixel.
      */
-    std::string getShape(int pixeltype = 1, int vCellPeriod = 1, int uCellPeriod = 1, int etaBin=0) const; 
-     
-    /** Get cluster type string. 
-     * @return type string, same as shape but without eta information
+    short getUSeed() const { return m_uSeed; }
+    
+    /** Get seed pixel cell in v direction.
+     * @return vCell of seed pixel.
      */
-    std::string getType(int pixeltype = 1, int vCellPeriod = 1, int uCellPeriod = 1) const;
-
-    /** Get cluster shape string
-     * @return shape string containing all features of cluster used for position reconstruction
-     */
-    std::string getEtaBinString(int etaBin=0) const;
-
+    short getVSeed() const { return m_vSeed; }
+    
     /** Get sorted vector of raw digits 
      */
     const std::vector<RawDigit>& getRawDigits() const { return m_sortedDigits; }
-
-    /** Get cluster eta
-    */
-    double computeEta(double thetaU, double thetaV) const; 
-    
-    /** Get cluster eta bin  
-    */
-    int computeEtaBin(double eta, const std::vector<double>& etaBinEdges) const; 
-
-    /** Get index of head pixel in cluster
-    */
-    int getHeadPixelIndex(double thetaU, double thetaV) const; 
-    
-    /** Get index of tail pixel in cluster
-    */
-    int getTailPixelIndex(double thetaU, double thetaV) const;
-    
-    /** Get indes of last pixel of local row vOffset  
-    */
-    int getLastPixelWithVOffset(int vOffset) const; 
-
-    /** Get index of first pixel of local row vOffset 
-    */
-    int getFirstPixelWithVOffset(int vOffset) const; 
     
     /** Compute center of gravity hit position and covariance matrix
     */
@@ -176,10 +140,13 @@ namespace depfet {
     unsigned short m_uStart;   
     // Start vcell of the cluster   
     unsigned short m_vStart;     
+    // Seed pixel uCell address   
+    short m_uSeed;
+    // Seed pixel vCell address  
+    short m_vSeed;
+
     // Sorted vector of raw digits 
     std::vector<RawDigit> m_sortedDigits;
-    // ClusterType
-    unsigned short tmpType;
   };
 }
 #endif

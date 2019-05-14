@@ -35,10 +35,15 @@ SquareDet::SquareDet(const std::string& typeName, int sensorID, int planeNumber,
       
   // Set v cells 
   SetCellsV( vCells );
-  
-  // TODO This is a rather inefficient solution. But it should not matter much      
-  for (int iv = GetMinVCell(); iv <= GetMaxVCell(); iv++) {
-    for ( int iu = GetMinUCell(); iu <= GetMaxUCell(); iu++) { 
+   
+  // Create protopixels
+  //  
+  // The pixel layout is split into several region. We look only 
+  // at one representative pixel per region. 
+  for (auto vCell : m_vCells ) {
+    for (auto uCell : m_uCells ) {
+      int iv = std::get<0>(vCell);
+      int iu = std::get<0>(uCell);
       int pixeltype = GetPixelType(iv, iu);
       double halfPitchU = 0.5*GetPitchU(iv, iu);   
       double halfPitchV = 0.5*GetPitchV(iv, iu);   

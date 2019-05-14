@@ -156,8 +156,8 @@ class PixelDUTAnalyzer : public marlin::Processor {
    int _rootHitSizeV;                // Number of hit cells along v direction in cluster
    int _rootHitCellU;                // Hit u coordinate lies on this u cell
    int _rootHitCellV;                // Hit v coordinate lies on this v cell
-   int _rootClusterStartCellU;       // Smallest uCell of cluster related to Hit 
-   int _rootClusterStartCellV;       // Smallest vCell of cluster related to Hit 
+   int _rootHitSeedCellU;            // Cluster seed pixel uCell  
+   int _rootHitSeedCellV;            // Cluster seed pixel vCell 
    int _rootHitHasTrack;             // Hit can be matched to track (== 0)     
    int _rootHitHasTrackWithRefHit;   // Hit can be matched to track which has a hit on the reference plane (== 0)     
    double _rootHitFitMomentum;       // Estimated track momentum from fit, only filled in case HasTrack==0            
@@ -177,12 +177,12 @@ class PixelDUTAnalyzer : public marlin::Processor {
    double _rootHitLocalChi2;         // Chi2 value from hit-track residual on device under test 
    int _rootHitTrackNDF;             // Number of degrees of freedom of track fit
    int _rootHitTrackNHits;           // Number of telescope hits used for track fitting 
-   int _rootHitPixelType;            // PixelType of seed pixel cell 
+   int _rootHitSeedPixelType;        // PixelType of seed pixel cell 
    
    
    // Variables in track tree  
    int _rootTrackHasHit;             // Track can be matched to a DUT hit (== 0) 
-   int _rootTrackWithRefHit;     // Track has hit on reference plane (== 0) 
+   int _rootTrackWithRefHit;         // Track has hit on reference plane (== 0) 
    double _rootTrackFitMomentum;     // Estimated track momentum from fit    
    int _rootTrackNDF;                // Number of degrees of freedom of track fit
    double _rootTrackChi2;            // Chi2 value from fit of reference track
@@ -197,7 +197,7 @@ class PixelDUTAnalyzer : public marlin::Processor {
    double _rootTrackFitCellUCenter;  // Central coordinate of cell 'FitCellU' in mm 
    double _rootTrackFitCellVCenter;  // Central coordinate of cell 'FitCellV' in mm 
    double _rootTrackSeedCharge;      // Highest charge in cluster, only filled if cluster matched
-   int _rootTrackPixelType;          // PixelType of hit pixel cell 
+   int _rootTrackPixelType;          // PixelType of pixel cell intersected by track 
    
    
    

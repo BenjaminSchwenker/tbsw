@@ -15,6 +15,7 @@
 #include "TrackInputProvider.h"
 #include "GenericTrackFitter.h"
 #include "PixelCluster.h"
+#include "PolyClusterDescriptor.h"
 
 // Include basic C
 #include <iostream>
@@ -255,17 +256,28 @@ namespace depfet {
           _trackDuDwHisto->Fill(trk_tu);  
           _trackDvDwHisto->Fill(trk_tv);       
              
+          // FIXME: This cluster is only needed to be handed to the ctor of PolyClusterDescriptor. 
+          // Check if its creation can be avoided. 
           PixelCluster Cluster = TE.GetHit().GetCluster();  
-          int pixeltype = Sensor.GetPixelType(Cluster.getVStart(), Cluster.getUStart()); 
-
+          PolyClusterDescriptor Descriptor(Cluster, Sensor);
+          
           // Fill collector output
-          m_typeName = Cluster.getType(pixeltype,_vCellPeriod, _uCellPeriod);
-          m_clusterEtaPP = Cluster.computeEta(+1, +1);
-          m_clusterEtaPN = Cluster.computeEta(+1, -1);
-          m_clusterEtaNP = Cluster.computeEta(-1, +1);
-          m_clusterEtaNN = Cluster.computeEta(-1, -1);   
-          m_positionOffsetU = trk_u - Sensor.GetPixelCenterCoordU( Cluster.getVStart(), Cluster.getUStart()); 
-          m_positionOffsetV = trk_v - Sensor.GetPixelCenterCoordV( Cluster.getVStart(), Cluster.getUStart()); 
+          
+          // A string to identify the cluster type, it quantifies the configuration of firing pixels 
+          // but does not using the measured pixel signals. Details depend on the implementation of 
+          // the cluster descriptor. 
+          m_typeName = Descriptor.getType(_vCellPeriod, _uCellPeriod);
+          
+          // The eta value is a scalar computed from the pixel charges. It value may depend on the sign of
+          // the incidence angle of the beam into the sensor. But details depend on the implementation of 
+          // the cluster descriptor. 
+          m_clusterEtaPP = Descriptor.computeEta(+1, +1);
+          m_clusterEtaPN = Descriptor.computeEta(+1, -1);
+          m_clusterEtaNP = Descriptor.computeEta(-1, +1);
+          m_clusterEtaNN = Descriptor.computeEta(-1, -1); 
+           
+          m_positionOffsetU = trk_u - Descriptor.getOriginU();  
+          m_positionOffsetV = trk_v - Descriptor.getOriginV();  
           m_rootTree->Fill(); 
         }
       }
@@ -455,18 +467,18 @@ namespace depfet {
       
       auto it = std::find_if(offsetHistosVec.begin(), offsetHistosVec.end(),
                         [&](const pair<string, vector<TH2D>>& element) { return element.first == m_typeName;});
-
+      
       auto it2 = std::find_if(etaBinEdgesVec.begin(), etaBinEdgesVec.end(),
                         [&](const pair<string, vector<double>>& element) { return element.first == m_typeName;});
-
+      
       //Item exists in maps
       if (it != offsetHistosVec.end()  && it2 != etaBinEdgesVec.end() ) {
         auto clusterEta = m_clusterEtaPP;
         if (thetaU > 0 && thetaV < 0) {clusterEta = m_clusterEtaPN;}
         else if (thetaU < 0 && thetaV > 0) {clusterEta = m_clusterEtaNP;}
         else if (thetaU < 0 && thetaV < 0) {clusterEta = m_clusterEtaNN;}   
-        PixelCluster aCluster;
-        auto etaBin = aCluster.computeEtaBin(clusterEta, it2->second);
+        // FIXME add a switch to select which descriptor to use
+        auto etaBin = PolyClusterDescriptor::computeEtaBin(clusterEta, it2->second);
         it->second.at(etaBin).Fill(m_positionOffsetU, m_positionOffsetV);
       }
     }

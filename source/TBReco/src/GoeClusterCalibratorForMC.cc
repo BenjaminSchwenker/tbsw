@@ -12,6 +12,7 @@
 #include "TBDetector.h"
 #include "TBHit.h"
 #include "PixelCluster.h"
+#include "PolyClusterDescriptor.h"
 #include "Utilities.h"
 
 // Include basic C
@@ -351,6 +352,10 @@ namespace depfet {
           int sensorID = hit.GetSensorID();     
           int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);
           const Det & Sensor = TBDetector::Get(ipl);   
+
+          // This is the plane number of one plane to which 
+          // the clusterDB would be applied
+          _setOfPlaneNumbers.insert(ipl);
            
           SimTrackerHit * simHit = SimHits[ hit2simhit[ihit] ]; 
           Vector3d momentum;
@@ -362,22 +367,32 @@ namespace depfet {
           double trk_u = simHit->getPosition()[0];    // mm
           double trk_v = simHit->getPosition()[1];    // mm
           //double trk_mom = momentum.norm();            // GeV
-          
            
           _trackDuDwHisto->Fill(trk_tu);  
           _trackDvDwHisto->Fill(trk_tv);  
-
-          PixelCluster Cluster = hit.GetCluster(); 
-          int pixeltype = Sensor.GetPixelType(Cluster.getVStart(), Cluster.getUStart()); 
-
+           
+          // FIXME: This cluster is only needed to be handed to the ctor of PolyClusterDescriptor. 
+          // Check if its creation can be avoided. 
+          PixelCluster Cluster = hit.GetCluster();  
+          PolyClusterDescriptor Descriptor(Cluster, Sensor);
+          
           // Fill collector output
-          m_typeName = Cluster.getType(pixeltype,_vCellPeriod, _uCellPeriod);
-          m_clusterEtaPP = Cluster.computeEta(+1, +1);
-          m_clusterEtaPN = Cluster.computeEta(+1, -1);
-          m_clusterEtaNP = Cluster.computeEta(-1, +1);
-          m_clusterEtaNN = Cluster.computeEta(-1, -1);   
-          m_positionOffsetU = trk_u - Sensor.GetPixelCenterCoordU( Cluster.getVStart(), Cluster.getUStart()); 
-          m_positionOffsetV = trk_v - Sensor.GetPixelCenterCoordV( Cluster.getVStart(), Cluster.getUStart()); 
+          
+          // A string to identify the cluster type, it quantifies the configuration of firing pixels 
+          // but does not using the measured pixel signals. Details depend on the implementation of 
+          // the cluster descriptor. 
+          m_typeName = Descriptor.getType(_vCellPeriod, _uCellPeriod);
+          
+          // The eta value is a scalar computed from the pixel charges. It value may depend on the sign of
+          // the incidence angle of the beam into the sensor. But details depend on the implementation of 
+          // the cluster descriptor. 
+          m_clusterEtaPP = Descriptor.computeEta(+1, +1);
+          m_clusterEtaPN = Descriptor.computeEta(+1, -1);
+          m_clusterEtaNP = Descriptor.computeEta(-1, +1);
+          m_clusterEtaNN = Descriptor.computeEta(-1, -1); 
+           
+          m_positionOffsetU = trk_u - Descriptor.getOriginU();  
+          m_positionOffsetV = trk_v - Descriptor.getOriginV();  
           m_rootTree->Fill(); 
         }
       }
@@ -415,6 +430,21 @@ namespace depfet {
                             << " "
                             << "Processor succesfully finished!"
                             << std::endl;
+     
+    // Make sure that all data was collected for a set of planes 
+    // have the same protopixels. 
+    bool consistencyTestPassed = true;
+    std::vector<int> planeNumbersVec(_setOfPlaneNumbers.begin(), _setOfPlaneNumbers.end()); 
+    for(auto i : planeNumbersVec ) {
+      for(auto j : planeNumbersVec ) {    
+        if ( TBDetector::Get(i).GetProtopixels() ==  TBDetector::Get(j).GetProtopixels() ) {
+          streamlog_out(MESSAGE3) << "Plane " << i << " and plane " << j << " have identical map of protopixels." << std::endl;   
+        } else {
+          streamlog_out(MESSAGE3) << "Plane " << i << " and plane " << j << " have different map of protopixels!" << std::endl;   
+          consistencyTestPassed = false;
+        } 
+      }  
+    }  
      
     // Compute the average incidence angles into the sensor
     // We assume a strongly collimated beam and the rms of the 
@@ -550,8 +580,8 @@ namespace depfet {
         if (thetaU > 0 && thetaV < 0) {clusterEta = m_clusterEtaPN;}
         else if (thetaU < 0 && thetaV > 0) {clusterEta = m_clusterEtaNP;}
         else if (thetaU < 0 && thetaV < 0) {clusterEta = m_clusterEtaNN;}   
-        PixelCluster aCluster;
-        auto etaBin = aCluster.computeEtaBin(clusterEta, it2->second);
+        // FIXME add a switch to select which descriptor to use
+        auto etaBin = PolyClusterDescriptor::computeEtaBin(clusterEta, it2->second);
         it->second.at(etaBin).Fill(m_positionOffsetU, m_positionOffsetV);
       }
     }
@@ -573,7 +603,7 @@ namespace depfet {
     _rootCollectorOutputFile->Close();
     delete _rootCollectorOutputFile;   
     
-    if (nShapes > 0) {
+    if (nShapes > 0 and consistencyTestPassed) {
       
       streamlog_out(MESSAGE3) << "Create the clusterDB ... " << endl; 
       
@@ -730,6 +760,27 @@ namespace depfet {
       DB_telcov[1] = 0.001;
       DB_telcov[2] = 0;
       DB_telcov.Write("DB_telcov");
+      
+      if (not planeNumbersVec.empty()) {
+        // Loop over all protopixel for one sensor to which the cluseterDB is going to 
+        // be used. 
+        for (auto protopixel : TBDetector::Get(planeNumbersVec[0]).GetProtopixels())  {
+          auto pixeltype = protopixel.first;
+          auto points = protopixel.second;
+          
+          // Add eta bin edges for type
+          TVectorD DB_protopixel( 2*points.size() );
+          int iBin = 0;
+          for (auto point: points){
+            DB_protopixel[iBin] = std::get<0>(point);
+            DB_protopixel[iBin+1] = std::get<1>(point);
+            iBin+=2;
+          }
+          DB_protopixel.Write( string("DB_protopixel_"+std::to_string(pixeltype)).c_str() ); 
+        }
+      } else {
+        streamlog_out(ERROR3) << "No information about protopixels is available. This is strange! "  << endl;   
+      }
       
       streamlog_out(MESSAGE3) << "Created clusterDB with coverage " << 100 * coverage << " percent on training data sample." << std::endl; 
       
