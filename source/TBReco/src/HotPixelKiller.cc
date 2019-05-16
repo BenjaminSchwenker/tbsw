@@ -228,6 +228,7 @@ namespace depfet {
     _rootFile->cd("");
 
     std::map< std::string, TH2F *> _histoMap;
+    std::map< std::string, TH2F *> _histoMapOcc;
     
     // Loop over all registered sensors 
     for(auto it = _hitCounterMap.begin(); it != _hitCounterMap.end(); it++) {
@@ -246,11 +247,17 @@ namespace depfet {
       int nVCells = maxVCell-minVCell+1; 
 
       string histoName = "hDB_sensor"+to_string(sensorID) + "_mask";
-      _histoMap[histoName] = new TH2F(histoName.c_str(), "" ,nUCells, minUCell, maxUCell+1, nVCells, minVCell, maxVCell+1); // +1 because maxCell is the not included upper border of the last bin, but maxCell should have a bin
+      string occhistoName = "hDB_sensor"+to_string(sensorID) + "_occupancy";
+      _histoMap[histoName] = new TH2F(histoName.c_str(), "" , nUCells, minUCell, maxUCell+1, nVCells, minVCell, maxVCell+1); // +1 because maxCell is the not included upper border of the last bin, but maxCell should have a bin
       _histoMap[histoName]->SetXTitle("uCell [cellID]"); 
       _histoMap[histoName]->SetYTitle("vCell [cellID]"); 
       _histoMap[histoName]->SetZTitle("mask");     
-      _histoMap[histoName]->SetStats( false );     
+      _histoMap[histoName]->SetStats( false );
+      _histoMapOcc[occhistoName] = new TH2F(occhistoName.c_str(), "" , nUCells, minUCell, maxUCell+1, nVCells, minVCell, maxVCell+1); // +1 because maxCell is the not included upper border of the last bin, but maxCell should have a bin
+      _histoMapOcc[occhistoName]->SetXTitle("uCell [cellID]");
+      _histoMapOcc[occhistoName]->SetYTitle("vCell [cellID]");
+      _histoMapOcc[occhistoName]->SetZTitle("occupancy");
+      _histoMapOcc[occhistoName]->SetStats( false );
       
       int nMasked = 0; 
        
@@ -262,6 +269,8 @@ namespace depfet {
           
           // Mask pixel with very high hit frequency -> hot pixel killer 
           double occupancy =  hitVec[ uniqPixelID ] / _nEvt;
+          _histoMapOcc[occhistoName]->SetBinContent(iU-minUCell+1,iV-minVCell+1, occupancy );
+
           if ( occupancy  > _maxOccupancy ) {
              
             nMasked++;     
@@ -269,9 +278,10 @@ namespace depfet {
                                     << "   iU: " << iU << ", iV: " << iV 
                                     << "   (" << occupancy <<  ")" << endl;
             
-            _histoMap[histoName]->SetBinContent(iU-minUCell+1,iV-minVCell+1, 1 );                      
+            _histoMap[histoName]->SetBinContent(iU-minUCell+1,iV-minVCell+1, 1 );
+
           } else {
-            _histoMap[histoName]->SetBinContent(iU-minUCell+1,iV-minVCell+1, 0 ); 
+            _histoMap[histoName]->SetBinContent(iU-minUCell+1,iV-minVCell+1, 0 );
           }      
         }
       } 
