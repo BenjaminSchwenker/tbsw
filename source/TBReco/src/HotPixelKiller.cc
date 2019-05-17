@@ -247,12 +247,13 @@ namespace depfet {
       int nVCells = maxVCell-minVCell+1; 
 
       string histoName = "hDB_sensor"+to_string(sensorID) + "_mask";
-      string occhistoName = "hDB_sensor"+to_string(sensorID) + "_occupancy";
       _histoMap[histoName] = new TH2F(histoName.c_str(), "" , nUCells, minUCell, maxUCell+1, nVCells, minVCell, maxVCell+1); // +1 because maxCell is the not included upper border of the last bin, but maxCell should have a bin
       _histoMap[histoName]->SetXTitle("uCell [cellID]"); 
       _histoMap[histoName]->SetYTitle("vCell [cellID]"); 
       _histoMap[histoName]->SetZTitle("mask");     
       _histoMap[histoName]->SetStats( false );
+
+      string occhistoName = "hDB_sensor"+to_string(sensorID) + "_occupancy";
       _histoMapOcc[occhistoName] = new TH2F(occhistoName.c_str(), "" , nUCells, minUCell, maxUCell+1, nVCells, minVCell, maxVCell+1); // +1 because maxCell is the not included upper border of the last bin, but maxCell should have a bin
       _histoMapOcc[occhistoName]->SetXTitle("uCell [cellID]");
       _histoMapOcc[occhistoName]->SetYTitle("vCell [cellID]");
