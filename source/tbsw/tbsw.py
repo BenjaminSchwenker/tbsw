@@ -1,5 +1,5 @@
 """
-Some helper code to use Marlin with pyhton scripts 
+Some helper code to use Marlin with python scripts 
 
 :author: benjamin.schwenker@phys.uni-goettinge.de  
 """

@@ -56,7 +56,11 @@ Use_clusterDB=True
 # Use Single Hit seeding to speed up track finding?
 Use_SingleHitSeeding=False
 
-# Long telescopes may require a sensor by sensor alignment approach
+# Finding correlations between first and last sensor can be difficult
+# for low momentum tracks and/or large distances between sensors.
+# By default, a robust method is used that correlates sensors step by
+# step. Only deactivate when you are really certain you do not need
+# this feature (expert decision).  
 Use_LongTelescopeCali=True
 
 # Flag to indicate that real EUTelescope data is used (raw format)
@@ -69,7 +73,8 @@ mcdata=False
 Script_purpose_option=2
 
 # Number of iterations during target alignment
-# Set to 0 or negative integer to disable target alignment
+# Target alignment should only be used when you are really certain you do
+# need this feature (expert decision)  
 targetalignment_iterations=0
 
 # File names and lists of filenames for the different steps 
@@ -86,8 +91,8 @@ cali_run='run000210.raw'
 rawfile_cali = rawfile_path + cali_run
 
 # raw file used for target alignment (only useful with a thick (X/X0 > 5 %) scattering target)
-#TA_run='run006958.raw'
-#rawfile_TA = rawfile_path + TA_run
+TA_run='run006958.raw'
+rawfile_TA = rawfile_path + TA_run
 
 # List of runs, which are used as input for the scattering angle reconstruction
 # The angle reconstruction step is essential and every run, that will be used later during the x0 calibration or x0 imaging steps, must be listed
