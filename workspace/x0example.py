@@ -54,9 +54,12 @@ mcdata=True
 
 # Script purpose option:
 # 0: Script only processes imaging part
-# 1: Script processes x0 calibration and imaging part
-# Everything else: Script processes the whole chain: Simulation, Telescope calibration, angle reconstruction, x0 calibration and x0 imaging 
-Script_purpose_option=2
+# 1: Script only processes x0 calibration part
+# 2: Script processes x0 calibration and imaging part
+# 3 and larger: Process x0 calibration and imaging part and angle reconstruction
+# 4 and larger: Process x0 calibration and imaging part, angle reconstruction, telescope calibration and target alignment
+# 5 and larger: Process everything
+Script_purpose_option=5
 
 # Number of iterations during target alignment
 # Set to 0 or negative integer to disable target alignment
@@ -88,196 +91,7 @@ modeexception_list=['']
 # Nominal Beam energy
 beamenergy=2.0
 
-def simulate(): 
-  """
-  Simulates a rawfiles from a simulated test beam experiment
-  Creates a folder in tmp-runs/ and populates it with 
-  Marlin steering and logfiles.  
-  """ 
-  
-  # Create tmpdir to hold all steerfiles and log files 
-  SimObj = tbsw.Simulation(steerfiles=steerfiles, name='x0-sim' )
-  
-  # Get path to gearfile in simulation environment
-  localgearfile = SimObj.get_filename(gearfile)
-  
-  # Misalign the telescope by applying random shifts to constants in local gearfile
-  tbsw.gear.randomize_telescope(gearfile=localgearfile, mean_list=mean_list, sigma_list=sigma_list, sensorexception_list=sensorexception_list, modeexception_list=modeexception_list)
-  
-  # Create a gearfile for the run with an Al plate 
-  # Only the Al plate is added in between the telescope arms
-  # The misaligned positions of the telescope planes remain
-  # the same. 
-  gearfile_alu = "gear_alu.xml"
-  localgearfile_alu = SimObj.copy_file(gearfile, gearfile_alu)
-  
-  # Replace the air layer  by a Al plate with 0.5mm thickness 
-  tbsw.gear.set_parameter(gearfile=localgearfile_alu, sensorID=11, parametername='thickness', value=0.50)
-  tbsw.gear.set_parameter(gearfile=localgearfile_alu, sensorID=11, parametername='radLength', value=89.0)
-  tbsw.gear.set_parameter(gearfile=localgearfile_alu, sensorID=11, parametername='atomicNumber', value=13)
-  tbsw.gear.set_parameter(gearfile=localgearfile_alu, sensorID=11, parametername='atomicMass', value=27)  
-  
-  # List to populate with simulation pathes (=jobs)
-  simpaths = []
-   
-  # Create path to simulate air run (just air between telescope arms) 
-  simpath_air = tbsw.path_utils.create_x0sim_path(SimObj, 'sim_air', rawfile_air, gearfile, nevents_air,  beamenergy)
-  simpaths.append(simpath_air)
-  
-  # Create path to simulate alu run (Al plate between telescope arms)
-  for nruns in range(0,nprocesses):
-    simname='sim_alu_run{:d}'.format(nruns+1)
-    simpath_alu = tbsw.path_utils.create_x0sim_path(SimObj, simname, rawfile_alu_list[nruns], gearfile_alu, nevents_alu/nprocesses, beamenergy)
-    simpaths.append(simpath_alu)   
-  
-  # Run simulation to create rawfile with simulated digits 
-  SimObj.simulate(paths=simpaths,caltag='x0-sim-truthdb')  
-  
 
-# Perform the telescope calibration
-def calibrate(params):
-  """
-  Calibrates an misaligned tracking telescope from run data. 
-  Creates a folder localDB/caltag in workspace containing 
-  calibration results. 
-  Creates a folder tmp-runs/name-sim/ and populates it with 
-  Marlin steering and logfiles.  
-  """ 
-  
-  rawfile, steerfiles, caltag = params
-  
-  # Calibrate of the run using beam data. Creates a folder cal-files/caltag 
-  # containing all calibration data. 
-  CalObj = tbsw.Calibration(steerfiles=steerfiles, name=caltag + '-cal') 
-  
-  # Create list of calibration steps 
-  calpaths = tbsw.path_utils.create_x0analysis_calibration_paths(CalObj, rawfile, gearfile, nevents_air, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali)
-  
-  # Run the calibration steps 
-  CalObj.calibrate(paths=calpaths,ifile=rawfile,caltag=caltag)
-
-  # Create DQM plots 
-  tbsw.DQMplots.calibration_DQMPlots(name=caltag + '-cal')
-
-# Perform the angle reconstruction of a single run
-def reconstruct(params):
-
-  rawfile, steerfiles, caltag = params
-
-  # Set cal tag that includes run name
-  name = os.path.splitext(os.path.basename(rawfile))[0] + '-' + caltag
-  
-  # Reconsruct the rawfile using the caltag. Resulting root files are 
-  # written to folder root-files/
-  RecObj = tbsw.Reconstruction(steerfiles=steerfiles, name=name )
-  
-  # Create reconstuction path
-  recopath = tbsw.path_utils.create_anglereco_path(RecObj, rawfile, gearfile, nevents_alu, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)  
-  
-  # Run the reconstuction  
-  RecObj.reconstruct(paths=recopath,ifile=rawfile,caltag=caltag) 
-
-
-# Create angle reconstruction DQM plots
-def reconstruction_DQM(params):
-
-  rawfile, caltag = params
-
-  # Set cal tag that includes run name
-  name = os.path.splitext(os.path.basename(rawfile))[0] + '-' + caltag
-  
-  # Create DQM plots
-  tbsw.DQMplots.anglereco_DQMPlots(filepath='root-files/X0-{}.root'.format(name)) 
-  
-
-def targetalignment(params):
-  """
-  Starts the scattering angle reconstruction and vertex fit on the central target
-  plane. Afterwards the mean vertex z position is set as the new target z position in
-  the aligment DB file and the calibration tag is exported
-    :@params:       consists of rawfile, steerfiles, gearfile, caltag, iteration
-    :@rawfile:      Input file for the reconstruction 
-    :@BE            Nominal beam energy of the run
-    :@nevents       Number of events
-    :@steerfiles:   Directory with the steering files for the reconstruction
-    :@gearfile:     Name of the gear file
-    :@caltag:       calibration tag for the reconstruction
-    :@iteration:    Target alignment iteration counter  
-    :author: benjamin.schwenker@phys.uni-goettinge.de  
-  """ 
-   
-  rawfile, steerfiles, caltag, iteration = params
-  
-  if iteration == 0:
-    oldcaltag=caltag
-  else: 
-    oldcaltag=caltag+'-target-align-it-{:d}'.format(iteration-1)
-     
-  newcaltag=caltag+'-target-align-it-{:d}'.format(iteration)
-  
-  # Reconsruct the rawfile using the caltag. Resulting root files are 
-  # written to folder root-files/
-  RecObj = tbsw.Reconstruction(steerfiles=steerfiles, name='x0-reco-targetalign-it-{:d}'.format(iteration) )
-  
-  # Create reconstuction path
-  recopath = tbsw.path_utils.create_anglereco_path(RecObj, rawfile, gearfile, nevents_TA, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)  
-  
-  # Run the reconstuction  
-  RecObj.reconstruct(path=recopath,ifile=rawfile,caltag=oldcaltag)  
-  
-  # Read the vertex position and save it in the alignmentDB
-  dbname=RecObj.create_dbfilename("alignmentDB.root")
-  treename=RecObj.get_rootfilename('X0')
-  tbsw.gear.save_targetpos(treename,dbname)
-  RecObj.export_caltag(newcaltag)
-
-
-# Perform x0 calibration
-def xx0calibration(params):
-
-  x0caltag, RunList, steerfiles, caltag = params
-
-  # Create list with input root files from list of input raw files
-  RootFileList_x0cali=[]
-  tbsw.x0imaging.X0Calibration.CreateRootFileList(rawlist=RunList,rootlist=RootFileList_x0cali, caltag=caltag)
-
-  # Generate a uncalibrated X/X0 image
-  imagenametag='X0image-calitarget-Uncalibrated'
-  tbsw.x0imaging.GenerateImage.x0imaging(rootfilelist=[RootFileList_x0cali[0]],caltag='',steerfiles=steerfiles,nametag=imagenametag)
-
-  # Path to uncalibrated X0 image file
-  imagefilename='/root-files/'+imagenametag+'.root'
-
-  # Do a calibration of the angle resolution
-  tbsw.x0imaging.X0Calibration.x0calibration(rootfilelist=RootFileList_x0cali,imagefile=imagefilename,caltag=x0caltag,steerfiles=steerfiles)
-
-  nametag='X0Calibration-'+x0caltag
-  tbsw.DQMplots.x0calibration_DQMPlots(nametag=nametag)
-
-
-# Generate x0 image
-def xx0image(params):
-
-  x0caltag, RunList, steerfiles, caltag, listnametag = params
-
-  RootFileList_x0image=[]
-  tbsw.x0imaging.X0Calibration.CreateRootFileList(rawlist=RunList,rootlist=RootFileList_x0image, caltag=caltag)
-
-  if listnametag=='':
-    print("No image name found. Using default naming scheme!")
-    listnametag='X0image'
-
-  # Determine name of image
-  if caltag=='':
-    nametag=listnametag+'-Uncalibrated'
-  else:
-    nametag=listnametag+'-Calibrated-'+x0caltag
-
-  # Do a calibration of the angle resolution
-  tbsw.x0imaging.GenerateImage.x0imaging(rootfilelist=RootFileList_x0image,caltag=x0caltag,steerfiles=steerfiles,nametag=nametag)
-
-  tbsw.DQMplots.x0image_Plots(nametag=nametag)
-  
   
 if __name__ == '__main__':
    
@@ -286,8 +100,8 @@ if __name__ == '__main__':
   
   # Create a simulated lcio for run with no target (air run) and 
   # multiple run s with a Al plate as scattering material
-  if Script_purpose_option !=0 and Script_purpose_option !=1:
-    simulate( )
+  if Script_purpose_option > 4:
+    tbsw.x0script_functions.simulate(rawfile_air, rawfile_alu_list, steerfiles, gearfile, nevents_air, nevents_alu, nprocesses, mean_list, sigma_list, sensorexception_list, modeexception_list, beamenergy)
   
   
   # Calibrate the telescope 
@@ -297,15 +111,12 @@ if __name__ == '__main__':
   # DQM plots like track p/chi2 values, residuals and other interesting parameters
   # from this telescope calibration step can be found as pdf files in 
   # workspace/results/telescopeDQM
-  if Script_purpose_option !=0 and Script_purpose_option !=1:
-    params_cali = ( rawfile_air, steerfiles, caltag)
-    calibrate( params_cali )
+  if Script_purpose_option > 3:
+    tbsw.x0script_functions.calibrate( rawfile_air, steerfiles, caltag, gearfile, nevents_air, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali)
    
-  for it in range(0,targetalignment_iterations):
-    params_TA = (rawfile_alu, steerfiles, caltag, it)
-    print "The parameters for the target alignment are: " 
-    print params_TA
-    targetalignment(params_TA)
+    # Target alignment
+    for it in range(0,targetalignment_iterations):
+      tbsw.x0script_functions.targetalignment(rawfile_alu_list[0], steerfiles, it, caltag, gearfile, nevents_TA, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)
   
   # Angle reconstruction
   # In case you already have reconstructed the scattering angles for all
@@ -316,33 +127,36 @@ if __name__ == '__main__':
   # workspace/root-files/X0-run*runnumber, etc*-reco.root
   # The histmap and angle resolution for every single run can be found in 
   # workspace/results/anglerecoDQM/
-  if Script_purpose_option !=0 and Script_purpose_option !=1:
-    params_reco=[(x, steerfiles, caltag) for x in rawfile_alu_list]
+  if Script_purpose_option > 2:
+    params_reco=[(x, steerfiles, caltag, gearfile, nevents_alu, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata) for x in rawfile_alu_list]
     print "The parameters for the reconstruction are: " 
     print params_reco
 
     count = multiprocessing.cpu_count()
     pool = multiprocessing.Pool(processes=count)
-    pool.map(reconstruct, params_reco)
+    pool.map(tbsw.x0script_functions.reconstruct, params_reco)
 
     for rawfile in rawfile_alu_list:
-      params=(rawfile, caltag)
-      reconstruction_DQM(params)
+      tbsw.x0script_functions.reconstruction_DQM(rawfile, caltag)
 
-  # Start x0 calibration
-  # In case you already have the x0 calibration DB file from a previous x0 calibration 
-  # and want to reuse it, just switch to Script_purpose_option 0
-  #
-  # The fitted distributions and self-consistency plots in pdf format from this 
-  # x0 calibration can be found in the workspace/tmp-runs/*X0Calibration/ directory
-  if Script_purpose_option !=0:
-    params_x0cali = ( x0caltag, rawfile_alu_list, steerfiles, caltag)
-    xx0calibration(params_x0cali)
+  if Script_purpose_option > 1:
+    # Start x0 calibration
+    # In case you already have the x0 calibration DB file from a previous x0 calibration 
+    # and want to reuse it, just switch to Script_purpose_option 0
+    #
+    # The fitted distributions and self-consistency plots in pdf format from this 
+    # x0 calibration can be found in the workspace/tmp-runs/*X0Calibration/ directory
+    tbsw.x0script_functions.xx0calibration(rawfile_alu_list, steerfiles, x0caltag, caltag)
 
-  # Generate a calibrated X/X0 image
-  #
-  # The calibrated radiation length image and other images, such as the beamspot
-  # etc can be found in the workspace/root-files/*CalibratedX0Image.root
-  params_x0image = ( x0caltag, rawfile_alu_list, steerfiles, caltag, name_image1)
-  xx0image(params_x0image)
+    # Generate a calibrated X/X0 image
+    #
+    # The calibrated radiation length image and other images, such as the beamspot
+    # etc can be found in the workspace/root-files/*CalibratedX0Image.root
+    tbsw.x0script_functions.xx0image(rawfile_alu_list, steerfiles, x0caltag, caltag, name_image1)
+
+  if Script_purpose_option == 1:
+    tbsw.x0script_functions.xx0calibration(rawfile_alu_list, steerfiles, x0caltag, caltag)
+
+  if Script_purpose_option == 0:
+    tbsw.x0script_functions.xx0image(rawfile_alu_list, steerfiles, x0caltag, caltag, name_image1)
 
