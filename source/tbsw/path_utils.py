@@ -136,7 +136,7 @@ def add_clustercalibrator(path):
   cluster_calibrator.param("MinClusters", "1000")
   cluster_calibrator.param("MinVarianceU", 1e-06)
   cluster_calibrator.param("MinVarianceV", 1e-06)
-  cluster_calibrator.param("IgnoreIDs",11)
+  cluster_calibrator.param("IgnoreIDs","0 5 11")
   path.add_processor(cluster_calibrator)
   
   return path 
@@ -150,21 +150,21 @@ def append_tracklett_aligner(Env, paths, gearfile, nevents, beamenergy, hitmaker
   if trackletttype=="triplet":
     xerrors="0 10 0 0 0 0 0"
     yerrors="0 10 0 0 0 0 0"
-    zerrors="0 0 0 0 0 0 0"
+    zerrors="0 10 0 0 0 0 0"
     gammaerrors="0 0.01 0 0 0 0 0"
     minhits=3
     excludeplanes="3 4 5 6"
   elif trackletttype=="quadruplet":
     xerrors="0 10 10 0 0 0 0"
     yerrors="0 10 10 0 0 0 0"
-    zerrors="0 0 0 0 0 0 0"
+    zerrors="0 10 10 0 0 0 0"
     gammaerrors="0 0.01 0.01 0 0 0 0"
     minhits=4
     excludeplanes="3 5 6"
   elif trackletttype=="quintet":
     xerrors="0 10 10 0 10 0 0"
     yerrors="0 10 10 0 10 0 0"
-    zerrors="0 0 0 0 0 0 0"
+    zerrors="0 10 10 0 10 0 0"
     gammaerrors="0 0.01 0.01 0 0.01 0 0"
     minhits=5
     excludeplanes="3 6"
@@ -341,12 +341,12 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
   mask_path = Env.create_path('mask_path')
 
   if not mcdata:
-    mask_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents, 'Verbosity': "MESSAGE3" }) 
+    mask_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 1000000, 'Verbosity': "MESSAGE3" }) 
     mask_path=add_rawinputprocessor(mask_path, rawfile) 
     mask_path=add_geometry(mask_path, applyAlignment="true", overrideAlignment="true")
     mask_path=add_M26unpacker(mask_path) 
   else:
-    mask_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents, 'LCIOInputFiles': rawfile }) 
+    mask_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 1000000, 'LCIOInputFiles': rawfile }) 
     mask_path=add_geometry(mask_path, applyAlignment="true", overrideAlignment="true")
   
   m26hotpixelkiller = tbsw.Processor(name="M26HotPixelKiller",proctype="HotPixelKiller")
