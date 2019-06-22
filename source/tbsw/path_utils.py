@@ -138,7 +138,7 @@ def add_clustercalibrator(path, use_outerplanes=False):
   cluster_calibrator.param("MinVarianceV", 1e-06)
 
   if use_outerplanes:
-    cluster_calibrator.param("IgnoreIDs","0")
+    cluster_calibrator.param("IgnoreIDs","11")
   else:
     cluster_calibrator.param("IgnoreIDs","0 5 11")
 
