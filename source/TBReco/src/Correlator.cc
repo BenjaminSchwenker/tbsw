@@ -31,6 +31,11 @@
 
 #include <Eigen/Core>
 
+// ROOT includes
+#include <TMath.h>
+#include <TRandom.h>
+#include <TRandom3.h>
+
 using Eigen::Vector3d;
 
 // Used namespaces
@@ -83,6 +88,9 @@ Correlator::Correlator() : Processor("Correlator")
    
    registerProcessorParameter ("ParticleCharge", "Particle charge [e]",
                               _charge,  static_cast < double > (-1));
+
+   registerProcessorParameter ("RandomSeed", "Seed for random generator",
+                              _seed,  static_cast < int > (0));
      
 }
 
@@ -95,7 +103,14 @@ void Correlator::init() {
   _iRun = 0 ;
   _iEvt = 0 ;
    
-  
+  // Initialize new random generator with unique seed 
+  gRandom = new TRandom3();
+  gRandom->SetSeed(_seed);
+
+  // Print random generator info
+  streamlog_out(MESSAGE3) << "Random Generator setup with seed: "
+                          << (gRandom->GetSeed())
+                          << std::endl << std::endl;
   
   // Book correlation histograms   
   bookHistos();   
@@ -222,7 +237,12 @@ void Correlator::processEvent(LCEvent * evt)
 
       // Get extrapolated intersection coordinates
       double u = rectrack.GetTE(ipl).GetState().GetPars()[2]; 
-      double v = rectrack.GetTE(ipl).GetState().GetPars()[3];       
+      double v = rectrack.GetTE(ipl).GetState().GetPars()[3];  
+
+      const Det & det = TBDetector::GetInstance().GetDet(ipl); 
+
+	  double  PitchU = ( det.GetSensitiveMaxU() - det.GetSensitiveMinU() ) /(det.GetMaxUCell()-det.GetMinUCell()+1); 
+	  double  PitchV = ( det.GetSensitiveMaxV() - det.GetSensitiveMinV() ) /(det.GetMaxVCell()-det.GetMinVCell()+1);     
            
       // Loop over all hits on this detector 
       for (int ihit = 0; ihit < HitStore.GetNHits(ipl); ++ihit ) 
@@ -233,13 +253,17 @@ void Correlator::processEvent(LCEvent * evt)
         // Measured hit coordinates
         Vector3d anypos = anyhit.GetLocalSpacePoint();
         double um = anypos[0]; 
-        double vm = anypos[1];   
+        double vm = anypos[1];  
+
+		// Smear out residuals with a Gaussian to remove peaks from residual distribution
+		double random_U = gRandom->Gaus(0, PitchU );
+		double random_V = gRandom->Gaus(0, PitchV );
         
-        _hitUCorrelationMatrix[ ipl ] -> Fill ( u, um ) ;
-        _hitVCorrelationMatrix[ ipl ] -> Fill ( v, vm ) ;
+        _hitUCorrelationMatrix[ ipl ] -> Fill ( u, um + random_U) ;
+        _hitVCorrelationMatrix[ ipl ] -> Fill ( v, vm + random_V) ;
                      
-        _hitUResidualHisto[ ipl ]->Fill( um - u);
-        _hitVResidualHisto[ ipl ]->Fill( vm - v);
+        _hitUResidualHisto[ ipl ]->Fill( um - u + random_U);
+        _hitVResidualHisto[ ipl ]->Fill( vm - v + random_V);
               
       }  // End inner hit loop 
            

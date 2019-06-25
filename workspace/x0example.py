@@ -46,6 +46,11 @@ Use_SingleHitSeeding=False
 # Long telescopes may require a sensor by sensor alignment approach
 Use_LongTelescopeCali=True
 
+# Switch to use clusters on outer planes on outer planes to calculate cluster resolution
+# The track resolution is expected to be worse on the outer planes, using them may 
+# have a negative impact on the determined cluster resolutions
+UseOuterPlanesForClusterDB=False
+
 # Determine cluster resolution and store in cluster DB?
 Use_clusterDB=True
 
@@ -90,8 +95,6 @@ modeexception_list=['']
 
 # Nominal Beam energy
 beamenergy=2.0
-
-
   
 if __name__ == '__main__':
    

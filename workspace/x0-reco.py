@@ -63,6 +63,11 @@ Use_SingleHitSeeding=False
 # this feature (expert decision).  
 Use_LongTelescopeCali=True
 
+# Switch to use clusters on outer planes on outer planes to calculate cluster resolution
+# The track resolution is expected to be worse on the outer planes, using them may 
+# have a negative impact on the determined cluster resolutions
+UseOuterPlanesForClusterDB=False
+
 # Flag to indicate that real EUTelescope data is used (raw format)
 mcdata=False
 
@@ -157,8 +162,7 @@ nevents_cali = 50000
 nevents_TA = 1000000
 
 # for angle reconstruction (-1 use all available events)
-nevents_reco = -1
-    
+nevents_reco = -1   
   
 if __name__ == '__main__':
 

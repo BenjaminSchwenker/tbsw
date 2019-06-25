@@ -114,6 +114,12 @@ protected:
    double _momentum;
    double _mass;
    double _charge;
+
+//! Random generator seed
+/*! Random numbers are used to smear out the residuals
+ */
+   int _seed;
+
     
 //! Output root file name  
 /*!

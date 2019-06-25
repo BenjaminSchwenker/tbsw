@@ -96,6 +96,8 @@ def plot_clusterDB_sigmas(histo1, histo2, entry1, entry2, paramname, ytitle):
 
   ROOT.gROOT.Reset()
 
+  histo1.SetTitle("cluster resolution")
+
   histo1.SetStats(False)
   histo1.GetXaxis().SetTitle("cluster type")
   histo1.GetXaxis().SetTitleOffset(0.88)

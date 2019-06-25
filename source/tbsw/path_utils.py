@@ -126,7 +126,7 @@ def add_M26hitmaker(path, hitmakertype):
   return path 
 
 
-def add_clustercalibrator(path):
+def add_clustercalibrator(path, use_outerplanes=False):
   """
   Adds M26 cluster calibration to the path
   """ 
@@ -136,7 +136,12 @@ def add_clustercalibrator(path):
   cluster_calibrator.param("MinClusters", "1000")
   cluster_calibrator.param("MinVarianceU", 1e-06)
   cluster_calibrator.param("MinVarianceV", 1e-06)
-  cluster_calibrator.param("IgnoreIDs",11)
+
+  if use_outerplanes:
+    cluster_calibrator.param("IgnoreIDs","11")
+  else:
+    cluster_calibrator.param("IgnoreIDs","0 5 11")
+
   path.add_processor(cluster_calibrator)
   
   return path 
@@ -150,21 +155,21 @@ def append_tracklett_aligner(Env, paths, gearfile, nevents, beamenergy, hitmaker
   if trackletttype=="triplet":
     xerrors="0 10 0 0 0 0 0"
     yerrors="0 10 0 0 0 0 0"
-    zerrors="0 0 0 0 0 0 0"
+    zerrors="0 10 0 0 0 0 0"
     gammaerrors="0 0.01 0 0 0 0 0"
     minhits=3
     excludeplanes="3 4 5 6"
   elif trackletttype=="quadruplet":
     xerrors="0 10 10 0 0 0 0"
     yerrors="0 10 10 0 0 0 0"
-    zerrors="0 0 0 0 0 0 0"
+    zerrors="0 10 10 0 0 0 0"
     gammaerrors="0 0.01 0.01 0 0 0 0"
     minhits=4
     excludeplanes="3 5 6"
   elif trackletttype=="quintet":
     xerrors="0 10 10 0 10 0 0"
     yerrors="0 10 10 0 10 0 0"
-    zerrors="0 0 0 0 0 0 0"
+    zerrors="0 10 10 0 10 0 0"
     gammaerrors="0 0.01 0.01 0 0.01 0 0"
     minhits=5
     excludeplanes="3 6"
@@ -328,7 +333,7 @@ def create_anglereco_path(Env, rawfile, gearfile, numberofevents, usesinglehitse
 
 
 
-def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClusterDB, beamenergy, mcdata, isLongTelescope=True):
+def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClusterDB, beamenergy, mcdata, isLongTelescope=True, use_outerplanes=False):
   """
   Returns a list of tbsw path objects to calibrate a tracking telescope
   """
@@ -341,12 +346,12 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
   mask_path = Env.create_path('mask_path')
 
   if not mcdata:
-    mask_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents, 'Verbosity': "MESSAGE3" }) 
+    mask_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 1000000, 'Verbosity': "MESSAGE3" }) 
     mask_path=add_rawinputprocessor(mask_path, rawfile) 
     mask_path=add_geometry(mask_path, applyAlignment="true", overrideAlignment="true")
     mask_path=add_M26unpacker(mask_path) 
   else:
-    mask_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents, 'LCIOInputFiles': rawfile }) 
+    mask_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 1000000, 'LCIOInputFiles': rawfile }) 
     mask_path=add_geometry(mask_path, applyAlignment="true", overrideAlignment="true")
   
   m26hotpixelkiller = tbsw.Processor(name="M26HotPixelKiller",proctype="HotPixelKiller")
@@ -443,7 +448,7 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
     cluster_calibration1_path=add_geometry(cluster_calibration1_path, applyAlignment="true", overrideAlignment="true")
     cluster_calibration1_path=add_M26hitmaker(cluster_calibration1_path,"cog")
     cluster_calibration1_path=add_trackfinder(cluster_calibration1_path, beamenergy, excludeplanes="3", minhits=6, maxTrkChi2=20, maxOutlierChi2=10)
-    cluster_calibration1_path=add_clustercalibrator(cluster_calibration1_path)
+    cluster_calibration1_path=add_clustercalibrator(cluster_calibration1_path, use_outerplanes)
      
     calpaths.append(cluster_calibration1_path)
     
@@ -457,7 +462,7 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
     cluster_calibration2_path=add_geometry(cluster_calibration2_path, applyAlignment="true", overrideAlignment="true")
     cluster_calibration2_path=add_M26hitmaker(cluster_calibration2_path,"goe")
     cluster_calibration2_path=add_trackfinder(cluster_calibration2_path, beamenergy, excludeplanes="3", minhits=6, maxTrkChi2=20, maxOutlierChi2=10)
-    cluster_calibration2_path=add_clustercalibrator(cluster_calibration2_path)
+    cluster_calibration2_path=add_clustercalibrator(cluster_calibration2_path, use_outerplanes)
     # Finished with second part of cluster calibration
     # Repeat this 7x
     for i in range(7):
