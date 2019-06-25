@@ -88,6 +88,9 @@ Correlator::Correlator() : Processor("Correlator")
    
    registerProcessorParameter ("ParticleCharge", "Particle charge [e]",
                               _charge,  static_cast < double > (-1));
+
+   registerProcessorParameter ("RandomSeed", "Seed for random generator",
+                              _seed,  static_cast < int > (0));
      
 }
 
@@ -102,7 +105,7 @@ void Correlator::init() {
    
   // Initialize new random generator with unique seed 
   gRandom = new TRandom3();
-  gRandom->SetSeed(0);
+  gRandom->SetSeed(_seed);
 
   // Print random generator info
   streamlog_out(MESSAGE3) << "Random Generator setup with seed: "
@@ -253,8 +256,8 @@ void Correlator::processEvent(LCEvent * evt)
         double vm = anypos[1];  
 
 		// Smear out residuals with a Gaussian to remove peaks from residual distribution
-		double random_U = gRandom->Gaus(0, TMath::Sqrt( PitchU/2.0 ));
-		double random_V = gRandom->Gaus(0, TMath::Sqrt( PitchU/2.0 ));
+		double random_U = gRandom->Gaus(0, PitchU );
+		double random_V = gRandom->Gaus(0, PitchV );
         
         _hitUCorrelationMatrix[ ipl ] -> Fill ( u, um + random_U) ;
         _hitVCorrelationMatrix[ ipl ] -> Fill ( v, vm + random_V) ;
