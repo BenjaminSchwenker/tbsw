@@ -59,6 +59,11 @@ Use_SingleHitSeeding=False
 # Long telescopes may require a sensor by sensor alignment approach
 Use_LongTelescopeCali=True
 
+# Switch to use clusters on outer planes on outer planes to calculate cluster resolution
+# The track resolution is expected to be worse on the outer planes, using them may 
+# have a negative impact on the determined cluster resolutions
+UseOuterPlanesForClusterDB=False
+
 # Flag to indicate that real EUTelescope data is used (raw format)
 mcdata=False
 
@@ -168,7 +173,7 @@ def calibrate(params):
   CalObj = tbsw.Calibration(steerfiles=steerfiles, name=caltag + '-cal') 
   
   # Create list of calibration steps 
-  calpaths = tbsw.path_utils.create_x0analysis_calibration_paths(CalObj, rawfile, gearfile, nevents_cali, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali)
+  calpaths = tbsw.path_utils.create_x0analysis_calibration_paths(CalObj, rawfile, gearfile, nevents_cali, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali, UseOuterPlanesForClusterDB)
   
   # Run the calibration steps 
   CalObj.calibrate(paths=calpaths,ifile=rawfile,caltag=caltag)
