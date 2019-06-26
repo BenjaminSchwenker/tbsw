@@ -28,6 +28,9 @@ pool = multiprocessing.Pool(processes=count)
 # for x0 calibration.
 steerfiles = 'steering-files/x0-tb/'
 
+# Nominal Beam energy
+beamenergy=2.0
+
 # cal tags
 # telescope calibration cal tag (typically named after telescope setup, beam energy etc.)
 caltag='x0-sim'
@@ -40,7 +43,9 @@ x0caltag='alutarget'
 # with two arms having three M26 planes each.  
 gearfile = 'gear.xml'
 
-# Use Single Hit seeding to speed up track finding?
+# By default,the track finder constructs track seeds using hit pairs from two 
+# planes. With SingleHitSeeding, seed tracks are constructed from a single hit 
+# and extrapolated parallel to the z axis. This can safe time but risks missing hits. 
 Use_SingleHitSeeding=False
 
 # Finding correlations between first and last sensor can be difficult
@@ -50,7 +55,7 @@ Use_SingleHitSeeding=False
 # this feature (expert decision).  
 Use_LongTelescopeCali=True
 
-# Switch to use clusters on outer planes on outer planes to calculate cluster resolution
+# Switch to use clusters on outer planes to calculate cluster resolution
 # The track resolution is expected to be worse on the outer planes, using them may 
 # have a negative impact on the determined cluster resolutions
 UseOuterPlanesForClusterDB=False
@@ -99,9 +104,6 @@ sigma_list=[0.5,0.5,1.0,0.3,0.3,1.5]
 # List of sensor ids and modes, which are excluded during misalignment
 sensorexception_list=[5,0,11] 
 modeexception_list=['']
-
-# Nominal Beam energy
-beamenergy=2.0
   
 if __name__ == '__main__':
    

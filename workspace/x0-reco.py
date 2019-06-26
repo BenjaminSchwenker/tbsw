@@ -53,7 +53,9 @@ gearfile = 'gear.xml'
 # Determine cluster resolution and store in cluster DB?
 Use_clusterDB=True
 
-# Use Single Hit seeding to speed up track finding?
+# By default,the track finder constructs track seeds using hit pairs from two 
+# planes. With SingleHitSeeding, seed tracks are constructed from a single hit 
+# and extrapolated parallel to the z axis. This can safe time but risks missing hits. 
 Use_SingleHitSeeding=False
 
 # Finding correlations between first and last sensor can be difficult
@@ -63,7 +65,7 @@ Use_SingleHitSeeding=False
 # this feature (expert decision).  
 Use_LongTelescopeCali=True
 
-# Switch to use clusters on outer planes on outer planes to calculate cluster resolution
+# Switch to use clusters on outer planes to calculate cluster resolution
 # The track resolution is expected to be worse on the outer planes, using them may 
 # have a negative impact on the determined cluster resolutions
 UseOuterPlanesForClusterDB=False
