@@ -43,7 +43,11 @@ gearfile = 'gear.xml'
 # Use Single Hit seeding to speed up track finding?
 Use_SingleHitSeeding=False
 
-# Long telescopes may require a sensor by sensor alignment approach
+# Finding correlations between first and last sensor can be difficult
+# for low momentum tracks and/or large distances between sensors.
+# By default, a robust method is used that correlates sensors step by
+# step. Only deactivate when you are really certain you do not need
+# this feature (expert decision).  
 Use_LongTelescopeCali=True
 
 # Switch to use clusters on outer planes on outer planes to calculate cluster resolution
@@ -66,8 +70,11 @@ mcdata=True
 # 5 and larger: Process everything
 Script_purpose_option=5
 
-# Number of iterations during target alignment
-# Set to 0 or negative integer to disable target alignment
+# By default, the z position of the X0 target is defined by an mechanical survey
+# measurement. For sufficiently thick targets, we can correct the z position of 
+# the X0 target by forming a vertex from the upstream and downstream track. 
+# This option is deactivated by default. If you know what you are doing, you can 
+# enable it by using a positive number of iterations (expert decision)  
 targetalignment_iterations=0
 
 # File name for raw data 
