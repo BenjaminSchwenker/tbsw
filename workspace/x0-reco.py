@@ -176,7 +176,7 @@ if __name__ == '__main__':
   # workspace/results/telescopeDQM
   
   if Script_purpose_option > 3:
-    tbsw.x0script_functions.calibrate( rawfile_cali, steerfiles, caltag, gearfile, nevents_cali, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali)
+    tbsw.x0script_functions.calibrate( rawfile_cali, steerfiles, caltag, gearfile, nevents_cali, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali, UseOuterPlanesForClusterDB)
 
     # Target alignment
     for it in range(0,targetalignment_iterations):

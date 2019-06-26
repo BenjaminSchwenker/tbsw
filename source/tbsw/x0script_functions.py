@@ -86,7 +86,7 @@ def simulate(rawfile_air=None, rawfile_alu_list=None, steerfiles=None, gearfile=
 
 
 # Perform the telescope calibration
-def calibrate(rawfile=None, steerfiles=None, caltag="default", gearfile="gear.xml", nevents=50000, Use_clusterDB=True, beamenergy=2.0, mcdata=False, Use_LongTelescopeCali=True):
+def calibrate(rawfile=None, steerfiles=None, caltag="default", gearfile="gear.xml", nevents=50000, Use_clusterDB=True, beamenergy=2.0, mcdata=False, Use_LongTelescopeCali=True, UseOuterPlanesForClusterDB=False):
   """
   Calibrates an misaligned tracking telescope from run data. 
   Creates a folder localDB/caltag in workspace containing 
@@ -102,6 +102,7 @@ def calibrate(rawfile=None, steerfiles=None, caltag="default", gearfile="gear.xm
   :@beamenergy     			Beam energy of the particle beam in GeV
   :@mcdata         			Switch to indicate Monte Carlo or real test beam data (True: MC data, False: Real TB data)
   :@Use_LongTelescopeCali  	Switch to enable/disable step by step correlation between upstream telescope tracks and downstream hits on individual sensors
+  :@Use_LongTelescopeCali  	Switch to enable/disable usage of the outer telescope planes during the cluster calibration
   :author: ulf.stolzenberg@phys.uni-goettingen.de   
   """ 
 
@@ -119,7 +120,7 @@ def calibrate(rawfile=None, steerfiles=None, caltag="default", gearfile="gear.xm
   CalObj = tbsw.Calibration(steerfiles=steerfiles, name=caltag + '-cal') 
   
   # Create list of calibration steps 
-  calpaths = path_utils.create_x0analysis_calibration_paths(CalObj, rawfile, gearfile, nevents, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali)
+  calpaths = path_utils.create_x0analysis_calibration_paths(CalObj, rawfile, gearfile, nevents, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali, UseOuterPlanesForClusterDB)
   
   # Run the calibration steps 
   CalObj.calibrate(paths=calpaths,ifile=rawfile,caltag=caltag)

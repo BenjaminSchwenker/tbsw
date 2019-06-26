@@ -115,7 +115,7 @@ if __name__ == '__main__':
   # from this telescope calibration step can be found as pdf files in 
   # workspace/results/telescopeDQM
   if Script_purpose_option > 3:
-    tbsw.x0script_functions.calibrate( rawfile_air, steerfiles, caltag, gearfile, nevents_air, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali)
+    tbsw.x0script_functions.calibrate( rawfile_air, steerfiles, caltag, gearfile, nevents_air, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali, UseOuterPlanesForClusterDB)
    
     # Target alignment
     for it in range(0,targetalignment_iterations):
