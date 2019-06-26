@@ -93,16 +93,16 @@ def calibrate(rawfile=None, steerfiles=None, caltag="default", gearfile="gear.xm
   calibration results. 
   Creates a folder tmp-runs/name-sim/ and populates it with 
   Marlin steering and logfiles. 
-  :@rawfile:       			Name of the raw file to be used for the telescope calibration  
-  :@steerfiles     			Name of the directory with the geometry information
-  :@caltag         			Name of the calibration tag, used to write/read to calbration information
-  :@gearfile       			Name of the gear file in the steering files directory
-  :@nevents       			Number of events used during the telescope calibration
-  :@Use_clusterDB  			Switch to enable/disable generation of a clusterDB
-  :@beamenergy     			Beam energy of the particle beam in GeV
-  :@mcdata         			Switch to indicate Monte Carlo or real test beam data (True: MC data, False: Real TB data)
-  :@Use_LongTelescopeCali  	Switch to enable/disable step by step correlation between upstream telescope tracks and downstream hits on individual sensors
-  :@Use_LongTelescopeCali  	Switch to enable/disable usage of the outer telescope planes during the cluster calibration
+  :@rawfile:       					Name of the raw file to be used for the telescope calibration  
+  :@steerfiles     					Name of the directory with the geometry information
+  :@caltag         					Name of the calibration tag, used to write/read to calbration information
+  :@gearfile       					Name of the gear file in the steering files directory
+  :@nevents       					Number of events used during the telescope calibration
+  :@Use_clusterDB  					Switch to enable/disable generation of a clusterDB
+  :@beamenergy     					Beam energy of the particle beam in GeV
+  :@mcdata         					Switch to indicate Monte Carlo or real test beam data (True: MC data, False: Real TB data)
+  :@Use_LongTelescopeCali  			Switch to enable/disable step by step correlation between upstream telescope tracks and downstream hits on individual sensors
+  :@UseOuterPlanesForClusterDB		Switch to enable/disable usage of the outer telescope planes during the cluster calibration
   :author: ulf.stolzenberg@phys.uni-goettingen.de   
   """ 
 
