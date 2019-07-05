@@ -30,7 +30,7 @@ PixelChargeCalibrator aPixelChargeCalibrator ;
 // Constructor
 //
 PixelChargeCalibrator::PixelChargeCalibrator() : Processor("PixelChargeCalibrator"),_inputDecodeHelper(""),
-    _calibOutputEncoderHelper(DEPFET::ZSDATADEFAULTENCODING) // clusterdefault?, _orginalOutputEncoderHelper(DEPFET::ZSCLUSTERDEFAULTENCODING),
+    _calibOutputEncoderHelper(DEPFET::ZSDATADEFAULTENCODING) 
 {
 
 // Processor description
@@ -50,16 +50,6 @@ PixelChargeCalibrator::PixelChargeCalibrator() : Processor("PixelChargeCalibrato
    registerProcessorParameter( "SparseZSCut","Threshold for zero suppression",
                                _sparseZSCut, static_cast<float > (0));
 
-   // no clusters and seeds
-   //registerProcessorParameter( "SparseSeedCut","Threshold for seed pixel signal",
-   //                            _sparseSeedCut, static_cast<float > (0));
-   
-   //registerProcessorParameter( "SparseClusterCut","Threshold for cluster signal",
-   //                            _sparseClusterCut, static_cast<float > (0) ); 
-   
-   //registerProcessorParameter( "AcceptDiagonalCluster","0: common side; 1: common corner; 3: max. one missing pixel",
-   //                            m_acceptDiagonalClusters , static_cast<int > (1) ); 
-
    registerProcessorParameter("NoiseDBFileName",
                                "This is the name of the ROOT file with the status mask (add .root)",
                                _noiseDBFileName, static_cast< string > ( "NoiseDB.root" ) ); 
@@ -78,17 +68,8 @@ PixelChargeCalibrator::PixelChargeCalibrator() : Processor("PixelChargeCalibrato
 
    registerProcessorParameter("CalibParaBaseName",
 		   	      "This is the base name of the ROOT TH2F's that contain each the pixel by pixel values for one parameter of the calibration function, full name: base + '_' + parnumber",
-			      _calibParaBaseName, static_cast<  > ( "" ) ); 
-   /*registerProcessorParameter("",
-		   	      "",
-			      _, static_cast<  > ( "" ) ); 
-   registerProcessorParameter("",
-		   	      "",
-			      _, static_cast<  > ( "" ) ); 
-   registerProcessorParameter("",
-		   	      "",
-			      _, static_cast<  > ( "" ) ); 
-   */
+			      _calibParaBaseName, static_cast< string > ( "para" ) ); 
+
 }
 
 //
@@ -99,21 +80,16 @@ void PixelChargeCalibrator::init() {
    // Initialize variables
    _nRun = 0 ;
    _nEvt = 0 ;
-   
-   
-   //_dummyCollectionName = "original_data_"+_clusterCollectionName; needed?
-   
+      
    // Open clusterDB file 
    TFile * noiseDBFile = new TFile(_noiseDBFileName.c_str(), "READ");
     
-   // for(int ipl=0;ipl<TBDetector::GetInstance().GetNSensors();ipl++)  { 
    int sensorID = TBDetector::Get(_idut).GetSensorID();  
    string histoName = "hDB_sensor"+to_string(sensorID) + "_mask";
    if ( (TH2F *) noiseDBFile->Get(histoName.c_str()) != nullptr) {
      _DB_Map_Mask[sensorID] = (TH2F *) noiseDBFile->Get(histoName.c_str());  
      _DB_Map_Mask[sensorID]->SetDirectory(0);
-   }  
-   //}
+   }
      
    // Close root  file
    noiseDBFile->Close();
@@ -122,13 +98,17 @@ void PixelChargeCalibrator::init() {
    // Open calibrationDB file
    TFile * calibDBFile = new TFile(_calibDBFileName.c_str(), "READ");
 
-   _calibFunc = (TF1 *) calibDBFile->Get(_calibFuncName.c_str()); // also SetDirectory(0)?
-   _nparFunc = _calibFunc->GetNpar();
+   if ((TF1 *) calibDBFile->Get(_calibFuncName.c_str()) != nullptr){ 
+     _calibFunc = (TF1 *) calibDBFile->Get(_calibFuncName.c_str()); 
+     _nparFunc = _calibFunc->GetNpar();
+   }
 
    for(int par=0;par<_nparFunc;par++){
      string histoNamePar = _calibParaBaseName + "_" + to_string(par);
-     _DB_Map_CalibPar[par] = (TH2F *) calibDBFile->Get(histoNamePar.c_str());
-     _DB_Map_CalibPar[par]->SetDirectory(0);
+     if ((TH2F *) calibDBFile->Get(histoNamePar.c_str()) != nullptr){
+       _DB_Map_CalibPar[par] = (TH2F *) calibDBFile->Get(histoNamePar.c_str());
+       _DB_Map_CalibPar[par]->SetDirectory(0);
+     }
    }
 
    // Close calibrationDB file
@@ -235,14 +215,17 @@ void PixelChargeCalibrator::printProcessorParams() const
    streamlog_out(MESSAGE3)  << std::endl
                             << " "
                             << "PixelChargeCalibrator Development Version, be carefull!!"
+			    << std::endl
+			    << "Calibration function name: " << _calibFuncName
+			    << std::endl
+			    << "with npars: " << _nparFunc
                             << " "
                             << std::endl  << std::endl;   
 
 
 }
 
-// Called by the processEvent() once for the  
-// pixel detector.  
+// Called by the processEvent()
 
 void PixelChargeCalibrator::calibrate( LCEvent * evt , LCCollectionVec * calibCollection  ) 
 {  
@@ -251,13 +234,8 @@ void PixelChargeCalibrator::calibrate( LCEvent * evt , LCCollectionVec * calibCo
   LCCollectionVec * Pix_collection = dynamic_cast < LCCollectionVec * > (evt->getCollection(_sparseDataCollectionName)); 
   // Helper class for decoding pixel data 
   CellIDDecoder<TrackerDataImpl> PixelID( Pix_collection,&_inputDecodeHelper );
-   
-  // The original data collection contains the sparse pixel data for 
-  // each accpeted cluster.  // needed?
-  //LCCollectionVec * originalDataCollection = new LCCollectionVec(LCIO::TRACKERDATA);
-  // Helper class for encoding clsuters  
-  //CellIDEncoder<TrackerDataImpl> originalDataEncoder( DEPFET::ZSCLUSTERDEFAULTENCODING, originalDataCollection,&_orginalOutputEncoderHelper );
-  CellIDEncoder<TrackerPulseImpl> calibEncoder(DEPFET::ZSDATADEFAULTENCODING, calibCollection,&_calibOutputEncoderHelper ); // DEPFET param?
+  
+  CellIDEncoder<TrackerDataImpl> calibEncoder(DEPFET::ZSDATADEFAULTENCODING, calibCollection,&_calibOutputEncoderHelper ); // DEPFET param?
 
   // loop over pixel detectors to select the right one from collection
   for (unsigned int iDet = 0; iDet < Pix_collection->size(); iDet++) { 
@@ -330,8 +308,7 @@ void PixelChargeCalibrator::calibrate( LCEvent * evt , LCCollectionVec * calibCo
         continue;
       }
       
-      // Use calibration function and the parameters for the pixel
-
+      // Use calibration function and the parameters for the pixel 
       for (int par = 0; par < _nparFunc; par++){
         _calibFunc->SetParameter(par, _DB_Map_CalibPar[par]->GetBinContent(iU-minUCell+1, iV-minVCell+1));
       }
@@ -341,11 +318,9 @@ void PixelChargeCalibrator::calibrate( LCEvent * evt , LCCollectionVec * calibCo
       calibData->chargeValues().push_back( iV );
       calibData->chargeValues().push_back( calibCharge );
       
-      streamlog_out(MESSAGE2) << " On sensor " << sensorID << " having DAC unit charge " << charge << << " calibrated to " << calibCharge << std::endl;
-
+      streamlog_out(MESSAGE2) << " On sensor " << sensorID << " having DAC unit charge " << charge << " calibrated to " << calibCharge << std::endl;
     }
 
-    // need prob originalDataEncoder as i do not change the format of the data
     static auto idx_orig_sensorID=calibEncoder.index("sensorID"s); //find the address ONCE.
     static auto idx_orig_sparsePixelType=calibEncoder.index("sparsePixelType"s);
 
@@ -354,190 +329,9 @@ void PixelChargeCalibrator::calibrate( LCEvent * evt , LCCollectionVec * calibCo
     calibEncoder.setCellID( calibData );
     calibCollection->push_back( calibData );
   
-    delete calibData;
   } // Detector selection loop
 
 }
 
-/*
-    /////////////////////////////////////////
-      // clustering not needed except writing of collection
-      // Loop on all existing pixel groups, until you find that current pixel 
-      // is a neighbour of a group.
-      bool found= false;
-         	
-      Pix_GroupVector::iterator firstGroup = pixGroups.begin();
-      Pix_GroupVector::iterator lastGroup  = pixGroups.end();    
-              
-      while( !found && firstGroup!= lastGroup)
-      {
-        
-        if ( areNeighbours( *firstGroup, iU, iV, ipl) )
-        {
-           
-          // If pixel is a duplicate of one in the cluster, do not add it.   
-          if(!isDuplicated( *firstGroup, iU, iV )){
-            
-            // Add this pixel to this pixel group 
-            (*firstGroup).push_back(iU);
-            (*firstGroup).push_back(iV);
-            (*firstGroup).push_back(charge);
-            
-            // See if iU/iV is a neighbour to any other groups, if yes perform merging 
-            checkForMerge(iU, iV, ipl, firstGroup, lastGroup);
-              
-          } else {
-            streamlog_out(MESSAGE2) << "  A pixel duplicate found. Skipping it." << std::endl; 
-          }
-          found = true; 
-        }
-        ++firstGroup;
-      }
-      
-      // If pixel is isolated, seed a new candidate cluster. 
-      if(!found)
-      {
-        FloatVec newGroup;
-        newGroup.reserve(6);
-        newGroup.push_back(iU);
-        newGroup.push_back(iV);
-        newGroup.push_back(charge);
-        
-        pixGroups.push_back(std::move(newGroup));
-        
-      }
-       
-    }  
-    
-    // Now, we make a quality selection among pixel groups 
-    streamlog_out(MESSAGE2) << std::endl << "Summary of cluster candidates: "  << std::endl << std::endl;
-    
-      
-    
-    // Count pixel groups 
-    int groupNumber = 0;
-    
-    // Counts good clusters
-    int clusterID = 0; 
-    
-    for( Pix_GroupVector::iterator group = pixGroups.begin() ;
-     	group!= pixGroups.end() ; ++group) 
-    {
-      
-      groupNumber++; 
-      
-      // If cluster is empty, i.e. it has been merged with another, 
-      // do not attempt to make cluster.
-      if ((*group).size()> 0)
-      {
-          
-        // We have found a new cluster candidate. We loop over all pixels  
-        // to calculate S/N ratios. 
-        
-        int cluQuality = 0;
-        float clusterSignal = 0; 
-        float seedSignal = 0; 
-        
-        
-        // Prepare a TrackerData to store original data of cluster
-        TrackerDataImpl* sparseCluster = new TrackerDataImpl ; 
-        
-        int npixels = (*group).size()/3; 
-        auto& chargeVec=sparseCluster->chargeValues();
-        chargeVec.reserve((*group).size());
-        for ( int index=0; index < npixels; index++)
-        {
-           
-          int iU = static_cast<int> ( (*group)[index * 3]);
-          int iV = static_cast<int> ( (*group)[index * 3 + 1]);
-          float charge = ( (*group)[index * 3 + 2]);
-                   
-          clusterSignal += charge;
-         
-          if (charge > seedSignal ) {
-            seedSignal = charge; 
-          }
-             
-          // Store pixel data int EUTelescope format 
-          chargeVec.push_back( iU );
-          chargeVec.push_back( iV );
-          chargeVec.push_back( charge );
-          
-        }
-            
-        // Use a global ADU threshold 
-        float seedThreshold = _sparseSeedCut; 
-        float clusterThreshold = _sparseClusterCut;
-          
-        // Verify if the cluster candidates is a good cluster
-        if ( ( seedSignal >= seedThreshold ) && 
-             ( clusterSignal >= clusterThreshold ) ) {
-          
-                
- 	      // New accpeted cluster
-          clusterID++; 
-            
-	  // need prob originalDataEncoder as i do not change the format of the data
-          streamlog_out(MESSAGE2) << " Stored cluster on sensor " << sensorID << " having total charge " << clusterSignal << std::endl;
-          static auto idx_orig_sensorID=originalDataEncoder.index("sensorID"s); //find the address ONCE.
-          //static auto idx_orig_clusterID=originalDataEncoder.index("clusterID"s);
-          static auto idx_orig_sparsePixelType=originalDataEncoder.index("sparsePixelType"s);
-          //static auto idx_orig_quality=originalDataEncoder.index("quality"s);
-          // Ok good cluster ... save it   
-          originalDataEncoder[idx_orig_sensorID] = sensorID;
-          //originalDataEncoder[idx_orig_clusterID] = 0;
-          originalDataEncoder[idx_orig_sparsePixelType] = static_cast<int> (kSimpleSparsePixel);
-          //originalDataEncoder[idx_orig_quality] = cluQuality;
-          originalDataEncoder.setCellID( sparseCluster ); // sparseCluster?
-          originalDataCollection->push_back( sparseCluster );
-                             
-	  // not needed
-          static auto idx_clust_sensorID=clusterEncoder.index("sensorID"s);
-          static auto idx_clust_clusterID=clusterEncoder.index("clusterID"s);
-          static auto idx_clust_sparsePixelType=clusterEncoder.index("sparsePixelType"s);
-          static auto idx_clust_quality=clusterEncoder.index("quality"s);
-          TrackerPulseImpl* zsPulse = new TrackerPulseImpl;
-          clusterEncoder[idx_clust_sensorID]  = sensorID;
-          clusterEncoder[idx_clust_clusterID] = 0;
-          clusterEncoder[idx_clust_sparsePixelType] = static_cast<int> (kSimpleSparsePixel);
-          clusterEncoder[idx_clust_quality] = cluQuality;
-          clusterEncoder.setCellID( zsPulse );
-          
-          zsPulse->setCharge( clusterSignal );
-          zsPulse->setQuality( cluQuality );
-          zsPulse->setTrackerData( sparseCluster );
-          clusterCollection->push_back( zsPulse );          
-          
-           
-          
-        } else {
-          // Cluster candidate thrown away, so clean up memory    
-          sparseCluster->chargeValues().clear(); 
-          delete sparseCluster;
-        }
-        
-      } // Non empty cluster candidate 
-    } // Cluster candidate loop 
-    
-    // 
-    // Free used memory 
-     
-    for( Pix_GroupVector::iterator group = pixGroups.begin() ;
-      	group!= pixGroups.end() ; ++group) 
-    {
-      (*group).clear(); 
-    }
-    pixGroups.clear(); 
-    
-  } // End detector loop 
-  
-  // Add original data collection to event, needed? no, because calibColl gets added
-  //evt->addCollection( originalDataCollection, _dummyCollectionName );
-  
-}
-*/
-
 } // Namespace
-
-
 
