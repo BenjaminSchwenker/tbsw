@@ -31,12 +31,13 @@ steerfiles = 'steering-files/x0-tb/'
 # Nominal Beam energy
 beamenergy=2.0
 
-# cal tags
-# telescope calibration cal tag (typically named after telescope setup, beam energy etc.)
+# Definition of the calibration tag. It is typically named after telescope setup, beam energy, x0calibration target etc.
+# The caltag is used to generate a directory under localDB/*caltag* where all calibration parameters are stored
+# in local DB files. The telescope calibration step (Step 1 in the enumeration above) will generate a hotpixel mask (NoiseDB-M26.root),
+# a files with alignment information (alignmentDB.root) and a data base containing cluster resolutions (clusterDB-M26.root).
+# During the radiation length calibration step (Step 3) the beam energy, the beam energy gradients and a global offset of the telescope
+# angle resolution will be determined and stored in a text file (x0cal_result.cfg)
 caltag='x0-sim'
-
-# Tag for x0 calibration
-x0caltag='alutarget'
 
 # Name of gearfile
 # This file describes the nominal geometry of a telescope 
@@ -158,17 +159,17 @@ if __name__ == '__main__':
     #
     # The fitted distributions and self-consistency plots in pdf format from this 
     # x0 calibration can be found in the workspace/tmp-runs/*X0Calibration/ directory
-    tbsw.x0script_functions.xx0calibration(rawfile_alu_list, steerfiles, x0caltag, caltag)
+    tbsw.x0script_functions.xx0calibration(rawfile_alu_list, steerfiles, caltag)
 
     # Generate a calibrated X/X0 image
     #
     # The calibrated radiation length image and other images, such as the beamspot
     # etc can be found in the workspace/root-files/*CalibratedX0Image.root
-    tbsw.x0script_functions.xx0image(rawfile_alu_list, steerfiles, x0caltag, caltag, name_image1)
+    tbsw.x0script_functions.xx0image(rawfile_alu_list, steerfiles, caltag, name_image1)
 
   if Script_purpose_option == 1:
-    tbsw.x0script_functions.xx0calibration(rawfile_alu_list, steerfiles, x0caltag, caltag)
+    tbsw.x0script_functions.xx0calibration(rawfile_alu_list, steerfiles, caltag)
 
   if Script_purpose_option == 0:
-    tbsw.x0script_functions.xx0image(rawfile_alu_list, steerfiles, x0caltag, caltag, name_image1)
+    tbsw.x0script_functions.xx0image(rawfile_alu_list, steerfiles, caltag, name_image1)
 
