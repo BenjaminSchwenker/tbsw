@@ -9,6 +9,10 @@
 #include "DEPFET.h" 
 #include "TBDetector.h"
 
+// Include LCIO classes
+#include <IMPL/LCCollectionVec.h>
+#include <IMPL/TrackerDataImpl.h>
+
 // Include ROOT classes
 #include <TFile.h>
 
@@ -34,40 +38,36 @@ PixelChargeCalibrator::PixelChargeCalibrator() : Processor("PixelChargeCalibrato
 {
 
 // Processor description
-   _description = "PixelChargeCalibrator: Applying calibration function pixel specific to zs pixel data for one specific detector" ;
+   _description = "PixelChargeCalibrator: Applying calibration functions sensor plane and pixel specific to a collection of sparsified pixel data" ;
 
 //   
 // First of all, we need to register the input/output collections
    
    registerInputCollection (LCIO::TRACKERDATA, "SparseDataCollectionName",
                             "Name of input sparsified pixel data collection",
-                            _sparseDataCollectionName, string("zsdata"));
+                            _sparseDataCollectionName, string("sdata"));
     
    registerOutputCollection (LCIO::TRACKERDATA, "CalibratedCollectionName",
                             "Name of the output charge calibrated collection",
-                            _calibratedCollectionName, string("zscalib"));
+                            _calibratedCollectionName, string("scalib"));
     
-   registerProcessorParameter( "SparseZSCut","Threshold for zero suppression",
+   registerProcessorParameter( "SparseZSCut","Threshold for zero suppression in detector respons units",
                                _sparseZSCut, static_cast<float > (0));
 
    registerProcessorParameter("NoiseDBFileName",
-                               "This is the name of the ROOT file with the status mask (add .root)",
-                               _noiseDBFileName, static_cast< string > ( "NoiseDB.root" ) ); 
+                               "This is the name of the ROOT file with the status mask (add .root), optional",
+                               _noiseDBFileName, static_cast< string > ( "" ) ); 
 
-   registerProcessorParameter("CalibrationDBFileName", 
+   registerProcessorParameter("GainCalibrationDBFileName", 
 		   	       "This is the name of the ROOT file with the calibration function and the parameters per pixel for the function (add .root)", 
-			       _calibDBFileName, static_cast< string > ( "CalibDB.root" ) );
-  
-   registerProcessorParameter ("DUTPlane",
-                              "Plane number of DUT along the beam line which gets calibrated",
-                              _idut,  static_cast < int > (3));
+			       _gainCalibDBFileName, static_cast< string > ( "CalibDB.root" ) );
 
    registerProcessorParameter("CalibFuncName",
-		   	      "This is the name of the ROOT TF1 function used to calibrate the DUT charge response",
-			      _calibFuncName, static_cast< string > ( "fCalibFunc" ) ); 
+		   	      "This is the base name of the ROOT TF1 function used to calibrate the charge response, full name: base + '_' + sensorID",
+			      _baseCalibFuncName, static_cast< string > ( "fCalibFunc" ) ); 
 
    registerProcessorParameter("CalibParaBaseName",
-		   	      "This is the base name of the ROOT TH2F's that contain each the pixel by pixel values for one parameter of the calibration function, full name: base + '_' + parnumber",
+		   	      "This is the base name of the ROOT TH2F's that contain each the pixel by pixel values for one parameter of the calibration function per sensor, full name: base + '_' + sensorID + '_' + parnumber",
 			      _calibParaBaseName, static_cast< string > ( "para" ) ); 
 
 }
@@ -81,36 +81,74 @@ void PixelChargeCalibrator::init() {
    _nRun = 0 ;
    _nEvt = 0 ;
       
-   // Open clusterDB file 
+   // Open noiseDB file 
+   // Check if file exist
    TFile * noiseDBFile = new TFile(_noiseDBFileName.c_str(), "READ");
-    
-   int sensorID = TBDetector::Get(_idut).GetSensorID();  
-   string histoName = "hDB_sensor"+to_string(sensorID) + "_mask";
-   if ( (TH2F *) noiseDBFile->Get(histoName.c_str()) != nullptr) {
-     _DB_Map_Mask[sensorID] = (TH2F *) noiseDBFile->Get(histoName.c_str());  
-     _DB_Map_Mask[sensorID]->SetDirectory(0);
+   if (noiseDBFile->IsZombie()){
+     // nothing to do as of no entry for sensorID in map no masking applied
+     streamlog_out(WARNING) << "Could not open NoiseDB file: "
+	     		     << _noiseDBFileName
+			     << std::endl
+			     << "Continuing without masking!"
+			     << std::endl << std::endl; 
    }
-     
+   else {
+     for(int ipl=0;ipl<TBDetector::GetInstance().GetNSensors();ipl++)  { 
+       int sensorID = TBDetector::Get(ipl).GetSensorID(); 
+       string histoName = "hDB_sensor"+to_string(sensorID) + "_mask";
+       if ( (TH2F *) noiseDBFile->Get(histoName.c_str()) != nullptr) {
+         _DB_Map_Mask[sensorID] = (TH2F *) noiseDBFile->Get(histoName.c_str());  
+         _DB_Map_Mask[sensorID]->SetDirectory(0);
+       } // no else default needed 
+     }
+   }
+
    // Close root  file
    noiseDBFile->Close();
    delete noiseDBFile;
    
    // Open calibrationDB file
-   TFile * calibDBFile = new TFile(_calibDBFileName.c_str(), "READ");
+   TFile * calibDBFile = new TFile(_gainCalibDBFileName.c_str(), "READ");
+   
+   for(int ipl = 0; ipl < TBDetector::GetInstance().GetNSensors(); ipl++)  { 
+     int sensorID = TBDetector::Get(ipl).GetSensorID(); 
+     string funcName = _baseCalibFuncName+"_"+to_string(sensorID);
+     if ((TF1 *) calibDBFile->Get(funcName.c_str()) != nullptr){ 
+       _DB_Map_CalibFunc[sensorID] = (TF1 *) calibDBFile->Get(funcName.c_str()); 
+       _DB_Map_NparFunc[sensorID] = _DB_Map_CalibFunc[sensorID]->GetNpar();
 
-   if ((TF1 *) calibDBFile->Get(_calibFuncName.c_str()) != nullptr){ 
-     _calibFunc = (TF1 *) calibDBFile->Get(_calibFuncName.c_str()); 
-     _nparFunc = _calibFunc->GetNpar();
-   }
-
-   for(int par=0;par<_nparFunc;par++){
-     string histoNamePar = _calibParaBaseName + "_" + to_string(par);
-     if ((TH2F *) calibDBFile->Get(histoNamePar.c_str()) != nullptr){
-       _DB_Map_CalibPar[par] = (TH2F *) calibDBFile->Get(histoNamePar.c_str());
-       _DB_Map_CalibPar[par]->SetDirectory(0);
+       for(int par = 0; par < _DB_Map_NparFunc[sensorID]; par++){
+         string histoNamePar = _calibParaBaseName + "_" + to_string(sensorID) + "_" + to_string(par);
+         if ((TH2F *) calibDBFile->Get(histoNamePar.c_str()) != nullptr){
+           _DB_Map_CalibPar[sensorID][par] = (TH2F *) calibDBFile->Get(histoNamePar.c_str());
+           _DB_Map_CalibPar[sensorID][par]->SetDirectory(0);
+         }
+         else if (_DB_Map_NparFunc[sensorID] > 0){
+           streamlog_out(WARNING) << "Could not find histogram with gain calibration parameters for: " 
+		                  << std::endl
+		                  << "sensorID: " << sensorID << std::endl
+				  << "calibration function name: " << funcName << std::endl
+				  << "parameter: " << par << std::endl
+				  << "parameter histogram name: " << histoNamePar << std::endl
+				  << std::endl
+				  << "Continuing without calibrating this sensor plane!" 
+				  << std::endl << std::endl;
+           _DB_Map_CalibFunc.erase(sensorID);
+	   _DB_Map_NparFunc.erase(sensorID);
+         }
+       }
+     }
+     else {
+       streamlog_out(WARNING) << "Could not find gain calibration function for: " 
+	                      << std::endl
+			      << "sensorID: " << sensorID << std::endl
+			      << "function name: " << funcName << std::endl
+			      << "calibration file name: " << _gainCalibDBFileName << std::endl
+                              << std::endl
+			      << "Continuing without calibrating this senor plane!" 
+			      << std::endl << std::endl;
      }
    }
-
    // Close calibrationDB file
    calibDBFile->Close();
    delete calibDBFile;
@@ -156,13 +194,13 @@ void PixelChargeCalibrator::processEvent(LCEvent * evt)
    // Open collections
    try {
      
-     // Output collection containing calibrated data // TRACKERPULSE?, TRACKERDATA from unpacker
+     // Output collection containing calibrated data
      LCCollectionVec * calibCollection = new LCCollectionVec(LCIO::TRACKERDATA) ;
      
      // Calibrate hits pixel by pixel  
      calibrate( evt , calibCollection  ); 
      
-     // Add clusterCollection to event
+     // Add calibratedCollection to event
      evt->addCollection( calibCollection, _calibratedCollectionName );
              	    
    } catch(DataNotAvailableException &e){}  
@@ -216,9 +254,7 @@ void PixelChargeCalibrator::printProcessorParams() const
                             << " "
                             << "PixelChargeCalibrator Development Version, be carefull!!"
 			    << std::endl
-			    << "Calibration function name: " << _calibFuncName
-			    << std::endl
-			    << "with npars: " << _nparFunc
+			    << "Calibration function base name: " << _baseCalibFuncName
                             << " "
                             << std::endl  << std::endl;   
 
@@ -230,28 +266,24 @@ void PixelChargeCalibrator::printProcessorParams() const
 void PixelChargeCalibrator::calibrate( LCEvent * evt , LCCollectionVec * calibCollection  ) 
 {  
     
-  // Open zero suppressed pixel data  
+  // Open sparsified pixel data  
   LCCollectionVec * Pix_collection = dynamic_cast < LCCollectionVec * > (evt->getCollection(_sparseDataCollectionName)); 
   // Helper class for decoding pixel data 
   CellIDDecoder<TrackerDataImpl> PixelID( Pix_collection,&_inputDecodeHelper );
   
-  CellIDEncoder<TrackerDataImpl> calibEncoder(DEPFET::ZSDATADEFAULTENCODING, calibCollection,&_calibOutputEncoderHelper ); // DEPFET param?
+  CellIDEncoder<TrackerDataImpl> calibEncoder(DEPFET::ZSDATADEFAULTENCODING, calibCollection,&_calibOutputEncoderHelper );
 
-  // loop over pixel detectors to select the right one from collection
+  // loop over pixel detectors
   for (unsigned int iDet = 0; iDet < Pix_collection->size(); iDet++) { 
      
-    // Get zs pixels from next pixel detector   
+    // Get sparsified pixel data from next pixel detector   
     TrackerDataImpl * pixModule = dynamic_cast<TrackerDataImpl* > ( Pix_collection->getElementAt(iDet) );
 
     // Sensor ID for pixel detector
     int sensorID = PixelID( pixModule ) ["sensorID"s];
     
     // Read geometry info for sensor 
-    int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);
-    if (ipl != _idut) // select the wanted DUT
-      //delete pixModule; ?
-      continue; 
-
+    int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID); 
     const Det& adet = TBDetector::Get(ipl);
 
     // Get min channel numbers
@@ -268,7 +300,7 @@ void PixelChargeCalibrator::calibrate( LCEvent * evt , LCCollectionVec * calibCo
     // Prepare a TrackerData to store the calibrated data
     TrackerDataImpl* calibData = new TrackerDataImpl ; 
      
-    // Loop over zspixels and calibrate each
+    // Loop over pixels and calibrate each
     for (int iPix = 0; iPix < npixels; iPix++) 
     {   
       
@@ -290,13 +322,13 @@ void PixelChargeCalibrator::calibrate( LCEvent * evt , LCCollectionVec * calibCo
                               << ", charge:" << charge
                               << std::endl;
       
-      // If pixel signal below threshold, skip it in clusterization
+      // If pixel signal below threshold, skip it in calibration
       if ( charge < _sparseZSCut ) {
         streamlog_out(MESSAGE2) << "  Signal below ZS cut. Skipping it." << std::endl; 
         continue;
       }
        
-      // If a pixel is out of range, skip it in clusterization
+      // If a pixel is out of range, skip it in calibration
       if ( iU < minUCell || iU > maxUCell || iV < minVCell || iV > maxVCell ) {
         streamlog_out(MESSAGE2) << "  Invalid pixel address found. Skipping it." << std::endl; 
         continue;
@@ -309,10 +341,13 @@ void PixelChargeCalibrator::calibrate( LCEvent * evt , LCCollectionVec * calibCo
       }
       
       // Use calibration function and the parameters for the pixel 
-      for (int par = 0; par < _nparFunc; par++){
-        _calibFunc->SetParameter(par, _DB_Map_CalibPar[par]->GetBinContent(iU-minUCell+1, iV-minVCell+1));
+      float calibCharge = charge;
+      if (_DB_Map_CalibFunc.find(sensorID) != _DB_Map_CalibFunc.end()){
+        for (int par = 0; par < _DB_Map_NparFunc[sensorID]; par++){
+          _DB_Map_CalibFunc[sensorID]->SetParameter(par, _DB_Map_CalibPar[sensorID][par]->GetBinContent(iU-minUCell+1, iV-minVCell+1));
+        }
+        calibCharge = _DB_Map_CalibFunc[sensorID]->Eval(charge);
       }
-      float calibCharge = _calibFunc->Eval(charge);
 
       calibData->chargeValues().push_back( iU );
       calibData->chargeValues().push_back( iV );
@@ -320,18 +355,17 @@ void PixelChargeCalibrator::calibrate( LCEvent * evt , LCCollectionVec * calibCo
       
       streamlog_out(MESSAGE2) << " On sensor " << sensorID << " having DAC unit charge " << charge << " calibrated to " << calibCharge << std::endl;
     }
+    
+    static auto idx_sensorID=calibEncoder.index("sensorID"s); //find the address ONCE.
+    static auto idx_sparsePixelType=calibEncoder.index("sparsePixelType"s);
 
-    static auto idx_orig_sensorID=calibEncoder.index("sensorID"s); //find the address ONCE.
-    static auto idx_orig_sparsePixelType=calibEncoder.index("sparsePixelType"s);
-
-    calibEncoder[idx_orig_sensorID] = sensorID;
-    calibEncoder[idx_orig_sparsePixelType] = static_cast<int> (kSimpleSparsePixel);
+    calibEncoder[idx_sensorID] = sensorID;
+    calibEncoder[idx_sparsePixelType] = static_cast<int> (kSimpleSparsePixel);
     calibEncoder.setCellID( calibData );
     calibCollection->push_back( calibData );
   
-  } // Detector selection loop
+  } // Detector loop
 
 }
 
 } // Namespace
-
