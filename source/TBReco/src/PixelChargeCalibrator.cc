@@ -112,13 +112,13 @@ void PixelChargeCalibrator::init() {
    
    for(int ipl = 0; ipl < TBDetector::GetInstance().GetNSensors(); ipl++)  { 
      int sensorID = TBDetector::Get(ipl).GetSensorID(); 
-     string funcName = _baseCalibFuncName+"_"+to_string(sensorID);
+     string funcName = "d" + to_string(sensorID) + "/" + _baseCalibFuncName;
      if ((TF1 *) calibDBFile->Get(funcName.c_str()) != nullptr){ 
        _DB_Map_CalibFunc[sensorID] = (TF1 *) calibDBFile->Get(funcName.c_str()); 
        _DB_Map_NparFunc[sensorID] = _DB_Map_CalibFunc[sensorID]->GetNpar();
 
        for(int par = 0; par < _DB_Map_NparFunc[sensorID]; par++){
-         string histoNamePar = _calibParaBaseName + "_" + to_string(sensorID) + "_" + to_string(par);
+         string histoNamePar = "d" + to_string(sensorID) + "/" + _calibParaBaseName + "_" + to_string(par);
          if ((TH2F *) calibDBFile->Get(histoNamePar.c_str()) != nullptr){
            _DB_Map_CalibPar[sensorID][par] = (TH2F *) calibDBFile->Get(histoNamePar.c_str());
            _DB_Map_CalibPar[sensorID][par]->SetDirectory(0);
