@@ -49,9 +49,9 @@ PixelChargeCalibrator::PixelChargeCalibrator() : Processor("PixelChargeCalibrato
     
    registerOutputCollection (LCIO::TRACKERDATA, "CalibratedCollectionName",
                             "Name of the output charge calibrated collection",
-                            _calibratedCollectionName, string("scalib"));
+                            _calibratedCollectionName, string("zscalib"));
     
-   registerProcessorParameter( "SparseZSCut","Threshold for zero suppression in detector respons units",
+   registerProcessorParameter( "SparseZSCut","Threshold for zero suppression in detector response units",
                                _sparseZSCut, static_cast<float > (0));
 
    registerProcessorParameter("NoiseDBFileName",
