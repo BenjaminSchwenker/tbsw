@@ -41,10 +41,14 @@ beamenergy=2.0
 
 # Definition of the calibration tag. It is typically named after telescope setup, beam energy, x0calibration target etc.
 # The caltag is used to generate a directory under localDB/*caltag* where all calibration parameters are stored
-# in local DB files. The telescope calibration step (Step 1 in the enumeration above) will generate a hotpixel mask (NoiseDB-M26.root),
-# a files with alignment information (alignmentDB.root) and a data base containing cluster resolutions (clusterDB-M26.root).
+# in local DB files. Additionally DQM plots of the calibration steps will be stored under results/ to cross check the
+# calibration results. The telescope calibration step (Step 1 in the enumeration above) will generate a hotpixel mask (NoiseDB-M26.root),
+# a files with alignment information (alignmentDB.root) and a data base containing cluster resolutions (clusterDB-M26.root). DQM plots
+# of the cluster calibration are stored under results/clusterDB-M26/*caltag*. Other track based DQM plots such as track p values,
+# pulls and the mean number of tracks per event are stored for example in results/TelescopeDQM2/*caltag*.
 # During the radiation length calibration step (Step 3) the beam energy, the beam energy gradients and a global offset of the telescope
-# angle resolution will be determined and stored in a text file (x0cal_result.cfg)
+# angle resolution will be determined and stored in a text file (x0cal_result.cfg). The DQM plots such as a selfconsistency diagram and
+# angle distributions with their associated fits can be found in results/x0calibrationDQM/*caltag*.
 caltag='air-alu-2GeV'
 
 # Name of the gearfile, which describes the telescope setup 
@@ -74,13 +78,21 @@ UseOuterPlanesForClusterDB=False
 # Flag to indicate that real EUTelescope data is used (raw format)
 mcdata=False
 
-# Script purpose option:
-# 0: Script only processes imaging part
-# 1: Script only processes x0 calibration part
-# 2: Script processes x0 calibration and imaging part
-# 3 and larger: Process x0 calibration and imaging part and angle reconstruction
-# 4 and larger: Process everything
-Script_purpose_option=4
+# Script purpose option: Determines which steps should be 
+# processed by the script. All steps with associated integer values
+# between the start and stop parameter are conducted. The following list 
+# provides the integer values of the individual reconstruction steps:
+
+# 1: Telescope calibration (and target alignment if enabled)
+# 2: Angle reconstruction
+# 3: X0 calibration
+# 4: X0 imaging
+
+# This default setting means that all reconstruction steps are performed
+# For example to only process the telescope calibration, set start and stop
+# parameter to 1
+Script_purpose_start=0
+Script_purpose_stop=4
 
 # By default, the z position of the X0 target is defined by an mechanical survey
 # measurement. For sufficiently thick targets, we can correct the z position of 
@@ -178,7 +190,7 @@ if __name__ == '__main__':
   # from this telescope calibration step can be found as pdf files in 
   # workspace/results/telescopeDQM
   
-  if Script_purpose_option > 3:
+  if Script_purpose_start < 2 and Script_purpose_stop >= 1:
     tbsw.x0script_functions.calibrate( rawfile_cali, steerfiles, caltag, gearfile, nevents_cali, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali, UseOuterPlanesForClusterDB)
 
     # Target alignment
@@ -194,7 +206,7 @@ if __name__ == '__main__':
   # workspace/root-files/X0-run*runnumber, etc*-reco.root
   # The histmap and angle resolution for every single run can be found in 
   # workspace/results/anglerecoDQM/
-  if Script_purpose_option > 2:
+  if Script_purpose_start < 3 and Script_purpose_stop >= 2:
     params_reco=[(x, steerfiles, caltag, gearfile, nevents_reco, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata) for x in RawfileList_reco]
     print "The parameters for the reconstruction are: " 
     print params_reco
@@ -213,25 +225,18 @@ if __name__ == '__main__':
   #
   # The fitted distributions and self-consistency plots in pdf format from this 
   # x0 calibration can be found in the workspace/tmp-runs/*X0Calibration/ directory
-  if Script_purpose_option  > 1:
+  if Script_purpose_start < 4 and Script_purpose_stop >= 3:
     tbsw.x0script_functions.xx0calibration(RawfileList_x0cali, steerfiles, caltag)
 
   # Generate a calibrated X/X0 image
   #
   # The calibrated radiation length image and other images, such as the beamspot
   # etc can be found in the workspace/root-files/*CalibratedX0Image.root
-  if Script_purpose_option  > 1:
+  if Script_purpose_start < 5 and Script_purpose_stop >= 4:
     tbsw.x0script_functions.xx0image(RawfileList_x0image, steerfiles, caltag, name_image1)
 
   # Generate another calibrated X/X0 image
   # The X/X0 image step can be repeated multiple times to generate a set of images
   # Just remove the comment and add a run list for each image
-    #tbsw.x0script_functions.xx0image(RawfileList_x0image2, steerfiles, caltag, caltag, name_image2)
-
-  if Script_purpose_option  == 1:
-    tbsw.x0script_functions.xx0calibration(RawfileList_x0cali, steerfiles, caltag)
-
-  if Script_purpose_option  == 0:
-    tbsw.x0script_functions.xx0image(RawfileList_x0image, steerfiles, caltag, name_image1)
     #tbsw.x0script_functions.xx0image(RawfileList_x0image2, steerfiles, caltag, caltag, name_image2)
 
