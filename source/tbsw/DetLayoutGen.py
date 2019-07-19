@@ -1,13 +1,17 @@
 """ Backend class and functions for creation of geometry xml files
-    author: Helge C. Beck helge-christoph.beck@phys.uni-goettingen.de
-
-    The script uses the xml.ElementTree library to generate a xml nodes. Purpose is to describe the telescope geometry and the detectors to then be used in the tbsw framework.
+    
+    
+    The script uses the xml.ElementTree library to generate a xml nodes. Purpose is to describe the telescope geometry and the detectors to then be used in 
+    the tbsw framework.
 
     Usage:
     The base xml/gear structure is in the function createGearStructure().
     The Detector class generates a detector xml tag with potentially multiple layers of detectors which are described by the same gear/detector parameters.
-      The Parameters of the contructor are list of the parameters used for each layer. It is assumed that no list given or to few list entries that the default parameters should be used. Missing list entries are appended at the end of the list. All lists assume that the index for a plane is the same in every parameter list. 
-      The class can be used to generate detectors of two gear type representations: SiPlanesParameters and PolyPlanesParameters. The first one assumes a rectangular pixel grid whereas the second one is totaly without limitations of pixel sizes and overall geometry. The parameters to be set for each are: 
+    The Parameters of the contructor are list of the parameters used for each layer. It is assumed that no list given or to few list entries that the default
+    parameters should be used. Missing list entries are appended at the end of the list. All lists assume that the index for a plane is the same in every 
+    parameter list. 
+    The class can be used to generate detectors of two gear type representations: SiPlanesParameters and PolyPlanesParameters. The first one assumes a 
+    rectangular pixel grid whereas the second one is totaly without limitations of pixel sizes and overall geometry. The parameters to be set for each are: 
         SiPlanesParameters: uCellGroupparamsList, vCellGroupparamsList ----- List of cellGroup parameters for each layer/plane
                             detectorparams ----------- most importent the geartype and number (number of planes)
         PolyPlanesParameters: pixelPrototypeparamsList --------- List of list of prototype pixel for each layer
@@ -15,9 +19,11 @@
                               detectorparams
         All parameter values have to be strings otherwise the parsing does not work.
         The other parameter lists are common to both types and some of the parameters need to be set for a sensible description of the detectors (IDs, positions)
-      Parameters to be set can be found in the declared default dictionaries in the class. The list of the respective parameters is set on construction of the detector object. Care has to be taken that the parameters for the pixel prototypes (or u/vCellGroups) are handled in a list of dictionaries ([{},{},]) because there could be multiple pixel types in one plane. 
-      For PolyPlanesParameters detector types:
-        Most important parameter to set is the list of functions that generate the layout of the pixels the pixel matrix for each layer. It has to be set during construction. This function has to be implemented for the specific layout (in a different file, see createGearfile.py). Characteristics of this function:
+    Parameters to be set can be found in the declared default dictionaries in the class. The list of the respective parameters is set on construction of the detector object. Care has 
+    to be taken that the parameters for the pixel prototypes (or u/vCellGroups) are handled in a list of dictionaries ([{},{},]) because there could be multiple pixel types in one plane. 
+    For PolyPlanesParameters detector types:
+        Most important parameter to set is the list of functions that generate the layout of the pixels the pixel matrix for each layer. It has to be set during construction. 
+        This function has to be implemented for the specific layout (in a different file, see createGearfile.py). Characteristics of this function:
         return: No return, all created elements have to be written to file directly.
         First parameter is self of the Detector class so that parameters can be accessed like the xmloutfile name.
         Elements: name is 'pixel'
@@ -42,12 +48,138 @@
         detector.createDetectorElement()
         #write (append) gearTags[1] to file (closing tags)
 
+    
+    author: Helge C. Beck helge-christoph.beck@phys.uni-goettingen.de
+    author: Benjamin Schwenker benjamin.schwenker@phys.uni-goettingen.de
 """
 import xml.etree.ElementTree as ET
 from copy import deepcopy 
 import os
 
 from ROOT import TFile, TH2Poly, TGraph
+
+
+class BaseDetector(object):
+  """
+  BaseDetector class implements an interface define a detector in a geomtry xml file. 
+   
+  :author: benjamin.schwenker@phys.uni-goettinge.de  
+  """
+  def __init__(self):
+    """  
+    Initialize with default values for the sensitive and parameter dictionaries. 
+    """    
+    self.gearType = None
+    
+    self.sensitiveParams = {
+                             "ID": "0",
+                             "positionX": "0.00",  
+                             "positionY": "0.00", 
+                             "positionZ": "0.00",  
+                             "alpha": "0",          
+                             "beta": "0",              
+                             "gamma": "0",         
+                             "rotation1": "1.0", 
+                             "rotation2": "0.0",  
+                             "rotation3": "0.0", 
+                             "rotation4": "1.0",
+                             "PixType": "0",
+                             "thickness": "0.07",  
+                             "radLength": "93.660734", 
+                             "atomicNumber": "14",
+                             "atomicMass": "28", 
+                           }
+      
+    self.supportParams = {
+                           "sizeU": "200", 
+                           "sizeV": "100",  
+                           "thickness": "0.07",  
+                           "radLength": "93.660734", 
+                           "atomicNumber": "14", 
+                           "atomicMass": "28",   
+                         }
+    
+  def sensParams(self, params):
+    """  
+    Updates dictionary of sensitive parameters.  
+    """    
+    self.sensitiveParams.update(params)
+
+  def suppParams(self, params):
+    """  
+    Updates dictionary of support parameters.  
+    """    
+    return self.supportParams.update(params)
+    
+
+class SquareDetector(BaseDetector):
+  """
+  SquareDetector class implements an interface to define a detector with a pixel matrix having
+  rectangular pixel cells.  
+
+  :author: benjamin.schwenker@phys.uni-goettinge.de  
+  """
+  def __init__(self, sensParams={}, suppParams={}):
+    """  
+    """ 
+    # Set default values for sensitive and support params
+    BaseDetector.__init__(self)
+
+    # Set gearType variable
+    self.gearType = "SiPlanesParameters" 
+
+    # Update params
+    self.suppParams(suppParams)
+    self.sensParams(sensParams)
+   
+    # By default, there are no pixels defined 
+    self.uCellGroups = list()  
+    self.vCellGroups = list()  
+    
+       
+  def addUCellGroup(self, cellGroup):
+    """
+    Add cell group for u axis 
+    """
+    return self.uCellGroups.extend(cellGroup) 
+
+  def addVCellGroup(self, cellGroup):
+    """
+    Add cell group for v axis 
+    """
+    return self.vCellGroups.extend(cellGroup) 
+
+class PolyDetector(BaseDetector):
+  """
+  PolyDetector class implements an interface to define a detector with a pixel matrix having
+  polygonal shaped pixel cells.  
+   
+  :author: benjamin.schwenker@phys.uni-goettinge.de  
+  """
+  
+  def __init__(self, pixelShapes=[], generatePixels=None):
+    """  
+    :@pixelPrototypeParams: pixel prototype parameter dictionary
+    """ 
+    
+    BaseDetector.__init__(self)
+    self.pixelShapes = []
+    self.pixelShapes.extend(pixelShapes)
+    self.gearType = "PolyPlanesParameters"     
+     
+    def generateNoPixels():
+      pass
+    
+    if not generatePixels == None: 
+      self.generatePixels = generatePixels
+    else: 
+      self.generatePixels = generateNoPixels
+   
+  def addPixelShapes(self, pixelShapes):
+    """
+    Extends the list of pixel shapes with new shapes 
+    """
+    self.pixelShapes.extend(pixelShapes)
 
 # better styling of xml outfile, like actual linebreaks! -> currently linebreaks are in but not a staggered indentation because there is no information about the indentation where pieces are added to. 
 # list of local class variables for reference
