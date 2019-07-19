@@ -797,11 +797,11 @@ $ source init_tbsw.sh
 $ python x0-reco.py
 ```
 
-In Practice selecting the measurement areas for the x0 calibration requires a good idea of the beamspot position on the calibration target. It is therefore recommended to create a set of
-X/X0 images of the calibration targets for orientation. The measurement areas should cover a large u and v range in order to minimize the statistical uncertainty of the beam energy gradients.
-However, the measurement areas should not be located near the borders of the beamspot, because there the radiation length value may deviate from the values in the center. For a homogeneously
-thick calibration target one typically observes a flat plateau with similar X/X0 values in the central region of the beamspot and increasing/decreasing values at the edges. All X0 calibration
-measurement areas should be placed in the central region with constant X/X0 values.
+To ensure a valid selection of measurement areas during the X0 calibration, it is recommended to create a set of X/X0 images of the calibration targets for orientation. 
+The measurement areas should cover a large u and v range in order to minimize the statistical uncertainty of the beam energy gradients. However, the measurement areas 
+should not be located near the borders of the beamspot, because there the measured radiation length value may be biased. For a homogeneously thick 
+calibration target one typically observes a flat plateau with similar X/X0 values in the central region of the beamspot and increasing/decreasing values at the edges. 
+All X0 calibration measurement areas should be placed in the central region with constant X/X0 values.
 
 In order to generate an image of the calibration target run the script only up to the X0calibration step:
 
