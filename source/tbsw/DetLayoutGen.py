@@ -1,57 +1,22 @@
-""" Backend class and functions for creation of geometry xml files
+""" Backend classes and functions for creation of geometry xml files
     
     
-    The script uses the xml.ElementTree library to generate a xml nodes. Purpose is to describe the telescope geometry and the detectors to then be used in 
-    the tbsw framework.
+    The xml.ElementTree library is used to generate all xml nodes. Purpose is to describe
+    the telescope geometry and the detectors to then be used in the tbsw framework.
 
     Usage:
-    The base xml/gear structure is in the function createGearStructure().
-    The Detector class generates a detector xml tag with potentially multiple layers of detectors which are described by the same gear/detector parameters.
-    The Parameters of the contructor are list of the parameters used for each layer. It is assumed that no list given or to few list entries that the default
-    parameters should be used. Missing list entries are appended at the end of the list. All lists assume that the index for a plane is the same in every 
-    parameter list. 
-    The class can be used to generate detectors of two gear type representations: SiPlanesParameters and PolyPlanesParameters. The first one assumes a 
-    rectangular pixel grid whereas the second one is totaly without limitations of pixel sizes and overall geometry. The parameters to be set for each are: 
-        SiPlanesParameters: uCellGroupparamsList, vCellGroupparamsList ----- List of cellGroup parameters for each layer/plane
-                            detectorparams ----------- most importent the geartype and number (number of planes)
-        PolyPlanesParameters: pixelPrototypeparamsList --------- List of list of prototype pixel for each layer
-                              createPixelfunctionList --------- List of functions for each layer to create the pixel, if not provided or not for every layer will throw a ValueError
-                              detectorparams
-        All parameter values have to be strings otherwise the parsing does not work.
-        The other parameter lists are common to both types and some of the parameters need to be set for a sensible description of the detectors (IDs, positions)
-    Parameters to be set can be found in the declared default dictionaries in the class. The list of the respective parameters is set on construction of the detector object. Care has 
-    to be taken that the parameters for the pixel prototypes (or u/vCellGroups) are handled in a list of dictionaries ([{},{},]) because there could be multiple pixel types in one plane. 
-    For PolyPlanesParameters detector types:
-        Most important parameter to set is the list of functions that generate the layout of the pixels the pixel matrix for each layer. It has to be set during construction. 
-        This function has to be implemented for the specific layout (in a different file, see createGearfile.py). Characteristics of this function:
-        return: No return, all created elements have to be written to file directly.
-        First parameter is self of the Detector class so that parameters can be accessed like the xmloutfile name.
-        Elements: name is 'pixel'
-                  attributes = {"type": "0",  # global type of the pixel
-                                "u": , "v",   # column, row coordinates of the pixel, pixel address in raw data, or pseudo coordinates but then a conversion processor needs to be used when reading in the raw data
-                                "centeru": ,  # centre coordinate u of pixel in mm, collection point of the charges, assigned hit position in calibration and reconstruction 
-                                "centerv": ,  # centre coordinate v of pixel in mm
-                               }
-        For conveniance there is a method called in Detector class before generating the pixel layout that creates a list of list of tuples. The list of tuples consists of the coordinates of the pixel prototype corners. Every prototype pixel is an entry in the outer list. This list is layer specific and can be accessed with self.basePointListList. Be aware that the provided string values from the prototype dictionaries are converted to floats, precision loss could happen. The first entry for each pixel is its type and not a point!
-        Use the function addPixelToTH2Poly(attributes) in the createPixel() function to add the pixel to a TH2Poly object which is written to a root file at the end of the detector creation. Name of the root file from the xmloutfile. 
-      Other parameters for Detector class:
-        The filename/path where the resulting gear file is written has to be provided to xmloutfile contructer parameter. In the class the write action is always append, so the file should be prepared for the detector elements.
-        With the default parameters 6 mimosa26 planes are created with ID=0 and at positionX/Y/Z=0.0. These two parameters are the ones that have to be set for every plane. Not every parameter has to be set. For every plane the default parameters are assigned first and then with the provided parameters overwritten. So not provided parameters stay the default ones. 
-        The Detector class does not return anything. All elements are written to the outputfile with the writeFile function.
-
-        basic usage of the module:
-        import DetLayoutGen
-        #create new .xml file to append everything to
-        gearTags = DetLayoutGen.createGearStructure(parameters)
-        #write (append) gearTags[0] to file (opening tags)
-        detector = DetLayoutGen.Detector(all the parameters you need)
-        detector.createDetectorElement()
-        #write (append) gearTags[1] to file (closing tags)
-
     
+    A list of detectors must be created. All detectors are objects created from either the 
+    class SquareDetector or the class PolyDetector. Both classes inherit from the class 
+    BaseDetector.   
+
+    The function WriteGearfile(outfile, sensors) writes the output gearfile.  
+    
+        
     author: Helge C. Beck helge-christoph.beck@phys.uni-goettingen.de
     author: Benjamin Schwenker benjamin.schwenker@phys.uni-goettingen.de
 """
+
 import xml.etree.ElementTree as ET
 from copy import deepcopy 
 import os
@@ -63,6 +28,13 @@ class BaseDetector(object):
   """
   BaseDetector class implements an interface define a detector in a geomtry xml file. 
    
+  sensitiveParams -----  Dictionary of parameters describing the sensitive part of the detector 
+  supportParams   -----  Dictionary of parameters describing the support parts of the sensor (outside acceptance) 
+  gearType        -----  Gear Type (str) 
+
+  The unit for lenght is mm. The unit of angles are degrees. Initial values for the sensitiveParams and supportParams
+  dictionary are set in the constructor. All values can be overriden by the member functions sensParams() and suppParams(). 
+  
   :author: benjamin.schwenker@phys.uni-goettinge.de  
   """
   def __init__(self):
@@ -115,8 +87,20 @@ class BaseDetector(object):
 class SquareDetector(BaseDetector):
   """
   SquareDetector class implements an interface to define a detector with a pixel matrix having
-  rectangular pixel cells.  
+  only rectangular pixel cells.  
 
+        
+  uCellGroups ---- List of cellGroup dictionaries describing the segmentation of sensor along u axis
+  vCellGroups ---- List of cellGroup dictionaries describing the segmentation of sensor along u axis 
+
+  The cellGroup dictionary is expected to look like: 
+
+  cellGroup = {"minCell": 0, "maxCell": 335, "pitch": 0.05 }
+  
+  It tells us that pixels with numbers [0, 335] have a pitch of 0.05mm. There can be multiple cellGroups with non
+  overlapping numbers to reflect a change in the pixel pitch along one sensor direction. A 2d grid is defined from 
+  the list of cellGroups for the u and v directions.   
+  
   :author: benjamin.schwenker@phys.uni-goettinge.de  
   """
   def __init__(self, sensParams={}, suppParams={}):
@@ -133,33 +117,59 @@ class SquareDetector(BaseDetector):
     self.sensParams(sensParams)
    
     # By default, there are no pixels defined 
-    self.uCellGroups = list()  
-    self.vCellGroups = list()  
+    self.uCellGroups = []
+    self.vCellGroups = []  
     
        
   def addUCellGroup(self, cellGroup):
     """
     Add cell group for u axis 
     """
-    return self.uCellGroups.extend(cellGroup) 
+    self.uCellGroups.append(cellGroup) 
 
   def addVCellGroup(self, cellGroup):
     """
     Add cell group for v axis 
     """
-    return self.vCellGroups.extend(cellGroup) 
+    self.vCellGroups.append(cellGroup) 
 
 class PolyDetector(BaseDetector):
   """
   PolyDetector class implements an interface to define a detector with a pixel matrix having
   polygonal shaped pixel cells.  
+
+  pixelShapes      ----- List of pixelShape dictionaries describing all different pixel types 
+  generatePixels   ----- Generator function to create pixel cells placed in the sensitive area
+  
+  The pixelShape dictionary is expected to look like
+ 
+  pixelShape = {
+                 "type": 0,         # int, unique for the detector   
+                 "distu": 0.3,      # float, extension along u direction in mm 
+                 "distv": 0.01,     # float, extension along v direction in mm 
+                 "points": [-0.125, -0.025, -0.125, 0.025, 0.125, 0.025, 0.125, -0.025]
+               } 
    
+  The type (int) of the pixelShape is a unique integer value. The distu and distv parameters meaure the extension of the pixel cell 
+  in the u and v direction and are used to define the neighborhood of the pixel. The points are a list of edge points of the polygonal
+  outer shape of the pixel. The center of the pixel at 0,0 can be the geometric center or the charge collection center. 
+
+  The generatePixels generator function yields a sequence of all pixels placed on the sensitive area. A placed pixel is defined by 
+  a dictionary of the following form. 
+
+  pixel = {
+            "type": "0",  # global type of the pixel
+            "u": , "v",   # column, row coordinates of the pixel, pixel address in raw data
+            "centeru": ,  # centre coordinate u of pixel in mm
+            "centerv": ,  # centre coordinate v of pixel in mm
+          } 
+  
   :author: benjamin.schwenker@phys.uni-goettinge.de  
   """
   
   def __init__(self, pixelShapes=[], generatePixels=None):
     """  
-    :@pixelPrototypeParams: pixel prototype parameter dictionary
+    :@pixelShapes: list of pixel shape dictionaries 
     """ 
     
     BaseDetector.__init__(self)
@@ -181,317 +191,191 @@ class PolyDetector(BaseDetector):
     """
     self.pixelShapes.extend(pixelShapes)
 
-# better styling of xml outfile, like actual linebreaks! -> currently linebreaks are in but not a staggered indentation because there is no information about the indentation where pieces are added to. 
-# list of local class variables for reference
-class Detector:
-  """Base class which holds all parameters and functions for creating a detector with multiple planes which have the same gear type in a gear file 
-  Default parameters are for a 6 layer Mimosa26 telescope, all layers at the same position!"""
+
+def WriteGearfile(xmloutfile, sensors=[]):
+  """Create a geometry xml file with path xmloutfile for the specified list of sensors.
+  """
+
+  # reset the file to empty because use append mode later
+  f = open(xmloutfile, "w") 
+  f.close()
+  # create the basic xml file structure, for parameters see DetLayoutGen.py
+  gearBaseTags = createGearStructure()
+  # write the opening tags of the basic xml structure. This is needed because the 
+  # xml nodes are itterativly created and written to file to reduce memory consumption
+  with open(xmloutfile, "a") as f:
+    f.write(gearBaseTags[0])
+    f.flush()
+    os.fsync(f.fileno())
+
+  # Filter the sensors 
+  square_dets = []
+  poly_dets = []
+  for sensor in sensors: 
+    if sensor.gearType == "SiPlanesParameters":
+      square_dets.append(sensor)
+    elif sensor.gearType == "PolyPlanesParameters": 
+      poly_dets.append(sensor)
+    else: 
+      print("Sensor with unkown gearType={}. Skipping it!".format(sensor.gearType)) 
+   
+  # Write all SquareDets into xmloutfile    
+  WriteDetsIntoGearfile(xmloutfile, name="SiPlanes", sensors=square_dets)
   
-  # gear/detector types available.
-  dettypes = dict(SquareDet="SiPlanesParameters", PolyDet="PolyPlanesParameters")
-
-  #detector parameters. Do not be confused by the dettypes and geartype names. Historically gear was used until the swap to only xml files for geometry description. For backwards compatibility the parameter is still called geartype even if it is a detector type now.
-  ddefault = dict(name="SiPlanes", geartype=dettypes["SquareDet"], ID="250", number="6")
-
-  # ladder paramaters
-  ldefault = dict(sizeU="200", sizeV="100", thickness="0.07", 
-                  radLength="93.660734", atomicNumber="14", atomicMass="28")
-
-  # sensitive parameters
-  sdefault = dict(ID="0", PixType="0", 
-              positionX="0.00", positionY="0.00", positionZ="0.00", 
-              thickness="0.07", 
-              radLength="93.660734", atomicNumber="14", atomicMass="28", 
-              alpha="0", beta="0", gamma="0", 
-              rotation1="1.0", rotation2="0.0", rotation3="0.0", rotation4="1.0",)
+  #  Write all PolyDets into xmloutfile 
+  WriteDetsIntoGearfile(xmloutfile, name="PolyPlanes", sensors=poly_dets)
   
-  # uCellGroup default
-  uCellGroupdefault = dict(minCell="0", maxCell="1151", pitch="0.0184")
-
-  #vCellGroup default 
-  vCellGroupdefault = dict(minCell="0", maxCell="575", pitch="0.0184")
-
-  #pixel prototyp, within dist pixels are counted as neigbouring, default 0.02 a bit larger then 0.0184 pixel pitch
-  # prototype for Mimosa26 pixel with pitch=0.0184mm
-  protopixdefault = dict(type="0", distu="0.02", distv="0.02", points="-0.0092 -0.0092, -0.0092 0.0092, 0.0092 0.0092, 0.0092 -0.0092")
+  # write the closing tags of the basic xml structure
+  with open(xmloutfile, "a") as f:
+    f.write(gearBaseTags[1])
+    f.flush()
+    os.fsync(f.fileno())
+ 
+def WriteDetsIntoGearfile(xmloutfile, name, sensors=[]):
   
-  # example of the list created by setPrototypeBasePoints() for the default protopixel, first entry is type
-  #self.basePointListList = [[0, (-0.0092, -0.0092), (-0.0092, 0.0092), (0.0092, 0.0092), (0.0092, -0.0092)]]
-
-  # variables which are local/individual for every detector object created, local to remove overwriting between the objects. Just for the overview. Do not put back in!
-
-  #self.xmloutfile --- file where the output is written to. Can be accessed by the createPixel(self) function!
-
-  #self.nlayers --- number of layers determined from detectorparams
-  #self.detType --- type of detector layout, from detectorparams, possible options in dettypes dictionary 
-  #self.ladderparamslist --- ladder parameters for each layer, appended with default values if list to short
-  #self.sensparamslist --- sensitive parameters for each layer, "-"
-  #self.createPixelFunctionsList --- functions that create pixels for each layer, from createPixelfunctionList, if not or not complete provided raises an exception ValueError
-  #self.pixelPrototypeParamsListList --- list of pixel prototypes for each layer, append default if not complete
-  #self.uCellGroupParamsListList --- List of uCellGroups for each layer
-  #self.vCellGroupParamsListList --- List of vCellGroups for each layer
-  #self.uCellGroupParamsList --- uCell parameters for the current layer (for SquareDet type), from uCellGroupparamsList, appended by default if not complete
-  #self.vCellGroupParamsList --- vCell parameters for the current layer "-"
-  #self.nucellGroups --- number of ucellGroups in the current layer
-  #self.nvcellGroups --- number of vcellGroups in the current layer
-  #self.protopixlistdic --- List of parameters for each protopixel in the current layer
-  #self.nprotopixel
-  #self.basePointListList --- list of points for every protopixel in the current layer
-  #self.createPixel --- object that gets passed the next used function from the createPixelFunctionsList
-  #self.layout --- List of TH2Poly objects for each layer, can be filled with bins with addPixelToTH2Poly(), is written to root file at the end of detector creation (for PolyDet type)
-  #self.layer --- current layer number 
-  #self.detectorparams --- detector parameters for the class object
-
-  def __init__(self, xmloutfile, createPixelfunctionList=None, ladderparamsList=None, sensparamsList=None, pixelPrototypeparamsList=None, detectorparams=None, uCellGroupparamsList=None, vCellGroupparamsList=None):
-    self.xmloutfile = xmloutfile
-    self.setDetectorParams(detectorparams)
-    
-    if ladderparamsList is not None:
-      if len(ladderparamsList) < self.nlayers:
-        for i in range(self.nlayers-len(ladderparamsList)):
-          ladderparamsList.append(deepcopy(ldefault))
-    else:
-      ladderparamsList = [deepcopy(self.ldefault) for i in range(self.nlayers)]
-    self.ladderparamslist = ladderparamsList
-
-    if sensparamsList is not None:
-      if len(sensparamsList) < self.nlayers:
-        for i in range(self.nlayers-len(sensparamsList)):
-          sensparamsList.append(deepcopy(sdefault))
-    else:
-      sensparamsList = [deepcopy(self.sdefault) for i in range(self.nlayers)]
-    self.sensparamslist = sensparamsList
-
-    if self.detType == self.dettypes["PolyDet"]:
-      if createPixelfunctionList is not None:
-        if len(createPixelfunctionList) < self.nlayers:
-          raise ValueError("ValueError: createPixelfunctionList parameter has less list items ({}) then number of layers ({})".format(len(createPixelfunctionList), self.nlayers))
-        self.createPixelFunctionsList = createPixelfunctionList
-      else:
-        raise ValueError("ValueError: Using {} detector type and not providing a list of functions to create the pixels is not forseen!".format(self.detType))
-      if pixelPrototypeparamsList is not None:
-        if len(pixelPrototypeparamsList) < self.nlayers:
-          for i in range(self.nlayers-len(pixelPrototypeparamsList)):
-            pixelPrototypeparamsList.append([deepcopy(self.protopixdefault)])
-      else:
-        pixelPrototypeparamsList = [[deepcopy(self.protopixdefault)] for i in range(self.nlayers)]
-      self.pixelPrototypeParamsListList = pixelPrototypeparamsList
-
-    elif self.detType == self.dettypes["SquareDet"]:
-      if uCellGroupparamsList is not None:
-        if len(uCellGroupparamsList) < self.nlayers:
-          for i in range(self.nlayers-len(uCellGroupparamsList)):
-            uCellGroupparamsList.append([deepcopy(uCellGroupdefault)])
-      else:
-        uCellGroupparamsList = [[deepcopy(self.uCellGroupdefault)] for i in range(self.nlayers)]
-      self.uCellGroupParamsListList = uCellGroupparamsList
-
-      if vCellGroupparamsList is not None:
-        if len(vCellGroupparamsList) < self.nlayers:
-          for i in range(self.nlayers-len(vCellGroupparamsList)):
-            vCellGroupparamsList.append([deepcopy(vCellGroupdefault)])
-      else:
-        vCellGroupparamsList = [[deepcopy(self.vCellGroupdefault)] for i in range(self.nlayers)]
-      self.vCellGroupParamsListList = vCellGroupparamsList
-      
-  def createLadder(self):
-    ladder = ET.Element('ladder', self.ladderparams)
-    return ladder
-
-  def createSensitive(self):
-    sensitive = ET.Element('sensitive', self.sensparams)
-    return sensitive
-
-  def createPixelPrototype(self):
-    for i in range(self.nprotopixel): 
-      self.writeFile(ET.Element('pixelPrototype', self.protopixlistdic[i]))
-
-  def createPixelMatrix(self):
-    matrixstart = '<pixelMatrix>'#indentation
-    matrixend = '</pixelMatrix>'
-    self.writeFile(matrixstart)
-    self.createPixel(self)
-    self.writeFile(matrixend)
-
-  def setDetectorParams(self, detectorparamsdic):
-    self.detectorparams = deepcopy(self.ddefault)
-    if detectorparamsdic is not None:
-      self.detectorparams.update(detectorparamsdic)
-    self.detType = self.detectorparams["geartype"]
-    if self.detType not in self.dettypes.values():
-      raise ValueError("The provided det/gear type ({}) is not supported (or not in the list of dettypes).".format(self.detType))
-    self.nlayers = int(self.detectorparams["number"])
+  if len(sensors) == 0: 
+    return 
   
-  def setLadderParams(self, ladderparamsdic):
-    self.ladderparams = deepcopy(self.ldefault)
-    if ladderparamsdic is not None:
-      self.ladderparams.update(ladderparamsdic)
-
-  def setSensitiveParams(self, sensparamsdic):
-    self.sensparams = deepcopy(self.sdefault)
-    if sensparamsdic is not None:
-      self.sensparams.update(sensparamsdic)
-    
-  def setPixelPrototypeParams(self, protopixdic):
-    self.protopixlistdic = []
-    if protopixdic is not None:
-      self.nprotopixel = len(protopixdic)
-      self.protopixlistdic = [deepcopy(self.protopixdefault) for i in range(self.nprotopixel)]
-      for i in range(self.nprotopixel):
-        self.protopixlistdic[i].update(protopixdic[i])
-    else:
-      self.nprotopixel = 1
-      self.protopixlistdic.append(self.protopixdefault)
-    self.setPrototypeBasePoints()
-
-  def setCellGroupParams(self, uCellGroupdict, vCellGroupdict):
-    self.uCellGroupParamsList = []
-    if uCellGroupdict is not None:
-      self.nucellGroups = len(uCellGroupdict)
-      self.uCellGroupParamsList = [deepcopy(self.uCellGroupdefault) for i in range(self.nucellGroups)]
-      for i in range(self.nucellGroups):
-        self.uCellGroupParamsList[i].update(uCellGroupdict[i])
-    else:
-      self.nucellGroups = 1
-      self.uCellGroupParamsList.append(self.uCellGroupdefault)
-
-    self.vCellGroupParamsList = []
-    if vCellGroupdict is not None:
-      self.nvcellGroups = len(vCellGroupdict)
-      self.vCellGroupParamsList = [deepcopy(self.vCellGroupdefault) for i in range(self.nvcellGroups)]
-      for i in range(self.nvcellGroups):
-        self.vCellGroupParamsList[i].update(vCellGroupdict[i])
-    else:
-      self.nvcellGroups = 1
-      self.vCellGroupParamsList.append(self.vCellGroupdefault)
-    
-  def setPrototypeBasePoints(self):
-    self.basePointListList = []
-    for i in range(self.nprotopixel):
-      pointList = []
-      pointList.append(int(float(self.protopixlistdic[i]["type"])))
-      for point in self.protopixlistdic[i]["points"].split(','):
-        pointList.append(tuple(float(x) for x in point.split()))
-      self.basePointListList.append(pointList)
+  nlayers = len(sensors)
+  gearType = sensors[0].gearType
+  dparams = {"name": name, "ID": 250, "geartype": gearType, "number":str(nlayers)}
   
-  def createDetectorElement(self):
-    detector = ET.Element('detector', name=self.detectorparams["name"], geartype=self.detectorparams["geartype"])
-    siplanesID = ET.SubElement(detector, 'siplanesID', ID=self.detectorparams["ID"])
-    siplanesNumber = ET.SubElement(detector, 'siplanesNumber', number=self.detectorparams["number"])
-    indent(detector)
-    stringdetector = ET.tostring(detector)
-    layerInsertPos = stringdetector.find('</detector>')
-    layersstart, layersend = stringdetector[:layerInsertPos], stringdetector[layerInsertPos:]
-    layersstart += '<layers>'# indentation?
-    layersend = '</layers>' + layersend
-    self.writeFile(layersstart)
-
-    self.layout = [] # list of TH2Poly objects for each layer, filled with addPixelToTH2Poly() if put in to createPixel() function
-
-    for i in range(self.nlayers):
-      self.layer = i
-      self.createLayerElement(i) 
-
-    self.writeFile(layersend)
-    self.layer = -1
-    self.writeLayout()
-
-  def createLayerElement(self, layernumber):
-    layer = ET.Element('layer')
-    self.setLadderParams(self.ladderparamslist[layernumber])
-    self.setSensitiveParams(self.sensparamslist[layernumber])
-    ladder = self.createLadder()
-    sensitive = self.createSensitive()
-    layer.append(ladder)
-    layer.append(sensitive)
-    indent(layer)
-    stringlayer = ET.tostring(layer)
-    pixelInsertPos = stringlayer.find('</layer>')
-    layerstart, layerend = stringlayer[:pixelInsertPos], stringlayer[pixelInsertPos:]
-    self.writeFile(layerstart)
-
-    self.layout.append(TH2Poly())
-    self.layout[layernumber].SetName("layer"+str(layernumber))
-
-    if self.detType == self.dettypes["SquareDet"]:
-      self.setCellGroupParams(self.uCellGroupParamsListList[layernumber], self.vCellGroupParamsListList[layernumber])
-      self.createPixel = self.createRectPixel
-      self.createPixel()
-    elif self.detType == self.dettypes["PolyDet"]:
-      self.createPixel = self.createPixelFunctionsList[layernumber]
-      self.setPixelPrototypeParams(self.pixelPrototypeParamsListList[layernumber])
-      self.createPixelPrototype()
-      self.createPixelMatrix()
-
-    self.writeFile(layerend)
+  detector = ET.Element('detector', name=dparams["name"], geartype=dparams["geartype"])
+  siplanesID = ET.SubElement(detector, 'siplanesID', ID=str(dparams["ID"]))
+  siplanesNumber = ET.SubElement(detector, 'siplanesNumber', number=str(dparams["number"]))
+  indent(detector)
+  stringdetector = ET.tostring(detector)
+  layerInsertPos = stringdetector.find('</detector>')
+  layersstart, layersend = stringdetector[:layerInsertPos], stringdetector[layerInsertPos:]
+  layersstart += '<layers>'# indentation?
+  layersend = '</layers>' + layersend
+  writeFile(layersstart, xmloutfile)
   
-  def createRectPixel(self):
-    if self.nucellGroups == self.nvcellGroups:
-      for i in range(self.nucellGroups):
-        ucells = ET.Element('uCellGroup', self.uCellGroupParamsList[i]);
-        vcells = ET.Element('vCellGroup', self.vCellGroupParamsList[i]);
-        self.writeFile(ucells);
-        self.writeFile(vcells);
-    else:
-      raise ValueError("ValueError: not equal number of uCellGroups ({}) and vCellGroups ({}). Have to be equal!".format(self.nucellGroups, self.nvcellGroups))
+  # Dictionary of TH2Poly objects for each layer, filled with addPixelToTH2Poly()
+  layout = {} 
+  
+  for sensor in sensors:
+    createLayerElement(sensor, layout, xmloutfile) 
+   
+  writeFile(layersend, xmloutfile)
+  #TODO fix this function
+  #writeLayout(xmloutfile, gearType, layout)
+  
 
-  def addPixelToTH2Poly(self, attributes):
-    pointsList = [plist for plist in self.basePointListList if plist[0] == int(float(attributes["type"]))][0]
-    gpixel = TGraph(len(pointsList)-1)
-    gpixel.SetName(attributes["u"] + "," + attributes["v"])
-    i = 0
-    for point in pointsList[1:]:
-      gpixel.SetPoint(i, point[0]+float(attributes["centeru"]), point[1]+float(attributes["centerv"]))
-      i += 1
-    self.layout[self.layer].AddBin(gpixel)
+def createPixelMatrix(generatePixels, xmloutfile):
+  matrixstart = '<pixelMatrix>'#indentation
+  matrixend = '</pixelMatrix>'
+  writeFile(matrixstart, xmloutfile)
+  generatePixels()
+  writeFile(matrixend, xmloutfile)
+  
+  
+def setPrototypeBasePoints():
+  basePointListList = []
+  for i in range(self.nprotopixel):
+    pointList = []
+    pointList.append(int(float(self.protopixlistdic[i]["type"])))
+    for point in self.protopixlistdic[i]["points"].split(','):
+      pointList.append(tuple(float(x) for x in point.split()))
+    basePointListList.append(pointList)
+  return basePointList
+  
+  
+def addPixelToTH2Poly(attributes):
+  pointsList = [plist for plist in self.basePointListList if plist[0] == int(float(attributes["type"]))][0]
+  gpixel = TGraph(len(pointsList)-1)
+  gpixel.SetName(attributes["u"] + "," + attributes["v"])
+  i = 0
+  for point in pointsList[1:]:
+    gpixel.SetPoint(i, point[0]+float(attributes["centeru"]), point[1]+float(attributes["centerv"]))
+    i += 1
+  self.layout[self.layer].AddBin(gpixel)
 
-  def writeLayout(self):
-    if self.detType != self.dettypes["PolyDet"]:
-      return
-    index = self.xmloutfile.find(".xml")
-    if index == -1:
-      print("Can not parse xmloutfile name to a rootfile (.xml -> .root) because no .xml found. Not writing Th2Poly layout!")
-      return
-    rootfilename = self.xmloutfile[0:self.xmloutfile.find(".xml")] + ".root"
-    rootfile = TFile(rootfilename, "RECREATE")
-    detTypedir = rootfile.mkdir(self.detType)
-    detTypedir.cd()
-    layoutdir = detTypedir.mkdir("layouts")
-    layoutdir.cd()
-    for polyhist in self.layout:
-      if polyhist.GetNumberOfBins > 0:
-        polyhist.Draw()
-        polyhist.Write()
+def writeLayout(xmloutfile, gearType, layout):
+  if gearType != "PolyPlanesParameters":
+    return
+  index = xmloutfile.find(".xml")
+  if index == -1:
+    print("Can not parse xmloutfile name to a rootfile (.xml -> .root) because no .xml found. Not writing Th2Poly layout!")
+    return
+  rootfilename = xmloutfile[0:xmloutfile.find(".xml")] + ".root"
+  rootfile = TFile(rootfilename, "RECREATE")
+  detTypedir = rootfile.mkdir(gearType)
+  detTypedir.cd()
+  layoutdir = detTypedir.mkdir("layouts")
+  layoutdir.cd()
+  for polyhist in layout:
+    if polyhist.GetNumberOfBins() > 0:
+      polyhist.Draw()
+      polyhist.Write()
 
-    detTypedir.cd()
-    testdir = detTypedir.mkdir("test")
-    testdir.cd()
-    for polyhist in self.layout:
-      # fill every bin with 1
-      nobins = polyhist.GetNumberOfBins()
-      if nobins > 0:
-        for i in range(1, nobins+1): # bins start at 1 and end at including nobins
-          polyhist.Fill(polyhist.GetBinName(i), 1)
-        polyhist.Draw("COLZ")
-        polyhist.Write()
+  detTypedir.cd()
+  testdir = detTypedir.mkdir("test")
+  testdir.cd()
+  for sensorID, polyhist in layout.iteritems():
+    # fill every bin with 1
+    nobins = polyhist.GetNumberOfBins
+    if nobins > 0:
+      for i in range(1, nobins+1): # bins start at 1 and end at including nobins
+        polyhist.Fill(polyhist.GetBinName(i), 1)
+      polyhist.Draw("COLZ")
+      polyhist.Write()
         
-    rootfile.Write()
-    rootfile.Close()
+  rootfile.Write()
+  rootfile.Close()
 
-  def writeFile(self, writeobject):  # write object is either an ET.Element or a string
-    writestring = ""
-    if ET.iselement(writeobject):
-      indent(writeobject)
-      writestring = ET.tostring(writeobject)
-    else:
-      writestring = writeobject
-    with open(self.xmloutfile, "a") as f:
-      f.write(writestring)
-      f.flush()
-      os.fsync(f.fileno())
+  
+def createRectPixel(uCellGroups, vCellGroups, xmloutfile):
+  for uCellGroup in uCellGroups:
+    ucells = ET.Element('uCellGroup', {str(k) : str(v) for k, v in uCellGroup.iteritems()})
+    writeFile(ucells, xmloutfile)
+  for vCellGroup in vCellGroups:
+    vcells = ET.Element('vCellGroup', {str(k) : str(v) for k, v in vCellGroup.iteritems()})
+    writeFile(vcells, xmloutfile)
 
-# creates the basic gear/xml layout file structure. Returns this structur in two parts so that the detectors generated with the Detector class can be inserted in between when writing the xml file.
+def createLayerElement(sensor, layout, xmloutfile):
+  layer = ET.Element('layer')
+  ladder = ET.Element('ladder', {str(k) : str(v) for k, v in sensor.supportParams.iteritems()})  
+  sensitive = ET.Element('sensitive', {str(k) : str(v) for k, v in sensor.sensitiveParams.iteritems()})
+  layer.append(ladder)
+  layer.append(sensitive)
+  indent(layer)
+  stringlayer = ET.tostring(layer)
+  pixelInsertPos = stringlayer.find('</layer>')
+  layerstart, layerend = stringlayer[:pixelInsertPos], stringlayer[pixelInsertPos:]
+  writeFile(layerstart, xmloutfile)
+               
+  sensorID = int(sensor.sensitiveParams["ID"]) 
+  layout[sensorID] = TH2Poly()
+  layout[sensorID].SetName("layer"+str(sensorID))
+  
+  if sensor.gearType == "SiPlanesParameters":
+     createRectPixel(sensor.uCellGroups, sensor.vCellGroups, xmloutfile)
+  elif sensor.gearType == "PolyPlanesParameters":
+    for pixelShape in sensor.pixelShapes: 
+      writeFile(ET.Element('pixelPrototype', pixelShape), xmloutfile)
+    createPixelMatrix(sensor.generatePixels, xmloutfile)
+  writeFile(layerend, xmloutfile)
+
+def writeFile(writeobject, xmloutfile):  
+  writestring = ""
+  if ET.iselement(writeobject):
+    indent(writeobject)
+    writestring = ET.tostring(writeobject)
+  else:
+    writestring = writeobject
+  with open(xmloutfile, "a") as f:
+    f.write(writestring)
+    f.flush()
+    os.fsync(f.fileno())
+
+
 def createGearStructure(detName="EUTelescope", bFieldtype="ConstantBField", bField=[0,0,0]):
+  """Creates the basic xml structure of the gearfile. 
+     Returns this structur in two parts so that the detectors 
+     generated with the Detector class can be inserted in
+     between when writing the xml file.
+  """
   gearTag = ET.Element('gear')
   globalTag = ET.SubElement(gearTag, 'global', detectorName=detName)
   bfieldTag = ET.SubElement(gearTag, 'BField', type=bFieldtype, x=str(bField[0]), y=str(bField[1]), z=str(bField[2]))

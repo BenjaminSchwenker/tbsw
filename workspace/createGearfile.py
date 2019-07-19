@@ -42,8 +42,7 @@ if __name__ == '__main__':
     m26.addVCellGroup( {"minCell": 0, "maxCell": 575, "pitch": 0.0184}  )
     # Add sensor to telescope 
     telescope.append(m26)
-    
-  
+
   # Create Atlas FEi4 reference sensor 
   fei4 = tbsw.DetLayoutGen.SquareDetector( sensParams={"ID": 22, "positionZ": 494, "thickness": 1.0} )    
   fei4.addUCellGroup( {"minCell": 0, "maxCell": 79, "pitch": 0.25 } )
@@ -85,41 +84,14 @@ if __name__ == '__main__':
   # It is not needed to use this try-except because the exception in Detector class 
   # cancels the program then, but it is neater.
   try: 
-    detector = tbsw.DetLayoutGen.CreateDetector(xmloutfile=outfile, sensors=telescope)
+    tbsw.DetLayoutGen.WriteGearfile(xmloutfile=outfile, sensors=telescope)
   except ValueError as ex:
     sys.exit(str(ex)+ " Aborting!")
   
-  #########################################################################################
-  # The following code should be moved into the redesigned tbsw.DetLayoutGen.CreateDetector
-  # method and fully hidden from the user. 
-  #########################################################################################
   
-  # reset the file to empty because use append mode later
-  f = open(outfile, "w") 
-  f.close()
-  # create the basic xml file structure, for parameters see DetLayoutGen.py
-  gearBaseTags = tbsw.DetLayoutGen.createGearStructure()
-  # write the opening tags of the basic xml structure. This is needed because the 
-  # xml nodes are itterativly created and written to file to reduce memory consumption
-  with open(outfile, "a") as f:
-    f.write(gearBaseTags[0])
-    f.flush()
-    os.fsync(f.fileno())
   
-  # create and initialise the Detector object
-  detector = tbsw.DetLayoutGen.Detector(xmloutfile=outfile, sensparamsList=spList, detectorparams=dparams, uCellGroupparamsList=uCGpList, vCellGroupparamsList=vCGpList)
-  # create the detector with the planes and write it to outfile
-  detector.createDetectorElement()
   
-  # There are two errors raised on __init__ of detector both if something with the createPixelfunctionList parameter is not correct, no list or to few list items. It is not needed to use this try-except because the exception in Detector class cancels the program then, but it is neater.
-  try: 
-    detector = tbsw.DetLayoutGen.Detector(xmloutfile=outfile, ladderparamsList=lpList, sensparamsList=spList, createPixelfunctionList=cpfList, detectorparams=dparams, pixelPrototypeparamsList=pppList)
-  except ValueError as ex:
-    sys.exit(str(ex)+ " Aborting!")
-  detector.createDetectorElement()
+  
+  
 
-  # write the closing tags of the basic xml structure
-  with open(outfile, "a") as f:
-    f.write(gearBaseTags[1])
-    f.flush()
-    os.fsync(f.fileno())
+  
