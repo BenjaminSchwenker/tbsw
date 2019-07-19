@@ -407,10 +407,10 @@ required for a successful x/x0 analysis:
 * Create a new steeringfiles folder from the default steering files folder:
 
 	```
-	cp -r steering-files/x0-tb steering-files/x0-tb2018-xymeasurement
+	cp -r steering-files/x0-tb steering-files/x0-someTB-xymeasurement
 	```
 
-* Edit the gear file in the newly created directory (steering-files/x0-tb2018-xymeasurement/gear.xml):
+* Edit the gear file in the newly created directory (steering-files/x0-someTB-xymeasurement/gear.xml):
 
 	* Enter the correct positions of the M26 sensors (ID0 to ID5) and the target (ID11) in the gearfile.
 	* Set the thickness of the target (ID11) to 0.0001 and the radLength to 304000.0 (corresponding to the radiation length constant of air)
@@ -424,7 +424,7 @@ required for a successful x/x0 analysis:
 			# Path to steering files 
 			# Folder contains a gear file detailing the detector geometry and a config file
 			# for x0 calibration. Users will likely want to rename this folder. 
-			steerfiles = 'steering-files/x0-tb2018-xymeasurement/'
+			steerfiles = 'steering-files/x0-someTB-xymeasurement/'
 
 	* Set the nominal beam energy (line 57):
 
@@ -443,12 +443,12 @@ required for a successful x/x0 analysis:
 			# During the radiation length calibration step (Step 3) the beam energy, the beam energy gradients and a global offset of the telescope
 			# angle resolution will be determined and stored in a text file (x0cal_result.cfg). The DQM plots such as a selfconsistency diagram and
 			# angle distributions with their associated fits can be found in results/x0calibrationDQM/*caltag*.
-			caltag='tb2018-4GeV'
+			caltag='someTB-4GeV'
 
 	* Edit the directory, where your raw files are stored (line 108):
 
 			# global path to raw files
-			rawfile_path='/work1/rawdata/tb2018/'
+			rawfile_path='/work1/rawdata/someTB/'
 
 	* Choose one raw file, which will be used during the telescope calibration, any air run (run000001 - run000005) will do (line 115):
 
@@ -520,11 +520,11 @@ required for a successful x/x0 analysis:
 	You can also select a name for this specific image (line 156):
 
 			# Set the name of this image
-			name_image1='tb2018-image'
+			name_image1='someTB-image'
 
 These are all necessary changes in the testbeam_x0.py script.
 
-* Edit the x0.cfg file in the newly created directory (steering-files/x0-tb2018-xymeasurement/x0.cfg):
+* Edit the x0.cfg file in the newly created directory (steering-files/x0-someTB-xymeasurement/x0.cfg):
 
 	* Set the beam energy start value to the nominal beam energy (line 17):
 
@@ -810,7 +810,7 @@ $ source init_tbsw.sh
 $ python x0-reco.py --startStep 0 --stopStep 3
 ```
 
-The X0 calibration results directory (results/x0calibrationDQM/X0Calibration-tb2018-4GeV) will contain a file (X0image_Boxes.pdf) which depicts the image of a calibration target and the selected 
+The X0 calibration results directory (results/x0calibrationDQM/X0Calibration-someTB-4GeV) will contain a file (X0image_Boxes.pdf) which depicts the image of a calibration target and the selected 
 X0 calibration measurement areas. This pdf can be used to select the optimal measurement positions. Once this is done you can repeat the X0 calibration:
 
 ```
@@ -834,7 +834,7 @@ Please you this reference for citing the method.
 Ulf Stolzenberg,
 Benjamin Schwenker
 
-Goettingen 2018
+Goettingen 2019
 
 ulf.stolzenberg@phys.uni-goettingen.de 
 benjamin.schwenker@phys.uni-goettingen.de
