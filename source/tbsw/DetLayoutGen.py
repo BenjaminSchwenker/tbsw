@@ -266,20 +266,30 @@ def createPixelMatrix(generatePixels, xmloutfile):
   matrixstart = '<pixelMatrix>'#indentation
   matrixend = '</pixelMatrix>'
   writeFile(matrixstart, xmloutfile)
-  generatePixels()
+  
+  pixelList = []
+  count = 0
+  for pixel in generatePixels():
+    pixelList.append(ET.Element('pixel', {str(k) : str(v) for k, v in pixel.iteritems()} ))
+    # TODO fix this function call
+    #addPixelToTH2Poly(pixel)
+    count += 1
+    if count == 500:
+      writePixelListToFile(xmloutfile, pixelList)
+      pixelList[:] = []
+      count = 0  
+  
+  writePixelListToFile(xmloutfile, pixelList)
   writeFile(matrixend, xmloutfile)
-  
-  
-def setPrototypeBasePoints():
-  basePointListList = []
-  for i in range(self.nprotopixel):
-    pointList = []
-    pointList.append(int(float(self.protopixlistdic[i]["type"])))
-    for point in self.protopixlistdic[i]["points"].split(','):
-      pointList.append(tuple(float(x) for x in point.split()))
-    basePointListList.append(pointList)
-  return basePointList
-  
+
+def writePixelListToFile(xmlfilename, pixelList):
+  with open(xmlfilename, "a") as f:
+    for element in pixelList:
+      indent(element)
+      f.write(ET.tostring(element)+"\n")
+    f.flush()
+    os.fsync(f.fileno())
+    pixelList[:] = []
   
 def addPixelToTH2Poly(attributes):
   pointsList = [plist for plist in self.basePointListList if plist[0] == int(float(attributes["type"]))][0]
@@ -292,6 +302,7 @@ def addPixelToTH2Poly(attributes):
   self.layout[self.layer].AddBin(gpixel)
 
 def writeLayout(xmloutfile, gearType, layout):
+  # TODO this should work for all gearTypes without exception
   if gearType != "PolyPlanesParameters":
     return
   index = xmloutfile.find(".xml")
@@ -353,7 +364,10 @@ def createLayerElement(sensor, layout, xmloutfile):
      createRectPixel(sensor.uCellGroups, sensor.vCellGroups, xmloutfile)
   elif sensor.gearType == "PolyPlanesParameters":
     for pixelShape in sensor.pixelShapes: 
-      writeFile(ET.Element('pixelPrototype', pixelShape), xmloutfile)
+      # We need to serialize the list of edge points into a string 
+      pixelShape["points"] = [ str(point) for point in pixelShape["points"] ]
+      pixelShape["points"] = " ".join(pixelShape["points"])  
+      writeFile(ET.Element('pixelPrototype', {str(k) : str(v) for k, v in pixelShape.iteritems()} ), xmloutfile)
     createPixelMatrix(sensor.generatePixels, xmloutfile)
   writeFile(layerend, xmloutfile)
 
