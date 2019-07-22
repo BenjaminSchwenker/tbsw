@@ -147,7 +147,7 @@ class PolyDetector(BaseDetector):
                  "type": 0,         # int, unique for the detector   
                  "distu": 0.3,      # float, extension along u direction in mm 
                  "distv": 0.01,     # float, extension along v direction in mm 
-                 "points": [-0.125, -0.025, -0.125, 0.025, 0.125, 0.025, 0.125, -0.025]
+                 "points": [(-0.125, -0.025), (-0.125, 0.025), (0.125, 0.025), (0.125, -0.025)]
                } 
    
   The type (int) of the pixelShape is a unique integer value. The distu and distv parameters meaure the extension of the pixel cell 
@@ -294,15 +294,11 @@ def writePixelListToFile(xmlfilename, pixelList):
     pixelList[:] = []
 
 
-def addPixelToTH2Poly(pixel, edges, polyhist):
-  pointsList = [] 
-  for i in xrange(0, len(edges), 2):
-    pointsList.append( edges[i:i+2] )    
-   
-  gpixel = TGraph(len(pointsList)-1)
+def addPixelToTH2Poly(pixel, edges, polyhist): 
+  gpixel = TGraph(len(edges))
   gpixel.SetName(str(pixel["u"]) + "," + str(pixel["v"]))
   
-  for i, point in enumerate(pointsList[1:]):
+  for i, point in enumerate(edges):
     gpixel.SetPoint(i, float(point[0])+float(pixel["centeru"]), float(point[1])+float(pixel["centerv"]))
   polyhist.AddBin(gpixel)
 
@@ -369,7 +365,7 @@ def createLayerElement(sensor, layout, xmloutfile):
     for pixelShape in sensor.pixelShapes: 
       # We need to serialize the list of edge points into a string 
       tmpPixelShape = deepcopy(pixelShape)
-      tmpPixelShape["points"] = [ str(point) for point in tmpPixelShape["points"] ]
+      tmpPixelShape["points"] = [ "{} {}".format(str(point[0]), str(point[1])) for point in tmpPixelShape["points"] ]
       tmpPixelShape["points"] = " ".join(tmpPixelShape["points"])  
       writeFile(ET.Element('pixelPrototype', {str(k) : str(v) for k, v in tmpPixelShape.iteritems()} ), xmloutfile)
     createPixelMatrix(sensor, xmloutfile, layout[sensorID])
@@ -407,8 +403,10 @@ def createGearStructure(detName="EUTelescope", bFieldtype="ConstantBField", bFie
   return [openingTags, closingTags]
 
 
-# function for indenting a Elementtree from: http://effbot.org/zone/element-lib.htm#prettyprint
+
 def indent(elem, level=0):
+  """Function for indenting a Elementtree from: http://effbot.org/zone/element-lib.htm#prettyprint.
+  """
   i = "\n" + level*"  "
   if len(elem):
     if not elem.text or not elem.text.strip():

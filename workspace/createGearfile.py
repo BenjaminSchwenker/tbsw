@@ -79,11 +79,16 @@ if __name__ == '__main__':
   
   # Create a costum DUT sensor with hexagonal pixel cells 
   dut = tbsw.DetLayoutGen.PolyDetector( )
+  # In order to look at the documentation, outcomment the next line.
+  # print(dut.__doc__) 
+
+  # Override parameters for sensitive and support. In particular, we want 
+  # to set the atomic number and mass to be diamond. 
   dut.sensParams( {"ID":21, "positionZ": 403, "thickness": 0.824, "radLength": 121.3068, "atomicNumber": 6, "atomicMass": 12} )
   dut.suppParams( {"radLength": 121.3068, "atomicNumber": 6, "atomicMass": 12} ) 
   
   # Define the outer shape of all pixels to be placed on the sensitive area of the DUT 
-  pixelDUT = {"type": 0, "distu": 0.3, "distv": 0.01, "points": [-0.125, -0.025, -0.125, 0.025, 0.125, 0.025, 0.125, -0.025]} 
+  pixelDUT = {"type": 0, "distu": 0.3, "distv": 0.01, "points": [(-0.125, -0.025), (-0.125, 0.025), (0.125, 0.025), (0.125, -0.025)]} 
   # Add a list of the pixel outer shapes to the DUT 
   dut.addPixelShapes( [pixelDUT] )   
   
