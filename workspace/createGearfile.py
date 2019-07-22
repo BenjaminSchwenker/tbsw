@@ -1,12 +1,12 @@
-""" Example python script for generating a xml geometry description (aka gearfile) of a tracking telescope for data 
-    analysis with tbsw. 
+""" Example python script for generating a xml geometry description (aka gearfile) of a tracking
+    telescope for data  analysis with tbsw. 
 
     Usage: 
     python createGearfile.py  
     
-    In the __main__ part, an example is given for the creation of a gear file for a telescope with 6 mimosa26 detector
-    planes and one Atlas FEI4 reference plane created with the detector type SiPlanesParameters. The dut plane has 
-    hexagonal pixel cells and is created with the gear type PolyPlanesParameters.
+    In the __main__ part, an example is given for the creation of a gear file for a telescope with 6
+    mimosa26 detector planes and one Atlas FEI4 trigger reference plane. As device under test (DUT), 
+    a diamond sensor with hexagonal pixel cells is placed in the center of the telescope. 
       
     author: Helge C. Beck helge-christoph.beck@phys.uni-goettingen.de
     author: Benjamin Schwenker benjamin.schwenker@phys.uni-goettingen.de
@@ -63,18 +63,18 @@ if __name__ == '__main__':
   # The rotation parameters are either +/-1 or 0. The component D(3,3) is determined by 
   # det(D)=1 condition. The matrix D reflects the different possibilities to 
   # install a detector in the beam.
-  fei4.sensParams({"rotation1": 0, "rotation2": 1, "rotation3": 1, "rotation4": 0})
+  # fei4.sensParams({"rotation1": 0, "rotation2": 1, "rotation3": 1, "rotation4": 0})
 
   # Of course it is also possible to add additional contiouus rotaions around the local 
   # sensor axes. Angles are specified in degree. 
-  fei4.sensParams({"alpha": 10.1, "beta": 0, "gamma": 0})
+  # fei4.sensParams({"alpha": 10.1, "beta": 0, "gamma": 0})
    
   # Define the rectangular pixel matrix 
   fei4.addUCellGroup( {"minCell": 0, "maxCell": 79, "pitch": 0.25 } )
   fei4.addVCellGroup( {"minCell": 0, "maxCell": 335, "pitch": 0.05 } )
   # If the pixel pitch increases along the v axis, we simply can add more 
   # cellGroups: 
-  fei4.addVCellGroup( {"minCell": 336, "maxCell": 435, "pitch": 0.15 } ) 
+  # fei4.addVCellGroup( {"minCell": 336, "maxCell": 435, "pitch": 0.15 } ) 
   telescope.append(fei4)
   
   # Create a costum DUT sensor with hexagonal pixel cells 
@@ -102,8 +102,8 @@ if __name__ == '__main__':
       for j in range(npixelsV):
         attributes["u"] = i
         attributes["v"] = j
-        attributes["centreu"] = pitchU*i 
-        attributes["centrev"] = pitchV*j 
+        attributes["centeru"] = pitchU*i 
+        attributes["centerv"] = pitchV*j 
         yield attributes
    
   dut.generatePixels = generateDUTPixels

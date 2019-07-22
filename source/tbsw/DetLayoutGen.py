@@ -160,8 +160,8 @@ class PolyDetector(BaseDetector):
   pixel = {
             "type": "0",  # global type of the pixel
             "u": , "v",   # column, row coordinates of the pixel, pixel address in raw data
-            "centeru": ,  # centre coordinate u of pixel in mm
-            "centerv": ,  # centre coordinate v of pixel in mm
+            "centeru": ,  # center coordinate u of pixel in mm
+            "centerv": ,  # center coordinate v of pixel in mm
           } 
   
   :author: benjamin.schwenker@phys.uni-goettinge.de  
@@ -258,21 +258,23 @@ def WriteDetsIntoGearfile(xmloutfile, name, sensors=[]):
     createLayerElement(sensor, layout, xmloutfile) 
    
   writeFile(layersend, xmloutfile)
-  #TODO fix this function
-  #writeLayout(xmloutfile, gearType, layout)
+  
+  # TODO this should work for all gearTypes without exception
+  if gearType == "PolyPlanesParameters":
+    writeLayout(xmloutfile, gearType, layout)
   
 
-def createPixelMatrix(generatePixels, xmloutfile):
+def createPixelMatrix(sensor, xmloutfile, polyhist):
   matrixstart = '<pixelMatrix>'#indentation
   matrixend = '</pixelMatrix>'
   writeFile(matrixstart, xmloutfile)
   
   pixelList = []
   count = 0
-  for pixel in generatePixels():
+  for pixel in sensor.generatePixels():
     pixelList.append(ET.Element('pixel', {str(k) : str(v) for k, v in pixel.iteritems()} ))
-    # TODO fix this function call
-    #addPixelToTH2Poly(pixel)
+    edges = [pixelShape["points"] for pixelShape in sensor.pixelShapes if pixelShape["type"] == int(pixel["type"])][0]   
+    addPixelToTH2Poly(pixel, edges, polyhist)
     count += 1
     if count == 500:
       writePixelListToFile(xmloutfile, pixelList)
@@ -290,21 +292,22 @@ def writePixelListToFile(xmlfilename, pixelList):
     f.flush()
     os.fsync(f.fileno())
     pixelList[:] = []
-  
-def addPixelToTH2Poly(attributes):
-  pointsList = [plist for plist in self.basePointListList if plist[0] == int(float(attributes["type"]))][0]
+
+
+def addPixelToTH2Poly(pixel, edges, polyhist):
+  pointsList = [] 
+  for i in xrange(0, len(edges), 2):
+    pointsList.append( edges[i:i+2] )    
+   
   gpixel = TGraph(len(pointsList)-1)
-  gpixel.SetName(attributes["u"] + "," + attributes["v"])
-  i = 0
-  for point in pointsList[1:]:
-    gpixel.SetPoint(i, point[0]+float(attributes["centeru"]), point[1]+float(attributes["centerv"]))
-    i += 1
-  self.layout[self.layer].AddBin(gpixel)
+  gpixel.SetName(str(pixel["u"]) + "," + str(pixel["v"]))
+  
+  for i, point in enumerate(pointsList[1:]):
+    gpixel.SetPoint(i, float(point[0])+float(pixel["centeru"]), float(point[1])+float(pixel["centerv"]))
+  polyhist.AddBin(gpixel)
 
 def writeLayout(xmloutfile, gearType, layout):
-  # TODO this should work for all gearTypes without exception
-  if gearType != "PolyPlanesParameters":
-    return
+  
   index = xmloutfile.find(".xml")
   if index == -1:
     print("Can not parse xmloutfile name to a rootfile (.xml -> .root) because no .xml found. Not writing Th2Poly layout!")
@@ -315,7 +318,7 @@ def writeLayout(xmloutfile, gearType, layout):
   detTypedir.cd()
   layoutdir = detTypedir.mkdir("layouts")
   layoutdir.cd()
-  for polyhist in layout:
+  for sensorID, polyhist in layout.iteritems():
     if polyhist.GetNumberOfBins() > 0:
       polyhist.Draw()
       polyhist.Write()
@@ -325,7 +328,7 @@ def writeLayout(xmloutfile, gearType, layout):
   testdir.cd()
   for sensorID, polyhist in layout.iteritems():
     # fill every bin with 1
-    nobins = polyhist.GetNumberOfBins
+    nobins = polyhist.GetNumberOfBins()
     if nobins > 0:
       for i in range(1, nobins+1): # bins start at 1 and end at including nobins
         polyhist.Fill(polyhist.GetBinName(i), 1)
@@ -365,10 +368,11 @@ def createLayerElement(sensor, layout, xmloutfile):
   elif sensor.gearType == "PolyPlanesParameters":
     for pixelShape in sensor.pixelShapes: 
       # We need to serialize the list of edge points into a string 
-      pixelShape["points"] = [ str(point) for point in pixelShape["points"] ]
-      pixelShape["points"] = " ".join(pixelShape["points"])  
-      writeFile(ET.Element('pixelPrototype', {str(k) : str(v) for k, v in pixelShape.iteritems()} ), xmloutfile)
-    createPixelMatrix(sensor.generatePixels, xmloutfile)
+      tmpPixelShape = deepcopy(pixelShape)
+      tmpPixelShape["points"] = [ str(point) for point in tmpPixelShape["points"] ]
+      tmpPixelShape["points"] = " ".join(tmpPixelShape["points"])  
+      writeFile(ET.Element('pixelPrototype', {str(k) : str(v) for k, v in tmpPixelShape.iteritems()} ), xmloutfile)
+    createPixelMatrix(sensor, xmloutfile, layout[sensorID])
   writeFile(layerend, xmloutfile)
 
 def writeFile(writeobject, xmloutfile):  
