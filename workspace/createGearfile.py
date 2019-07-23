@@ -146,7 +146,7 @@ if __name__ == '__main__':
   dut.generatePixels = generateDUTPixels
   telescope.append(dut)
   
-  
+  # Try to create the gearfile needed for tbsw
   try: 
     tbsw.DetLayoutGen.WriteGearfile(xmloutfile=outfile, sensors=telescope)
   except IOError as (errno, strerror):
@@ -156,8 +156,22 @@ if __name__ == '__main__':
   except:
     print "Unexpected error:", sys.exc_info()[0]
     raise
-
+   
   print("Successfully created gear file \"{}\".".format(outfile))
   
+  # Try to create the rootfile for visualization of the pixel matrix
+  # of all sensors in the telescope 
+  rootfilename = outfile[0:outfile.find(".xml")] + ".root"
+  
+  try: 
+    tbsw.DetLayoutGen.WriteLayoutRootfile(outfile=rootfilename, sensors=telescope)
+  except IOError as (errno, strerror):
+    print "I/O error({0}): {1}".format(errno, strerror)
+  except ValueError:
+    print "Could not convert data to an integer."
+  except:
+    print "Unexpected error:", sys.exc_info()[0]
+    raise
 
+  print("Successfully created layout root file \"{}\".".format(rootfilename))
   
