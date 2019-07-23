@@ -100,21 +100,27 @@ if __name__ == '__main__':
   dut.addPixelShapes( pixelDUTList )   
   
   # Generator to create the placed pixels on the sensitive area one by one 
-  # This example DUT consists of rectangular pixel (type == 1) and 
-  # staggered hexagonal pixel (type == 2).
+  # This example DUT consists of rectangular pixel (type == 0) and 
+  # staggered hexagonal pixel (type == 1).
   # More complicated layouts with more pixel types can be created. 
   def generateDUTPixels():
     attributes = {}
     # Placing rectangular pixels type == 0
+    # Note that the pixel type will be searched in the list of pixelShapes
+    # added to a PolyDet instance. 
     attributes["type"] = 0
     npixelsU = 50
     npixelsVrect = 50
     pitchUrect = 0.25
     pitchVrect = 0.05
+    # Placing pixels means to define the mapping of hit pixel 
+    # addresses in raw data to a geometric position on the sensor. 
     for i in range(npixelsU):
       for j in range(npixelsVrect):
-        attributes["u"] = i
-        attributes["v"] = j
+        # The pixels u/v adress in raw data
+        attributes["u"] = i 
+        attributes["v"] = j 
+        # The pixels u/v center position in mm 
         attributes["centeru"] = pitchUrect*i 
         attributes["centerv"] = pitchVrect*j 
         yield attributes
