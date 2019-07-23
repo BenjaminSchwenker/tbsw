@@ -87,30 +87,56 @@ if __name__ == '__main__':
   dut.sensParams( {"ID":21, "positionZ": 403, "thickness": 0.824, "radLength": 121.3068, "atomicNumber": 6, "atomicMass": 12} )
   dut.suppParams( {"radLength": 121.3068, "atomicNumber": 6, "atomicMass": 12} ) 
   
-  # Define the outer shape of all pixels to be placed on the sensitive area of the DUT 
-  pixelDUT = {"type": 0, "distu": 0.3, "distv": 0.01, "points": [(-0.125, -0.025), (-0.125, 0.025), (0.125, 0.025), (0.125, -0.025)]} 
+  # Define the outer shape of all pixels to be placed on the sensitive area of the DUT
+  pixelDUTList = []
+  # Rectangular pixel
+  pixelDUTRect = {"type": 0, "distu": 0.3, "distv": 0.07, "points": [(-0.125, -0.025), (-0.125, 0.025), (0.125, 0.025), (0.125, -0.025)]} 
+  # Hexagonal pixel
+  pixelDUTHex = {"type": 1, "distu": 0.14, "distv": 0.12, "points": [(0.0, -0.1332), (-0.1138, -0.0666), (-0.1138, 0.0666), (0.0, 0.1332), (0.1138, 0.0666), (0.1138, -0.0666)]}
+  pixelDUTList.append(pixelDUTRect)
+  pixelDUTList.append(pixelDUTHex)
+
   # Add a list of the pixel outer shapes to the DUT 
-  dut.addPixelShapes( [pixelDUT] )   
+  dut.addPixelShapes( pixelDUTList )   
   
   # Generator to create the placed pixels on the sensitive area one by one 
-  # of placed pixels 
-  # TODO put a slightly more complicated examplep here with some hexagonal pixels. 
-  # BUT the example should not be get much longer to keep this example self contained. 
+  # This example DUT consists of rectangular pixel (type == 1) and 
+  # staggered hexagonal pixel (type == 2).
+  # More complicated layouts with more pixel types can be created. 
   def generateDUTPixels():
     attributes = {}
+    # Placing rectangular pixels type == 0
     attributes["type"] = 0
     npixelsU = 50
-    npixelsV = 50
-    pitchU = 0.25
-    pitchV = 0.05
+    npixelsVrect = 50
+    pitchUrect = 0.25
+    pitchVrect = 0.05
     for i in range(npixelsU):
-      for j in range(npixelsV):
+      for j in range(npixelsVrect):
         attributes["u"] = i
         attributes["v"] = j
-        attributes["centeru"] = pitchU*i 
-        attributes["centerv"] = pitchV*j 
+        attributes["centeru"] = pitchUrect*i 
+        attributes["centerv"] = pitchVrect*j 
         yield attributes
    
+    # Placing hexagonal pixels type == 1
+    attributes["type"] = 1
+    npixelsVhex = 25
+    pitchUhex = 2.*0.1138
+    pitchVhex = 0.4 # pitch between 2 rows of pixel
+    gapRectHexV = 0.2 # distance to last row rectangular pixel
+    for i in range(npixelsU):
+      for j in range(npixelsVhex):
+        attributes["u"] = i
+        attributes["v"] = j + npixelsVrect
+        if j%2 == 0:
+          attributes["centeru"] = pitchUhex*i
+          attributes["centerv"] = pitchVhex*j/2 + gapRectHexV + pitchVrect*npixelsVrect
+        else: # stagger the hexagons every second row
+          attributes["centeru"] = pitchUhex*i - pitchUhex/2. 
+          attributes["centerv"] = pitchVhex*(j-1)/2 + pitchVhex/2.+ gapRectHexV + pitchVrect*npixelsVrect
+        yield attributes
+
   dut.generatePixels = generateDUTPixels
   telescope.append(dut)
   

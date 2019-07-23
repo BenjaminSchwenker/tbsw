@@ -150,16 +150,18 @@ class PolyDetector(BaseDetector):
                  "points": [(-0.125, -0.025), (-0.125, 0.025), (0.125, 0.025), (0.125, -0.025)]
                } 
    
-  The type (int) of the pixelShape is a unique integer value. The distu and distv parameters meaure the extension of the pixel cell 
-  in the u and v direction and are used to define the neighborhood of the pixel. The points are a list of edge points of the polygonal
-  outer shape of the pixel. The center of the pixel at 0,0 can be the geometric center or the charge collection center. 
+  The type (int) of the pixelShape is a unique integer value. type == -1 is used for none described areas of the layout. 
+  The distu and distv parameters measure the extension of the pixel cell in the u and v direction and are used to define the neighborhood of the pixel. 
+  -> The distu and distv parameters give the distance from the pixel center in which gets checked for neighboring pixel aka. other pixel centers. TODO
+  The points are a list of edge points of the polygonal outer shape of the pixel. They polygon is built with the points in order of the list. 
+  The center of the pixel at 0,0 can be the geometric center or the charge collection center. In tbsw it is used as the hit position of the pixel.
 
   The generatePixels generator function yields a sequence of all pixels placed on the sensitive area. A placed pixel is defined by 
   a dictionary of the following form. 
 
   pixel = {
             "type": "0",  # global type of the pixel
-            "u": , "v",   # column, row coordinates of the pixel, pixel address in raw data
+            "u": , "v": , # column, row coordinates of the pixel, pixel address in raw data
             "centeru": ,  # center coordinate u of pixel in mm
             "centerv": ,  # center coordinate v of pixel in mm
           } 
@@ -193,13 +195,14 @@ class PolyDetector(BaseDetector):
 
 
 def WriteGearfile(xmloutfile, sensors=[]):
-  """Create a geometry xml file with path xmloutfile for the specified list of sensors.
+  """
+  Create a geometry xml file with path xmloutfile for the specified list of sensors.
   """
 
   # reset the file to empty because use append mode later
   f = open(xmloutfile, "w") 
   f.close()
-  # create the basic xml file structure, for parameters see DetLayoutGen.py
+  # create the basic xml file structure
   gearBaseTags = createGearStructure()
   # write the opening tags of the basic xml structure. This is needed because the 
   # xml nodes are itterativly created and written to file to reduce memory consumption
@@ -385,10 +388,11 @@ def writeFile(writeobject, xmloutfile):
 
 
 def createGearStructure(detName="EUTelescope", bFieldtype="ConstantBField", bField=[0,0,0]):
-  """Creates the basic xml structure of the gearfile. 
-     Returns this structur in two parts so that the detectors 
-     generated with the Detector class can be inserted in
-     between when writing the xml file.
+  """
+  Creates the basic xml structure of the gearfile. 
+  Returns this structur in two parts so that the detectors 
+  generated with the Detector class can be inserted in
+  between when writing the xml file.
   """
   gearTag = ET.Element('gear')
   globalTag = ET.SubElement(gearTag, 'global', detectorName=detName)
