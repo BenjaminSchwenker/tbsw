@@ -1280,7 +1280,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		{
 			// Use Gaussian function with width corresponding to the calibrated angle resolution, if material is only air or extremely thin
 			// Also in this case the fit range is set to be a little smaller
-			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0002) fitFcn = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13]*[15]+[14],[7]*[8])",-fitrange,fitrange);
+			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0002) fitFcn = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13]*[15]*[16]+[14],[7]*[8])",-fitrange,fitrange);
 
 
 			// Use Moliere model in case the material is not just air
@@ -1290,7 +1290,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		else
 		{
 			// Use Gaussian function with width corresponding to the calibrated angle resolution, if material is only air or extremely thin
-			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0002) fitFcn = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13]*[15]+[14],[7]*[8])",-fitrange,fitrange);
+			if(grid.GetMeasurementAreas().at(i).Get_thickness()<0.0002) fitFcn = new TF1(fctname,"[9]*TMath::Gaus(x,0.0*[0]*[1]*[2]*[3]*[4]*[5]*[6]*[10]*[11]*[12]*[13]*[15]*[16]+[14],[7]*[8])",-fitrange,fitrange);
 			// Use Highland model in case the material is not just air
 			else fitFcn = new TF1(fctname,highlandfunction,-fitrange,fitrange,num_localparameters);
 		}
@@ -1490,7 +1490,9 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		histo_vec.at(i)->GetListOfFunctions()->Add(fitFcn_vec.at(i));
 		histoname.Form("gridpoint%lu",i+1);
 		// display mode
-		gStyle->SetOptFit(1111);
+		gStyle->SetOptStat(0);
+		gStyle->SetOptFit(111);
+
 		histo_vec.at(i)->Write("thetasum_"+histoname+"_fit");
 
 		for(int iname=0;iname<num_localparameters;iname++) fitfunc->SetParName(iname,name[iname]);
@@ -1612,7 +1614,7 @@ double* fit( TFile* file, Grid grid, std::vector<double> beamoptions, double rec
 		double BE_vgrad=fitresults[6];
         std::vector<double> parameters_temp{ BE_mean,z,mass,grid.GetMeasurementAreas().at(i).Get_density(),grid.GetMeasurementAreas().at(i).Get_Z(),grid.GetMeasurementAreas().at(i).Get_A(),
                     1.0,recoerr,lambda,700.0,grid.GetMeasurementAreas().at(i).Get_u_center(),
-                    grid.GetMeasurementAreas().at(i).Get_v_center(),BE_ugrad,BE_vgrad,0.0,grid.GetMeasurementAreas().at(i).Get_X0()};
+                    grid.GetMeasurementAreas().at(i).Get_v_center(),BE_ugrad,BE_vgrad,0.0,grid.GetMeasurementAreas().at(i).Get_X0(), epsilon};
         parameters_temp.resize(num_localparameters);
         fitFcn->SetParameters(&parameters_temp[0]);
 

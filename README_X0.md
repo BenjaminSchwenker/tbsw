@@ -190,7 +190,7 @@ The complete results can be found in workspace/root-files/X0-mc-alu-default-reco
 
 ## Reconstruction of test beam data:
 
-If you are performing an analysis of real test beam data, the basic processing steps do not change. The example script for processing test beam datat is 
+If you are performing an analysis of real test beam data, the basic processing steps do not change. The example script for processing test beam data is 
 testbeam_x0.py. The most important changes are the following:
 
    * You do not simulate the air and aluminium runs. You have to actually record the runs in a mono-energetic particle beam using a high resolution tracking 
@@ -407,57 +407,56 @@ required for a successful x/x0 analysis:
 * Create a new steeringfiles folder from the default steering files folder:
 
 	```
-	cp -r steering-files/x0-tb steering-files/x0-tb2018-xymeasurement
+	cp -r steering-files/x0-tb steering-files/x0-someTB-xymeasurement
 	```
 
-* Edit the gear file in the newly created directory (steering-files/x0-tb2018-xymeasurement/gear.xml):
+* Edit the gear file in the newly created directory (steering-files/x0-someTB-xymeasurement/gear.xml):
 
 	* Enter the correct positions of the M26 sensors (ID0 to ID5) and the target (ID11) in the gearfile.
 	* Set the thickness of the target (ID11) to 0.0001 and the radLength to 304000.0 (corresponding to the radiation length constant of air)
 
     This gear file can be used for all target thicknesses as the angle reconstruction is completely independent of the nominal target thickness documented in the gear file.
 
-* Edit the testbeam_x0.py script :
+* Edit the x0-reco.py script :
 
-	* Edit the steerfing file path(lines 27-34):
+	* Edit the steerfing file path(line 54):
 
-			# Steerfiles for the telescope calibration
-			steerfiles_cali = 'steering-files/x0-tb2018-xymeasurement/'
+			# Path to steering files 
+			# Folder contains a gear file detailing the detector geometry and a config file
+			# for x0 calibration. Users will likely want to rename this folder. 
+			steerfiles = 'steering-files/x0-someTB-xymeasurement/'
 
-			# Steerfiles for the angle reconstruction (can be the same directory as telescope calibration steerfiles)
-			steerfiles_reco = 'steering-files/x0-tb2018-xymeasurement/'
-
-			# Steerfiles for the x0calibration/x0imaging (can be the same directory as telescope calibration steerfiles)
-			steerfiles_x0 = 'steering-files/x0-tb2018-xymeasurement/'
-
-	* Set the nominal beam energy (line 37):
+	* Set the nominal beam energy (line 57):
 
 			# Nominal Beam energy
 			beamenergy=4.0
 
-	* Edit the calibration tag of the telescope calibration, typically combination of testbeam, beam energy and telescope setup (line 41):
+	* Edit the calibration tag of the telescope calibration, typically combination of testbeam, beam energy and telescope setup (line 69):
 
-			# cal tags
-			# telescope calibration cal tag (typically named after telescope setup, beam energy etc.)
-			caltag='45mm-spacing-4GeV'
+			# Definition of the calibration tag. It is typically named after telescope setup, beam energy, x0calibration target etc.
+			# The caltag is used to generate a directory under localDB/*caltag* where all calibration parameters are stored
+			# in local DB files. Additionally DQM plots of the calibration steps will be stored under results/ to cross check the
+			# calibration results. The telescope calibration step (Step 1 in the enumeration above) will generate a hotpixel mask (NoiseDB-M26.root),
+			# a files with alignment information (alignmentDB.root) and a data base containing cluster resolutions (clusterDB-M26.root). DQM plots
+			# of the cluster calibration are stored under results/clusterDB-M26/*caltag*. Other track based DQM plots such as track p values,
+			# pulls and the mean number of tracks per event are stored for example in results/TelescopeDQM2/*caltag*.
+			# During the radiation length calibration step (Step 3) the beam energy, the beam energy gradients and a global offset of the telescope
+			# angle resolution will be determined and stored in a text file (x0cal_result.cfg). The DQM plots such as a selfconsistency diagram and
+			# angle distributions with their associated fits can be found in results/x0calibrationDQM/*caltag*.
+			caltag='someTB-4GeV'
 
-	* Edit the calibration tag of the x/x0 calibration, typically combination of materials used and the beamenergy (line 44):
-
-			# x0 calibration cal tag
-			x0tag='air-1mmalu-4GeV'
-
-	* Edit the directory, where your raw files are stored (line 59):
+	* Edit the directory, where your raw files are stored (line 108):
 
 			# global path to raw files
-			rawfile_path='/work1/rawdata/tb2018/'
+			rawfile_path='/work1/rawdata/someTB/'
 
-	* Choose one raw file, which will be used during the telescope calibration, any air run (run000001 - run000005) will do (line 63):
+	* Choose one raw file, which will be used during the telescope calibration, any air run (run000001 - run000005) will do (line 115):
 
 			# raw file used during telescope calibration (best use data with scattering target)
 			# The calibration has to be done for every telescope setup, beam energy and m26 threshold settings
 			cali_run='run000001.raw'
 
-	* Select all rawfiles, for which the angle reconstruction has to be done, in this case every available raw file (run000001 - run000020, lines 72-77 in the original file):
+	* Select all rawfiles, for which the angle reconstruction has to be done, in this case every available raw file (run000001 - run000020, lines 125-128):
 
 			# List of runs, which are used as input for the scattering angle reconstruction
 			# The angle reconstruction step is essential and every run, that will be used later during the x0 calibration or x0 imaging steps, must be listed
@@ -484,7 +483,7 @@ required for a successful x/x0 analysis:
 							'run000020.raw',
 							]
 
-	* Select all rawfiles, which will be used in the x/x0 calibration (run000001 - run000015, lines 84-87 in the original file):
+	* Select all rawfiles, which will be used in the x/x0 calibration (run000001 - run000015, lines 142-144):
 
 			# List of runs, which are input for the x0 calibration
 			# Typically runs with various different materials and thicknesses have to be used to achieve a sensible calibration
@@ -507,7 +506,7 @@ required for a successful x/x0 analysis:
 							'run000015.raw',
 						  ]
 
-	* Select all rawfiles, which will be used in the x/x0 imaging process (run000016 - run000020, lines 93-97 in the original file):
+	* Select all rawfiles, which will be used in the x/x0 imaging process (run000016 - run000020, line 152):
 
 			# List of runs, which are input for the first x0 image
 			# Use only runs, with exactly the same target material and positioning
@@ -518,10 +517,14 @@ required for a successful x/x0 analysis:
 							'run000019.raw',
 							'run000020.raw',
 						  ]
+	You can also select a name for this specific image (line 156):
+
+			# Set the name of this image
+			name_image1='someTB-image'
+
 These are all necessary changes in the testbeam_x0.py script.
 
-
-* Edit the x0.cfg file in the newly created directory (steering-files/x0-tb2018-xymeasurement/x0.cfg):
+* Edit the x0.cfg file in the newly created directory (steering-files/x0-someTB-xymeasurement/x0.cfg):
 
 	* Set the beam energy start value to the nominal beam energy (line 17):
 
@@ -536,19 +539,15 @@ These are all necessary changes in the testbeam_x0.py script.
 
 	* Define the position of the x0 image (lines 47-49). The given values represent the upper left corner of the x/x0 image:
 
-
 			# umin and vmax of the complete X0 image in mm
 			umin : -15
 			vmax : +15
-
-
 
 	* Define the pixel pitches of the x0 image (lines 51-53):
 
 			# Pixel sizes of the image in µm
 			u_pixel_size : 400.0
 			v_pixel_size : 400.0
-
 
 	* Define the measurement areas during the x/x0 calibration (from line 116 onward). First measurement area (air, center of the beamspot), here only the thickness entry 
     and the min/max runnumber entries have to be edited. The maximum number of scattering angles per distribution can be limited by setting the 
@@ -795,8 +794,37 @@ Afterwards you can start the analysis via:
 
 ```
 $ source init_tbsw.sh
-$ python testbeam_x0.py
+$ python x0-reco.py
 ```
+
+To ensure a valid selection of measurement areas during the X0 calibration, it is recommended to create a set of X/X0 images of the calibration targets for orientation. 
+The measurement areas should cover a large u and v range in order to minimize the statistical uncertainty of the beam energy gradients. However, the measurement areas 
+should not be located near the borders of the beamspot, because there the measured radiation length value may be biased. For a homogeneously thick 
+calibration target one typically observes a flat plateau with similar X/X0 values in the central region of the beamspot and increasing/decreasing values at the edges. 
+All X0 calibration measurement areas should be placed in the central region with constant X/X0 values.
+
+In order to generate an image of the calibration target run the script only up to the X0calibration step:
+
+```
+$ source init_tbsw.sh
+$ python x0-reco.py --startStep 0 --stopStep 3
+```
+
+The X0 calibration results directory (results/x0calibrationDQM/X0Calibration-someTB-4GeV) will contain a file (X0image_Boxes.pdf) which depicts the image of a calibration target and the selected 
+X0 calibration measurement areas. This pdf can be used to select the optimal measurement positions. Once this is done you can repeat the X0 calibration:
+
+```
+$ source init_tbsw.sh
+$ python x0-reco.py --startStep 3 --stopStep 3
+```
+
+and check the X0 Calibration results. If everything worked the imaging step can be conducted:
+
+```
+$ source init_tbsw.sh
+$ python x0-reco.py --startStep 4 --stopStep 4
+```
+
 
 The technique and algorithm behind radiation length imaging was shown VCI 2016. The link to the proceedings paper is http://www.sciencedirect.com/science/article/pii/S0168900216306519.
 Please you this reference for citing the method. 
@@ -806,7 +834,7 @@ Please you this reference for citing the method.
 Ulf Stolzenberg,
 Benjamin Schwenker
 
-Goettingen 2018
+Goettingen 2019
 
 ulf.stolzenberg@phys.uni-goettingen.de 
 benjamin.schwenker@phys.uni-goettingen.de

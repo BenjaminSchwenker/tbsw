@@ -245,7 +245,7 @@ def targetalignment(rawfile=None, steerfiles=None, iteration=None, caltag="defau
 
 
 # Perform x0 calibration
-def xx0calibration(RunList=None, steerfiles=None, x0caltag="x0-default", caltag="default"):
+def xx0calibration(RunList=None, steerfiles=None, caltag="default", x0caltag=None):
   """ 
   Starts the radiation length calibration procedure, which is used to determine
   calibration parameters such as the global offset of the telescope angle resolution, the global offset of the multiple
@@ -267,6 +267,9 @@ def xx0calibration(RunList=None, steerfiles=None, x0caltag="x0-default", caltag=
     print("Steerfiles name missing! Skip x0 calibration.")
     return None
 
+  if x0caltag == None:
+    x0caltag=caltag
+
   # Create list with input root files from list of input raw files
   RootFileList_x0cali=[]
   x0imaging.X0Calibration.CreateRootFileList(rawlist=RunList,rootlist=RootFileList_x0cali, caltag=caltag)
@@ -286,7 +289,7 @@ def xx0calibration(RunList=None, steerfiles=None, x0caltag="x0-default", caltag=
 
 
 # Generate x0 image
-def xx0image(RunList=None, steerfiles=None, x0caltag="x0-default", caltag="default", listname="X0image"):
+def xx0image(RunList=None, steerfiles=None, caltag="default", listname="X0image", x0caltag=None):
   """ 
   Starts the radiation length imaging procedure. Produces radiation length images and populates root/ results/
   and tmp with folders according to the selected listname.
@@ -305,6 +308,9 @@ def xx0image(RunList=None, steerfiles=None, x0caltag="x0-default", caltag="defau
   if steerfiles == None:
     print("Steerfiles name missing! Skip x0 imaging.")
     return None
+
+  if x0caltag == None:
+    x0caltag=caltag
 
   RootFileList_x0image=[]
   x0imaging.X0Calibration.CreateRootFileList(rawlist=RunList,rootlist=RootFileList_x0image, caltag=caltag)
