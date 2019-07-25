@@ -30,6 +30,23 @@ Author: Benjamin Schwenker <benjamin.schwenker@phys.uni-goettingen.de>
 import tbsw 
 import os
 import multiprocessing
+import argparse
+
+# Script purpose option: Determines which steps should be 
+# processed by the script. All steps with associated integer values
+# between the start and stop parameter are conducted. The following list 
+# provides the integer values of the individual reconstruction steps:
+
+# 1: Telescope calibration (and target alignment if enabled)
+# 2: Angle reconstruction
+# 3: X0 calibration
+# 4: X0 imaging
+
+# This default setting means that all reconstruction steps are performed
+parser = argparse.ArgumentParser(description="Perform calibration and reconstruction of a test beam run")
+parser.add_argument('--startStep', dest='startStep', default=0, type=int, help='Start processing at this step number. Steps are 1) Telescope calibration, 2) Angle reconstruction, 3) X0 calibration, 4) X0 imaging')
+parser.add_argument('--stopStep', dest='stopStep', default=4, type=int, help='Stop processing at this step number. Steps are 1) Telescope calibration, 2) Angle reconstruction, 3) X0 calibration, 4) X0 imaging')
+args = parser.parse_args()
 
 # Path to steering files 
 # Folder contains a gear file detailing the detector geometry and a config file
@@ -39,12 +56,17 @@ steerfiles = 'steering-files/x0-tb-june17/'
 # Nominal Beam energy
 beamenergy=2.0
 
-# cal tags
-# telescope calibration cal tag (typically named after telescope setup, beam energy etc.)
-caltag='tb2017_PB'
-
-# x0 calibration cal tag
-x0caltag='air-alu-2GeV'
+# Definition of the calibration tag. It is typically named after telescope setup, beam energy, x0calibration target etc.
+# The caltag is used to generate a directory under localDB/*caltag* where all calibration parameters are stored
+# in local DB files. Additionally DQM plots of the calibration steps will be stored under results/ to cross check the
+# calibration results. The telescope calibration step (Step 1 in the enumeration above) will generate a hotpixel mask (NoiseDB-M26.root),
+# a files with alignment information (alignmentDB.root) and a data base containing cluster resolutions (clusterDB-M26.root). DQM plots
+# of the cluster calibration are stored under results/clusterDB-M26/*caltag*. Other track based DQM plots such as track p values,
+# pulls and the mean number of tracks per event are stored for example in results/TelescopeDQM2/*caltag*.
+# During the radiation length calibration step (Step 3) the beam energy, the beam energy gradients and a global offset of the telescope
+# angle resolution will be determined and stored in a text file (x0cal_result.cfg). The DQM plots such as a selfconsistency diagram and
+# angle distributions with their associated fits can be found in results/x0calibrationDQM/*caltag*.
+caltag='air-alu-2GeV'
 
 # Name of the gearfile, which describes the telescope setup 
 # Must be placed in the steerfiles folder
@@ -72,14 +94,6 @@ UseOuterPlanesForClusterDB=False
 
 # Flag to indicate that real EUTelescope data is used (raw format)
 mcdata=False
-
-# Script purpose option:
-# 0: Script only processes imaging part
-# 1: Script only processes x0 calibration part
-# 2: Script processes x0 calibration and imaging part
-# 3 and larger: Process x0 calibration and imaging part and angle reconstruction
-# 4 and larger: Process everything
-Script_purpose_option=4
 
 # By default, the z position of the X0 target is defined by an mechanical survey
 # measurement. For sufficiently thick targets, we can correct the z position of 
@@ -176,8 +190,8 @@ if __name__ == '__main__':
   # DQM plots like track p/chi2 values, residuals and other interesting parameters
   # from this telescope calibration step can be found as pdf files in 
   # workspace/results/telescopeDQM
-  
-  if Script_purpose_option > 3:
+
+  if args.startStep < 2 and args.stopStep >= 1:
     tbsw.x0script_functions.calibrate( rawfile_cali, steerfiles, caltag, gearfile, nevents_cali, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali, UseOuterPlanesForClusterDB)
 
     # Target alignment
@@ -193,7 +207,7 @@ if __name__ == '__main__':
   # workspace/root-files/X0-run*runnumber, etc*-reco.root
   # The histmap and angle resolution for every single run can be found in 
   # workspace/results/anglerecoDQM/
-  if Script_purpose_option > 2:
+  if args.startStep < 3 and args.stopStep >= 2:
     params_reco=[(x, steerfiles, caltag, gearfile, nevents_reco, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata) for x in RawfileList_reco]
     print "The parameters for the reconstruction are: " 
     print params_reco
@@ -212,25 +226,18 @@ if __name__ == '__main__':
   #
   # The fitted distributions and self-consistency plots in pdf format from this 
   # x0 calibration can be found in the workspace/tmp-runs/*X0Calibration/ directory
-  if Script_purpose_option  > 1:
-    tbsw.x0script_functions.xx0calibration(RawfileList_x0cali, steerfiles, x0caltag, caltag)
+  if args.startStep < 4 and args.stopStep >= 3:
+    tbsw.x0script_functions.xx0calibration(RawfileList_x0cali, steerfiles, caltag)
 
   # Generate a calibrated X/X0 image
   #
   # The calibrated radiation length image and other images, such as the beamspot
   # etc can be found in the workspace/root-files/*CalibratedX0Image.root
-  if Script_purpose_option  > 1:
-    tbsw.x0script_functions.xx0image(RawfileList_x0image, steerfiles, x0caltag, caltag, name_image1)
+  if args.startStep < 5 and args.stopStep >= 4:
+    tbsw.x0script_functions.xx0image(RawfileList_x0image, steerfiles, caltag, name_image1)
 
   # Generate another calibrated X/X0 image
   # The X/X0 image step can be repeated multiple times to generate a set of images
   # Just remove the comment and add a run list for each image
-    #tbsw.x0script_functions.xx0image(RawfileList_x0image2, steerfiles, x0caltag, caltag, name_image2)
-
-  if Script_purpose_option  == 1:
-    tbsw.x0script_functions.xx0calibration(RawfileList_x0cali, steerfiles, x0caltag, caltag)
-
-  if Script_purpose_option  == 0:
-    tbsw.x0script_functions.xx0image(RawfileList_x0image, steerfiles, x0caltag, caltag, name_image1)
-    #tbsw.x0script_functions.xx0image(RawfileList_x0image2, steerfiles, x0caltag, caltag, name_image2)
+    #tbsw.x0script_functions.xx0image(RawfileList_x0image2, steerfiles, caltag, name_image2)
 
