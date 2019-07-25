@@ -70,8 +70,10 @@ if __name__ == '__main__':
   # fei4.sensParams({"alpha": 10.1, "beta": 0, "gamma": 0})
    
   # Define the rectangular pixel matrix 
-  fei4.addUCellGroup( {"minCell": 0, "maxCell": 79, "pitch": 0.25 } )
+  fei4.addUCellGroup( {"minCell": 0, "maxCell": 159, "pitch": 0.25 } )
   fei4.addVCellGroup( {"minCell": 0, "maxCell": 335, "pitch": 0.05 } )
+  fei4.addUCellGroup( {"minCell": 160, "maxCell": 319, "pitch": 0.5 } )
+  fei4.addVCellGroup( {"minCell": 336, "maxCell": 671, "pitch": 0.1 } )
   # If the pixel pitch increases along the v axis, we simply can add more 
   # cellGroups: 
   # fei4.addVCellGroup( {"minCell": 336, "maxCell": 435, "pitch": 0.15 } ) 
@@ -162,12 +164,15 @@ if __name__ == '__main__':
   
   # Try to create the rootfile for visualization of the pixel matrix
   # of the sensors between the telescope arms and one telescope sensor. 
-  # Displaying all Mimosa26 sensors takes very long. 
+  # Building all pixels can take long. Parameter maxPixel=30000 is default: 
+  # Builds per cellGroup 30000 pixel. maxPixel=-1 builds all pixel. 
+  # As a test the histograms can be filled with 1 in every bin. 
+  # This takes even longer than building the pixel. Parameter fillTest=False disables the test. 
   rootfilename = outfile[0:outfile.find(".xml")] + ".root"
   sensorVisualise = [fei4, dut, telescope[0]]
   
   try: 
-    tbsw.DetLayoutGen.WriteLayoutRootfile(outfile=rootfilename, sensors=sensorVisualise)
+    tbsw.DetLayoutGen.WriteLayoutRootfile(outfile=rootfilename, sensors=sensorVisualise, fillTest=True)
   except IOError as (errno, strerror):
     print "I/O error({0}): {1}".format(errno, strerror)
   except ValueError:

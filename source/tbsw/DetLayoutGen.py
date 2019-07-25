@@ -260,27 +260,31 @@ def WriteDetsIntoGearfile(xmloutfile, name, sensors=[]):
   
   for sensor in sensors:
     createLayerElement(sensor, xmloutfile) 
-   
+    print("Sensor " + str(sensor.sensitiveParams["ID"]) + " written to xml file")
+  
   writeFile(layersend, xmloutfile)
   
   
-def WriteLayoutRootfile(outfile, sensors=[]): 
+def WriteLayoutRootfile(outfile, sensors=[], maxPixel=30000, fillTest=True): 
   """
   Create a root file containing TH2Poly histograms representing the matrix layout 
   of all sensors. 
+  Limit the number of pixels to maxPixel per sensor 
+  (per cellGroup for SquareDet) to reduce processing time.
+  Filling TH2Poly for testing takes also very long, so disable it with fillTest=False.
   """
   
   # Dictionary of TH2Poly objects for each layer, filled with addPixelToTH2Poly()
   layout = {} 
    
   for sensor in sensors:
-    sensorID, polyhist = createTH2Poly(sensor)
+    sensorID, polyhist = createTH2Poly(sensor, maxPixel)
     layout[sensorID] = polyhist 
     
-  writeLayout(outfile, layout)
+  writeLayout(outfile, layout, fillTest)
 
 
-def createTH2Poly(sensor):
+def createTH2Poly(sensor, maxPixel):
   sensorID = int(sensor.sensitiveParams["ID"])              
   polyhist = TH2Poly()
   polyhist.SetName("layer"+str(sensorID))
@@ -288,35 +292,50 @@ def createTH2Poly(sensor):
   if sensor.gearType == "SiPlanesParameters":
     # First, we need to generate pixel shapes for all square pixels 
     pixelShapes = generateSquarePixelShapes(sensor.uCellGroups, sensor.vCellGroups)
-    # Next, we need to place all square pixels using standard generator  
-    for pixel in generateSquarePixels(sensor.uCellGroups, sensor.vCellGroups): 
+    # Next, we need to place all square pixels using standard generator, 
+    # or at least maxPixel per cellGroup
+    for pixel in generateSquarePixels(sensor.uCellGroups, sensor.vCellGroups, maxPixel): 
       edges = [pixelShape["points"] for pixelShape in pixelShapes if pixelShape["type"] == int(pixel["type"])][0]   
       addPixelToTH2Poly(pixel, edges, polyhist)  
   elif sensor.gearType == "PolyPlanesParameters":   
+    pixelCount = 0
     for pixel in sensor.generatePixels():
       edges = [pixelShape["points"] for pixelShape in sensor.pixelShapes if pixelShape["type"] == int(pixel["type"])][0]   
       addPixelToTH2Poly(pixel, edges, polyhist)
+      pixelCount += 1
+      if pixelCount >= maxPixel: # Because generatePixels is not generic break here after maxPixel
+        break
       
   return sensorID, polyhist
 
-def generateSquarePixels(uCellGroups, vCellGroups): 
+def generateSquarePixels(uCellGroups, vCellGroups, maxPixel): 
   """
   Standard generator for rectangular pixels, same style as user defined generators for PolyDet case.
+  Limit the number of pixels generated per cellGroup to maxPixel, or not if maxPixel==-1. 
+  Needed because files get to large and processing time very long.
   """
+  maxCellPixel = maxPixel
   attributes = {}
   offsetV = 0
   for iv, vCell in enumerate(vCellGroups):
     pitchV = vCell["pitch"]
     offsetU = 0
     for iu, uCell in enumerate(uCellGroups):
+      cellPixelCounter = 0
       attributes["type"] = len(uCellGroups)*iv + iu
       pitchU = uCell["pitch"]
       for u in range(uCell["minCell"], uCell["maxCell"]+1):
+        if maxCellPixel > 0 and cellPixelCounter >= maxCellPixel:
+          break
         for v in range(vCell["minCell"], vCell["maxCell"]+1):
+          if maxCellPixel > 0 and cellPixelCounter >= maxCellPixel:
+            break
           attributes["u"] = u
           attributes["v"] = v
-          attributes["centeru"] = pitchU*u + offsetU
-          attributes["centerv"] = pitchV*v + offsetV
+          # add 0.5*pitch to shift (0,0) to lower left corner of pixel
+          attributes["centeru"] = pitchU*(u-uCell["minCell"]+0.5) + offsetU
+          attributes["centerv"] = pitchV*(v-vCell["minCell"]+0.5) + offsetV
+          cellPixelCounter += 1
           yield attributes
       offsetU += pitchU*(uCell["maxCell"] - uCell["minCell"] + 1)
     offsetV += pitchV*(vCell["maxCell"] - vCell["minCell"] + 1)
@@ -326,8 +345,6 @@ def generateSquarePixelShapes(uCellGroups, vCellGroups):
   From the uCell and vCell groups generate the shapes of the pixel for the SquareDet class
   """
 
-  # calculate the shapes
-  # shape = {type:, points:[(,),(,),], distu:, distv:,}
   pixelShapes = []
   for iv, vCell in enumerate(vCellGroups):
     for iu, uCell in enumerate(uCellGroups):
@@ -379,26 +396,29 @@ def addPixelToTH2Poly(pixel, edges, polyhist):
     gpixel.SetPoint(i, float(point[0])+float(pixel["centeru"]), float(point[1])+float(pixel["centerv"]))
   polyhist.AddBin(gpixel)
 
-def writeLayout(rootfilename, layout):
+def writeLayout(rootfilename, layout, fillTest):
   rootfile = TFile(rootfilename, "RECREATE")
   layoutdir = rootfile.mkdir("layouts")
   layoutdir.cd()
   for sensorID, polyhist in layout.iteritems():
     if polyhist.GetNumberOfBins() > 0:
+      print("Drawing " + str(sensorID) + " with " + str(polyhist.GetNumberOfBins()) + " bins.")
       polyhist.Draw()
       polyhist.Write()
-
-  rootfile.cd()
-  testdir = rootfile.mkdir("test")
-  testdir.cd()
-  for sensorID, polyhist in layout.iteritems():
-    # fill every bin with 1
-    nobins = polyhist.GetNumberOfBins()
-    if nobins > 0:
-      for i in range(1, nobins+1): # bins start at 1 and end at including nobins
-        polyhist.Fill(polyhist.GetBinName(i), 1)
-      polyhist.Draw("COLZ")
-      polyhist.Write()
+  
+  if fillTest:
+    rootfile.cd()
+    testdir = rootfile.mkdir("test")
+    testdir.cd()
+    for sensorID, polyhist in layout.iteritems():
+      # fill every bin with 1
+      nobins = polyhist.GetNumberOfBins()
+      if nobins > 0:
+        for i in range(1, nobins+1): # bins start at 1 and end at including nobins
+          polyhist.Fill(polyhist.GetBinName(i), 1)
+        polyhist.Draw("COLZ")
+        polyhist.Write()
+        print("Test filling of sensor " + str(sensorID) + " done.")
         
   rootfile.Write()
   rootfile.Close()
