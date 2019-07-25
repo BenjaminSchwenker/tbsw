@@ -93,6 +93,8 @@ class SquareDetector(BaseDetector):
   uCellGroups ---- List of cellGroup dictionaries describing the segmentation of sensor along u axis
   vCellGroups ---- List of cellGroup dictionaries describing the segmentation of sensor along u axis 
 
+  The groups are sorted internaly accending in minCell. 
+
   The cellGroup dictionary is expected to look like: 
 
   cellGroup = {"minCell": 0, "maxCell": 335, "pitch": 0.05 }
@@ -123,15 +125,17 @@ class SquareDetector(BaseDetector):
        
   def addUCellGroup(self, cellGroup):
     """
-    Add cell group for u axis 
+    Add cell group for u axis and sort the groups accending in minCell
     """
     self.uCellGroups.append(cellGroup) 
+    self.uCellGroups = sorted(self.uCellGroups, key=lambda k: k['minCell'])
 
   def addVCellGroup(self, cellGroup):
     """
-    Add cell group for v axis 
+    Add cell group for v axis and sort the groups accending in minCell
     """
     self.vCellGroups.append(cellGroup) 
+    self.vCellGroups = sorted(self.vCellGroups, key=lambda k: k['minCell'])
 
 class PolyDetector(BaseDetector):
   """
@@ -296,10 +300,48 @@ def createTH2Poly(sensor):
   return sensorID, polyhist
 
 def generateSquarePixels(uCellGroups, vCellGroups): 
-  pass
+  """
+  Standard generator for rectangular pixels, same style as user defined generators for PolyDet case.
+  """
+  attributes = {}
+  offsetV = 0
+  for iv, vCell in enumerate(vCellGroups):
+    pitchV = vCell["pitch"]
+    offsetU = 0
+    for iu, uCell in enumerate(uCellGroups):
+      attributes["type"] = len(uCellGroups)*iv + iu
+      pitchU = uCell["pitch"]
+      for u in range(uCell["minCell"], uCell["maxCell"]+1):
+        for v in range(vCell["minCell"], vCell["maxCell"]+1):
+          attributes["u"] = u
+          attributes["v"] = v
+          attributes["centeru"] = pitchU*u + offsetU
+          attributes["centerv"] = pitchV*v + offsetV
+          yield attributes
+      offsetU += pitchU*(uCell["maxCell"] - uCell["minCell"] + 1)
+    offsetV += pitchV*(vCell["maxCell"] - vCell["minCell"] + 1)
 
 def generateSquarePixelShapes(uCellGroups, vCellGroups):
-  pass 
+  """
+  From the uCell and vCell groups generate the shapes of the pixel for the SquareDet class
+  """
+
+  # calculate the shapes
+  # shape = {type:, points:[(,),(,),], distu:, distv:,}
+  pixelShapes = []
+  for iv, vCell in enumerate(vCellGroups):
+    for iu, uCell in enumerate(uCellGroups):
+      halfPitchU = 0.5*uCell['pitch']
+      halfPitchV = 0.5*vCell['pitch']
+      ptype = len(uCellGroups)*iv + iu
+      points = [(-halfPitchU, halfPitchV),
+                (halfPitchU, halfPitchV),
+                (halfPitchU, -halfPitchV),
+                (-halfPitchU, -halfPitchV)]
+      pixelShape = {"type": ptype, "points": points}
+      pixelShapes.append(pixelShape)
+
+  return pixelShapes
 
 def createPixelMatrix(sensor, xmloutfile):
   matrixstart = '<pixelMatrix>'#indentation

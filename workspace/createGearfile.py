@@ -65,7 +65,7 @@ if __name__ == '__main__':
   # install a detector in the beam.
   # fei4.sensParams({"rotation1": 0, "rotation2": 1, "rotation3": 1, "rotation4": 0})
 
-  # Of course it is also possible to add additional contiouus rotaions around the local 
+  # Of course it is also possible to add additional continuous rotations around the local 
   # sensor axes. Angles are specified in degree. 
   # fei4.sensParams({"alpha": 10.1, "beta": 0, "gamma": 0})
    
@@ -131,16 +131,17 @@ if __name__ == '__main__':
     pitchUhex = 2.*0.1138
     pitchVhex = 0.4 # pitch between 2 rows of pixel
     gapRectHexV = 0.2 # distance to last row rectangular pixel
+    offsetHexV = pitchVrect*npixelsVrect + gapRectHexV
     for i in range(npixelsU):
       for j in range(npixelsVhex):
         attributes["u"] = i
         attributes["v"] = j + npixelsVrect
         if j%2 == 0:
           attributes["centeru"] = pitchUhex*i
-          attributes["centerv"] = pitchVhex*j/2 + gapRectHexV + pitchVrect*npixelsVrect
+          attributes["centerv"] = pitchVhex*j/2 + offsetHexV
         else: # stagger the hexagons every second row
           attributes["centeru"] = pitchUhex*i - pitchUhex/2. 
-          attributes["centerv"] = pitchVhex*(j-1)/2 + pitchVhex/2.+ gapRectHexV + pitchVrect*npixelsVrect
+          attributes["centerv"] = pitchVhex*(j-1)/2 + pitchVhex/2. + offsetHexV
         yield attributes
 
   dut.generatePixels = generateDUTPixels
@@ -160,11 +161,13 @@ if __name__ == '__main__':
   print("Successfully created gear file \"{}\".".format(outfile))
   
   # Try to create the rootfile for visualization of the pixel matrix
-  # of all sensors in the telescope 
+  # of the sensors between the telescope arms and one telescope sensor. 
+  # Displaying all Mimosa26 sensors takes very long. 
   rootfilename = outfile[0:outfile.find(".xml")] + ".root"
+  sensorVisualise = [fei4, dut, telescope[0]]
   
   try: 
-    tbsw.DetLayoutGen.WriteLayoutRootfile(outfile=rootfilename, sensors=telescope)
+    tbsw.DetLayoutGen.WriteLayoutRootfile(outfile=rootfilename, sensors=sensorVisualise)
   except IOError as (errno, strerror):
     print "I/O error({0}): {1}".format(errno, strerror)
   except ValueError:
