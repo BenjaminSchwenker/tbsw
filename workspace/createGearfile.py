@@ -79,7 +79,7 @@ if __name__ == '__main__':
   # fei4.addVCellGroup( {"minCell": 336, "maxCell": 435, "pitch": 0.15 } ) 
   telescope.append(fei4)
   
-  # Create a costum DUT sensor with hexagonal pixel cells 
+  # Create a custom DUT sensor with hexagonal pixel cells 
   dut = tbsw.DetLayoutGen.PolyDetector( )
   # In order to look at the documentation, outcomment the next line.
   # print(dut.__doc__) 
@@ -164,10 +164,13 @@ if __name__ == '__main__':
   
   # Try to create the rootfile for visualization of the pixel matrix
   # of the sensors between the telescope arms and one telescope sensor. 
-  # Building all pixels can take long. Parameter maxPixel=30000 is default: 
-  # Builds per cellGroup 30000 pixel. maxPixel=-1 builds all pixel. 
-  # As a test the histograms can be filled with 1 in every bin. 
+  # Building all pixels with TH2Poly can take long. Parameter maxPixel=30000 is default: 
+  # Builds per PolyDet sensor 30000 pixels. maxPixel=-1 builds all pixel. 
+  # As a test the TH2Poly histograms can be filled with 1 in every bin. 
   # This takes even longer than building the pixel. Parameter fillTest=False disables the test. 
+  # SquareDet sensors are visualised with different bins sizes in TH2F histograms. 
+  # Lines are drawn at every bin edge. Difficult to distinguish if pixels are small
+  # and many. Setting logscale when viewing might help. 
   rootfilename = outfile[0:outfile.find(".xml")] + ".root"
   sensorVisualise = [fei4, dut, telescope[0]]
   
