@@ -167,8 +167,8 @@ class PolyDetector(BaseDetector):
 
   pixel = {
             "type": 0,     # global type of the pixel
-            "u": 0,        # vCell (column) address of pixel in raw data 
-            "v": 0,        # uCell (row) address of the pixel in raw data
+            "u": 0,        # uCell (column) address of pixel in raw data 
+            "v": 0,        # vCell (row) address of the pixel in raw data
             "centeru": 0,  # center coordinate u of pixel in mm
             "centerv": 0,  # center coordinate v of pixel in mm
           } 
