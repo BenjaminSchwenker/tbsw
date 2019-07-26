@@ -12,6 +12,7 @@
 
     The function WriteGearfile(outfile, sensors) writes the output gearfile.  
     
+    The function WriteLayoutRootfile(outfile, sensors) writes a root file with histograms to plot the pixel matrices of sensors.   
         
     author: Helge C. Beck helge-christoph.beck@phys.uni-goettingen.de
     author: Benjamin Schwenker benjamin.schwenker@phys.uni-goettingen.de
@@ -165,10 +166,11 @@ class PolyDetector(BaseDetector):
   a dictionary of the following form. 
 
   pixel = {
-            "type": "0",  # global type of the pixel
-            "u": , "v": , # column, row coordinates of the pixel, pixel address in raw data
-            "centeru": ,  # center coordinate u of pixel in mm
-            "centerv": ,  # center coordinate v of pixel in mm
+            "type": 0,     # global type of the pixel
+            "u": 0,        # vCell (column) address of pixel in raw data 
+            "v": 0,        # uCell (row) address of the pixel in raw data
+            "centeru": 0,  # center coordinate u of pixel in mm
+            "centerv": 0,  # center coordinate v of pixel in mm
           } 
   
   :author: benjamin.schwenker@phys.uni-goettinge.de  
@@ -261,7 +263,7 @@ def WriteDetsIntoGearfile(xmloutfile, name, sensors=[]):
   
   for sensor in sensors:
     createLayerElement(sensor, xmloutfile) 
-    print("Sensor " + str(sensor.sensitiveParams["ID"]) + " written to xml file")
+    print("Sensor with ID=" + str(sensor.sensitiveParams["ID"]) + " written to xml file")
   
   writeFile(layersend, xmloutfile)
   
@@ -307,7 +309,8 @@ def createTH2Poly(sensor, maxPixel):
     edges = [pixelShape["points"] for pixelShape in sensor.pixelShapes if pixelShape["type"] == int(pixel["type"])][0]   
     addPixelToTH2Poly(pixel, edges, polyhist)
     pixelCount += 1
-    if pixelCount >= maxPixel: # Because generatePixels is not generic break here after maxPixel
+    if pixelCount >= maxPixel: 
+      print("TH2Poly histogram for Sensor with ID={} truncated after maxPixel={}".format(sensorID, maxPixel))
       break
       
   return sensorID, polyhist
@@ -316,28 +319,25 @@ def createTH2Poly(sensor, maxPixel):
 def generateSquarePixelBins(uCellGroups, vCellGroups):
   """
   Generate list of lower bin edges aka pixel edges for display in TH2F. 
+  Layout starts at 0,0 (in tbsw then centred but not here).
   """
-  lowEdgesU = []
-  lowEdgesV = []
-  i = 0
-  # layout starts at 0,0 (in tbsw then centred but not here)
-  offsetV = 0
-  lowEdgesU.append(0)
-  lowEdgesV.append(0)
-  i += 1
+  lowEdgesU = [0,]
+  lowEdgesV = [0,]
+  
+  i = 1
   for vCell in vCellGroups:
     pitchV = vCell["pitch"]
     for v in range(vCell["minCell"], vCell["maxCell"] + 1):
       lowEdgesV.append(lowEdgesV[i-1] + pitchV)
       i += 1
-
+  
   i = 1
   for uCell in uCellGroups:
     pitchU = uCell["pitch"]
     for u in range(uCell["minCell"], uCell["maxCell"] + 1):
       lowEdgesU.append(lowEdgesU[i-1] + pitchU)
       i += 1
-
+  
   return lowEdgesU, lowEdgesV
 
 
@@ -384,7 +384,7 @@ def writeLayout(rootfilename, layoutSquareDet, layoutPolyDet, fillTest):
   for sensorID, squarehist in layoutSquareDet.iteritems():
     nbinsU = squarehist.GetNbinsX()
     nbinsV = squarehist.GetNbinsY()
-    print("Drawing sensor " + str(sensorID) + " with " + str(nbinsV) + " times " + str(nbinsV) + " bins.")
+    print("Drawing sensor with ID=" + str(sensorID) + " with " + str(nbinsU) + " times " + str(nbinsV) + " bins.")
     # Generating a grid of lines representing the bins/pixels
     canvas = TCanvas("c"+str(sensorID))
     canvas.cd()
@@ -499,7 +499,8 @@ def createGearStructure(detName="EUTelescope", bFieldtype="ConstantBField", bFie
 
 
 def indent(elem, level=0):
-  """Function for indenting a Elementtree from: http://effbot.org/zone/element-lib.htm#prettyprint.
+  """
+  Function for indenting a Elementtree from: http://effbot.org/zone/element-lib.htm#prettyprint.
   """
   i = "\n" + level*"  "
   if len(elem):

@@ -26,6 +26,8 @@ if __name__ == '__main__':
   # In this example, we construct a tracking telescope consisting of six mimosa26 planes, a FEI4 
   # timing plane and a 2d diamond sensor with matrix layout that is a mixture of polygonal and 
   # rectangular pixels.   
+  
+  # List of all sensors placed in the beam
   telescope = list()
    
   # Define z positions (in mm) and sensor ID for the mimosa26 reference sensors. 
@@ -50,8 +52,8 @@ if __name__ == '__main__':
     m26.addVCellGroup( {"minCell": 0, "maxCell": 575, "pitch": 0.0184}  )
     # Add sensor to telescope 
     telescope.append(m26)
-
-  # Create Atlas FEi4 reference sensor 
+  
+  # Create Atlas FEI4 reference sensor 
   fei4 = tbsw.DetLayoutGen.SquareDetector( sensParams={"ID": 22, "positionZ": 494, "thickness": 1.0} )    
   # In case the local u axis is parallel to the global y axis,
   # we can define a disrcete rotation matrix D 
@@ -70,13 +72,13 @@ if __name__ == '__main__':
   # fei4.sensParams({"alpha": 10.1, "beta": 0, "gamma": 0})
    
   # Define the rectangular pixel matrix 
+  # In this example, the u pitch changes at uCell 160 from 0.25 to 0.5mm 
   fei4.addUCellGroup( {"minCell": 0, "maxCell": 159, "pitch": 0.25 } )
-  fei4.addVCellGroup( {"minCell": 0, "maxCell": 335, "pitch": 0.05 } )
   fei4.addUCellGroup( {"minCell": 160, "maxCell": 319, "pitch": 0.5 } )
+  # and the v pitch changes at vCell 336 from 0.05 to 0.1mm 
+  fei4.addVCellGroup( {"minCell": 0, "maxCell": 335, "pitch": 0.05 } )
   fei4.addVCellGroup( {"minCell": 336, "maxCell": 671, "pitch": 0.1 } )
-  # If the pixel pitch increases along the v axis, we simply can add more 
-  # cellGroups: 
-  # fei4.addVCellGroup( {"minCell": 336, "maxCell": 435, "pitch": 0.15 } ) 
+  # There is no limitation for the number of cell groups along u and v axis. 
   telescope.append(fei4)
   
   # Create a custom DUT sensor with hexagonal pixel cells 
@@ -151,6 +153,7 @@ if __name__ == '__main__':
   
   # Try to create the gearfile needed for tbsw
   try: 
+    print("Start writting gear file \"{}\" ...".format(outfile))
     tbsw.DetLayoutGen.WriteGearfile(xmloutfile=outfile, sensors=telescope)
   except IOError as (errno, strerror):
     print "I/O error({0}): {1}".format(errno, strerror)
@@ -162,20 +165,24 @@ if __name__ == '__main__':
    
   print("Successfully created gear file \"{}\".".format(outfile))
   
-  # Try to create the rootfile for visualization of the pixel matrix
-  # of the sensors between the telescope arms and one telescope sensor. 
-  # Building all pixels with TH2Poly can take long. Parameter maxPixel=30000 is default: 
-  # Builds per PolyDet sensor 30000 pixels. maxPixel=-1 builds all pixel. 
-  # As a test the TH2Poly histograms can be filled with 1 in every bin. 
-  # This takes even longer than building the pixel. Parameter fillTest=False disables the test. 
-  # SquareDet sensors are visualised with different bins sizes in TH2F histograms. 
-  # Lines are drawn at every bin edge. Difficult to distinguish if pixels are small
-  # and many. Setting logscale when viewing might help. 
+  # Try to create the rootfile containing 2d histograms for visualizing the pixel
+  # matrix of sensors. We will visualize one m26 sensor, the fei4 sensor and 
+  # the dut sensor.  
+  # PolyDetectors are visualized as TH2Poly histograms. This can take a long time if 
+  # the sensor has very many pixel cells. The maximum number of pixels that will be 
+  # created is controlled by parameter maxPixel. Default value is maxPixel=30000   
+  # but maxPixel=-1 creates all pixel. 
+  # For PolyDetectors, the layout can be tested by filling a one in each histogram 
+  # bin. The test can take long for very many pixels and can be disabled with parameter
+  # fillTest=False.   
+  # SquareDet sensors are visualised as TH2F histograms with different bins sizes. 
+  # Lines are drawn at every bin edge. 
   rootfilename = outfile[0:outfile.find(".xml")] + ".root"
   sensorVisualise = [fei4, dut, telescope[0]]
   
-  try: 
-    tbsw.DetLayoutGen.WriteLayoutRootfile(outfile=rootfilename, sensors=sensorVisualise, fillTest=True)
+  try:
+    print("Start writting layout root file \"{}\" ...".format(rootfilename)) 
+    tbsw.DetLayoutGen.WriteLayoutRootfile(outfile=rootfilename, sensors=sensorVisualise, fillTest=True, maxPixel=30000)
   except IOError as (errno, strerror):
     print "I/O error({0}): {1}".format(errno, strerror)
   except ValueError:
@@ -183,6 +190,6 @@ if __name__ == '__main__':
   except:
     print "Unexpected error:", sys.exc_info()[0]
     raise
-
+  
   print("Successfully created layout root file \"{}\".".format(rootfilename))
   
