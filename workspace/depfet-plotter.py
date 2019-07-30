@@ -1,5 +1,13 @@
 """
-Script for plotting depfet testbeam data
+Simple script for plotting depfet testbeam data using fully reconstructed root files 
+from folder root-files. 
+
+For example, this script can be run on the output root files from running the script 
+depfet-reco.py. 
+
+Usage: 
+
+python depfet-plotter.py
 
 Author: Benjamin Schwenker <benjamin.schwenker@phys.uni-goettingen.de>  
 """
@@ -9,19 +17,10 @@ from tbsw import *
 import argparse
 parser = argparse.ArgumentParser(description="Perform plotting of a test beam runs")
 parser.add_argument('--pattern', dest='pattern', default='*', type=str, help='Pattern of run numbers to process')
-parser.add_argument('--mapping', dest='mapping', default='', type=str, help='IF, OF')
+parser.add_argument('--mapping', dest='mapping', default='IF', type=str, help='IF, OF')
 args = parser.parse_args()
   
-  
-for trackfile in glob.glob('root-files/Histos-H5-{}-reco.root'.format(args.pattern)): 
-        
-    ofile = 'Residuals-' + os.path.basename(trackfile)
-    residuals.plot(inputfilename = trackfile, histofilename = ofile, basecut = "hasTrack==0", nbins=501, urange=400, vrange=400)
     
-    ofile = 'Efficiency-' + os.path.basename(trackfile)  
-    efficiency.plot(inputfilename=trackfile, histofilename=ofile, basecut="hasRefHit==0 && hasTestPixels==1", matchcut="hasHit==0", uaxis=(64,0,64), vaxis=(64,0,64))
-    
-  
 for trackfile in glob.glob('root-files/Histos-PXD-{}-reco.root'.format(args.pattern)): 
         
     ofile = 'Residuals-LargePitch-' + os.path.basename(trackfile)

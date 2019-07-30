@@ -1,7 +1,22 @@
 #!/usr/bin/env python
 # coding: utf8
 """
-Script for processing depfet testbeam November 2018.
+Script for processing depfet testbeam November 2018 at Desy. 
+
+This script shows the calibration and reconstruction process for testbeam data 
+starting from .raw files. 
+
+An example .raw file from this test beam can be downloaded:  
+
+wget -O run001286.raw  https://owncloud.gwdg.de/index.php/s/vphTqcJfwyyIHiZ/download
+
+The steering files for in order to process this test beam is shipped with tbsw and 
+can be found at steering-files/depfet-tb. 
+
+
+Usage: 
+
+python depfet-reco.py 
 
 Author: Benjamin Schwenker <benjamin.schwenker@phys.uni-goettingen.de>  
 """
@@ -561,12 +576,12 @@ if __name__ == '__main__':
       raise argparse.ArgumentTypeError('Boolean value expected.')
 
   parser = argparse.ArgumentParser(description="Perform calibration and reconstruction of a test beam run")
-  parser.add_argument('--rawfile', dest='rawfile', default='/home/benjamin/Desktop/run000020.raw', type=str, help='Location of rawfile to process')
-  parser.add_argument('--gearfile', dest='gearfile', default='gear_desy_W11OF2_perp_geoid2.xml', type=str, help='Location of gearfile')
-  parser.add_argument('--energy', dest='energy', default=5.0, type=float, help='Beam energy in GeV')
+  parser.add_argument('--rawfile', dest='rawfile', default='run001286.raw', type=str, help='Full path to rawfile to process')
   parser.add_argument('--steerfiles', dest='steerfiles', default='steering-files/depfet-tb/', type=str, help='Path to steerfiles')
+  parser.add_argument('--gearfile', dest='gearfile', default='gear_desy_W40IF_perp_geoid9.xml', type=str, help='Name of gearfile inside steerfiles folder')
+  parser.add_argument('--energy', dest='energy', default=3.0, type=float, help='Beam energy in GeV')
   parser.add_argument('--caltag', dest='caltag', default='', type=str, help='Name of calibration tag to use')
-  parser.add_argument('--mapping', dest='mapping', default='OF', type=str, help='OF,OB,IF,IB')
+  parser.add_argument('--mapping', dest='mapping', default='IF', type=str, help='OF,OB,IF,IB')
   parser.add_argument('--useClusterDB', dest='use_cluster_db', default=True, type=str2bool, help="Use cluster database")
   parser.add_argument('--skipCalibration', dest='skip_calibration', default=False, type=str2bool, help="Skip creating a new calibration tag")
   parser.add_argument('--skipReconstruction', dest='skip_reco', default=False, type=str2bool, help="Skip reconstruction of run")
@@ -587,6 +602,10 @@ if __name__ == '__main__':
       maxRecordNrLong = 40000
       maxRecordNrShort = 20000
 
+  # Make sure that we have an absolute path
+  args.rawfile = os.path.abspath(args.rawfile)
+ 
+ 
   if args.caltag=='':
     args.caltag = os.path.splitext(os.path.basename(args.rawfile))[0]
     
