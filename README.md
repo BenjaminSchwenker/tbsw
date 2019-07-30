@@ -313,9 +313,23 @@ _rootEventTree->Branch("isGoodEvent"     ,&_rootDUTGoodEvent,  "isGoodEvent/O");
 
 ```
 
-The plotting of root trees is well known in the HEP community. The script tbsw_example.py contains some instructive examples
-based on PyRoot showing how to get residuals and efficiencies plots from the root trees. 
- 
+The tbsw repo also ships a full script for processing of a depfet test beam November 2018 at Desy. 
+This script shows the calibration and reconstruction process for testbeam data starting from .raw 
+files. 
+
+An example .raw file from this test beam can be downloaded:  
+
+```
+wget -O run001286.raw  https://owncloud.gwdg.de/index.php/s/vphTqcJfwyyIHiZ/download
+```
+
+The steering files for in order to process this test beam is shipped with tbsw and 
+can be found at steering-files/depfet-tb. 
+
+```
+python depfet-reco.py 
+python depfet-plotter.py
+```
 
 Have fun with test beams ;)  
 
