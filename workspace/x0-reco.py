@@ -22,11 +22,11 @@ are needed are commented in the text below. Examples for such modifactions are t
 files, settings for beam energy and the definition of objects used for the X0 calibration. 
 
 Example .raw files from a X0 test beam can be downloaded. First create a directory (for example at 
-'/work1/rawdata/example') where they are stored. Afterwards download the files:
+'$HOME/rawdata/example') where they are stored. Afterwards download the files:
 
-wget -O /work1/rawdata/example/run006958.raw  https://owncloud.gwdg.de/index.php/s/JQeBuMrloiuc0ww/download
-wget -O /work1/rawdata/example/run006965.raw  https://owncloud.gwdg.de/index.php/s/GfoshbsCw16CYUw/download
-wget -O /work1/rawdata/example/run006973.raw  https://owncloud.gwdg.de/index.php/s/tGlcETzGGXTDR7S/download
+wget -O $HOME/rawdata/example/run006958.raw  https://owncloud.gwdg.de/index.php/s/JQeBuMrloiuc0ww/download
+wget -O $HOME/rawdata/example/run006965.raw  https://owncloud.gwdg.de/index.php/s/GfoshbsCw16CYUw/download
+wget -O $HOME/rawdata/example/run006973.raw  https://owncloud.gwdg.de/index.php/s/tGlcETzGGXTDR7S/download
 
 Take into account that the total size of these files is ~3 GB and the download may take a while.
 
@@ -124,7 +124,7 @@ targetalignment_iterations=0
 # File names and lists of filenames for the different steps 
 
 # global path to raw files
-rawfile_path='/work1/rawdata/example/'
+rawfile_path=os.environ['HOME']+'/rawdata/example/'
 
 # Eudaq raw files used during telescope calibration. Telescope calibration 
 # includes the alignment of the reference telescope and the calibration
