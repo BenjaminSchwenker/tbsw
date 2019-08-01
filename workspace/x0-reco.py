@@ -24,9 +24,9 @@ files, settings for beam energy and the definition of objects used for the X0 ca
 Example .raw files from a X0 test beam can be downloaded. First create a directory (for example at 
 '$HOME/rawdata/example') where they are stored. Afterwards download the files:
 
-wget -O $HOME/rawdata/example/run006958.raw  https://owncloud.gwdg.de/index.php/s/JQeBuMrloiuc0ww/download
-wget -O $HOME/rawdata/example/run006965.raw  https://owncloud.gwdg.de/index.php/s/GfoshbsCw16CYUw/download
-wget -O $HOME/rawdata/example/run006973.raw  https://owncloud.gwdg.de/index.php/s/tGlcETzGGXTDR7S/download
+wget -O $HOME/rawdata/example/run006958.raw  https://owncloud.gwdg.de/index.php/s/NKdExF0pgz4G3UA/download
+wget -O $HOME/rawdata/example/run006965.raw  https://owncloud.gwdg.de/index.php/s/7a3SXRqHGVTOQnn/download
+wget -O $HOME/rawdata/example/run006973.raw  https://owncloud.gwdg.de/index.php/s/DkiJTIaHSJWgXgf/download
 
 Take into account that the total size of these files is ~3 GB and the download may take a while.
 
