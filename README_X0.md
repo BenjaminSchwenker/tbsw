@@ -12,7 +12,7 @@ image of the DUT is computed.
 $ cp -r <path-to-tbsw-installdir>/workspace ~/workspace-x0-example
 $ cd ~/workspace-x0-example
 $ source init_tbsw.sh
-$ python tbsw_x0example.py
+$ python x0example.py
 ```  
 
 __ Due to the large track sample needed for the X0 imaging, running this script can take several hours!__
@@ -224,18 +224,30 @@ match the telescope setup you used during you beam test experiment. Especially t
 
 #1. Telescope calibration 
 
-The telescope calibration works with a single run raw file 
+The telescope calibration works with a single run raw file. Example raw files can be downloaded to test the script. First create a directory (for example at '$HOME/rawdata/example') where the data files
+are stored. Afterwards download the files:
+
+```
+wget -O $HOME/rawdata/example/run006958.raw  https://owncloud.gwdg.de/index.php/s/NKdExF0pgz4G3UA/download
+wget -O $HOME/rawdata/example/run006965.raw  https://owncloud.gwdg.de/index.php/s/7a3SXRqHGVTOQnn/download
+wget -O $HOME/rawdata/example/run006973.raw  https://owncloud.gwdg.de/index.php/s/DkiJTIaHSJWgXgf/download 
+```
+
+The rawfile path parameter defines the directory with the rawfiles:
+
 ```
 # global path to raw files
-rawfile_path='/work1/rawdata/tboct16/'
+rawfile_path=os.environ['HOME']+'/rawdata/example/'
 
 # raw file used during telescope calibration (best use data with scattering target)
 # The calibration has to be done for every telescope setup, beam energy and m26 threshold settings
 cali_run='run006973.raw'
 rawfile_cali = rawfile_path + cali_run
 ```
-The path to the run raw files and the name of the run raw file has to be modified to match your data. Typically rawfile_path should be set to the directory, where all your raw files from a specific beam 
-test are stored. Using subdirectories for cali_run is possible. For example 
+
+The functionality of the X/X0 script can be tested with these raw files. The path to the run raw files and the name of the run raw file has to be modified to match your data.
+Typically rawfile_path should be set to the directory, where all your raw files from a specific beam test are stored. Using subdirectories for cali_run is possible. For example:
+
 
 ```
 cali_run='run006973.raw'
@@ -247,9 +259,15 @@ cali_run='some_directory/run006973.raw'
 are both valid options. The calibration run should have 500k to 1mio tracks without any additional material in the telescope. The calibration procedure 
 
 ```
- # Calibrate the telescope
- params_cali = ( rawfile_cali, steerfiles_cali, gearfile, caltag)
- calibrate( params_cali )
+  # Calibrate the telescope 
+  # In case you already have all the DB files from another telescope calibration 
+  # and want to reuse it, just switch to Script_purpose_option 0 or 1
+  #
+  # DQM plots like track p/chi2 values, residuals and other interesting parameters
+  # from this telescope calibration step can be found as pdf files in 
+  # workspace/results/telescopeDQM
+  if args.startStep < 2 and args.stopStep >= 1:
+    tbsw.x0script_functions.calibrate( rawfile_cali, steerfiles, caltag, gearfile, nevents_cali, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali, UseOuterPlanesForClusterDB)
 ```
 
 produces a calibration tag directory, that is written to workspace/local-DB/caltag. Choose an appropriate name for the caltag,
@@ -259,15 +277,32 @@ produces a calibration tag directory, that is written to workspace/local-DB/calt
 caltag='40mm-spacing-2GeV'
 ```
 
-so that you always know, which telescope setup, beam energy etc is covered by this tag. The telescope calibration has to be done only once for each beam energy, telescope setup and M26 threshold setting. At the beginning of the script there is an option, which enables/disables the telescope calibration:
+so that you always know, which telescope setup, beam energy etc is covered by this tag. The telescope calibration has to be done only once for each beam energy, telescope setup and 
+M26 threshold setting. The script can be started with startstep and stopstep parameters to select the individual analysis steps that are performed by the script. The steps are:
+
+1. Telescope calibration: Hot pixel masking, telescope alignment and cluster calibration (only from air run)
+2. Angle reconstruction: Reconstruction of kink angles on the scattering object (from all runs: air, Al, DUT)   
+3. X0 calibration: Obtain X0 calibration constants using X0 calibraiton runs (all runs with known scatterer) 
+4. X0 imaging: Obtain calibrated X0 images of unknown scattering objects  
+
+The steps can be selected by adding a flag to the command line. The commands
 
 ```
- # Script purpose option:
- # 0: Script only processes imaging part
- # 1: Script processes x0 calibration and imaging part
- # Everything else: Script processes the whole chain: Telescope calibration, angle reconstruction, x0 calibration and x0 imaging 
- Script_purpose_option=2
+python x0-reco.py --startStep 1 --stopStep 4
 ```
+
+and 
+
+```
+python x0-reco.py
+```
+will include all four reconstruction steps, while
+
+```
+python x0-reco.py --startStep 1 --stopStep 1
+```
+
+will only include the telescope calibration part.
 
 The data quality monitoring plots of the telescope calibration step can be found in workspace/results/telescopeDQM. It contains plots of track p values, alignment shifts and cluster resolutions. You should always check whether this step of the analysis worked, as a failure during this step will often cause the angle reconstruction to not work at all. 
 
@@ -278,25 +313,35 @@ The target position, material and thickness can be different for the individual 
 
 
 ```
- RunList_reco = [
-             'run006958.raw',
-             'run006959.raw',
-             'run006960.raw',
-             'run006961.raw',
-           ]
+RunList_reco = [
+		    'run006973.raw', #air
+		    'run006965.raw', #0.5 mm Alu
+		    'run006958.raw', #1 mm Alu
+          ]
 ```
 
-Of course, this list also has to be modified to match the runs you want to analyse. The angle reconstruction is started by the following code snippet
+Of course, this list also has to be modified to match the runs you want to analyse. The raw files used here match the downloaded example files. The angle reconstruction is started by the following code snippet
 
 ```
   # Angle reconstruction
-  params_reco=[(x, steerfiles_reco, gearfile, caltag) for x in RawfileList_reco]
-  print "The parameters for the reconstruction are: " 
-  print params_reco
+  #
+  # The root files with the reconstructed angles and other parameters (see 
+  # README_X0.md for a full list and some descriptions) can be found in 
+  # workspace/root-files/X0-run*runnumber, etc*-reco.root
+  # The histmap and angle resolution for every single run can be found in 
+  # workspace/results/anglerecoDQM/
+  if args.startStep < 3 and args.stopStep >= 2:
+    params_reco=[(x, steerfiles, caltag, gearfile, nevents_reco, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata) for x in RawfileList_reco]
+    print "The parameters for the reconstruction are: " 
+    print params_reco
 
-  count = multiprocessing.cpu_count()
-  pool = multiprocessing.Pool(processes=count)
-  pool.map(reconstruct, params_reco)
+    count = multiprocessing.cpu_count()
+    pool = multiprocessing.Pool(processes=count)
+    pool.map(tbsw.x0script_functions.reconstruct, params_reco)
+
+    for rawfile in RawfileList_reco:
+      params=(rawfile, caltag)
+      tbsw.x0script_functions.reconstruction_DQM(rawfile, caltag)
 ```
 
 As you can see the angle reconstruction uses multiprocessing. In case you don't want to use all system ressources feel free to set the variable count to some number smaller than the number of processor cores of your maschine.
@@ -308,8 +353,9 @@ Now the x0 calibration is performed. Once again a list of runs has to be modifie
 
 ```
  RunList_x0cali = [
-             'run006958.raw',
-             'run006961.raw',
+		    'run006973.raw', #air
+		    'run006965.raw', #0.5 mm Alu
+		    'run006958.raw', #1 mm Alu
            ]
 ```
 
@@ -322,9 +368,12 @@ to use different X/X0 values during the calibration and a run without a scatteri
 The x0 calibration process is started via:
 
 ```
-  # start x0 calibration
-  params_x0cali = ( x0caltag, RawfileList_x0cali, steerfiles_x0, caltag, deletetag)
-  xx0calibration(params_x0cali)
+  # Start x0 calibration
+  #
+  # The fitted distributions and self-consistency plots in pdf format from this 
+  # x0 calibration can be found in the workspace/tmp-runs/*X0Calibration/ directory
+  if args.startStep < 4 and args.stopStep >= 3:
+    tbsw.x0script_functions.xx0calibration(RawfileList_x0cali, steerfiles, caltag)
 ```
 
 The xx0calibration() functions performs the following steps:
@@ -348,10 +397,11 @@ Afterwards the x0 calibration itself is performed
 
 ```
    # Do a calibration of the angle resolution
-   tbsw.x0imaging.X0Calibration.x0calibration(filelist=RootFileList_x0cali,imagefilename=imagefilename,caltag=x0caltag,steerfiles=steerfiles)
+   tbsw.x0imaging.X0Calibration.x0calibration(filelist=RootFileList_x0cali,imagefilename=imagefilename,caltag=caltag,steerfiles=steerfiles)
 ```
 
-The x0 calibration creates a new caltag at localDB/x0tag. Just like the telescope calibration the x0 calibration step has to be done only once. Before proceeding with the x0imaging step one should check the quality of the calibration measurement. The fitted distributions, a self-consistency check and a visualization of the measurement areas can be found in workspace/results/x0calibrationDQM. As the radiation length calibration is an essential part of the radiation length measurement, you should always check if the fits have succeeded and whether the determined radiation length values in the self consistency plot match the expected values. In case of a faulty x/x0 calibration the subsequent radiation length images will be flawed as well!   
+The x0 calibration are stored in the directory localDB/caltag, which also contains the telescope calibration data base files. Just like the telescope calibration the x0 calibration step has to be done only once.
+Before proceeding with the x0imaging step one should check the quality of the calibration measurement. The fitted distributions, a self-consistency check and a visualization of the measurement areas can be found in workspace/results/x0calibrationDQM. As the radiation length calibration is an essential part of the radiation length measurement, you should always check if the fits have succeeded and whether the determined radiation length values in the self consistency plot match the expected values. In case of a faulty x/x0 calibration the subsequent radiation length images will be flawed as well!   
 
 #5. X/X0 Images 
 
@@ -359,19 +409,26 @@ Now calibrated images can be generated. The imaging process is started via:
 
 ```
   # Generate a calibrated X/X0 image
-  nametag='x0image-list'
-  params_x0image = ( x0caltag, RawfileList_x0image, steerfiles_x0, caltag, deletetag,nametag)
-  xx0image(params_x0image)
+  #
+  # The calibrated radiation length image and other images, such as the beamspot
+  # etc can be found in the workspace/root-files/*CalibratedX0Image.root
+  if args.startStep < 5 and args.stopStep >= 4:
+    tbsw.x0script_functions.xx0image(RawfileList_x0image, steerfiles, caltag, name_image1)
 ```
 
-The runs used for the generation of the image are defined in a list:
+The runs used for the generation of the image and the image named are defined in the following code snippet:
 
 ```
- RunList_image1 = [
-             'run006958.raw',
-             'run006959.raw',
-             'run006960.raw',
-           ]
+# List of runs, which are input for the first x0 image
+# Use only runs, with exactly the same target material and positioning
+RunList_x0image = [
+		    'run006958.raw', #1mm alu
+          ]
+
+# Set the name of this image
+name_image1='1mm-alu'
+
+RawfileList_x0image = [rawfile_path+x for x in RunList_x0image]
 ```
 
 In this step it is important that exactly the same target material and target position are used. The Imaging process can now be repeated for every image you want to create. The image settings can be changed in the

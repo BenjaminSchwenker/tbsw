@@ -202,8 +202,6 @@ if __name__ == '__main__':
 
 
   # Calibrate the telescope 
-  # In case you already have all the DB files from another telescope calibration 
-  # and want to reuse it, just switch to Script_purpose_option 0 or 1
   #
   # DQM plots like track p/chi2 values, residuals and other interesting parameters
   # from this telescope calibration step can be found as pdf files in 
@@ -217,8 +215,6 @@ if __name__ == '__main__':
       tbsw.x0script_functions.targetalignment(rawfile_TA, steerfiles, it, caltag, gearfile, nevents_TA, Use_clusterDB, beamenergy, mcdata)
 
   # Angle reconstruction
-  # In case you already have reconstructed the scattering angles for all
-  # the runs you are interested in, just switch to Script_purpose_option 0 or 1
   #
   # The root files with the reconstructed angles and other parameters (see 
   # README_X0.md for a full list and some descriptions) can be found in 
@@ -239,8 +235,6 @@ if __name__ == '__main__':
       tbsw.x0script_functions.reconstruction_DQM(rawfile, caltag)
 
   # Start x0 calibration
-  # In case you already have the x0 calibration DB file from a previous x0 calibration 
-  # and want to reuse it, just switch to Script_purpose_option 0
   #
   # The fitted distributions and self-consistency plots in pdf format from this 
   # x0 calibration can be found in the workspace/tmp-runs/*X0Calibration/ directory
