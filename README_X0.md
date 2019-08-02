@@ -2,7 +2,8 @@
 #Introduction to X/X0 measurements with the test beam software (tbsw)
 
 This README is a step-by-step explanation of how to generate a calibrated X0 image with the test beam software framework. The 
-data processing is explained on the heavily commented example script tbsw_x0example.py. The script simulates
+data processing is explained in the heavily commented example x0example.py and scripts x0-reco.py. x0example.py can be used to
+conduct a toy simulation of a beam test experiments. The script simulates
 a test beam experiment where charged tracks cross a misaligned pixel telescope containing six Mimosa 26 detector planes and a 
 centered device under test (DUT). Afterwards, the simulated raw data is calibrated and reconstucted. Finally, a calibrated X0 
 image of the DUT is computed.
@@ -17,9 +18,31 @@ $ python x0example.py
 
 __ Due to the large track sample needed for the X0 imaging, running this script can take several hours!__
 
-There are a number of different reconstruction steps, which are necessary for generating a calibrated X0 image. All of these steps 
-are included in the example script. The different steps are described in the following bullet points:
+The results can for example be used to determine the resolution of a given telescope geometry or beam energy. This script 
+is explained in the first part of this README. There are a number of different reconstruction steps, which are necessary for
+generating a calibrated X0 image. All of these steps are included in the example script. The different steps are described 
+there.
 
+The second part of this README explains the x0-reco.py script which can be used to analyse real beam test data. Example raw
+files can be downloaded to test the script. First create a directory (for example at '$HOME/rawdata/example') where the data files
+are stored. Afterwards download the files:
+
+```
+wget -O $HOME/rawdata/example/run006958.raw  https://owncloud.gwdg.de/index.php/s/NKdExF0pgz4G3UA/download
+wget -O $HOME/rawdata/example/run006965.raw  https://owncloud.gwdg.de/index.php/s/7a3SXRqHGVTOQnn/download
+wget -O $HOME/rawdata/example/run006973.raw  https://owncloud.gwdg.de/index.php/s/DkiJTIaHSJWgXgf/download 
+```
+
+The parameters in the script are selected to conduct a analysis with the downloaded example files. It can be
+started via:
+
+```
+$ source init_tbsw.sh
+$ python x0-reco.py
+```
+
+
+## I) Simulation script x0example.py:
 
 ##0. Simulation of telescope digits:
 
@@ -33,9 +56,7 @@ material distribution will be generated.
 ##1. Telescope calibration:
 
 During the telescope calibration, noisy pixel masks is produced and cluster calibration and telescope alignment
-is carried out. The MARLIN Processors, which are used during this process are described in README.md and can
-be found in workspace/steering-files/x0-tb/processors.xml .The calibration results can be found in the folder  
-workspace/localDB/mc-air-test/. 
+is carried out. The calibration results can be found in the folder workspace/localDB/x0-sim/. 
 
 It is preferred to use an air run for the telescope calibration. Afterwards, scattering objects must be installed 
 w/o moving the telescope arms. The reason for this approach is that unkown, or wrongly modelled, material inside
@@ -48,15 +69,19 @@ Using the calibration results from the previous step the scattering angles on th
 reconstructed. During the angle reconstruction step the workspace/steering-files/x0-tb/processors.xml
 steering file is employed. The following processors are used in the X0 analysis:
 
-   _1. M26Clusterizer:_			  Input: NoiseDB (must be present in cal-files/default) and M26 digit collectiion, Output: M26 clusters
+   _1. EUDAQInputProcessor:_	  Input: EUDAQ raw file, Output: slcio data
+
+   _2. NIUnpacker:_				  Decodes data format and produces collection of M26 digits
+
+   _3. M26Clusterizer:_			  Input: NoiseDB (must be present in cal-files/default) and M26 digit collection, Output: M26 clusters
    
-   _2. GoeHitMaker:_			  Input: clusterDB (must be present in cal-files/default) and M26 clusters, Output: M26 hits 
+   _4. GoeHitMaker:_			  Input: clusterDB (must be present in cal-files/default) and M26 clusters, Output: M26 hits 
    
-   _3. Fastracker (downstream):_  Input: alignmentDB (must be in cal-files/default) and M26 hits (only downstream hits), Output: downstream tracks 
+   _5. Fastracker (downstream):_  Input: alignmentDB (must be in cal-files/default) and M26 hits (only downstream hits), Output: downstream tracks 
    
-   _4. Fastracker (upstream):_    Input: alignmentDB (must be in cal-files/cal-tag) and M26 hits (only upstream hits), Output: upstream tracks
+   _6. Fastracker (upstream):_    Input: alignmentDB (must be in cal-files/cal-tag) and M26 hits (only upstream hits), Output: upstream tracks
    
-   _5. X0ImageProducer:_          Input: alignmentDB (must be present in cal-files/cal-tag), Get kink calculates angles from tracks, Output: X0 root file 
+   _7. X0ImageProducer:_          Input: alignmentDB (must be present in cal-files/cal-tag), Get kink calculates angles from tracks, Output: X0 root file 
 
 The results of the angle reconstruction can be found at workspace/root-files/X0-mc-air-test-reco.root. The results file contains a root 
 tree named MSCTree. The following variables are stored in the tree:
@@ -93,7 +118,7 @@ tree named MSCTree. The following variables are stored in the tree:
    *  vertex_x_var    			: Vertex x position variance in global coordinates (mm^2)
    *  vertex_y_var    			: Vertex y position variance in global coordinates (mm^2)
    *  vertex_z_var    			: Vertex z position variance in global coordinates (mm^2)
-   *  vertex_chi2     			: Chi2 value of the vertex fit
+   *  vertex_chi2ndf     		: Chi2 per ndof value of the vertex fit
    *  vertex_prob     			: p value of the vertex fit
    *  vertex_u_res    			: Vertex u residual (mm)
    *  vertex_v_res    			: Vertex v residual (mm)
@@ -105,38 +130,50 @@ tree named MSCTree. The following variables are stored in the tree:
 
 The tree, which was generated in the last step will now be used to generate a uncalibrated
 radiation length image of the aluminium DUT. The imaging procedure employs a cfg file 
-(see "workspace/steering-files/x0-tb/image.cfg"). The parameters in the config file are
+(see "workspace/steering-files/x0-tb/x0.cfg"). The relevant parameters in the [general] and
+[x0image] section of the config file are:
+
 
   * lambda			         : The calibration factor of the angle resolution sigma, during this first
                                uncalibrated imaging, lambda should be 1.0
   * momentumoffset           : mean value of the momentum/beam energy in the center of the image (u=0,v=0)
   * momentumugradient        : momentum gradient of the beam in u direction
   * momentumvgradient        : momentum gradient of the beam in u direction
+  * model					 : Fit model, either highland or moliere
+  * epsilon					 : Weight parameter used to include energy loss effects due to bremsstrahlung.
+							   Should be either 0.0 to deactivate or ~0.3 
+
   * resultsfilename          : name of the results file, which is produced by the GenerateImage.py script
+  * maxchi2ndof				 : Max fit chi2ndof value, deactivated by setting to -1
   * u_length/v_length        : side lengths of the total image, should be 20 x 10 mm^2 for an image of the whole beam spot 
   * umin/vmax                : Position of the upper left corner of the total image, should be (umin,vmax)=(-10mm,5mm) for 
                                an image of the whole beam spot
   * u/v pixelsize            : Pixel size of the image in microns, should be chosen in such away, that at least 1000 particles 
                                pass through the area of most pixels
+  * histo_range				 : Range of the histogram in multitudes of the RMS of the distribution
+  * num_bins				 : Number of bins per histograms, simulations indicate that 150 bins are optimal
+							   when a range of -5*RMS to +5*RMS is selected
+  * fit_options				 : String that determines the ROOT fit options
 
 After the imaging process the uncalibrated radiation length image is located in 
-workspace/root-files/X0-mc-air-test-reco-Uncalibrated-X0image.root . The file contains many 2D histograms, the
+workspace/root-files/X0image-calitarget-Uncalibrated.root . The file contains many 2D histograms, the
 most important ones are:
 
-  * x0_image                         : Radiation length (X/X0) image 
-  * x0err_image                      : Image of the statistical errors of the image (due to the fit)
-  * x0relerr_image                   : Image of relative X/X0 errors
-  * fit(1/2/sum)chi2ndof_image       : Images of the fit chi2 values
-  * fit(1/2/sum)prob_image          	: p values of the fit of the projected angle distributions and the combined distribution
-  * theta(1/2)mean_image             : Image of the mean values of the projected kink angle distributions (before correction)
-  * correctedtheta(1/2)mean_image    : Image of the mean values of the projected kink angle distributions (after correction)
-  * (u/v)residualmean_image    		: Image of the u and v residuals of down and upstream track
-  * beamspot                         : Image of number of tracks 
-  * BE_image                         : Image of the particle momentum/beam energy
-  * vertex_w_mean_image              : Image of the mean vertex w position , this might be useful, when trying to align the target plane
-  * vertex_w_rms_image              : Image of the vertex w position RMS, this parameter can be used as a complementary thickness measurement
-  * vertex_chi2_image              : Image of the vertex fit chi2 value
-  * vertex_multiplicity_image              : Image of the vertex multiplicity, this parameter also has a thickness/X/X0 dependency
+  * x0_image								: Radiation length (X/X0) image 
+  * x0err_image								: Image of the statistical errors of the image (due to the fit)
+  * x0relerr_image							: Image of relative X/X0 errors
+  * fitDQM/fit(1/2/sum)chi2ndof_image		: Images of the fit chi2 values
+  * fitDQM/fit(1/2/sum)chi2ndof_histo		: Histograms of the fit chi2 values
+  * fitDQM/fit(1/2/sum)prob_image			: Images of p values of the fit of the projected angle distributions and the combined distribution
+  * fitDQM/fit(1/2/sum)prob_histo			: Histos of p values of the fit of the projected angle distributions and the combined distribution
+  * theta(1/2)mean_image					: Image of the mean values of the projected kink angle distributions (before correction)
+  * correctedtheta(1/2)mean_image			: Image of the mean values of the projected kink angle distributions (after correction)
+  * beamspot								: Image of number of tracks 
+  * BE_image								: Image of the particle momentum/beam energy
+  * vertex/vertex_w_mean_image				: Image of the mean vertex w position , this might be useful, when trying to align the target plane
+  * vertex/vertex_w_rms_image				: Image of the vertex w position RMS, this parameter can be used as a complementary thickness 												  measurement
+  * vertex/vertex_chi2_image				: Image of the vertex fit chi2 value
+  * vertex/vertex_multiplicity_image		: Image of the vertex multiplicity, this parameter also has a thickness/X/X0 dependency
 
 ##4. Calibration of beam energy and telescope angle resolution:
 
@@ -153,45 +190,29 @@ momentum = momentumoffset+momentumugradient*u+momentumvgradient*v
 
 The calibration parameters are measured by fitting a X0 image from a calibration target. The calibration target is
 expected to be a planar object with areas of well defined  X/X0. For the calibration software, the calibration target
-must be described in a cfg file. This file is located at workspace/steering-files/x0-sim/x0calibration.cfg. It is 
-used to to set starting parameters, measurement areas (MA) and fit options. The measurement areas can be added
-as simple rectangular shapes (MA in the cfg file) with a center position, length, thickness and material parameters. 
-Alternatively a line can be defined, which constructs multiple measurement areas at the same time. More detailed 
-descriptions of the options can be found in the cfg file itself. 
+must be described in a cfg file. This file is the same file as previously in the imaging step. It is located at 
+workspace/steering-files/x0-sim/x0.cfg. It is used to to set starting parameters, measurement areas (MA) and fit options. 
+The measurement areas can be added as simple rectangular shapes (MA in the cfg file) with a center position, 
+length, thickness and material parameters. Alternatively a line can be defined, which constructs multiple measurement
+areas at the same time. More detailed descriptions of the options can be found in the cfg file itself. 
 
 In the example script, an aluminium plate with a material step is used as the DUT. The cfg file we are using here employs
-several measurement areas and a line in order to fit the calibration parameters. The measurement areas are marked on the
-following image of the uncalibrated aluminium plate:
-
-[picture](workspace/tbsw/validation/X0image_Boxes.png)
-
-There is one measurement area in the 0.5mm thick aluminium (1), 6 measurement areas in the 1mm aluminium area (2,3 and 9-12)
-the remaining measurement areas lie in the air region.
+several measurement areas and a line in order to fit the calibration parameters. There is one measurement area in the 0.5mm 
+thick aluminium, 6 measurement areas in the 1mm aluminium area and the remaining measurement areas lie in the air region.
 
 The results of the calibration, including pictures of the fits of the individual measurement areas, can be found in 
-workspace/tmp-runs/X0-mc-air-test-reco-X0Calibration/ . The results of the calibration are also stored as a cfg file
-in workspace/localDB/mc-air-test/x0cal_result.cfg.
+workspace/tmp-runs/X0Calibration-x0-sim/ . The results of the calibration are also stored as a cfg file
+in workspace/localDB/x0-sim/x0cal_result.cfg.
 
 ##5. X/X0 imaging (calibrated):
 
-In the last step an calibrated X/X0 image is produced, which used the cfg file from the previous calibration step. The
-calibrated X/X0 image should look like this:
+In the last step an calibrated X/X0 image is produced, which used the cfg file from the previous calibration step. The results 
+can be found in workspace/root-files/alutarget-image-Calibrated-x0-sim.root.root
 
-[picture](workspace/tbsw/validation/X0image.png)
-
-The area of the aluminium plate is 8x8mm^2 and has a thickness of 1mm. The central part has a reduced thickness of 0.5mm. The aluminium plate is freely 
-hanging in air. 
-
-A X/X0 profile cut can be used for X/X0 measurements. In this example case the steps between thick and thin aluminium, as well as air is clearly visible.
-
-[picture](workspace/tbsw/validation/X0profile.png)
-
-The complete results can be found in workspace/root-files/X0-mc-alu-default-reco-Calibrated-X0image.root
-
-## Reconstruction of test beam data:
+## I) Test beam data analysis script x0-reco.py:
 
 If you are performing an analysis of real test beam data, the basic processing steps do not change. The example script for processing test beam data is 
-testbeam_x0.py. The most important changes are the following:
+x0-reco.py. The most important changes are the following:
 
    * You do not simulate the air and aluminium runs. You have to actually record the runs in a mono-energetic particle beam using a high resolution tracking 
      telescope. 
@@ -208,7 +229,7 @@ testbeam_x0.py. The most important changes are the following:
    * The uncalibrated X0 image is also useful to check that your scattering object is actually inside the beam. It is highly recommended to check this whenever you switch 
      or move your object. Do it during the data taking, not weeks after you are home ;)
 
-In the following paragraph a guideline of how you have to change the testbeam_x0.py script and the x0.cfg file in order to be able to analyse your test beam data.
+In the following paragraph a guideline of how you have to change the x0-reco.py script and the x0.cfg file in order to be able to analyse your test beam data.
 
 #0. First steps
 
@@ -219,21 +240,14 @@ Change the beam energy to the correct value, which was used during your beam tes
  beamenergy=2.0
 ``` 
 
-The next step is to copy the default x0 steering files (workspace/steering-files/x0-tb) to workspace/steering-files/x0-mytb. Then the gear file (workspace/steering-files/x0-mytb/gear.xml) has to be edited to
-match the telescope setup you used during you beam test experiment. Especially the M26 spacings, target position and mean thickness will have to be modified.
+The next step is to copy the default x0 steering files (workspace/steering-files/x0-tb) to workspace/steering-files/x0-mytb. Then the gear file 
+(workspace/steering-files/x0-mytb/gear.xml) has to be edited to match the telescope setup you used during you beam test experiment. Especially 
+the M26 spacings, target position and mean thickness will have to be modified.
 
 #1. Telescope calibration 
 
-The telescope calibration works with a single run raw file. Example raw files can be downloaded to test the script. First create a directory (for example at '$HOME/rawdata/example') where the data files
-are stored. Afterwards download the files:
-
-```
-wget -O $HOME/rawdata/example/run006958.raw  https://owncloud.gwdg.de/index.php/s/NKdExF0pgz4G3UA/download
-wget -O $HOME/rawdata/example/run006965.raw  https://owncloud.gwdg.de/index.php/s/7a3SXRqHGVTOQnn/download
-wget -O $HOME/rawdata/example/run006973.raw  https://owncloud.gwdg.de/index.php/s/DkiJTIaHSJWgXgf/download 
-```
-
-The rawfile path parameter defines the directory with the rawfiles:
+The telescope calibration works with a single run raw file. Example raw files can be downloaded to test the script as mentioned at the beginning of this README. The rawfile path
+parameter defines the directory with the rawfiles:
 
 ```
 # global path to raw files
@@ -245,7 +259,15 @@ cali_run='run006973.raw'
 rawfile_cali = rawfile_path + cali_run
 ```
 
-The functionality of the X/X0 script can be tested with these raw files. The path to the run raw files and the name of the run raw file has to be modified to match your data.
+The functionality of the X/X0 script can be tested with the downloaded raw files. Downloading the rawfiles into the directory specified at the beginning of this README and
+starting the script via
+
+```
+$ source init_tbsw.sh
+$ python x0-reco.py
+```
+
+works out of the box. For analysing your beam test data, the path to the run raw files and the name of the run raw file has to be modified to match your data.
 Typically rawfile_path should be set to the directory, where all your raw files from a specific beam test are stored. Using subdirectories for cali_run is possible. For example:
 
 
@@ -274,7 +296,7 @@ produces a calibration tag directory, that is written to workspace/local-DB/calt
 
 ```
 # telescope calibration cal tag (typically named after telescope setup, beam energy etc.)
-caltag='40mm-spacing-2GeV'
+caltag='tboct16-2GeV'
 ```
 
 so that you always know, which telescope setup, beam energy etc is covered by this tag. The telescope calibration has to be done only once for each beam energy, telescope setup and 
@@ -308,8 +330,9 @@ The data quality monitoring plots of the telescope calibration step can be found
 
 #2. Angle reconstruction
 
-The angle reconstruction is performed for a list of runs. The list should contain all runs, which were recorded with the same beam energy and telescope settings and which are needed either for the x0 calibration or the x0 imaging. 
-The target position, material and thickness can be different for the individual runs in the list, because for each run a seperate root file with the reconstructed scattering angles is created.
+The angle reconstruction is performed for a list of runs. The list should contain all runs, which were recorded with the same beam energy and telescope settings
+and which are needed either for the x0 calibration or the x0 imaging. The target position, material and thickness can be different for the individual runs in the
+list, because for each run a seperate root file with the reconstructed scattering angles is created.
 
 
 ```
@@ -881,7 +904,6 @@ and check the X0 Calibration results. If everything worked the imaging step can 
 $ source init_tbsw.sh
 $ python x0-reco.py --startStep 4 --stopStep 4
 ```
-
 
 The technique and algorithm behind radiation length imaging was shown VCI 2016. The link to the proceedings paper is http://www.sciencedirect.com/science/article/pii/S0168900216306519.
 Please you this reference for citing the method. 
