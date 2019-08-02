@@ -21,6 +21,25 @@ The script must be modified by most users to their specific use case. Places whe
 are needed are commented in the text below. Examples for such modifactions are the pathes to the rawdata
 files, settings for beam energy and the definition of objects used for the X0 calibration. 
 
+Example .raw files from a X0 test beam can be downloaded. First create a directory (for example at 
+'$HOME/rawdata/example') where they are stored. Afterwards download the files:
+
+wget -O $HOME/rawdata/example/run006958.raw  https://owncloud.gwdg.de/index.php/s/NKdExF0pgz4G3UA/download
+wget -O $HOME/rawdata/example/run006965.raw  https://owncloud.gwdg.de/index.php/s/7a3SXRqHGVTOQnn/download
+wget -O $HOME/rawdata/example/run006973.raw  https://owncloud.gwdg.de/index.php/s/DkiJTIaHSJWgXgf/download
+
+Take into account that the total size of these files is ~3 GB and the download may take a while.
+
+The runs have three different targets: Air (run006973.raw), 0.5mm (run006958.raw) and 1mm (run006965.raw) 
+of aluminium. These three runs can be directly used to perform a X/X0 analysis with this script.
+
+The steering files for in order to process this test beam is shipped with tbsw and 
+can be found at steering-files/x0-tb-oct16. 
+
+Usage: 
+
+python x0-reco.py --startStep 1 --stopStep 4
+
 Have fun with X0 imaging. 
 
 Author: Ulf Stolzenberg <ulf.stolzenberg@phys.uni-goettingen.de>  
@@ -51,7 +70,7 @@ args = parser.parse_args()
 # Path to steering files 
 # Folder contains a gear file detailing the detector geometry and a config file
 # for x0 calibration. Users will likely want to rename this folder. 
-steerfiles = 'steering-files/x0-tb-june17/'
+steerfiles = 'steering-files/x0-tb-oct16/'
 
 # Nominal Beam energy
 beamenergy=2.0
@@ -66,7 +85,7 @@ beamenergy=2.0
 # During the radiation length calibration step (Step 3) the beam energy, the beam energy gradients and a global offset of the telescope
 # angle resolution will be determined and stored in a text file (x0cal_result.cfg). The DQM plots such as a selfconsistency diagram and
 # angle distributions with their associated fits can be found in results/x0calibrationDQM/*caltag*.
-caltag='air-alu-2GeV'
+caltag='tboct16-2GeV'
 
 # Name of the gearfile, which describes the telescope setup 
 # Must be placed in the steerfiles folder
@@ -85,7 +104,7 @@ Use_SingleHitSeeding=False
 # By default, a robust method is used that correlates sensors step by
 # step. Only deactivate when you are really certain you do not need
 # this feature (expert decision).  
-Use_LongTelescopeCali=True
+Use_LongTelescopeCali=False
 
 # Switch to use clusters on outer planes to calculate cluster resolution
 # The track resolution is expected to be worse on the outer planes, using them may 
@@ -105,14 +124,14 @@ targetalignment_iterations=0
 # File names and lists of filenames for the different steps 
 
 # global path to raw files
-rawfile_path='/work1/rawdata/luise/'
+rawfile_path=os.environ['HOME']+'/rawdata/example/'
 
 # Eudaq raw files used during telescope calibration. Telescope calibration 
 # includes the alignment of the reference telescope and the calibration
 # of its spatial resolution. 
 # Best use a run without a scattering target in between the telescope arms.
 # The calibration has to be done for every telescope setup, beam energy and m26 threshold settings
-cali_run='run000210.raw'
+cali_run='run006973.raw'
 rawfile_cali = rawfile_path + cali_run
 
 # raw file used for target alignment (only useful with a thick (X/X0 > 5 %) scattering target)
@@ -122,10 +141,9 @@ rawfile_TA = rawfile_path + TA_run
 # List of runs, which are used as input for the scattering angle reconstruction
 # The angle reconstruction step is essential and every run, that will be used later during the x0 calibration or x0 imaging steps, must be listed
 RunList_reco = [
-		    'run000210.raw', #air
-		    'run000154.raw', #4 mm Alu
-		    'run000161.raw', #6 mm Alu
-		    'run000171.raw', #PB 1
+		    'run006973.raw', #air
+		    'run006965.raw', #0.5 mm Alu
+		    'run006958.raw', #1 mm Alu
           ]
 
 RawfileList_reco = [rawfile_path+x for x in RunList_reco]
@@ -139,9 +157,9 @@ RawfileList_reco = [rawfile_path+x for x in RunList_reco]
 #
 # The different measurement regions and other options have to be set in the x0.cfg file in the steer files directory
 RunList_x0cali = [
-		    'run000210.raw', #air
-		    'run000154.raw', #4 mm Alu
-		    'run000161.raw', #6 mm Alu
+		    'run006973.raw', #air
+		    'run006965.raw', #0.5 mm Alu
+		    'run006958.raw', #1 mm Alu
           ]
 
 RawfileList_x0cali = [rawfile_path+x for x in RunList_x0cali]
@@ -149,11 +167,11 @@ RawfileList_x0cali = [rawfile_path+x for x in RunList_x0cali]
 # List of runs, which are input for the first x0 image
 # Use only runs, with exactly the same target material and positioning
 RunList_x0image = [
-		    'run000171.raw', #PB 1
+		    'run006958.raw', #1mm alu
           ]
 
 # Set the name of this image
-name_image1='image1'
+name_image1='1mm-alu'
 
 RawfileList_x0image = [rawfile_path+x for x in RunList_x0image]
 
@@ -172,7 +190,7 @@ name_image2='image2'
 
 # Number of events ...
 # for telescope calibration
-nevents_cali = 50000
+nevents_cali = 700000
 
 # for target alignment
 nevents_TA = 1000000
@@ -184,8 +202,6 @@ if __name__ == '__main__':
 
 
   # Calibrate the telescope 
-  # In case you already have all the DB files from another telescope calibration 
-  # and want to reuse it, just switch to Script_purpose_option 0 or 1
   #
   # DQM plots like track p/chi2 values, residuals and other interesting parameters
   # from this telescope calibration step can be found as pdf files in 
@@ -199,8 +215,6 @@ if __name__ == '__main__':
       tbsw.x0script_functions.targetalignment(rawfile_TA, steerfiles, it, caltag, gearfile, nevents_TA, Use_clusterDB, beamenergy, mcdata)
 
   # Angle reconstruction
-  # In case you already have reconstructed the scattering angles for all
-  # the runs you are interested in, just switch to Script_purpose_option 0 or 1
   #
   # The root files with the reconstructed angles and other parameters (see 
   # README_X0.md for a full list and some descriptions) can be found in 
@@ -221,8 +235,6 @@ if __name__ == '__main__':
       tbsw.x0script_functions.reconstruction_DQM(rawfile, caltag)
 
   # Start x0 calibration
-  # In case you already have the x0 calibration DB file from a previous x0 calibration 
-  # and want to reuse it, just switch to Script_purpose_option 0
   #
   # The fitted distributions and self-consistency plots in pdf format from this 
   # x0 calibration can be found in the workspace/tmp-runs/*X0Calibration/ directory
