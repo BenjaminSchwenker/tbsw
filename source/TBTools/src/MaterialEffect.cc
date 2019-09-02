@@ -8,11 +8,14 @@
 #include "MaterialEffect.h"
 
 #include <cmath>
-#include "TMath.h"
 #include "math.h"
 #include <Math/DistFunc.h>
-
 #include <Eigen/Geometry> 
+
+// ROOT includes
+#include <TMath.h>
+#include <TRandom.h>
+#include <TRandom3.h>
 
 using namespace std;
 
@@ -257,14 +260,14 @@ double GetScatterKink_SC(double length, double X0, double Z, double mass, double
   double meanscatnum=length*Ns/Xs; //mean number of scatterings
   
   //Determine number of Single scatterings
-  double N=myRng->Poisson(meanscatnum);
+  double N= gRandom->Poisson(meanscatnum);
   double thetax=0;
   
   //loop of single scatterings
   for (int ix = 1; ix <= N; ++ix) 
   {
-    double u = myRng->Uniform(0,1);
-    double phi = myRng->Uniform(0,2*3.1415);
+    double u =  gRandom->Uniform(0,1);
+    double phi =  gRandom->Uniform(0,2*3.1415);
     thetax=thetax+anorm*bnorm*sqrt((1-u)/(u*bnorm*bnorm+anorm*anorm))*cos(phi);
   }  
   

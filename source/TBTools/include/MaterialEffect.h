@@ -36,6 +36,14 @@ namespace materialeffect {
    */ 
   double GetScatterTheta2(double mom, double x, double x0, double mass, double charge);  
   
+  /** Simulate scatter kink for single scattering theory 
+   *
+   * Simulate the scattering kink as a sum of independent and identically distributed single scattering 
+   * events following the paper R. Frühwirth et al.  "On the quantitative modelling of core and tails of multiple 
+   * scattering by Gaussian mixtures", Nucl.Instrum.Meth. (2000)
+   */   
+  double GetScatterKink_SC(double length, double X0, double Z, double mass, double charge, double mom  );
+  
   /** Scatter track at thin scatterer 
    *
    * The track is locally scattered by two scatter kink angles. The kink angles 

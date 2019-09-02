@@ -91,6 +91,9 @@ X0ImageProducer::X0ImageProducer() : Processor("X0ImageProducer")
                               "Switch to fast toy simulation mode: Replace reconstructed scatter angles from track fitting by angles sampled from a Gauss distribution",
                               _m_toy,  static_cast < bool > (false));
 
+  registerProcessorParameter ("ToyScatterModel", "Choose model for multiple scattering used in toy simulations: Highland(0), SumOfSingleScatterings(1)",
+                                _m_toyScatterModel,  static_cast < int > (0));
+
   registerProcessorParameter ("ToyRecoError",
                               "Angle reconstruction error used in toy simulations, if its smaller than 0, use real angle reco error instead (only used in toy simulation mode)",
                               _m_reco_error,  static_cast < double > (-1.0));
@@ -573,12 +576,20 @@ void X0ImageProducer::processEvent(LCEvent * evt)
           } 
           // Take average of momentum before and after scattering
           average_mom += 0.5*uptrack.GetCharge()/p_in[4];
-		  
-		  // Highland model scattering
-		  double theta2 = materialeffect::GetScatterTheta2(average_mom, l0, dut.GetRadLength(u,v),uptrack.GetMass(), uptrack.GetCharge() );  
-		  double kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
-		  double kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 ));    
-	  
+
+          double kink_u = 0;
+          double kink_v = 0;
+          
+          if(  _m_toyScatterModel==0  ) { 
+            // Highland model scattering
+            double theta2 = materialeffect::GetScatterTheta2(average_mom, l0, dut.GetRadLength(u,v), uptrack.GetMass(), uptrack.GetCharge() );      
+            kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
+            kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 ));      
+          } else if ( _m_toyScatterModel==1 ) {
+            kink_u = materialeffect::GetScatterKink_SC(l0, dut.GetRadLength(u,v), dut.GetAtomicNumber(u,v), uptrack.GetMass(), uptrack.GetCharge(), average_mom   );
+            kink_v = materialeffect::GetScatterKink_SC(l0, dut.GetRadLength(u,v), dut.GetAtomicNumber(u,v), uptrack.GetMass(), uptrack.GetCharge(), average_mom   );     
+          } 
+          
 		  // Scatter track ('in' state -> 'out' state)
 		  auto toystate=p_in;
 		  materialeffect::ScatterTrack(toystate, kink_u, kink_v); 

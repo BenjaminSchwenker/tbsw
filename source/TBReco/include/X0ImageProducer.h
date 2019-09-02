@@ -123,6 +123,9 @@ protected:
 //! toy Bethe Heitler switch
    bool _m_ToyBetheHeitler;
 
+//! choose toy model for multiple scattering
+   int _m_toyScatterModel;  
+
 //! Max vertex chi2/ndof
    double _maxVertexChi2;
 
