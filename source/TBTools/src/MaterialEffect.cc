@@ -233,6 +233,48 @@ double GetScatterTheta2(double mom, double x, double x0, double mass, double cha
   return SigTheta2;
 }  
 
+/** Simulate scatter kink for single scattering theory 
+ *
+ * Simulate the scattering kink as a sum of independent and identically distributed single scattering 
+ * events following the paper R. Frühwirth et al.  "On the quantitative modelling of core and tails of multiple 
+ * scattering by Gaussian mixtures", Nucl.Instrum.Meth. (2000)
+ */   
+double GetScatterKink_SC(double length, double X0, double Z, double mass, double charge, double mom  )
+{
+  
+  double Etot = std::sqrt(mom*mom + mass*mass);   
+  double beta = mom/Etot; 
+  		
+  // Parameters for single scattering at nuclei from Frühwirth's paper
+  double a=6.415E-6/mom;  //theta min
+  double rho=7188;
+  double anorm=3.454E-1;
+  double bnorm=2483;
+  
+  double Xs=X0*(Z+1.0)/Z*log(287*pow(Z,-0.5))/log(159*pow(Z,-0.333333));
+
+  double Ns=1.587E7/(beta*beta*pow(Z,0.666667)*log(159/pow(Z,0.333333)));
+  double meanscatnum=length*Ns/Xs; //mean number of scatterings
+  
+  //Determine number of Single scatterings
+  double N=myRng->Poisson(meanscatnum);
+  double thetax=0;
+  
+  //loop of single scatterings
+  for (int ix = 1; ix <= N; ++ix) 
+  {
+    double u = myRng->Uniform(0,1);
+    double phi = myRng->Uniform(0,2*3.1415);
+    thetax=thetax+anorm*bnorm*sqrt((1-u)/(u*bnorm*bnorm+anorm*anorm))*cos(phi);
+  }  
+  
+  //Normalization
+  double norm_simu=a*(sqrt(log(rho)-0.5));//aid variable normalization to [rad]
+  double thetaxrad=thetax*norm_simu;
+  
+  return thetaxrad;
+}
+
 
 /** Scatter track at thin scatterer 
  *

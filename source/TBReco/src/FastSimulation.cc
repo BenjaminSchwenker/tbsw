@@ -269,7 +269,14 @@ namespace depfet {
             double kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 ));      
             // Scatter track ('in' state -> 'out' state)
             materialeffect::ScatterTrack(state, kink_u, kink_v); 
-          }
+          } else if ( m_scatterModel==1 ) {
+            kink_u = GetScatterKink_SC(l0, current_det.GetRadLength(u,v), current_det.GetAtomicNumber(u,v), mcp->getMass(), mcp->getCharge(), average_mom   );
+            kink_v = GetScatterKink_SC(l0, current_det.GetRadLength(u,v), current_det.GetAtomicNumber(u,v), mcp->getMass(), mcp->getCharge(), average_mom   );
+            // Scatter track ('in' state -> 'out' state)
+            materialeffect::ScatterTrack(state, kink_u, kink_v);     
+          } 
+          
+         
         }
          
         // Propagate particle to next detector surface
@@ -314,7 +321,12 @@ namespace depfet {
           double kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 )); 
           // Scatter track ('in' state -> 'out' state)
           materialeffect::ScatterTrack(state, kink_u, kink_v);     
-        }
+        } else if ( m_scatterModel==1 ) {
+          kink_u = GetScatterKink_SC(l0, current_det.GetRadLength(u,v), current_det.GetAtomicNumber(u,v), mcp->getMass(), mcp->getCharge(), average_mom   );
+          kink_v = GetScatterKink_SC(l0, current_det.GetRadLength(u,v), current_det.GetAtomicNumber(u,v), mcp->getMass(), mcp->getCharge(), average_mom   );
+          // Scatter track ('in' state -> 'out' state)
+          materialeffect::ScatterTrack(state, kink_u, kink_v);     
+        } 
           
         // Get state on next detector
         bool error = false; 
