@@ -8,6 +8,13 @@ a test beam experiment where charged tracks cross a misaligned pixel telescope c
 centered device under test (DUT). Afterwards, the simulated raw data is calibrated and reconstucted. Finally, a calibrated X0 
 image of the DUT is computed.
 
+Additional information on the radiation length imaging and calibration methods used in the scripts 
+can be found at http://hdl.handle.net/21.11130/00-1735-0000-0003-C1A1-C. Also The technique and algorithm behind 
+the radiation length imaging was shown at VCI 2016. The link to the proceedings paper is 
+http://www.sciencedirect.com/science/article/pii/S0168900216306519.
+
+Please use these references for citing the method. 
+
 
 ```
 $ cp -r <path-to-tbsw-installdir>/workspace ~/workspace-x0-example
@@ -904,10 +911,6 @@ and check the X0 Calibration results. If everything worked the imaging step can 
 $ source init_tbsw.sh
 $ python x0-reco.py --startStep 4 --stopStep 4
 ```
-
-The technique and algorithm behind radiation length imaging was shown VCI 2016. The link to the proceedings paper is http://www.sciencedirect.com/science/article/pii/S0168900216306519.
-Please you this reference for citing the method. 
-
 
 
 Ulf Stolzenberg,
