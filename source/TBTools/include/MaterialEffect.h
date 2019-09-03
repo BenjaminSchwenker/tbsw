@@ -80,11 +80,14 @@ namespace materialeffect {
   // Highland radiation length for air [mm] (NTP: 20 deg, 1bar, PDG value)   
   static const float X0_air = 303900;
 
-  // TODO: this is a wild guess, check it
-  static const float AtomicMass_air = 16; 
+  // Average Z of air can be calculated from the fractions of the individual elements
+  // According to the PDG it contains 76% nitrogen, 23% oxygen and 1% argon
+  // Therefore Z=0.76*7.0+0.23*8.0+0.01*18.0
+  static const float AtomicNumber_air = 7.34;
 
-  // TODO: this is a wild guess, check it
-  static const float AtomicNumber_air = 8; 
+  // According to the PDG <Z/A> of air is 0.499, therefore A=Z/0.499
+  static const float AtomicMass_air = 14.71; 
+ 
 
 } // Namespace
 
