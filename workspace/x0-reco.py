@@ -104,7 +104,7 @@ Use_SingleHitSeeding=False
 # By default, a robust method is used that correlates sensors step by
 # step. Only deactivate when you are really certain you do not need
 # this feature (expert decision).  
-Use_LongTelescopeCali=False
+Use_LongTelescopeCali=True
 
 # Switch to use clusters on outer planes to calculate cluster resolution
 # The track resolution is expected to be worse on the outer planes, using them may 
