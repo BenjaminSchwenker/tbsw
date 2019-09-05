@@ -586,8 +586,8 @@ void X0ImageProducer::processEvent(LCEvent * evt)
             kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
             kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 ));      
           } else if ( _m_toyScatterModel==1 ) {
-            kink_u = materialeffect::GetScatterKink_SC(l0, dut.GetRadLength(u,v), dut.GetAtomicNumber(u,v), uptrack.GetMass(), uptrack.GetCharge(), average_mom   );
-            kink_v = materialeffect::GetScatterKink_SC(l0, dut.GetRadLength(u,v), dut.GetAtomicNumber(u,v), uptrack.GetMass(), uptrack.GetCharge(), average_mom   );     
+            kink_u = materialeffect::GetScatterKink_SC(l0, dut.GetRadLength(u,v), dut.GetAtomicNumber(u,v), dut.GetAtomicMass(u,v), uptrack.GetMass(), uptrack.GetCharge(), average_mom   );
+            kink_v = materialeffect::GetScatterKink_SC(l0, dut.GetRadLength(u,v), dut.GetAtomicNumber(u,v), dut.GetAtomicMass(u,v), uptrack.GetMass(), uptrack.GetCharge(), average_mom   );     
           } 
           
 		  // Scatter track ('in' state -> 'out' state)

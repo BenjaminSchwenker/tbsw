@@ -270,8 +270,8 @@ namespace depfet {
             // Scatter track ('in' state -> 'out' state)
             materialeffect::ScatterTrack(state, kink_u, kink_v); 
           } else if ( m_scatterModel==1 ) {
-            double kink_u = materialeffect::GetScatterKink_SC(l0, current_det.GetRadLength(u,v), current_det.GetAtomicNumber(u,v), mcp->getMass(), mcp->getCharge(), average_mom   );
-            double kink_v = materialeffect::GetScatterKink_SC(l0, current_det.GetRadLength(u,v), current_det.GetAtomicNumber(u,v), mcp->getMass(), mcp->getCharge(), average_mom   );
+            double kink_u = materialeffect::GetScatterKink_SC(l0, current_det.GetRadLength(u,v), current_det.GetAtomicNumber(u,v), current_det.GetAtomicMass(u,v), mcp->getMass(), mcp->getCharge(), average_mom   );
+            double kink_v = materialeffect::GetScatterKink_SC(l0, current_det.GetRadLength(u,v), current_det.GetAtomicNumber(u,v), current_det.GetAtomicMass(u,v), mcp->getMass(), mcp->getCharge(), average_mom   );
             // Scatter track ('in' state -> 'out' state)
             materialeffect::ScatterTrack(state, kink_u, kink_v);     
           } 
@@ -322,8 +322,8 @@ namespace depfet {
           // Scatter track ('in' state -> 'out' state)
           materialeffect::ScatterTrack(state, kink_u, kink_v);     
         } else if ( m_scatterModel==1 ) {
-          double kink_u = materialeffect::GetScatterKink_SC(length, materialeffect::X0_air, materialeffect::AtomicNumber_air, mcp->getMass(), mcp->getCharge(), average_mom   );
-          double kink_v = materialeffect::GetScatterKink_SC(length, materialeffect::X0_air, materialeffect::AtomicNumber_air, mcp->getMass(), mcp->getCharge(), average_mom   );
+          double kink_u = materialeffect::GetScatterKink_SC(length, materialeffect::X0_air, materialeffect::AtomicNumber_air, materialeffect::AtomicMass_air, mcp->getMass(), mcp->getCharge(), average_mom   );
+          double kink_v = materialeffect::GetScatterKink_SC(length, materialeffect::X0_air, materialeffect::AtomicNumber_air, materialeffect::AtomicMass_air, mcp->getMass(), mcp->getCharge(), average_mom   );
           // Scatter track ('in' state -> 'out' state)
           materialeffect::ScatterTrack(state, kink_u, kink_v);     
         } 

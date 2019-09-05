@@ -242,17 +242,19 @@ double GetScatterTheta2(double mom, double x, double x0, double mass, double cha
  * events following the paper R. Frühwirth et al.  "On the quantitative modelling of core and tails of multiple 
  * scattering by Gaussian mixtures", Nucl.Instrum.Meth. (2000)
  */   
-double GetScatterKink_SC(double length, double X0, double Z, double mass, double charge, double mom  )
+double GetScatterKink_SC(double length, double X0, double Z, double A, double mass, double charge, double mom  )
 {
   
   double Etot = std::sqrt(mom*mom + mass*mass);   
   double beta = mom/Etot; 
   		
   // Parameters for single scattering at nuclei from Frühwirth's paper
-  double a=6.415E-6/mom;  //theta min
-  double rho=7188;
-  double anorm=3.454E-1;
-  double bnorm=2483;
+  double a=2.66E-6*pow(Z,0.333)/mom;  //theta min
+  double b=0.14/pow(A,0.333)/mom;  //theta max
+  double rho=b/a;
+
+  double anorm=1/sqrt(log(rho-0.5));
+  double bnorm=rho/sqrt(log(rho-0.5));
   
   double Xs=X0*(Z+1.0)/Z*log(287*pow(Z,-0.5))/log(159*pow(Z,-0.333333));
 

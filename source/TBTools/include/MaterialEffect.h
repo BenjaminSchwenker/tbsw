@@ -42,7 +42,7 @@ namespace materialeffect {
    * events following the paper R. Frühwirth et al.  "On the quantitative modelling of core and tails of multiple 
    * scattering by Gaussian mixtures", Nucl.Instrum.Meth. (2000)
    */   
-  double GetScatterKink_SC(double length, double X0, double Z, double mass, double charge, double mom  );
+  double GetScatterKink_SC(double length, double X0, double Z, double A, double mass, double charge, double mom  );
   
   /** Scatter track at thin scatterer 
    *
