@@ -484,7 +484,7 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
   { 
 	// Calculate number of parameters
 	int num_parameters = 8;
-	//cout<<num_parameters<<endl;
+	cout<<endl<<endl<<"Start fitting procedure for column "<<col<<" and row "<<row<<" !"<<endl;
 
 	// Open the histograms
  
@@ -644,8 +644,9 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
    		fit2->SetParError(5,10.0);
    		fitsum->SetParError(5,10.0);
 
-		TFitResultPtr fitr1=fithistogram1->Fit("theta1_fit",fitoptions);
 		cout<<endl<<endl<<"Fit of first angle distribution! "<<endl;
+		TFitResultPtr fitr1=fithistogram1->Fit("theta1_fit",fitoptions);
+		cout<<endl<<"Results: "<<endl;
 		cout<<"Fit is valid: "<<fitr1->IsValid()<<endl;
 		cout<<"Fit status: "<<fitr1->Status()<<endl;
 		if(!fitr1->IsValid())
@@ -653,17 +654,19 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 			cout<<endl<<"Fit of first angle distribution failed with status: "<<fitr1<<endl;
 			cout<<"Repeat fit "<<endl;
 			fitr1=fithistogram1->Fit("theta1_fit",fitoptions);
+			cout<<endl<<"Results: "<<endl;
 		    cout<<endl<<"Fit is valid: "<<fitr1->IsValid()<<endl;
 		    cout<<"Fit status: "<<fitr1->Status()<<endl;
-			if(!fitr1->IsValid()&&fittype==0) 
+			if(!fitr1->IsValid()) 
 			{
-				cout<<"Fit of second angle distribution failed a second time with status: "<<fitr1<<" !"<< " X/X0 cannot be calculated!"<<endl<<endl<<endl;
+				cout<<"Fit of first angle distribution failed a second time with status: "<<fitr1<<" !"<< " X/X0 cannot be calculated!"<<endl<<endl<<endl;
 				status1=2;
 			}
 		}
 
-		TFitResultPtr fitr2=fithistogram2->Fit("theta2_fit",fitoptions);
 		cout<<endl<<endl<<"Fit of second angle distribution! "<<endl;
+		TFitResultPtr fitr2=fithistogram2->Fit("theta2_fit",fitoptions);
+		cout<<endl<<"Results: "<<endl;
 		cout<<"Fit is valid: "<<fitr2->IsValid()<<endl;
 		cout<<"Fit status: "<<fitr2->Status()<<endl;
 		if(!fitr2->IsValid())
@@ -671,17 +674,19 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 			cout<<"Fit of second angle distribution failed with status: "<<fitr2<<endl;
 			cout<<"Repeat fit "<<endl;
 			fitr2=fithistogram2->Fit("theta2_fit",fitoptions);
+			cout<<endl<<"Results: "<<endl;
 		    cout<<endl<<"Fit is valid: "<<fitr2->IsValid()<<endl;
 		    cout<<"Fit status: "<<fitr2->Status()<<endl;
-			if(!fitr2->IsValid()&&fittype==0) 
+			if(!fitr2->IsValid()) 
 			{
 				cout<<"Fit of second angle distribution failed a second time with status: "<<fitr2<<" !"<< " X/X0 cannot be calculated!"<<endl<<endl<<endl;
 				status2=2;
 			}
 		}
 
-		TFitResultPtr fitrsum=fithistogramsum->Fit("thetasum_fit",fitoptions);
 		cout<<endl<<endl<<"Fit of combined angle distribution! "<<endl;
+		TFitResultPtr fitrsum=fithistogramsum->Fit("thetasum_fit",fitoptions);
+		cout<<endl<<"Results: "<<endl;
 		cout<<"Fit is valid: "<<fitrsum->IsValid()<<endl;
 		cout<<"Fit statuss: "<<fitrsum->Status()<<endl;
 		if(!fitrsum->IsValid())
@@ -691,7 +696,7 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 			fitrsum=fithistogramsum->Fit("thetasum_fit",fitoptions);
 		    cout<<endl<<"Fit is valid: "<<fitrsum->IsValid()<<endl;
 		    cout<<"Fit status: "<<fitrsum->Status()<<endl;
-			if(!fitrsum->IsValid()&&fittype==1) 
+			if(!fitrsum->IsValid()) 
 			{
 				cout<<"Fit of combined angle distribution failed a second time with status: "<<fitrsum<<" !"<< " X/X0 cannot be calculated!"<<endl<<endl<<endl;
 				statussum=2;
@@ -732,9 +737,9 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 		if((chi2_cut > 0)&&(chi2ndof2>chi2_cut)) status2=1;
 
 		// Use the chi2 values for quality cuts
-		if(((fittype==0)&&(chi2_cut > 0)&&((chi2ndof1+chi2ndof2)>chi2_cut*2.0))||(!fitr1->IsValid())||(!fitr2->IsValid()))
+		if((fittype==0) && ( ((chi2_cut > 0)&&((chi2ndof1+chi2ndof2)>chi2_cut*2.0))||(!fitr1->IsValid())||(!fitr2->IsValid())))
 		{
-			cout<<endl<<"Something went wrong with fit (fittype: "<<fittype<<" ), X/X0 could not be determined!"<<endl;
+			cout<<endl<<"Something went wrong with fit (fittype: "<<fittype<<" ), X/X0 could not be determined!"<<endl<<endl;
 			// The fit didn't work: Dont trust this X/X0 and theta mean value
 			XX01=0.0;
 			XX0err1=99.0;
@@ -754,9 +759,9 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 
 		}
 
-		else if (((fittype==1)&&(chi2_cut > 0)&&(chi2ndofsum>chi2_cut))||((!fitrsum->IsValid())))
+		else if ((fittype==1) && ( ((chi2_cut > 0)&&(chi2ndofsum>chi2_cut))||(!fitrsum->IsValid())))
 		{
-			cout<<endl<<"Something went wrong with fit (fittype: "<<fittype<<" ), X/X0 could not be determined!"<<endl;
+			cout<<endl<<"Something went wrong with fit (fittype: "<<fittype<<" ), X/X0 could not be determined!"<<endl<<endl;
 			// The fit didn't work: Dont trust this X/X0 and theta mean value
 			XX0sum=0.0;
 			XX0errsum=99.0;
@@ -778,7 +783,7 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 		else
 		{
 
-			cout<<endl<<"Determine X/X0!"<<endl;
+			cout<<endl<<"Determine X/X0!"<<endl<<endl;
 			// Extract Fit parameters of the first distribution
 			XX01=fit1->GetParameter(3);
 			XX0err1=fit1->GetParError(3);

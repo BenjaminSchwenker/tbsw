@@ -84,6 +84,10 @@ int main(int , char **)
 	TH1F * fit2prob_histo_tmp;			            // fit prob histo of second scattering angle
 	TH1F * fitsumprob_histo_tmp;			        // fit prob histo of merged scattering angle distribution
 
+	TH1F * fit1status_histo_tmp;	    	        // fit status histo of first scattering angle
+	TH1F * fit2status_histo_tmp;			        // fit status histo of second scattering angle
+	TH1F * fitsumstatus_histo_tmp;			        // fit status histo of merged scattering angle distribution
+
 	TH2F * hscatt_theta1_vs_resu_tmp;	            // theta vs residual scatter plot
 	TH2F * hscatt_theta1_vs_resv_tmp;	            // theta vs residual scatter plot
 	TH2F * hscatt_theta2_vs_resu_tmp;	            // theta vs residual scatter plot
@@ -120,6 +124,34 @@ int main(int , char **)
 	TH1F * fitsumchi2ndof_histo = new TH1F("fitsumchi2ndof_histo","fitsumchi2ndof_histo",100,0.0,20.0);
     fitsumchi2ndof_histo->GetXaxis()->SetTitle("#chi^{2}_{ndof}");
     fitsumchi2ndof_histo->GetYaxis()->SetTitle("number of fits");
+
+
+    // Fit status distribution for first angle dist
+	TH1F * fit1status_histo = new TH1F("fit1status_histo","fit1status_histo",4,0,4);
+    fit1status_histo->GetXaxis()->SetTitle("fitstatus");
+    fit1status_histo->GetXaxis()->SetBinLabel(1, "fit worked" );
+    fit1status_histo->GetXaxis()->SetBinLabel(2, "bad chi2" );
+    fit1status_histo->GetXaxis()->SetBinLabel(3, "fit error" );
+    fit1status_histo->GetXaxis()->SetBinLabel(4, "low statistics" );
+    fit1status_histo->GetYaxis()->SetTitle("number of fits");
+
+	// Fit status distribution for second angle dist
+	TH1F * fit2status_histo = new TH1F("fit2status_histo","fit2status_histo",4,0,4);
+    fit2status_histo->GetXaxis()->SetTitle("fitstatus");
+    fit2status_histo->GetXaxis()->SetBinLabel(1, "fit worked" );
+    fit2status_histo->GetXaxis()->SetBinLabel(2, "bad chi2" );
+    fit2status_histo->GetXaxis()->SetBinLabel(3, "fit error" );
+    fit2status_histo->GetXaxis()->SetBinLabel(4, "low statistics" );
+    fit2status_histo->GetYaxis()->SetTitle("number of fits");
+
+	// Fit status distribution for merged angle dist
+	TH1F * fitsumstatus_histo = new TH1F("fitsumstatus_histo","fitsumstatus_histo",4,0,4);
+    fitsumstatus_histo->GetXaxis()->SetTitle("fitstatus");
+    fitsumstatus_histo->GetXaxis()->SetBinLabel(1, "fit worked" );
+    fitsumstatus_histo->GetXaxis()->SetBinLabel(2, "bad chi2" );
+    fitsumstatus_histo->GetXaxis()->SetBinLabel(3, "fit error" );
+    fitsumstatus_histo->GetXaxis()->SetBinLabel(4, "low statistics" );
+    fitsumstatus_histo->GetYaxis()->SetTitle("number of fits");
 
 
 	// Scatter theta1 vs residual u
@@ -273,7 +305,7 @@ int main(int , char **)
     fitsumchi2ndof_image->SetStats(kFALSE);
     fitsumchi2ndof_image->GetXaxis()->SetTitle("u [mm]");
     fitsumchi2ndof_image->GetYaxis()->SetTitle("v [mm]");
-    fitsumchi2ndof_image->GetZaxis()->SetTitle("{#chi^2}_{ndof}");
+    fitsumchi2ndof_image->GetZaxis()->SetTitle("#chi^{2}_{ndof}");
     fitsumchi2ndof_image->GetZaxis()->SetTitleSize(0.02);
     fitsumchi2ndof_image->GetZaxis()->SetLabelSize(0.02);
 
@@ -282,7 +314,7 @@ int main(int , char **)
     fit1chi2ndof_image->SetStats(kFALSE);
     fit1chi2ndof_image->GetXaxis()->SetTitle("u [mm]");
     fit1chi2ndof_image->GetYaxis()->SetTitle("v [mm]");
-    fit1chi2ndof_image->GetZaxis()->SetTitle("{#chi^2}_{ndof}");
+    fit1chi2ndof_image->GetZaxis()->SetTitle("#chi^{2}_{ndof}");
     fit1chi2ndof_image->GetZaxis()->SetTitleSize(0.02);
     fit1chi2ndof_image->GetZaxis()->SetLabelSize(0.02);
 
@@ -291,7 +323,7 @@ int main(int , char **)
     fit2chi2ndof_image->SetStats(kFALSE);
     fit2chi2ndof_image->GetXaxis()->SetTitle("u [mm]");
     fit2chi2ndof_image->GetYaxis()->SetTitle("v [mm]");
-    fit2chi2ndof_image->GetZaxis()->SetTitle("{#chi^2}_{ndof}");
+    fit2chi2ndof_image->GetZaxis()->SetTitle("#chi^{2}_{ndof}");
     fit2chi2ndof_image->GetZaxis()->SetTitleSize(0.02);
     fit2chi2ndof_image->GetZaxis()->SetLabelSize(0.02);
 
@@ -542,18 +574,35 @@ int main(int , char **)
 			fit2prob_histo_tmp=(TH1F*)X0file->Get("result/fitDQM/fit2prob_histo");
 			fitsumprob_histo_tmp=(TH1F*)X0file->Get("result/fitDQM/fitsumprob_histo");
 
-			fit1prob_histo->Add(fit1prob_histo_tmp);
-			fit2prob_histo->Add(fit2prob_histo_tmp);
-			fitsumprob_histo->Add(fitsumprob_histo_tmp);
+			if((col%max_u_pixels==0)&&(row%max_v_pixels==0))
+			{	
+				fit1prob_histo->Add(fit1prob_histo_tmp);
+				fit2prob_histo->Add(fit2prob_histo_tmp);
+				fitsumprob_histo->Add(fitsumprob_histo_tmp);
+			}
 
 
 			fit1chi2ndof_histo_tmp=(TH1F*)X0file->Get("result/fitDQM/fit1chi2ndof_histo");
 			fit2chi2ndof_histo_tmp=(TH1F*)X0file->Get("result/fitDQM/fit2chi2ndof_histo");
 			fitsumchi2ndof_histo_tmp=(TH1F*)X0file->Get("result/fitDQM/fitsumchi2ndof_histo");
 
-			fit1chi2ndof_histo->Add(fit1chi2ndof_histo_tmp);
-			fit2chi2ndof_histo->Add(fit2chi2ndof_histo_tmp);
-			fitsumchi2ndof_histo->Add(fitsumchi2ndof_histo_tmp);
+			if((col%max_u_pixels==0)&&(row%max_v_pixels==0))
+			{
+				fit1chi2ndof_histo->Add(fit1chi2ndof_histo_tmp);
+				fit2chi2ndof_histo->Add(fit2chi2ndof_histo_tmp);
+				fitsumchi2ndof_histo->Add(fitsumchi2ndof_histo_tmp);
+			}
+
+			fit1status_histo_tmp=(TH1F*)X0file->Get("result/fitDQM/fit1status_histo");
+			fit2status_histo_tmp=(TH1F*)X0file->Get("result/fitDQM/fit2status_histo");
+			fitsumstatus_histo_tmp=(TH1F*)X0file->Get("result/fitDQM/fitsumstatus_histo");
+
+			if((col%max_u_pixels==0)&&(row%max_v_pixels==0))
+			{
+				fit1status_histo->Add(fit1status_histo_tmp);
+				fit2status_histo->Add(fit2status_histo_tmp);
+				fitsumstatus_histo->Add(fitsumstatus_histo_tmp);
+			}
 
 			// Copy entries of first images
 			x0_image->SetBinContent(col+1,row+1,x0_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
@@ -629,6 +678,9 @@ int main(int , char **)
     fit1prob_histo->Write();
 	fit2prob_histo->Write();
 	fitsumprob_histo->Write();
+    fit1status_histo->Write();
+	fit2status_histo->Write();
+	fitsumstatus_histo->Write();
 
 	Resultsfile->cd("vertex");
 	vertex_w_mean_image->Write();
