@@ -780,10 +780,13 @@ void PixelDUTAnalyzer::bookHistos()
    _rootTrackTree->Branch("iEvt"            ,&_rootEventNumber    ,"iEvt/I");
    _rootTrackTree->Branch("sensorID"        ,&_rootSensorID        ,"sensorID/I");
    _rootTrackTree->Branch("nTelTracks"      ,&_rootNTelTracks     ,"nTelTracks/I"); 
+   _rootTrackTree->Branch("nTelTracksWithRefHit" ,&_rootNTelTracksWithRefHit ,"nTelTracksWithRefHit/I");
    _rootTrackTree->Branch("nDutDigits"      ,&_rootNDUTDigits       ,"nDutDigits/I");
    _rootTrackTree->Branch("isGoodEvent"     ,&_rootDUTGoodEvent,  "isGoodEvent/O");
    _rootTrackTree->Branch("hasTestPixels"   ,&_rootDUTHasTestPixels, "hasTestPixels/O");
    _rootTrackTree->Branch("hasHit"          ,&_rootTrackHasHit         ,"hasHit/I");
+   _rootTrackTree->Branch("u_hit"           ,&_rootHitU             ,"u_hit/D");
+   _rootTrackTree->Branch("v_hit"           ,&_rootHitV             ,"v_hit/D");
    _rootTrackTree->Branch("hasRefHit"       ,&_rootTrackWithRefHit     ,"hasRefHit/I");
    _rootTrackTree->Branch("momentum"        ,&_rootTrackFitMomentum    ,"momentum/D");                                                           
    _rootTrackTree->Branch("u_fit"           ,&_rootTrackFitU           ,"u_fit/D");
