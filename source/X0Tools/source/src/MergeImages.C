@@ -55,13 +55,13 @@ int main(int, char **)
 
   TH2F *fit1prob_image_tmp;     // fit prob images of first scattering angle
   TH2F *fit2prob_image_tmp;     // fit prob images of second scattering angle
-  TH2F *fitsumstatus_image_tmp; // fit prob images of merged scattering angle
+  TH2F *fitsumprob_image_tmp;   // fit prob images of merged scattering angle
                                 // distribution
 
-  TH2F *fit1status_image_tmp; // fit status images of first scattering angle
-  TH2F *fit2status_image_tmp; // fit status images of second scattering angle
-  TH2F *fitsumprob_image_tmp; // fit status images of merged scattering angle
-                              // distribution
+  TH2F *fit1status_image_tmp;   // fit status images of first scattering angle
+  TH2F *fit2status_image_tmp;   // fit status images of second scattering angle
+  TH2F *fitsumstatus_image_tmp; // fit status images of merged scattering angle
+                                // distribution
 
   TH2F *theta1mean_image_tmp; // images of mean value of first scattering angle
                               // distribution
