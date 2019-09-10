@@ -52,17 +52,26 @@ int main(int , char **)
 	TH2F * fit1chi2ndof_image_tmp;				    // fit chi2 images
 	TH2F * fit2chi2ndof_image_tmp;				    // fit chi2 images
 	TH2F * fitsumchi2ndof_image_tmp;			    // fit chi2 images
+
 	TH2F * fit1prob_image_tmp;				        // fit prob images of first scattering angle
 	TH2F * fit2prob_image_tmp;				        // fit prob images of second scattering angle
-	TH2F * fitsumprob_image_tmp;			        // fit prob images of merged scattering angle distribution
+	TH2F * fitsumstatus_image_tmp;			        // fit prob images of merged scattering angle distribution
+
+	TH2F * fit1status_image_tmp;				    // fit status images of first scattering angle
+	TH2F * fit2status_image_tmp;				    // fit status images of second scattering angle
+	TH2F * fitsumprob_image_tmp;			        // fit status images of merged scattering angle distribution
+
 	TH2F * theta1mean_image_tmp;				    // images of mean value of first scattering angle distribution
 	TH2F * theta2mean_image_tmp;				    // images of mean value of second scattering angle distribution
-	TH2F * correctedtheta1mean_image_tmp;	        // images of mean value of first scattering angle distribution
-	TH2F * correctedtheta2mean_image_tmp;	        // images of mean value of second scattering angle distribution
+
+	TH2F * correctedtheta1mean_image_tmp;	        // images of the corrected mean value of first scattering angle distribution
+	TH2F * correctedtheta2mean_image_tmp;	        // images of the corrected mean value of second scattering angle distribution
+
 	TH2F * scatteroffset_umean_image_tmp;		    // mean scatter offset images
 	TH2F * scatteroffset_vmean_image_tmp;		    // mean scatter offset images
 	TH2F * scatteroffset_urms_image_tmp;		    // RMS scatter offset images
 	TH2F * scatteroffset_vrms_image_tmp;		    // RMS scatter offset images
+
 	TH2F * beamspot_tmp;				            // hit map
 	TH2F * BE_image_tmp;				            // Momentum images
 
@@ -355,6 +364,43 @@ int main(int , char **)
     fitsumprob_image->GetZaxis()->SetLabelSize(0.02);
 
 
+	// Fit status map for first angle dist
+	TH2F * fit1status_image = new TH2F("fit1status_image","fit1status_image",numcol,umin,umax,numrow,vmin,vmax);
+	fit1status_image->SetStats(kFALSE);
+    fit1status_image->GetXaxis()->SetTitle("u [mm]");
+    fit1status_image->GetYaxis()->SetTitle("v [mm]");
+    fit1status_image->GetZaxis()->SetTitle("status");
+    fit1status_image->SetMaximum(5);
+    fit1status_image->SetMinimum(-1);
+    fit1status_image->SetContour(6);
+    fit1status_image->GetZaxis()->SetTitleSize(0.02);
+    fit1status_image->GetZaxis()->SetLabelSize(0.02);
+
+	// Fit status map for second angle dist
+	TH2F * fit2status_image = new TH2F("fit2status_image","fit2status_image",numcol,umin,umax,numrow,vmin,vmax);
+	fit2status_image->SetStats(kFALSE);
+    fit2status_image->GetXaxis()->SetTitle("u [mm]");
+    fit2status_image->GetYaxis()->SetTitle("v [mm]");
+    fit2status_image->GetZaxis()->SetTitle("status");
+    fit2status_image->SetMaximum(5);
+    fit2status_image->SetMinimum(-1);
+    fit2status_image->SetContour(6);
+    fit2status_image->GetZaxis()->SetTitleSize(0.02);
+    fit2status_image->GetZaxis()->SetLabelSize(0.02);
+
+	// Fit status map for merged angle dist
+	TH2F * fitsumstatus_image = new TH2F("fitsumstatus_image","fitsumstatus_image",numcol,umin,umax,numrow,vmin,vmax);
+	fitsumstatus_image->SetStats(kFALSE);
+    fitsumstatus_image->GetXaxis()->SetTitle("u [mm]");
+    fitsumstatus_image->GetYaxis()->SetTitle("v [mm]");
+    fitsumstatus_image->GetZaxis()->SetTitle("status");
+    fitsumstatus_image->SetMaximum(5);
+    fitsumstatus_image->SetMinimum(-1);
+    fitsumstatus_image->SetContour(6);
+    fitsumstatus_image->GetZaxis()->SetTitleSize(0.02);
+    fitsumstatus_image->GetZaxis()->SetLabelSize(0.02);
+
+
 	// Fit mean value of first distribution
 	TH2F * theta1mean_image = new TH2F("theta1mean_image","theta1mean_image",numcol,umin,umax,numrow,vmin,vmax);
 	theta1mean_image->SetStats(kFALSE);
@@ -549,6 +595,9 @@ int main(int , char **)
 			fit1prob_image_tmp=(TH2F*)X0file->Get("result/fitDQM/fit1prob_image");
 			fit2prob_image_tmp=(TH2F*)X0file->Get("result/fitDQM/fit2prob_image");
 			fitsumprob_image_tmp=(TH2F*)X0file->Get("result/fitDQM/fitsumprob_image");
+			fit1status_image_tmp=(TH2F*)X0file->Get("result/fitDQM/fit1status_image");
+			fit2status_image_tmp=(TH2F*)X0file->Get("result/fitDQM/fit2status_image");
+			fitsumstatus_image_tmp=(TH2F*)X0file->Get("result/fitDQM/fitsumstatus_image");
 			theta1mean_image_tmp=(TH2F*)X0file->Get("result/theta1mean_image");
 			theta2mean_image_tmp=(TH2F*)X0file->Get("result/theta2mean_image");
 			correctedtheta1mean_image_tmp=(TH2F*)X0file->Get("result/correctedtheta1mean_image");
@@ -615,6 +664,9 @@ int main(int , char **)
 			fit1prob_image->SetBinContent(col+1,row+1,fit1prob_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 			fit2prob_image->SetBinContent(col+1,row+1,fit2prob_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 			fitsumprob_image->SetBinContent(col+1,row+1,fitsumprob_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			fit1status_image->SetBinContent(col+1,row+1,fit1status_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			fit2status_image->SetBinContent(col+1,row+1,fit2status_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
+			fitsumstatus_image->SetBinContent(col+1,row+1,fitsumstatus_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 			theta1mean_image->SetBinContent(col+1,row+1,theta1mean_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 			theta2mean_image->SetBinContent(col+1,row+1,theta2mean_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
 			correctedtheta1mean_image->SetBinContent(col+1,row+1,correctedtheta1mean_image_tmp->GetBinContent(col%max_u_pixels+1,row%max_v_pixels+1));
@@ -678,6 +730,9 @@ int main(int , char **)
     fit1prob_histo->Write();
 	fit2prob_histo->Write();
 	fitsumprob_histo->Write();
+	fit1status_image->Write();
+	fit2status_image->Write();
+	fitsumstatus_image->Write();
     fit1status_histo->Write();
 	fit2status_histo->Write();
 	fitsumstatus_histo->Write();

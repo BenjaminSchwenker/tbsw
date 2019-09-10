@@ -480,7 +480,7 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 }
 
   // Function to fit the MSC angle histograms and fill the map histograms
-  void fithisto( TFile* file, int fittype, double maxchi2ndof_fit, double rangevalue, int col, int numcol, int row,int numrow, double* parameters, TString fitoptions)
+  void fithisto( TFile* file, int fittype, double maxchi2ndof_fit, int mintracks, double rangevalue, int col, int numcol, int row,int numrow, double* parameters, TString fitoptions)
   { 
 	// Calculate number of parameters
 	int num_parameters = 8;
@@ -587,7 +587,9 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 	vtx_trk_res_u_rms=histogram_resu_vtx_trk->GetRMS();
 	vtx_trk_res_v_rms=histogram_resv_vtx_trk->GetRMS();
 
-	if(NumberOfTracks>400)
+	// Employ fits only if the number of tracks is larger than
+    // a predefined value
+	if(NumberOfTracks>mintracks)
 	{
 		//Fit histogram with Highland model
 
@@ -737,6 +739,8 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 		if((chi2_cut > 0)&&(chi2ndof2>chi2_cut)) status2=1;
 
 		// Use the chi2 values for quality cuts
+		// In case the fittype is 0 the two projected angle distributions are used seperately to determine the radiation length
+		// Accordingly, the chi2 and quality cuts have to be used on the fit of the two projected distributions
 		if((fittype==0) && ( ((chi2_cut > 0)&&((chi2ndof1+chi2ndof2)>chi2_cut*2.0))||(!fitr1->IsValid())||(!fitr2->IsValid())))
 		{
 			cout<<endl<<"Something went wrong with fit (fittype: "<<fittype<<" ), X/X0 could not be determined!"<<endl<<endl;
@@ -759,6 +763,9 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 
 		}
 
+		// Use the chi2 values for quality cuts
+		// In case the fittype is 1 the merged projected angle distribution is used to determine the radiation length
+		// Accordingly, the chi2 and quality cuts have to be used on the fit of the two merged distribution
 		else if ((fittype==1) && ( ((chi2_cut > 0)&&(chi2ndofsum>chi2_cut))||(!fitrsum->IsValid())))
 		{
 			cout<<endl<<"Something went wrong with fit (fittype: "<<fittype<<" ), X/X0 could not be determined!"<<endl<<endl;
@@ -858,6 +865,9 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
 	TH1F* chi2ndof1histo=(TH1F*)file->Get("result/fitDQM/fit1chi2ndof_histo");
 	TH1F* chi2ndof2histo=(TH1F*)file->Get("result/fitDQM/fit2chi2ndof_histo");
 
+	TH2F* fitstatus_summap=(TH2F*)file->Get("result/fitDQM/fitsumstatus_image");
+	TH2F* fitstatus_1map=(TH2F*)file->Get("result/fitDQM/fit1status_image");
+	TH2F* fitstatus_2map=(TH2F*)file->Get("result/fitDQM/fit2status_image");
     TH1F* fitstatus_sumhisto=(TH1F*)file->Get("result/fitDQM/fitsumstatus_histo");
     TH1F* fitstatus_1histo=(TH1F*)file->Get("result/fitDQM/fit1status_histo");
     TH1F* fitstatus_2histo=(TH1F*)file->Get("result/fitDQM/fit2status_histo");
@@ -921,8 +931,11 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
     chi2ndofsumhisto->Fill(chi2ndofsum);
 
     fitstatus_sumhisto->Fill(statussum);
+	fitstatus_summap->SetBinContent(col+1,row+1,statussum);
     fitstatus_1histo->Fill(status1);
+	fitstatus_1map->SetBinContent(col+1,row+1,status1);
     fitstatus_2histo->Fill(status2);
+	fitstatus_2map->SetBinContent(col+1,row+1,status2);
 
     // Fill the momentum image
 	mommap->SetBinContent(col+1,row+1,parameters[0]);
@@ -1038,6 +1051,10 @@ double DetermineFitrange(TH1F* histo,double rangevalue)
         chi2ndof1histo->Write();
         chi2ndof2histo->Write();
         chi2ndofsumhisto->Write();
+
+        fitstatus_summap->Write();
+        fitstatus_1map->Write();
+        fitstatus_2map->Write();
 
         fitstatus_sumhisto->Write();
         fitstatus_1histo->Write();
@@ -1229,8 +1246,12 @@ int main(int , char **)
 	cout<<endl<<"Minimal vertex multiplicity:"<<vertex_multiplicity_min<<endl;
 	cout<<"Maximal vertex multiplicity:"<<vertex_multiplicity_max<<endl;
 
-    // Vertex multiplicity cut (should be 1 for default X0 analysis)
+    // Fit chi2 value cut parameter, fit results with larger chi2 values are 
+    // discarded
 	double maxchi2ndof_fit=mEnv.GetValue("maxchi2ndof", 10.0);
+
+    // Minimum number of tracks required for a stable fit
+	double mintracks=mEnv.GetValue("min_tracks", 400);
 
     // Fit range parameter
 	double rangevalue=mEnv.GetValue("fitrange_parameter", 1.0);
@@ -1413,7 +1434,7 @@ int main(int , char **)
     fitsumchi2ndof_image->SetStats(kFALSE);
     fitsumchi2ndof_image->GetXaxis()->SetTitle("u [mm]");
     fitsumchi2ndof_image->GetYaxis()->SetTitle("v [mm]");
-    fitsumchi2ndof_image->GetZaxis()->SetTitle("fitsum chi2");
+    fitsumchi2ndof_image->GetZaxis()->SetTitle("#{chi^2}_{ndof}");
     fitsumchi2ndof_image->GetZaxis()->SetTitleSize(0.02);
     fitsumchi2ndof_image->GetZaxis()->SetLabelSize(0.02);
 
@@ -1422,7 +1443,19 @@ int main(int , char **)
     fitsumchi2ndof_histo->GetXaxis()->SetTitle("#chi^{2}_{ndof}");
     fitsumchi2ndof_histo->GetYaxis()->SetTitle("number of fits");
 
-    // Fit Status of merged angle dist
+	// Fit status image of the merged angle distribution
+	TH2F * fitsumstatus_image = new TH2F("fitsumstatus_image","fitsumstatus_image",numcol,umin,umax,numrow,vmin,vmax);
+    fitsumstatus_image->SetStats(kFALSE);
+    fitsumstatus_image->GetXaxis()->SetTitle("u [mm]");
+    fitsumstatus_image->GetYaxis()->SetTitle("v [mm]");
+    fitsumstatus_image->GetZaxis()->SetTitle("fit status");
+    fitsumstatus_image->SetMaximum(5);
+    fitsumstatus_image->SetMinimum(-1);
+    fitsumstatus_image->SetContour(6);
+    fitsumstatus_image->GetZaxis()->SetTitleSize(0.02);
+    fitsumstatus_image->GetZaxis()->SetLabelSize(0.02);
+
+    // Fit Status distribution of merged angle dist
 	TH1F * fitsumstatus_histo = new TH1F("fitsumstatus_histo","fitsumstatus_histo",4,0,4);
     fitsumstatus_histo->GetXaxis()->SetTitle("Fit status");
     fitsumstatus_histo->GetXaxis()->SetBinLabel(1, "fit worked" );
@@ -1436,7 +1469,7 @@ int main(int , char **)
     fit1chi2ndof_image->SetStats(kFALSE);
     fit1chi2ndof_image->GetXaxis()->SetTitle("u [mm]");
     fit1chi2ndof_image->GetYaxis()->SetTitle("v [mm]");
-    fit1chi2ndof_image->GetZaxis()->SetTitle("#{chi^2}_{ndof}");
+    fit1chi2ndof_image->GetZaxis()->SetTitle("#chi^{2}_{ndof}");
     fit1chi2ndof_image->GetZaxis()->SetTitleSize(0.02);
     fit1chi2ndof_image->GetZaxis()->SetLabelSize(0.02);
 
@@ -1444,6 +1477,18 @@ int main(int , char **)
 	TH1F * fit1chi2ndof_histo = new TH1F("fit1chi2ndof_histo","fit1chi2ndof_histo",100,0.0,20.0);
     fit1chi2ndof_histo->GetXaxis()->SetTitle("#chi^{2}_{ndof}");
     fit1chi2ndof_histo->GetYaxis()->SetTitle("number of fits");
+
+	// Fit status image of the first angle distribution
+	TH2F * fit1status_image = new TH2F("fit1status_image","fit1status_image",numcol,umin,umax,numrow,vmin,vmax);
+    fit1status_image->SetStats(kFALSE);
+    fit1status_image->GetXaxis()->SetTitle("u [mm]");
+    fit1status_image->GetYaxis()->SetTitle("v [mm]");
+    fit1status_image->GetZaxis()->SetTitle("fit status");
+    fit1status_image->SetMaximum(5);
+    fit1status_image->SetMinimum(-1);
+    fit1status_image->SetContour(6);
+    fit1status_image->GetZaxis()->SetTitleSize(0.02);
+    fit1status_image->GetZaxis()->SetLabelSize(0.02);
 
     // Fit Status of angle dist 1
 	TH1F * fit1status_histo = new TH1F("fit1status_histo","fit1status_histo",4,0,4);
@@ -1459,7 +1504,7 @@ int main(int , char **)
     fit2chi2ndof_image->SetStats(kFALSE);
     fit2chi2ndof_image->GetXaxis()->SetTitle("u [mm]");
     fit2chi2ndof_image->GetYaxis()->SetTitle("v [mm]");
-    fit2chi2ndof_image->GetZaxis()->SetTitle("#{chi^2}_{ndof}");
+    fit2chi2ndof_image->GetZaxis()->SetTitle("#chi^{2}_{ndof}");
     fit2chi2ndof_image->GetZaxis()->SetTitleSize(0.02);
     fit2chi2ndof_image->GetZaxis()->SetLabelSize(0.02);
 
@@ -1467,6 +1512,19 @@ int main(int , char **)
 	TH1F * fit2chi2ndof_histo = new TH1F("fit2chi2ndof_histo","fit2chi2ndof_histo",100,0.0,20.0);
     fit2chi2ndof_histo->GetXaxis()->SetTitle("#chi^{2}_{ndof}");
     fit2chi2ndof_histo->GetYaxis()->SetTitle("number of fits");
+
+	// Fit status image of the second angle distribution
+	TH2F * fit2status_image = new TH2F("fit2status_image","fit2status_image",numcol,umin,umax,numrow,vmin,vmax);
+    fit2status_image->SetStats(kFALSE);
+    fit2status_image->GetXaxis()->SetTitle("u [mm]");
+    fit2status_image->GetYaxis()->SetTitle("v [mm]");
+    fit2status_image->GetZaxis()->SetTitle("fit status");
+    fit2status_image->SetMaximum(5);
+    fit2status_image->SetMinimum(-1);
+    fit2status_image->SetContour(6);
+    fit2status_image->GetZaxis()->SetTitle("fit status");
+    fit2status_image->GetZaxis()->SetTitleSize(0.02);
+    fit2status_image->GetZaxis()->SetLabelSize(0.02);
 
     // Fit Status of angle dist 2
 	TH1F * fit2status_histo = new TH1F("fit2status_histo","fit2status_histo",4,0,4);
@@ -1729,7 +1787,7 @@ int main(int , char **)
 			double parameters[8]={mom,charge,mass,0.01,recoerror,300,0.0, epsilon};
 
 			// fit the histograms
-			fithisto(imagefile, fittype, maxchi2ndof_fit, rangevalue, col,numcol,row,numrow,parameters,fitoptions);
+			fithisto(imagefile, fittype, maxchi2ndof_fit, mintracks, rangevalue, col,numcol,row,numrow,parameters,fitoptions);
 		}
 	}
 

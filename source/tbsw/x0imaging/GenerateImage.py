@@ -107,6 +107,7 @@ def x0imaging(rootfilelist=[],caltag='',steerfiles='',nametag=''):
   # histosettings
   num_bins = config.getfloat('x0image', 'num_bins')
   histo_range = config.getfloat('x0image', 'histo_range')
+  min_tracks = config.getfloat('x0image', 'min_tracks')
 
   # Fit options (log likelihood or chi2 fit?)
   fit_options = config.get('x0image', 'fit_options')
@@ -186,6 +187,7 @@ def x0imaging(rootfilelist=[],caltag='',steerfiles='',nametag=''):
       config.set('image', 'epsilon', str(epsilon))
       config.set('image', 'vertexmultiplicitymin', vertex_multiplicity_min)
       config.set('image', 'vertexmultiplicitymax', vertex_multiplicity_max)
+      config.set('image', 'min_tracks', str(min_tracks))
       config.set('image', 'num_bins', str(num_bins))
       config.set('image', 'histo_range', str(histo_range))
       config.set('image', 'fit_options', str(fit_options))
