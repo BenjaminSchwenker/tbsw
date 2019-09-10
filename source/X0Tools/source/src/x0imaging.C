@@ -1,1800 +1,1973 @@
 #include <fstream>
 #include <iostream>
 
-#include "TROOT.h"
-#include "TMath.h"
+#include "TEnv.h"
+#include "TF1.h"
 #include "TFile.h"
-#include "TTree.h"
+#include "TFitResult.h"
 #include "TH1F.h"
 #include "TH2F.h"
-#include "TF1.h"
-#include "TStyle.h"
 #include "TList.h"
-#include "TEnv.h"
-#include "TFitResult.h"
+#include "TMath.h"
+#include "TROOT.h"
+#include "TStyle.h"
+#include "TTree.h"
 
+using namespace std;
 
-using namespace std ;
+/** Highland model of a MSC angle distribution, the parameters are:
+ * par[0]:  Expected beam energy at u,v=0;
+ * par[1]:  Beam particle charge
+ * par[2]:  Beam particle mass
+ * par[3]:  Radiation length X/X0
+ * par[4]:  Expected angle reconstruction error
+ * par[5]:  Normalization
+ * par[6]:  mean value
+ * par[7]:  weight of bremsstrahlung energy loss (set to 0 to disable)
+ * x: Variable of the 1D function, corresponds to the scattering angle
+ */
 
+// Highland model of multiple scattering: Simple gaussian with a well defined
+// standard deviation depending on X/X0 and the beam energy.
+// The overall function describing the kink angle distributions is the Highland
+// function convoluted with a gaussian function due to the finite angle
+// resolution on the target plane.
+// The formula for the Highland standard deviation taken from the Particle Data
+// Group Tanabashi et al. 2018  (eq. 33.15)
+Double_t highlandfunction(Double_t *x, Double_t *par) {
 
+  // Other parameters
+  double recoerror = par[4]; // expected reconstruction error
 
-  /** Highland model of a MSC angle distribution, the parameters are: 
-   * par[0]:  Expected beam energy at u,v=0;
-   * par[1]:  Beam particle charge
-   * par[2]:  Beam particle mass
-   * par[3]:  Radiation length X/X0
-   * par[4]:  Expected angle reconstruction error
-   * par[5]:  Normalization
-   * par[6]:  mean value
-   * par[7]:  weight of bremsstrahlung energy loss (set to 0 to disable)
-   * x: Variable of the 1D function, corresponds to the scattering angle
-   */
+  // particle parameters
 
-  // Highland model of multiple scattering: Simple gaussian with a well defined standard deviation depending on X/X0 and the beam energy.
-  // The overall function describing the kink angle distributions is the Highland function convoluted with a gaussian function due to the finite angle resolution on the target plane.
-  // The formula for the Highland standard deviation taken from the Particle Data Group Tanabashi et al. 2018  (eq. 33.15)
-  Double_t highlandfunction(Double_t *x, Double_t *par)
-  { 
+  // mass of beam particle
+  double mass;
+  mass = par[2];
 
-	// Other parameters
-	double recoerror=par[4];  //expected reconstruction error
+  // charge of beam particle
+  double charge;
+  charge = par[1];
 
-    // particle parameters
+  // Radiation length computed from the other parameters
+  double XX0 = par[3];
 
-	// mass of beam particle
-	double mass;   
-	mass=par[2];  
+  // beam energy, modified by the energy loss due to bremsstrahlung
+  // A weighted mean of the average particle energy before and after the
+  // material transition is calculated
+  double epsilon = par[7];
+  double p = par[0] * ((1 - epsilon) + epsilon * exp(-XX0));
 
-	// charge of beam particle
-	double charge;   
-	charge=par[1];
+  // calibrated momentum
+  double E = TMath::Sqrt(p * p + mass * mass); // energy in GeV
 
-	// Radiation length computed from the other parameters
-	double XX0=par[3];
+  double beta; // relative velocity
+  beta = p / E;
 
-	// beam energy, modified by the energy loss due to bremsstrahlung
-    // A weighted mean of the average particle energy before and after the material transition is calculated
-	double epsilon=par[7];
-	double p=par[0]*((1-epsilon)+epsilon*exp(-XX0));
+  // Combination of Highland width and reconstruction error
+  double sigma =
+      TMath::Sqrt(pow(0.0136 * charge / (p * beta) * TMath::Sqrt(XX0) *
+                          (1.0 + 0.038 * TMath::Log(XX0)),
+                      2) +
+                  pow(recoerror, 2));
 
-	// calibrated momentum
-	double E=TMath::Sqrt(p*p+mass*mass);  // energy in GeV
+  // function value at a certain theta value
+  double value = par[5] * TMath::Gaus(x[0], par[6], sigma);
 
-	double beta;  //relative velocity
-	beta=p/E;
+  return value;
+} // End definition of highland model
 
-	// Combination of Highland width and reconstruction error
-	double sigma=TMath::Sqrt(pow(0.0136*charge/(p*beta)*TMath::Sqrt(XX0)*(1.0+0.038*TMath::Log(XX0)),2)+pow(recoerror,2));
+// Returns the mean value of the angle reco error squared
+double getanglerecovar(TFile *file) {
+  // TTree in input root file, that contains the MSC projected angle
+  // distributions and reconstruction error distribution
+  file->cd("");
+  TTree *msc_tree = (TTree *)file->Get("MSCTree");
 
-	// function value at a certain theta value
-	double value=par[5]*TMath::Gaus(x[0],par[6],sigma);
+  // Draw reconstruction error 1 histogram
+  msc_tree->Draw("theta1_var", "", "P*");
 
-	return value;
-  }// End definition of highland model
+  // Get mean value
+  double recovar = msc_tree->GetHistogram()->GetMean();
 
+  // Get maximum value
+  double recovar_error = msc_tree->GetHistogram()->GetMeanError(); // max
+                                                                   // methode
 
-  // Returns the mean value of the angle reco error squared
-  double getanglerecovar(TFile* file)
-  {
-	//TTree in input root file, that contains the MSC projected angle distributions and reconstruction error distribution
-	file->cd("");
-	TTree *msc_tree = (TTree*)file->Get("MSCTree");
+  // The recovar error shouldn't be too large!
+  cout << "Angle Reconstruction Variance is " << recovar << " +/- "
+       << recovar_error << endl;
 
-	// Draw reconstruction error 1 histogram
-	msc_tree->Draw("theta1_var", "", "P*");
+  return recovar;
+}
 
-	// Get mean value
-	double recovar = msc_tree->GetHistogram()->GetMean();
+// This function fills histograms corresponding to certain u v values with msc
+// angle distributions
+void getcorrection(std::vector<TString> filenames, TFile *file2,
+                   std::vector<double> means, std::vector<double> plotranges,
+                   int numberofbins, const size_t numcol, const size_t numrow,
+                   double umin, double vmin, double umax, double vmax,
+                   int vertex_multiplicity_min, int vertex_multiplicity_max) {
+  // parameters which are read out from the root file
+  Double_t theta1;
+  Double_t theta2;
+  Double_t u;
+  Double_t v;
+  Int_t vertex_multiplicity = 1;
 
-	// Get maximum value
-	double recovar_error = msc_tree->GetHistogram()->GetMeanError();	//max methode
+  // arrays of msc angle histograms
+  file2->cd("");
+  file2->cd("raw");
+  // TH1F *histo_theta1[numcol][numrow];
+  // TH1F *histo_theta2[numcol][numrow];
 
-	// The recovar error shouldn't be too large! 
-	cout<<"Angle Reconstruction Variance is "<<recovar<<" +/- "<<recovar_error<<endl; 
-
-	return recovar;
-  }
-
-
-
-  // This function fills histograms corresponding to certain u v values with msc angle distributions 
-  void getcorrection(std::vector<TString> filenames, TFile* file2, std::vector<double> means, std::vector<double> plotranges, int numberofbins, const size_t numcol, const size_t numrow, double umin, double vmin, double umax, double vmax, int vertex_multiplicity_min, int vertex_multiplicity_max)
-  {
-	// parameters which are read out from the root file
-	Double_t theta1;
-	Double_t theta2;
-	Double_t u;
-	Double_t v;
-	Int_t vertex_multiplicity=1;
-
-	// arrays of msc angle histograms
-	file2->cd("");
-	file2->cd("raw");
-    //TH1F *histo_theta1[numcol][numrow];
-    //TH1F *histo_theta2[numcol][numrow];
-
-    auto histo_theta1 =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
-    auto histo_theta2 =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
-    for (size_t i=0; i<numcol; i++)
-	{
-        for (size_t j=0; j<numrow; j++)
-		{
-			 	histo_theta1[i][j] = new TH1F("","",numberofbins,means.at(0)-1.0*plotranges.at(0),means.at(0)+plotranges.at(0));
-			 	histo_theta2[i][j] = new TH1F("","",numberofbins,means.at(1)-1.0*plotranges.at(1),means.at(1)+plotranges.at(1));
-		}
-	}
-
-	cout<<endl<<"Selecting raw angle distributions"<<endl;
-
-
-    for(size_t ifile=0;ifile<filenames.size();ifile++)
-	{
-
-		//TTree in input root file, that contains the MSC projected angle distributions and reconstruction error distribution
-		TFile* inputfile= new TFile(filenames.at(ifile), "READ");
-        TTree * msc_tree = static_cast<TTree*>( inputfile->Get("MSCTree"));
-
-		msc_tree->SetBranchAddress("theta1",&theta1);
-		msc_tree->SetBranchAddress("theta2",&theta2);
-		msc_tree->SetBranchAddress("u",&u);
-		msc_tree->SetBranchAddress("v",&v);
-
-		// Loop over all events
-		for(int i=0; i< msc_tree->GetEntries(); i++)
-		{
-
-			if(i%1000000==0) cout<<"raw angles, track number "<<i<<endl;
-			msc_tree->GetEntry(i);
-		
-			// position within the map area
-			double u_pos=u-umin;
-			double v_pos=v-vmin;
-
-			// side lengths of the map area
-			double u_length=umax-umin;
-			double v_length=vmax-vmin;
-
-			// skip this entry, when u or v is outside of the mapping area
-			if (u_pos<0) continue;
-			if (u_pos>=u_length) continue;
-			if (v_pos<0) continue;
-			if (v_pos>=v_length) continue;
-		    
-			// Apply cut on vertex multiplicity
-		    if (vertex_multiplicity>vertex_multiplicity_max||vertex_multiplicity<vertex_multiplicity_min) continue;
-
-			// Determine column and row number from the position within the map area and the number of rows and columns
-            size_t col=size_t(u_pos*numcol/u_length);
-            size_t row=size_t(v_pos*numrow/v_length);
-
-			// Fill histograms
-			histo_theta1[col][row]->Fill(theta1);
-			histo_theta2[col][row]->Fill(theta2);
-		}
+  auto histo_theta1 = std::vector<std::vector<TH1F *>>(
+      numcol, std::vector<TH1F *>(numrow, nullptr));
+  auto histo_theta2 = std::vector<std::vector<TH1F *>>(
+      numcol, std::vector<TH1F *>(numrow, nullptr));
+  for (size_t i = 0; i < numcol; i++) {
+    for (size_t j = 0; j < numrow; j++) {
+      histo_theta1[i][j] =
+          new TH1F("", "", numberofbins, means.at(0) - 1.0 * plotranges.at(0),
+                   means.at(0) + plotranges.at(0));
+      histo_theta2[i][j] =
+          new TH1F("", "", numberofbins, means.at(1) - 1.0 * plotranges.at(1),
+                   means.at(1) + plotranges.at(1));
     }
-
-	cout<<"Writing raw angle histograms "<<endl;
-
-	file2->cd("");
-	file2->cd("raw");
-
-    for (size_t i=0; i<numcol; i++)
-	{
-        for (size_t j=0; j<numrow; j++)
-		{
-			// Name of the histograms
-			TString histoname;
-            histoname.Form("area(%lu,%lu)",i,j);
-
-			histo_theta1[i][j]->Write("theta1_uncorrected_"+histoname);
-			histo_theta1[i][j]->Delete();
-			histo_theta2[i][j]->Write("theta2_uncorrected_"+histoname);
-			histo_theta2[i][j]->Delete();
-
-
-			cout<<"Raw angle distributions in pixel area (col="<<i<<", row="<<j<<") written to disk!"<<endl;
-		}
-	}
-
   }
 
+  cout << endl << "Selecting raw angle distributions" << endl;
 
-  // This function fills histograms corresponding to certain u v values with msc angle distributions 
-  void savehistos(std::vector<TString> filenames, TFile* file2, int numberofbins, double histo_range, const size_t numcol, const size_t numrow, double umin, double vmin, double umax, double vmax, int vertex_multiplicity_min, int vertex_multiplicity_max)
-  {
-	// parameters which are read out from the root file
-	Double_t theta1;
-	Double_t theta2;
-	Double_t u;
-	Double_t v;
-	Double_t u_in;
-	Double_t v_in;
-	Double_t u_out;
-	Double_t v_out;
+  for (size_t ifile = 0; ifile < filenames.size(); ifile++) {
 
-	Int_t vertex_multiplicity=1;
-	Double_t vertex_w;
-	Double_t vertex_chi2;
-	Double_t vertex_u;
-	Double_t vertex_v;
+    // TTree in input root file, that contains the MSC projected angle
+    // distributions and reconstruction error distribution
+    TFile *inputfile = new TFile(filenames.at(ifile), "READ");
+    TTree *msc_tree = static_cast<TTree *>(inputfile->Get("MSCTree"));
 
-	// Array of mean theta1 and theta2 values in each map pixel
-    auto mean1 =std::vector<std::vector<double>>(numcol, std::vector<double>(numrow,0));
-    auto mean2 =std::vector<std::vector<double>>(numcol, std::vector<double>(numrow,0));
+    msc_tree->SetBranchAddress("theta1", &theta1);
+    msc_tree->SetBranchAddress("theta2", &theta2);
+    msc_tree->SetBranchAddress("u", &u);
+    msc_tree->SetBranchAddress("v", &v);
 
-	file2->cd("");
-	file2->cd("raw");
+    // Loop over all events
+    for (int i = 0; i < msc_tree->GetEntries(); i++) {
 
-	// arrays of msc angle histograms
-    auto histo_theta1 =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
-    auto histo_theta2 =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
-    auto histo_scatteroffset_u =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
-    auto histo_scatteroffset_v =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
-    auto histo_thetasum =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
-    auto histo_2d =std::vector<std::vector<TH2F *>>(numcol, std::vector<TH2F *>(numrow,nullptr));
+      if (i % 1000000 == 0)
+        cout << "raw angles, track number " << i << endl;
+      msc_tree->GetEntry(i);
 
-	// arrays of vertex parameter histograms
-    auto histo_vertex_w =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
-    auto histo_vertex_multiplicity =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
-    auto histo_vertex_chi2 =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
-    auto histo_vtx_trk_u_res =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
-    auto histo_vtx_trk_v_res =std::vector<std::vector<TH1F *>>(numcol, std::vector<TH1F *>(numrow,nullptr));
+      // position within the map area
+      double u_pos = u - umin;
+      double v_pos = v - vmin;
 
+      // side lengths of the map area
+      double u_length = umax - umin;
+      double v_length = vmax - vmin;
 
-	cout<<endl<<"Determining mean values from raw histograms"<<endl;
+      // skip this entry, when u or v is outside of the mapping area
+      if (u_pos < 0)
+        continue;
+      if (u_pos >= u_length)
+        continue;
+      if (v_pos < 0)
+        continue;
+      if (v_pos >= v_length)
+        continue;
 
-    for (size_t i=0; i<numcol; i++)
-	{
-        for (size_t j=0; j<numrow; j++)
-		{
+      // Apply cut on vertex multiplicity
+      if (vertex_multiplicity > vertex_multiplicity_max ||
+          vertex_multiplicity < vertex_multiplicity_min)
+        continue;
 
-				// Get the histograms generated in the getcorrection function
-				// Name of the histograms
-				TString aidhistoname;
-                aidhistoname.Form("area(%lu,%lu)",i,j);
+      // Determine column and row number from the position within the map area
+      // and the number of rows and columns
+      size_t col = size_t(u_pos * numcol / u_length);
+      size_t row = size_t(v_pos * numrow / v_length);
 
-				// Get histogram
-				TH1F* histogram1=(TH1F*)file2->Get("raw/theta1_uncorrected_"+aidhistoname);
-				TH1F* histogram2=(TH1F*)file2->Get("raw/theta2_uncorrected_"+aidhistoname);
-			
-				// Determine plot range from uncorrected histograms
-				double limits=histo_range/2.0*(histogram1->GetRMS()+histogram2->GetRMS());
-
-			 	histo_theta1[i][j] = new TH1F("","",numberofbins,-limits,limits);
-			 	histo_theta2[i][j] = new TH1F("","",numberofbins,-limits,limits);
-			 	histo_scatteroffset_u[i][j] = new TH1F("","",1000,-1.0,1.0);
-			 	histo_scatteroffset_v[i][j] = new TH1F("","",1000,-1.0,1.0);
-			 	histo_thetasum[i][j] = new TH1F("","",numberofbins,-limits,limits);
-				histo_2d[i][j] = new TH2F("","",numberofbins,-limits,limits,numberofbins,-limits,limits);
-
-				// Set range and title of vertex histograms
-			 	histo_vertex_w[i][j] = new TH1F("","",900,-15.0,15.0);
-			 	histo_vertex_chi2[i][j] = new TH1F("","",200,0.0,11.0);
-			 	histo_vertex_multiplicity[i][j] = new TH1F("","",10,0.0,10);
-			 	histo_vtx_trk_u_res[i][j] = new TH1F("","",1000,-5.0,5.0);
-			 	histo_vtx_trk_v_res[i][j] = new TH1F("","",1000,-5.0,5.0);
-
-				// Save mean of both distributions in arrays
-				mean1[i][j]=histogram1->GetMean();
-				mean2[i][j]=histogram2->GetMean();
-
-				cout<<"Mean value in pixel area (col="<<i<<", row="<<j<<") determined!"<<endl;
-
-		        histogram1->Delete();
-		        histogram2->Delete();
-
-		}
-	}
-
-	cout<<endl<<"Selecting corrected angle distributions"<<endl;
-
-	//TTree in input root file, that contains the MSC projected angle distributions and reconstruction error distribution
-    for(size_t ifile=0;ifile<filenames.size();ifile++)
-	{
-
-		//TTree in input root file, that contains the MSC projected angle distributions and reconstruction error distribution
-		TFile* inputfile= new TFile(filenames.at(ifile), "READ");
-		TTree * msc_tree = (TTree*) inputfile->Get("MSCTree");
-
-		// Set branch adresses for parameters connected to the scattering angles
-		msc_tree->SetBranchAddress("theta1",&theta1);
-		msc_tree->SetBranchAddress("theta2",&theta2);
-		msc_tree->SetBranchAddress("u",&u);
-		msc_tree->SetBranchAddress("v",&v);
-		msc_tree->SetBranchAddress("u_in",&u_in);
-		msc_tree->SetBranchAddress("v_in",&v_in);
-		msc_tree->SetBranchAddress("u_out",&u_out);
-		msc_tree->SetBranchAddress("v_out",&v_out);
-
-		// Set branch adresses for parameters connected to the vertex fit
-		msc_tree->SetBranchAddress("vertex_w",&vertex_w);
-		msc_tree->SetBranchAddress("vertex_chi2ndf",&vertex_chi2);
-        // FIXME: can this be removed
-		//int test=msc_tree->SetBranchAddress("vertex_multiplicity",&vertex_multiplicity);
-		msc_tree->SetBranchAddress("vertex_u",&vertex_u);
-		msc_tree->SetBranchAddress("vertex_v",&vertex_v);
-
-
-		file2->cd("");
-		file2->cd("raw");
-
-		// Loop over all events, find the corresponding image pixel from the u,v values and fill the histograms
-		for(int i=0; i< msc_tree->GetEntries(); i++)
-		{
-
-			if(i%1000000==0) cout<<"corrected angles, track number "<<i<<endl;
-			msc_tree->GetEntry(i);
-		
-			// position within the map area
-			double u_pos=u-umin;
-			double v_pos=v-vmin;
-
-			// side lengths of the map area
-			double u_length=umax-umin;
-			double v_length=vmax-vmin;
-
-			// skip this entry, when u or v is outside of the image area
-			if (u_pos<0) continue;
-			if (u_pos>=u_length) continue;
-			if (v_pos<0) continue;
-			if (v_pos>=v_length) continue;
-
-			// Apply cut on vertex multiplicity
-		    if (vertex_multiplicity>vertex_multiplicity_max||vertex_multiplicity<vertex_multiplicity_min) continue;
-
-			// Determine column and row number from the position within the map area and the number of rows and columns
-            size_t col=size_t(u_pos*numcol/u_length);
-            size_t row=size_t(v_pos*numrow/v_length);
-
-			// mean correction of theta
-			theta1=theta1-mean1[col][row];
-			theta2=theta2-mean2[col][row];
-
-			// Fill histograms
-			histo_theta1[col][row]->Fill(theta1);
-			histo_theta2[col][row]->Fill(theta2);
-			histo_thetasum[col][row]->Fill(theta1);
-			histo_thetasum[col][row]->Fill(theta2);
-			histo_2d[col][row]->Fill(theta1,theta2);
-
-			histo_scatteroffset_u[col][row]->Fill(u_in-u_out);
-			histo_scatteroffset_v[col][row]->Fill(v_in-v_out);
-
-			histo_vertex_w[col][row]->Fill(vertex_w);
-			histo_vertex_chi2[col][row]->Fill(vertex_chi2);
-			histo_vertex_multiplicity[col][row]->Fill(vertex_multiplicity);
-
-			histo_vtx_trk_u_res[col][row]->Fill(vertex_u-u);
-			histo_vtx_trk_v_res[col][row]->Fill(vertex_v-v);
-		}
+      // Fill histograms
+      histo_theta1[col][row]->Fill(theta1);
+      histo_theta2[col][row]->Fill(theta2);
     }
-
-	cout<<"Write histograms "<<endl;
-
-	file2->cd("");
-	file2->cd("raw");
-
-    for (size_t i=0; i<numcol; i++)
-	{
-        for (size_t j=0; j<numrow; j++)
-		{
-			// Name of the histograms
-			TString histoname;
-            histoname.Form("area(%lu,%lu)",i,j);
-
-			histo_theta1[i][j]->Write("theta1_"+histoname);
-			histo_theta1[i][j]->Delete();
-			histo_theta2[i][j]->Write("theta2_"+histoname);
-			histo_theta2[i][j]->Delete();
-			histo_scatteroffset_u[i][j]->Write("scatteroffset_u_"+histoname);
-			histo_scatteroffset_u[i][j]->Delete();
-			histo_scatteroffset_v[i][j]->Write("scatteroffset_v_"+histoname);
-			histo_scatteroffset_v[i][j]->Delete();
-			histo_thetasum[i][j]->Write("sumhisto_"+histoname);
-			histo_thetasum[i][j]->Delete();
-			histo_2d[i][j]->Write("2Dhisto_"+histoname);
-			histo_2d[i][j]->Delete();
-
-			histo_vertex_w[i][j]->Write("vertex_w_"+histoname);
-			histo_vertex_w[i][j]->Delete();
-			histo_vertex_chi2[i][j]->Write("vertex_chi2_"+histoname);
-			histo_vertex_chi2[i][j]->Delete();
-			histo_vertex_multiplicity[i][j]->Write("vertex_multiplicity_"+histoname);
-			histo_vertex_multiplicity[i][j]->Delete();
-
-			histo_vtx_trk_u_res[i][j]->Write("res_u_vtx_trk_"+histoname);
-			histo_vtx_trk_u_res[i][j]->Delete();
-			histo_vtx_trk_v_res[i][j]->Write("res_v_vtx_trk_"+histoname);
-			histo_vtx_trk_v_res[i][j]->Delete();
-
-			cout<<"Corrected angle distributions in pixel area (col="<<i<<", row="<<j<<") written to disk!"<<endl;
-
-		}
-		
-	}
-
   }
 
+  cout << "Writing raw angle histograms " << endl;
+
+  file2->cd("");
+  file2->cd("raw");
+
+  for (size_t i = 0; i < numcol; i++) {
+    for (size_t j = 0; j < numrow; j++) {
+      // Name of the histograms
+      TString histoname;
+      histoname.Form("area(%lu,%lu)", i, j);
+
+      histo_theta1[i][j]->Write("theta1_uncorrected_" + histoname);
+      histo_theta1[i][j]->Delete();
+      histo_theta2[i][j]->Write("theta2_uncorrected_" + histoname);
+      histo_theta2[i][j]->Delete();
+
+      cout << "Raw angle distributions in pixel area (col=" << i
+           << ", row=" << j << ") written to disk!" << endl;
+    }
+  }
+}
+
+// This function fills histograms corresponding to certain u v values with msc
+// angle distributions
+void savehistos(std::vector<TString> filenames, TFile *file2, int numberofbins,
+                double histo_range, const size_t numcol, const size_t numrow,
+                double umin, double vmin, double umax, double vmax,
+                int vertex_multiplicity_min, int vertex_multiplicity_max) {
+  // parameters which are read out from the root file
+  Double_t theta1;
+  Double_t theta2;
+  Double_t u;
+  Double_t v;
+  Double_t u_in;
+  Double_t v_in;
+  Double_t u_out;
+  Double_t v_out;
+
+  Int_t vertex_multiplicity = 1;
+  Double_t vertex_w;
+  Double_t vertex_chi2;
+  Double_t vertex_u;
+  Double_t vertex_v;
+
+  // Array of mean theta1 and theta2 values in each map pixel
+  auto mean1 =
+      std::vector<std::vector<double>>(numcol, std::vector<double>(numrow, 0));
+  auto mean2 =
+      std::vector<std::vector<double>>(numcol, std::vector<double>(numrow, 0));
+
+  file2->cd("");
+  file2->cd("raw");
+
+  // arrays of msc angle histograms
+  auto histo_theta1 = std::vector<std::vector<TH1F *>>(
+      numcol, std::vector<TH1F *>(numrow, nullptr));
+  auto histo_theta2 = std::vector<std::vector<TH1F *>>(
+      numcol, std::vector<TH1F *>(numrow, nullptr));
+  auto histo_scatteroffset_u = std::vector<std::vector<TH1F *>>(
+      numcol, std::vector<TH1F *>(numrow, nullptr));
+  auto histo_scatteroffset_v = std::vector<std::vector<TH1F *>>(
+      numcol, std::vector<TH1F *>(numrow, nullptr));
+  auto histo_thetasum = std::vector<std::vector<TH1F *>>(
+      numcol, std::vector<TH1F *>(numrow, nullptr));
+  auto histo_2d = std::vector<std::vector<TH2F *>>(
+      numcol, std::vector<TH2F *>(numrow, nullptr));
+
+  // arrays of vertex parameter histograms
+  auto histo_vertex_w = std::vector<std::vector<TH1F *>>(
+      numcol, std::vector<TH1F *>(numrow, nullptr));
+  auto histo_vertex_multiplicity = std::vector<std::vector<TH1F *>>(
+      numcol, std::vector<TH1F *>(numrow, nullptr));
+  auto histo_vertex_chi2 = std::vector<std::vector<TH1F *>>(
+      numcol, std::vector<TH1F *>(numrow, nullptr));
+  auto histo_vtx_trk_u_res = std::vector<std::vector<TH1F *>>(
+      numcol, std::vector<TH1F *>(numrow, nullptr));
+  auto histo_vtx_trk_v_res = std::vector<std::vector<TH1F *>>(
+      numcol, std::vector<TH1F *>(numrow, nullptr));
+
+  cout << endl << "Determining mean values from raw histograms" << endl;
+
+  for (size_t i = 0; i < numcol; i++) {
+    for (size_t j = 0; j < numrow; j++) {
+
+      // Get the histograms generated in the getcorrection function
+      // Name of the histograms
+      TString aidhistoname;
+      aidhistoname.Form("area(%lu,%lu)", i, j);
+
+      // Get histogram
+      TH1F *histogram1 =
+          (TH1F *)file2->Get("raw/theta1_uncorrected_" + aidhistoname);
+      TH1F *histogram2 =
+          (TH1F *)file2->Get("raw/theta2_uncorrected_" + aidhistoname);
+
+      // Determine plot range from uncorrected histograms
+      double limits =
+          histo_range / 2.0 * (histogram1->GetRMS() + histogram2->GetRMS());
+
+      histo_theta1[i][j] = new TH1F("", "", numberofbins, -limits, limits);
+      histo_theta2[i][j] = new TH1F("", "", numberofbins, -limits, limits);
+      histo_scatteroffset_u[i][j] = new TH1F("", "", 1000, -1.0, 1.0);
+      histo_scatteroffset_v[i][j] = new TH1F("", "", 1000, -1.0, 1.0);
+      histo_thetasum[i][j] = new TH1F("", "", numberofbins, -limits, limits);
+      histo_2d[i][j] = new TH2F("", "", numberofbins, -limits, limits,
+                                numberofbins, -limits, limits);
+
+      // Set range and title of vertex histograms
+      histo_vertex_w[i][j] = new TH1F("", "", 900, -15.0, 15.0);
+      histo_vertex_chi2[i][j] = new TH1F("", "", 200, 0.0, 11.0);
+      histo_vertex_multiplicity[i][j] = new TH1F("", "", 10, 0.0, 10);
+      histo_vtx_trk_u_res[i][j] = new TH1F("", "", 1000, -5.0, 5.0);
+      histo_vtx_trk_v_res[i][j] = new TH1F("", "", 1000, -5.0, 5.0);
+
+      // Save mean of both distributions in arrays
+      mean1[i][j] = histogram1->GetMean();
+      mean2[i][j] = histogram2->GetMean();
+
+      cout << "Mean value in pixel area (col=" << i << ", row=" << j
+           << ") determined!" << endl;
+
+      histogram1->Delete();
+      histogram2->Delete();
+    }
+  }
+
+  cout << endl << "Selecting corrected angle distributions" << endl;
+
+  // TTree in input root file, that contains the MSC projected angle
+  // distributions and reconstruction error distribution
+  for (size_t ifile = 0; ifile < filenames.size(); ifile++) {
+
+    // TTree in input root file, that contains the MSC projected angle
+    // distributions and reconstruction error distribution
+    TFile *inputfile = new TFile(filenames.at(ifile), "READ");
+    TTree *msc_tree = (TTree *)inputfile->Get("MSCTree");
+
+    // Set branch adresses for parameters connected to the scattering angles
+    msc_tree->SetBranchAddress("theta1", &theta1);
+    msc_tree->SetBranchAddress("theta2", &theta2);
+    msc_tree->SetBranchAddress("u", &u);
+    msc_tree->SetBranchAddress("v", &v);
+    msc_tree->SetBranchAddress("u_in", &u_in);
+    msc_tree->SetBranchAddress("v_in", &v_in);
+    msc_tree->SetBranchAddress("u_out", &u_out);
+    msc_tree->SetBranchAddress("v_out", &v_out);
+
+    // Set branch adresses for parameters connected to the vertex fit
+    msc_tree->SetBranchAddress("vertex_w", &vertex_w);
+    msc_tree->SetBranchAddress("vertex_chi2ndf", &vertex_chi2);
+    // FIXME: can this be removed
+    // int
+    // test=msc_tree->SetBranchAddress("vertex_multiplicity",&vertex_multiplicity);
+    msc_tree->SetBranchAddress("vertex_u", &vertex_u);
+    msc_tree->SetBranchAddress("vertex_v", &vertex_v);
+
+    file2->cd("");
+    file2->cd("raw");
+
+    // Loop over all events, find the corresponding image pixel from the u,v
+    // values and fill the histograms
+    for (int i = 0; i < msc_tree->GetEntries(); i++) {
+
+      if (i % 1000000 == 0)
+        cout << "corrected angles, track number " << i << endl;
+      msc_tree->GetEntry(i);
+
+      // position within the map area
+      double u_pos = u - umin;
+      double v_pos = v - vmin;
+
+      // side lengths of the map area
+      double u_length = umax - umin;
+      double v_length = vmax - vmin;
+
+      // skip this entry, when u or v is outside of the image area
+      if (u_pos < 0)
+        continue;
+      if (u_pos >= u_length)
+        continue;
+      if (v_pos < 0)
+        continue;
+      if (v_pos >= v_length)
+        continue;
+
+      // Apply cut on vertex multiplicity
+      if (vertex_multiplicity > vertex_multiplicity_max ||
+          vertex_multiplicity < vertex_multiplicity_min)
+        continue;
+
+      // Determine column and row number from the position within the map area
+      // and the number of rows and columns
+      size_t col = size_t(u_pos * numcol / u_length);
+      size_t row = size_t(v_pos * numrow / v_length);
+
+      // mean correction of theta
+      theta1 = theta1 - mean1[col][row];
+      theta2 = theta2 - mean2[col][row];
+
+      // Fill histograms
+      histo_theta1[col][row]->Fill(theta1);
+      histo_theta2[col][row]->Fill(theta2);
+      histo_thetasum[col][row]->Fill(theta1);
+      histo_thetasum[col][row]->Fill(theta2);
+      histo_2d[col][row]->Fill(theta1, theta2);
+
+      histo_scatteroffset_u[col][row]->Fill(u_in - u_out);
+      histo_scatteroffset_v[col][row]->Fill(v_in - v_out);
+
+      histo_vertex_w[col][row]->Fill(vertex_w);
+      histo_vertex_chi2[col][row]->Fill(vertex_chi2);
+      histo_vertex_multiplicity[col][row]->Fill(vertex_multiplicity);
+
+      histo_vtx_trk_u_res[col][row]->Fill(vertex_u - u);
+      histo_vtx_trk_v_res[col][row]->Fill(vertex_v - v);
+    }
+  }
+
+  cout << "Write histograms " << endl;
+
+  file2->cd("");
+  file2->cd("raw");
+
+  for (size_t i = 0; i < numcol; i++) {
+    for (size_t j = 0; j < numrow; j++) {
+      // Name of the histograms
+      TString histoname;
+      histoname.Form("area(%lu,%lu)", i, j);
+
+      histo_theta1[i][j]->Write("theta1_" + histoname);
+      histo_theta1[i][j]->Delete();
+      histo_theta2[i][j]->Write("theta2_" + histoname);
+      histo_theta2[i][j]->Delete();
+      histo_scatteroffset_u[i][j]->Write("scatteroffset_u_" + histoname);
+      histo_scatteroffset_u[i][j]->Delete();
+      histo_scatteroffset_v[i][j]->Write("scatteroffset_v_" + histoname);
+      histo_scatteroffset_v[i][j]->Delete();
+      histo_thetasum[i][j]->Write("sumhisto_" + histoname);
+      histo_thetasum[i][j]->Delete();
+      histo_2d[i][j]->Write("2Dhisto_" + histoname);
+      histo_2d[i][j]->Delete();
+
+      histo_vertex_w[i][j]->Write("vertex_w_" + histoname);
+      histo_vertex_w[i][j]->Delete();
+      histo_vertex_chi2[i][j]->Write("vertex_chi2_" + histoname);
+      histo_vertex_chi2[i][j]->Delete();
+      histo_vertex_multiplicity[i]
+                               [j]->Write("vertex_multiplicity_" + histoname);
+      histo_vertex_multiplicity[i][j]->Delete();
+
+      histo_vtx_trk_u_res[i][j]->Write("res_u_vtx_trk_" + histoname);
+      histo_vtx_trk_u_res[i][j]->Delete();
+      histo_vtx_trk_v_res[i][j]->Write("res_v_vtx_trk_" + histoname);
+      histo_vtx_trk_v_res[i][j]->Delete();
+
+      cout << "Corrected angle distributions in pixel area (col=" << i
+           << ", row=" << j << ") written to disk!" << endl;
+    }
+  }
+}
 
 // Determine fit range for a kink angle histogram
 // This is done by finding the first and last bin above a certain threshold.
 // The fit range is half of the distance between these two bins in rad
-double DetermineFitrange(TH1F* histo,double rangevalue)
-{
+double DetermineFitrange(TH1F *histo, double rangevalue) {
   // Clone histo
-  TH1F *h2 = (TH1F*) histo->Clone();
-  
-  cout<<"RMS value of distribution: "<<histo->GetRMS()<<endl;
-  cout<<"Selected range parameter: "<<rangevalue<<" -> Fit range up to y=1/("<<rangevalue<<"*e)"<<endl;
-  double fitrange = sqrt(2.0*rangevalue)*histo->GetRMS();
+  TH1F *h2 = (TH1F *)histo->Clone();
+
+  cout << "RMS value of distribution: " << histo->GetRMS() << endl;
+  cout << "Selected range parameter: " << rangevalue
+       << " -> Fit range up to y=1/(" << rangevalue << "*e)" << endl;
+  double fitrange = sqrt(2.0 * rangevalue) * histo->GetRMS();
 
   // Use RMS value as a rough measure of the fit range for a gaussian fit
-  TF1 *f1 = new TF1("f1","gaus(x)",-fitrange,fitrange);
-  f1->SetParameter(2,histo->GetRMS());
-  f1->FixParameter(1,0);
-  f1->SetParLimits(2,0.0,2*histo->GetRMS());
+  TF1 *f1 = new TF1("f1", "gaus(x)", -fitrange, fitrange);
+  f1->SetParameter(2, histo->GetRMS());
+  f1->FixParameter(1, 0);
+  f1->SetParLimits(2, 0.0, 2 * histo->GetRMS());
   f1->SetLineStyle(2);
-  TFitResultPtr fitr=h2->Fit("f1","RS");
+  TFitResultPtr fitr = h2->Fit("f1", "RS");
 
-  cout<<endl<<"Fit results:  "<<endl;
-  cout<<"Fit status: "<<fitr<<endl;
-  cout<<"Fit status, is valid: "<<fitr->IsValid()<<endl;
-  cout<<"Fit status, Status: "<<fitr->Status()<<endl;
+  cout << endl << "Fit results:  " << endl;
+  cout << "Fit status: " << fitr << endl;
+  cout << "Fit status, is valid: " << fitr->IsValid() << endl;
+  cout << "Fit status, Status: " << fitr->Status() << endl;
 
   // Repeat fit in case it failed
-  if(!fitr->IsValid())
-  {
-    cout<<endl<<"Fit of angle distribution failed with status: "<<fitr<<endl;
-    cout<<"Repeat fit "<<endl;
-    fitr=h2->Fit("f1","RMS");
+  if (!fitr->IsValid()) {
+    cout << endl
+         << "Fit of angle distribution failed with status: " << fitr << endl;
+    cout << "Repeat fit " << endl;
+    fitr = h2->Fit("f1", "RMS");
 
-	cout<<endl<<"Second Fit results: "<<endl;
-	cout<<"Fit status: "<<fitr<<endl;
-	cout<<"Fit status, is valid: "<<fitr->IsValid()<<endl;
-	cout<<"Fit status, Status: "<<fitr->Status()<<endl;
+    cout << endl << "Second Fit results: " << endl;
+    cout << "Fit status: " << fitr << endl;
+    cout << "Fit status, is valid: " << fitr->IsValid() << endl;
+    cout << "Fit status, Status: " << fitr->Status() << endl;
   }
 
   // Use the determined sigma value to calculate the fit range
   double sigma = f1->GetParameter(2);
 
   // In case the second fit failed as well, simply use the RMS of the histo
-  if(!fitr->IsValid()) 
-  {
+  if (!fitr->IsValid()) {
 
-	double corerange=3*histo->GetRMS();
+    double corerange = 3 * histo->GetRMS();
 
-	// Limit histo range to core of distribution
-	histo->GetXaxis()->SetRangeUser(-corerange,corerange);
+    // Limit histo range to core of distribution
+    histo->GetXaxis()->SetRangeUser(-corerange, corerange);
 
-	// Get RMS of core distribution without outliers
-	sigma = histo->GetRMS();
-    cout<<"Fall back fit of angle distribution failed with status: "<<fitr<<"! Just use RMS of histogram."<<endl;
+    // Get RMS of core distribution without outliers
+    sigma = histo->GetRMS();
+    cout << "Fall back fit of angle distribution failed with status: " << fitr
+         << "! Just use RMS of histogram." << endl;
   }
 
-  fitrange=sqrt(2.0*rangevalue)*sigma;
-  cout<<endl<<"Determined fit range: " << fitrange<<endl<<endl;
+  fitrange = sqrt(2.0 * rangevalue) * sigma;
+  cout << endl << "Determined fit range: " << fitrange << endl << endl;
 
   delete h2;
   delete f1;
   return fitrange;
 }
 
-  // Function to fit the MSC angle histograms and fill the map histograms
-  void fithisto( TFile* file, int fittype, double maxchi2ndof_fit, int mintracks, double rangevalue, int col, int numcol, int row,int numrow, double* parameters, TString fitoptions)
-  { 
-	// Calculate number of parameters
-	int num_parameters = 8;
-	cout<<endl<<endl<<"Start fitting procedure for column "<<col<<" and row "<<row<<" !"<<endl;
-
-	// Open the histograms
- 
-	// histogram name
-	TString histoname;
-	histoname.Form("area(%i,%i)",col,row);
-	file->cd("");
-	TH1F* histogram1=(TH1F*)file->Get("raw/theta1_"+histoname);
-	TH1F* histogram2=(TH1F*)file->Get("raw/theta2_"+histoname);
-	TH1F* histogramu=(TH1F*)file->Get("raw/scatteroffset_u_"+histoname);
-	TH1F* histogramv=(TH1F*)file->Get("raw/scatteroffset_v_"+histoname);
-	TH1F* histogramsum=(TH1F*)file->Get("raw/sumhisto_"+histoname);
-
-	// Get vertex histos
-	TH1F* histogram_vertex_w=(TH1F*)file->Get("raw/vertex_w_"+histoname);
-	TH1F* histogram_vertex_chi2=(TH1F*)file->Get("raw/vertex_chi2_"+histoname);
-	TH1F* histogram_vertex_multiplicity=(TH1F*)file->Get("raw/vertex_multiplicity_"+histoname);
-
-	TH1F* histogram_resu_vtx_trk=(TH1F*)file->Get("raw/res_u_vtx_trk_"+histoname);
-	TH1F* histogram_resv_vtx_trk=(TH1F*)file->Get("raw/res_v_vtx_trk_"+histoname);
-
-
-	double uncorrected_mean1=histogram1->GetMean();
-	double uncorrected_mean2=histogram2->GetMean();
-
-    if((file->Get("raw/theta1_uncorrected_"+histoname)!=nullptr)&&(file->Get("raw/theta2_uncorrected_"+histoname)!=nullptr))
-	{
-
-		TH1F* histogram_uncorrected1=(TH1F*)file->Get("raw/theta1_uncorrected_"+histoname);
-		TH1F* histogram_uncorrected2=(TH1F*)file->Get("raw/theta2_uncorrected_"+histoname);
-
-		if((histogram_uncorrected1->GetEntries()>0)&&(histogram_uncorrected2->GetEntries()>0))
-		{
-			uncorrected_mean1=histogram_uncorrected1->GetMean();
-			uncorrected_mean2=histogram_uncorrected2->GetMean();
-		}
-
-		else
-		{
-
-			uncorrected_mean1=0;
-			uncorrected_mean2=0;
-
-		}
-		
-	}
-
-	file->cd("");
-	file->cd("fit");
-
-	// Make a copy of the histogram
-	TH1F* fithistogram1=(TH1F*)histogram1->Clone("fithisto");
-	TH1F* fithistogram2=(TH1F*)histogram2->Clone("fithisto2");
-	TH1F* fithistogramsum=(TH1F*)histogramsum->Clone("fithistosum");
-
-	// Fit result parameters of both angle distribution
-
-	// mean of the gaussian and its error
-
-	double mean1=0., mean2=0., meansum=0.;
-
-	// quality parameters of the fit
-	double chi2ndof1,chi2ndof2,chi2ndofsum;
-    double prob1=0.,prob2=0.,probsum=0.;
-
-	int status1=0,status2=0,statussum=0;
-
-	// X/X0 values from the fit
-    double XX01=0.,XX02=0.,XX0sum=0.;
-    double XX0err1=0.,XX0err2=0.,XX0errsum=0.;
-
-	// vertex parameters
-	double vertex_chi2,vertex_w_mean,vertex_w_rms;
-	double vertex_multiplicity;
-	double vtx_trk_res_u_mean,vtx_trk_res_v_mean,vtx_trk_res_u_rms,vtx_trk_res_v_rms;
-
-	// Variables used to calculate the fit range of the histograms
-	double fitrange;
-
-	double scatteroffset_u_mean;
-	double scatteroffset_v_mean;
-	double scatteroffset_u_rms;
-	double scatteroffset_v_rms;
-
-    int NumberOfTracks=int(fithistogram1->GetEntries());
-
-	// Get residual values for this image bin from histogram
-	scatteroffset_u_mean=histogramu->GetMean();
-	scatteroffset_v_mean=histogramv->GetMean();
-	scatteroffset_u_rms=histogramu->GetRMS();
-	scatteroffset_v_rms=histogramv->GetRMS();
-
-	// Get vertex values for this image bin from histogram
-	vertex_w_mean=histogram_vertex_w->GetMean();
-	vertex_w_rms=histogram_vertex_w->GetRMS();
-	vertex_chi2=histogram_vertex_chi2->GetMean();
-	vertex_multiplicity=histogram_vertex_multiplicity->GetMean();
-	vtx_trk_res_u_mean=histogram_resu_vtx_trk->GetMean();
-	vtx_trk_res_v_mean=histogram_resv_vtx_trk->GetMean();
-	vtx_trk_res_u_rms=histogram_resu_vtx_trk->GetRMS();
-	vtx_trk_res_v_rms=histogram_resv_vtx_trk->GetRMS();
-
-	// Employ fits only if the number of tracks is larger than
-    // a predefined value
-	if(NumberOfTracks>mintracks)
-	{
-		//Fit histogram with Highland model
-
-		// Fit functions definition
-		// The fit range is determined from the RMS value of the histogram
-		// The Highland model is validated up to the width sigma_1/e, where the 
-		// distribution reaches the values max/e. The fit range should be therefore limited to 
-		// The intervall [-sqrt(2)*RMS,+sqrt(2)*RMS]
-		fitrange =DetermineFitrange(fithistogram1,rangevalue);
-		TF1 *fit1 = new TF1("theta1_fit",highlandfunction,-fitrange,fitrange,num_parameters);
-
-		fitrange =DetermineFitrange(fithistogram2,rangevalue);
-		TF1 *fit2 = new TF1("theta2_fit",highlandfunction,-fitrange,fitrange,num_parameters);
-
-		fitrange =DetermineFitrange(fithistogramsum,rangevalue);
-		TF1 *fitsum = new TF1("thetasum_fit",highlandfunction,-fitrange,fitrange,num_parameters);
-
-
-
-		// Set starting values
-   		fit1->SetParameters(parameters);
-   		fit2->SetParameters(parameters);
-   		fitsum->SetParameters(parameters);
-
-		for(int i=0; i<num_parameters;i++)
-		{
-			if(i!=3&&i!=5)
-			{
-   				fit1->FixParameter(i,parameters[i]);
-   				fit2->FixParameter(i,parameters[i]);
-   				fitsum->FixParameter(i,parameters[i]);
-			}
-		}	
-
-		// The mean value of the distribution should not be shifted more than 100 µrad -> limit parameter 6
-		// Fix mean value
-/*   		fit1->SetParLimits(6,-0.0001,0.0001);
-   		fit2->SetParLimits(6,-0.0001,0.0001);
-   		fitsum->SetParLimits(6,-0.0001,0.0001);
-   		fit1->SetParError(6,0.00001);
-   		fit2->SetParError(6,0.00001);
-   		fitsum->SetParError(6,0.00001);*/
-
-		// The Starting step size and limits of X/X0
-   		fit1->SetParLimits(3,0.00001,200.0);
-   		fit2->SetParLimits(3,0.00001,200.0);
-   		fitsum->SetParLimits(3,0.00001,200.0);
-   		fit1->SetParError(3,0.001);
-   		fit2->SetParError(3,0.001);
-   		fitsum->SetParError(3,0.001);
-
-		// Step size of norm
-   		fit1->SetParError(5,10.0);
-   		fit2->SetParError(5,10.0);
-   		fitsum->SetParError(5,10.0);
-
-		cout<<endl<<endl<<"Fit of first angle distribution! "<<endl;
-		TFitResultPtr fitr1=fithistogram1->Fit("theta1_fit",fitoptions);
-		cout<<endl<<"Results: "<<endl;
-		cout<<"Fit is valid: "<<fitr1->IsValid()<<endl;
-		cout<<"Fit status: "<<fitr1->Status()<<endl;
-		if(!fitr1->IsValid())
-		{
-			cout<<endl<<"Fit of first angle distribution failed with status: "<<fitr1<<endl;
-			cout<<"Repeat fit "<<endl;
-			fitr1=fithistogram1->Fit("theta1_fit",fitoptions);
-			cout<<endl<<"Results: "<<endl;
-		    cout<<endl<<"Fit is valid: "<<fitr1->IsValid()<<endl;
-		    cout<<"Fit status: "<<fitr1->Status()<<endl;
-			if(!fitr1->IsValid()) 
-			{
-				cout<<"Fit of first angle distribution failed a second time with status: "<<fitr1<<" !"<< " X/X0 cannot be calculated!"<<endl<<endl<<endl;
-				status1=2;
-			}
-		}
-
-		cout<<endl<<endl<<"Fit of second angle distribution! "<<endl;
-		TFitResultPtr fitr2=fithistogram2->Fit("theta2_fit",fitoptions);
-		cout<<endl<<"Results: "<<endl;
-		cout<<"Fit is valid: "<<fitr2->IsValid()<<endl;
-		cout<<"Fit status: "<<fitr2->Status()<<endl;
-		if(!fitr2->IsValid())
-		{
-			cout<<"Fit of second angle distribution failed with status: "<<fitr2<<endl;
-			cout<<"Repeat fit "<<endl;
-			fitr2=fithistogram2->Fit("theta2_fit",fitoptions);
-			cout<<endl<<"Results: "<<endl;
-		    cout<<endl<<"Fit is valid: "<<fitr2->IsValid()<<endl;
-		    cout<<"Fit status: "<<fitr2->Status()<<endl;
-			if(!fitr2->IsValid()) 
-			{
-				cout<<"Fit of second angle distribution failed a second time with status: "<<fitr2<<" !"<< " X/X0 cannot be calculated!"<<endl<<endl<<endl;
-				status2=2;
-			}
-		}
-
-		cout<<endl<<endl<<"Fit of combined angle distribution! "<<endl;
-		TFitResultPtr fitrsum=fithistogramsum->Fit("thetasum_fit",fitoptions);
-		cout<<endl<<"Results: "<<endl;
-		cout<<"Fit is valid: "<<fitrsum->IsValid()<<endl;
-		cout<<"Fit statuss: "<<fitrsum->Status()<<endl;
-		if(!fitrsum->IsValid())
-		{
-			cout<<"Fit of combined angle distribution failed with status: "<<fitrsum<<endl;
-			cout<<"Repeat fit "<<endl;
-			fitrsum=fithistogramsum->Fit("thetasum_fit",fitoptions);
-		    cout<<endl<<"Fit is valid: "<<fitrsum->IsValid()<<endl;
-		    cout<<"Fit status: "<<fitrsum->Status()<<endl;
-			if(!fitrsum->IsValid()) 
-			{
-				cout<<"Fit of combined angle distribution failed a second time with status: "<<fitrsum<<" !"<< " X/X0 cannot be calculated!"<<endl<<endl<<endl;
-				statussum=2;
-			}
-		}
-
-		// Names of the 8 local parameters
-		const int num_parameters=8;
-		TString name[num_parameters];
-		name[0]="E";
-		name[1]="z[e]";
-		name[2]="m";
-		name[3]="X/X0";
-		name[4]="reco err";
-		name[5]="norm";
-		name[6]="mean";
-		name[7]="epsilon";
-
-		gStyle->SetOptFit(1111);
-
-		for(int iname=0;iname<num_parameters;iname++) 
-		{
-			fit1->SetParName(iname,name[iname]);			
-			fit2->SetParName(iname,name[iname]);
-			fitsum->SetParName(iname,name[iname]);
-		}
-
-		// Chi2ndof of the fit
-		chi2ndof1=fit1->GetChisquare()/(fit1->GetNDF()*1.0);
-		chi2ndof2=fit2->GetChisquare()/(fit2->GetNDF()*1.0);
-		chi2ndofsum=fitsum->GetChisquare()/(fitsum->GetNDF()*1.0);	
-
-		// define chi2 cut, if the cut value is below 0 the cut is deactivated
-		double chi2_cut=maxchi2ndof_fit;
-
-		if((chi2_cut > 0)&&(chi2ndofsum>chi2_cut)) statussum=1;
-		if((chi2_cut > 0)&&(chi2ndof1>chi2_cut)) status1=1;
-		if((chi2_cut > 0)&&(chi2ndof2>chi2_cut)) status2=1;
-
-		// Use the chi2 values for quality cuts
-		// In case the fittype is 0 the two projected angle distributions are used seperately to determine the radiation length
-		// Accordingly, the chi2 and quality cuts have to be used on the fit of the two projected distributions
-		if((fittype==0) && ( ((chi2_cut > 0)&&((chi2ndof1+chi2ndof2)>chi2_cut*2.0))||(!fitr1->IsValid())||(!fitr2->IsValid())))
-		{
-			cout<<endl<<"Something went wrong with fit (fittype: "<<fittype<<" ), X/X0 could not be determined!"<<endl<<endl;
-			// The fit didn't work: Dont trust this X/X0 and theta mean value
-			XX01=0.0;
-			XX0err1=99.0;
-			XX02=0.0;
-			XX0err2=99.0;
-			mean1=0;
-			mean2=0;
-			// save the fitted histograms
-			file->cd("");
-			file->cd("badfit");
-			fithistogram1->GetListOfFunctions()->Add(fit1);
-			fithistogram1->Write("theta1_"+histoname+"_fit");
-			fithistogram2->GetListOfFunctions()->Add(fit2);
-			fithistogram2->Write("theta2_"+histoname+"_fit");
-			fithistogramsum->GetListOfFunctions()->Add(fitsum);
-			fithistogramsum->Write("sumhisto_"+histoname+"_fit");
-
-		}
-
-		// Use the chi2 values for quality cuts
-		// In case the fittype is 1 the merged projected angle distribution is used to determine the radiation length
-		// Accordingly, the chi2 and quality cuts have to be used on the fit of the two merged distribution
-		else if ((fittype==1) && ( ((chi2_cut > 0)&&(chi2ndofsum>chi2_cut))||(!fitrsum->IsValid())))
-		{
-			cout<<endl<<"Something went wrong with fit (fittype: "<<fittype<<" ), X/X0 could not be determined!"<<endl<<endl;
-			// The fit didn't work: Dont trust this X/X0 and theta mean value
-			XX0sum=0.0;
-			XX0errsum=99.0;
-			mean1=0;
-			mean2=0;
-
-			// save the fitted histograms
-			file->cd("");
-			file->cd("badfit");
-			fithistogram1->GetListOfFunctions()->Add(fit1);
-			fithistogram1->Write("theta1_"+histoname+"_fit");
-			fithistogram2->GetListOfFunctions()->Add(fit2);
-			fithistogram2->Write("theta2_"+histoname+"_fit");
-			fithistogramsum->GetListOfFunctions()->Add(fitsum);
-			fithistogramsum->Write("sumhisto_"+histoname+"_fit");
-
-		}
-
-		else
-		{
-
-			cout<<endl<<"Determine X/X0!"<<endl<<endl;
-			// Extract Fit parameters of the first distribution
-			XX01=fit1->GetParameter(3);
-			XX0err1=fit1->GetParError(3);
-			mean1=fit1->GetParameter(6);
-			prob1=fit1->GetProb();
-
-			// Extract Fit parameters of the second distribution
-			XX02=fit2->GetParameter(3);
-			XX0err2=fit2->GetParError(3);
-			mean2=fit2->GetParameter(6);
-			prob2=fit2->GetProb();
-
-			// Extract Fit parameters of the merged distribution
-			XX0sum=fitsum->GetParameter(3);
-			XX0errsum=fitsum->GetParError(3);
-			meansum=fitsum->GetParameter(6);
-			probsum=fitsum->GetProb();
-
-			// save the fitted histograms
-			file->cd("");
-			file->cd("fit");
-			fithistogram1->GetListOfFunctions()->Add(fit1);
-			fithistogram1->Write("theta1_"+histoname+"_fit");
-			fithistogram2->GetListOfFunctions()->Add(fit2);
-			fithistogram2->Write("theta2_"+histoname+"_fit");
-			fithistogramsum->GetListOfFunctions()->Add(fitsum);
-			fithistogramsum->Write("sumhisto_"+histoname+"_fit");
-		}
-
-
-
-	}
-
-	// If the histogram has too few tracks for the fit, just set all relevant fit results to unrealistic values
-	else
-	{
-
-		XX01=-1.0;
-		XX0err1=99.0;
-		mean1=99.0;
-		chi2ndof1=-99.0;
-		prob1=-1.0;
-
-		XX02=-1.0;
-		XX0err2=99.0;
-		mean2=99.0;
-		chi2ndof2=-99.0;
-		prob2=-1.0;
-
-		XX0sum=-1.0;
-		XX0errsum=99.0;
-		meansum=99.0;
-		chi2ndofsum=-99.0;
-		probsum=-1.0;
-
-		statussum=3;
-		status1=3;
-		status2=3;
-
-		cout<<"Too few tracks in this pixel... no fit done!"<<endl;
-	}
-
-	// Go to results directory
-	file->cd("");
-	file->cd("result");
-
-	// Get the chi2 histos
-	TH2F* chi2ndofsummap=(TH2F*)file->Get("result/fitDQM/fitsumchi2ndof_image");
-	TH2F* chi2ndof1map=(TH2F*)file->Get("result/fitDQM/fit1chi2ndof_image");
-	TH2F* chi2ndof2map=(TH2F*)file->Get("result/fitDQM/fit2chi2ndof_image");
-	TH1F* chi2ndofsumhisto=(TH1F*)file->Get("result/fitDQM/fitsumchi2ndof_histo");
-	TH1F* chi2ndof1histo=(TH1F*)file->Get("result/fitDQM/fit1chi2ndof_histo");
-	TH1F* chi2ndof2histo=(TH1F*)file->Get("result/fitDQM/fit2chi2ndof_histo");
-
-	TH2F* fitstatus_summap=(TH2F*)file->Get("result/fitDQM/fitsumstatus_image");
-	TH2F* fitstatus_1map=(TH2F*)file->Get("result/fitDQM/fit1status_image");
-	TH2F* fitstatus_2map=(TH2F*)file->Get("result/fitDQM/fit2status_image");
-    TH1F* fitstatus_sumhisto=(TH1F*)file->Get("result/fitDQM/fitsumstatus_histo");
-    TH1F* fitstatus_1histo=(TH1F*)file->Get("result/fitDQM/fit1status_histo");
-    TH1F* fitstatus_2histo=(TH1F*)file->Get("result/fitDQM/fit2status_histo");
-
-	// Get the mean histogram
-	TH2F* meanmap1=(TH2F*)file->Get("result/theta1mean_image");
-	TH2F* meanmap2=(TH2F*)file->Get("result/theta2mean_image");
-	TH2F* correctedmeanmap1=(TH2F*)file->Get("result/correctedtheta1mean_image");
-	TH2F* correctedmeanmap2=(TH2F*)file->Get("result/correctedtheta2mean_image");
-
-	// Get the mean residual histograms
-	TH2F* scatteroffset_u_meanmap=(TH2F*)file->Get("result/scatteroffset_umean_image");
-	TH2F* scatteroffset_v_meanmap=(TH2F*)file->Get("result/scatteroffset_vmean_image");
-
-	// Get the residual rms histogram
-	TH2F* scatteroffset_u_rmsmap=(TH2F*)file->Get("result/scatteroffset_urms_image");
-	TH2F* scatteroffset_v_rmsmap=(TH2F*)file->Get("result/scatteroffset_vrms_image");
-
-    // Get the momentum 2D histogram
-	TH2F* mommap=(TH2F*)file->Get("result/BE_image");
-
-    // Get the vertex coordiante mean histograms
-	TH2F* vertex_w_mean_map=(TH2F*)file->Get("result/vertex/vertex_w_image");
-	TH2F* vertex_w_rms_map=(TH2F*)file->Get("result/vertex/vertex_w_rms_image");
-	TH2F* vertex_chi2_map=(TH2F*)file->Get("result/vertex/vertex_chi2_image");
-
-    // Get the vertex multiplicity histogram
-	TH2F* vertex_multiplicity_map=(TH2F*)file->Get("result/vertex/vertex_multiplicity_image");
-
-	// Get the mean u residual (vertex  vs track) histogram
-	TH2F* u_res_mean_vtx_trk_map=(TH2F*)file->Get("result/vertex/u_res_mean_vtx_trk_image");
-
-	// Get the mean u residual (vertex  vs track) histogram
-	TH2F* v_res_mean_vtx_trk_map=(TH2F*)file->Get("result/vertex/v_res_mean_vtx_trk_image");
-
-	// Get the u residual rms (vertex  vs track) histogram
-	TH2F* u_res_rms_vtx_trk_map=(TH2F*)file->Get("result/vertex/u_res_rms_vtx_trk_image");
-
-	// Get the u residual rms (vertex  vs track) histogram
-	TH2F* v_res_rms_vtx_trk_map=(TH2F*)file->Get("result/vertex/v_res_rms_vtx_trk_image");
-
-	// Fill both maps containing the theta means
-	meanmap1->SetBinContent(col+1,row+1,uncorrected_mean1);
-	meanmap2->SetBinContent(col+1,row+1,uncorrected_mean2);
-
-	// Fill both maps containing the theta means
-	correctedmeanmap1->SetBinContent(col+1,row+1,mean1);
-	correctedmeanmap2->SetBinContent(col+1,row+1,mean2);
-
-	// Fill both maps containing the residual means
-	scatteroffset_u_meanmap->SetBinContent(col+1,row+1,scatteroffset_u_mean*1E3);
-	scatteroffset_v_meanmap->SetBinContent(col+1,row+1,scatteroffset_v_mean*1E3);
-	scatteroffset_u_rmsmap->SetBinContent(col+1,row+1,scatteroffset_u_rms*1E3);
-	scatteroffset_v_rmsmap->SetBinContent(col+1,row+1,scatteroffset_v_rms*1E3);
-
-    chi2ndof1map->SetBinContent(col+1,row+1,chi2ndof1);
-    chi2ndof1histo->Fill(chi2ndof1);
-	chi2ndof2map->SetBinContent(col+1,row+1,chi2ndof2);
-    chi2ndof2histo->Fill(chi2ndof2);
-	chi2ndofsummap->SetBinContent(col+1,row+1,chi2ndofsum);
-    chi2ndofsumhisto->Fill(chi2ndofsum);
-
-    fitstatus_sumhisto->Fill(statussum);
-	fitstatus_summap->SetBinContent(col+1,row+1,statussum);
-    fitstatus_1histo->Fill(status1);
-	fitstatus_1map->SetBinContent(col+1,row+1,status1);
-    fitstatus_2histo->Fill(status2);
-	fitstatus_2map->SetBinContent(col+1,row+1,status2);
-
-    // Fill the momentum image
-	mommap->SetBinContent(col+1,row+1,parameters[0]);
-
-    // Fill the vertex images
-	vertex_w_mean_map->SetBinContent(col+1,row+1,vertex_w_mean);
-	vertex_w_rms_map->SetBinContent(col+1,row+1,vertex_w_rms);
-	vertex_chi2_map->SetBinContent(col+1,row+1,vertex_chi2);
-	vertex_multiplicity_map->SetBinContent(col+1,row+1,vertex_multiplicity);
-	// Fill both maps containing the residual means and rms
-	u_res_mean_vtx_trk_map->SetBinContent(col+1,row+1,vtx_trk_res_u_mean);
-	v_res_mean_vtx_trk_map->SetBinContent(col+1,row+1,vtx_trk_res_v_mean);
-	u_res_rms_vtx_trk_map->SetBinContent(col+1,row+1,vtx_trk_res_u_rms);
-	v_res_rms_vtx_trk_map->SetBinContent(col+1,row+1,vtx_trk_res_v_rms);
-
-	double X0;
-	double X0err;
-
-	// Fill histograms with mean X0 (in %) and mean absolute X0 error (in %) of both fits
-
-
-	// Fitting type:
-	// 0: gaussian fit function with cuts on the tails, use the two distributions seperately to fit X/X0 and calculate the sum
-	// 1: gaussian fit function with cuts on the tails, use the merged distribution to fit X/X0
-	//		
-	if(fittype==0)
-	{
-		X0=100.0*(XX01+XX02)/2.0;
-	    X0err=100.0*sqrt(pow(XX0err1,2)+pow(XX0err2,2))/2.0;
-
-	}
-
-
-    // Merged theta distribution fit
-	else
-	{
-		X0=100.0*XX0sum;
-	    X0err=100.0*XX0errsum;
-
-	}
-
-	// Get the X0 histogram
-	TH2F* X0map=(TH2F*)file->Get("result/x0_image");
-	cout<<"X0 in area "<<col<<","<<row<<" is: "<<X0<<"%"<<endl;
-	X0map->SetBinContent(col+1,row+1,X0);
-
-	// Get the X0 fit error histogram
-	TH2F* X0errmap=(TH2F*)file->Get("result/x0err_image");
-	cout<<"X0 error in area "<<col<<","<<row<<" is: "<<X0err<<"%"<<endl;
-	X0errmap->SetBinContent(col+1,row+1,X0err);
-
-	// Get the relative X0 fit error histogram
-	TH2F* X0relerrmap=(TH2F*)file->Get("result/x0relerr_image");
-
-	double X0relerr;
-
-	// Fill it with mean relative X0 error (in %) of both fits
-	if(X0!=0.0)
-	{
-		X0relerr=X0err/X0*100.0;
-	}
-
-	else
-	{
-		X0relerr=99.0;
-	}
-	X0relerrmap->SetBinContent(col+1,row+1,X0relerr);
-
-	// Get the # tracks map
-	TH2F* nummap=(TH2F*)file->Get("result/beamspot");
-
-	// Fill it with mean prob of both fits
-	nummap->SetBinContent(col+1,row+1,NumberOfTracks);
-
-	// Get the prob map (2D) histogram (theta1)
-	TH2F* probmap1=(TH2F*)file->Get("result/fitDQM/fit1prob_image");
-
-	// Get the prob histogram (theta1)
-	TH1F* probhisto1=(TH1F*)file->Get("result/fitDQM/fit1prob_histo");
-
-	probmap1->SetBinContent(col+1,row+1,prob1);
-	probhisto1->Fill(prob1);
-
-	// Get the prob map (2D) histogram (theta2)
-	TH2F* probmap2=(TH2F*)file->Get("result/fitDQM/fit2prob_image");
-
-	// Get the prob histogram (theta2)
-	TH1F* probhisto2=(TH1F*)file->Get("result/fitDQM/fit2prob_histo");
-
-	probmap2->SetBinContent(col+1,row+1,prob2);
-	probhisto2->Fill(prob2);
-
-	// Get the prob map (2D) histogram (sum)
-	TH2F* probmapsum=(TH2F*)file->Get("result/fitDQM/fitsumprob_image");
-
-	// Get the prob histogram (sum)
-	TH1F* probhistosum=(TH1F*)file->Get("result/fitDQM/fitsumprob_histo");
-
-	probmapsum->SetBinContent(col+1,row+1,probsum);
-	probhistosum->Fill(probsum);
-
-	// Write the histogram to the rootfile
-	if(col==numcol-1&&row==numrow-1)
-	{
-
-	    file->cd("");
-	    file->cd("result/fitDQM");
-
-		chi2ndof1map->Write();
-		chi2ndof2map->Write();
-		chi2ndofsummap->Write();
-
-        chi2ndof1histo->Write();
-        chi2ndof2histo->Write();
-        chi2ndofsumhisto->Write();
-
-        fitstatus_summap->Write();
-        fitstatus_1map->Write();
-        fitstatus_2map->Write();
-
-        fitstatus_sumhisto->Write();
-        fitstatus_1histo->Write();
-        fitstatus_2histo->Write();
-
-		probmap1->Write();
-		probmap2->Write();
-		probmapsum->Write();
-
-		probhisto1->Write();
-		probhisto2->Write();
-		probhistosum->Write();
-
-	    file->cd("");
-	    file->cd("result");
-
-		X0map->Write();
-		X0errmap->Write();
-        X0relerrmap->Write();
-
-		meanmap1->Write();
-		meanmap2->Write();
-		correctedmeanmap1->Write();
-		correctedmeanmap2->Write();
-
-		scatteroffset_u_meanmap->Write();
-		scatteroffset_v_meanmap->Write();
-		scatteroffset_u_rmsmap->Write();
-		scatteroffset_v_rmsmap->Write();
-
-		nummap->Write();
-		mommap->Write();
-
-	    file->cd("");
-	    file->cd("result/vertex");
-
-		vertex_w_mean_map->Write();
-		vertex_w_rms_map->Write();
-		vertex_chi2_map->Write();
-		vertex_multiplicity_map->Write();
-		u_res_mean_vtx_trk_map->Write();
-		v_res_mean_vtx_trk_map->Write();
-		u_res_rms_vtx_trk_map->Write();
-		v_res_rms_vtx_trk_map->Write();
-
-	}
-
-	//delete all histograms from memory
-	fithistogram1->SetDirectory(gROOT);
-	delete fithistogram1;
-
-	fithistogram2->SetDirectory(gROOT);
-	delete fithistogram2;
-
-	fithistogramsum->SetDirectory(gROOT);
-	delete fithistogramsum;
-
-	//delete all histograms from memory
-	histogram1->SetDirectory(gROOT);
-	delete histogram1;
-
-	histogram2->SetDirectory(gROOT);
-	delete histogram2;
-
-	//delete all histograms from memory
-	histogramu->SetDirectory(gROOT);
-	delete histogramu;
-
-	histogramv->SetDirectory(gROOT);
-	delete histogramv;
-
-	histogramsum->SetDirectory(gROOT);
-	delete histogramsum;
-
-    histogram_vertex_w->SetDirectory(gROOT);
-    delete histogram_vertex_w;
-
-    histogram_vertex_chi2->SetDirectory(gROOT);
-    delete histogram_vertex_chi2;
-
-    histogram_resu_vtx_trk->SetDirectory(gROOT);
-    delete histogram_resu_vtx_trk;
-
-    histogram_resv_vtx_trk->SetDirectory(gROOT);
-    delete histogram_resv_vtx_trk;
+// Function to fit the MSC angle histograms and fill the map histograms
+void fithisto(TFile *file, int fittype, double maxchi2ndof_fit, int mintracks,
+              double rangevalue, int col, int numcol, int row, int numrow,
+              double *parameters, TString fitoptions) {
+  // Calculate number of parameters
+  int num_parameters = 8;
+  cout << endl
+       << endl
+       << "Start fitting procedure for column " << col << " and row " << row
+       << " !" << endl;
+
+  // Open the histograms
+
+  // histogram name
+  TString histoname;
+  histoname.Form("area(%i,%i)", col, row);
+  file->cd("");
+  TH1F *histogram1 = (TH1F *)file->Get("raw/theta1_" + histoname);
+  TH1F *histogram2 = (TH1F *)file->Get("raw/theta2_" + histoname);
+  TH1F *histogramu = (TH1F *)file->Get("raw/scatteroffset_u_" + histoname);
+  TH1F *histogramv = (TH1F *)file->Get("raw/scatteroffset_v_" + histoname);
+  TH1F *histogramsum = (TH1F *)file->Get("raw/sumhisto_" + histoname);
+
+  // Get vertex histos
+  TH1F *histogram_vertex_w = (TH1F *)file->Get("raw/vertex_w_" + histoname);
+  TH1F *histogram_vertex_chi2 =
+      (TH1F *)file->Get("raw/vertex_chi2_" + histoname);
+  TH1F *histogram_vertex_multiplicity =
+      (TH1F *)file->Get("raw/vertex_multiplicity_" + histoname);
+
+  TH1F *histogram_resu_vtx_trk =
+      (TH1F *)file->Get("raw/res_u_vtx_trk_" + histoname);
+  TH1F *histogram_resv_vtx_trk =
+      (TH1F *)file->Get("raw/res_v_vtx_trk_" + histoname);
+
+  double uncorrected_mean1 = histogram1->GetMean();
+  double uncorrected_mean2 = histogram2->GetMean();
+
+  if ((file->Get("raw/theta1_uncorrected_" + histoname) != nullptr) &&
+      (file->Get("raw/theta2_uncorrected_" + histoname) != nullptr)) {
+
+    TH1F *histogram_uncorrected1 =
+        (TH1F *)file->Get("raw/theta1_uncorrected_" + histoname);
+    TH1F *histogram_uncorrected2 =
+        (TH1F *)file->Get("raw/theta2_uncorrected_" + histoname);
+
+    if ((histogram_uncorrected1->GetEntries() > 0) &&
+        (histogram_uncorrected2->GetEntries() > 0)) {
+      uncorrected_mean1 = histogram_uncorrected1->GetMean();
+      uncorrected_mean2 = histogram_uncorrected2->GetMean();
+    }
+
+    else {
+
+      uncorrected_mean1 = 0;
+      uncorrected_mean2 = 0;
+    }
+  }
+
+  file->cd("");
+  file->cd("fit");
+
+  // Make a copy of the histogram
+  TH1F *fithistogram1 = (TH1F *)histogram1->Clone("fithisto");
+  TH1F *fithistogram2 = (TH1F *)histogram2->Clone("fithisto2");
+  TH1F *fithistogramsum = (TH1F *)histogramsum->Clone("fithistosum");
+
+  // Fit result parameters of both angle distribution
+
+  // mean of the gaussian and its error
+
+  double mean1 = 0., mean2 = 0., meansum = 0.;
+
+  // quality parameters of the fit
+  double chi2ndof1, chi2ndof2, chi2ndofsum;
+  double prob1 = 0., prob2 = 0., probsum = 0.;
+
+  int status1 = 0, status2 = 0, statussum = 0;
+
+  // X/X0 values from the fit
+  double XX01 = 0., XX02 = 0., XX0sum = 0.;
+  double XX0err1 = 0., XX0err2 = 0., XX0errsum = 0.;
+
+  // vertex parameters
+  double vertex_chi2, vertex_w_mean, vertex_w_rms;
+  double vertex_multiplicity;
+  double vtx_trk_res_u_mean, vtx_trk_res_v_mean, vtx_trk_res_u_rms,
+      vtx_trk_res_v_rms;
+
+  // Variables used to calculate the fit range of the histograms
+  double fitrange;
+
+  double scatteroffset_u_mean;
+  double scatteroffset_v_mean;
+  double scatteroffset_u_rms;
+  double scatteroffset_v_rms;
+
+  int NumberOfTracks = int(fithistogram1->GetEntries());
+
+  // Get residual values for this image bin from histogram
+  scatteroffset_u_mean = histogramu->GetMean();
+  scatteroffset_v_mean = histogramv->GetMean();
+  scatteroffset_u_rms = histogramu->GetRMS();
+  scatteroffset_v_rms = histogramv->GetRMS();
+
+  // Get vertex values for this image bin from histogram
+  vertex_w_mean = histogram_vertex_w->GetMean();
+  vertex_w_rms = histogram_vertex_w->GetRMS();
+  vertex_chi2 = histogram_vertex_chi2->GetMean();
+  vertex_multiplicity = histogram_vertex_multiplicity->GetMean();
+  vtx_trk_res_u_mean = histogram_resu_vtx_trk->GetMean();
+  vtx_trk_res_v_mean = histogram_resv_vtx_trk->GetMean();
+  vtx_trk_res_u_rms = histogram_resu_vtx_trk->GetRMS();
+  vtx_trk_res_v_rms = histogram_resv_vtx_trk->GetRMS();
+
+  // Employ fits only if the number of tracks is larger than
+  // a predefined value
+  if (NumberOfTracks > mintracks) {
+    // Fit histogram with Highland model
+
+    // Fit functions definition
+    // The fit range is determined from the RMS value of the histogram
+    // The Highland model is validated up to the width sigma_1/e, where the
+    // distribution reaches the values max/e. The fit range should be therefore
+    // limited to
+    // The intervall [-sqrt(2)*RMS,+sqrt(2)*RMS]
+    fitrange = DetermineFitrange(fithistogram1, rangevalue);
+    TF1 *fit1 = new TF1("theta1_fit", highlandfunction, -fitrange, fitrange,
+                        num_parameters);
+
+    fitrange = DetermineFitrange(fithistogram2, rangevalue);
+    TF1 *fit2 = new TF1("theta2_fit", highlandfunction, -fitrange, fitrange,
+                        num_parameters);
+
+    fitrange = DetermineFitrange(fithistogramsum, rangevalue);
+    TF1 *fitsum = new TF1("thetasum_fit", highlandfunction, -fitrange, fitrange,
+                          num_parameters);
+
+    // Set starting values
+    fit1->SetParameters(parameters);
+    fit2->SetParameters(parameters);
+    fitsum->SetParameters(parameters);
+
+    for (int i = 0; i < num_parameters; i++) {
+      if (i != 3 && i != 5) {
+        fit1->FixParameter(i, parameters[i]);
+        fit2->FixParameter(i, parameters[i]);
+        fitsum->FixParameter(i, parameters[i]);
+      }
+    }
+
+    // The mean value of the distribution should not be shifted more than 100
+    // µrad -> limit parameter 6
+    // Fix mean value
+    /*   		fit1->SetParLimits(6,-0.0001,0.0001);
+                    fit2->SetParLimits(6,-0.0001,0.0001);
+                    fitsum->SetParLimits(6,-0.0001,0.0001);
+                    fit1->SetParError(6,0.00001);
+                    fit2->SetParError(6,0.00001);
+                    fitsum->SetParError(6,0.00001);*/
+
+    // The Starting step size and limits of X/X0
+    fit1->SetParLimits(3, 0.00001, 200.0);
+    fit2->SetParLimits(3, 0.00001, 200.0);
+    fitsum->SetParLimits(3, 0.00001, 200.0);
+    fit1->SetParError(3, 0.001);
+    fit2->SetParError(3, 0.001);
+    fitsum->SetParError(3, 0.001);
+
+    // Step size of norm
+    fit1->SetParError(5, 10.0);
+    fit2->SetParError(5, 10.0);
+    fitsum->SetParError(5, 10.0);
+
+    cout << endl << endl << "Fit of first angle distribution! " << endl;
+    TFitResultPtr fitr1 = fithistogram1->Fit("theta1_fit", fitoptions);
+    cout << endl << "Results: " << endl;
+    cout << "Fit is valid: " << fitr1->IsValid() << endl;
+    cout << "Fit status: " << fitr1->Status() << endl;
+    if (!fitr1->IsValid()) {
+      cout << endl
+           << "Fit of first angle distribution failed with status: " << fitr1
+           << endl;
+      cout << "Repeat fit " << endl;
+      fitr1 = fithistogram1->Fit("theta1_fit", fitoptions);
+      cout << endl << "Results: " << endl;
+      cout << endl << "Fit is valid: " << fitr1->IsValid() << endl;
+      cout << "Fit status: " << fitr1->Status() << endl;
+      if (!fitr1->IsValid()) {
+        cout << "Fit of first angle distribution failed a second time with "
+                "status: "
+             << fitr1 << " !"
+             << " X/X0 cannot be calculated!" << endl
+             << endl
+             << endl;
+        status1 = 2;
+      }
+    }
+
+    cout << endl << endl << "Fit of second angle distribution! " << endl;
+    TFitResultPtr fitr2 = fithistogram2->Fit("theta2_fit", fitoptions);
+    cout << endl << "Results: " << endl;
+    cout << "Fit is valid: " << fitr2->IsValid() << endl;
+    cout << "Fit status: " << fitr2->Status() << endl;
+    if (!fitr2->IsValid()) {
+      cout << "Fit of second angle distribution failed with status: " << fitr2
+           << endl;
+      cout << "Repeat fit " << endl;
+      fitr2 = fithistogram2->Fit("theta2_fit", fitoptions);
+      cout << endl << "Results: " << endl;
+      cout << endl << "Fit is valid: " << fitr2->IsValid() << endl;
+      cout << "Fit status: " << fitr2->Status() << endl;
+      if (!fitr2->IsValid()) {
+        cout << "Fit of second angle distribution failed a second time with "
+                "status: "
+             << fitr2 << " !"
+             << " X/X0 cannot be calculated!" << endl
+             << endl
+             << endl;
+        status2 = 2;
+      }
+    }
+
+    cout << endl << endl << "Fit of combined angle distribution! " << endl;
+    TFitResultPtr fitrsum = fithistogramsum->Fit("thetasum_fit", fitoptions);
+    cout << endl << "Results: " << endl;
+    cout << "Fit is valid: " << fitrsum->IsValid() << endl;
+    cout << "Fit statuss: " << fitrsum->Status() << endl;
+    if (!fitrsum->IsValid()) {
+      cout << "Fit of combined angle distribution failed with status: "
+           << fitrsum << endl;
+      cout << "Repeat fit " << endl;
+      fitrsum = fithistogramsum->Fit("thetasum_fit", fitoptions);
+      cout << endl << "Fit is valid: " << fitrsum->IsValid() << endl;
+      cout << "Fit status: " << fitrsum->Status() << endl;
+      if (!fitrsum->IsValid()) {
+        cout << "Fit of combined angle distribution failed a second time with "
+                "status: "
+             << fitrsum << " !"
+             << " X/X0 cannot be calculated!" << endl
+             << endl
+             << endl;
+        statussum = 2;
+      }
+    }
+
+    // Names of the 8 local parameters
+    const int num_parameters = 8;
+    TString name[num_parameters];
+    name[0] = "E";
+    name[1] = "z[e]";
+    name[2] = "m";
+    name[3] = "X/X0";
+    name[4] = "reco err";
+    name[5] = "norm";
+    name[6] = "mean";
+    name[7] = "epsilon";
+
+    gStyle->SetOptFit(1111);
+
+    for (int iname = 0; iname < num_parameters; iname++) {
+      fit1->SetParName(iname, name[iname]);
+      fit2->SetParName(iname, name[iname]);
+      fitsum->SetParName(iname, name[iname]);
+    }
+
+    // Chi2ndof of the fit
+    chi2ndof1 = fit1->GetChisquare() / (fit1->GetNDF() * 1.0);
+    chi2ndof2 = fit2->GetChisquare() / (fit2->GetNDF() * 1.0);
+    chi2ndofsum = fitsum->GetChisquare() / (fitsum->GetNDF() * 1.0);
+
+    // define chi2 cut, if the cut value is below 0 the cut is deactivated
+    double chi2_cut = maxchi2ndof_fit;
+
+    if ((chi2_cut > 0) && (chi2ndofsum > chi2_cut))
+      statussum = 1;
+    if ((chi2_cut > 0) && (chi2ndof1 > chi2_cut))
+      status1 = 1;
+    if ((chi2_cut > 0) && (chi2ndof2 > chi2_cut))
+      status2 = 1;
+
+    // Use the chi2 values for quality cuts
+    // In case the fittype is 0 the two projected angle distributions are used
+    // seperately to determine the radiation length
+    // Accordingly, the chi2 and quality cuts have to be used on the fit of the
+    // two projected distributions
+    if ((fittype == 0) &&
+        (((chi2_cut > 0) && ((chi2ndof1 + chi2ndof2) > chi2_cut * 2.0)) ||
+         (!fitr1->IsValid()) || (!fitr2->IsValid()))) {
+      cout << endl
+           << "Something went wrong with fit (fittype: " << fittype
+           << " ), X/X0 could not be determined!" << endl
+           << endl;
+      // The fit didn't work: Dont trust this X/X0 and theta mean value
+      XX01 = 0.0;
+      XX0err1 = 99.0;
+      XX02 = 0.0;
+      XX0err2 = 99.0;
+      mean1 = 0;
+      mean2 = 0;
+      // save the fitted histograms
+      file->cd("");
+      file->cd("badfit");
+      fithistogram1->GetListOfFunctions()->Add(fit1);
+      fithistogram1->Write("theta1_" + histoname + "_fit");
+      fithistogram2->GetListOfFunctions()->Add(fit2);
+      fithistogram2->Write("theta2_" + histoname + "_fit");
+      fithistogramsum->GetListOfFunctions()->Add(fitsum);
+      fithistogramsum->Write("sumhisto_" + histoname + "_fit");
+
+    }
+
+    // Use the chi2 values for quality cuts
+    // In case the fittype is 1 the merged projected angle distribution is used
+    // to determine the radiation length
+    // Accordingly, the chi2 and quality cuts have to be used on the fit of the
+    // two merged distribution
+    else if ((fittype == 1) && (((chi2_cut > 0) && (chi2ndofsum > chi2_cut)) ||
+                                (!fitrsum->IsValid()))) {
+      cout << endl
+           << "Something went wrong with fit (fittype: " << fittype
+           << " ), X/X0 could not be determined!" << endl
+           << endl;
+      // The fit didn't work: Dont trust this X/X0 and theta mean value
+      XX0sum = 0.0;
+      XX0errsum = 99.0;
+      mean1 = 0;
+      mean2 = 0;
+
+      // save the fitted histograms
+      file->cd("");
+      file->cd("badfit");
+      fithistogram1->GetListOfFunctions()->Add(fit1);
+      fithistogram1->Write("theta1_" + histoname + "_fit");
+      fithistogram2->GetListOfFunctions()->Add(fit2);
+      fithistogram2->Write("theta2_" + histoname + "_fit");
+      fithistogramsum->GetListOfFunctions()->Add(fitsum);
+      fithistogramsum->Write("sumhisto_" + histoname + "_fit");
+
+    }
+
+    else {
+
+      cout << endl << "Determine X/X0!" << endl << endl;
+      // Extract Fit parameters of the first distribution
+      XX01 = fit1->GetParameter(3);
+      XX0err1 = fit1->GetParError(3);
+      mean1 = fit1->GetParameter(6);
+      prob1 = fit1->GetProb();
+
+      // Extract Fit parameters of the second distribution
+      XX02 = fit2->GetParameter(3);
+      XX0err2 = fit2->GetParError(3);
+      mean2 = fit2->GetParameter(6);
+      prob2 = fit2->GetProb();
+
+      // Extract Fit parameters of the merged distribution
+      XX0sum = fitsum->GetParameter(3);
+      XX0errsum = fitsum->GetParError(3);
+      meansum = fitsum->GetParameter(6);
+      probsum = fitsum->GetProb();
+
+      // save the fitted histograms
+      file->cd("");
+      file->cd("fit");
+      fithistogram1->GetListOfFunctions()->Add(fit1);
+      fithistogram1->Write("theta1_" + histoname + "_fit");
+      fithistogram2->GetListOfFunctions()->Add(fit2);
+      fithistogram2->Write("theta2_" + histoname + "_fit");
+      fithistogramsum->GetListOfFunctions()->Add(fitsum);
+      fithistogramsum->Write("sumhisto_" + histoname + "_fit");
+    }
 
   }
 
-// Function, which returns beam momentum value for every point on the target plane
-// This is necessary because the beam profile at DESY often have beam energy gradients in the order of a few MeV/mm
-Double_t GetMomentum(double meanvalue,double ugrad,double vgrad, double u, double v)
-{
-	double p;
-	p=meanvalue+u*ugrad+v*vgrad;
-	return p;
+  // If the histogram has too few tracks for the fit, just set all relevant fit
+  // results to unrealistic values
+  else {
+
+    XX01 = -1.0;
+    XX0err1 = 99.0;
+    mean1 = 99.0;
+    chi2ndof1 = -99.0;
+    prob1 = -1.0;
+
+    XX02 = -1.0;
+    XX0err2 = 99.0;
+    mean2 = 99.0;
+    chi2ndof2 = -99.0;
+    prob2 = -1.0;
+
+    XX0sum = -1.0;
+    XX0errsum = 99.0;
+    meansum = 99.0;
+    chi2ndofsum = -99.0;
+    probsum = -1.0;
+
+    statussum = 3;
+    status1 = 3;
+    status2 = 3;
+
+    cout << "Too few tracks in this pixel... no fit done!" << endl;
+  }
+
+  // Go to results directory
+  file->cd("");
+  file->cd("result");
+
+  // Get the chi2 histos
+  TH2F *chi2ndofsummap =
+      (TH2F *)file->Get("result/fitDQM/fitsumchi2ndof_image");
+  TH2F *chi2ndof1map = (TH2F *)file->Get("result/fitDQM/fit1chi2ndof_image");
+  TH2F *chi2ndof2map = (TH2F *)file->Get("result/fitDQM/fit2chi2ndof_image");
+  TH1F *chi2ndofsumhisto =
+      (TH1F *)file->Get("result/fitDQM/fitsumchi2ndof_histo");
+  TH1F *chi2ndof1histo = (TH1F *)file->Get("result/fitDQM/fit1chi2ndof_histo");
+  TH1F *chi2ndof2histo = (TH1F *)file->Get("result/fitDQM/fit2chi2ndof_histo");
+
+  TH2F *fitstatus_summap =
+      (TH2F *)file->Get("result/fitDQM/fitsumstatus_image");
+  TH2F *fitstatus_1map = (TH2F *)file->Get("result/fitDQM/fit1status_image");
+  TH2F *fitstatus_2map = (TH2F *)file->Get("result/fitDQM/fit2status_image");
+  TH1F *fitstatus_sumhisto =
+      (TH1F *)file->Get("result/fitDQM/fitsumstatus_histo");
+  TH1F *fitstatus_1histo = (TH1F *)file->Get("result/fitDQM/fit1status_histo");
+  TH1F *fitstatus_2histo = (TH1F *)file->Get("result/fitDQM/fit2status_histo");
+
+  // Get the mean histogram
+  TH2F *meanmap1 = (TH2F *)file->Get("result/theta1mean_image");
+  TH2F *meanmap2 = (TH2F *)file->Get("result/theta2mean_image");
+  TH2F *correctedmeanmap1 =
+      (TH2F *)file->Get("result/correctedtheta1mean_image");
+  TH2F *correctedmeanmap2 =
+      (TH2F *)file->Get("result/correctedtheta2mean_image");
+
+  // Get the mean residual histograms
+  TH2F *scatteroffset_u_meanmap =
+      (TH2F *)file->Get("result/scatteroffset_umean_image");
+  TH2F *scatteroffset_v_meanmap =
+      (TH2F *)file->Get("result/scatteroffset_vmean_image");
+
+  // Get the residual rms histogram
+  TH2F *scatteroffset_u_rmsmap =
+      (TH2F *)file->Get("result/scatteroffset_urms_image");
+  TH2F *scatteroffset_v_rmsmap =
+      (TH2F *)file->Get("result/scatteroffset_vrms_image");
+
+  // Get the momentum 2D histogram
+  TH2F *mommap = (TH2F *)file->Get("result/BE_image");
+
+  // Get the vertex coordiante mean histograms
+  TH2F *vertex_w_mean_map = (TH2F *)file->Get("result/vertex/vertex_w_image");
+  TH2F *vertex_w_rms_map =
+      (TH2F *)file->Get("result/vertex/vertex_w_rms_image");
+  TH2F *vertex_chi2_map = (TH2F *)file->Get("result/vertex/vertex_chi2_image");
+
+  // Get the vertex multiplicity histogram
+  TH2F *vertex_multiplicity_map =
+      (TH2F *)file->Get("result/vertex/vertex_multiplicity_image");
+
+  // Get the mean u residual (vertex  vs track) histogram
+  TH2F *u_res_mean_vtx_trk_map =
+      (TH2F *)file->Get("result/vertex/u_res_mean_vtx_trk_image");
+
+  // Get the mean u residual (vertex  vs track) histogram
+  TH2F *v_res_mean_vtx_trk_map =
+      (TH2F *)file->Get("result/vertex/v_res_mean_vtx_trk_image");
+
+  // Get the u residual rms (vertex  vs track) histogram
+  TH2F *u_res_rms_vtx_trk_map =
+      (TH2F *)file->Get("result/vertex/u_res_rms_vtx_trk_image");
+
+  // Get the u residual rms (vertex  vs track) histogram
+  TH2F *v_res_rms_vtx_trk_map =
+      (TH2F *)file->Get("result/vertex/v_res_rms_vtx_trk_image");
+
+  // Fill both maps containing the theta means
+  meanmap1->SetBinContent(col + 1, row + 1, uncorrected_mean1);
+  meanmap2->SetBinContent(col + 1, row + 1, uncorrected_mean2);
+
+  // Fill both maps containing the theta means
+  correctedmeanmap1->SetBinContent(col + 1, row + 1, mean1);
+  correctedmeanmap2->SetBinContent(col + 1, row + 1, mean2);
+
+  // Fill both maps containing the residual means
+  scatteroffset_u_meanmap->SetBinContent(col + 1, row + 1,
+                                         scatteroffset_u_mean * 1E3);
+  scatteroffset_v_meanmap->SetBinContent(col + 1, row + 1,
+                                         scatteroffset_v_mean * 1E3);
+  scatteroffset_u_rmsmap->SetBinContent(col + 1, row + 1,
+                                        scatteroffset_u_rms * 1E3);
+  scatteroffset_v_rmsmap->SetBinContent(col + 1, row + 1,
+                                        scatteroffset_v_rms * 1E3);
+
+  chi2ndof1map->SetBinContent(col + 1, row + 1, chi2ndof1);
+  chi2ndof1histo->Fill(chi2ndof1);
+  chi2ndof2map->SetBinContent(col + 1, row + 1, chi2ndof2);
+  chi2ndof2histo->Fill(chi2ndof2);
+  chi2ndofsummap->SetBinContent(col + 1, row + 1, chi2ndofsum);
+  chi2ndofsumhisto->Fill(chi2ndofsum);
+
+  fitstatus_sumhisto->Fill(statussum);
+  fitstatus_summap->SetBinContent(col + 1, row + 1, statussum);
+  fitstatus_1histo->Fill(status1);
+  fitstatus_1map->SetBinContent(col + 1, row + 1, status1);
+  fitstatus_2histo->Fill(status2);
+  fitstatus_2map->SetBinContent(col + 1, row + 1, status2);
+
+  // Fill the momentum image
+  mommap->SetBinContent(col + 1, row + 1, parameters[0]);
+
+  // Fill the vertex images
+  vertex_w_mean_map->SetBinContent(col + 1, row + 1, vertex_w_mean);
+  vertex_w_rms_map->SetBinContent(col + 1, row + 1, vertex_w_rms);
+  vertex_chi2_map->SetBinContent(col + 1, row + 1, vertex_chi2);
+  vertex_multiplicity_map->SetBinContent(col + 1, row + 1, vertex_multiplicity);
+  // Fill both maps containing the residual means and rms
+  u_res_mean_vtx_trk_map->SetBinContent(col + 1, row + 1, vtx_trk_res_u_mean);
+  v_res_mean_vtx_trk_map->SetBinContent(col + 1, row + 1, vtx_trk_res_v_mean);
+  u_res_rms_vtx_trk_map->SetBinContent(col + 1, row + 1, vtx_trk_res_u_rms);
+  v_res_rms_vtx_trk_map->SetBinContent(col + 1, row + 1, vtx_trk_res_v_rms);
+
+  double X0;
+  double X0err;
+
+  // Fill histograms with mean X0 (in %) and mean absolute X0 error (in %) of
+  // both fits
+
+  // Fitting type:
+  // 0: gaussian fit function with cuts on the tails, use the two distributions
+  // seperately to fit X/X0 and calculate the sum
+  // 1: gaussian fit function with cuts on the tails, use the merged
+  // distribution to fit X/X0
+  //
+  if (fittype == 0) {
+    X0 = 100.0 * (XX01 + XX02) / 2.0;
+    X0err = 100.0 * sqrt(pow(XX0err1, 2) + pow(XX0err2, 2)) / 2.0;
+
+  }
+
+  // Merged theta distribution fit
+  else {
+    X0 = 100.0 * XX0sum;
+    X0err = 100.0 * XX0errsum;
+  }
+
+  // Get the X0 histogram
+  TH2F *X0map = (TH2F *)file->Get("result/x0_image");
+  cout << "X0 in area " << col << "," << row << " is: " << X0 << "%" << endl;
+  X0map->SetBinContent(col + 1, row + 1, X0);
+
+  // Get the X0 fit error histogram
+  TH2F *X0errmap = (TH2F *)file->Get("result/x0err_image");
+  cout << "X0 error in area " << col << "," << row << " is: " << X0err << "%"
+       << endl;
+  X0errmap->SetBinContent(col + 1, row + 1, X0err);
+
+  // Get the relative X0 fit error histogram
+  TH2F *X0relerrmap = (TH2F *)file->Get("result/x0relerr_image");
+
+  double X0relerr;
+
+  // Fill it with mean relative X0 error (in %) of both fits
+  if (X0 != 0.0) {
+    X0relerr = X0err / X0 * 100.0;
+  }
+
+  else {
+    X0relerr = 99.0;
+  }
+  X0relerrmap->SetBinContent(col + 1, row + 1, X0relerr);
+
+  // Get the # tracks map
+  TH2F *nummap = (TH2F *)file->Get("result/beamspot");
+
+  // Fill it with mean prob of both fits
+  nummap->SetBinContent(col + 1, row + 1, NumberOfTracks);
+
+  // Get the prob map (2D) histogram (theta1)
+  TH2F *probmap1 = (TH2F *)file->Get("result/fitDQM/fit1prob_image");
+
+  // Get the prob histogram (theta1)
+  TH1F *probhisto1 = (TH1F *)file->Get("result/fitDQM/fit1prob_histo");
+
+  probmap1->SetBinContent(col + 1, row + 1, prob1);
+  probhisto1->Fill(prob1);
+
+  // Get the prob map (2D) histogram (theta2)
+  TH2F *probmap2 = (TH2F *)file->Get("result/fitDQM/fit2prob_image");
+
+  // Get the prob histogram (theta2)
+  TH1F *probhisto2 = (TH1F *)file->Get("result/fitDQM/fit2prob_histo");
+
+  probmap2->SetBinContent(col + 1, row + 1, prob2);
+  probhisto2->Fill(prob2);
+
+  // Get the prob map (2D) histogram (sum)
+  TH2F *probmapsum = (TH2F *)file->Get("result/fitDQM/fitsumprob_image");
+
+  // Get the prob histogram (sum)
+  TH1F *probhistosum = (TH1F *)file->Get("result/fitDQM/fitsumprob_histo");
+
+  probmapsum->SetBinContent(col + 1, row + 1, probsum);
+  probhistosum->Fill(probsum);
+
+  // Write the histogram to the rootfile
+  if (col == numcol - 1 && row == numrow - 1) {
+
+    file->cd("");
+    file->cd("result/fitDQM");
+
+    chi2ndof1map->Write();
+    chi2ndof2map->Write();
+    chi2ndofsummap->Write();
+
+    chi2ndof1histo->Write();
+    chi2ndof2histo->Write();
+    chi2ndofsumhisto->Write();
+
+    fitstatus_summap->Write();
+    fitstatus_1map->Write();
+    fitstatus_2map->Write();
+
+    fitstatus_sumhisto->Write();
+    fitstatus_1histo->Write();
+    fitstatus_2histo->Write();
+
+    probmap1->Write();
+    probmap2->Write();
+    probmapsum->Write();
+
+    probhisto1->Write();
+    probhisto2->Write();
+    probhistosum->Write();
+
+    file->cd("");
+    file->cd("result");
+
+    X0map->Write();
+    X0errmap->Write();
+    X0relerrmap->Write();
+
+    meanmap1->Write();
+    meanmap2->Write();
+    correctedmeanmap1->Write();
+    correctedmeanmap2->Write();
+
+    scatteroffset_u_meanmap->Write();
+    scatteroffset_v_meanmap->Write();
+    scatteroffset_u_rmsmap->Write();
+    scatteroffset_v_rmsmap->Write();
+
+    nummap->Write();
+    mommap->Write();
+
+    file->cd("");
+    file->cd("result/vertex");
+
+    vertex_w_mean_map->Write();
+    vertex_w_rms_map->Write();
+    vertex_chi2_map->Write();
+    vertex_multiplicity_map->Write();
+    u_res_mean_vtx_trk_map->Write();
+    v_res_mean_vtx_trk_map->Write();
+    u_res_rms_vtx_trk_map->Write();
+    v_res_rms_vtx_trk_map->Write();
+  }
+
+  // delete all histograms from memory
+  fithistogram1->SetDirectory(gROOT);
+  delete fithistogram1;
+
+  fithistogram2->SetDirectory(gROOT);
+  delete fithistogram2;
+
+  fithistogramsum->SetDirectory(gROOT);
+  delete fithistogramsum;
+
+  // delete all histograms from memory
+  histogram1->SetDirectory(gROOT);
+  delete histogram1;
+
+  histogram2->SetDirectory(gROOT);
+  delete histogram2;
+
+  // delete all histograms from memory
+  histogramu->SetDirectory(gROOT);
+  delete histogramu;
+
+  histogramv->SetDirectory(gROOT);
+  delete histogramv;
+
+  histogramsum->SetDirectory(gROOT);
+  delete histogramsum;
+
+  histogram_vertex_w->SetDirectory(gROOT);
+  delete histogram_vertex_w;
+
+  histogram_vertex_chi2->SetDirectory(gROOT);
+  delete histogram_vertex_chi2;
+
+  histogram_resu_vtx_trk->SetDirectory(gROOT);
+  delete histogram_resu_vtx_trk;
+
+  histogram_resv_vtx_trk->SetDirectory(gROOT);
+  delete histogram_resv_vtx_trk;
 }
 
+// Function, which returns beam momentum value for every point on the target
+// plane
+// This is necessary because the beam profile at DESY often have beam energy
+// gradients in the order of a few MeV/mm
+Double_t GetMomentum(double meanvalue, double ugrad, double vgrad, double u,
+                     double v) {
+  double p;
+  p = meanvalue + u * ugrad + v * vgrad;
+  return p;
+}
 
-// This script is used to create a map of a plane in a test beam telescope. The input is a TTree including 
+// This script is used to create a map of a plane in a test beam telescope. The
+// input is a TTree including
 // MSC projected scattering angle distributions and reconstruction errors.
-int main(int , char **)
-{
-
-	gROOT->Reset(); 
-
-	// display mode
-	gStyle->SetPalette(1);
-	gStyle->SetOptStat(11111111);
-    gStyle->SetPadRightMargin(0.15f);
-    gStyle->SetPadLeftMargin(0.15f);
-
-    gROOT->ForceStyle();
-
-    // Read config file
-    //------------------
-    TEnv mEnv("x0image-partial.cfg");
-
-    // Read calibration results config file
-    //------------------
-    TEnv mEnv_res("x0cal_result.cfg");
-
-	// TString for the input root file name
-	TString histoname,range;
-	TString imagename=mEnv.GetValue("x0imagename", "X0image.root");
-
-	// List of input file names 
-    TString list=mEnv.GetValue("inputfile", "X0");
-    std::vector<TString> filenames;
-
-    // Read input files and sort them into a tstring vector
-    TObjArray *tx = list.Tokenize(",");
-    cout<<endl<<"Input file names: "<<endl;
-    for (Int_t i = 0; i < tx->GetEntries(); i++)
-    {
-		filenames.push_back(((TObjString *)(tx->At(i)))->String());
-		std::cout << filenames.at(i) << endl;
-	}
-
-	//Create and open image file 
-	TFile *imagefile = new TFile(imagename, "RECREATE");
-
-	// Create directories containing map histograms, fits and results
-	imagefile->mkdir("raw");
-	imagefile->mkdir("fit");
-	imagefile->mkdir("badfit");
-	imagefile->mkdir("result");
-	imagefile->mkdir("result/vertex");
-	imagefile->mkdir("result/fitDQM");
-
-	// Number of Rows and Columns of the sensor map
-    int numcol = mEnv.GetValue("maxupixels", 100);
-	int numrow = mEnv.GetValue("maxvpixels", 50);
-
-	// u minimum and v maximum value (in mm)
-	double umin=mEnv.GetValue("umin", -10.0);
-	double vmax=mEnv.GetValue("vmax", 5.0);
-
-	// u and v length of the map (in mm)
-	double ulength=mEnv.GetValue("ulength", 20.0);
-	double vlength=mEnv.GetValue("vlength", -10.0);
-
-	// u and v pitch (length of one pixel in the map, in mm)
-	double upitch=ulength/(1.0*numcol);
-	double vpitch=vlength/(1.0*numrow);
-
-	// umax and vmin can be computed from the parameters already implemented 
-	double umax=umin+ulength;
-	double vmin=vmax-vlength;
-
-    // calculate the u value of the center of the image
-    //double u_center=umin+0.5*ulength;
-
-	// Print map parameters
-	cout<<endl<<"Column and Row values of the whole area:"<<endl;
-	cout<<"Lowest Column value: "<<0<<endl;
-	cout<<"Highest Column value: "<<numcol-1<<endl;
-	cout<<"Lowest Row value: "<<0<<endl;
-	cout<<"Highest Row value: "<<numrow-1<<endl;
-
-	cout<<endl<<"Minimal u value:"<<umin<<" mm"<<endl;
-	cout<<"Max. u value:"<<umax<<" mm"<<endl;
-	cout<<"Minimal v value:"<<vmin<<" mm"<<endl;
-	cout<<"Max. v value:"<<vmax<<" mm"<<endl;
-
-    // Vertex multiplicity cut (should be 1 for default X0 analysis)
-	int vertex_multiplicity_min=mEnv.GetValue("vertexmultiplicitymin", 1);
-	int vertex_multiplicity_max=mEnv.GetValue("vertexmultiplicitymax", 1);
-
-	cout<<endl<<"Minimal vertex multiplicity:"<<vertex_multiplicity_min<<endl;
-	cout<<"Maximal vertex multiplicity:"<<vertex_multiplicity_max<<endl;
-
-    // Fit chi2 value cut parameter, fit results with larger chi2 values are 
-    // discarded
-	double maxchi2ndof_fit=mEnv.GetValue("maxchi2ndof", 10.0);
-
-    // Minimum number of tracks required for a stable fit
-	double mintracks=mEnv.GetValue("min_tracks", 400);
-
-    // Fit range parameter
-	double rangevalue=mEnv.GetValue("fitrange_parameter", 1.0);
-
-    // Fit options
-	TString fitoptions=mEnv.GetValue("fit_options", "RMELS");
-
-    // epsilon value (weight of the weighted mean that it used to calculate the energy loss due to bremsstrahlung)
-	double epsilon=mEnv.GetValue("epsilon", 0.0);
-
-	// Choose the type of fit
-	// 0: gaussian fit function with cuts on the tails, both kink distributions are used seperately
-	// 1: gaussian fit function with cuts on the tails, use only 1 fit on the merged histogram consisting of both distributions
-	int fittype=1;
-
-	//Create and open first input file in list
-	TFile *inputfile = new TFile(filenames.at(0), "READ");
-
-	TTree * tree = (TTree*) inputfile->Get("MSCTree");
- 	std::vector<double> plotranges,means;
-
-	// Draw theta1 histogram
-	tree->Draw("theta1", "", "P*");
-
-	// Get plot range and mean value for first iteration of theta1 histograms
-	plotranges.push_back(4*tree->GetHistogram()->GetRMS());
-	means.push_back(tree->GetHistogram()->GetMean());
-
-	// Draw theta2 histogram
-	tree->Draw("theta2", "", "P*");
-
-	// Get plot range and mean value for first iteration of theta1 histograms
-	plotranges.push_back(4*tree->GetHistogram()->GetRMS());
-	means.push_back(tree->GetHistogram()->GetMean());
-	
-	// The number of bins of angle histograms
-	int numberofbins=mEnv.GetValue("num_bins", 50);
-
-	// Range parameter of angle histograms
-	double histo_range=mEnv.GetValue("histo_range", 5.0);
-
-	cout<<endl<<"The first Scattering angle distributions will be plotted with range "<<plotranges.at(0)<<" rad and "<<numberofbins<<" bins!"<<endl;
-	cout<<"The mean value of the histogram is "<<means.at(0)<<" rad !"<<endl;
-
-	cout<<"The second Scattering angle distributions will be plotted with range "<<plotranges.at(1)<<" rad and "<<numberofbins<<" bins!"<<endl;
-	cout<<"The mean value of the histogram is "<<means.at(1)<<" rad !"<<endl;
-
-	// Calibration factor lambda, used to change the reconstruction error to include systematical errors
-	// The calibration factor is either taken from the x0 calibration results cfg file or
-	// from the cfg, where it must be inserted manually
-	double lambda_default=mEnv.GetValue("lambda", 1.0);
-	double lambda=mEnv_res.GetValue("lambda_start", lambda_default);
-	double recoerror=sqrt(getanglerecovar(inputfile))*lambda;
-	cout<<endl<<"The reconstruction error is "<<recoerror*1E6<<" µrad!"<<endl;
-	cout<<"This includes the calibration factor of "<<lambda<<endl;
-
-	// Beam energy in GeV
-    // The particle momenta are distributed due to the beam generation at the desy facility
-    // Particles of different momenta are sperated by a dipole magnet and a collimator. Due to
-    // the finite size of the collimator opening particles with momenta in a certain range p0+/-delta_p
-    // can traverse into the test beam area
-    // We expect a linear distribution with slope corresponding to ~500MeV/20mm
-	// Take either results from x0 calibration or manually inserted values from cfg file
-	double mom0_default=mEnv.GetValue("momentumoffset", 4.0);           // in GeV
-	double mom0=mEnv_res.GetValue("momentumoffset", mom0_default);
-    double mom_uslope_default=mEnv.GetValue("momentumugradient", 0.0);    // in GeV/mm
-	double mom_uslope=mEnv_res.GetValue("momentumugradient", mom_uslope_default);
-    double mom_vslope_default=mEnv.GetValue("momentumvgradient", 0.0);    // in GeV/mm
-	double mom_vslope=mEnv_res.GetValue("momentumvgradient", mom_vslope_default);
-	cout<<endl<<"The beam energy is "<<mom0<<" GeV!"<<endl;
-	cout<<"The beam energy gradient (u direction) is "<<mom_uslope<<" GeV/mm!"<<endl;
-	cout<<"The beam energy gradient (v direction) is "<<mom_vslope<<" GeV/mm!"<<endl<<endl;
-
-	//particle charge
-	double charge=1;
-
-	//particle mass
-	double mass=0.000511;
-
-	imagefile->cd("");
-	imagefile->cd("result");
-
-	// Scatter theta1 vs residual u
-	TH2F * hscatt_theta1_vs_resu = new TH2F("hscatt_theta1_vs_resu","hscatt_theta1_vs_resu",100,-0.1,0.1,150,means.at(0)-plotranges.at(0),means.at(0)+plotranges.at(0));
-    hscatt_theta1_vs_resu->SetStats(kFALSE);
-    hscatt_theta1_vs_resu->GetXaxis()->SetTitle("u residual[mm]");
-    hscatt_theta1_vs_resu->GetYaxis()->SetTitle("theta1[rad]");
-    hscatt_theta1_vs_resu->GetZaxis()->SetTitle("Number of tracks");
-    hscatt_theta1_vs_resu->GetZaxis()->SetTitleOffset(1.4f);
-    hscatt_theta1_vs_resu->GetZaxis()->SetTitleSize(0.02f);
-    hscatt_theta1_vs_resu->GetZaxis()->SetLabelSize(0.02f);
-
-	// Scatter theta2 vs residual u
-	TH2F * hscatt_theta2_vs_resu = new TH2F("hscatt_theta2_vs_resu","hscatt_theta2_vs_resu",100,-0.1,0.1,150,means.at(1)-plotranges.at(1),means.at(1)+plotranges.at(1));
-    hscatt_theta2_vs_resu->SetStats(kFALSE);
-    hscatt_theta2_vs_resu->GetXaxis()->SetTitle("u residual[mm]");
-    hscatt_theta2_vs_resu->GetYaxis()->SetTitle("theta2[rad]");
-    hscatt_theta2_vs_resu->GetZaxis()->SetTitle("Number of tracks");
-    hscatt_theta2_vs_resu->GetZaxis()->SetTitleOffset(1.4f);
-    hscatt_theta2_vs_resu->GetZaxis()->SetTitleSize(0.02f);
-    hscatt_theta2_vs_resu->GetZaxis()->SetLabelSize(0.02f);
-
-	// Scatter theta1 vs residual v
-	TH2F * hscatt_theta1_vs_resv = new TH2F("hscatt_theta1_vs_resv","hscatt_theta1_vs_resv",100,-0.1,0.1,150,means.at(0)-plotranges.at(0),means.at(0)+plotranges.at(0));
-    hscatt_theta1_vs_resv->SetStats(kFALSE);
-    hscatt_theta1_vs_resv->GetXaxis()->SetTitle("v residual[mm]");
-    hscatt_theta1_vs_resv->GetYaxis()->SetTitle("theta1[rad]");
-    hscatt_theta1_vs_resv->GetZaxis()->SetTitle("Number of tracks");
-    hscatt_theta1_vs_resv->GetZaxis()->SetTitleOffset(1.4f);
-    hscatt_theta1_vs_resv->GetZaxis()->SetTitleSize(0.02f);
-    hscatt_theta1_vs_resv->GetZaxis()->SetLabelSize(0.02f);
-
-	// Scatter theta2 vs residual v
-	TH2F * hscatt_theta2_vs_resv = new TH2F("hscatt_theta2_vs_resv","hscatt_theta2_vs_resv",100,-0.1,0.1,150,means.at(1)-plotranges.at(1),means.at(1)+plotranges.at(1));
-    hscatt_theta2_vs_resv->SetStats(kFALSE);
-    hscatt_theta2_vs_resv->GetXaxis()->SetTitle("v residual[mm]");
-    hscatt_theta2_vs_resv->GetYaxis()->SetTitle("theta2[rad]");
-    hscatt_theta2_vs_resv->GetZaxis()->SetTitle("Number of tracks");
-    hscatt_theta2_vs_resv->GetZaxis()->SetTitleOffset(1.4f);
-    hscatt_theta2_vs_resv->GetZaxis()->SetTitleSize(0.02f);
-    hscatt_theta2_vs_resv->GetZaxis()->SetLabelSize(0.02f);
-
-	tree->Draw("theta1:(u_out-u_in)>>hscatt_theta1_vs_resu","","colz");
-	hscatt_theta1_vs_resu->Write();
-
-	tree->Draw("theta2:(u_out-u_in)>>hscatt_theta2_vs_resu","","colz");
-	hscatt_theta2_vs_resu->Write();
-
-	tree->Draw("theta1:(v_out-v_in)>>hscatt_theta1_vs_resv","","colz");
-	hscatt_theta1_vs_resv->Write();
-
-	tree->Draw("theta2:(v_out-v_in)>>hscatt_theta2_vs_resv","","colz");
-	hscatt_theta2_vs_resv->Write();
-
-	imagefile->cd("");
-    inputfile->Close();
-	
-	getcorrection(filenames, imagefile, means, plotranges, numberofbins, numcol, numrow, umin, vmin, umax, vmax, vertex_multiplicity_min, vertex_multiplicity_max);
-	savehistos(filenames, imagefile, numberofbins, histo_range, numcol, numrow, umin, vmin, umax, vmax, vertex_multiplicity_min, vertex_multiplicity_max);
-
-	imagefile->cd("");
-	imagefile->cd("result");
-
-	// X0 map
-	TH2F * x0_image = new TH2F("x0_image","x0_image",numcol,umin,umax,numrow,vmin,vmax);
-    x0_image->SetStats(kFALSE);
-    x0_image->SetMinimum(0);
-    x0_image->GetXaxis()->SetTitle("u [mm]");
-    x0_image->GetYaxis()->SetTitle("v [mm]");
-    x0_image->GetZaxis()->SetTitle("X/X0 [%]");
-    x0_image->GetZaxis()->SetTitleSize(0.02);
-    x0_image->GetZaxis()->SetLabelSize(0.02);
-
-	// X0 statistical error map (absolute value)
-	TH2F * x0err_image = new TH2F("x0err_image","x0err_image",numcol,umin,umax,numrow,vmin,vmax);
-    x0err_image->SetStats(kFALSE);
-    x0err_image->SetMinimum(0);
-    x0err_image->GetXaxis()->SetTitle("u [mm]");
-    x0err_image->GetYaxis()->SetTitle("v [mm]");
-    x0err_image->GetZaxis()->SetTitle("X/X0 [%]");
-    x0err_image->GetZaxis()->SetTitleSize(0.02);
-    x0err_image->GetZaxis()->SetLabelSize(0.02);
-
-	// X0 statistical error map (relative value)
-	TH2F * x0relerr_image = new TH2F("x0relerr_image","x0relerr_image",numcol,umin,umax,numrow,vmin,vmax);
-    x0relerr_image->SetStats(kFALSE);
-    x0relerr_image->SetMinimum(0);
-    x0relerr_image->GetXaxis()->SetTitle("u [mm]");
-    x0relerr_image->GetYaxis()->SetTitle("v [mm]");
-    x0relerr_image->GetZaxis()->SetTitle("rel. error [%]");
-    x0relerr_image->GetZaxis()->SetTitleOffset(1.4);
-    x0relerr_image->GetZaxis()->SetTitleSize(0.02);
-    x0relerr_image->GetZaxis()->SetLabelSize(0.02);
-
-	imagefile->cd("");
-	imagefile->cd("result/fitDQM");
-
-	// Fit Chi2 image of the merged angle distribution
-	TH2F * fitsumchi2ndof_image = new TH2F("fitsumchi2ndof_image","fitsumchi2ndof_image",numcol,umin,umax,numrow,vmin,vmax);
-    fitsumchi2ndof_image->SetStats(kFALSE);
-    fitsumchi2ndof_image->GetXaxis()->SetTitle("u [mm]");
-    fitsumchi2ndof_image->GetYaxis()->SetTitle("v [mm]");
-    fitsumchi2ndof_image->GetZaxis()->SetTitle("#{chi^2}_{ndof}");
-    fitsumchi2ndof_image->GetZaxis()->SetTitleSize(0.02);
-    fitsumchi2ndof_image->GetZaxis()->SetLabelSize(0.02);
-
-    // Fit chi2 distribution of merged angle dist
-	TH1F * fitsumchi2ndof_histo = new TH1F("fitsumchi2ndof_histo","fitsumchi2ndof_histo",100,0.0,20.0);
-    fitsumchi2ndof_histo->GetXaxis()->SetTitle("#chi^{2}_{ndof}");
-    fitsumchi2ndof_histo->GetYaxis()->SetTitle("number of fits");
-
-	// Fit status image of the merged angle distribution
-	TH2F * fitsumstatus_image = new TH2F("fitsumstatus_image","fitsumstatus_image",numcol,umin,umax,numrow,vmin,vmax);
-    fitsumstatus_image->SetStats(kFALSE);
-    fitsumstatus_image->GetXaxis()->SetTitle("u [mm]");
-    fitsumstatus_image->GetYaxis()->SetTitle("v [mm]");
-    fitsumstatus_image->GetZaxis()->SetTitle("fit status");
-    fitsumstatus_image->SetMaximum(5);
-    fitsumstatus_image->SetMinimum(-1);
-    fitsumstatus_image->SetContour(6);
-    fitsumstatus_image->GetZaxis()->SetTitleSize(0.02);
-    fitsumstatus_image->GetZaxis()->SetLabelSize(0.02);
-
-    // Fit Status distribution of merged angle dist
-	TH1F * fitsumstatus_histo = new TH1F("fitsumstatus_histo","fitsumstatus_histo",4,0,4);
-    fitsumstatus_histo->GetXaxis()->SetTitle("Fit status");
-    fitsumstatus_histo->GetXaxis()->SetBinLabel(1, "fit worked" );
-    fitsumstatus_histo->GetXaxis()->SetBinLabel(2, "bad chi2" );
-    fitsumstatus_histo->GetXaxis()->SetBinLabel(3, "fit error" );
-    fitsumstatus_histo->GetXaxis()->SetBinLabel(4, "low statistics" );
-    fitsumstatus_histo->GetYaxis()->SetTitle("number of fits");
-
-	// Fit Chi2 image of the first angle distribution
-	TH2F * fit1chi2ndof_image = new TH2F("fit1chi2ndof_image","fit1chi2ndof_image",numcol,umin,umax,numrow,vmin,vmax);
-    fit1chi2ndof_image->SetStats(kFALSE);
-    fit1chi2ndof_image->GetXaxis()->SetTitle("u [mm]");
-    fit1chi2ndof_image->GetYaxis()->SetTitle("v [mm]");
-    fit1chi2ndof_image->GetZaxis()->SetTitle("#chi^{2}_{ndof}");
-    fit1chi2ndof_image->GetZaxis()->SetTitleSize(0.02);
-    fit1chi2ndof_image->GetZaxis()->SetLabelSize(0.02);
-
-    // Fit chi2 distribution of first angle dist
-	TH1F * fit1chi2ndof_histo = new TH1F("fit1chi2ndof_histo","fit1chi2ndof_histo",100,0.0,20.0);
-    fit1chi2ndof_histo->GetXaxis()->SetTitle("#chi^{2}_{ndof}");
-    fit1chi2ndof_histo->GetYaxis()->SetTitle("number of fits");
-
-	// Fit status image of the first angle distribution
-	TH2F * fit1status_image = new TH2F("fit1status_image","fit1status_image",numcol,umin,umax,numrow,vmin,vmax);
-    fit1status_image->SetStats(kFALSE);
-    fit1status_image->GetXaxis()->SetTitle("u [mm]");
-    fit1status_image->GetYaxis()->SetTitle("v [mm]");
-    fit1status_image->GetZaxis()->SetTitle("fit status");
-    fit1status_image->SetMaximum(5);
-    fit1status_image->SetMinimum(-1);
-    fit1status_image->SetContour(6);
-    fit1status_image->GetZaxis()->SetTitleSize(0.02);
-    fit1status_image->GetZaxis()->SetLabelSize(0.02);
-
-    // Fit Status of angle dist 1
-	TH1F * fit1status_histo = new TH1F("fit1status_histo","fit1status_histo",4,0,4);
-    fit1status_histo->GetXaxis()->SetTitle("Fit status");
-    fit1status_histo->GetXaxis()->SetBinLabel(1, "fit worked" );
-    fit1status_histo->GetXaxis()->SetBinLabel(2, "bad chi2" );
-    fit1status_histo->GetXaxis()->SetBinLabel(3, "fit error" );
-    fit1status_histo->GetXaxis()->SetBinLabel(4, "low statistics" );
-    fit1status_histo->GetYaxis()->SetTitle("number of fits");
-
-	// Fit Chi2 image of the second angle distribution
-	TH2F * fit2chi2ndof_image = new TH2F("fit2chi2ndof_image","fit2chi2ndof_image",numcol,umin,umax,numrow,vmin,vmax);
-    fit2chi2ndof_image->SetStats(kFALSE);
-    fit2chi2ndof_image->GetXaxis()->SetTitle("u [mm]");
-    fit2chi2ndof_image->GetYaxis()->SetTitle("v [mm]");
-    fit2chi2ndof_image->GetZaxis()->SetTitle("#chi^{2}_{ndof}");
-    fit2chi2ndof_image->GetZaxis()->SetTitleSize(0.02);
-    fit2chi2ndof_image->GetZaxis()->SetLabelSize(0.02);
-
-    // Fit chi2 distribution of second angle dist
-	TH1F * fit2chi2ndof_histo = new TH1F("fit2chi2ndof_histo","fit2chi2ndof_histo",100,0.0,20.0);
-    fit2chi2ndof_histo->GetXaxis()->SetTitle("#chi^{2}_{ndof}");
-    fit2chi2ndof_histo->GetYaxis()->SetTitle("number of fits");
-
-	// Fit status image of the second angle distribution
-	TH2F * fit2status_image = new TH2F("fit2status_image","fit2status_image",numcol,umin,umax,numrow,vmin,vmax);
-    fit2status_image->SetStats(kFALSE);
-    fit2status_image->GetXaxis()->SetTitle("u [mm]");
-    fit2status_image->GetYaxis()->SetTitle("v [mm]");
-    fit2status_image->GetZaxis()->SetTitle("fit status");
-    fit2status_image->SetMaximum(5);
-    fit2status_image->SetMinimum(-1);
-    fit2status_image->SetContour(6);
-    fit2status_image->GetZaxis()->SetTitle("fit status");
-    fit2status_image->GetZaxis()->SetTitleSize(0.02);
-    fit2status_image->GetZaxis()->SetLabelSize(0.02);
-
-    // Fit Status of angle dist 2
-	TH1F * fit2status_histo = new TH1F("fit2status_histo","fit2status_histo",4,0,4);
-    fit2status_histo->GetXaxis()->SetTitle("Fit status");
-    fit2status_histo->GetXaxis()->SetBinLabel(1, "fit worked" );
-    fit2status_histo->GetXaxis()->SetBinLabel(2, "bad chi2" );
-    fit2status_histo->GetXaxis()->SetBinLabel(3, "fit error" );
-    fit2status_histo->GetXaxis()->SetBinLabel(4, "low statistics" );
-    fit2status_histo->GetYaxis()->SetTitle("number of fits");
-
-    // Fit Probability distribution for first angle dist
-	TH1F * fit1prob_histo = new TH1F("fit1prob_histo","fit1prob_histo",50,0.0,1.0);
-    fit1prob_histo->GetXaxis()->SetTitle("p value");
-    fit1prob_histo->GetYaxis()->SetTitle("number of fits");
-
-	// Fit probability map for first angle dist
-	TH2F * fit1prob_image = new TH2F("fit1prob_image","fit1prob_image",numcol,umin,umax,numrow,vmin,vmax);
-	fit1prob_image->SetStats(kFALSE);
-    fit1prob_image->GetXaxis()->SetTitle("u [mm]");
-    fit1prob_image->GetYaxis()->SetTitle("v [mm]");
-    fit1prob_image->SetMinimum(-0.1);
-    fit1prob_image->GetZaxis()->SetTitle("p value");
-    fit1prob_image->GetZaxis()->SetTitleSize(0.02);
-    fit1prob_image->GetZaxis()->SetLabelSize(0.02);
-
-	// Fit Probability distribution for second angle dist
-	TH1F * fit2prob_histo = new TH1F("fit2prob_histo","fit2prob_histo",50,0.0,1.0);
-    fit2prob_histo->GetXaxis()->SetTitle("p value");
-    fit2prob_histo->GetYaxis()->SetTitle("number of fits");
-
-	// Fit probability map for second angle dist
-	TH2F * fit2prob_image = new TH2F("fit2prob_image","fit2prob_image",numcol,umin,umax,numrow,vmin,vmax);
-	fit2prob_image->SetStats(kFALSE);
-    fit2prob_image->GetXaxis()->SetTitle("u [mm]");
-    fit2prob_image->GetYaxis()->SetTitle("v [mm]");
-    fit2prob_image->SetMinimum(-0.1);
-    fit2prob_image->GetZaxis()->SetTitle("p value");
-    fit2prob_image->GetZaxis()->SetTitleSize(0.02);
-    fit2prob_image->GetZaxis()->SetLabelSize(0.02);
-
-	// Fit Probability distribution for merged angle dist
-	TH1F * fitsumprob_histo = new TH1F("fitsumprob_histo","fitsumprob_histo",50,0.0,1.0);
-	fitsumprob_histo->SetStats(kFALSE);
-    fitsumprob_histo->GetXaxis()->SetTitle("p value");
-    fitsumprob_histo->GetYaxis()->SetTitle("number of fits");
-
-	// Fit probability map for merged angle dist
-	TH2F * fitsumprob_image = new TH2F("fitsumprob_image","fitsumprob_image",numcol,umin,umax,numrow,vmin,vmax);
-	fitsumprob_image->SetStats(kFALSE);
-    fitsumprob_image->GetXaxis()->SetTitle("u [mm]");
-    fitsumprob_image->GetYaxis()->SetTitle("v [mm]");
-    fitsumprob_image->SetMinimum(-0.1);
-    fitsumprob_image->GetZaxis()->SetTitle("fitsump value");
-    fitsumprob_image->GetZaxis()->SetTitleSize(0.02);
-    fitsumprob_image->GetZaxis()->SetLabelSize(0.02);
-
-	imagefile->cd("");
-	imagefile->cd("result");
-
-	// Fit mean value of first scattering angle distribution
-	TH2F * theta1mean_image = new TH2F("theta1mean_image","theta1mean_image",numcol,umin,umax,numrow,vmin,vmax);
-	theta1mean_image->SetStats(kFALSE);
-    theta1mean_image->GetXaxis()->SetTitle("u [mm]");
-    theta1mean_image->GetYaxis()->SetTitle("v [mm]");
-    theta1mean_image->GetZaxis()->SetTitle("#theta_{u} mean value[rad]");
-    theta1mean_image->GetZaxis()->SetTitleSize(0.02);
-    theta1mean_image->GetZaxis()->SetLabelSize(0.02);
-
-
-    // Fit mean value of second scattering angle distribution
-	TH2F * theta2mean_image = new TH2F("theta2mean_image","theta2mean_image",numcol,umin,umax,numrow,vmin,vmax);
-	theta2mean_image->SetStats(kFALSE);
-    theta2mean_image->GetXaxis()->SetTitle("u [mm]");
-    theta2mean_image->GetYaxis()->SetTitle("v [mm]");
-    theta2mean_image->GetZaxis()->SetTitle("#theta_{v} mean value[rad]");
-    theta2mean_image->GetZaxis()->SetTitleSize(0.02);
-    theta2mean_image->GetZaxis()->SetLabelSize(0.02);
-
-	// Fit mean value of centered first scattering angle distribution
-	TH2F * correctedtheta1mean_image = new TH2F("correctedtheta1mean_image","correctedtheta1mean_image",numcol,umin,umax,numrow,vmin,vmax);
-	correctedtheta1mean_image->SetStats(kFALSE);
-    correctedtheta1mean_image->GetXaxis()->SetTitle("u [mm]");
-    correctedtheta1mean_image->GetYaxis()->SetTitle("v [mm]");
-    correctedtheta1mean_image->GetZaxis()->SetTitle("#theta_{u} mean value[rad]");
-    correctedtheta1mean_image->GetZaxis()->SetTitleSize(0.02);
-    correctedtheta1mean_image->GetZaxis()->SetLabelSize(0.02);
-
-	// Fit mean value of centered second scattering angle distribution
-	TH2F * correctedtheta2mean_image = new TH2F("correctedtheta2mean_image","correctedtheta2mean_image",numcol,umin,umax,numrow,vmin,vmax);
-	correctedtheta2mean_image->SetStats(kFALSE);
-    correctedtheta2mean_image->GetXaxis()->SetTitle("u [mm]");
-    correctedtheta2mean_image->GetYaxis()->SetTitle("v [mm]");
-    correctedtheta2mean_image->GetZaxis()->SetTitle("#theta_{v} mean value[rad]");
-    correctedtheta2mean_image->GetZaxis()->SetTitleSize(0.02);
-    correctedtheta2mean_image->GetZaxis()->SetLabelSize(0.02);
-
-
-	// u residuals of downstream and upstream estimation
-	TH2F * scatteroffset_umean_image = new TH2F("scatteroffset_umean_image","scatteroffset_umean_image",numcol,umin,umax,numrow,vmin,vmax);
-	scatteroffset_umean_image->SetStats(kFALSE);
-    scatteroffset_umean_image->GetXaxis()->SetTitle("u [mm]");
-    scatteroffset_umean_image->GetYaxis()->SetTitle("v [mm]");
-    scatteroffset_umean_image->GetZaxis()->SetTitle("mean scatter offset u[µm]");
-    scatteroffset_umean_image->GetZaxis()->SetTitleSize(0.02);
-    scatteroffset_umean_image->GetZaxis()->SetLabelSize(0.02);
-
-	// v residuals of downstream and upstream estimation
-	TH2F * scatteroffset_vmean_image = new TH2F("scatteroffset_vmean_image","scatteroffset_vmean_image",numcol,umin,umax,numrow,vmin,vmax);
-	scatteroffset_vmean_image->SetStats(kFALSE);
-    scatteroffset_vmean_image->GetXaxis()->SetTitle("u [mm]");
-    scatteroffset_vmean_image->GetYaxis()->SetTitle("v [mm]");
-    scatteroffset_vmean_image->GetZaxis()->SetTitle("mean scatter offset v[µm]");
-    scatteroffset_vmean_image->GetZaxis()->SetTitleSize(0.02);
-    scatteroffset_vmean_image->GetZaxis()->SetLabelSize(0.02);
-
-	// u residual rms of downstream and upstream estimation
-	TH2F * scatteroffset_urms_image = new TH2F("scatteroffset_urms_image","scatteroffset_urms_image",numcol,umin,umax,numrow,vmin,vmax);
-	scatteroffset_urms_image->SetStats(kFALSE);
-    scatteroffset_urms_image->GetXaxis()->SetTitle("u [mm]");
-    scatteroffset_urms_image->GetYaxis()->SetTitle("v [mm]");
-    scatteroffset_urms_image->GetZaxis()->SetTitle("RMS scatter offset u[µm]");
-    scatteroffset_urms_image->GetZaxis()->SetTitleSize(0.02);
-    scatteroffset_urms_image->GetZaxis()->SetLabelSize(0.02);
-
-	// v residual rms of downstream and upstream estimation
-	TH2F * scatteroffset_vrms_image = new TH2F("scatteroffset_vrms_image","scatteroffset_vrms_image",numcol,umin,umax,numrow,vmin,vmax);
-	scatteroffset_vrms_image->SetStats(kFALSE);
-    scatteroffset_vrms_image->GetXaxis()->SetTitle("u [mm]");
-    scatteroffset_vrms_image->GetYaxis()->SetTitle("v [mm]");
-    scatteroffset_vrms_image->GetZaxis()->SetTitle("RMS scatter offset v[µm]");
-    scatteroffset_vrms_image->GetZaxis()->SetTitleSize(0.02);
-    scatteroffset_vrms_image->GetZaxis()->SetLabelSize(0.02);
-	
-	// Beam spot image from track intersections
-	TH2F * beamspot = new TH2F("beamspot","beamspot",numcol,umin,umax,numrow,vmin,vmax);
-    beamspot->SetStats(kFALSE);
-    beamspot->GetXaxis()->SetTitle("u [mm]");
-    beamspot->GetYaxis()->SetTitle("v [mm]");
-    beamspot->GetZaxis()->SetTitle("number of tracks");
-    beamspot->GetZaxis()->SetTitleOffset(1.4);
-    beamspot->GetZaxis()->SetTitleSize(0.02);
-    beamspot->GetZaxis()->SetLabelSize(0.02);
-
-	// Momentum image
-	TH2F * BE_image = new TH2F("BE_image","BE_image",numcol,umin,umax,numrow,vmin,vmax);
-    BE_image->SetStats(kFALSE);
-    BE_image->GetXaxis()->SetTitle("u [mm]");
-    BE_image->GetYaxis()->SetTitle("v [mm]");
-    BE_image->GetZaxis()->SetTitle("momentum [GeV/c]");
-    BE_image->GetZaxis()->SetTitleOffset(1.4);
-    BE_image->GetZaxis()->SetTitleSize(0.02);
-    BE_image->GetZaxis()->SetLabelSize(0.02);
-
-	imagefile->cd("");
-	imagefile->cd("result/vertex");
-
-	// Mean Vertex w position image
-	TH2F * vertex_w_image = new TH2F("vertex_w_image","vertex_w_image",numcol,umin,umax,numrow,vmin,vmax);
-    vertex_w_image->SetStats(kFALSE);
-    vertex_w_image->GetXaxis()->SetTitle("u [mm]");
-    vertex_w_image->GetYaxis()->SetTitle("v [mm]");
-    vertex_w_image->GetZaxis()->SetTitle("vertex w [mm]");
-    vertex_w_image->GetZaxis()->SetTitleOffset(1.4);
-    vertex_w_image->GetZaxis()->SetTitleSize(0.02);
-    vertex_w_image->GetZaxis()->SetLabelSize(0.02);
-
-	// Vertex w position RMS image
-	TH2F * vertex_w_rms_image = new TH2F("vertex_w_rms_image","vertex_w_rms_image",numcol,umin,umax,numrow,vmin,vmax);
-    vertex_w_rms_image->SetStats(kFALSE);
-    vertex_w_rms_image->GetXaxis()->SetTitle("u [mm]");
-    vertex_w_rms_image->GetYaxis()->SetTitle("v [mm]");
-    vertex_w_rms_image->GetZaxis()->SetTitle("vertex w RMS [mm]");
-    vertex_w_rms_image->GetZaxis()->SetTitleOffset(1.4);
-    vertex_w_rms_image->GetZaxis()->SetTitleSize(0.02);
-    vertex_w_rms_image->GetZaxis()->SetLabelSize(0.02);
-
-	// Mean Vertex multiplicity image
-	TH2F * vertex_multiplicity_image = new TH2F("vertex_multiplicity_image","vertex_multiplicity_image",numcol,umin,umax,numrow,vmin,vmax);
-    vertex_multiplicity_image->SetStats(kFALSE);
-    vertex_multiplicity_image->GetXaxis()->SetTitle("u [mm]");
-    vertex_multiplicity_image->GetYaxis()->SetTitle("v [mm]");
-    vertex_multiplicity_image->GetZaxis()->SetTitle("mean vertex multiplicity");
-    vertex_multiplicity_image->GetZaxis()->SetTitleOffset(1.4);
-    vertex_multiplicity_image->GetZaxis()->SetTitleSize(0.02);
-    vertex_multiplicity_image->GetZaxis()->SetLabelSize(0.02);
-
-	// Mean Vertex chi2 image
-	TH2F * vertex_chi2_image = new TH2F("vertex_chi2_image","vertex_chi2_image",numcol,umin,umax,numrow,vmin,vmax);
-    vertex_chi2_image->SetStats(kFALSE);
-    vertex_chi2_image->GetXaxis()->SetTitle("u [mm]");
-    vertex_chi2_image->GetYaxis()->SetTitle("v [mm]");
-    vertex_chi2_image->GetZaxis()->SetTitle("mean vertex chi2");
-    vertex_chi2_image->GetZaxis()->SetTitleOffset(1.4);
-    vertex_chi2_image->GetZaxis()->SetTitleSize(0.02);
-    vertex_chi2_image->GetZaxis()->SetLabelSize(0.02);
-
-	// Residual mean of Vertex position u and weighted means intersection from down and upstream track
-	TH2F * u_res_mean_vtx_trk_image = new TH2F("u_res_mean_vtx_trk_image","u_res_mean_vtx_trk_image",numcol,umin,umax,numrow,vmin,vmax);
-    u_res_mean_vtx_trk_image->SetStats(kFALSE);
-    u_res_mean_vtx_trk_image->GetXaxis()->SetTitle("u [mm]");
-    u_res_mean_vtx_trk_image->GetYaxis()->SetTitle("v [mm]");
-    u_res_mean_vtx_trk_image->GetZaxis()->SetTitle("mean u residual vtx-trk [mm]");
-    u_res_mean_vtx_trk_image->GetZaxis()->SetTitleOffset(1.4);
-    u_res_mean_vtx_trk_image->GetZaxis()->SetTitleSize(0.02);
-    u_res_mean_vtx_trk_image->GetZaxis()->SetLabelSize(0.02);
-
-	// Residual mean of Vertex position v and weighted means intersection from down and upstream track
-	TH2F * v_res_mean_vtx_trk_image = new TH2F("v_res_mean_vtx_trk_image","v_res_mean_vtx_trk_image",numcol,umin,umax,numrow,vmin,vmax);
-    v_res_mean_vtx_trk_image->SetStats(kFALSE);
-    v_res_mean_vtx_trk_image->GetXaxis()->SetTitle("u [mm]");
-    v_res_mean_vtx_trk_image->GetYaxis()->SetTitle("v [mm]");
-    v_res_mean_vtx_trk_image->GetZaxis()->SetTitle("mean v residual vtx-trk [mm]");
-    v_res_mean_vtx_trk_image->GetZaxis()->SetTitleOffset(1.4);
-    v_res_mean_vtx_trk_image->GetZaxis()->SetTitleSize(0.02);
-    v_res_mean_vtx_trk_image->GetZaxis()->SetLabelSize(0.02);
-
-	// Residual rms of Vertex position u and weighted means intersection from down and upstream track
-	TH2F * u_res_rms_vtx_trk_image = new TH2F("u_res_rms_vtx_trk_image","u_res_rms_vtx_trk_image",numcol,umin,umax,numrow,vmin,vmax);
-    u_res_rms_vtx_trk_image->SetStats(kFALSE);
-    u_res_rms_vtx_trk_image->GetXaxis()->SetTitle("u [mm]");
-    u_res_rms_vtx_trk_image->GetYaxis()->SetTitle("v [mm]");
-    u_res_rms_vtx_trk_image->GetZaxis()->SetTitle("u residual rms vtx-trk [mm]");
-    u_res_rms_vtx_trk_image->GetZaxis()->SetTitleOffset(1.4);
-    u_res_rms_vtx_trk_image->GetZaxis()->SetTitleSize(0.02);
-    u_res_rms_vtx_trk_image->GetZaxis()->SetLabelSize(0.02);
-
-	// Residual rms of Vertex position v and weighted means intersection from down and upstream track
-	TH2F * v_res_rms_vtx_trk_image = new TH2F("v_res_rms_vtx_trk_image","v_res_rms_vtx_trk_image",numcol,umin,umax,numrow,vmin,vmax);
-    v_res_rms_vtx_trk_image->SetStats(kFALSE);
-    v_res_rms_vtx_trk_image->GetXaxis()->SetTitle("u [mm]");
-    v_res_rms_vtx_trk_image->GetYaxis()->SetTitle("v [mm]");
-    v_res_rms_vtx_trk_image->GetZaxis()->SetTitle("v residual rms vtx-trk [mm]");
-    v_res_rms_vtx_trk_image->GetZaxis()->SetTitleOffset(1.4);
-    v_res_rms_vtx_trk_image->GetZaxis()->SetTitleSize(0.02);
-    v_res_rms_vtx_trk_image->GetZaxis()->SetLabelSize(0.02);
-
-
-	for(int col=0; col<numcol; col++)
-	{
-		for(int row=0; row<numrow; row++)
-		{
-
-			cout<<"fit histogram in (col,row): ("<<col<<","<<row<<")"<<endl;
-			cout<<"Fit range value: "<<rangevalue<<endl;
-
-            // Calculate the u position of this bin
-            double u=umin+col*upitch;
-            double v=vmin+row*vpitch;
-
-           	// Determine the momentum value from the u position and the p distribution parameters
-           	double mom=GetMomentum(mom0, mom_uslope, mom_vslope, u, v);
-
-			/*	* par[0]:  Expected beam energy
-				* par[1]:  Beam particle charge
-				* par[2]:  Beam particle mass
-				* par[3]:  Radiation length X/X0
-				* par[4]:  Calibrated angle reconstruction error
-			*/
-
-			double parameters[8]={mom,charge,mass,0.01,recoerror,300,0.0, epsilon};
-
-			// fit the histograms
-			fithisto(imagefile, fittype, maxchi2ndof_fit, mintracks, rangevalue, col,numcol,row,numrow,parameters,fitoptions);
-		}
-	}
-
-	imagefile->Close();
-
-    return 0;
-
-	
+int main(int, char **) {
+
+  gROOT->Reset();
+
+  // display mode
+  gStyle->SetPalette(1);
+  gStyle->SetOptStat(11111111);
+  gStyle->SetPadRightMargin(0.15f);
+  gStyle->SetPadLeftMargin(0.15f);
+
+  gROOT->ForceStyle();
+
+  // Read config file
+  //------------------
+  TEnv mEnv("x0image-partial.cfg");
+
+  // Read calibration results config file
+  //------------------
+  TEnv mEnv_res("x0cal_result.cfg");
+
+  // TString for the input root file name
+  TString histoname, range;
+  TString imagename = mEnv.GetValue("x0imagename", "X0image.root");
+
+  // List of input file names
+  TString list = mEnv.GetValue("inputfile", "X0");
+  std::vector<TString> filenames;
+
+  // Read input files and sort them into a tstring vector
+  TObjArray *tx = list.Tokenize(",");
+  cout << endl << "Input file names: " << endl;
+  for (Int_t i = 0; i < tx->GetEntries(); i++) {
+    filenames.push_back(((TObjString *)(tx->At(i)))->String());
+    std::cout << filenames.at(i) << endl;
+  }
+
+  // Create and open image file
+  TFile *imagefile = new TFile(imagename, "RECREATE");
+
+  // Create directories containing map histograms, fits and results
+  imagefile->mkdir("raw");
+  imagefile->mkdir("fit");
+  imagefile->mkdir("badfit");
+  imagefile->mkdir("result");
+  imagefile->mkdir("result/vertex");
+  imagefile->mkdir("result/fitDQM");
+
+  // Number of Rows and Columns of the sensor map
+  int numcol = mEnv.GetValue("maxupixels", 100);
+  int numrow = mEnv.GetValue("maxvpixels", 50);
+
+  // u minimum and v maximum value (in mm)
+  double umin = mEnv.GetValue("umin", -10.0);
+  double vmax = mEnv.GetValue("vmax", 5.0);
+
+  // u and v length of the map (in mm)
+  double ulength = mEnv.GetValue("ulength", 20.0);
+  double vlength = mEnv.GetValue("vlength", -10.0);
+
+  // u and v pitch (length of one pixel in the map, in mm)
+  double upitch = ulength / (1.0 * numcol);
+  double vpitch = vlength / (1.0 * numrow);
+
+  // umax and vmin can be computed from the parameters already implemented
+  double umax = umin + ulength;
+  double vmin = vmax - vlength;
+
+  // calculate the u value of the center of the image
+  // double u_center=umin+0.5*ulength;
+
+  // Print map parameters
+  cout << endl << "Column and Row values of the whole area:" << endl;
+  cout << "Lowest Column value: " << 0 << endl;
+  cout << "Highest Column value: " << numcol - 1 << endl;
+  cout << "Lowest Row value: " << 0 << endl;
+  cout << "Highest Row value: " << numrow - 1 << endl;
+
+  cout << endl << "Minimal u value:" << umin << " mm" << endl;
+  cout << "Max. u value:" << umax << " mm" << endl;
+  cout << "Minimal v value:" << vmin << " mm" << endl;
+  cout << "Max. v value:" << vmax << " mm" << endl;
+
+  // Vertex multiplicity cut (should be 1 for default X0 analysis)
+  int vertex_multiplicity_min = mEnv.GetValue("vertexmultiplicitymin", 1);
+  int vertex_multiplicity_max = mEnv.GetValue("vertexmultiplicitymax", 1);
+
+  cout << endl
+       << "Minimal vertex multiplicity:" << vertex_multiplicity_min << endl;
+  cout << "Maximal vertex multiplicity:" << vertex_multiplicity_max << endl;
+
+  // Fit chi2 value cut parameter, fit results with larger chi2 values are
+  // discarded
+  double maxchi2ndof_fit = mEnv.GetValue("maxchi2ndof", 10.0);
+
+  // Minimum number of tracks required for a stable fit
+  double mintracks = mEnv.GetValue("min_tracks", 400);
+
+  // Fit range parameter
+  double rangevalue = mEnv.GetValue("fitrange_parameter", 1.0);
+
+  // Fit options
+  TString fitoptions = mEnv.GetValue("fit_options", "RMELS");
+
+  // epsilon value (weight of the weighted mean that it used to calculate the
+  // energy loss due to bremsstrahlung)
+  double epsilon = mEnv.GetValue("epsilon", 0.0);
+
+  // Choose the type of fit
+  // 0: gaussian fit function with cuts on the tails, both kink distributions
+  // are used seperately
+  // 1: gaussian fit function with cuts on the tails, use only 1 fit on the
+  // merged histogram consisting of both distributions
+  int fittype = 1;
+
+  // Create and open first input file in list
+  TFile *inputfile = new TFile(filenames.at(0), "READ");
+
+  TTree *tree = (TTree *)inputfile->Get("MSCTree");
+  std::vector<double> plotranges, means;
+
+  // Draw theta1 histogram
+  tree->Draw("theta1", "", "P*");
+
+  // Get plot range and mean value for first iteration of theta1 histograms
+  plotranges.push_back(4 * tree->GetHistogram()->GetRMS());
+  means.push_back(tree->GetHistogram()->GetMean());
+
+  // Draw theta2 histogram
+  tree->Draw("theta2", "", "P*");
+
+  // Get plot range and mean value for first iteration of theta1 histograms
+  plotranges.push_back(4 * tree->GetHistogram()->GetRMS());
+  means.push_back(tree->GetHistogram()->GetMean());
+
+  // The number of bins of angle histograms
+  int numberofbins = mEnv.GetValue("num_bins", 50);
+
+  // Range parameter of angle histograms
+  double histo_range = mEnv.GetValue("histo_range", 5.0);
+
+  cout << endl
+       << "The first Scattering angle distributions will be plotted with range "
+       << plotranges.at(0) << " rad and " << numberofbins << " bins!" << endl;
+  cout << "The mean value of the histogram is " << means.at(0) << " rad !"
+       << endl;
+
+  cout
+      << "The second Scattering angle distributions will be plotted with range "
+      << plotranges.at(1) << " rad and " << numberofbins << " bins!" << endl;
+  cout << "The mean value of the histogram is " << means.at(1) << " rad !"
+       << endl;
+
+  // Calibration factor lambda, used to change the reconstruction error to
+  // include systematical errors
+  // The calibration factor is either taken from the x0 calibration results cfg
+  // file or
+  // from the cfg, where it must be inserted manually
+  double lambda_default = mEnv.GetValue("lambda", 1.0);
+  double lambda = mEnv_res.GetValue("lambda_start", lambda_default);
+  double recoerror = sqrt(getanglerecovar(inputfile)) * lambda;
+  cout << endl
+       << "The reconstruction error is " << recoerror * 1E6 << " µrad!" << endl;
+  cout << "This includes the calibration factor of " << lambda << endl;
+
+  // Beam energy in GeV
+  // The particle momenta are distributed due to the beam generation at the desy
+  // facility
+  // Particles of different momenta are sperated by a dipole magnet and a
+  // collimator. Due to
+  // the finite size of the collimator opening particles with momenta in a
+  // certain range p0+/-delta_p
+  // can traverse into the test beam area
+  // We expect a linear distribution with slope corresponding to ~500MeV/20mm
+  // Take either results from x0 calibration or manually inserted values from
+  // cfg file
+  double mom0_default = mEnv.GetValue("momentumoffset", 4.0); // in GeV
+  double mom0 = mEnv_res.GetValue("momentumoffset", mom0_default);
+  double mom_uslope_default =
+      mEnv.GetValue("momentumugradient", 0.0); // in GeV/mm
+  double mom_uslope =
+      mEnv_res.GetValue("momentumugradient", mom_uslope_default);
+  double mom_vslope_default =
+      mEnv.GetValue("momentumvgradient", 0.0); // in GeV/mm
+  double mom_vslope =
+      mEnv_res.GetValue("momentumvgradient", mom_vslope_default);
+  cout << endl << "The beam energy is " << mom0 << " GeV!" << endl;
+  cout << "The beam energy gradient (u direction) is " << mom_uslope
+       << " GeV/mm!" << endl;
+  cout << "The beam energy gradient (v direction) is " << mom_vslope
+       << " GeV/mm!" << endl
+       << endl;
+
+  // particle charge
+  double charge = 1;
+
+  // particle mass
+  double mass = 0.000511;
+
+  imagefile->cd("");
+  imagefile->cd("result");
+
+  // Scatter theta1 vs residual u
+  TH2F *hscatt_theta1_vs_resu = new TH2F(
+      "hscatt_theta1_vs_resu", "hscatt_theta1_vs_resu", 100, -0.1, 0.1, 150,
+      means.at(0) - plotranges.at(0), means.at(0) + plotranges.at(0));
+  hscatt_theta1_vs_resu->SetStats(kFALSE);
+  hscatt_theta1_vs_resu->GetXaxis()->SetTitle("u residual[mm]");
+  hscatt_theta1_vs_resu->GetYaxis()->SetTitle("theta1[rad]");
+  hscatt_theta1_vs_resu->GetZaxis()->SetTitle("Number of tracks");
+  hscatt_theta1_vs_resu->GetZaxis()->SetTitleOffset(1.4f);
+  hscatt_theta1_vs_resu->GetZaxis()->SetTitleSize(0.02f);
+  hscatt_theta1_vs_resu->GetZaxis()->SetLabelSize(0.02f);
+
+  // Scatter theta2 vs residual u
+  TH2F *hscatt_theta2_vs_resu = new TH2F(
+      "hscatt_theta2_vs_resu", "hscatt_theta2_vs_resu", 100, -0.1, 0.1, 150,
+      means.at(1) - plotranges.at(1), means.at(1) + plotranges.at(1));
+  hscatt_theta2_vs_resu->SetStats(kFALSE);
+  hscatt_theta2_vs_resu->GetXaxis()->SetTitle("u residual[mm]");
+  hscatt_theta2_vs_resu->GetYaxis()->SetTitle("theta2[rad]");
+  hscatt_theta2_vs_resu->GetZaxis()->SetTitle("Number of tracks");
+  hscatt_theta2_vs_resu->GetZaxis()->SetTitleOffset(1.4f);
+  hscatt_theta2_vs_resu->GetZaxis()->SetTitleSize(0.02f);
+  hscatt_theta2_vs_resu->GetZaxis()->SetLabelSize(0.02f);
+
+  // Scatter theta1 vs residual v
+  TH2F *hscatt_theta1_vs_resv = new TH2F(
+      "hscatt_theta1_vs_resv", "hscatt_theta1_vs_resv", 100, -0.1, 0.1, 150,
+      means.at(0) - plotranges.at(0), means.at(0) + plotranges.at(0));
+  hscatt_theta1_vs_resv->SetStats(kFALSE);
+  hscatt_theta1_vs_resv->GetXaxis()->SetTitle("v residual[mm]");
+  hscatt_theta1_vs_resv->GetYaxis()->SetTitle("theta1[rad]");
+  hscatt_theta1_vs_resv->GetZaxis()->SetTitle("Number of tracks");
+  hscatt_theta1_vs_resv->GetZaxis()->SetTitleOffset(1.4f);
+  hscatt_theta1_vs_resv->GetZaxis()->SetTitleSize(0.02f);
+  hscatt_theta1_vs_resv->GetZaxis()->SetLabelSize(0.02f);
+
+  // Scatter theta2 vs residual v
+  TH2F *hscatt_theta2_vs_resv = new TH2F(
+      "hscatt_theta2_vs_resv", "hscatt_theta2_vs_resv", 100, -0.1, 0.1, 150,
+      means.at(1) - plotranges.at(1), means.at(1) + plotranges.at(1));
+  hscatt_theta2_vs_resv->SetStats(kFALSE);
+  hscatt_theta2_vs_resv->GetXaxis()->SetTitle("v residual[mm]");
+  hscatt_theta2_vs_resv->GetYaxis()->SetTitle("theta2[rad]");
+  hscatt_theta2_vs_resv->GetZaxis()->SetTitle("Number of tracks");
+  hscatt_theta2_vs_resv->GetZaxis()->SetTitleOffset(1.4f);
+  hscatt_theta2_vs_resv->GetZaxis()->SetTitleSize(0.02f);
+  hscatt_theta2_vs_resv->GetZaxis()->SetLabelSize(0.02f);
+
+  tree->Draw("theta1:(u_out-u_in)>>hscatt_theta1_vs_resu", "", "colz");
+  hscatt_theta1_vs_resu->Write();
+
+  tree->Draw("theta2:(u_out-u_in)>>hscatt_theta2_vs_resu", "", "colz");
+  hscatt_theta2_vs_resu->Write();
+
+  tree->Draw("theta1:(v_out-v_in)>>hscatt_theta1_vs_resv", "", "colz");
+  hscatt_theta1_vs_resv->Write();
+
+  tree->Draw("theta2:(v_out-v_in)>>hscatt_theta2_vs_resv", "", "colz");
+  hscatt_theta2_vs_resv->Write();
+
+  imagefile->cd("");
+  inputfile->Close();
+
+  getcorrection(filenames, imagefile, means, plotranges, numberofbins, numcol,
+                numrow, umin, vmin, umax, vmax, vertex_multiplicity_min,
+                vertex_multiplicity_max);
+  savehistos(filenames, imagefile, numberofbins, histo_range, numcol, numrow,
+             umin, vmin, umax, vmax, vertex_multiplicity_min,
+             vertex_multiplicity_max);
+
+  imagefile->cd("");
+  imagefile->cd("result");
+
+  // X0 map
+  TH2F *x0_image =
+      new TH2F("x0_image", "x0_image", numcol, umin, umax, numrow, vmin, vmax);
+  x0_image->SetStats(kFALSE);
+  x0_image->SetMinimum(0);
+  x0_image->GetXaxis()->SetTitle("u [mm]");
+  x0_image->GetYaxis()->SetTitle("v [mm]");
+  x0_image->GetZaxis()->SetTitle("X/X0 [%]");
+  x0_image->GetZaxis()->SetTitleSize(0.02);
+  x0_image->GetZaxis()->SetLabelSize(0.02);
+
+  // X0 statistical error map (absolute value)
+  TH2F *x0err_image = new TH2F("x0err_image", "x0err_image", numcol, umin, umax,
+                               numrow, vmin, vmax);
+  x0err_image->SetStats(kFALSE);
+  x0err_image->SetMinimum(0);
+  x0err_image->GetXaxis()->SetTitle("u [mm]");
+  x0err_image->GetYaxis()->SetTitle("v [mm]");
+  x0err_image->GetZaxis()->SetTitle("X/X0 [%]");
+  x0err_image->GetZaxis()->SetTitleSize(0.02);
+  x0err_image->GetZaxis()->SetLabelSize(0.02);
+
+  // X0 statistical error map (relative value)
+  TH2F *x0relerr_image = new TH2F("x0relerr_image", "x0relerr_image", numcol,
+                                  umin, umax, numrow, vmin, vmax);
+  x0relerr_image->SetStats(kFALSE);
+  x0relerr_image->SetMinimum(0);
+  x0relerr_image->GetXaxis()->SetTitle("u [mm]");
+  x0relerr_image->GetYaxis()->SetTitle("v [mm]");
+  x0relerr_image->GetZaxis()->SetTitle("rel. error [%]");
+  x0relerr_image->GetZaxis()->SetTitleOffset(1.4);
+  x0relerr_image->GetZaxis()->SetTitleSize(0.02);
+  x0relerr_image->GetZaxis()->SetLabelSize(0.02);
+
+  imagefile->cd("");
+  imagefile->cd("result/fitDQM");
+
+  // Fit Chi2 image of the merged angle distribution
+  TH2F *fitsumchi2ndof_image =
+      new TH2F("fitsumchi2ndof_image", "fitsumchi2ndof_image", numcol, umin,
+               umax, numrow, vmin, vmax);
+  fitsumchi2ndof_image->SetStats(kFALSE);
+  fitsumchi2ndof_image->GetXaxis()->SetTitle("u [mm]");
+  fitsumchi2ndof_image->GetYaxis()->SetTitle("v [mm]");
+  fitsumchi2ndof_image->GetZaxis()->SetTitle("#{chi^2}_{ndof}");
+  fitsumchi2ndof_image->GetZaxis()->SetTitleSize(0.02);
+  fitsumchi2ndof_image->GetZaxis()->SetLabelSize(0.02);
+
+  // Fit chi2 distribution of merged angle dist
+  TH1F *fitsumchi2ndof_histo =
+      new TH1F("fitsumchi2ndof_histo", "fitsumchi2ndof_histo", 100, 0.0, 20.0);
+  fitsumchi2ndof_histo->GetXaxis()->SetTitle("#chi^{2}_{ndof}");
+  fitsumchi2ndof_histo->GetYaxis()->SetTitle("number of fits");
+
+  // Fit status image of the merged angle distribution
+  TH2F *fitsumstatus_image =
+      new TH2F("fitsumstatus_image", "fitsumstatus_image", numcol, umin, umax,
+               numrow, vmin, vmax);
+  fitsumstatus_image->SetStats(kFALSE);
+  fitsumstatus_image->GetXaxis()->SetTitle("u [mm]");
+  fitsumstatus_image->GetYaxis()->SetTitle("v [mm]");
+  fitsumstatus_image->GetZaxis()->SetTitle("fit status");
+  fitsumstatus_image->SetMaximum(5);
+  fitsumstatus_image->SetMinimum(-1);
+  fitsumstatus_image->SetContour(6);
+  fitsumstatus_image->GetZaxis()->SetTitleSize(0.02);
+  fitsumstatus_image->GetZaxis()->SetLabelSize(0.02);
+
+  // Fit Status distribution of merged angle dist
+  TH1F *fitsumstatus_histo =
+      new TH1F("fitsumstatus_histo", "fitsumstatus_histo", 4, 0, 4);
+  fitsumstatus_histo->GetXaxis()->SetTitle("Fit status");
+  fitsumstatus_histo->GetXaxis()->SetBinLabel(1, "fit worked");
+  fitsumstatus_histo->GetXaxis()->SetBinLabel(2, "bad chi2");
+  fitsumstatus_histo->GetXaxis()->SetBinLabel(3, "fit error");
+  fitsumstatus_histo->GetXaxis()->SetBinLabel(4, "low statistics");
+  fitsumstatus_histo->GetYaxis()->SetTitle("number of fits");
+
+  // Fit Chi2 image of the first angle distribution
+  TH2F *fit1chi2ndof_image =
+      new TH2F("fit1chi2ndof_image", "fit1chi2ndof_image", numcol, umin, umax,
+               numrow, vmin, vmax);
+  fit1chi2ndof_image->SetStats(kFALSE);
+  fit1chi2ndof_image->GetXaxis()->SetTitle("u [mm]");
+  fit1chi2ndof_image->GetYaxis()->SetTitle("v [mm]");
+  fit1chi2ndof_image->GetZaxis()->SetTitle("#chi^{2}_{ndof}");
+  fit1chi2ndof_image->GetZaxis()->SetTitleSize(0.02);
+  fit1chi2ndof_image->GetZaxis()->SetLabelSize(0.02);
+
+  // Fit chi2 distribution of first angle dist
+  TH1F *fit1chi2ndof_histo =
+      new TH1F("fit1chi2ndof_histo", "fit1chi2ndof_histo", 100, 0.0, 20.0);
+  fit1chi2ndof_histo->GetXaxis()->SetTitle("#chi^{2}_{ndof}");
+  fit1chi2ndof_histo->GetYaxis()->SetTitle("number of fits");
+
+  // Fit status image of the first angle distribution
+  TH2F *fit1status_image = new TH2F("fit1status_image", "fit1status_image",
+                                    numcol, umin, umax, numrow, vmin, vmax);
+  fit1status_image->SetStats(kFALSE);
+  fit1status_image->GetXaxis()->SetTitle("u [mm]");
+  fit1status_image->GetYaxis()->SetTitle("v [mm]");
+  fit1status_image->GetZaxis()->SetTitle("fit status");
+  fit1status_image->SetMaximum(5);
+  fit1status_image->SetMinimum(-1);
+  fit1status_image->SetContour(6);
+  fit1status_image->GetZaxis()->SetTitleSize(0.02);
+  fit1status_image->GetZaxis()->SetLabelSize(0.02);
+
+  // Fit Status of angle dist 1
+  TH1F *fit1status_histo =
+      new TH1F("fit1status_histo", "fit1status_histo", 4, 0, 4);
+  fit1status_histo->GetXaxis()->SetTitle("Fit status");
+  fit1status_histo->GetXaxis()->SetBinLabel(1, "fit worked");
+  fit1status_histo->GetXaxis()->SetBinLabel(2, "bad chi2");
+  fit1status_histo->GetXaxis()->SetBinLabel(3, "fit error");
+  fit1status_histo->GetXaxis()->SetBinLabel(4, "low statistics");
+  fit1status_histo->GetYaxis()->SetTitle("number of fits");
+
+  // Fit Chi2 image of the second angle distribution
+  TH2F *fit2chi2ndof_image =
+      new TH2F("fit2chi2ndof_image", "fit2chi2ndof_image", numcol, umin, umax,
+               numrow, vmin, vmax);
+  fit2chi2ndof_image->SetStats(kFALSE);
+  fit2chi2ndof_image->GetXaxis()->SetTitle("u [mm]");
+  fit2chi2ndof_image->GetYaxis()->SetTitle("v [mm]");
+  fit2chi2ndof_image->GetZaxis()->SetTitle("#chi^{2}_{ndof}");
+  fit2chi2ndof_image->GetZaxis()->SetTitleSize(0.02);
+  fit2chi2ndof_image->GetZaxis()->SetLabelSize(0.02);
+
+  // Fit chi2 distribution of second angle dist
+  TH1F *fit2chi2ndof_histo =
+      new TH1F("fit2chi2ndof_histo", "fit2chi2ndof_histo", 100, 0.0, 20.0);
+  fit2chi2ndof_histo->GetXaxis()->SetTitle("#chi^{2}_{ndof}");
+  fit2chi2ndof_histo->GetYaxis()->SetTitle("number of fits");
+
+  // Fit status image of the second angle distribution
+  TH2F *fit2status_image = new TH2F("fit2status_image", "fit2status_image",
+                                    numcol, umin, umax, numrow, vmin, vmax);
+  fit2status_image->SetStats(kFALSE);
+  fit2status_image->GetXaxis()->SetTitle("u [mm]");
+  fit2status_image->GetYaxis()->SetTitle("v [mm]");
+  fit2status_image->GetZaxis()->SetTitle("fit status");
+  fit2status_image->SetMaximum(5);
+  fit2status_image->SetMinimum(-1);
+  fit2status_image->SetContour(6);
+  fit2status_image->GetZaxis()->SetTitle("fit status");
+  fit2status_image->GetZaxis()->SetTitleSize(0.02);
+  fit2status_image->GetZaxis()->SetLabelSize(0.02);
+
+  // Fit Status of angle dist 2
+  TH1F *fit2status_histo =
+      new TH1F("fit2status_histo", "fit2status_histo", 4, 0, 4);
+  fit2status_histo->GetXaxis()->SetTitle("Fit status");
+  fit2status_histo->GetXaxis()->SetBinLabel(1, "fit worked");
+  fit2status_histo->GetXaxis()->SetBinLabel(2, "bad chi2");
+  fit2status_histo->GetXaxis()->SetBinLabel(3, "fit error");
+  fit2status_histo->GetXaxis()->SetBinLabel(4, "low statistics");
+  fit2status_histo->GetYaxis()->SetTitle("number of fits");
+
+  // Fit Probability distribution for first angle dist
+  TH1F *fit1prob_histo =
+      new TH1F("fit1prob_histo", "fit1prob_histo", 50, 0.0, 1.0);
+  fit1prob_histo->GetXaxis()->SetTitle("p value");
+  fit1prob_histo->GetYaxis()->SetTitle("number of fits");
+
+  // Fit probability map for first angle dist
+  TH2F *fit1prob_image = new TH2F("fit1prob_image", "fit1prob_image", numcol,
+                                  umin, umax, numrow, vmin, vmax);
+  fit1prob_image->SetStats(kFALSE);
+  fit1prob_image->GetXaxis()->SetTitle("u [mm]");
+  fit1prob_image->GetYaxis()->SetTitle("v [mm]");
+  fit1prob_image->SetMinimum(-0.1);
+  fit1prob_image->GetZaxis()->SetTitle("p value");
+  fit1prob_image->GetZaxis()->SetTitleSize(0.02);
+  fit1prob_image->GetZaxis()->SetLabelSize(0.02);
+
+  // Fit Probability distribution for second angle dist
+  TH1F *fit2prob_histo =
+      new TH1F("fit2prob_histo", "fit2prob_histo", 50, 0.0, 1.0);
+  fit2prob_histo->GetXaxis()->SetTitle("p value");
+  fit2prob_histo->GetYaxis()->SetTitle("number of fits");
+
+  // Fit probability map for second angle dist
+  TH2F *fit2prob_image = new TH2F("fit2prob_image", "fit2prob_image", numcol,
+                                  umin, umax, numrow, vmin, vmax);
+  fit2prob_image->SetStats(kFALSE);
+  fit2prob_image->GetXaxis()->SetTitle("u [mm]");
+  fit2prob_image->GetYaxis()->SetTitle("v [mm]");
+  fit2prob_image->SetMinimum(-0.1);
+  fit2prob_image->GetZaxis()->SetTitle("p value");
+  fit2prob_image->GetZaxis()->SetTitleSize(0.02);
+  fit2prob_image->GetZaxis()->SetLabelSize(0.02);
+
+  // Fit Probability distribution for merged angle dist
+  TH1F *fitsumprob_histo =
+      new TH1F("fitsumprob_histo", "fitsumprob_histo", 50, 0.0, 1.0);
+  fitsumprob_histo->SetStats(kFALSE);
+  fitsumprob_histo->GetXaxis()->SetTitle("p value");
+  fitsumprob_histo->GetYaxis()->SetTitle("number of fits");
+
+  // Fit probability map for merged angle dist
+  TH2F *fitsumprob_image = new TH2F("fitsumprob_image", "fitsumprob_image",
+                                    numcol, umin, umax, numrow, vmin, vmax);
+  fitsumprob_image->SetStats(kFALSE);
+  fitsumprob_image->GetXaxis()->SetTitle("u [mm]");
+  fitsumprob_image->GetYaxis()->SetTitle("v [mm]");
+  fitsumprob_image->SetMinimum(-0.1);
+  fitsumprob_image->GetZaxis()->SetTitle("fitsump value");
+  fitsumprob_image->GetZaxis()->SetTitleSize(0.02);
+  fitsumprob_image->GetZaxis()->SetLabelSize(0.02);
+
+  imagefile->cd("");
+  imagefile->cd("result");
+
+  // Fit mean value of first scattering angle distribution
+  TH2F *theta1mean_image = new TH2F("theta1mean_image", "theta1mean_image",
+                                    numcol, umin, umax, numrow, vmin, vmax);
+  theta1mean_image->SetStats(kFALSE);
+  theta1mean_image->GetXaxis()->SetTitle("u [mm]");
+  theta1mean_image->GetYaxis()->SetTitle("v [mm]");
+  theta1mean_image->GetZaxis()->SetTitle("#theta_{u} mean value[rad]");
+  theta1mean_image->GetZaxis()->SetTitleSize(0.02);
+  theta1mean_image->GetZaxis()->SetLabelSize(0.02);
+
+  // Fit mean value of second scattering angle distribution
+  TH2F *theta2mean_image = new TH2F("theta2mean_image", "theta2mean_image",
+                                    numcol, umin, umax, numrow, vmin, vmax);
+  theta2mean_image->SetStats(kFALSE);
+  theta2mean_image->GetXaxis()->SetTitle("u [mm]");
+  theta2mean_image->GetYaxis()->SetTitle("v [mm]");
+  theta2mean_image->GetZaxis()->SetTitle("#theta_{v} mean value[rad]");
+  theta2mean_image->GetZaxis()->SetTitleSize(0.02);
+  theta2mean_image->GetZaxis()->SetLabelSize(0.02);
+
+  // Fit mean value of centered first scattering angle distribution
+  TH2F *correctedtheta1mean_image =
+      new TH2F("correctedtheta1mean_image", "correctedtheta1mean_image", numcol,
+               umin, umax, numrow, vmin, vmax);
+  correctedtheta1mean_image->SetStats(kFALSE);
+  correctedtheta1mean_image->GetXaxis()->SetTitle("u [mm]");
+  correctedtheta1mean_image->GetYaxis()->SetTitle("v [mm]");
+  correctedtheta1mean_image->GetZaxis()->SetTitle("#theta_{u} mean value[rad]");
+  correctedtheta1mean_image->GetZaxis()->SetTitleSize(0.02);
+  correctedtheta1mean_image->GetZaxis()->SetLabelSize(0.02);
+
+  // Fit mean value of centered second scattering angle distribution
+  TH2F *correctedtheta2mean_image =
+      new TH2F("correctedtheta2mean_image", "correctedtheta2mean_image", numcol,
+               umin, umax, numrow, vmin, vmax);
+  correctedtheta2mean_image->SetStats(kFALSE);
+  correctedtheta2mean_image->GetXaxis()->SetTitle("u [mm]");
+  correctedtheta2mean_image->GetYaxis()->SetTitle("v [mm]");
+  correctedtheta2mean_image->GetZaxis()->SetTitle("#theta_{v} mean value[rad]");
+  correctedtheta2mean_image->GetZaxis()->SetTitleSize(0.02);
+  correctedtheta2mean_image->GetZaxis()->SetLabelSize(0.02);
+
+  // u residuals of downstream and upstream estimation
+  TH2F *scatteroffset_umean_image =
+      new TH2F("scatteroffset_umean_image", "scatteroffset_umean_image", numcol,
+               umin, umax, numrow, vmin, vmax);
+  scatteroffset_umean_image->SetStats(kFALSE);
+  scatteroffset_umean_image->GetXaxis()->SetTitle("u [mm]");
+  scatteroffset_umean_image->GetYaxis()->SetTitle("v [mm]");
+  scatteroffset_umean_image->GetZaxis()->SetTitle("mean scatter offset u[µm]");
+  scatteroffset_umean_image->GetZaxis()->SetTitleSize(0.02);
+  scatteroffset_umean_image->GetZaxis()->SetLabelSize(0.02);
+
+  // v residuals of downstream and upstream estimation
+  TH2F *scatteroffset_vmean_image =
+      new TH2F("scatteroffset_vmean_image", "scatteroffset_vmean_image", numcol,
+               umin, umax, numrow, vmin, vmax);
+  scatteroffset_vmean_image->SetStats(kFALSE);
+  scatteroffset_vmean_image->GetXaxis()->SetTitle("u [mm]");
+  scatteroffset_vmean_image->GetYaxis()->SetTitle("v [mm]");
+  scatteroffset_vmean_image->GetZaxis()->SetTitle("mean scatter offset v[µm]");
+  scatteroffset_vmean_image->GetZaxis()->SetTitleSize(0.02);
+  scatteroffset_vmean_image->GetZaxis()->SetLabelSize(0.02);
+
+  // u residual rms of downstream and upstream estimation
+  TH2F *scatteroffset_urms_image =
+      new TH2F("scatteroffset_urms_image", "scatteroffset_urms_image", numcol,
+               umin, umax, numrow, vmin, vmax);
+  scatteroffset_urms_image->SetStats(kFALSE);
+  scatteroffset_urms_image->GetXaxis()->SetTitle("u [mm]");
+  scatteroffset_urms_image->GetYaxis()->SetTitle("v [mm]");
+  scatteroffset_urms_image->GetZaxis()->SetTitle("RMS scatter offset u[µm]");
+  scatteroffset_urms_image->GetZaxis()->SetTitleSize(0.02);
+  scatteroffset_urms_image->GetZaxis()->SetLabelSize(0.02);
+
+  // v residual rms of downstream and upstream estimation
+  TH2F *scatteroffset_vrms_image =
+      new TH2F("scatteroffset_vrms_image", "scatteroffset_vrms_image", numcol,
+               umin, umax, numrow, vmin, vmax);
+  scatteroffset_vrms_image->SetStats(kFALSE);
+  scatteroffset_vrms_image->GetXaxis()->SetTitle("u [mm]");
+  scatteroffset_vrms_image->GetYaxis()->SetTitle("v [mm]");
+  scatteroffset_vrms_image->GetZaxis()->SetTitle("RMS scatter offset v[µm]");
+  scatteroffset_vrms_image->GetZaxis()->SetTitleSize(0.02);
+  scatteroffset_vrms_image->GetZaxis()->SetLabelSize(0.02);
+
+  // Beam spot image from track intersections
+  TH2F *beamspot =
+      new TH2F("beamspot", "beamspot", numcol, umin, umax, numrow, vmin, vmax);
+  beamspot->SetStats(kFALSE);
+  beamspot->GetXaxis()->SetTitle("u [mm]");
+  beamspot->GetYaxis()->SetTitle("v [mm]");
+  beamspot->GetZaxis()->SetTitle("number of tracks");
+  beamspot->GetZaxis()->SetTitleOffset(1.4);
+  beamspot->GetZaxis()->SetTitleSize(0.02);
+  beamspot->GetZaxis()->SetLabelSize(0.02);
+
+  // Momentum image
+  TH2F *BE_image =
+      new TH2F("BE_image", "BE_image", numcol, umin, umax, numrow, vmin, vmax);
+  BE_image->SetStats(kFALSE);
+  BE_image->GetXaxis()->SetTitle("u [mm]");
+  BE_image->GetYaxis()->SetTitle("v [mm]");
+  BE_image->GetZaxis()->SetTitle("momentum [GeV/c]");
+  BE_image->GetZaxis()->SetTitleOffset(1.4);
+  BE_image->GetZaxis()->SetTitleSize(0.02);
+  BE_image->GetZaxis()->SetLabelSize(0.02);
+
+  imagefile->cd("");
+  imagefile->cd("result/vertex");
+
+  // Mean Vertex w position image
+  TH2F *vertex_w_image = new TH2F("vertex_w_image", "vertex_w_image", numcol,
+                                  umin, umax, numrow, vmin, vmax);
+  vertex_w_image->SetStats(kFALSE);
+  vertex_w_image->GetXaxis()->SetTitle("u [mm]");
+  vertex_w_image->GetYaxis()->SetTitle("v [mm]");
+  vertex_w_image->GetZaxis()->SetTitle("vertex w [mm]");
+  vertex_w_image->GetZaxis()->SetTitleOffset(1.4);
+  vertex_w_image->GetZaxis()->SetTitleSize(0.02);
+  vertex_w_image->GetZaxis()->SetLabelSize(0.02);
+
+  // Vertex w position RMS image
+  TH2F *vertex_w_rms_image =
+      new TH2F("vertex_w_rms_image", "vertex_w_rms_image", numcol, umin, umax,
+               numrow, vmin, vmax);
+  vertex_w_rms_image->SetStats(kFALSE);
+  vertex_w_rms_image->GetXaxis()->SetTitle("u [mm]");
+  vertex_w_rms_image->GetYaxis()->SetTitle("v [mm]");
+  vertex_w_rms_image->GetZaxis()->SetTitle("vertex w RMS [mm]");
+  vertex_w_rms_image->GetZaxis()->SetTitleOffset(1.4);
+  vertex_w_rms_image->GetZaxis()->SetTitleSize(0.02);
+  vertex_w_rms_image->GetZaxis()->SetLabelSize(0.02);
+
+  // Mean Vertex multiplicity image
+  TH2F *vertex_multiplicity_image =
+      new TH2F("vertex_multiplicity_image", "vertex_multiplicity_image", numcol,
+               umin, umax, numrow, vmin, vmax);
+  vertex_multiplicity_image->SetStats(kFALSE);
+  vertex_multiplicity_image->GetXaxis()->SetTitle("u [mm]");
+  vertex_multiplicity_image->GetYaxis()->SetTitle("v [mm]");
+  vertex_multiplicity_image->GetZaxis()->SetTitle("mean vertex multiplicity");
+  vertex_multiplicity_image->GetZaxis()->SetTitleOffset(1.4);
+  vertex_multiplicity_image->GetZaxis()->SetTitleSize(0.02);
+  vertex_multiplicity_image->GetZaxis()->SetLabelSize(0.02);
+
+  // Mean Vertex chi2 image
+  TH2F *vertex_chi2_image = new TH2F("vertex_chi2_image", "vertex_chi2_image",
+                                     numcol, umin, umax, numrow, vmin, vmax);
+  vertex_chi2_image->SetStats(kFALSE);
+  vertex_chi2_image->GetXaxis()->SetTitle("u [mm]");
+  vertex_chi2_image->GetYaxis()->SetTitle("v [mm]");
+  vertex_chi2_image->GetZaxis()->SetTitle("mean vertex chi2");
+  vertex_chi2_image->GetZaxis()->SetTitleOffset(1.4);
+  vertex_chi2_image->GetZaxis()->SetTitleSize(0.02);
+  vertex_chi2_image->GetZaxis()->SetLabelSize(0.02);
+
+  // Residual mean of Vertex position u and weighted means intersection from
+  // down and upstream track
+  TH2F *u_res_mean_vtx_trk_image =
+      new TH2F("u_res_mean_vtx_trk_image", "u_res_mean_vtx_trk_image", numcol,
+               umin, umax, numrow, vmin, vmax);
+  u_res_mean_vtx_trk_image->SetStats(kFALSE);
+  u_res_mean_vtx_trk_image->GetXaxis()->SetTitle("u [mm]");
+  u_res_mean_vtx_trk_image->GetYaxis()->SetTitle("v [mm]");
+  u_res_mean_vtx_trk_image->GetZaxis()->SetTitle(
+      "mean u residual vtx-trk [mm]");
+  u_res_mean_vtx_trk_image->GetZaxis()->SetTitleOffset(1.4);
+  u_res_mean_vtx_trk_image->GetZaxis()->SetTitleSize(0.02);
+  u_res_mean_vtx_trk_image->GetZaxis()->SetLabelSize(0.02);
+
+  // Residual mean of Vertex position v and weighted means intersection from
+  // down and upstream track
+  TH2F *v_res_mean_vtx_trk_image =
+      new TH2F("v_res_mean_vtx_trk_image", "v_res_mean_vtx_trk_image", numcol,
+               umin, umax, numrow, vmin, vmax);
+  v_res_mean_vtx_trk_image->SetStats(kFALSE);
+  v_res_mean_vtx_trk_image->GetXaxis()->SetTitle("u [mm]");
+  v_res_mean_vtx_trk_image->GetYaxis()->SetTitle("v [mm]");
+  v_res_mean_vtx_trk_image->GetZaxis()->SetTitle(
+      "mean v residual vtx-trk [mm]");
+  v_res_mean_vtx_trk_image->GetZaxis()->SetTitleOffset(1.4);
+  v_res_mean_vtx_trk_image->GetZaxis()->SetTitleSize(0.02);
+  v_res_mean_vtx_trk_image->GetZaxis()->SetLabelSize(0.02);
+
+  // Residual rms of Vertex position u and weighted means intersection from down
+  // and upstream track
+  TH2F *u_res_rms_vtx_trk_image =
+      new TH2F("u_res_rms_vtx_trk_image", "u_res_rms_vtx_trk_image", numcol,
+               umin, umax, numrow, vmin, vmax);
+  u_res_rms_vtx_trk_image->SetStats(kFALSE);
+  u_res_rms_vtx_trk_image->GetXaxis()->SetTitle("u [mm]");
+  u_res_rms_vtx_trk_image->GetYaxis()->SetTitle("v [mm]");
+  u_res_rms_vtx_trk_image->GetZaxis()->SetTitle("u residual rms vtx-trk [mm]");
+  u_res_rms_vtx_trk_image->GetZaxis()->SetTitleOffset(1.4);
+  u_res_rms_vtx_trk_image->GetZaxis()->SetTitleSize(0.02);
+  u_res_rms_vtx_trk_image->GetZaxis()->SetLabelSize(0.02);
+
+  // Residual rms of Vertex position v and weighted means intersection from down
+  // and upstream track
+  TH2F *v_res_rms_vtx_trk_image =
+      new TH2F("v_res_rms_vtx_trk_image", "v_res_rms_vtx_trk_image", numcol,
+               umin, umax, numrow, vmin, vmax);
+  v_res_rms_vtx_trk_image->SetStats(kFALSE);
+  v_res_rms_vtx_trk_image->GetXaxis()->SetTitle("u [mm]");
+  v_res_rms_vtx_trk_image->GetYaxis()->SetTitle("v [mm]");
+  v_res_rms_vtx_trk_image->GetZaxis()->SetTitle("v residual rms vtx-trk [mm]");
+  v_res_rms_vtx_trk_image->GetZaxis()->SetTitleOffset(1.4);
+  v_res_rms_vtx_trk_image->GetZaxis()->SetTitleSize(0.02);
+  v_res_rms_vtx_trk_image->GetZaxis()->SetLabelSize(0.02);
+
+  for (int col = 0; col < numcol; col++) {
+    for (int row = 0; row < numrow; row++) {
+
+      cout << "fit histogram in (col,row): (" << col << "," << row << ")"
+           << endl;
+      cout << "Fit range value: " << rangevalue << endl;
+
+      // Calculate the u position of this bin
+      double u = umin + col * upitch;
+      double v = vmin + row * vpitch;
+
+      // Determine the momentum value from the u position and the p distribution
+      // parameters
+      double mom = GetMomentum(mom0, mom_uslope, mom_vslope, u, v);
+
+      /*	* par[0]:  Expected beam energy
+              * par[1]:  Beam particle charge
+              * par[2]:  Beam particle mass
+              * par[3]:  Radiation length X/X0
+              * par[4]:  Calibrated angle reconstruction error
+      */
+
+      double parameters[8] = {mom,       charge, mass, 0.01,
+                              recoerror, 300,    0.0,  epsilon};
+
+      // fit the histograms
+      fithisto(imagefile, fittype, maxchi2ndof_fit, mintracks, rangevalue, col,
+               numcol, row, numrow, parameters, fitoptions);
+    }
+  }
+
+  imagefile->Close();
+
+  return 0;
 }
-
