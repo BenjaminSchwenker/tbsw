@@ -624,10 +624,14 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
       _rootTrackLocalChi2 = TrackFitter.GetPredictedChi2(p, C, hit);
       _rootTrackHasHit = 0;  // match
       _rootTrackSeedCharge = Cluster.getSeedCharge() ; 
+      _rootTrackHitU = hit.GetCoord()[0];
+      _rootTrackHitV = hit.GetCoord()[1];
     } else {
       _rootTrackLocalChi2 = -1;
       _rootTrackHasHit = -1; // no match
       _rootTrackSeedCharge = -1;
+      _rootTrackHitU = -1;
+      _rootTrackHitV = -1;
     }
        
     _rootFile->cd("");
@@ -785,8 +789,8 @@ void PixelDUTAnalyzer::bookHistos()
    _rootTrackTree->Branch("isGoodEvent"     ,&_rootDUTGoodEvent,  "isGoodEvent/O");
    _rootTrackTree->Branch("hasTestPixels"   ,&_rootDUTHasTestPixels, "hasTestPixels/O");
    _rootTrackTree->Branch("hasHit"          ,&_rootTrackHasHit         ,"hasHit/I");
-   _rootTrackTree->Branch("u_hit"           ,&_rootHitU             ,"u_hit/D");
-   _rootTrackTree->Branch("v_hit"           ,&_rootHitV             ,"v_hit/D");
+   _rootTrackTree->Branch("u_hit"           ,&_rootTrackHitU             ,"u_hit/D");
+   _rootTrackTree->Branch("v_hit"           ,&_rootTrackHitV             ,"v_hit/D");
    _rootTrackTree->Branch("hasRefHit"       ,&_rootTrackWithRefHit     ,"hasRefHit/I");
    _rootTrackTree->Branch("momentum"        ,&_rootTrackFitMomentum    ,"momentum/D");                                                           
    _rootTrackTree->Branch("u_fit"           ,&_rootTrackFitU           ,"u_fit/D");
