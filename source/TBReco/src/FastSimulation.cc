@@ -72,7 +72,7 @@ namespace depfet {
                              "Collection name for SimTrackerHits",
                              m_SimTrackerHitCollectionName, string ("SimTrackerHits"));
     
-    registerProcessorParameter ("ScatterModel", "Choose model for multiple scattering: Highland(0)",
+    registerProcessorParameter ("ScatterModel", "Choose model for multiple scattering: Highland(0), SumOfSingleScatterings(1)",
                                 m_scatterModel,  static_cast < int > (0));
     
     registerProcessorParameter ("DoEnergyLossStraggling", "Flag (true/false) for simulating energy loss straggling",
@@ -200,7 +200,7 @@ namespace depfet {
       int ipl = -1;
       
       // Average mometum before and after energy loss. 
-      double average_mom = 0;
+      double weighted_mean_mom = 0;
 
       do  { 
         
@@ -253,23 +253,46 @@ namespace depfet {
           simHitVec->push_back( simHit );
            
           // Simulate energy loss by bremsstrahlung (Bethe Heitler theory)
-          average_mom = 0.5*mcp->getCharge()/state[4];
+		  // A weighted mean approach is used similar to the momentum calculation in
+		  // the X/X0 imaging and calibration scripts.
+		  // The momentum during the multiple scattering process is calculated as
+		  // a weighted mean with the weight parameter epsilon, which is a steering parameter
+		  // of this processor. 
+		  // First term of the weighted mean
+          weighted_mean_mom = (1.0-materialeffect::Epsilon_Weightfactor)*mcp->getCharge()/state[4];
+
+   		  streamlog_out ( MESSAGE1 ) << endl;
+   		  streamlog_out ( MESSAGE1 ) << "Materialeffects of plane " << ipl << endl;
+   		  streamlog_out ( MESSAGE1 ) << "Momentum before transition: " << mcp->getCharge()/state[4] << " GeV" << endl;
+   		  streamlog_out ( MESSAGE1 ) << "First term of weighted mean: " << weighted_mean_mom << " GeV" << endl;
+		  
           if (m_doFractionalBetheHeitlerEnergyLoss) {
             double t = l0/current_det.GetRadLength(u,v);
             double rndm = gRandom->Rndm(1);
             materialeffect::SimulateBetherHeitlerEnergyLoss(state, t, mcp->getMass(), mcp->getCharge(), rndm);    
           }
-          // Take average of momentum before and after scattering
-          average_mom += 0.5*mcp->getCharge()/state[4];
+          // Second term of the weighted mean
+          weighted_mean_mom += materialeffect::Epsilon_Weightfactor*mcp->getCharge()/state[4];
+
+   		  streamlog_out ( MESSAGE1 ) << "Momentum after transition: " << mcp->getCharge()/state[4] << " GeV" << endl;
+   		  streamlog_out ( MESSAGE1 ) << "Second term of weighted mean: " << materialeffect::Epsilon_Weightfactor*mcp->getCharge()/state[4] << " GeV" << endl;
+   		  streamlog_out ( MESSAGE1 ) << "Overall weighted mean: " << weighted_mean_mom << " GeV" << endl;
            
           if(  m_scatterModel==0  ) { 
             // Highland model scattering
-            double theta2 = materialeffect::GetScatterTheta2(average_mom, l0, current_det.GetRadLength(u,v), mcp->getMass(), mcp->getCharge() );      
+            double theta2 = materialeffect::GetScatterTheta2(weighted_mean_mom, l0, current_det.GetRadLength(u,v), mcp->getMass(), mcp->getCharge() );      
             double kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
             double kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 ));      
             // Scatter track ('in' state -> 'out' state)
             materialeffect::ScatterTrack(state, kink_u, kink_v); 
-          }
+          } else if ( m_scatterModel==1 ) {
+            double kink_u = materialeffect::GetScatterKink_SC(l0, current_det.GetRadLength(u,v), current_det.GetAtomicNumber(u,v), current_det.GetAtomicMass(u,v), mcp->getMass(), mcp->getCharge(), weighted_mean_mom   );
+            double kink_v = materialeffect::GetScatterKink_SC(l0, current_det.GetRadLength(u,v), current_det.GetAtomicNumber(u,v), current_det.GetAtomicMass(u,v), mcp->getMass(), mcp->getCharge(), weighted_mean_mom   );
+            // Scatter track ('in' state -> 'out' state)
+            materialeffect::ScatterTrack(state, kink_u, kink_v);     
+          } 
+          
+         
         }
          
         // Propagate particle to next detector surface
@@ -298,23 +321,44 @@ namespace depfet {
         // ------------------------------- 
         
         // Simulate energy loss by bremsstrahlung (Bethe Heitler theory)
-        average_mom = 0.5*mcp->getCharge()/state[4];
+		// A weighted mean approach is used similar to the momentum calculation in
+		// the X/X0 imaging and calibration scripts.
+		// The momentum during the multiple scattering process is calculated as
+		// a weighted mean with the weight parameter epsilon, which is a steering parameter
+		// of this processor. 
+		// First term of the weighted mean
+        weighted_mean_mom = (1-materialeffect::Epsilon_Weightfactor)*mcp->getCharge()/state[4];
+
+   		streamlog_out ( MESSAGE1 ) << endl;
+   		streamlog_out ( MESSAGE1 ) << "Materialeffects of air plane " << endl;
+   		streamlog_out ( MESSAGE1 ) << "Momentum before transition: " << mcp->getCharge()/state[4] << " GeV" << endl;
+   		streamlog_out ( MESSAGE1 ) << "First term of weighted mean: " << weighted_mean_mom << " GeV" << endl;
+
         if (m_doFractionalBetheHeitlerEnergyLoss) {
           double t = length/materialeffect::X0_air;
           double rndm = gRandom->Rndm(1);
           materialeffect::SimulateBetherHeitlerEnergyLoss(state, t, mcp->getMass(), mcp->getCharge(), rndm); 
         } 
-        // Take average of momentum before and after scattering
-        average_mom += 0.5*mcp->getCharge()/state[4];
+		// Second term of the weighted mean
+        weighted_mean_mom += materialeffect::Epsilon_Weightfactor*mcp->getCharge()/state[4];
+
+   		streamlog_out ( MESSAGE1 ) << "Momentum after transition: " << mcp->getCharge()/state[4] << " GeV" << endl;
+   		streamlog_out ( MESSAGE1 ) << "Second term of weighted mean: " << materialeffect::Epsilon_Weightfactor*mcp->getCharge()/state[4] << " GeV" << endl;
+   		streamlog_out ( MESSAGE1 ) << "Overall weighted mean: " << weighted_mean_mom << " GeV" << endl;
         
         if( m_scatterModel==0 ) { 
           // Highland model scattering     
-          double theta2 = materialeffect::GetScatterTheta2(average_mom, length, materialeffect::X0_air, mcp->getMass(), mcp->getCharge()) ;   
+          double theta2 = materialeffect::GetScatterTheta2(weighted_mean_mom, length, materialeffect::X0_air, mcp->getMass(), mcp->getCharge()) ;   
           double kink_u = gRandom->Gaus(0, TMath::Sqrt( theta2 ));
           double kink_v = gRandom->Gaus(0, TMath::Sqrt( theta2 )); 
           // Scatter track ('in' state -> 'out' state)
           materialeffect::ScatterTrack(state, kink_u, kink_v);     
-        }
+        } else if ( m_scatterModel==1 ) {
+          double kink_u = materialeffect::GetScatterKink_SC(length, materialeffect::X0_air, materialeffect::AtomicNumber_air, materialeffect::AtomicMass_air, mcp->getMass(), mcp->getCharge(), weighted_mean_mom   );
+          double kink_v = materialeffect::GetScatterKink_SC(length, materialeffect::X0_air, materialeffect::AtomicNumber_air, materialeffect::AtomicMass_air, mcp->getMass(), mcp->getCharge(), weighted_mean_mom   );
+          // Scatter track ('in' state -> 'out' state)
+          materialeffect::ScatterTrack(state, kink_u, kink_v);     
+        } 
           
         // Get state on next detector
         bool error = false; 

@@ -36,6 +36,14 @@ namespace materialeffect {
    */ 
   double GetScatterTheta2(double mom, double x, double x0, double mass, double charge);  
   
+  /** Simulate scatter kink for single scattering theory 
+   *
+   * Simulate the scattering kink as a sum of independent and identically distributed single scattering 
+   * events following the paper R. Frühwirth et al.  "On the quantitative modelling of core and tails of multiple 
+   * scattering by Gaussian mixtures", Nucl.Instrum.Meth. (2000)
+   */   
+  double GetScatterKink_SC(double length, double X0, double Z, double A, double mass, double charge, double mom  );
+  
   /** Scatter track at thin scatterer 
    *
    * The track is locally scattered by two scatter kink angles. The kink angles 
@@ -72,11 +80,19 @@ namespace materialeffect {
   // Highland radiation length for air [mm] (NTP: 20 deg, 1bar, PDG value)   
   static const float X0_air = 303900;
 
-  // TODO: this is a wild guess, check it
-  static const float AtomicMass_air = 16; 
+  // Average Z of air can be calculated from the fractions of the individual elements
+  // According to the PDG it contains 76% nitrogen, 23% oxygen and 1% argon
+  // Therefore Z=0.76*7.0+0.23*8.0+0.01*18.0
+  static const float AtomicNumber_air = 7.34;
 
-  // TODO: this is a wild guess, check it
-  static const float AtomicNumber_air = 8; 
+  // According to the PDG <Z/A> of air is 0.499, therefore A=Z/0.499
+  static const float AtomicMass_air = 14.71; 
+
+  // Weight to determine the modified particle momentum
+  // when bremsstrahlung energy losses are significant
+  // (i.e. when traversing a high Z and thick material)
+  static const float Epsilon_Weightfactor = 0.3; 
+ 
 
 } // Namespace
 
