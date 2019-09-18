@@ -90,12 +90,6 @@ X0ImageProducer::X0ImageProducer() : Processor("X0ImageProducer") {
                          "simulations: Highland(0), SumOfSingleScatterings(1)",
       _m_toyScatterModel, static_cast<int>(0));
 
-  registerProcessorParameter("EpsilonWeightParameter", 
-					  "Weight Parameter to calculate the momentum during "
-                      "multiple scattering on a plane (only used in toy "
-                      "simulation mode)",
-      _m_epsilon, static_cast<double>(0.0));
-
   registerProcessorParameter(
       "ToyRecoError", "Angle reconstruction error used in toy simulations, if "
                       "its smaller than 0, use real angle reco error instead "
@@ -579,7 +573,7 @@ void X0ImageProducer::processEvent(LCEvent *evt) {
             dut.GetThickness(u, v) * std::sqrt(1 + dudw * dudw + dvdw * dvdw);
 
         // Simulate energy loss by bremsstrahlung (Bethe Heitler theory)
-        weighted_mean_mom = (1.0-_m_epsilon) * uptrack.GetCharge() / p_in[4];
+        weighted_mean_mom = (1.0-materialeffect::Epsilon_Weightfactor) * uptrack.GetCharge() / p_in[4];
 
    		streamlog_out ( MESSAGE1 ) << endl;
    		streamlog_out ( MESSAGE1 ) << "Materialeffects of target plane " << endl;
@@ -594,10 +588,10 @@ void X0ImageProducer::processEvent(LCEvent *evt) {
               p_in, t, uptrack.GetMass(), uptrack.GetCharge(), rndm);
         }
         // Take average of momentum before and after scattering
-        weighted_mean_mom += _m_epsilon * uptrack.GetCharge() / p_in[4];
+        weighted_mean_mom += materialeffect::Epsilon_Weightfactor * uptrack.GetCharge() / p_in[4];
 
    		streamlog_out ( MESSAGE1 ) << "Momentum after transition: " << uptrack.GetCharge() / p_in[4] << " GeV" << endl;
-   		streamlog_out ( MESSAGE1 ) << "Second term of weighted mean: " << _m_epsilon * uptrack.GetCharge() / p_in[4] << " GeV" << endl;
+   		streamlog_out ( MESSAGE1 ) << "Second term of weighted mean: " << materialeffect::Epsilon_Weightfactor * uptrack.GetCharge() / p_in[4] << " GeV" << endl;
    		streamlog_out ( MESSAGE1 ) << "Overall weighted mean: " << weighted_mean_mom << " GeV" << endl;
 
         double kink_u = 0;

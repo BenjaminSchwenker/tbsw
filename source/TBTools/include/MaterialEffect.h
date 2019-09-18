@@ -87,6 +87,11 @@ namespace materialeffect {
 
   // According to the PDG <Z/A> of air is 0.499, therefore A=Z/0.499
   static const float AtomicMass_air = 14.71; 
+
+  // Weight to determine the modified particle momentum
+  // when bremsstrahlung energy losses are significant
+  // (i.e. when traversing a high Z and thick material)
+  static const float Epsilon_Weightfactor = 0.3; 
  
 
 } // Namespace

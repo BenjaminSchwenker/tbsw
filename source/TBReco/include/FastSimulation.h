@@ -76,11 +76,6 @@ namespace depfet
     
     // Flag for simulating fractional bethe heitler energy loss 
     bool m_doFractionalBetheHeitlerEnergyLoss; 
-
-	// Weight parameter used in the calculation of the momentum after 
-	// energy loss. This weighted mean of the momentum is used to determine 
-	// the multiple scattering angle of the corresponding plane.
-	double m_epsilon;
    
    private: 
      

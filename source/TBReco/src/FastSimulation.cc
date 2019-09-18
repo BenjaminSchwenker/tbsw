@@ -80,9 +80,6 @@ namespace depfet {
     
     registerProcessorParameter ("DoFractionalBetheHeitlerEnergyLoss", "Flag (true/false) for simulating fractional Bethe Heitler energy loss",
                                 m_doFractionalBetheHeitlerEnergyLoss,  static_cast < bool > (false));
-
-    registerProcessorParameter ("EpsilonWeightParameter", "Weight Parameter to calculate the momentum during multiple scattering on a plane",
-                                m_epsilon,  static_cast < double > (0.0));
     
                                  
   }
@@ -262,7 +259,7 @@ namespace depfet {
 		  // a weighted mean with the weight parameter epsilon, which is a steering parameter
 		  // of this processor. 
 		  // First term of the weighted mean
-          weighted_mean_mom = (1.0-m_epsilon)*mcp->getCharge()/state[4];
+          weighted_mean_mom = (1.0-materialeffect::Epsilon_Weightfactor)*mcp->getCharge()/state[4];
 
    		  streamlog_out ( MESSAGE1 ) << endl;
    		  streamlog_out ( MESSAGE1 ) << "Materialeffects of plane " << ipl << endl;
@@ -275,10 +272,10 @@ namespace depfet {
             materialeffect::SimulateBetherHeitlerEnergyLoss(state, t, mcp->getMass(), mcp->getCharge(), rndm);    
           }
           // Second term of the weighted mean
-          weighted_mean_mom += m_epsilon*mcp->getCharge()/state[4];
+          weighted_mean_mom += materialeffect::Epsilon_Weightfactor*mcp->getCharge()/state[4];
 
    		  streamlog_out ( MESSAGE1 ) << "Momentum after transition: " << mcp->getCharge()/state[4] << " GeV" << endl;
-   		  streamlog_out ( MESSAGE1 ) << "Second term of weighted mean: " << m_epsilon*mcp->getCharge()/state[4] << " GeV" << endl;
+   		  streamlog_out ( MESSAGE1 ) << "Second term of weighted mean: " << materialeffect::Epsilon_Weightfactor*mcp->getCharge()/state[4] << " GeV" << endl;
    		  streamlog_out ( MESSAGE1 ) << "Overall weighted mean: " << weighted_mean_mom << " GeV" << endl;
            
           if(  m_scatterModel==0  ) { 
@@ -330,7 +327,7 @@ namespace depfet {
 		// a weighted mean with the weight parameter epsilon, which is a steering parameter
 		// of this processor. 
 		// First term of the weighted mean
-        weighted_mean_mom = (1-m_epsilon)*mcp->getCharge()/state[4];
+        weighted_mean_mom = (1-materialeffect::Epsilon_Weightfactor)*mcp->getCharge()/state[4];
 
    		streamlog_out ( MESSAGE1 ) << endl;
    		streamlog_out ( MESSAGE1 ) << "Materialeffects of air plane " << endl;
@@ -343,10 +340,10 @@ namespace depfet {
           materialeffect::SimulateBetherHeitlerEnergyLoss(state, t, mcp->getMass(), mcp->getCharge(), rndm); 
         } 
 		// Second term of the weighted mean
-        weighted_mean_mom += m_epsilon*mcp->getCharge()/state[4];
+        weighted_mean_mom += materialeffect::Epsilon_Weightfactor*mcp->getCharge()/state[4];
 
    		streamlog_out ( MESSAGE1 ) << "Momentum after transition: " << mcp->getCharge()/state[4] << " GeV" << endl;
-   		streamlog_out ( MESSAGE1 ) << "Second term of weighted mean: " << m_epsilon*mcp->getCharge()/state[4] << " GeV" << endl;
+   		streamlog_out ( MESSAGE1 ) << "Second term of weighted mean: " << materialeffect::Epsilon_Weightfactor*mcp->getCharge()/state[4] << " GeV" << endl;
    		streamlog_out ( MESSAGE1 ) << "Overall weighted mean: " << weighted_mean_mom << " GeV" << endl;
         
         if( m_scatterModel==0 ) { 

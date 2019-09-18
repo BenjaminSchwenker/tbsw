@@ -119,11 +119,6 @@ protected:
   //! choose toy model for multiple scattering
   int _m_toyScatterModel;
 
-  // Weight parameter used in the calculation of the momentum after 
-  // energy loss. This weighted mean of the momentum is used to determine 
-  // the multiple scattering angle of the corresponding plane in the toy study
-  double _m_epsilon;
-
   //! Max vertex chi2/ndof
   double _maxVertexChi2;
 
