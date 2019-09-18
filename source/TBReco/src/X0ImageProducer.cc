@@ -90,6 +90,12 @@ X0ImageProducer::X0ImageProducer() : Processor("X0ImageProducer") {
                          "simulations: Highland(0), SumOfSingleScatterings(1)",
       _m_toyScatterModel, static_cast<int>(0));
 
+  registerProcessorParameter("EpsilonWeightParameter", 
+					  "Weight Parameter to calculate the momentum during "
+                      "multiple scattering on a plane (only used in toy "
+                      "simulation mode)",
+      _m_epsilon, static_cast<double>(0.0));
+
   registerProcessorParameter(
       "ToyRecoError", "Angle reconstruction error used in toy simulations, if "
                       "its smaller than 0, use real angle reco error instead "
@@ -416,8 +422,8 @@ void X0ImageProducer::processEvent(LCEvent *evt) {
   _rootFile->cd("");
   _rootEventTree->Fill();
 
-  // Average mometum before and after energy loss.
-  double average_mom = 0;
+  // Average momentum before and after energy loss.
+  double weighted_mean_mom = 0;
 
   for (size_t iup = 0; iup < upTrackStore.size(); iup++) {
 
@@ -573,15 +579,26 @@ void X0ImageProducer::processEvent(LCEvent *evt) {
             dut.GetThickness(u, v) * std::sqrt(1 + dudw * dudw + dvdw * dvdw);
 
         // Simulate energy loss by bremsstrahlung (Bethe Heitler theory)
-        average_mom = 0.5 * uptrack.GetCharge() / p_in[4];
+        weighted_mean_mom = (1.0-_m_epsilon) * uptrack.GetCharge() / p_in[4];
+
+   		streamlog_out ( MESSAGE1 ) << endl;
+   		streamlog_out ( MESSAGE1 ) << "Materialeffects of target plane " << endl;
+   		streamlog_out ( MESSAGE1 ) << "Momentum before transition: " << uptrack.GetCharge() / p_in[4] << " GeV" << endl;
+   		streamlog_out ( MESSAGE1 ) << "First term of weighted mean: " << weighted_mean_mom << " GeV" << endl;
+
         if (_m_ToyBetheHeitler) {
+		  streamlog_out ( MESSAGE3 ) << "Inside! " << endl;
           double t = l0 / dut.GetRadLength(u, v);
           double rndm = gRandom->Rndm(1);
           materialeffect::SimulateBetherHeitlerEnergyLoss(
               p_in, t, uptrack.GetMass(), uptrack.GetCharge(), rndm);
         }
         // Take average of momentum before and after scattering
-        average_mom += 0.5 * uptrack.GetCharge() / p_in[4];
+        weighted_mean_mom += _m_epsilon * uptrack.GetCharge() / p_in[4];
+
+   		streamlog_out ( MESSAGE1 ) << "Momentum after transition: " << uptrack.GetCharge() / p_in[4] << " GeV" << endl;
+   		streamlog_out ( MESSAGE1 ) << "Second term of weighted mean: " << _m_epsilon * uptrack.GetCharge() / p_in[4] << " GeV" << endl;
+   		streamlog_out ( MESSAGE1 ) << "Overall weighted mean: " << weighted_mean_mom << " GeV" << endl;
 
         double kink_u = 0;
         double kink_v = 0;
@@ -589,7 +606,7 @@ void X0ImageProducer::processEvent(LCEvent *evt) {
         if (_m_toyScatterModel == 0) {
           // Highland model scattering
           double theta2 = materialeffect::GetScatterTheta2(
-              average_mom, l0, dut.GetRadLength(u, v), uptrack.GetMass(),
+              weighted_mean_mom, l0, dut.GetRadLength(u, v), uptrack.GetMass(),
               uptrack.GetCharge());
           kink_u = gRandom->Gaus(0, TMath::Sqrt(theta2));
           kink_v = gRandom->Gaus(0, TMath::Sqrt(theta2));
@@ -597,11 +614,11 @@ void X0ImageProducer::processEvent(LCEvent *evt) {
           kink_u = materialeffect::GetScatterKink_SC(
               l0, dut.GetRadLength(u, v), dut.GetAtomicNumber(u, v),
               dut.GetAtomicMass(u, v), uptrack.GetMass(), uptrack.GetCharge(),
-              average_mom);
+              weighted_mean_mom);
           kink_v = materialeffect::GetScatterKink_SC(
               l0, dut.GetRadLength(u, v), dut.GetAtomicNumber(u, v),
               dut.GetAtomicMass(u, v), uptrack.GetMass(), uptrack.GetCharge(),
-              average_mom);
+              weighted_mean_mom);
         }
 
         // Scatter track ('in' state -> 'out' state)
@@ -636,7 +653,7 @@ void X0ImageProducer::processEvent(LCEvent *evt) {
         _root_angle1_var = reco_error1 * reco_error1;
         _root_angle2_var = reco_error2 * reco_error2;
 
-        _root_momentum = average_mom;
+        _root_momentum = weighted_mean_mom;
       }
 
       _rootMscTree->Fill();

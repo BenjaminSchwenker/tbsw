@@ -324,6 +324,7 @@ def create_anglereco_path(Env, rawfile, gearfile, numberofevents, usesinglehitse
   x0imageproducer.param("VertexFitSwitch","false")
   x0imageproducer.param("ToyBetheHeitlerSwitch","true")
   x0imageproducer.param("ToyScatteringSwitch","false")
+  x0imageproducer.param("EpsilonWeightParameter","0.0")
   x0imageproducer.param("ToyRecoError","-1")
   x0imageproducer.param("MaxDist","0.5")
   x0imageproducer.param("RootFileName","X0.root")
@@ -492,7 +493,7 @@ def create_x0sim_path(Env, name, rawfile, gearfile, nevents, beamenergy):
   """
   
   x0sim = Env.create_path(name)
-  x0sim.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents})   
+  x0sim.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents, 'Verbosity': "MESSAGE3"})   
   
   infosetter = tbsw.Processor(name="InfoSetter", proctype='EventInfoSetter')
   infosetter.param("RunNumber","0")
@@ -532,6 +533,7 @@ def create_x0sim_path(Env, name, rawfile, gearfile, nevents, beamenergy):
   fastsim.param("ScatterModel","0")
   fastsim.param("DoEnergyLossStraggling","false")
   fastsim.param("DoFractionalBetheHeitlerEnergyLoss","false")
+  fastsim.param("EpsilonWeightParameter","0.0")
   x0sim.add_processor(fastsim)
  
   m26digi = tbsw.Processor(name="M26Digitizer",proctype="SiPixDigitizer")
