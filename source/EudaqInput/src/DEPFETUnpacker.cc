@@ -165,9 +165,12 @@ namespace eudaqinput {
         for(const auto & event:all_events){
           // isGood flags an event w/o a serious format error found during unpacking
           bool isGood = not (event.isDummy or event.badPadding or event.badCRC);
-          
-          streamlog_out(MESSAGE2) << "Unpacker flags are isGood=" << isGood << " isDummy=" << event.isDummy << " isBadPadding=" << event.badPadding
-                                  << " badCRC=" << event.badCRC << std::endl;
+
+          if(not isGood){
+              streamlog_out( MESSAGE3) << " Unpacker flags are isGood=" << isGood << " isDummy=" << event.isDummy << " isBadPadding=" << event.badPadding
+                                      << " badCRC=" << event.badCRC << std::endl;
+          }
+
             
           // Unfortunately there is no boolean type, so i store flags as integer
           LCGenericObjectImpl* metaobj = new LCGenericObjectImpl(4,0,0);

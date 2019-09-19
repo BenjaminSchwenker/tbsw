@@ -199,7 +199,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
                             << endl << endl;
   }     
   
-  streamlog_out(MESSAGE2) << "Unpacker flags isGoodEvent= " << isGoodEvent << endl; 
+  streamlog_out(MESSAGE2) << "Unpacker flags isGoodEvent= " << isGoodEvent << endl;
   
   //
   // Get digit collection 
