@@ -12,6 +12,54 @@
 #include <ostream>
 #include <memory>
 
+
+class save_ios_flags{
+public:
+    explicit save_ios_flags(std::ios & stream): _restoreStream( stream ), _width( stream.width() ),_precision( stream.precision() ),
+        _flags( stream.flags() ),_fill( stream.fill() )
+    {}
+    ~save_ios_flags(){this->restore();}
+private:
+    void restore(){
+        _restoreStream.width(_width);
+        _restoreStream.precision(_precision);
+        _restoreStream.fill(_fill);
+        _restoreStream.flags(_flags);
+    }
+    std::ios &_restoreStream;
+    std::streamsize _width;
+    std::streamsize _precision;
+    std::ios::fmtflags _flags;
+    char _fill;
+};
+
+template<typename T>
+void print_hex(T value){
+    save_ios_flags saver(std::cout);
+    std::cout<<std::setfill('0')<<std::setw(2*sizeof (T))<<std::hex<<long(value)<<" ";
+}
+
+
+void print_byte_array_in_hex(const uint8_t* array, long array_length, int print_width,long max_bytes){
+    if(print_width<4)print_width=4;
+    long print_array_length=max_bytes;
+    if(print_array_length>array_length){
+        print_array_length=array_length;
+    }
+    for (long i=0;i<print_array_length;i++){
+        if ((i>0)&&(i%print_width==0)){
+            std::cout<<"\n";
+        }
+        print_hex(array[i]);
+    }
+    if(print_array_length<array_length){
+        std::cout<<"+"<<array_length-print_array_length<<" words\n";
+    } else{
+        std::cout<<"\n";
+    }
+}
+
+
 inline void print_header(const unsigned int * frame, const unsigned int frame_size, const unsigned frame_type){
 
     switch(frame_type){
@@ -28,7 +76,6 @@ inline void print_header(const unsigned int * frame, const unsigned int frame_si
         break;
     case DHH_START_OF_FRAME_TYPE:{
         // finish last DHE data
-
         const DHE_Start_Frame_t * dhe_hdr=reinterpret_cast<const DHE_Start_Frame_t *>(frame);
         assert(frame_size>=3);
         printf("DHE Start: flag %d, DataType %d, DheId %d, DhpMask %d, TriggerNr1 %d, TriggerNr2 %d, DheTime1 %d, DheTime2 %d, TriggerOffset %d, DHPFrame %d,\n word1 %08x, word2 %08x, word3 %08x\n",
@@ -639,11 +686,6 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, c
             }
 
             if((DHP_id==dhpNR)||(dhpNR==-1)) {
-                if(dhpData[(frame_size-2)*2 -1]==0  ){
-                    printf("Unwanted padding in data! SHOULD NOT HAPPEN! Ignoring event\n");
-                    if (fill_info) info_map["ERROR,"+dhc_prefix+dhe_prefix + fr_prefix+"ERROR_INVALID_PADDING"]+=1;
-                    evt.badPadding=true;
-                }
                 if(((dhpData[(frame_size-2)*2 -1]) >> 15) == 0 ){
 
                     bool padding_is_good=false;
@@ -663,12 +705,28 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, c
                     if(!padding_is_good){
                         printf("Unwanted padding for new firmware! Should be 0x%04x but is 0x%04x - pos %d and %d\n",last_row_word,dhpData[(frame_size-2)*2 -1],idx,(frame_size-2)*2 -1);
                         if (fill_info) info_map["ERROR,"+dhc_prefix+dhe_prefix + fr_prefix+"ERROR_INVALID_PADDING_NEW_FW"]+=1;
-                        continue;
+                        evt.badPadding=true;
                     }
                     if((((frame_size-2)*2 -1) - idx) < 2){
                         printf("Padding and last row word are too close together! At %d and %d \n",idx,(frame_size-2)*2 -1);
                         if (fill_info) info_map["ERROR,"+dhc_prefix+dhe_prefix + fr_prefix+"ERROR_PADDING_CLOSE_TO_END"]+=1;
-                        continue;
+                        evt.badPadding=true;
+                    }
+                    if(evt.badPadding){
+                        print_byte_array_in_hex((const uint8_t*)dhpData,(frame_size-2)*4,40,120);
+                        printf("Complete Event\n");
+                        auto walker2=get_walker(reinterpret_cast<const unsigned int *>(inputBuffer),buffer_size/4,new_format);
+                        const unsigned int * frame2=nullptr;
+                        unsigned int frame_size2=0;
+
+                        for(;walker2->get_frame_data()!=nullptr;++(*walker2)){
+                            frame2=walker2->get_frame_data();
+                            frame_size2=walker2->get_frame_size();
+                            if(frame2==frame){
+                                printf("->");
+                            } else printf("  ");
+                            print_byte_array_in_hex((const uint8_t*)frame2,4*frame_size2,120,120);
+                        }
                     }
 
                 }
