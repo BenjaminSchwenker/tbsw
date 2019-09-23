@@ -188,7 +188,9 @@ class PixelDUTAnalyzer : public marlin::Processor {
    double _rootTrackChi2;            // Chi2 value from fit of reference track
    double _rootTrackLocalChi2;       // Chi2 value from hit-track residual on device under test 
    double _rootTrackFitU ;           // Estimated track intersection u coordimate in mm, in local DUT uvw coordinates 
-   double _rootTrackFitV ;           // Estimated track intersection v coordimate in mm, in local DUT uvw coordinates 
+   double _rootTrackFitV ;           // Estimated track intersection v coordimate in mm, in local DUT uvw coordinates
+   double _rootTrackHitU;            // Hit coordinate u reconstructed from DUT cluster in mm, in local DUT uvw coordinates 
+   double _rootTrackHitV;            // Hit coordinate v reconstructed from DUT cluster in mm, in local DUT uvw coordinates
    double _rootTrackFitdUdW;         // Estimated track slope du/dw in radians, in local DUT uvw coordinates     
    double _rootTrackFitdVdW;         // Estimated track slope dv/dw in radians, in local DUT uvw coordinates     
    int _rootTrackFitCellU;           // Estimated track intersection u coordinate lies on this u cell  
