@@ -266,7 +266,9 @@ void TrackFitAnalyzer::processEvent(LCEvent * evt)
       _rootHitSeedPixelType = dut.GetPixelType(_rootHitSeedCellV, _rootHitSeedCellU);           
       
       
-      
+      // Fill tree with set variables 
+      _rootFile->cd("");
+      _rootHitTree->Fill();  
                   
     } // end sensor loop   
     
