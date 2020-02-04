@@ -524,6 +524,15 @@ def create_reco_path(Env):
   pxd_analyzer.param("MaxResidualU","0.2")
   pxd_analyzer.param("RootFileName","Histos-PXD.root")
   reco_path.add_processor(pxd_analyzer)   
+
+  tel_dqm = tbsw.Processor(name="TelDQM", proctype="TrackFitDQM") 
+  tel_dqm.param("RootFileName","Histos-TELDQM.root")
+  reco_path.add_processor(tel_dqm)  
+   
+  tel_analyzer = tbsw.Processor(name="TelAnalyzer", proctype="TrackFitAnalyzer") 
+  tel_analyzer.param("RootFileName","Histos-TEL.root")
+  tel_analyzer.param("ReferencePlane","7")
+  reco_path.add_processor(tel_analyzer)  
   
   return [ reco_path ]  
  
