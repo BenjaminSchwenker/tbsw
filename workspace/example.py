@@ -109,6 +109,7 @@ def add_hitmakersDB(path):
   m26goehitmaker.param("ClusterCollection","zscluster_m26")
   m26goehitmaker.param("HitCollectionName","hit_m26")
   m26goehitmaker.param("ClusterDBFileName","localDB/clusterDB-M26.root")
+  m26goehitmaker.param("RescaleHitErrors","1.0")
   path.add_processor(m26goehitmaker)  
     
   fei4goehitmaker = tbsw.Processor(name="FEI4GoeHitMaker",proctype="GoeHitMaker")   

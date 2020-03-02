@@ -92,6 +92,9 @@ namespace depfet {
     //! not available from clusterDB. 
     bool _useCoGFallback; 
 
+    //! Scale factor for clusterDB covariance matrix
+    double m_scale;
+
    private:
    
     //!Method searching for clusterID id on sensor sensorID in clusterDB. Returns success.  
