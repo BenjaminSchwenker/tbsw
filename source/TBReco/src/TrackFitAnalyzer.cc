@@ -63,6 +63,11 @@ TrackFitAnalyzer::TrackFitAnalyzer() : Processor("TrackFitAnalyzer")
   registerProcessorParameter ("ReferencePlane",
                               "Plane number of teference plane. Use only tracks having a hit on the reference plane to measure DUT efficiency. Put -1 to deactivate.",
                               _iref,  static_cast < int > (-1));
+  
+  std::vector<int> initIgnoreIDVec;
+  registerProcessorParameter ("IgnoreIDs",
+                              "Ignore data from these sensorIDs",
+                              _ignoreIDVec, initIgnoreIDVec);
                                  
 }
 
@@ -185,7 +190,16 @@ void TrackFitAnalyzer::processEvent(LCEvent * evt)
       //------------------------
       const TBTrackElement& TE = track.GetTE(ipl);  
       const Det& dut = track.GetTE(ipl).GetDet();
-           
+      int sensorID = dut.GetSensorID();  
+      
+      bool ignoreID = false;
+      for (auto id :  _ignoreIDVec)  {
+        if (id == sensorID) ignoreID = true; 
+      }
+         
+      // Ignore track elements 
+      if ( ignoreID ) continue; 
+       
       // Get local track parameters 
       double trk_tu = TE.GetState().GetPars()[0];  // rad
       double trk_tv = TE.GetState().GetPars()[1];  // rad

@@ -532,6 +532,7 @@ def create_reco_path(Env):
   tel_analyzer = tbsw.Processor(name="TelAnalyzer", proctype="TrackFitAnalyzer") 
   tel_analyzer.param("RootFileName","Histos-TEL.root")
   tel_analyzer.param("ReferencePlane","7")
+  tel_analyzer.param("IgnoreIDs","21")
   reco_path.add_processor(tel_analyzer)  
   
   return [ reco_path ]  
