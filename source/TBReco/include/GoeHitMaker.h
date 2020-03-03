@@ -92,7 +92,7 @@ namespace depfet {
     //! not available from clusterDB. 
     bool _useCoGFallback; 
 
-    //! Scale factor for clusterDB covariance matrix
+    //! Scale factor for hit covariance matrix
     double m_scale;
 
    private:

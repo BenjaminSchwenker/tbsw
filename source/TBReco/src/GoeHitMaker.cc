@@ -73,7 +73,7 @@ namespace depfet {
                                "Set true to use center of gravity hit when no correction available from clusterDB",
                                _useCoGFallback, static_cast< bool > ( true ) ); 
 
-    registerProcessorParameter ("RescaleHitErrors", "Scale factor for clusterDB covariance matrix.",
+    registerProcessorParameter ("RescaleHitErrors", "Scale factor for hit covariance matrix.",
                                 m_scale,  static_cast < double > (1.0));
      
     std::vector<float> initSigmaUCorrrections;
@@ -331,7 +331,7 @@ namespace depfet {
           quality = 1;  
           
           // Make TBHit 
-          TBHit hit(sensorID, u, v, sig2_u, sig2_v, cov_uv, quality);
+          TBHit hit(sensorID, u, v, m_scale*sig2_u, m_scale*sig2_v, m_scale*cov_uv, quality);
           
           // Make LCIO TrackerHit
           TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
