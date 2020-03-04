@@ -124,7 +124,9 @@ namespace depfet {
      double _rootPullResidualU;        // Standardized residual in u direction, should have mean = 0 and rms = 1
      double _rootPullResidualV;        // Standardized residual in v direction, should have mean = 0 and rms = 1       
      double _rootHitU;                 // Hit coordinate u reconstructed from cluster in mm, in local uvw coordinates       
-     double _rootHitV;                 // Hit coordinate v reconstructed from cluster in mm, in local uvw coordinates     
+     double _rootHitV;                 // Hit coordinate v reconstructed from cluster in mm, in local uvw coordinates    
+     double _rootHitErrorU;            // Estimated 1x sigma uncertainty for hit u coordinate
+     double _rootHitErrorV;            // Estimated 1x sigma uncertainty for hit v coordinate  
      double _rootHitClusterCharge;     // Sum over all charges in the cluster 
      double _rootHitSeedCharge;        // Highest charge in cluster
      int _rootHitSeedPixelType;        // PixelType of seed pixel cell 

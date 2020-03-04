@@ -246,7 +246,9 @@ void TrackFitAnalyzer::processEvent(LCEvent * evt)
       _rootHitCellU = -1;             
       _rootHitCellV = -1;             
       _rootHitSeedCellU = -1;            
-      _rootHitSeedCellV = -1;           
+      _rootHitSeedCellV = -1;     
+      _rootHitErrorU = -1;        
+      _rootHitErrorV = -1;         
 	
        
       // Skip sensor w/o measurment
@@ -265,7 +267,9 @@ void TrackFitAnalyzer::processEvent(LCEvent * evt)
       _rootHitQuality = TE.GetHit().GetQuality();           
       _rootHitLocalChi2 = TrackFitter.GetPredictedChi2(TE.GetState().GetPars(), TE.GetState().GetCov(), TE.GetHit());             
       _rootPullResidualU = pull_u;    
-      _rootPullResidualV = pull_v;      
+      _rootPullResidualV = pull_v;   
+      _rootHitErrorU = TE.GetHit().GetCov()(0,0);
+      _rootHitErrorV = TE.GetHit().GetCov()(1,1);   
       _rootHitU = hit_u;                  
       _rootHitV = hit_v;               
       _rootHitClusterCharge = Cluster.getCharge();    
@@ -385,7 +389,9 @@ void TrackFitAnalyzer::bookHistos()
   _rootHitTree->Branch("pull_resu"       ,&_rootPullResidualU    ,"pull_resu/D");
   _rootHitTree->Branch("pull_resv"       ,&_rootPullResidualV    ,"pull_resv/D");   
   _rootHitTree->Branch("u_hit"           ,&_rootHitU             ,"u_hit/D");
-  _rootHitTree->Branch("v_hit"           ,&_rootHitV             ,"v_hit/D");     
+  _rootHitTree->Branch("v_hit"           ,&_rootHitV             ,"v_hit/D");    
+  _rootHitTree->Branch("u_hiterr"        ,&_rootHitErrorU        ,"u_hiterr/D");
+  _rootHitTree->Branch("v_hiterr"        ,&_rootHitErrorV        ,"v_hiterr/D");  
   _rootHitTree->Branch("clusterCharge"   ,&_rootHitClusterCharge ,"clusterCharge/D");
   _rootHitTree->Branch("seedCharge"      ,&_rootHitSeedCharge       ,"seedCharge/D");
   _rootHitTree->Branch("sizeU"           ,&_rootHitSizeU        ,"sizeU/I");

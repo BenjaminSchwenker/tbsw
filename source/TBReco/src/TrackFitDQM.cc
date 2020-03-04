@@ -232,6 +232,9 @@ void TrackFitDQM::processEvent(LCEvent * evt)
       
       _histoMap[ "hresU_sensor" ]->Fill( du );
       _histoMap[ "hresV_sensor" ]->Fill( dv );
+
+      _histoMap[ "hhitU_sigma_sensor" ]->Fill( TMath::Sqrt(TE.GetHit().GetCov()(0,0)) );
+      _histoMap[ "hhitV_sigma_sensor" ]->Fill( TMath::Sqrt(TE.GetHit().GetCov()(1,1)) );
       
       _histoMap[ "hpull_resU_sensor" ]->Fill( pull_u );
       _histoMap[ "hpull_resV_sensor" ]->Fill( pull_v );
@@ -325,7 +328,17 @@ void TrackFitDQM::end()
     _overviewHistoMap["hfit_res_rms_v"s]->SetBinContent(ipl+1, res_rms_v );
     _overviewHistoMap["hfit_res_rms_v"s]->SetBinError(ipl+1, res_rms_error_v );
 
-    
+    double mean_hit_sigma_u = _histoMap[ "hhitU_sigma_sensor" ]->GetMean();
+    double mean_hit_sigma_error_u = _histoMap[ "hhitU_sigma_sensor" ]->GetMeanError();
+ 
+    _overviewHistoMap["hhit_sigma_u"s]->SetBinContent(ipl+1, mean_hit_sigma_u );
+    _overviewHistoMap["hhit_sigma_u"s]->SetBinError(ipl+1, mean_hit_sigma_error_u );
+
+    double mean_hit_sigma_v = _histoMap[ "hhitV_sigma_sensor" ]->GetMean();
+    double mean_hit_sigma_error_v = _histoMap[ "hhitV_sigma_sensor" ]->GetMeanError();
+ 
+    _overviewHistoMap["hhit_sigma_v"s]->SetBinContent(ipl+1, mean_hit_sigma_v );
+    _overviewHistoMap["hhit_sigma_v"s]->SetBinError(ipl+1,  mean_hit_sigma_error_v );
     
     _rootFile->cd("");
 
@@ -480,13 +493,22 @@ void TrackFitDQM::bookHistos()
   _overviewHistoMap["hfit_res_rms_u"s] = new TH1D("hfit_res_rms_u","",nSens,0,nSens);
   _overviewHistoMap["hfit_res_rms_u"s]->SetStats( false );
   _overviewHistoMap["hfit_res_rms_u"s]->SetXTitle("plane number");
-  _overviewHistoMap["hfit_res_rms_u"s]->SetYTitle("RMS u residual");
+  _overviewHistoMap["hfit_res_rms_u"s]->SetYTitle("RMS u residual [mm]");
   
   _overviewHistoMap["hfit_res_rms_v"s] = new TH1D("hfit_res_rms_v","",nSens,0,nSens);
   _overviewHistoMap["hfit_res_rms_v"s]->SetStats( false );
   _overviewHistoMap["hfit_res_rms_v"s]->SetXTitle("plane number");
-  _overviewHistoMap["hfit_res_rms_v"s]->SetYTitle("RMS v residual");
+  _overviewHistoMap["hfit_res_rms_v"s]->SetYTitle("RMS v residual [mm]");
 
+  _overviewHistoMap["hhit_sigma_u"s] = new TH1D("hhit_sigma_u","",nSens,0,nSens);
+  _overviewHistoMap["hhit_sigma_u"s]->SetStats( false );
+  _overviewHistoMap["hhit_sigma_u"s]->SetXTitle("plane number");
+  _overviewHistoMap["hhit_sigma_u"s]->SetYTitle("cluster sigma u [mm]");
+
+  _overviewHistoMap["hhit_sigma_v"s] = new TH1D("hhit_sigma_v","",nSens,0,nSens);
+  _overviewHistoMap["hhit_sigma_v"s]->SetStats( false );
+  _overviewHistoMap["hhit_sigma_v"s]->SetXTitle("plane number");
+  _overviewHistoMap["hhit_sigma_v"s]->SetYTitle("cluster sigma v [mm]");
 
   // Create subdir for alignment plots
   TDirectory *alignDir = _rootFile->mkdir("alignment");
@@ -584,6 +606,20 @@ void TrackFitDQM::bookHistos()
     _histoMap[ "hresV_sensor" ]->SetXTitle("v residual [mm]");
     _histoMap[ "hresV_sensor" ]->SetYTitle("tracks");
     
+    // Plot cluster sigmas U/V 
+    
+    histoName = "hhitU_sigma_sensor"+to_string( ipl );
+    max = 5*safetyFactor*( Sensor.GetSensitiveMaxU() - Sensor.GetSensitiveMinU()) /(Sensor.GetMaxUCell()-Sensor.GetMinUCell()+2); 
+    _histoMap[ "hhitU_sigma_sensor" ] = new TH1D(histoName.c_str(), "", 500, 0, +max);
+    _histoMap[ "hhitU_sigma_sensor" ]->SetXTitle("hit u sigma [mm]");
+    _histoMap[ "hhitU_sigma_sensor" ]->SetYTitle("tracks");
+    
+    histoName = "hhitV_sigma_sensor"+to_string( ipl );
+    max = 5*safetyFactor*( Sensor.GetSensitiveMaxV() - Sensor.GetSensitiveMinV()) /(Sensor.GetMaxVCell()-Sensor.GetMinVCell()+2); 
+    _histoMap[ "hhitV_sigma_sensor" ] = new TH1D(histoName.c_str(), "", 500, 0, +max);
+    _histoMap[ "hhitV_sigma_sensor" ]->SetXTitle("hit v sigma [mm]");
+    _histoMap[ "hhitV_sigma_sensor" ]->SetYTitle("tracks");
+
     // Plot residuals pulls  
 
     histoName = "hpull_resU_sensor"+to_string( ipl );
