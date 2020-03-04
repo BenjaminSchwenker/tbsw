@@ -74,6 +74,9 @@ CogHitMaker::CogHitMaker() : Processor("CogHitMaker"),_inputDecodeHelper("")
                                "List of correction factors for sigma V for sizeV=1,2,... . Sigma V will be computed as factor*vLength/sqrt(12). Defaults to factor=1.",
                                _sigmaVCorrections, initSigmaVCorrections); 
 
+   registerProcessorParameter ("RescaleHitErrors", "Scale factor for hit covariance matrix.",
+                                m_scale,  static_cast < double > (1.0));
+
 }
 
 //
@@ -85,6 +88,11 @@ void CogHitMaker::init() {
    _nRun = 0 ;
    _nEvt = 0 ;
    _timeCPU = clock()/1000;
+   
+   if (m_scale <= 0.0) {
+     m_scale = 1.0;
+     streamlog_out(MESSAGE3) << "Non positive scale factor encountered. Use default value of 1.0 instead." << std::endl;
+   }
                  
    // Print set parameters
    printProcessorParams();
@@ -165,7 +173,7 @@ void CogHitMaker::processEvent(LCEvent * evt)
                        
         streamlog_out(MESSAGE2) << "Stored cluster on sensorID " << sensorID << " at u=" << u << " v=" << v << endl; 
         
-        TBHit hit(sensorID, u, v, sig2_u, sig2_v, cov_uv, clsType);
+        TBHit hit(sensorID, u, v, m_scale*sig2_u, m_scale*sig2_v, m_scale*cov_uv, clsType);
         
         // Make LCIO TrackerHit
         TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  

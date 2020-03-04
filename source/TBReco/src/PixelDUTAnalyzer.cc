@@ -492,7 +492,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     _rootHitSeedCellV = Cluster.getVSeed();    
     _rootHitSeedPixelType = dut.GetPixelType(_rootHitSeedCellV, _rootHitSeedCellU);   
        
-    _rootHitQuality = 0; 
+    _rootHitQuality = hit.GetQuality(); 
     _rootHitClusterCharge = Cluster.getCharge() ; 
     _rootHitSeedCharge = Cluster.getSeedCharge() ; 
     _rootHitSize = Cluster.getSize();  

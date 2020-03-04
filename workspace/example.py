@@ -109,6 +109,7 @@ def add_hitmakersDB(path):
   m26goehitmaker.param("ClusterCollection","zscluster_m26")
   m26goehitmaker.param("HitCollectionName","hit_m26")
   m26goehitmaker.param("ClusterDBFileName","localDB/clusterDB-M26.root")
+  m26goehitmaker.param("RescaleHitErrors","1.0")
   path.add_processor(m26goehitmaker)  
     
   fei4goehitmaker = tbsw.Processor(name="FEI4GoeHitMaker",proctype="GoeHitMaker")   
@@ -524,6 +525,16 @@ def create_reco_path(Env):
   pxd_analyzer.param("MaxResidualU","0.2")
   pxd_analyzer.param("RootFileName","Histos-PXD.root")
   reco_path.add_processor(pxd_analyzer)   
+
+  tel_dqm = tbsw.Processor(name="TelDQM", proctype="TrackFitDQM") 
+  tel_dqm.param("RootFileName","Histos-TELDQM.root")
+  reco_path.add_processor(tel_dqm)  
+   
+  tel_analyzer = tbsw.Processor(name="TelAnalyzer", proctype="TrackFitAnalyzer") 
+  tel_analyzer.param("RootFileName","Histos-TEL.root")
+  tel_analyzer.param("ReferencePlane","7")
+  tel_analyzer.param("IgnoreIDs","21")
+  reco_path.add_processor(tel_analyzer)  
   
   return [ reco_path ]  
  

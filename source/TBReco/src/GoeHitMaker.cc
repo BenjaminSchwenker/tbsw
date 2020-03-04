@@ -72,6 +72,9 @@ namespace depfet {
     registerProcessorParameter("UseCenterOfGravityFallback",
                                "Set true to use center of gravity hit when no correction available from clusterDB",
                                _useCoGFallback, static_cast< bool > ( true ) ); 
+
+    registerProcessorParameter ("RescaleHitErrors", "Scale factor for hit covariance matrix.",
+                                m_scale,  static_cast < double > (1.0));
      
     std::vector<float> initSigmaUCorrrections;
     initSigmaUCorrrections.push_back(1.0);
@@ -100,7 +103,10 @@ namespace depfet {
     // Print set parameters
     printProcessorParams();
     
-    
+    if (m_scale <= 0.0) {
+      m_scale = 1.0;
+      streamlog_out(MESSAGE3) << "Non positive scale factor encountered. Use default value of 1.0 instead." << std::endl;
+    }
     
     // Open clusterDB file 
     TFile * clusterDBFile = new TFile(_clusterDBFileName.c_str(), "READ");
@@ -287,14 +293,14 @@ namespace depfet {
           
           streamlog_out(MESSAGE2) << "  Shape " << shapeName << " found: " << endl
                                 << std::setprecision(8)
-                                << "  u: " << u << ", sigmaU: " << TMath::Sqrt(sig2_u) << endl
-                                << "  v: " << v << ", sigmaV: " << TMath::Sqrt(sig2_v) << endl
+                                << "  u: " << u << ", sigmaU: " << TMath::Sqrt(m_scale*sig2_u) << endl
+                                << "  v: " << v << ", sigmaV: " << TMath::Sqrt(m_scale*sig2_v) << endl
                                 << "  corr(u,v): " << cov_uv/TMath::Sqrt(sig2_u)/TMath::Sqrt(sig2_v)
                                 << std::setprecision(3)
                                 << endl; 
         
           // Make TBHit 
-          TBHit hit(sensorID, u, v, sig2_u, sig2_v, cov_uv, quality);
+          TBHit hit(sensorID, u, v, m_scale*sig2_u, m_scale*sig2_v, m_scale*cov_uv, quality);
         
           // Make LCIO TrackerHit
           TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
@@ -325,7 +331,7 @@ namespace depfet {
           quality = 1;  
           
           // Make TBHit 
-          TBHit hit(sensorID, u, v, sig2_u, sig2_v, cov_uv, quality);
+          TBHit hit(sensorID, u, v, m_scale*sig2_u, m_scale*sig2_v, m_scale*cov_uv, quality);
           
           // Make LCIO TrackerHit
           TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
