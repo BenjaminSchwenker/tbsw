@@ -11,7 +11,7 @@
 
 // system includes <>
 #include <vector>
-
+#include <string>
 
 namespace depfet
 {
@@ -36,6 +36,11 @@ namespace depfet
     virtual void readDataSource (int Ntrig);
     virtual void init ();
     virtual void end ();
+
+    // read one event from file
+    int getEventFromFile(std::string fileName, int currEvt,  std::vector< std::vector<int> >& hits);
+
+    
     
    protected:
      
@@ -45,6 +50,9 @@ namespace depfet
     
    private:
     CellIDEncodeConstructHelper _outputEncoderHelper;
+
+
+    
      
   };
   
