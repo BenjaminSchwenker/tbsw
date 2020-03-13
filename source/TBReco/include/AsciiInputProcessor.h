@@ -36,11 +36,12 @@ namespace depfet
     virtual void readDataSource (int Ntrig);
     virtual void init ();
     virtual void end ();
-
+    
     // read one event from file
     int getEventFromFile(std::string fileName, int currEvt,  std::vector< std::vector<int> >& hits);
-
     
+    // read all event from file
+    int getAllEventFromFile(std::string fileName, std::vector< std::vector<int> >& hits, std::vector< std::vector<int> >& events );
     
    protected:
      
