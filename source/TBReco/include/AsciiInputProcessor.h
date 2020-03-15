@@ -18,9 +18,22 @@ namespace depfet
   
   /** The AsciiInputProcessor Processor
    *
-   * The input processor reads one or more ascii files produced containing 
-   * Hits tables. It reads hits one by one from file, builds 
-   * events (lcio::LCEvent) and fills a lcio::LCCollection with hits.  
+   * The input processor reads one or more ascii files containing 
+   * Hits tables. It reads all hits one by one from file, builds 
+   * lcio::LCEvent and fills a lcio::LCCollection with hits.  
+   * 
+   * The input files contain comma seperated values with one hit 
+   * per row. There should five columns containing 'event_number'
+   * 'layerID', 'column', 'row' and 'charge'.  
+   * 
+   * The 'layerID' must be unique identifier for a detector layer
+   * described in the gear file. 
+   * 
+   * The 'event_number' must be unique across all files and serves
+   * to merge hits from different input files into global events.
+   * 
+   * This processor provides a simple means to feed data from 
+   * different subdetectors into tbsw.  
    * 
    * Author: Benjamin Schwenker, Göttingen University 
    * <mailto:benjamin.schwenker@phys.uni-goettingen.de>
