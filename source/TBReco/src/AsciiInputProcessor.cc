@@ -27,7 +27,8 @@
 // system includes
 #include <iomanip>
 #include <iostream>
-#include <fstream>
+#include <assert.h>
+
 
 using namespace std;
 using namespace marlin;
@@ -36,7 +37,7 @@ using namespace std::string_literals;
 
 
 
-AsciiInputProcessor::AsciiInputProcessor ():DataSourceProcessor("AsciiInputProcessor"), _outputEncoderHelper( "sensorID:6,sparsePixelType:5") {
+AsciiInputProcessor::AsciiInputProcessor ():DataSourceProcessor("AsciiInputProcessor") {
   
   _description =
     "Reads Hits table from one or more ascii files. Events are formed and hits are written to TrackerData collections.\n"
@@ -49,6 +50,12 @@ AsciiInputProcessor::AsciiInputProcessor ():DataSourceProcessor("AsciiInputProce
   
   registerProcessorParameter( "DetectorName", "Set name of the detector. Needs to be the same name as in gear file.",
                               m_detectorName, std::string("EUTelescope"));
+
+  registerProcessorParameter( "RawHitCollectionName", "Set name of the raw hit collection.",
+                              m_rawHitCollectionName, std::string("zsdata"));
+
+  registerProcessorParameter ("RunNumber", "Set run number.",
+                              m_runNumber,  static_cast < int > (0));
     
 }
 
@@ -59,6 +66,7 @@ AsciiInputProcessor * AsciiInputProcessor::newProcessor () {
 
 
 void AsciiInputProcessor::init () {
+  m_chunkSize = 1000;
   printParameters ();
 }
 
@@ -66,314 +74,215 @@ void AsciiInputProcessor::init () {
 void AsciiInputProcessor::readDataSource (int Ntrig) {
   
   if (m_fileNameVec.size() == 0) return;
-  
   string filename = m_fileNameVec[0];
-  
-  streamlog_out ( MESSAGE3 ) << "Start reading raw file " << filename << std::endl;
-     
-  // Open file stream
-  fstream fin(filename);
-    
-  // Read the Data from the file 
-  // as String Vector 
-  vector<int> row; 
-  string line, word; 
-    
-  // Skip some hits
-  for (int i=0; i<30000000; i++) getline(fin, line);
-  
-  // Limit the max number of hits to read
-  int max_hits = 40000000;
-  int nhits = 0;   
    
-  // a table for all hits 
-  vector< vector<int> > hits;
-  
-  while (getline(fin, line)) {
-      
-    if (nhits > max_hits && max_hits > 0) break;
-
-    // clear last row   
-    row.clear(); 
-           
-    // used for breaking words 
-    stringstream sd(line); 
-         
-    // read every column data of a row and 
-    // store it in a string variable, 'word' 
-    while (getline(sd, word, ',')) { 
-    
-      // add all the column data 
-      // of a row to a vector 
-      row.push_back(stoi(word)); 
-    } 
-            
-    hits.push_back(row);
-    nhits++;     
-  }
-    
-  vector<int> evr_eventNumber(hits.size());
-  vector<int> evr_firstHit(hits.size());
-  vector<int> evr_lastHit(hits.size());
-    
-  // Assume that first hit starts first event
-  //cout << "START NEW EVENT!!" << endl;
-  int currEvt = hits[0][0]; // TODO assuming event number is first
-  int firstHit = 0;
-  int nevt = 0;
-      
-  cout << "First event " << hits[0][0] << endl; 
-  cout << "Last event " << hits[hits.size()-1][0] << endl; 
-  
-  for (int i = 0; i<(int)hits.size(); i++) { 
-       
-    if (currEvt !=  hits[i][0] ) {
-        
-      evr_eventNumber[nevt] = currEvt;
-      evr_firstHit[nevt] = firstHit;
-      evr_lastHit[nevt] = i-1; 
-      //cout << "FINISH EVENT: evt=" << evr_eventNumber[nevt] << " firstHit=" << evr_firstHit[nevt] << " lastHit=" << evr_lastHit[nevt] << endl;
-      //cout << "START NEW EVENT!!" << endl;
-      firstHit=i;
-      nevt++;
-        
-    }      
-      
-    // Cache last event number
-    currEvt = hits[i][0]; 
-  }
-  
-  
-  vector< vector< vector<int> > > all_other_hits;
-  vector< vector< vector<int> > > all_other_events;
-
-  // now add data from other file  
-  for (int ifile=1; ifile< (int)m_fileNameVec.size(); ifile++) {
-    string other_filename = m_fileNameVec[ifile];
-    vector< vector<int> > other_hits;
-    vector< vector<int> > other_events;
-    
-    getAllEventFromFile(other_filename, other_hits, other_events); 
-     
-    all_other_hits.push_back(other_hits);
-    all_other_events.push_back(other_events);   
-  }       
-  
-  
-      
   // Write LCIO run header here 
   IMPL::LCRunHeaderImpl* lcHeader = new IMPL::LCRunHeaderImpl;
   lcHeader->setDescription(" Reading from file " + filename);
-  lcHeader->setRunNumber( 0 );  // TODO: how to know the run number???
+  lcHeader->setRunNumber( m_runNumber );  
   lcHeader->setDetectorName(m_detectorName);
           
   // Add run header to LCIO file
   ProcessorMgr::instance ()->processRunHeader ( static_cast<lcio::LCRunHeader*> (lcHeader) );
   delete lcHeader; 
-    
-  for (long i = 0; i< nevt; i++) {
-      
-    //cout << "benni 2 evt=" << evr_eventNumber[i] << endl;
-    // Process data event 
-    lcio::LCEventImpl * lcEvent = new lcio::LCEventImpl;
-    lcEvent->setEventNumber(evr_eventNumber[i]);
-    lcEvent->setRunNumber(0);  // TODO Again run number issue
-    lcEvent->setTimeStamp(0);  // TODO how to know the timestamp?? not used anyway
-      
-    // prepare the collections for the raw data 
-    LCCollectionVec * rawDataCollection = new LCCollectionVec( lcio::LCIO::TRACKERDATA );           
-    // set the proper cell encoder
-    CellIDEncoder<TrackerDataImpl> lcEncoder( "sensorID:6,sparsePixelType:5", rawDataCollection , &_outputEncoderHelper );
-       
-    // Prepare a new lcio::TrackerData for the ZS data
-    lcio::TrackerDataImpl* zsFrame =  new lcio::TrackerDataImpl;
-    lcEncoder["sensorID"s] = 0;  // TODO how to get sensorID???
-    lcEncoder["sparsePixelType"s] = 0;
-    lcEncoder.setCellID( zsFrame );
-      
-    auto& chargevec=zsFrame->chargeValues();
-    chargevec.reserve(chargevec.size()+size_t(60)  );
-      
-    
-
-    for (long j=evr_firstHit[i]; j<=evr_lastHit[i]; j++ ) {
- 
-      //cout << "   ipl=" << hits[j][1] << endl;
-      //cout << "   col=" << hits[j][2] << endl;
-      //cout << "   row=" << hits[j][3] << endl;
-      //cout << "   charge=" << hits[j][4] << endl;
-        
-      chargevec.push_back( hits[j][1] );
-      chargevec.push_back( hits[j][2] );
-      chargevec.push_back( hits[j][3] );
-      chargevec.push_back( hits[j][4] );
-    }
-    
-    // now add data from other file 
-    /* 
-    for (int ifile=1; ifile< (int)m_fileNameVec.size(); ifile++) {
-      string other_filename = m_fileNameVec[ifile];
-      vector< vector<int> > other_hits;
-      getEventFromFile(other_filename, evr_eventNumber[i],  other_hits); 
-       
-      for (int ihit = 0; ihit< (int)other_hits.size() ; ihit++ ) {
-        
-        //cout << "   ipl=" << other_hits[ihit][1] << endl;
-        //cout << "   col=" << other_hits[ihit][2] << endl;
-        //cout << "   row=" << other_hits[ihit][3] << endl;
-        //cout << "   charge=" << other_hits[ihit][4] << endl;
-        
-        chargevec.push_back( other_hits[ihit][1] );
-        chargevec.push_back( other_hits[ihit][2] );
-        chargevec.push_back( other_hits[ihit][3] );
-        chargevec.push_back( other_hits[ihit][4] );
-      }       
-    }
-    */
-    
-    
-    for (int ifile=1; ifile< (int)m_fileNameVec.size(); ifile++) {   
-      for (int iEvt=0; iEvt<(int) all_other_events[ifile-1].size(); iEvt++) {  
-        if (all_other_events[ifile-1][iEvt][0] == evr_eventNumber[i]) { 
-          for (int ihit = all_other_events[ifile-1][iEvt][1]; ihit<=all_other_events[ifile-1][iEvt][2]; ihit++ ) {  
-            //cout << "   ipl=" << all_other_hits[ifile-1][ihit][1] << endl;
-            //cout << "   col=" << all_other_hits[ifile-1][ihit][2] << endl;
-            //cout << "   row=" << all_other_hits[ifile-1][ihit][3] << endl;
-            //cout << "   charge=" << all_other_hits[ifile-1][ihit][4] << endl;
-            
-            chargevec.push_back( all_other_hits[ifile-1][ihit][1] );
-            chargevec.push_back( all_other_hits[ifile-1][ihit][2] );
-            chargevec.push_back( all_other_hits[ifile-1][ihit][3] );
-            chargevec.push_back( all_other_hits[ifile-1][ihit][4] );
-          } 
-                   
-        }
-        
-      }
-    }
-      
-    // Now add the TrackerData to the collection
-    rawDataCollection->push_back( zsFrame );
-      
-    // Add output collection to event
-    lcEvent->addCollection( rawDataCollection, "zsdata" ); // TODO how to get the collection name
-      
-    ProcessorMgr::instance ()->processEvent (static_cast<LCEventImpl*> (lcEvent));
-    delete lcEvent;
-      
-  }
-        
-}
-
-
- 
-
-int AsciiInputProcessor::getEventFromFile(std::string fileName, int currEvt,  std::vector< std::vector<int> >& hits) 
-{
-  // Open file stream
-  fstream fin(fileName);  
   
-  vector<int> row; 
-  string line, word; 
-  
-  while (getline(fin, line)) {
-      
-    // clear last row   
-    row.clear(); 
-           
-    // used for breaking words 
-    stringstream sd(line); 
-         
-    // read every column data of a row and 
-    // store it in a string variable, 'word' 
-    while (getline(sd, word, ',')) { 
-  
-      // add all the column data 
-      // of a row to a vector 
-      row.push_back(stoi(word)); 
-    } 
-  
-    if (row[0] == currEvt) hits.push_back(row);     
-  }
-    
-  return 0;
-}
-
-
-
-int AsciiInputProcessor::getAllEventFromFile(std::string fileName, vector< vector<int> >& hits, std::vector< std::vector<int> >& events) 
-{
-  // Open file stream
-  fstream fin(fileName);  
-  
-  vector<int> row; 
-  string line, word; 
-  
-  while (getline(fin, line)) {
-      
-    // clear last row   
-    row.clear(); 
-           
-    // used for breaking words 
-    stringstream sd(line); 
-         
-    // read every column data of a row and 
-    // store it in a string variable, 'word' 
-    while (getline(sd, word, ',')) { 
-  
-      // add all the column data 
-      // of a row to a vector 
-      row.push_back(stoi(word)); 
-    } 
-    
-    hits.push_back(row);     
-  }
-   
-  
-
-  // Assume that first hit starts first event
-  //cout << "START NEW EVENT!!" << endl;
-  int currEvt = hits[0][0]; // TODO assuming event number is first
-  int firstHit = 0;
+  streamlog_out ( MESSAGE3 ) << "Start reading next chunk from raw file " << filename << std::endl;
      
-  for (int i = 0; i<(int)hits.size(); i++) { 
-       
-    if (currEvt !=  hits[i][0] ) {
-           
-      vector<int> event;   
-      event.push_back(currEvt);
-      event.push_back(firstHit);
-      event.push_back(i-1); 
-      events.push_back(event);
-      //cout << "FINISH EVENT: evt=" << currEvt << " firstHit=" << firstHit << " lastHit=" << i-1 << endl;
-      //cout << "START NEW EVENT!!" << endl;
-      firstHit=i;
-    }      
-      
-    // Cache last event number
-    currEvt = hits[i][0]; 
+  // Open file stream
+  fstream fin(filename);
+  assert (!fin.fail( ));   
+  
+  // Stores the curent read position to other files 
+  vector<streampos> other_pos;
+  for (size_t iFile=1; iFile<m_fileNameVec.size(); iFile++) {
+    string other_filename = m_fileNameVec[iFile];
+    // Open file stream
+    fstream other_fin(other_filename);  
+    assert (!other_fin.fail( ));
+    // Remember current position 
+    other_pos.push_back(other_fin.tellg());     
   }
+  
+  bool readNextChunk=true;
+  while(readNextChunk) {  
+    
+    // Read chunk of data from the first file 
+    vector< vector<int> > hits;
+    vector< vector<int> > events;
+    readNextChunk = getAllEventFromFile(fin, hits, events, m_chunkSize, -1);  
+    
+    // Read data from all other files 
+    vector< vector< vector<int> > > all_other_hits;
+    vector< vector< vector<int> > > all_other_events;
+    
+    // now add data from other file  
+    for (size_t iFile=1; iFile< m_fileNameVec.size(); iFile++) {
+      string other_filename = m_fileNameVec[iFile];
+      
+      streamlog_out ( MESSAGE3 ) << "Start reading next chunk from raw file " << other_filename << std::endl;
+      
+      vector< vector<int> > other_hits;
+      vector< vector<int> > other_events;
+      
+      // Open file stream
+      fstream other_fin(other_filename);  
+      assert (!other_fin.fail( ));         
+      
+      // Jump to position where reading stopped after last chunk
+      other_fin.seekg ( other_pos[iFile-1] );
+      
+      // Read next chunk from file   
+      getAllEventFromFile(other_fin, other_hits, other_events, -1, events[events.size()-1][0]); 
+      
+      // Remember current reading position for next chunk 
+      other_pos[iFile-1] = other_fin.tellg();
+      
+      all_other_hits.push_back(other_hits);
+      all_other_events.push_back(other_events);   
+    }       
+    
+    // Process all events from curent chunk 
+    for (size_t iEvt = 0; iEvt < events.size(); iEvt++) {
+        
+      //cout << "evt=" << events[iEvt][0] << endl;
+      // Process data event 
+      lcio::LCEventImpl * lcEvent = new lcio::LCEventImpl;
+      lcEvent->setEventNumber(events[iEvt][0]);
+      lcEvent->setRunNumber(m_runNumber); 
+      lcEvent->setTimeStamp(0);  
+      
+      // Prepare the collections for the raw data 
+      LCCollectionVec * rawDataCollection = new LCCollectionVec( lcio::LCIO::TRACKERDATA );           
+       
+      // Prepare a new lcio::TrackerData for the ZS data
+      lcio::TrackerDataImpl* zsFrame =  new lcio::TrackerDataImpl;
+      
+      auto& chargevec=zsFrame->chargeValues();
+      chargevec.reserve(chargevec.size()+size_t(60)  );
+      
+      for (int iHit=events[iEvt][1]; iHit<=events[iEvt][2]; iHit++ ) {
+        
+        //cout << "   ipl=" << hits[iHit][1] << endl;
+        //cout << "   col=" << hits[iHit][2] << endl;
+        //cout << "   row=" << hits[iHit][3] << endl;
+        //cout << "   charge=" << hits[iHit][4] << endl;
+        
+        chargevec.push_back( hits[iHit][1] );
+        chargevec.push_back( hits[iHit][2] );
+        chargevec.push_back( hits[iHit][3] );
+        chargevec.push_back( hits[iHit][4] );
+      }
+      
+      // now add data from other file 
+      for (size_t iFile=1; iFile<m_fileNameVec.size(); iFile++) {   
+        for (size_t oEvt=0; oEvt<all_other_events[iFile-1].size(); oEvt++) {  
+          if (all_other_events[iFile-1][oEvt][0] == events[iEvt][0]) { 
+            for (int iHit = all_other_events[iFile-1][oEvt][1]; iHit<=all_other_events[iFile-1][oEvt][2]; iHit++ ) {  
+              //cout << "   ipl=" << all_other_hits[iFile-1][iHit][1] << endl;
+              //cout << "   col=" << all_other_hits[iFile-1][iHit][2] << endl;
+              //cout << "   row=" << all_other_hits[iFile-1][iHit][3] << endl;
+              //cout << "   charge=" << all_other_hits[iFile-1][iHit][4] << endl;
+              
+              chargevec.push_back( all_other_hits[iFile-1][iHit][1] );
+              chargevec.push_back( all_other_hits[iFile-1][iHit][2] );
+              chargevec.push_back( all_other_hits[iFile-1][iHit][3] );
+              chargevec.push_back( all_other_hits[iFile-1][iHit][4] );
+            } 
+          }
+        }
+      }
+      
+      // Now add the TrackerData to the collection
+      rawDataCollection->push_back( zsFrame );
+      
+      // Add output collection to event
+      lcEvent->addCollection( rawDataCollection, m_rawHitCollectionName ); 
+      
+      ProcessorMgr::instance ()->processEvent (static_cast<LCEventImpl*> (lcEvent));
+      delete lcEvent;  
+    }
+  }
+}
 
-  return 0;
+bool AsciiInputProcessor::getAllEventFromFile(fstream& fin, vector< vector<int> >& hits, std::vector< std::vector<int> >& events, int max_events, int max_event_number) 
+{
+  
+  string line, word; 
+  int event_number=-1;  
+  int plane=-1; 
+  int column=-1; 
+  int row=-1; 
+  int charge=-1;   
+  int firstHit = 0;
+  int current_event = -1; 
+  
+  // stores the position
+  streampos oldpos = fin.tellg();
+  
+  while (getline(fin, line)) {
+             
+    // used for breaking words 
+    stringstream sd(line); 
+     
+    getline(sd, word, ',');    
+    event_number=stoi(word);
+    getline(sd, word, ',');
+    plane=stoi(word);
+    getline(sd, word, ',');
+    column=stoi(word);
+    getline(sd, word, ',');
+    row=stoi(word);
+    getline(sd, word, ','); 
+    charge=stoi(word);       
+    
+    if (current_event == -1) {
+      //cout << "START CHUNK WITH EVT=" << event_number << endl;
+      current_event = event_number;
+    }
+    
+    if (current_event !=  event_number ) {
+      //cout << "FINISH EVT=" << current_event << " firstHit=" << firstHit << " lastHit=" << hits.size()-1  << endl;
+      events.push_back( vector<int>{ current_event, firstHit, hits.size()-1 } );
+      
+      if (event_number > max_event_number and max_event_number >=0) {
+        //cout << "CURRENT EVT=" << event_number << " BIGGER THAN MAX EVT=" << max_event_number << ". LAST EVT FOR CURRENT CHUNK." << endl;
+        // Get back to the position before reading the current hit 
+        fin.seekg (oldpos);  
+        return true;
+      }
+      
+      if (events.size() >= max_events) {
+        // cout << "LAST EVT FOR CURRENT CHUNK." << endl;
+        // Get back to the position before reading the current hit 
+        fin.seekg (oldpos);  
+        return true;
+      }
+      
+      //cout << "START NEW EVENT!!" << endl;
+      firstHit=hits.size();
+    }     
+    
+    // Cache last event number
+    current_event = event_number;
+      
+    // Buffer event data 
+    hits.push_back(vector<int>{event_number, plane, column, row, charge} );
+    
+    // Stores the position in file stream
+    oldpos = fin.tellg();  
+  }
+  
+  // Reached end of file, nothing left to read 
+  return false;
 }
 
 
 void AsciiInputProcessor::end () 
 { 
-  /*
-  streamlog_out ( MESSAGE3 ) << "Number of data events: " << to_string(m_ndata) << std::endl;
-  if (!m_nbore) {
-    streamlog_out ( MESSAGE3 ) << "Warning: No BORE found" << std::endl;
-  } else if (m_nbore > 1) {
-    streamlog_out ( MESSAGE3 ) << "Warning: Multiple BOREs found: " << m_nbore << std::endl;
-  }
-            
-  if (!m_neore) {
-    streamlog_out ( MESSAGE3 ) << "Warning: No EORE found, possibly truncated file." << std::endl;
-  } else if (m_neore > 1) {
-    streamlog_out ( MESSAGE3 ) << "Warning: Multiple EOREs found: " << m_nbore << std::endl;
-  }
-  */
+  // Print message
+  streamlog_out(MESSAGE3) << std::endl
+                          << "Processor succesfully finished!"
+                          << std::endl;
 }
 
 

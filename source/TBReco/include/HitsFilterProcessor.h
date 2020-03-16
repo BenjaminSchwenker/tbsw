@@ -10,7 +10,6 @@
 
 // Include LCIO classes
 #include <lcio.h>
-#include <UTIL/CellIDDecoder.h>
 #include <UTIL/CellIDEncoder.h>
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerDataImpl.h>
@@ -79,7 +78,7 @@ protected:
    //! Picked indices for filtered hits   
    std::vector<int >  _pickedIndices;
  private: 
-    
+   CellIDEncodeConstructHelper _outputEncoderHelper; 
     
    double _timeCPU; //!< CPU time
    int    _nRun ;   //!< Run number

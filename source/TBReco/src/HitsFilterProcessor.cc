@@ -25,7 +25,7 @@ HitsFilterProcessor aHitsFilterProcessor ;
 //
 // Constructor
 //
-HitsFilterProcessor::HitsFilterProcessor() : Processor("HitsFilterProcessor")
+HitsFilterProcessor::HitsFilterProcessor() : Processor("HitsFilterProcessor") , _outputEncoderHelper( "sensorID:6,sparsePixelType:5")
 {
 
    // Processor description
@@ -117,9 +117,7 @@ void HitsFilterProcessor::processEvent(LCEvent * evt)
      
      // Open zero suppressed pixel data  
      LCCollectionVec * inputCollection = dynamic_cast < LCCollectionVec * > (evt->getCollection(_inputCollectionName)); 
-     // Helper class for decoding pixel data 
-     CellIDDecoder<TrackerDataImpl> inputDecoder( inputCollection );  
-     
+      
      // The original data collection contains one or more frames with zs data
      LCCollectionVec * outputCollection = new LCCollectionVec(LCIO::TRACKERDATA);
      
@@ -165,10 +163,10 @@ void HitsFilterProcessor::processEvent(LCEvent * evt)
        }  
 
      } // End frame loop 
-     
-     // CellID encoding string  
-     CellIDEncoder<TrackerDataImpl> outputEncoder( "sensorID:6,sparsePixelType:5" , outputCollection ); 
-     
+       
+     // Set the proper cell encoder
+     CellIDEncoder<TrackerDataImpl> outputEncoder( "sensorID:6,sparsePixelType:5", outputCollection , &_outputEncoderHelper );
+ 
      // Add output digits to output collection
      for ( auto& cached :  outputDigitsMap ) 
      { 

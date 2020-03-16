@@ -6,12 +6,10 @@
 #include <marlin/DataSourceProcessor.h>
 #include <marlin/Exceptions.h>
 
-// lcio includes <.h>
-#include <UTIL/CellIDEncoder.h>
-
 // system includes <>
 #include <vector>
 #include <string>
+#include <fstream>
 
 namespace depfet
 {
@@ -31,6 +29,8 @@ namespace depfet
    * 
    * The 'event_number' must be unique across all files and serves
    * to merge hits from different input files into global events.
+   * In addition, the 'event_number' must non negative and increase
+   * monotonically. 
    * 
    * This processor provides a simple means to feed data from 
    * different subdetectors into tbsw.  
@@ -50,24 +50,30 @@ namespace depfet
     virtual void init ();
     virtual void end ();
     
-    // read one event from file
-    int getEventFromFile(std::string fileName, int currEvt,  std::vector< std::vector<int> >& hits);
-    
+   
     // read all event from file
-    int getAllEventFromFile(std::string fileName, std::vector< std::vector<int> >& hits, std::vector< std::vector<int> >& events );
+    bool getAllEventFromFile(std::fstream& fin, std::vector< std::vector<int> >& hits, std::vector< std::vector<int> >& events, int max_events, int max_event_number);
     
    protected:
      
     // Processor parameters 
-    std::vector< std::string >  m_fileNameVec;  
+
+    //! Input hit files 
+    std::vector< std::string >  m_fileNameVec;
+
+    //! Gear detector name   
     std::string m_detectorName;
-    
-   private:
-    CellIDEncodeConstructHelper _outputEncoderHelper;
 
+    //! Output hit collection name
+    std::string m_rawHitCollectionName;
 
-    
-     
+    //! Run number 
+    int m_runNumber;
+
+   private:  
+    //! Number of events per chunk
+    int m_chunkSize;
+       
   };
   
   AsciiInputProcessor gAsciiInputProcessor;
