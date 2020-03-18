@@ -151,6 +151,22 @@ def plot(inputfile=None, histofile=None, basecut="hasTrack==0", Config=None):
   hres_uv.SetStats(0)
   hres_uv.Write()  
 
+  hfit_sigma_u = TH1F("hfit_sigma_u","hfit_sigma_u",200,0,maxu)
+  hittree.Draw("u_fiterr*1000 >>+hfit_sigma_u", hitcut,"goff")
+  hfit_sigma_u.SetTitle("Track intersection uncertainty #sigma_{u}")
+  hfit_sigma_u.GetXaxis().SetTitle("#sigma_{u_{fit}} [#mum]")
+  hfit_sigma_u.GetYaxis().SetTitle("number of tracks")
+  hfit_sigma_u.GetYaxis().SetTitleOffset(1.2)
+  hfit_sigma_u.Write()  
+
+  hfit_sigma_v = TH1F("hfit_sigma_v","hfit_sigma_v",200,0,maxv)
+  hittree.Draw("v_fiterr*1000 >>+hfit_sigma_v", hitcut,"goff")
+  hfit_sigma_v.SetTitle("Track intersection uncertainty #sigma_{v}")
+  hfit_sigma_v.GetXaxis().SetTitle("#sigma_{v_{fit}} [#mum]")
+  hfit_sigma_v.GetYaxis().SetTitle("number of tracks")
+  hfit_sigma_v.GetYaxis().SetTitleOffset(1.2)
+  hfit_sigma_v.Write()  
+
   hchisqundof = TH1F("hchisqundof","",100,0,0)
   hittree.Draw("trackChi2 / trackNdof >> +hchisqundof", hitcut,"goff")
   hchisqundof.SetTitle("#chi^{2}/ndof")

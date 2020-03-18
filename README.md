@@ -328,8 +328,10 @@ can be found at steering-files/depfet-tb.
 
 ```
 python depfet-reco.py 
-python depfet-plotter.py
+python histo-plotter.py
 ```
+
+A collection of real world workspaces for applying tbsw to testbeam data can be found at https://bitbucket.org/testbeam/tbsw_workspaces/src/master/
 
 Have fun with test beams ;)  
 
