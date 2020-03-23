@@ -86,7 +86,7 @@ def simulate(rawfile_air=None, rawfile_alu_list=None, steerfiles=None, gearfile=
 
 
 # Perform the telescope calibration
-def calibrate(rawfile=None, steerfiles=None, caltag="default", gearfile="gear.xml", nevents=50000, Use_clusterDB=True, beamenergy=2.0, mcdata=False, Use_LongTelescopeCali=True, UseOuterPlanesForClusterDB=False):
+def calibrate(rawfile=None, steerfiles=None, caltag="default", gearfile="gear.xml", nevents=50000, Use_clusterDB=True, beamenergy=2.0, mcdata=False, Use_LongTelescopeCali=True, UseOuterPlanesForClusterDB=False, csvdata=False):
   """
   Calibrates an misaligned tracking telescope from run data. 
   Creates a folder localDB/caltag in workspace containing 
@@ -120,7 +120,7 @@ def calibrate(rawfile=None, steerfiles=None, caltag="default", gearfile="gear.xm
   CalObj = tbsw.Calibration(steerfiles=steerfiles, name=caltag + '-cal') 
   
   # Create list of calibration steps 
-  calpaths = path_utils.create_x0analysis_calibration_paths(CalObj, rawfile, gearfile, nevents, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali, UseOuterPlanesForClusterDB)
+  calpaths = path_utils.create_x0analysis_calibration_paths(CalObj, rawfile, gearfile, nevents, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali, UseOuterPlanesForClusterDB, csvdata=csvdata)
   
   # Run the calibration steps 
   CalObj.calibrate(paths=calpaths,ifile=rawfile,caltag=caltag)
@@ -130,7 +130,8 @@ def calibrate(rawfile=None, steerfiles=None, caltag="default", gearfile="gear.xm
 
 
 # Perform the angle reconstruction of a single run
-def reconstruct(params):
+def reconstruct(rawfile=None, steerfiles=None, caltag='default', gearfile='gear.xml', nevents=-1, Use_SingleHitSeeding=True, Use_clusterDB=True, beamenergy=2.0, mcdata=False, csvdata=False):
+
   """
   Calibrates an misaligned tracking telescope from run data. 
   Creates a folder localDB/caltag in workspace containing 
@@ -149,17 +150,15 @@ def reconstruct(params):
   :@mcdata         			Switch to indicate Monte Carlo or real test beam data (True: MC data, False: Real TB data)
   :author: ulf.stolzenberg@phys.uni-goettingen.de   
   """ 
-
-  rawfile, steerfiles, caltag, gearfile, nevents, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata = params
-
+  
   if rawfile == None:
     print("Rawfile name missing! Skip angle reconstruction.")
     return None
-
+  
   if steerfiles == None:
     print("Steerfiles name missing! Skip angle reconstruction.")
     return None
-
+  
   # Set cal tag that includes run name
   name = os.path.splitext(os.path.basename(rawfile))[0] + '-' + caltag
   
@@ -168,7 +167,7 @@ def reconstruct(params):
   RecObj = tbsw.Reconstruction(steerfiles=steerfiles, name=name )
   
   # Create reconstuction path
-  recopath = path_utils.create_anglereco_path(RecObj, rawfile, gearfile, nevents, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)  
+  recopath = path_utils.create_anglereco_path(RecObj, rawfile, gearfile, nevents, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata, csvdata=csvdata)  
   
   # Run the reconstuction  
   RecObj.reconstruct(paths=recopath,ifile=rawfile,caltag=caltag) 
@@ -190,7 +189,7 @@ def reconstruction_DQM(rawfile=None,caltag="default"):
   DQMplots.anglereco_DQMPlots(filepath='root-files/X0-{}.root'.format(name)) 
 
 
-def targetalignment(rawfile=None, steerfiles=None, iteration=None, caltag="default", gearfile="gear.xml", nevents=1000000, Use_SingleHitSeeding=False, Use_clusterDB=True, beamenergy=2.0, mcdata=False):
+def targetalignment(rawfile=None, steerfiles=None, iteration=None, caltag="default", gearfile="gear.xml", nevents=1000000, Use_SingleHitSeeding=False, Use_clusterDB=True, beamenergy=2.0, mcdata=False, csvdata=False):
   """ 
   Starts the scattering angle reconstruction and vertex fit on the central target
   plane. Afterwards the mean vertex z position is set as the new target z position in
@@ -232,7 +231,7 @@ def targetalignment(rawfile=None, steerfiles=None, iteration=None, caltag="defau
   RecObj = tbsw.Reconstruction(steerfiles=steerfiles, name='x0-reco-targetalign-it-{:d}'.format(iteration) )
   
   # Create reconstuction path
-  recopath = path_utils.create_anglereco_path(RecObj, rawfile, gearfile, nevents, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)  
+  recopath = path_utils.create_anglereco_path(RecObj, rawfile, gearfile, nevents, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata, csvdata=csvdata)  
   
   # Run the reconstuction  
   RecObj.reconstruct(paths=recopath,ifile=rawfile,caltag=oldcaltag)  

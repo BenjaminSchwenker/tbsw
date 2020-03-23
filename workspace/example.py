@@ -8,6 +8,13 @@ The reference telescope has two arms with three sensors. A BELLE II PXD sensor i
 the center of the reference telescope as device under test. A reference FEI4 plane is used
 as a timing plane. 
 
+
+Usage: 
+
+python example.py
+
+python histo-plotter.py --ifile=root-files/Histos-PXD-simrun-test-reco.root
+
 Author: Benjamin Schwenker <benjamin.schwenker@phys.uni-goettingen.de>  
 """
 
@@ -19,7 +26,7 @@ import os
 # nominal telescope geometry. 
 steerfiles = 'steering-files/depfet-tb/'
 # Select the name of a gearfile to use from the steerfiles folder  
-gearfile = 'gear_desy_W11OF2_perp_geoid2.xml'
+gearfile =  'gear_desy_W40IF_perp_geoid9.xml'  
 # Select filename for the simulated test beam run  
 rawfile = os.getcwd() + '/simrun.slcio'
 # Number of events to simulate 
@@ -137,20 +144,20 @@ def add_clustercalibrators(path):
   m26clustdb = tbsw.Processor(name="M26ClusterCalibrator",proctype="GoeClusterCalibrator")   
   m26clustdb.param("ClusterDBFileName","localDB/clusterDB-M26.root")  
   m26clustdb.param("MinClusters","500")
-  m26clustdb.param("IgnoreIDs","6 7 21")
+  m26clustdb.param("SelectPlanes","1 2 4 5")
   path.add_processor(m26clustdb)  
     
   pxdclustdb = tbsw.Processor(name="PXDClusterCalibrator",proctype="GoeClusterCalibrator")   
   pxdclustdb.param("ClusterDBFileName","localDB/clusterDB-PXD.root")  
   pxdclustdb.param("MinClusters","500")
   pxdclustdb.param("MaxEtaBins","7")
-  pxdclustdb.param("IgnoreIDs","0 1 2 3 4 5 7 21")
+  pxdclustdb.param("SelectPlanes","3")
   path.add_processor(pxdclustdb)  
     
   fei4clustdb = tbsw.Processor(name="FEI4ClusterCalibrator",proctype="GoeClusterCalibrator")   
   fei4clustdb.param("ClusterDBFileName","localDB/clusterDB-FEI4.root")  
   fei4clustdb.param("MinClusters","500")
-  fei4clustdb.param("IgnoreIDs","0 1 2 3 4 5 6 7")
+  fei4clustdb.param("SelectPlanes","7")
   path.add_processor(fei4clustdb)  
   
   return path
@@ -533,7 +540,7 @@ def create_reco_path(Env):
   tel_analyzer = tbsw.Processor(name="TelAnalyzer", proctype="TrackFitAnalyzer") 
   tel_analyzer.param("RootFileName","Histos-TEL.root")
   tel_analyzer.param("ReferencePlane","7")
-  tel_analyzer.param("IgnoreIDs","21")
+  tel_analyzer.param("SelectPlanes","0 1 2")
   reco_path.add_processor(tel_analyzer)  
   
   return [ reco_path ]  
@@ -616,19 +623,6 @@ if __name__ == '__main__':
   # Reconstruct the rawfile 
   reconstruct( params )
   
-  # Make a list of root files containing reconstructed trees 
-  # for tracks / hits / events
-  trackfile = 'root-files/Histos-PXD-simrun-test-reco.root'  
-  
-  # Plot DUT residuals and cluster signal histograms from the 'Hit'
-  # tree in the workspace. 
-  ofile = 'Example-Residuals.root'
-  tbsw.residuals.plot(inputfilename=trackfile, histofilename=ofile, basecut = "hasTrack==0", nbins=501, urange=400, vrange=400)
-      
-  # Plot DUT hit efficiency histograms from the 'Track' tree 
-  # in the workspace. 
-  ofile = 'Example-Efficiency.root' 
-  tbsw.efficiency.plot(inputfilename=trackfile, histofilename=ofile, basecut="trackNHits==7 && nDutDigits>=0", matchcut="hasHit==0", uaxis=(250,0,250), vaxis=(768,0,768))
     
     
     

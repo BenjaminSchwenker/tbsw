@@ -93,10 +93,10 @@ namespace depfet {
                                 _minVarianceV, static_cast < float > (1.0E-6) );
      
     
-    std::vector<int> initIgnoreIDVec;
-    registerProcessorParameter ("IgnoreIDs",
-                                "Ignore clusters from list of sensorIDs",
-                                _ignoreIDVec, initIgnoreIDVec);
+    std::vector<int> initSelectIDVec;
+    registerProcessorParameter ("SelectPlanes",
+                                "Select clusters from list of planes",
+                                _selectIDVec, initSelectIDVec);
     
   }
   
@@ -220,15 +220,14 @@ namespace depfet {
         //------------------------
         TBTrackElement& TE = track.GetTE(ipl);  
         const Det & Sensor = TBDetector::Get(ipl);  
-        int sensorID = Sensor.GetSensorID();        
         
-        bool ignoreID = false;
-        for (auto id :  _ignoreIDVec)  {
-          if  (id == sensorID) ignoreID = true; 
+        bool selectID = false;
+        for (auto id :  _selectIDVec)  {
+          if  (id == ipl) selectID = true; 
         }
          
         // Ignore track elements w/o measurment
-        if ( TE.HasHit() && !ignoreID ) { 
+        if ( TE.HasHit() && selectID ) { 
           
           // This is the plane number of one plane to which 
           // the clusterDB would be applied

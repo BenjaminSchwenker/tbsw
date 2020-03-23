@@ -101,8 +101,8 @@ namespace depfet {
     double _maxResidualU; 
     double _maxResidualV; 
 
-    //! Ignore clusters from these sensorIDs 
-    std::vector<int>  _ignoreIDVec;
+    //! Select clusters from these planes
+    std::vector<int>  _selectIDVec;
     
     //! Name of temporary file for collector output
     std::string _collectorOutputFileName; 
