@@ -1,5 +1,6 @@
 from ROOT import TFile, TH1F, TH2F
 from ROOT import gROOT, Double, TCut
+import math
 
 
 
@@ -116,41 +117,44 @@ def plot(inputfile=None, histofile=None, basecut="hasTrack==0", Config=None):
   hspot.GetZaxis().SetTitle("number of clusters")
   hspot.SetStats(0)
   hspot.Write()
+  
+  def make_residual_histo(nbins, xmin, xmax, size_cut='sizeU>0', axis='u', label='all'):
+    """ Helper function for residual making residual histo."""
+    histo = TH1F("hres_{:s}_{:s}".format(axis, label),"",nbins,xmin,xmax)
+    hittree.Draw("({:s}_hit - {:s}_fit)*1000 >>+hres_{:s}_{:s}".format(axis, axis, axis, label), hitcut+TCut(size_cut),"goff")
+    histo.SetTitle("Unbiased DUT residuals {:s}_{{hit}}-{:s}_{{fit}} for {:s} clusters".format(axis, axis, label))
+    histo.GetXaxis().SetTitle("{:s}_{{hit}} - {:s}_{{fit}} [#mum]".format(axis,axis))
+    histo.GetYaxis().SetTitle("number of clusters")
+    histo.GetYaxis().SetTitleOffset(1.2)
+    histo.Write()
+    return histo 
+  
+  def make_resolution_histo(residual_histos, tel_sigma=0, axis='u'):
+    """ Helper function for making resolution histo."""
+    histo = TH1F("hpoint_resolution_{:s}".format(axis),"",len(residual_histos),0 ,len(residual_histos))
+    histo.SetTitle("DUT pointing resolution {:s} overview".format(axis))
+    histo.GetXaxis().SetTitle("")
+    histo.GetYaxis().SetTitle("DUT pointing resolution #sigma_{:s} [#mum]".format(axis))
+    histo.GetYaxis().SetTitleOffset(1.2)    
+    histo.SetStats(0)     
 
-
+    bin=1
+    for key, residual_histo in sorted(residual_histos.items(), key = lambda kv: kv[0][-1] )    :
+      histo.GetXaxis().SetBinLabel(bin, key)
+      if residual_histo.GetRMS()**2 - tel_sigma**2 > 0:
+        dut_sigma = math.sqrt( residual_histo.GetRMS()**2 - tel_sigma**2 )
+        dut_sigma_sigma = residual_histo.GetRMSError()
+        histo.SetBinContent(bin, dut_sigma) 
+        histo.SetBinError(bin, dut_sigma_sigma) 
+      bin+=1
+    
+    histo.Write()
+    return histo   
+    
   nbinsu = Config['residual_u_axis'][0]
   minu = 1000*Config['residual_u_axis'][1]
   maxu = 1000*Config['residual_u_axis'][2]
-
-  hres_u = TH1F("hres_u","",nbinsu,minu,maxu)
-  hittree.Draw("(u_hit - u_fit)*1000 >>+hres_u", hitcut,"goff")
-  hres_u.SetTitle("Unbiased DUT residuals u_{hit}-u_{fit}")
-  hres_u.GetXaxis().SetTitle("u_{hit} - u_{fit} [#mum]")
-  hres_u.GetYaxis().SetTitle("number of hits")
-  hres_u.GetYaxis().SetTitleOffset(1.2)
-  hres_u.Write()  
-
-  nbinsv = Config['residual_u_axis'][0]
-  minv = 1000*Config['residual_u_axis'][1]
-  maxv = 1000*Config['residual_u_axis'][2]
-
-  hres_v = TH1F("hres_v","",nbinsv,minv,maxv)
-  hittree.Draw("(v_hit - v_fit)*1000 >>+hres_v", hitcut,"goff")
-  hres_v.SetTitle("Unbiased DUT residuals v_{hit}-v_{fit}")
-  hres_v.GetXaxis().SetTitle("v_{hit} - v_{fit} [#mum]")
-  hres_v.GetYaxis().SetTitle("number of hits")
-  hres_v.GetYaxis().SetTitleOffset(1.2)
-  hres_v.Write()  
-
-  hres_uv = TH2F("hres_uv","",nbinsu,minu,maxu, nbinsv,minv,maxv )
-  hittree.Draw("(v_hit - v_fit)*1000:(u_hit - u_fit)*1000 >>+hres_uv", hitcut,"goff")  
-  hres_uv.SetTitle("Unbiased 2D DUT residuals")
-  hres_uv.GetXaxis().SetTitle("u_{hit} - u_{fit} [#mum]")
-  hres_uv.GetYaxis().SetTitle("v_{hit} - v_{fit} [#mum]")
-  hres_uv.GetZaxis().SetTitle("number of hits")
-  hres_uv.SetStats(0)
-  hres_uv.Write()  
-
+  
   hfit_sigma_u = TH1F("hfit_sigma_u","hfit_sigma_u",200,0,maxu)
   hittree.Draw("u_fiterr*1000 >>+hfit_sigma_u", hitcut,"goff")
   hfit_sigma_u.SetTitle("Track intersection uncertainty #sigma_{u}")
@@ -158,6 +162,18 @@ def plot(inputfile=None, histofile=None, basecut="hasTrack==0", Config=None):
   hfit_sigma_u.GetYaxis().SetTitle("number of tracks")
   hfit_sigma_u.GetYaxis().SetTitleOffset(1.2)
   hfit_sigma_u.Write()  
+  
+  residual_histos_u = {}
+  residual_histos_u['sizeU>0'] = make_residual_histo(nbinsu, minu, maxu, size_cut='sizeU>0', axis='u', label='all') 
+  residual_histos_u['sizeU==1'] = make_residual_histo(nbinsu, minu, maxu, size_cut='sizeU==1', axis='u', label='sizeU==1') 
+  residual_histos_u['sizeU==2'] = make_residual_histo(nbinsu, minu, maxu, size_cut='sizeU==2', axis='u', label='sizeU==2') 
+  #residual_histos_u['sizeU==3'] = make_residual_histo(nbinsu, minu, maxu, size_cut='sizeU==3', axis='u', label='sizeU==3') 
+   
+  make_resolution_histo(residual_histos_u, tel_sigma=hfit_sigma_u.GetMean(), axis='u')
+
+  nbinsv = Config['residual_u_axis'][0]
+  minv = 1000*Config['residual_u_axis'][1]
+  maxv = 1000*Config['residual_u_axis'][2]
 
   hfit_sigma_v = TH1F("hfit_sigma_v","hfit_sigma_v",200,0,maxv)
   hittree.Draw("v_fiterr*1000 >>+hfit_sigma_v", hitcut,"goff")
@@ -166,6 +182,23 @@ def plot(inputfile=None, histofile=None, basecut="hasTrack==0", Config=None):
   hfit_sigma_v.GetYaxis().SetTitle("number of tracks")
   hfit_sigma_v.GetYaxis().SetTitleOffset(1.2)
   hfit_sigma_v.Write()  
+  
+  residual_histos_v = {}
+  residual_histos_v['sizeV>0'] = make_residual_histo(nbinsv, minv, maxv, size_cut='sizeV>0', axis='v', label='all') 
+  residual_histos_v['sizeV==1'] = make_residual_histo(nbinsv, minv, maxv, size_cut='sizeV==1', axis='v', label='sizeV==1') 
+  residual_histos_v['sizeV==2'] = make_residual_histo(nbinsv, minv, maxv, size_cut='sizeV==2', axis='v', label='sizeV==2') 
+  #residual_histos_v['sizeV==3'] = make_residual_histo(nbinsv, minv, maxv, size_cut='sizeV==3', axis='v', label='sizeV==3') 
+   
+  make_resolution_histo(residual_histos_v, tel_sigma=hfit_sigma_v.GetMean(), axis='v')
+  
+  hres_uv = TH2F("hres_uv","",nbinsu,minu,maxu, nbinsv,minv,maxv )
+  hittree.Draw("(v_hit - v_fit)*1000:(u_hit - u_fit)*1000 >>+hres_uv", hitcut,"goff")  
+  hres_uv.SetTitle("Unbiased 2D DUT residuals")
+  hres_uv.GetXaxis().SetTitle("u_{hit} - u_{fit} [#mum]")
+  hres_uv.GetYaxis().SetTitle("v_{hit} - v_{fit} [#mum]")
+  hres_uv.GetZaxis().SetTitle("number of hits")
+  hres_uv.SetStats(0)
+  hres_uv.Write()  
 
   hchisqundof = TH1F("hchisqundof","",100,0,0)
   hittree.Draw("trackChi2 / trackNdof >> +hchisqundof", hitcut,"goff")
