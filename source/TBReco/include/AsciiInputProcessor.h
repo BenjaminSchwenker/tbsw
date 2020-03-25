@@ -73,6 +73,8 @@ namespace depfet
    private:  
     //! Number of events per chunk
     int m_chunkSize;
+    //! Number of processed triggers (events)
+    unsigned m_ntriggers;
        
   };
   

@@ -67,6 +67,7 @@ AsciiInputProcessor * AsciiInputProcessor::newProcessor () {
 
 void AsciiInputProcessor::init () {
   m_chunkSize = 1000;
+  m_ntriggers = 0;
   printParameters ();
 }
 
@@ -75,6 +76,8 @@ void AsciiInputProcessor::readDataSource (int Ntrig) {
   
   if (m_fileNameVec.size() == 0) return;
   string filename = m_fileNameVec[0];
+
+  streamlog_out ( MESSAGE3 ) << "Start reading Ntrig=" << Ntrig << " from raw file " << filename << std::endl;
    
   // Write LCIO run header here 
   IMPL::LCRunHeaderImpl* lcHeader = new IMPL::LCRunHeaderImpl;
@@ -86,7 +89,7 @@ void AsciiInputProcessor::readDataSource (int Ntrig) {
   ProcessorMgr::instance ()->processRunHeader ( static_cast<lcio::LCRunHeader*> (lcHeader) );
   delete lcHeader; 
   
-  streamlog_out ( MESSAGE3 ) << "Start reading next chunk from raw file " << filename << std::endl;
+  streamlog_out ( MESSAGE2 ) << "Start reading next chunk from raw file " << filename << std::endl;
      
   // Open file stream
   fstream fin(filename);
@@ -104,11 +107,13 @@ void AsciiInputProcessor::readDataSource (int Ntrig) {
   }
   
   bool readNextChunk=true;
-  while(readNextChunk) {  
+  while(readNextChunk and m_ntriggers < Ntrig) {  
     
     // Read chunk of data from the first file 
     vector< vector<int> > hits;
     vector< vector<int> > events;
+    
+    streamlog_out ( MESSAGE2 ) << "Start reading next chunk from raw file " << filename << std::endl;
     readNextChunk = getAllEventFromFile(fin, hits, events, m_chunkSize, -1);  
     
     // Read data from all other files 
@@ -119,7 +124,7 @@ void AsciiInputProcessor::readDataSource (int Ntrig) {
     for (size_t iFile=1; iFile< m_fileNameVec.size(); iFile++) {
       string other_filename = m_fileNameVec[iFile];
       
-      streamlog_out ( MESSAGE3 ) << "Start reading next chunk from raw file " << other_filename << std::endl;
+      streamlog_out ( MESSAGE2 ) << "Start reading next chunk from raw file " << other_filename << std::endl;
       
       vector< vector<int> > other_hits;
       vector< vector<int> > other_events;
@@ -143,8 +148,9 @@ void AsciiInputProcessor::readDataSource (int Ntrig) {
     
     // Process all events from curent chunk 
     for (size_t iEvt = 0; iEvt < events.size(); iEvt++) {
-        
-      //cout << "evt=" << events[iEvt][0] << endl;
+      // Count number of LCIO events   
+      m_ntriggers++; 
+      
       // Process data event 
       lcio::LCEventImpl * lcEvent = new lcio::LCEventImpl;
       lcEvent->setEventNumber(events[iEvt][0]);
@@ -242,7 +248,7 @@ bool AsciiInputProcessor::getAllEventFromFile(fstream& fin, vector< vector<int> 
     
     if (current_event !=  event_number ) {
       //cout << "FINISH EVT=" << current_event << " firstHit=" << firstHit << " lastHit=" << hits.size()-1  << endl;
-      events.push_back( vector<int>{ current_event, firstHit, hits.size()-1 } );
+      events.push_back( vector<int>{ current_event, firstHit, (int)hits.size()-1 } );
       
       if (event_number > max_event_number and max_event_number >=0) {
         //cout << "CURRENT EVT=" << event_number << " BIGGER THAN MAX EVT=" << max_event_number << ". LAST EVT FOR CURRENT CHUNK." << endl;
@@ -251,7 +257,7 @@ bool AsciiInputProcessor::getAllEventFromFile(fstream& fin, vector< vector<int> 
         return true;
       }
       
-      if (events.size() >= max_events) {
+      if ( events.size() >= max_events) {
         // cout << "LAST EVT FOR CURRENT CHUNK." << endl;
         // Get back to the position before reading the current hit 
         fin.seekg (oldpos);  
@@ -279,7 +285,9 @@ bool AsciiInputProcessor::getAllEventFromFile(fstream& fin, vector< vector<int> 
 
 void AsciiInputProcessor::end () 
 { 
+  
   // Print message
+  streamlog_out(MESSAGE3) << "Number of data events: " << to_string(m_ntriggers) << std::endl;
   streamlog_out(MESSAGE3) << std::endl
                           << "Processor succesfully finished!"
                           << std::endl;
