@@ -78,10 +78,12 @@ void EudaqInputProcessor::init () {
 
 void EudaqInputProcessor::readDataSource (int Ntrig) {
   
+  streamlog_out ( MESSAGE3 ) << "Start reading Ntrig=" << Ntrig << std::endl;
+
   for (auto filename : m_fileNameVec) {
 
     streamlog_out ( MESSAGE3 ) << "Start reading raw file " << filename << std::endl;
-
+    
     // ------------------------------------------------------- // 
     // Create a file reader for raw data  
     eudaqinput::FileReader reader(filename, "", false);
@@ -172,7 +174,7 @@ void EudaqInputProcessor::readDataSource (int Ntrig) {
             
         ProcessorMgr::instance ()->processEvent (static_cast<LCEventImpl*> (lcEvent));
         delete lcEvent;        
-      }       
+      }  
     } while (reader.NextEvent()  &&  m_ndata < Ntrig );
   } // end loop over raw files    
 }

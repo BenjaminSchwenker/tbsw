@@ -18,6 +18,8 @@ Usage:
 
 python depfet-reco.py 
 
+python histo-plotter.py --ifile=root-files/Histos-PXD-run001286-reco.root
+
 Author: Benjamin Schwenker <benjamin.schwenker@phys.uni-goettingen.de>  
 """
 
@@ -182,27 +184,27 @@ def add_clustercalibrators(path):
   m26clustdb = tbsw.Processor(name="M26ClusterCalibrator",proctype="GoeClusterCalibrator")   
   m26clustdb.param("ClusterDBFileName","localDB/clusterDB-M26.root")  
   m26clustdb.param("MinClusters","200")
-  m26clustdb.param("IgnoreIDs","6 7 21")
+  m26clustdb.param("SelectPlanes","1 2 4 5")
   path.add_processor(m26clustdb)  
     
   pxdclustdb = tbsw.Processor(name="PXDClusterCalibrator",proctype="GoeClusterCalibrator")   
   pxdclustdb.param("ClusterDBFileName","localDB/clusterDB-PXD.root")  
   pxdclustdb.param("MinClusters","200")
   pxdclustdb.param("MaxEtaBins","7")
-  pxdclustdb.param("IgnoreIDs","0 1 2 3 4 5 7 21")
+  pxdclustdb.param("SelectPlanes","3")
   path.add_processor(pxdclustdb)  
     
   h5clustdb = tbsw.Processor(name="H5ClusterCalibrator",proctype="GoeClusterCalibrator")   
   h5clustdb.param("ClusterDBFileName","localDB/clusterDB-H5.root")  
   h5clustdb.param("MinClusters","200")
-  h5clustdb.param("IgnoreIDs","0 1 2 3 4 5 6 21")
+  h5clustdb.param("SelectPlanes","8")
   h5clustdb.param("MaxEtaBins","7")
   path.add_processor(h5clustdb)  
 
   fei4clustdb = tbsw.Processor(name="FEI4ClusterCalibrator",proctype="GoeClusterCalibrator")   
   fei4clustdb.param("ClusterDBFileName","localDB/clusterDB-FEI4.root")  
   fei4clustdb.param("MinClusters","200")
-  fei4clustdb.param("IgnoreIDs","0 1 2 3 4 5 6 7")
+  fei4clustdb.param("SelectPlanes","7")
   path.add_processor(fei4clustdb)  
   
   return path

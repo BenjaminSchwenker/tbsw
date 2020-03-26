@@ -103,10 +103,10 @@ namespace depfet {
                                 _uCellPeriod,  static_cast < int > (1));
     
     
-    std::vector<int> initIgnoreIDVec;
-    registerProcessorParameter ("IgnoreIDs",
-                                "Ignore clusters from list of sensorIDs",
-                                _ignoreIDVec, initIgnoreIDVec);
+    std::vector<int> initSelectIDVec;
+    registerProcessorParameter ("SelectPlanes",
+                                "Select clusters from list of planes",
+                                _selectIDVec, initSelectIDVec);
     
   }
   
@@ -234,16 +234,18 @@ namespace depfet {
       // Retrieve simtrackerhit 
       SimTrackerHit * simHit = dynamic_cast<SimTrackerHit*> (simHitCol->getElementAt(i));
       int sensorID = cellIDDec(simHit)["sensorID"];
+      int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);
       
       streamlog_out(MESSAGE2) << " SimHit with sensorID " << sensorID << " at: (" << simHit->getPosition()[0] << ", " << simHit->getPosition()[1] << ")" 
                               << endl;
           
-      bool ignoreID = false;
-      for (auto id :  _ignoreIDVec)  {
-        if  (id == sensorID) ignoreID = true; 
+      
+      bool selectID = false;
+      for (auto id :  _selectIDVec)  {
+        if  (id == ipl) selectID = true; 
       }
       
-      if ( !ignoreID ) SimHitMap[sensorID].push_back(simHit);            
+      if ( selectID ) SimHitMap[sensorID].push_back(simHit);            
     } 
     
     
@@ -253,16 +255,17 @@ namespace depfet {
       TrackerHitImpl * lciohit = dynamic_cast<TrackerHitImpl*>( hitCol->getElementAt(i) ) ;
       TBHit recoHit ( lciohit  );        
       int sensorID = recoHit.GetSensorID();      
+      int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);
                 
       streamlog_out(MESSAGE2) << " RecoHit with sensorID " << sensorID << " at: (" << recoHit.GetCoord()[0] << ", " << recoHit.GetCoord()[1] << ")" 
                               << endl;
         
-      bool ignoreID = false;
-      for (auto id :  _ignoreIDVec)  {
-        if  (id == sensorID) ignoreID = true; 
+      bool selectID = false;
+      for (auto id :  _selectIDVec)  {
+        if  (id == ipl) selectID = true; 
       }
 
-      if ( !ignoreID ) RecoHitMap[sensorID].push_back( recoHit );    
+      if ( selectID ) RecoHitMap[sensorID].push_back( recoHit );    
     } 
     
     // Go through all sensors 

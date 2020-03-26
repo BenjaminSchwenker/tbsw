@@ -81,8 +81,8 @@ namespace depfet {
     //! Reference plane number, a track is required to have a hit on the reference plane 
     int _iref; 
     
-    //! Ignore data from these sensors
-    std::vector<int >  _ignoreIDVec;
+    //! Select data from these planes
+    std::vector<int >  _selectIDVec;
          
    private:
    
