@@ -398,13 +398,13 @@ class ClusterDB(object):
     
     # Sum the fractions for all shape belonging to the cluster type
     # Note that we do not want to match shapes with more digits
-    sum_prob = self.getFraction('^E[0-9]'+clusterType+'$') 
+    sum_prob = self.getFraction('^E[0-9]+'+clusterType+'$') 
     
     # Compute the sigmaU, sigmaV and rho for the weighted avarage 
     # of the covariance matrices of all contributing shapes. 
-    av_sigU, _ = self.getSigmaU('^E[0-9]'+clusterType+'$')
-    av_sigV, _ = self.getSigmaV('^E[0-9]'+clusterType+'$')
-    av_rho = self.getRho('^E[0-9]'+clusterType+'$')    
+    av_sigU, _ = self.getSigmaU('^E[0-9]+'+clusterType+'$')
+    av_sigV, _ = self.getSigmaV('^E[0-9]+'+clusterType+'$')
+    av_rho = self.getRho('^E[0-9]+'+clusterType+'$')    
     
     # Compute list of cells and bounding box
     if poly: 
@@ -444,7 +444,7 @@ class ClusterDB(object):
       ax.add_artist(pixel)
       
     # Loop over all shapes   
-    for shape in self.getSelectedShapes('^E[0-9]'+clusterType+'$') :
+    for shape in self.getSelectedShapes('^E[0-9]+'+clusterType+'$') :
       prob = self.getFraction('^'+shape+'$')
       sigU, _ = self.getSigmaU('^'+shape+'$')
       sigV, _ = self.getSigmaV('^'+shape+'$')
