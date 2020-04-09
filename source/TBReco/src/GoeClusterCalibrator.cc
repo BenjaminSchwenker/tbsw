@@ -97,6 +97,10 @@ namespace depfet {
     registerProcessorParameter ("IgnoreIDs",
                                 "Ignore clusters from list of sensorIDs",
                                 _ignoreIDVec, initIgnoreIDVec);
+
+    registerProcessorParameter("CorrectBias",
+                               "Switch to turn on auto bias correction",
+                               _correctBiasSwitch, static_cast<bool>(true));
     
   }
   
@@ -153,6 +157,8 @@ namespace depfet {
     m_rootTree->Branch<float>("ClusterEtaNN", &m_clusterEtaNN);
     m_rootTree->Branch<float>("OffsetU", &m_positionOffsetU);
     m_rootTree->Branch<float>("OffsetV", &m_positionOffsetV);
+    m_rootTree->Branch<int>("RunNumber", &m_runNumber);
+    m_rootTree->Branch<int>("PlaneNumber", &m_planeNumber);
     
     // Print set parameters
     printProcessorParams();
@@ -181,6 +187,8 @@ namespace depfet {
   void GoeClusterCalibrator::processEvent(LCEvent * evt)
   {
     
+    // Set run number 
+    m_runNumber = evt->getRunNumber();   
     _nEvt ++ ;
     
     TrackInputProvider TrackIO; 
@@ -278,7 +286,27 @@ namespace depfet {
            
           m_positionOffsetU = trk_u - Descriptor.getOriginU();  
           m_positionOffsetV = trk_v - Descriptor.getOriginV();  
+          m_planeNumber = ipl;
           m_rootTree->Fill(); 
+           
+          // Create the residual histograms for bias correction if needed  
+          auto key = std::make_pair(m_runNumber, m_planeNumber);
+          if ( _biasMapU.find(key) == _biasMapU.end() ) {
+            string tmpName = "hBiasU_runno_" + to_string(m_runNumber) + "_plane_" + to_string(m_planeNumber); 
+            _biasMapU[key] = new TH1F(tmpName.c_str(),tmpName.c_str(),1,0,1);
+            _biasMapU[key]->StatOverflows();
+            _biasMapU[key]->SetDirectory(nullptr);
+          }
+          if ( _biasMapV.find(key) == _biasMapV.end() ) {
+            string tmpName = "hBiasV_runno_" + to_string(m_runNumber) + "_plane_" + to_string(m_planeNumber); 
+            _biasMapV[key] = new TH1F(tmpName.c_str(),tmpName.c_str(),1,0,1);
+            _biasMapV[key]->StatOverflows();
+            _biasMapV[key]->SetDirectory(nullptr);
+          }
+          
+          // Fill the bias map to detect residual drift over runs
+          _biasMapU[key]->Fill(TE.GetHit().GetCoord()[0] - trk_u);   
+          _biasMapV[key]->Fill(TE.GetHit().GetCoord()[1] - trk_v);   
         }
       }
     }  
@@ -344,7 +372,26 @@ namespace depfet {
     // should be small (< few mrad) 
     double thetaU = _trackDuDwHisto->GetMean();
     double thetaV = _trackDvDwHisto->GetMean();
-    
+
+    // Check if there is a drift in the residuals in case 
+    // data from more than one run is used. 
+    for (const auto &entry: _biasMapU)
+	{
+      auto key_pair = entry.first;
+      streamlog_out(MESSAGE3) << std::setprecision(5)
+                              << "Run number " << key_pair.first << ", plane number " << key_pair.second << " has biasU="
+                              << entry.second->GetMean() << "+/-" << entry.second->GetMeanError() << endl;
+	}
+    // Check if there is a drift in the residuals in case 
+    // data from more than one run is used. 
+    for (const auto &entry: _biasMapV)
+	{
+      auto key_pair = entry.first;
+      streamlog_out(MESSAGE3) << std::setprecision(5)
+                              << "Run number " << key_pair.first << ", plane number " << key_pair.second << " has biasV="
+                              << entry.second->GetMean() << "+/-" << entry.second->GetMeanError() << endl;
+	}
+     
     streamlog_out(MESSAGE3) << std::setprecision(5)
                             << "Average telescope sigmaU=" << sqrt(trk_covU) << ", sigmaV=" << sqrt(trk_covV) << endl
                             << "Average track incidence angles on DUT are du/dw=" << thetaU  << ", dvdw=" << thetaV  << endl;
@@ -388,7 +435,7 @@ namespace depfet {
         coverage += counter / nEntries;
         string etaname = "eta_" + name;     
         TH1D etaHisto(etaname.c_str(), etaname.c_str(), 301, 0, 1);
-        etaHisto.SetDirectory(0);
+        etaHisto.SetDirectory(nullptr);
         etaHistos.push_back(pair<string, TH1D>(name, etaHisto));
       } else {
         streamlog_out(MESSAGE3) << "  Unable to calibrate cluster type:  " << name << " because too few counts (" << counter  << ")" << endl;
@@ -455,6 +502,7 @@ namespace depfet {
         string offsetname = "E" + std::to_string(i) + name;         
         TH2D offsetHisto(offsetname.c_str(), offsetname.c_str(), 1, 0, 1, 1, 0, 1);
         offsetHisto.StatOverflows();
+        offsetHisto.SetDirectory(nullptr);
         offsetHistos.push_back(offsetHisto);
       }
       etaBinEdgesVec.push_back(pair< string, vector<double> >(name, etaBinEdges));
@@ -479,7 +527,15 @@ namespace depfet {
         else if (thetaU < 0 && thetaV < 0) {clusterEta = m_clusterEtaNN;}   
         // FIXME add a switch to select which descriptor to use
         auto etaBin = PolyClusterDescriptor::computeEtaBin(clusterEta, it2->second);
-        it->second.at(etaBin).Fill(m_positionOffsetU, m_positionOffsetV);
+        if (_correctBiasSwitch) {
+          auto key = std::make_pair(m_runNumber, m_planeNumber); 
+          double biasU = _biasMapU[key]->GetMean();     
+          double biasV = _biasMapV[key]->GetMean();  
+          // TODO not sure wheter to add or subtract here. discuss/test with Philipp
+          it->second.at(etaBin).Fill(m_positionOffsetU-biasU, m_positionOffsetV-biasV);
+        } else {
+          it->second.at(etaBin).Fill(m_positionOffsetU, m_positionOffsetV);
+        }
       }
     }
     

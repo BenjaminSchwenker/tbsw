@@ -11,6 +11,7 @@
 #include <string>
 #include <map>
 #include <set>
+#include <utility>
 
 // Include Marlin classes
 #include <marlin/Global.h>
@@ -100,6 +101,9 @@ namespace depfet {
        
     //! Name of temporary file for collector output
     std::string _collectorOutputFileName;   
+
+    //! Switch to turn on auto bias correction
+    bool _correctBiasSwitch;
  
    private:
     
@@ -115,12 +119,20 @@ namespace depfet {
     TH1F * _trackDuDwHisto;
     /**Histograms for track incident angle DvDw */
     TH1F * _trackDvDwHisto;
-    /**Container for histos*/
+    /**Container for bias histos for pairs (runno,plane)*/
+    std::map< std::pair<int,int>, TH1F *> _biasMapU;
+    /**Container for bias histos for pairs (runno,plane)*/
+    std::map< std::pair<int,int>, TH1F *> _biasMapV;
+    /**Container for clusterDB histos*/
     std::map< std::string, TH1F *> _histoMap;
     /** Name of cluster tree */
     TTree * m_rootTree; 
     /** Name of cluster type */
     std::string m_typeName;
+    /** Run number used for bias check/correction */
+    int m_runNumber;
+    /** Plane number used for bias check/correction */
+    int m_planeNumber;
     /** Eta value of cluster for sector (+,+)*/
     float m_clusterEtaPP;
     /** Eta value of cluster for sector (-,+)*/
