@@ -1,6 +1,10 @@
 """
 This is an example script prints the extracted cluster resolutions (sigmas) from clusterDBs in the localDB folder.
 
+Usage: 
+
+python print_resolution.py --dbpath=<path-to-localDB/clusterDB-{detname}.root --output=<path-to-plots>
+
 Author: Benjamin Schwenker <benjamin.schwenker@phys.uni-goettingen.de>  
 """
 

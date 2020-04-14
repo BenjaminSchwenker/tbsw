@@ -430,7 +430,7 @@ class ClusterDB(object):
     ax.set_ylabel('offset v / mm')
     #ax.set_title(clusterType)
     ax.set_title("\n".join(textwrap.wrap(clusterType, 50)))
-    ax.text(0.5, 0.9, 'prob={:.2f}% \n $\sigma_u$={:.1f}$\mu$m, $\sigma_v$={:.1f}$\mu$m, $\\rho$={:.2f}'.format(sum_prob, 1000*av_sigU, 1000*av_sigV, av_rho),
+    ax.text(0.5, 0.9, 'prob={:.2f}% \n $\sigma_u$={:.2f}$\mu$m, $\sigma_v$={:.2f}$\mu$m, $\\rho$={:.2f}'.format(sum_prob, 1000*av_sigU, 1000*av_sigV, av_rho),
           style='italic',
           bbox={'facecolor':'red', 'alpha':0.5, 'pad':10},
           horizontalalignment='center',
