@@ -358,7 +358,50 @@ class ClusterDB(object):
       for digit in digits:		
         cells.append( (float(re.split('\.',digit)[1])*pitchU , float(re.split('\.',digit)[0])*pitchV, pixelType) ) 
       return cells
-     
+       
+    def getHeadTailPixelIndices(cells, thetaU, thetaV): 
+      # Note cell contains posU,posV,pixelType 
+      size = len(cells)
+      # Find index of lower right digit 
+      lowerRight = size-1 
+      for index in range(size-1):   
+        if cells[index+1][1] > cells[0][1]: 
+          lowerRight = index
+          break
+      
+      # Find index of upper left digit
+      upperLeft = 0 
+      for index in range( size-1,0,-1): 
+        if cells[index-1][1] < cells[size-1][1]:
+          upperLeft = index
+          break
+      
+      head, tail = -1, -1
+      
+      if thetaV >= 0: 
+        if thetaU >= 0: 
+          head = size-1  #This is the index of upper right digit 
+        else :
+          head = upperLeft    
+      else:   
+        if thetaU >= 0:
+          head = lowerRight 
+        else : 
+          head = 0 # This is the index of lower left digit
+
+      if thetaV >= 0:
+        if thetaU >= 0:
+          tail = 0 # This is the index of lower left digit
+        else :
+          tail = lowerRight  
+      else :
+        if thetaU >= 0:
+          tail = upperLeft
+        else :  
+          tail = size-1 # This is the index of upper right digit     
+      
+      return head, tail
+    
     def create_poly_pixels(cells):  
       pixels = []
       for originU, originV, pixelType in cells: 
@@ -438,11 +481,28 @@ class ClusterDB(object):
           transform = ax.transAxes)
     
     # Draw the cluster outline
-    pixels = create_poly_pixels(cells)      
-    for pixel in pixels:
+    pixels = create_poly_pixels(cells)   
+
+    head, tail = getHeadTailPixelIndices(cells, self.getThetaU(), self.getThetaV())
+   
+    for index, pixel in enumerate(pixels):
       pixel.set_clip_box(ax.bbox)
       ax.add_artist(pixel)
       
+      if index == head and len(pixels)>1: 
+        # Mark the head pixel  
+        cx = np.array(pixel.get_xy()[:,0]).mean()
+        cy = np.array(pixel.get_xy()[:,1]).mean()
+        ax.annotate('Head', (cx, cy), color='b', weight='bold', 
+                    fontsize=12, ha='center', va='center')
+      
+      if index == tail and len(pixels)>1: 
+        # Mark the tail pixel  
+        cx = np.array(pixel.get_xy()[:,0]).mean()
+        cy = np.array(pixel.get_xy()[:,1]).mean()
+        ax.annotate('Tail', (cx, cy), color='b', weight='bold', 
+                    fontsize=12, ha='center', va='center')
+        
     # Loop over all shapes   
     for shape in self.getSelectedShapes('^E[0-9]+'+clusterType+'$') :
       prob = self.getFraction('^'+shape+'$')
@@ -464,3 +524,7 @@ class ClusterDB(object):
     
     fig.savefig(imagePath)
     fig.clf()
+
+  
+    
+  
