@@ -92,10 +92,8 @@ if __name__ == '__main__':
         print("  ClusterType={:s}".format(shape))
         print("  PixelType={:d}".format(pixelType))
         print("  Fraction={:.3f}%".format(frac))
-        print("  PositionU={:.4f} mm".format(sensorDB.getPositionU(shape)))
-        print("  PositionV={:.4f} mm".format(sensorDB.getPositionV(shape)))
-        print("  SigmaU={:.4f}+/- {:.5f} mm".format(sigU, sigUError))
-        print("  SigmaV={:.4f}+/- {:.5f} mm".format(sigV, sigVError))
+        print("  SigmaU={:.5f}+/- {:.5f} mm".format(sigU, sigUError))
+        print("  SigmaV={:.5f}+/- {:.5f} mm".format(sigV, sigVError))
         print("  Rho={:.4f}".format(sensorDB.getRho(shape)))
 
 
@@ -109,8 +107,8 @@ if __name__ == '__main__':
     print("  Fraction={:.3f}%".format(frac))
     print("  PositionU={:.4f} mm".format(sensorDB.getPositionU(args.shape)))
     print("  PositionV={:.4f} mm".format(sensorDB.getPositionV(args.shape)))
-    print("  SigmaU={:.4f}+/- {:.5f} mm".format(sigU, sigUError))
-    print("  SigmaV={:.4f}+/- {:.5f} mm".format(sigV, sigVError))
+    print("  SigmaU={:.5f}+/- {:.5f} mm".format(sigU, sigUError))
+    print("  SigmaV={:.5f}+/- {:.5f} mm".format(sigV, sigVError))
     print("  Rho={:.4f}".format(sensorDB.getRho(args.shape)))
 
 
