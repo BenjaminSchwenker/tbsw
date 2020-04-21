@@ -149,6 +149,21 @@ class ClusterDB(object):
     
     return nClusters
 
+  def getEtaIndex(self, clustype):
+    """
+    Get index of selected eta variable for offset calibration.  
+    """
+    dbfile = ROOT.TFile( self.dbpath, 'READ' ) 
+    histo  = dbfile.Get("hDB_EtaIndex")
+    
+    etaIndex = None
+    for bin in range(1,histo.GetNbinsX()+1):    
+      if histo.GetXaxis().GetBinLabel(bin) == clustype:        
+        etaIndex = histo.GetBinContent(bin)
+     
+    dbfile.Close() 
+     
+    return etaIndex      
     
   def getFraction(self, shape=''): 
     """
@@ -359,48 +374,64 @@ class ClusterDB(object):
         cells.append( (float(re.split('\.',digit)[1])*pitchU , float(re.split('\.',digit)[0])*pitchV, pixelType) ) 
       return cells
        
-    def getHeadTailPixelIndices(cells, thetaU, thetaV): 
-      # Note cell contains posU,posV,pixelType 
+    def getHeadTailPixelIndices(cells, thetaU, thetaV, etaindex=0): 
       size = len(cells)
+      
+      # The cells are sorted from lowerLeft to 
+      # upperRight
+      lowerLeft = 0
+      upperRight = size-1
+      
       # Find index of lower right digit 
-      lowerRight = size-1 
+      # Note cell contains posU,posV,pixelType 
+      lowerRight = upperRight
       for index in range(size-1):   
         if cells[index+1][1] > cells[0][1]: 
           lowerRight = index
           break
       
       # Find index of upper left digit
-      upperLeft = 0 
+      # Note cell contains posU,posV,pixelType 
+      upperLeft = lowerLeft 
       for index in range( size-1,0,-1): 
         if cells[index-1][1] < cells[size-1][1]:
           upperLeft = index
           break
       
-      head, tail = -1, -1
+      # Basically, we need to distingush same sign 
+      # and opposite sign cases for angles.  
+      if thetaV*thetaU>=0: 
+        heads = [upperRight, upperRight]
+        tails = [lowerLeft, lowerLeft]
+        if size > 1:
+          heads[1] = upperRight-1    
+          tails[1] = lowerLeft+1    
+      else:
+        heads = [upperLeft, upperLeft]
+        tails = [lowerRight, lowerRight]
+        if size > 1:
+          if upperLeft < upperRight:
+            heads[1] = upperLeft+1
+          else: 
+            heads[1] = upperLeft-1
+          
+          if lowerRight > lowerLeft:
+            tails[1] = lowerRight-1
+          else: 
+            tails[1] = lowerRight+1   
       
-      if thetaV >= 0: 
-        if thetaU >= 0: 
-          head = size-1  #This is the index of upper right digit 
-        else :
-          head = upperLeft    
-      else:   
-        if thetaU >= 0:
-          head = lowerRight 
-        else : 
-          head = 0 # This is the index of lower left digit
-
-      if thetaV >= 0:
-        if thetaU >= 0:
-          tail = 0 # This is the index of lower left digit
-        else :
-          tail = lowerRight  
-      else :
-        if thetaU >= 0:
-          tail = upperLeft
-        else :  
-          tail = size-1 # This is the index of upper right digit     
+      etamapping = { 0: ([heads[0]], [tails[0]]), 
+                     1: ([heads[1]], [tails[0]]), 
+                     2: ([heads[0]], [tails[1]]), 
+                     3: ([heads[1]], [tails[1]]), 
+                     4: ([heads[0], heads[1]], [tails[0]]), 
+                     5: ([heads[0], heads[1]], [tails[1]]), 
+                     6: ([heads[0]], [tails[0], tails[1]]), 
+                     7: ([heads[1]], [tails[0], tails[1]]), 
+                     8: ([heads[0], heads[1]], [tails[0], tails[1]]), 
+                   }
       
-      return head, tail
+      return etamapping[etaindex]
     
     def create_poly_pixels(cells):  
       pixels = []
@@ -471,7 +502,6 @@ class ClusterDB(object):
     
     ax.set_xlabel('offset u / mm')
     ax.set_ylabel('offset v / mm')
-    #ax.set_title(clusterType)
     ax.set_title("\n".join(textwrap.wrap(clusterType, 50)))
     ax.text(0.5, 0.9, 'prob={:.2f}% \n $\sigma_u$={:.2f}$\mu$m, $\sigma_v$={:.2f}$\mu$m, $\\rho$={:.2f}'.format(sum_prob, 1000*av_sigU, 1000*av_sigV, av_rho),
           style='italic',
@@ -483,20 +513,22 @@ class ClusterDB(object):
     # Draw the cluster outline
     pixels = create_poly_pixels(cells)   
 
-    head, tail = getHeadTailPixelIndices(cells, self.getThetaU(), self.getThetaV())
+    # Get indices for head and tail pixels 
+    heads, tails = getHeadTailPixelIndices(cells, self.getThetaU(), self.getThetaV(), self.getEtaIndex(clusterType))
+    
    
     for index, pixel in enumerate(pixels):
       pixel.set_clip_box(ax.bbox)
       ax.add_artist(pixel)
       
-      if index == head and len(pixels)>1: 
+      if index in heads and len(pixels)>1: 
         # Mark the head pixel  
         cx = np.array(pixel.get_xy()[:,0]).mean()
         cy = np.array(pixel.get_xy()[:,1]).mean()
         ax.annotate('Head', (cx, cy), color='b', weight='bold', 
                     fontsize=12, ha='center', va='center')
       
-      if index == tail and len(pixels)>1: 
+      if index in tails and len(pixels)>1: 
         # Mark the tail pixel  
         cx = np.array(pixel.get_xy()[:,0]).mean()
         cy = np.array(pixel.get_xy()[:,1]).mean()
