@@ -161,4 +161,29 @@ def plot(inputfile=None, histofile=None, basecut="", matchcut="hasHit==0", uaxis
   h2_efficiencymap.SetStats(0)
   h2_efficiencymap.Write()
 
+def extract_roi(inputfile=None, basecut="", matchcut="hasHit==0"):
+     
+  if inputfile == None:
+    return None
+  
+  total_cut = TCut(basecut)
+  pass_cut   = TCut(basecut) + TCut(matchcut)   
+  
+  # Get access to tracks 
+  tree = inputfile.Get("Track")
+ 
+  # Compute roi efficiency 
+  h_roi_total = TH1F("h_roi_total","",1,0,500)
+  tree.Draw("trackChi2 >> +h_roi_total", total_cut  ,  "goff")
+  
+  h_roi_pass = TH1F("h_roi_pass","",1,0,500)
+  tree.Draw("trackChi2 >> +h_roi_pass"  ,  pass_cut , "goff" )
+  
+  g_efficiency_roi = TGraphAsymmErrors()
+  g_efficiency_roi.SetName("g_efficiency_roi")
+  g_efficiency_roi.Divide(h_roi_pass,h_roi_total) 
+  g_efficiency_roi.SetTitle("Hit efficiency roi")
+  g_efficiency_roi.GetYaxis().SetTitle("efficiency") 
+  g_efficiency_roi.Write()
+
   
