@@ -94,7 +94,7 @@ namespace depfet {
     //! Output original pixel data collection name 
     std::string _dummyCollectionName;
     
-    //! Name of clusterDB file 
+    //! Name of noiseDB file with masks
     std::string  _noiseDBFileName;
     
     //! Minimimum signal for zero suppression

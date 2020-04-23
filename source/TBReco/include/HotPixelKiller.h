@@ -29,8 +29,8 @@ namespace depfet {
    *  to exclude hot pixels from entering into clusters. 
    * 
    *  The HotPixelKiller needs an input collection containing zero suppressed data or 
-   *  digits. The user can specify a maximum hit rate for "normal" pixels. For The user
-   *  can specify an offline zero suppression threshold. 
+   *  digits. The user can specify a maximum hit probability (hits/events) for "normal"
+   *  pixels. For The user can specify an offline zero suppression threshold. 
    *   
    *  The processor also checks if zero suppressed pixels are duplicated and have 
    *  a valid pair of cellIDs.  
@@ -85,11 +85,17 @@ namespace depfet {
     float _offlineZSCut;
     
     //! Maximum pixel occupancy
-    /*! This is the maximum allowed hit rate or occupancy for nornal pixels.
+    /*! This is the maximum allowed hit rate or occupancy for normal pixels.
      *  If a pixel fires more frequently, it is masked as HOT. 
      */
     float _maxOccupancy;
     
+    //! Minimum pixel occupancy
+    /*! This is the minimum allowed hit rate or occupancy for normal pixels.
+     *  If a pixel fires less frequently, it is masked as DEAD. 
+     */
+    float _minOccupancy;
+
    private:
     
     //! internally used as storage for input decoding

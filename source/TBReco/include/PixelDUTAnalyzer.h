@@ -33,6 +33,7 @@
 #include <TFile.h>
 #include <TTree.h>
 #include <TMath.h>
+#include <TH2F.h>
 
 namespace depfet {
 
@@ -107,6 +108,9 @@ class PixelDUTAnalyzer : public marlin::Processor {
 
    //! Input digit collection name
    std::string _digitColName;
+
+   //! Name of noiseDB file with masks
+   std::string  _noiseDBFileName;
    
    //! ROOT output file name  
    std::string _rootFileName;  
@@ -178,7 +182,7 @@ class PixelDUTAnalyzer : public marlin::Processor {
    int _rootHitTrackNDF;             // Number of degrees of freedom of track fit
    int _rootHitTrackNHits;           // Number of telescope hits used for track fitting 
    int _rootHitSeedPixelType;        // PixelType of seed pixel cell 
-   
+   int _rootHitPixelMasked;          // Track intersects a masked pixel (masked!=0) or unmasked pixel (masked=0)
    
    // Variables in track tree  
    int _rootTrackHasHit;             // Track can be matched to a DUT hit (== 0) 
@@ -200,6 +204,7 @@ class PixelDUTAnalyzer : public marlin::Processor {
    double _rootTrackFitCellVCenter;  // Central coordinate of cell 'FitCellV' in mm 
    double _rootTrackSeedCharge;      // Highest charge in cluster, only filled if cluster matched
    int _rootTrackPixelType;          // PixelType of pixel cell intersected by track 
+   int _rootTrackPixelMasked;        // Track intersects a masked pixel (masked!=0) or unmasked pixel (masked=0)
    
    
    
@@ -275,6 +280,12 @@ class PixelDUTAnalyzer : public marlin::Processor {
 
    std::vector<TBTrack> TrackStore;
    std::vector<TBHit> HitStore;
+
+   // Dead/Hot pixel masks for the DUT
+   TH2F * _DUT_Mask{nullptr};
+
+   int _minUCell{0}; 
+   int _minVCell{0};  
 
 }; // Class
 

@@ -62,6 +62,10 @@ namespace depfet {
                                 "Maximum hit rate (hits/events) for normal pixels",
                                 _maxOccupancy, static_cast < float >(0.01));
     
+    registerProcessorParameter ("MinOccupancy",
+                                "Minimum hit rate (hits/events) for normal pixels. Use negative value to deactivate cut. Use 0 to mask pixel with zero hits in run data.",
+                                _minOccupancy, static_cast < float >(-1));
+
     registerProcessorParameter ("OfflineZSThreshold",
                                 "Zero suppression threshold for digits [ADU]",
                                 _offlineZSCut, static_cast < float >(0));
@@ -272,7 +276,7 @@ namespace depfet {
           double occupancy =  hitVec[ uniqPixelID ] / _nEvt;
           _histoMapOcc[occhistoName]->SetBinContent(iU-minUCell+1,iV-minVCell+1, occupancy );
 
-          if ( occupancy  > _maxOccupancy ) {
+          if ( (occupancy  > _maxOccupancy) or (occupancy <= _minOccupancy ) ) {
              
             nMasked++;     
             streamlog_out(MESSAGE1) << "Mask pixel on sensorID " << sensorID 
