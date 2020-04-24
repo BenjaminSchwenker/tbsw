@@ -60,6 +60,42 @@ def add_unpackers(path):
   
   return path
 
+def add_pixelmaskers(path):
+  """
+  Adds hot/dead pixel masking processors to the path
+  """
+
+  m26hotpixelkiller = tbsw.Processor(name="M26HotPixelKiller",proctype="HotPixelKiller")
+  m26hotpixelkiller.param("InputCollectionName", "zsdata_m26")
+  m26hotpixelkiller.param("MaxOccupancy", 0.001)
+  m26hotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-M26.root")
+  m26hotpixelkiller.param("OfflineZSThreshold", 0)
+  path.add_processor(m26hotpixelkiller)
+   
+  fei4hotpixelkiller = tbsw.Processor(name="FEI4HotPixelKiller", proctype="HotPixelKiller")
+  fei4hotpixelkiller.param("InputCollectionName", "zsdata_fei4")
+  fei4hotpixelkiller.param("MaxOccupancy", 0.001)
+  fei4hotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-FEI4.root")
+  fei4hotpixelkiller.param("OfflineZSThreshold", 0)
+  path.add_processor(fei4hotpixelkiller)
+   
+  pxdhotpixelkiller = tbsw.Processor(name="PXDHotPixelKiller", proctype="HotPixelKiller")
+  pxdhotpixelkiller.param("InputCollectionName", "zsdata_pxd")
+  pxdhotpixelkiller.param("MaxOccupancy", 0.001)
+  pxdhotpixelkiller.param("MinOccupancy", 0.0)   # Mask dead pixels 
+  pxdhotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-PXD.root")
+  pxdhotpixelkiller.param("OfflineZSThreshold", 0)
+  path.add_processor(pxdhotpixelkiller)  
+  
+  h5hotpixelkiller = tbsw.Processor(name="H5HotPixelKiller", proctype="HotPixelKiller")
+  h5hotpixelkiller.param("InputCollectionName", "zsdata_h5")
+  h5hotpixelkiller.param("MaxOccupancy", 0.001)
+  h5hotpixelkiller.param("MinOccupancy", 0.0)   # Mask dead pixels 
+  h5hotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-H5.root")
+  h5hotpixelkiller.param("OfflineZSThreshold", 0)
+  path.add_processor(h5hotpixelkiller)  
+
+  return path
 
 def add_clusterizers(path):
   """
@@ -234,33 +270,7 @@ def create_calibration_path(Env, rawfile, gearfile, energy, useClusterDB, mappin
   
   mask_path = add_unpackers(mask_path)
    
-  m26hotpixelkiller = tbsw.Processor(name="M26HotPixelKiller",proctype="HotPixelKiller")
-  m26hotpixelkiller.param("InputCollectionName", "zsdata_m26")
-  m26hotpixelkiller.param("MaxOccupancy", 0.001)
-  m26hotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-M26.root")
-  m26hotpixelkiller.param("OfflineZSThreshold", 0)
-  mask_path.add_processor(m26hotpixelkiller)
-   
-  fei4hotpixelkiller = tbsw.Processor(name="FEI4HotPixelKiller", proctype="HotPixelKiller")
-  fei4hotpixelkiller.param("InputCollectionName", "zsdata_fei4")
-  fei4hotpixelkiller.param("MaxOccupancy", 0.001)
-  fei4hotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-FEI4.root")
-  fei4hotpixelkiller.param("OfflineZSThreshold", 0)
-  mask_path.add_processor(fei4hotpixelkiller)
-   
-  pxdhotpixelkiller = tbsw.Processor(name="PXDHotPixelKiller", proctype="HotPixelKiller")
-  pxdhotpixelkiller.param("InputCollectionName", "zsdata_pxd")
-  pxdhotpixelkiller.param("MaxOccupancy", 0.001)
-  pxdhotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-PXD.root")
-  pxdhotpixelkiller.param("OfflineZSThreshold", 0)
-  mask_path.add_processor(pxdhotpixelkiller)  
-  
-  h5hotpixelkiller = tbsw.Processor(name="H5HotPixelKiller", proctype="HotPixelKiller")
-  h5hotpixelkiller.param("InputCollectionName", "zsdata_h5")
-  h5hotpixelkiller.param("MaxOccupancy", 0.001)
-  h5hotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-H5.root")
-  h5hotpixelkiller.param("OfflineZSThreshold", 0)
-  mask_path.add_processor(h5hotpixelkiller)  
+  mask_path = add_pixelmaskers(mask_path)
   
   # Add path for masking
   calpaths.append(mask_path)  
@@ -522,6 +532,7 @@ def create_reco_path(Env, rawfile, gearfile, energy, useClusterDB, mapping):
   reco_path.add_processor(hybrid_analyzer)  
 
   pxd_analyzer = tbsw.Processor(name="PXDAnalyzer",proctype="PixelDUTAnalyzer")
+  pxd_analyzer.param("NoiseDBFileName","localDB/NoiseDB-PXD.root")  # for flagging hits at hot/dead channels
   pxd_analyzer.param("HitCollection","hit_pxd")  
   pxd_analyzer.param("DigitCollection","zsdata_pxd")
   pxd_analyzer.param("DUTPlane","3")

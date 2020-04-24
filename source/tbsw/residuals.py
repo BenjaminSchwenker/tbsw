@@ -14,7 +14,7 @@ def make_pdf(histofile, pdfName='plots.pdf'):
 
   c1 = ROOT.TCanvas("c1","",10,10,1100,700)
   c1.SetRightMargin(0.2)
-  c1.Print(pdfName+"(","pdf")
+  
   
   for key in histofile.GetListOfKeys():
          
