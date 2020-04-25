@@ -162,14 +162,22 @@ def plot(inputfile=None, histofile=None, basecut="hasTrack==0", Config=None):
   hfit_sigma_u.GetYaxis().SetTitle("number of tracks")
   hfit_sigma_u.GetYaxis().SetTitleOffset(1.2)
   hfit_sigma_u.Write()  
+
+  hfit_cov_u = TH1F("hfit_cov_u","hfit_cov_u",200,0,maxu**2)
+  hittree.Draw("u_fiterr*u_fiterr*1000*1000 >>+hfit_cov_u", hitcut,"goff")
+  hfit_cov_u.SetTitle("Track intersection uncertainty #sigma_{u}^{2}")
+  hfit_cov_u.GetXaxis().SetTitle("#sigma_{u_{fit}}^{2} [#mum^{2}]")
+  hfit_cov_u.GetYaxis().SetTitle("number of tracks")
+  hfit_cov_u.GetYaxis().SetTitleOffset(1.2)
+  hfit_cov_u.Write()  
   
   residual_histos_u = {}
   residual_histos_u['sizeU>0'] = make_residual_histo(nbinsu, minu, maxu, size_cut='sizeU>0', axis='u', label='all') 
   residual_histos_u['sizeU==1'] = make_residual_histo(nbinsu, minu, maxu, size_cut='sizeU==1', axis='u', label='sizeU==1') 
   residual_histos_u['sizeU==2'] = make_residual_histo(nbinsu, minu, maxu, size_cut='sizeU==2', axis='u', label='sizeU==2') 
   #residual_histos_u['sizeU==3'] = make_residual_histo(nbinsu, minu, maxu, size_cut='sizeU==3', axis='u', label='sizeU==3') 
-   
-  make_resolution_histo(residual_histos_u, tel_sigma=hfit_sigma_u.GetMean(), axis='u')
+  
+  make_resolution_histo(residual_histos_u, tel_sigma=math.sqrt(hfit_cov_u.GetMean()), axis='u')
 
   nbinsv = Config['residual_u_axis'][0]
   minv = 1000*Config['residual_u_axis'][1]
@@ -182,6 +190,14 @@ def plot(inputfile=None, histofile=None, basecut="hasTrack==0", Config=None):
   hfit_sigma_v.GetYaxis().SetTitle("number of tracks")
   hfit_sigma_v.GetYaxis().SetTitleOffset(1.2)
   hfit_sigma_v.Write()  
+
+  hfit_cov_v = TH1F("hfit_cov_v","hfit_cov_v",200,0,maxv**2)
+  hittree.Draw("v_fiterr*v_fiterr*1000*1000 >>+hfit_cov_v", hitcut,"goff")
+  hfit_cov_v.SetTitle("Track intersection uncertainty #sigma_{v}^{2}")
+  hfit_cov_v.GetXaxis().SetTitle("#sigma_{v_{fit}}^{2} [#mum^{2}]")
+  hfit_cov_v.GetYaxis().SetTitle("number of tracks")
+  hfit_cov_v.GetYaxis().SetTitleOffset(1.2)
+  hfit_cov_v.Write()  
   
   residual_histos_v = {}
   residual_histos_v['sizeV>0'] = make_residual_histo(nbinsv, minv, maxv, size_cut='sizeV>0', axis='v', label='all') 
@@ -189,7 +205,7 @@ def plot(inputfile=None, histofile=None, basecut="hasTrack==0", Config=None):
   residual_histos_v['sizeV==2'] = make_residual_histo(nbinsv, minv, maxv, size_cut='sizeV==2', axis='v', label='sizeV==2') 
   #residual_histos_v['sizeV==3'] = make_residual_histo(nbinsv, minv, maxv, size_cut='sizeV==3', axis='v', label='sizeV==3') 
    
-  make_resolution_histo(residual_histos_v, tel_sigma=hfit_sigma_v.GetMean(), axis='v')
+  make_resolution_histo(residual_histos_v, tel_sigma=math.sqrt(hfit_cov_v.GetMean()), axis='v')
   
   hres_uv = TH2F("hres_uv","",nbinsu,minu,maxu, nbinsv,minv,maxv )
   hittree.Draw("(v_hit - v_fit)*1000:(u_hit - u_fit)*1000 >>+hres_uv", hitcut,"goff")  
