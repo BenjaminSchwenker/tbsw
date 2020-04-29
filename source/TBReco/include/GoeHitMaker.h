@@ -28,11 +28,14 @@ namespace depfet {
    *  processor uses a clusterDB file with pre-computed offsets 
    *  and covariance matrix entries. 
    *  
-   *  The needed clusterDB is either produced by the GoeClusterCalibrator
-   *  or by the GoeClusterCalibratorForMC processors. 
+   *  The needed clusterDB is produced by the GoeClusterCalibrator
+   *  processor. For the complete sequence of steps to calibrate 
+   *  the clusters from the whole telescope, have a look into the 
+   *  script workspace/depfet-reco.py. 
    *  
-   *  Clusters not found in the clusterDB are currently ignored. They are
-   *  not available for tracking or DUT efficiency studies. The fraction 
+   *  Clusters not found in the clusterDB can be treated by falling back
+   *  to the center of gravity method. The quality attribute of the TBHit
+   *  object returns a value of 1 for fallback cases, otherwise 0. The fraction 
    *  of ignored clusters is called clusterDB coverage inefficiency and is
    *  computed for all sensors. Coverage efficiencies are finally written 
    *  to the log file.  
@@ -97,10 +100,11 @@ namespace depfet {
 
    private:
    
-    //!Method searching for clusterID id on sensor sensorID in clusterDB. Returns success.  
-    bool searchDB(int sensorID, std::string id, double& u, double& v, double& sig2_u, double& sig2_v, double& cov_uv);
+    //!Method searching for offset calibration for cluster type in clusterDB. Returns success.  
+    bool getEtaOffset(const std::string& clusshape, double& u, double& v, double& sig2_u, double& sig2_v, double& cov_uv) const;
      
-    
+    //!Method searching for the eta index in clusterDB. Returns success.    
+    bool getEtaIndex(const std::string& clustype, int& etaIndex) const;
 
     //! internally used as storage for input decoding
     UTIL::BitField64 _inputDecodeHelper;
@@ -113,6 +117,7 @@ namespace depfet {
     TH1F * m_DB_Sigma2_V; 
     TH1F * m_DB_Cov_UV;
     TH1F * m_DB_Types;  
+    TH1F * m_DB_EtaIndex;
     
     // Map for eta bin edges stored by type name 
     std::map<std::string, std::vector<double> > m_etaBinEdgesMap;

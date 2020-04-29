@@ -20,7 +20,7 @@ namespace depfet {
     
   /** Constructor */
   PolyClusterDescriptor::PolyClusterDescriptor( const PixelCluster& Cluster, const Det& Sensor) : 
-                                  m_originU(0), m_originV(0), m_uStart(0), m_vStart(0), m_lowerRight(0), m_upperLeft(0)
+                                  m_originU(0), m_originV(0), m_uStart(0), m_vStart(0), m_lowerRight(0), m_upperLeft(0), m_upperRight(0),  m_lowerLeft(0)
   {  
     m_uStart = Cluster.getUStart(); 
     m_vStart = Cluster.getVStart(); 
@@ -46,8 +46,13 @@ namespace depfet {
     // Sort PolyRawDigit according to position of pixel centers
     std::sort(m_sortedDigits.begin(), m_sortedDigits.end());
     
+    // The digits are sorted from lowerLeft to 
+    // upperRight. Easy to find their index. 
+    m_lowerLeft = 0;
+    m_upperRight = size-1;
+
     // Find index of lower right digit 
-    m_lowerRight = size-1; 
+    m_lowerRight = m_lowerLeft; 
     for (size_t index = 0; index < size-1; ++index) {
       if (m_sortedDigits[index+1].m_cellPosV > m_sortedDigits[0].m_cellPosV) {
         m_lowerRight = index;
@@ -56,7 +61,7 @@ namespace depfet {
     }    
     
     // Find index of upper left digit
-    m_upperLeft = 0; 
+    m_upperLeft = m_upperRight; 
     for (size_t index = size-1; index >0 ; --index) {
       if (m_sortedDigits[index-1].m_cellPosV < m_sortedDigits[size-1].m_cellPosV) {
         m_upperLeft = index;
@@ -99,17 +104,44 @@ namespace depfet {
     return ret;
   }
    
-  double PolyClusterDescriptor::computeEta(double thetaU, double thetaV) const
+  double PolyClusterDescriptor::computeEta(double thetaU, double thetaV, int etaIndex) const
   {
-    auto headPixelIndex = getHeadPixelIndex(thetaU, thetaV);
-    auto tailPixelIndex = getTailPixelIndex(thetaU, thetaV);
-    float eta = 0;
-    if (headPixelIndex != tailPixelIndex) {
-      eta = m_sortedDigits[tailPixelIndex].m_charge;
-      eta /= (m_sortedDigits[tailPixelIndex].m_charge + m_sortedDigits[headPixelIndex].m_charge);
-    } else {
-      eta = 0.5;
-    }
+    auto heads = getHeadPixels(thetaU, thetaV);
+    auto tails = getTailPixels(thetaU, thetaV);
+    double charge_head{1}, charge_tail{1}; 
+    
+    switch (etaIndex) {
+      case 0: charge_head=m_sortedDigits[heads[0]].m_charge;
+              charge_tail=m_sortedDigits[tails[0]].m_charge;
+              break;
+      case 1: charge_head=m_sortedDigits[heads[1]].m_charge;
+              charge_tail=m_sortedDigits[tails[0]].m_charge;
+              break;
+      case 2: charge_head=m_sortedDigits[heads[0]].m_charge;
+              charge_tail=m_sortedDigits[tails[1]].m_charge;
+              break;
+      case 3: charge_head=m_sortedDigits[heads[1]].m_charge;
+              charge_tail=m_sortedDigits[tails[1]].m_charge;
+              break;
+      case 4: charge_head=m_sortedDigits[heads[0]].m_charge+m_sortedDigits[heads[1]].m_charge;
+              charge_tail=m_sortedDigits[tails[0]].m_charge;
+              break;
+      case 5: charge_head=m_sortedDigits[heads[0]].m_charge+m_sortedDigits[heads[1]].m_charge;
+              charge_tail=m_sortedDigits[tails[1]].m_charge;
+              break;
+      case 6: charge_head=m_sortedDigits[heads[0]].m_charge;
+              charge_tail=m_sortedDigits[tails[0]].m_charge + m_sortedDigits[tails[1]].m_charge;
+              break;
+      case 7: charge_head=m_sortedDigits[heads[1]].m_charge;
+              charge_tail=m_sortedDigits[tails[0]].m_charge + m_sortedDigits[tails[1]].m_charge;
+              break;
+      case 8: charge_head=m_sortedDigits[heads[0]].m_charge + m_sortedDigits[heads[1]].m_charge;
+              charge_tail=m_sortedDigits[tails[0]].m_charge + m_sortedDigits[tails[1]].m_charge;
+              break;
+    }          
+    
+    double eta = 0.5;
+    if (charge_head != charge_tail) eta=charge_tail / (charge_tail+charge_head);
     return eta;
   }
   
@@ -122,42 +154,61 @@ namespace depfet {
     return 0;
   }
   
-  int PolyClusterDescriptor::getHeadPixelIndex(double thetaU, double thetaV) const
+  std::vector<int> PolyClusterDescriptor::getHeadPixels(double thetaU, double thetaV) const
   {
-    // This logic estimates at which digit the particle leaves the sensor
-    // Most meaningfull when thetaU and theta are not both zero.  
-    if (thetaV >= 0) {
-      if (thetaU >= 0) {
-        return m_sortedDigits.size()-1; // This is the index of upper right digit 
-      } else {
-        return m_upperLeft; 
-      }
+    
+    // Basically, we need to distingush same sign 
+    // and opposite sign cases for angles.  
+    std::vector<int> heads{0,0};
+   
+    if (thetaV*thetaU >= 0) { 
+      heads[0] = m_upperRight;
+      heads[1] = m_upperRight;
+      
+      if (m_sortedDigits.size() > 1) {
+        heads[1] = m_upperRight-1;     
+      }    
     } else {
-      if (thetaU >= 0) {
-        return m_lowerRight; 
-      } else {
-        return 0; // This is the index of lower left digit
+      heads[0] = m_upperLeft;
+      heads[1] = m_upperLeft;
+      
+      if (m_sortedDigits.size() > 1) {
+        if (m_upperLeft < m_upperRight) {
+          heads[1] = m_upperLeft+1;
+        } else { 
+          heads[1] = m_upperLeft-1;
+        }  
       }
     }
+    return heads; 
   }
   
-  int PolyClusterDescriptor::getTailPixelIndex(double thetaU, double thetaV) const
+  std::vector<int> PolyClusterDescriptor::getTailPixels(double thetaU, double thetaV) const
   {
-    // This logic estimates at which digit the particle enters the sensor
-    // Most meaningfull when thetaU and theta are not both zero.  
-    if (thetaV >= 0) {
-      if (thetaU >= 0) {
-        return 0; // This is the index of lower left digit
-      } else {
-        return m_lowerRight;
-      }
+    // Basically, we need to distingush same sign 
+    // and opposite sign cases for angles.  
+    std::vector<int> tails{0,0};
+     
+    if (thetaV*thetaU >=0) { 
+      tails[0] = m_lowerLeft; 
+      tails[1] = m_lowerLeft; 
+      
+      if (m_sortedDigits.size() > 1) {
+        tails[1] = m_lowerLeft+1; 
+      }    
     } else {
-      if (thetaU >= 0) {
-        return m_upperLeft;
-      } else {
-        return m_sortedDigits.size()-1; // This is the index of upper right digit 
+      tails[0] = m_lowerRight; 
+      tails[1] = m_lowerRight; 
+      
+      if (m_sortedDigits.size() > 1) {
+        if (m_lowerRight > m_lowerLeft) {
+          tails[1] = m_lowerRight-1; 
+        } else { 
+          tails[1] = m_lowerRight+1; 
+        }   
       }
     }
+    return tails; 
   }
 }
 

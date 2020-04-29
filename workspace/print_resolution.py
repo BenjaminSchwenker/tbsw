@@ -1,7 +1,11 @@
 """
 This is an example script prints the extracted cluster resolutions (sigmas) from clusterDBs in the localDB folder.
 
-Usage: python print_resolution.py --dbpath=<path-to-clusterDB-root-file-in-localDB-folder>  --output=<output-folder-for-plots>
+
+Usage: 
+
+python print_resolution.py --dbpath=<path-to-localDB/clusterDB-{detname}.root --output=<path-to-plots>
+
 
 Author: Benjamin Schwenker <benjamin.schwenker@phys.uni-goettingen.de>  
 """
@@ -25,7 +29,7 @@ if __name__ == '__main__':
   parser.add_argument('--output', dest='output', default='', type=str, help='Location of outputs')
   parser.add_argument('--size', dest='size', default='', type=str, help='Cluster size string')
   parser.add_argument('--clustype', dest='cltype', default=True, type=str2bool, help='Cluster descriptor type poly True (default) or False')
-
+  parser.add_argument('--shape', dest='shape', default=None, type=str, help='Print results for query shape')
   args = parser.parse_args()
   
   # Make folder for output plots 
@@ -76,21 +80,38 @@ if __name__ == '__main__':
     sensorDB.plotClusterType(clusterType=clusterType, imagePath="{}/typeID_{:d}.png".format(args.output, typeID), poly=args.cltype)
   
   # Print hit estimator for selected cluster type
-  for uPeriod in sensorDB.getPeriodsU(): 
-    for vPeriod in sensorDB.getPeriodsV(): 
+  for pixelType in sensorDB.getPixelTypes(): 
+    for uPeriod in sensorDB.getPeriodsU(): 
+      for vPeriod in sensorDB.getPeriodsV(): 
             
-      # Select a shape pattern
-      shape = '^E[0-9]+P{:d}.{:d}.[0-9]{:s}'.format(vPeriod, uPeriod, args.size) 
+        # Select a shape pattern
+        shape = '^E[0-9]+P{:d}.{:d}.{:d}{:s}'.format(vPeriod, uPeriod, pixelType, args.size) 
             
-      sigU, sigUError = sensorDB.getSigmaU(shape)
-      sigV, sigVError = sensorDB.getSigmaV(shape)
-      frac = sensorDB.getFraction(shape) 
+        sigU, sigUError = sensorDB.getSigmaU(shape)
+        sigV, sigVError = sensorDB.getSigmaV(shape)
+        frac = sensorDB.getFraction(shape) 
         
-      print("  ClusterType={:s}".format(shape))
-      print("  Fraction={:.3f}%".format(frac))
-      print("  PositionU={:.4f} mm".format(sensorDB.getPositionU(shape)))
-      print("  PositionV={:.4f} mm".format(sensorDB.getPositionV(shape)))
-      print("  SigmaU={:.4f}+/- {:.5f} mm".format(sigU, sigUError))
-      print("  SigmaV={:.4f}+/- {:.5f} mm".format(sigV, sigVError))
-      print("  Rho={:.4f}".format(sensorDB.getRho(shape)))
+        print("  ClusterType={:s}".format(shape))
+        print("  PixelType={:d}".format(pixelType))
+        print("  Fraction={:.3f}%".format(frac))
+        print("  SigmaU={:.5f}+/- {:.5f} mm".format(sigU, sigUError))
+        print("  SigmaV={:.5f}+/- {:.5f} mm".format(sigV, sigVError))
+        print("  Rho={:.4f}".format(sensorDB.getRho(shape)))
+
+
+
+  if not args.shape==None: 
+    sigU, sigUError = sensorDB.getSigmaU(args.shape)
+    sigV, sigVError = sensorDB.getSigmaV(args.shape)
+    frac = sensorDB.getFraction(args.shape) 
+        
+    print("  ClusterType={:s}".format(args.shape))
+    print("  Fraction={:.3f}%".format(frac))
+    print("  PositionU={:.4f} mm".format(sensorDB.getPositionU(args.shape)))
+    print("  PositionV={:.4f} mm".format(sensorDB.getPositionV(args.shape)))
+    print("  SigmaU={:.5f}+/- {:.5f} mm".format(sigU, sigUError))
+    print("  SigmaV={:.5f}+/- {:.5f} mm".format(sigV, sigVError))
+    print("  Rho={:.4f}".format(sensorDB.getRho(args.shape)))
+
+
         

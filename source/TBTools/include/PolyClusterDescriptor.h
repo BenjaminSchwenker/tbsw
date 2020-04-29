@@ -25,7 +25,7 @@ namespace depfet {
     public: 
      
      /** Default constructor */
-     PolyRawDigit(float u=0, float v=0, unsigned short charge=1, int type=0) : m_cellPosU(u), m_cellPosV(v), m_charge(charge), m_pixelType(type)
+     PolyRawDigit(float u=0, float v=0, float charge=1, int type=0) : m_cellPosU(u), m_cellPosV(v), m_charge(charge), m_pixelType(type)
      {}
      
      /** Sorting PolyRawDigits */
@@ -41,7 +41,7 @@ namespace depfet {
      
      float m_cellPosU;
      float m_cellPosV;
-     unsigned short m_charge;
+     float m_charge;
      int m_pixelType;
   };
 
@@ -59,7 +59,7 @@ namespace depfet {
 
     /** Default constructor */
     PolyClusterDescriptor():
-      m_originU(0), m_originV(0), m_uStart(0), m_vStart(0), m_lowerRight(0), m_upperLeft(0)
+      m_originU(0), m_originV(0), m_uStart(0), m_vStart(0), m_lowerRight(0), m_upperLeft(0), m_upperRight(0),  m_lowerLeft(0)
     {}
     
     /** Constructor */
@@ -90,21 +90,21 @@ namespace depfet {
     
     /** Get cluster eta
     */
-    double computeEta(double thetaU, double thetaV) const; 
+    double computeEta(double thetaU, double thetaV, int etaIndex=0) const; 
     
     /** Get cluster eta bin  
     */
     static int computeEtaBin(double eta, const std::vector<double>& etaBinEdges); 
 
-    /** Get index of head pixel in cluster
-    */
-    int getHeadPixelIndex(double thetaU, double thetaV) const; 
-    
-    /** Get index of tail pixel in cluster
-    */
-    int getTailPixelIndex(double thetaU, double thetaV) const;
-    
   private:
+    
+    /** Get indices of head pixels in cluster
+    */
+    std::vector<int> getHeadPixels(double thetaU, double thetaV) const; 
+    
+    /** Get indices of tail pixels in cluster
+    */
+    std::vector<int> getTailPixels(double thetaU, double thetaV) const;
     
     // Origin of cluster coordinates
     float m_originU;   
@@ -114,10 +114,14 @@ namespace depfet {
     unsigned short m_uStart;   
     // Start vcell of the cluster   
     unsigned short m_vStart;   
-    // Index of digit at lower right corner
+    // Index of digit at lower right corner of cluster
     int m_lowerRight;
-    // Index of digit at upper left corner
+    // Index of digit at upper left corner of cluster
     int m_upperLeft; 
+    // Index of digit at upper right corner of cluster
+    int m_upperRight;
+    // Index of digit at lower left corner of cluster
+    int m_lowerLeft;
       
     // Sorted vector of raw digits 
     std::vector<PolyRawDigit> m_sortedDigits;

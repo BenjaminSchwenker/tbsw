@@ -170,7 +170,13 @@ namespace depfet {
         m_DB_Types = (TH1F *) clusterDBFile->Get(histoName.c_str());
         m_DB_Types->SetDirectory(nullptr);
       } 
-    
+      
+      histoName = "hDB_EtaIndex";
+      if ((TH1F *) clusterDBFile->Get(histoName.c_str()) != nullptr) {
+        m_DB_EtaIndex = (TH1F *) clusterDBFile->Get(histoName.c_str());
+        m_DB_EtaIndex->SetDirectory(nullptr);
+      }     
+      
       // We need the eta bin edges for all cluster types  
       for (auto i = 1; i <= m_DB_Types->GetXaxis()->GetNbins(); i++) {    
         string typeName =  m_DB_Types->GetXaxis()->GetBinLabel(i);
@@ -214,7 +220,7 @@ namespace depfet {
   //
   void GoeHitMaker::processEvent(LCEvent * evt)
   {
-
+     
     _nEvt ++ ;
     
     // Print event number
@@ -223,39 +229,40 @@ namespace depfet {
                                                                 << std::endl << std::endl;
     
     
-
+    
     //
     // Open collections
     try {
-
-      LCCollectionVec* clusterCollection = dynamic_cast < LCCollectionVec * >  ( evt->getCollection(_clusterCollectionName) );
       
+      LCCollectionVec* clusterCollection = dynamic_cast < LCCollectionVec * >  ( evt->getCollection(_clusterCollectionName) );
+       
       // Create hit collection  
       LCCollectionVec * hitCollection = new LCCollectionVec(LCIO::TRACKERHIT) ;
-
+      
       // Helper class for decoding cluster ID's
       CellIDDecoder<TrackerPulseImpl> clusterDecoder( clusterCollection,&_inputDecodeHelper);
-
+      
       // Loop on all clusters 
       for (unsigned int iClu = 0; iClu < clusterCollection->size(); iClu++) 
       {
-
         // Read cluster header
-
-
         TrackerPulseImpl* cluster = dynamic_cast<TrackerPulseImpl* > ( clusterCollection->getElementAt(iClu) )  ;       
-
+      
         static auto idx_clust_sensorID=clusterDecoder(cluster).index("sensorID"s); //find the address ONCE.
         int sensorID = clusterDecoder(cluster)[idx_clust_sensorID];
         int ipl = TBDetector::GetInstance().GetPlaneNumber(sensorID);
         const Det& Det = TBDetector::Get(ipl);
-
         
         // Increment the cluster counter
         _countAllMap[sensorID]++;
-       
+        
+        // Compute position measurement and its 2x2 covariance matrix   
+        double u{0.0}, v{0.0}, sig2_u{0.0}, sig2_v{0.0}, cov_uv{0.0};
+        // Hit quality =1 for center of gravity fallback or 0 for clusterDB
+        int quality = 1; 
+        
         PixelCluster aCluster(cluster->getTrackerData());  
-
+        
         // Compute the cluster ID string
         // FIXME add a switch to choose among descriptors
         PolyClusterDescriptor Descriptor(aCluster, Det);
@@ -265,55 +272,36 @@ namespace depfet {
         // the cluster descriptor. 
         string typeName = Descriptor.getType(_vCellPeriod, _uCellPeriod);
         
-        // The eta value is a scalar computed from the pixel charges. It value may depend on the sign 
-        // of the incidence angles of the beam into the sensor. But details depend on the implementation of 
-        // the cluster descriptor. 
-        double eta = Descriptor.computeEta(_thetaU, _thetaV);
-        
-        // The eta values are quantized. The optimal bin edges have been computed during the cluster 
-        // calibration and are read back from the clusterDB.  
-        int etaBin = PolyClusterDescriptor::computeEtaBin(eta, m_etaBinEdgesMap[typeName]);
-
-        // A string to identify the cluster shape, including the information from analog pixel charges. 
-        string shapeName = Descriptor.getEtaBinString(etaBin)+typeName;
-        
-        streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID << " with shape " << shapeName << endl; 
-        
-        // Compute position measurement and its 2x2 covariance matrix   
-        double u{0.0}, v{0.0}, sig2_u{0.0}, sig2_v{0.0}, cov_uv{0.0};
-        int quality = 0; 
-        
-        bool found = searchDB(sensorID, shapeName, u, v, sig2_u, sig2_v, cov_uv); 
+        int etaIndex{-1};
+        bool found = getEtaIndex(typeName, etaIndex); 
         if (found) {
-          // Count matched clusters
-          _countCalMap[sensorID]++; 
-          // Shift position into local sensor coordinates
-          u += Descriptor.getOriginU();  
-          v += Descriptor.getOriginV();  
           
-          streamlog_out(MESSAGE2) << "  Shape " << shapeName << " found: " << endl
-                                << std::setprecision(8)
-                                << "  u: " << u << ", sigmaU: " << TMath::Sqrt(m_scale*sig2_u) << endl
-                                << "  v: " << v << ", sigmaV: " << TMath::Sqrt(m_scale*sig2_v) << endl
-                                << "  corr(u,v): " << cov_uv/TMath::Sqrt(sig2_u)/TMath::Sqrt(sig2_v)
-                                << std::setprecision(3)
-                                << endl; 
-        
-          // Make TBHit 
-          TBHit hit(sensorID, u, v, m_scale*sig2_u, m_scale*sig2_v, m_scale*cov_uv, quality);
-        
-          // Make LCIO TrackerHit
-          TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
-            
-          // Add link to full cluster data 
-          LCObjectVec clusterVec;
-          clusterVec.push_back( cluster->getTrackerData() );
-          trackerhit->rawHits() = clusterVec;
+          // The eta value is a scalar feature correlated to the hit position. Its value depends on the sign 
+          // of the incidence angles and the etaIndex. 
+          double eta = Descriptor.computeEta(_thetaU, _thetaV, etaIndex);
           
-          //  Add hit to the hit collection
-          hitCollection->push_back( trackerhit );
-             
-        } else if (_useCoGFallback)  {
+          // The eta values are quantized. The optimal bin edges have been computed during the cluster 
+          // calibration and are read back from the clusterDB.  
+          int etaBin = PolyClusterDescriptor::computeEtaBin(eta, m_etaBinEdgesMap[typeName]);
+          
+          // A string to identify the cluster shape, including the information from analog pixel charges. 
+          string shapeName = Descriptor.getEtaBinString(etaBin)+typeName;
+           
+          streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID << " with shape " << shapeName << endl; 
+          
+          found = getEtaOffset(shapeName, u, v, sig2_u, sig2_v, cov_uv); 
+          if (found) {
+            // Count matched clusters
+            _countCalMap[sensorID]++; 
+            // Shift position into local sensor coordinates
+            u += Descriptor.getOriginU();  
+            v += Descriptor.getOriginV();  
+            // Mark calibration from clusterDB
+            quality = 0;  
+          }
+        }
+                 
+        if (quality==1)  {
            
           aCluster.getCenterOfGravity(Det, u, v, sig2_u, sig2_v, cov_uv); 
           
@@ -325,26 +313,36 @@ namespace depfet {
           // Override sigma v from user input    
           if ( aCluster.getVSize()-1 < int(_sigmaVCorrections.size()) ) {
             sig2_v *= pow(_sigmaVCorrections[aCluster.getVSize()-1],2); 
-          }        
-          
-          // Mark as fallback
-          quality = 1;  
-          
-          // Make TBHit 
-          TBHit hit(sensorID, u, v, m_scale*sig2_u, m_scale*sig2_v, m_scale*cov_uv, quality);
-          
-          // Make LCIO TrackerHit
-          TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
-            
-          // Add link to full cluster data 
-          LCObjectVec clusterVec;
-          clusterVec.push_back( cluster->getTrackerData() );
-          trackerhit->rawHits() = clusterVec;
-          
-          //  Add hit to the hit collection
-          hitCollection->push_back( trackerhit );
+          }         
         }
-               
+        
+        if (not _useCoGFallback and quality==1)  {
+          // This option discards clusters that cannot be calibrated from 
+          // clusterDB. This is a drastic measure. 
+          continue;
+        }
+         
+        streamlog_out(MESSAGE2) << "  Cluster " << typeName << " with quality: " << quality << " found" << endl
+                                << std::setprecision(5)
+                                << "  u: " << u << ", sigmaU: " << TMath::Sqrt(m_scale*sig2_u) << endl
+                                << "  v: " << v << ", sigmaV: " << TMath::Sqrt(m_scale*sig2_v) << endl
+                                << "  corr(u,v): " << cov_uv/TMath::Sqrt(sig2_u)/TMath::Sqrt(sig2_v)
+                                << endl; 
+            
+        // Make TBHit 
+        TBHit hit(sensorID, u, v, m_scale*sig2_u, m_scale*sig2_v, m_scale*cov_uv, quality);
+            
+        // Make LCIO TrackerHit
+        TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
+            
+        // Add link to full cluster data 
+        LCObjectVec clusterVec;
+        clusterVec.push_back( cluster->getTrackerData() );
+        trackerhit->rawHits() = clusterVec;
+            
+        //  Add hit to the hit collection
+        hitCollection->push_back( trackerhit );
+                 
       } // End cluster loop 
        
       // Store hitCollection in LCIO file
@@ -403,14 +401,15 @@ namespace depfet {
                             << std::endl;
   }
   
-  bool GoeHitMaker::searchDB(int /*sensorID*/, string id, double& u, double& v, double& sig2_u, double& sig2_v, double& cov_uv)
+  
+  bool GoeHitMaker::getEtaOffset(const string& clusshape, double& u, double& v, double& sig2_u, double& sig2_v, double& cov_uv) const
   {
    
     if ( m_DB_Weight == nullptr ) {
       return false;  
     }
      
-    int bin = m_DB_Weight->GetXaxis()->FindFixBin(id.c_str());
+    int bin = m_DB_Weight->GetXaxis()->FindFixBin(clusshape.c_str());
     if (bin == -1) {
       return false;
     }
@@ -429,6 +428,23 @@ namespace depfet {
     return true;
   }
   
+  bool GoeHitMaker::getEtaIndex(const string& clustype, int& etaIndex) const
+  {
+    
+    if ( m_DB_EtaIndex == nullptr ) {
+      return false;  
+    }
+     
+    int bin = m_DB_EtaIndex->GetXaxis()->FindFixBin(clustype.c_str());
+    if (bin == -1) {
+      return false;
+    }
+    
+    etaIndex = m_DB_EtaIndex->GetBinContent(bin);
+    
+    return true;
+  }  
+
   //
   // Method printing processor parameters
   //
