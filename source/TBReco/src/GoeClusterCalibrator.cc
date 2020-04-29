@@ -72,7 +72,7 @@ namespace depfet {
      
     registerProcessorParameter ("MinClusters",
                                 "Minimum number of clusters needed to calibrate a cluster type",
-                                _minClusters,  static_cast < int > (2000));
+                                _minClusters,  static_cast < int > (200));
     
     registerProcessorParameter ("MaxEtaBins",
                                 "Maximum number of eta bins per cluster type",
