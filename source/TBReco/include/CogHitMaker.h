@@ -76,6 +76,9 @@ protected:
    //! Sigma V correction factors 
    //! One value for sizeV = 1,2,3,... 
    std::vector<float> _sigmaVCorrections; 
+
+   //! Scale factor for hit covariance matrix
+   double m_scale;
     
  private:
    

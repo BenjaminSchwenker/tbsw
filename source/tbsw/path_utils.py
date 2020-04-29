@@ -1,6 +1,7 @@
 """
 Some helper code to define processor paths for X/X0 studies
 
+:author: benjamin.schwenker@phys.uni-goettinge.de  
 :author: ulf.stolzenberg@phys.uni-goettinge.de  
 """
 
@@ -31,6 +32,20 @@ def add_rawinputprocessor(path,rawfile):
 
   return path 
 
+def add_csvrawinputprocessor(path,rawfile, runno=0):
+  """
+  Adds raw input processor to the path
+  """ 
+
+  csvinput = tbsw.Processor(name="CSVInputProcessor",proctype="AsciiInputProcessor")
+  csvinput.param("RawHitCollectionName", "zsdata")
+  csvinput.param("RunNumber", runno)
+  csvinput.param('FileNames', rawfile)
+  csvinput.param("DetectorName","EUTelescope")
+  path.add_processor(csvinput)
+  
+  return path 
+
 
 def add_M26unpacker(path):
   """
@@ -44,6 +59,17 @@ def add_M26unpacker(path):
 
   return path 
 
+def add_CSVunpacker(path, ids=[1, 2, 3, 4, 5, 6], colname="zsdata_m26"): 
+  """
+  Adds csv unpacker to the path
+  """ 
+  csvunpacker = tbsw.Processor(name="CSVUnpacker",proctype="HitsFilterProcessor")   
+  csvunpacker.param("InputCollectionName", "zsdata")
+  csvunpacker.param("OutputCollectionName", colname)
+  csvunpacker.param("FilterIDs"," ".join([ str(sensorID) for sensorID in ids ]))
+  path.add_processor(csvunpacker)
+   
+  return path    
 
 def add_M26clusterizer(path):
   """
@@ -62,16 +88,17 @@ def add_M26clusterizer(path):
   return path
 
 
-def add_trackfinder(path, beamenergy, excludeplanes="3", minhits=6, maxTrkChi2=20, maxOutlierChi2=10):
+def add_trackfinder(path, beamenergy, excludeplanes="3", minhits=6, maxTrkChi2=20, maxOutlierChi2=10, maxgap=0):
   """
   Adds trackfinding to the path
   """  
-    
+  #fixme: add gap to deal with additional sensors (timing planes)
+  maxgap=1  
   trackfinder = tbsw.Processor(name="TF",proctype="FastTracker")
   trackfinder.param("InputHitCollectionNameVec","hit_m26")
   trackfinder.param("ExcludeDetector", excludeplanes)
   trackfinder.param("MaxTrackChi2", maxTrkChi2)  # loosecut version 10,000,000  
-  trackfinder.param("MaximumGap", 0)
+  trackfinder.param("MaximumGap", maxgap)
   trackfinder.param("MinimumHits",minhits)
   trackfinder.param("OutlierChi2Cut", maxOutlierChi2)  # loosecut version 10,000,000
   trackfinder.param("ParticleCharge","-1")
@@ -138,9 +165,9 @@ def add_clustercalibrator(path, use_outerplanes=False):
   cluster_calibrator.param("MinVarianceV", 1e-06)
 
   if use_outerplanes:
-    cluster_calibrator.param("IgnoreIDs","11")
+    cluster_calibrator.param("SelectPlanes","0 1 2 4 5 6")
   else:
-    cluster_calibrator.param("IgnoreIDs","0 5 11")
+    cluster_calibrator.param("SelectPlanes","1 2 4 5")
 
   path.add_processor(cluster_calibrator)
   
@@ -232,7 +259,7 @@ def append_tracklett_aligner(Env, paths, gearfile, nevents, beamenergy, hitmaker
   return paths
 
 
-def create_anglereco_path(Env, rawfile, gearfile, numberofevents, usesinglehitseeding, useclusterdb, beamenergy, mcdata):
+def create_anglereco_path(Env, rawfile, gearfile, numberofevents, usesinglehitseeding, useclusterdb, beamenergy, mcdata, csvdata=False):
   """
   Returns a list of tbsw path objects to reconstruct a test beam run 
   """
@@ -241,14 +268,16 @@ def create_anglereco_path(Env, rawfile, gearfile, numberofevents, usesinglehitse
 
   if not mcdata:
     reco_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : numberofevents }) 
-    reco_path=add_rawinputprocessor(reco_path,rawfile) 
-    reco_path=add_geometry(reco_path, applyAlignment="true", overrideAlignment="true")
-    reco_path=add_M26unpacker(reco_path) 
-
+    if csvdata:
+      reco_path=add_csvrawinputprocessor(reco_path, rawfile)
+      reco_path=add_CSVunpacker(reco_path)  
+    else: 
+      reco_path=add_rawinputprocessor(reco_path, rawfile)
+      reco_path=add_M26unpacker(reco_path)  
   else:
     reco_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : numberofevents, 'LCIOInputFiles': rawfile })
-    reco_path=add_geometry(reco_path, applyAlignment="true", overrideAlignment="true")
-
+  
+  reco_path=add_geometry(reco_path, applyAlignment="true", overrideAlignment="true")
   reco_path=add_M26clusterizer(reco_path);
 
   if useclusterdb:
@@ -262,7 +291,7 @@ def create_anglereco_path(Env, rawfile, gearfile, numberofevents, usesinglehitse
   downstream_TF.param("OutputTrackCollectionName","down_tracks")
   downstream_TF.param("ExcludeDetector", "0 1 2 3")
   downstream_TF.param("MaxTrackChi2", 20)
-  downstream_TF.param("MaximumGap", 0)
+  downstream_TF.param("MaximumGap", 1)    #fixme: add gap to deal with additional sensors (timing planes)
   downstream_TF.param("MinimumHits", 3)
   downstream_TF.param("OutlierChi2Cut", 10)
   downstream_TF.param("ParticleCharge","-1")
@@ -293,7 +322,7 @@ def create_anglereco_path(Env, rawfile, gearfile, numberofevents, usesinglehitse
   upstream_TF.param("OutputTrackCollectionName","up_tracks")
   upstream_TF.param("ExcludeDetector", "3 4 5 6")
   upstream_TF.param("MaxTrackChi2", 20)
-  upstream_TF.param("MaximumGap", 0)
+  upstream_TF.param("MaximumGap", 1)   #fixme: add gap to deal with additional sensors (timing planes)
   upstream_TF.param("MinimumHits", 3)
   upstream_TF.param("OutlierChi2Cut", 10)
   upstream_TF.param("ParticleCharge","-1")
@@ -333,7 +362,7 @@ def create_anglereco_path(Env, rawfile, gearfile, numberofevents, usesinglehitse
 
 
 
-def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClusterDB, beamenergy, mcdata, isLongTelescope=True, use_outerplanes=False):
+def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClusterDB, beamenergy, mcdata, isLongTelescope=True, use_outerplanes=False, csvdata=False):
   """
   Returns a list of tbsw path objects to calibrate a tracking telescope
   """
@@ -347,13 +376,18 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
 
   if not mcdata:
     mask_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 1000000, 'Verbosity': "MESSAGE3" }) 
-    mask_path=add_rawinputprocessor(mask_path, rawfile) 
-    mask_path=add_geometry(mask_path, applyAlignment="true", overrideAlignment="true")
-    mask_path=add_M26unpacker(mask_path) 
+    if csvdata:
+      mask_path=add_csvrawinputprocessor(mask_path, rawfile)
+      mask_path=add_CSVunpacker(mask_path)  
+    else: 
+      mask_path=add_rawinputprocessor(mask_path, rawfile)
+      mask_path=add_M26unpacker(mask_path)  
   else:
     mask_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : 1000000, 'LCIOInputFiles': rawfile }) 
-    mask_path=add_geometry(mask_path, applyAlignment="true", overrideAlignment="true")
+    
   
+  mask_path=add_geometry(mask_path, applyAlignment="true", overrideAlignment="true")
+
   m26hotpixelkiller = tbsw.Processor(name="M26HotPixelKiller",proctype="HotPixelKiller")
   m26hotpixelkiller.param("InputCollectionName", "zsdata_m26")
   m26hotpixelkiller.param("MaxOccupancy", 0.01)
@@ -369,13 +403,17 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
   
   if not mcdata:
     clusterizer_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents, 'Verbosity': "MESSAGE3" }) 
-    clusterizer_path=add_rawinputprocessor(clusterizer_path,rawfile) 
-    clusterizer_path=add_geometry(clusterizer_path, applyAlignment="true", overrideAlignment="true")
-    clusterizer_path=add_M26unpacker(clusterizer_path) 
+    if csvdata:
+      clusterizer_path=add_csvrawinputprocessor(clusterizer_path, rawfile)
+      clusterizer_path=add_CSVunpacker(clusterizer_path)  
+    else: 
+      clusterizer_path=add_rawinputprocessor(clusterizer_path, rawfile)
+      clusterizer_path=add_M26unpacker(clusterizer_path)  
   else:
     clusterizer_path.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents, 'LCIOInputFiles': rawfile }) 
-    clusterizer_path=add_geometry(clusterizer_path, applyAlignment="true", overrideAlignment="true")
+    
 
+  clusterizer_path=add_geometry(clusterizer_path, applyAlignment="true", overrideAlignment="true")
   clusterizer_path=add_M26clusterizer(clusterizer_path)
 
   lciooutput = tbsw.Processor(name="LCIOOutput",proctype="LCIOOutputProcessor")

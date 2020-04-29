@@ -11,6 +11,11 @@ to compute a X0 image from the reconstructed scattering angles. The known X/X0 o
 used to calibrate the beam energy and the angular resolution of the telescope. This second step 
 completes the calibration of the telescope for X0 imaging. 
 
+Usage: 
+
+python x0example.py
+
+
 Author: Ulf Stolzenberg <ulf.stolzenberg@phys.uni-goettingen.de>  
 """
 
@@ -38,8 +43,8 @@ args = parser.parse_args()
 
 # Determine maximum number of processes
 nprocesses=2
-count = min(nprocesses,multiprocessing.cpu_count())
-pool = multiprocessing.Pool(processes=count)
+
+
 
 # Path to steering files 
 # Folder contains a gear file detailing the detector geometry and a config file
@@ -159,14 +164,22 @@ if __name__ == '__main__':
     params_reco=[(x, steerfiles, caltag, gearfile, nevents_alu, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata) for x in rawfile_alu_list]
     print "The parameters for the reconstruction are: " 
     print params_reco
-
-    count = multiprocessing.cpu_count()
+    
+    def work(params):
+      """ Multiprocessing work
+      """
+      rawfile, steerfiles, caltag, gearfile, nevents, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata = params
+      tbsw.x0script_functions.reconstruct(rawfile, steerfiles, caltag, gearfile, nevents, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)
+                  
+    count = min(nprocesses,multiprocessing.cpu_count())
     pool = multiprocessing.Pool(processes=count)
-    pool.map(tbsw.x0script_functions.reconstruct, params_reco)
-
+    results = pool.map_async(work, params_reco)
+    pool.close()
+    pool.join()
+    
     for rawfile in rawfile_alu_list:
       tbsw.x0script_functions.reconstruction_DQM(rawfile, caltag)
-
+    
   if args.startStep < 4 and args.stopStep >= 3:
     # Start x0 calibration
     # In case you already have the x0 calibration DB file from a previous x0 calibration 

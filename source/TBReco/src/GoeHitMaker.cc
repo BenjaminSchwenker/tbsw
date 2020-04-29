@@ -73,7 +73,7 @@ namespace depfet {
                                "Set true to use center of gravity hit when no correction available from clusterDB",
                                _useCoGFallback, static_cast< bool > ( true ) ); 
 
-    registerProcessorParameter ("RescaleHitErrors", "Scale factor for clusterDB covariance matrix.",
+    registerProcessorParameter ("RescaleHitErrors", "Scale factor for hit covariance matrix.",
                                 m_scale,  static_cast < double > (1.0));
      
     std::vector<float> initSigmaUCorrrections;

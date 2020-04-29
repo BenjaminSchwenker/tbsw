@@ -225,10 +225,18 @@ if __name__ == '__main__':
     params_reco=[(x, steerfiles, caltag, gearfile, nevents_reco, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata) for x in RawfileList_reco]
     print "The parameters for the reconstruction are: " 
     print params_reco
-
+    
+    def work(params):
+      """ Multiprocessing work
+      """
+      rawfile, steerfiles, caltag, gearfile, nevents, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata = params
+      tbsw.x0script_functions.reconstruct(rawfile, steerfiles, caltag, gearfile, nevents, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)
+                  
     count = multiprocessing.cpu_count()
     pool = multiprocessing.Pool(processes=count)
-    pool.map(tbsw.x0script_functions.reconstruct, params_reco)
+    results = pool.map_async(work, params_reco)
+    pool.close()
+    pool.join()
 
     for rawfile in RawfileList_reco:
       params=(rawfile, caltag)

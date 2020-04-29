@@ -889,9 +889,22 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
     return;
   }
          
-  // Reject hit if total chisq gets too large
+  // Reject track candidate if total chisq gets too large
   if( finderChi2>_maxTrkChi2  ||  std::isnan(finderChi2)  || finderChi2 < 0 ) { 
     streamlog_out ( MESSAGE1 ) << "Bad chisq. Skipping track candidate!" << endl;
+    return;      
+  }
+  
+  // Perform refit of the track 
+  bool trkerr = TrackFitter.Fit(trk, -1);
+  if ( trkerr ) {
+    streamlog_out ( MESSAGE1 ) << "ReFit failed. Skipping track candidate!" << endl;
+    return;
+  } 
+  
+  // Reject track candidate if total chisq gets too large
+  if( trk.GetChiSqu()>_maxTrkChi2  ) { 
+    streamlog_out ( MESSAGE1 ) << "Bad chisq. Skipping track candidate after refit!" << endl;
     return;      
   }
                         
@@ -900,8 +913,6 @@ void FastTracker::buildTrackCand(TBTrack& trk, HitFactory& HitStore, std::list<T
   _noOfAmbiguousHits += nAmbiguousHits;
               
   // Ok, we keep this track for final selection
-  trk.SetChiSqu(finderChi2);
-  TrackFitter.SetNdof(trk);      
   TrackCollector.push_back( trk ); 
   
   return;

@@ -225,10 +225,86 @@ example. The main advantage of this choice is that we can always work in the loc
 - w axis completes a right handed cartesian coordinate system
 - The interpolated track state does not include information from the DUT hit
 
-The structure of the root trees is always the same: 
+The structure of the root trees is defined at the end of the document in Appendix 1. 
+
+
+A toy simulation example script for simulation, calibration (alignment), reconstruction and analysis of a depfet testbeam 
+is part of the workspace folder. 
+
+The next script runs simulation, calibration and reconstruction: 
+
+```
+python example.py
+```
+
+The output of this script is a root file `root-files/Histos-PXD-simrun-test-reco.root` containing flat tuples for further 
+analysis. A simple way to get a pdf withplots is: 
+
+
+```
+python histo-plotter.py --ifile=root-files/Histos-PXD-simrun-test-reco.root 
+```
+
+
+
+The tbsw repo also ships a full script for processing of a depfet test beam November 2018 at Desy. 
+This script shows the calibration and reconstruction process for testbeam data starting from .raw 
+files. 
+
+An example .raw file from this test beam can be downloaded:  
+
+```
+wget -O run001286.raw  https://owncloud.gwdg.de/index.php/s/vphTqcJfwyyIHiZ/download
+```
+
+The steering files for in order to process this test beam is shipped with tbsw and 
+can be found at steering-files/depfet-tb. 
+
+```
+python depfet-reco.py 
+python histo-plotter.py
+```
+
+A collection of real world workspaces for applying tbsw to testbeam data can be found at https://bitbucket.org/testbeam/tbsw_workspaces/src/master/
+
+Have fun with test beams ;)  
+
+benjamin.schwenker@phys.uni-goettingen.de
+
+# Bug Report / Feature Request / Question
+
+Please use the issue tracker: https://bitbucket.org/testbeam/tbsw/issues?status=new&status=open
+
+# Phd theses
+
+The software tbsw was develped and applied in the following (incomplete) list of Phd theses:
+
+B. Schwenker, 2014 Development and validation of a model for the response of the Belle II vertex detector, Ph.D. thesis, http://cds.cern.ch/record/1967035 U. Göttingen, Göttingen, Germany
+
+U. Stolzenberg, 2020 Radiation length measurements with high-resolution telescopes, Ph.D. thesis, http://cds.cern.ch/record/2690257, U.~Göttingen Göttingen, Germany
+
+H. C. Beck, 2019 Development of Pixel Module Assembly Processes for the Phase 2 Upgrade of the ATLAS Detector and Test Beam Measurements with Diamond Pixel Detectors, Ph.D. thesis, https://ediss.uni-goettingen.de/handle/21.11130/00-1735-0000-0005-1337-8?locale-attribute=en , U.~Göttingen Göttingen, Germany
+
+# Proceedings and papers
+
+U. Stolzenberg, A. Frey, B. Schwenker, P. Wieduwilt, C. Marinas and F. Lütticke, 2017, Radiation length imaging with high resolution telescopes, https://doi.org/10.1016/j.nima.2016.06.086 Nucl. Instrum. Meth. A 845 173 [1609.02402]
+
+T. Obermanna, T. Hemperek, F. Hügging, H. Krüger, D.-L. Pohl, B. Schwenker and N. Wermes, 2017,  Depleted Monolithic Pixels (DMAPS) in a 150 nm technology: lab and beam results, https://doi.org/10.1088%2F1748-0221%2F12%2F01%2Fc01062, JINST 2017
+
+
+# Further references
+
+[1] F. Gaede, Marlin and LCCD: Software tools for the ILC, Nucl.Instrum.Meth. A559 (2006) 177–180.
+
+[2] S. Aplin, J. Engels, F. Gaede, N. A. Graf, T. Johnson, et al., LCIO: A Persistency Framework and Event Data Model for HEP, SLAC-PUB-15296
+
+[3] https://eudaq.github.io/
+
+
+
+# Appendix 1: Definition of output tuples 
 
 ```c
-// 
 // Hit Tree  filled once per hit (potentially multiple times per event)
 _rootHitTree = new TTree("Hit","Hit info");
 _rootHitTree->Branch("iRun"            ,&_rootRunNumber        ,"iRun/I");         // Run number from lcio file 
@@ -271,7 +347,6 @@ _rootHitTree->Branch("trackNdof"       ,&_rootHitTrackNDF       ,"trackNdof/I");
 _rootHitTree->Branch("trackNHits"      ,&_rootHitTrackNHits     ,"trackNHits/I");       // Number of telescope hits used for track fitting, defautls to -1 when HasTrack!=0    
 _rootHitTree->Branch("localChi2"       ,&_rootHitLocalChi2      ,"localChi2/D");        // Chi2 value from hit-track residual on device under test, defautls to -1 when HasTrack!=0    
   
-// 
 // Track Tree filled once per track (potentially multiple times per event)
 _rootTrackTree = new TTree("Track","Track info");
 _rootTrackTree->Branch("iRun"            ,&_rootRunNumber      ,"iRun/I");             // Run number from lcio file 
@@ -298,8 +373,7 @@ _rootTrackTree->Branch("hasHit"          ,&_rootTrackHasHit         ,"hasHit/I")
 _rootTrackTree->Branch("localChi2"       ,&_rootTrackLocalChi2      ,"localChi2/D");   // Chi2 value from hit-track residual on device under test                                                
 _rootTrackTree->Branch("seedCharge"      ,&_rootTrackSeedCharge     ,"seedCharge/D");  // Highest charge in cluster, only filled if cluster matched
 _rootTrackTree->Branch("pixeltype"      ,&_rootTrackPixelType     ,"pixeltype/I");     // PixelType of pixel cell intersected by track 
-
-// 
+ 
 // Event Summay Tree filled once per event
 _rootEventTree = new TTree("Event","Event info");
 _rootEventTree->Branch("iRun"            ,&_rootRunNumber      ,"iRun/I");            // Run number from lcio file 
@@ -313,33 +387,4 @@ _rootEventTree->Branch("isGoodEvent"     ,&_rootDUTGoodEvent,  "isGoodEvent/O");
 
 ```
 
-The tbsw repo also ships a full script for processing of a depfet test beam November 2018 at Desy. 
-This script shows the calibration and reconstruction process for testbeam data starting from .raw 
-files. 
 
-An example .raw file from this test beam can be downloaded:  
-
-```
-wget -O run001286.raw  https://owncloud.gwdg.de/index.php/s/vphTqcJfwyyIHiZ/download
-```
-
-The steering files for in order to process this test beam is shipped with tbsw and 
-can be found at steering-files/depfet-tb. 
-
-```
-python depfet-reco.py 
-python depfet-plotter.py
-```
-
-Have fun with test beams ;)  
-
-benjamin.schwenker@phys.uni-goettingen.de
-
-
-References: 
-
-[1] F. Gaede, Marlin and LCCD: Software tools for the ILC, Nucl.Instrum.Meth. A559 (2006) 177–180.
-
-[2] S. Aplin, J. Engels, F. Gaede, N. A. Graf, T. Johnson, et al., LCIO: A Persistency Framework and Event Data Model for HEP, SLAC-PUB-15296
-
-[3] https://eudaq.github.io/
