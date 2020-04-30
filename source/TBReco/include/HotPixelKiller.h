@@ -25,12 +25,17 @@
 namespace depfet {
 
   //! HotPixelKiller Processor 
-  /*! The processor generates a hot pixel mask. This mask is used for clustering 
-   *  to exclude hot pixels from entering into clusters. 
+  /*! The processor generates a hot/dead pixel mask. This mask is used for clustering 
+   *  to exclude hot/dead pixels from entering into clusters. 
    * 
    *  The HotPixelKiller needs an input collection containing zero suppressed data or 
    *  digits. The user can specify a maximum hit probability (hits/events) for "normal"
-   *  pixels. For The user can specify an offline zero suppression threshold. 
+   *  pixels. For The user can specify an offline zero suppression threshold.
+   * 
+   *  The hit probability (or occupancy) is shaped by the smooth beam profile. In order to remove the smooth
+   *  beam profile and can normalize and mask only pixels having far less or far more hits 
+   *  than neighbor pixels. We normalize by dividing by the median hit probability in a 5x5
+   *  field around each pixel. A normal working pixel has normed hit probability close to 1.  
    *   
    *  The processor also checks if zero suppressed pixels are duplicated and have 
    *  a valid pair of cellIDs.  
@@ -70,6 +75,9 @@ namespace depfet {
     //! Method printing processor parameters
     void printProcessorParams() const;
     
+    //! Method for computing the median of std::vector<double>
+    double get_median(std::vector<double>& v) const;
+    
     // Processor Parameters 
     
     //! Input rawdata collection name
@@ -95,6 +103,12 @@ namespace depfet {
      *  If a pixel fires less frequently, it is masked as DEAD. 
      */
     float _minOccupancy;
+
+    //! Masking on normalized occupancy
+    /*! Normalize the occupancy before applying min/max cuts for pixel masking.  
+     *  A Normal working pixel has a normalized occupancy close to 1. 
+     */
+    bool _maskNormalized;                 
 
    private:
     

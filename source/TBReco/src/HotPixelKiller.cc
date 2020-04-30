@@ -12,6 +12,7 @@
 // Include basic C
 #include <iostream>
 #include <iomanip>
+#include <algorithm>
 
 // Include LCIO classes
 #include <lcio.h>
@@ -59,17 +60,21 @@ namespace depfet {
                                _noiseDBFileName, string("NoiseDB.root"));
     
     registerProcessorParameter ("MaxOccupancy",
-                                "Maximum hit rate (hits/events) for normal pixels",
-                                _maxOccupancy, static_cast < float >(0.01));
+                                "Maximum occupancy for normal pixels",
+                                _maxOccupancy, static_cast < float >(5));
     
     registerProcessorParameter ("MinOccupancy",
-                                "Minimum hit rate (hits/events) for normal pixels. Use negative value to deactivate cut. Use 0 to mask pixel with zero hits in run data.",
-                                _minOccupancy, static_cast < float >(-1));
+                                "Minimum occupancy for normal pixels. Use negative value to deactivate cut. Use 0 to mask pixel with zero hits in run data.",
+                                _minOccupancy, static_cast < float >(0));
 
     registerProcessorParameter ("OfflineZSThreshold",
                                 "Zero suppression threshold for digits [ADU]",
                                 _offlineZSCut, static_cast < float >(0));
     
+    registerProcessorParameter ("MaskNormalized",
+                                "Normalize occupancy before applying min/max cuts. Normal working pixel has normed occupancy near 1.",
+                                _maskNormalized, static_cast < bool >(true));
+
   }
   
   //
@@ -263,19 +268,53 @@ namespace depfet {
       _histoMapOcc[occhistoName]->SetYTitle("vCell [cellID]");
       _histoMapOcc[occhistoName]->SetZTitle("occupancy");
       _histoMapOcc[occhistoName]->SetStats( false );
+
+      string normed_occhistoName = "hDB_sensor"+to_string(sensorID) + "_normed_occupancy";
+      _histoMapOcc[normed_occhistoName] = new TH2F(normed_occhistoName.c_str(), "" , nUCells, minUCell, maxUCell+1, nVCells, minVCell, maxVCell+1); // +1 because maxCell is the not included upper border of the last bin, but maxCell should have a bin
+      _histoMapOcc[normed_occhistoName]->SetXTitle("uCell [cellID]");
+      _histoMapOcc[normed_occhistoName]->SetYTitle("vCell [cellID]");
+      _histoMapOcc[normed_occhistoName]->SetZTitle("normalized occupancy");
+      _histoMapOcc[normed_occhistoName]->SetStats( false );
       
       int nMasked = 0; 
-       
-      // Loop over all pixels / histogram bins 
-      for (int iV = minVCell; iV < maxVCell; iV++) {
-        for (int iU = minUCell; iU < maxUCell; iU++) {
-            
-          int uniqPixelID  = adet.encodePixelID(iV, iU);   
-          
-          // Mask pixel with very high hit frequency -> hot pixel killer 
-          double occupancy =  hitVec[ uniqPixelID ] / _nEvt;
-          _histoMapOcc[occhistoName]->SetBinContent(iU-minUCell+1,iV-minVCell+1, occupancy );
+      int width = 5; 
+      std::vector<double> hitpatch;
+      hitpatch.reserve(width*width);        
 
+      // Loop over all pixels / histogram bins 
+      for (int iV = minVCell; iV <= maxVCell; iV++) {
+        for (int iU = minUCell; iU <= maxUCell; iU++) {
+            
+          // Mask pixel with very high hit frequency -> hot pixel killer 
+          double occupancy =  hitVec[ adet.encodePixelID(iV, iU) ] / _nEvt;
+          _histoMapOcc[occhistoName]->SetBinContent(iU-minUCell+1,iV-minVCell+1, occupancy );
+           
+          // The default value is for a normal working pixel
+          double normed_occupancy = 1;
+          hitpatch.clear();
+          
+          for (int iVV = std::max(minVCell, iV-width); iVV < std::min(maxVCell, iV+width); iVV++) {
+            for (int iUU = std::max(minUCell, iU-width); iUU < std::min(maxUCell, iU+width); iUU++) {   
+              hitpatch.push_back( hitVec[ adet.encodePixelID(iVV, iUU) ] );
+            }
+          }
+          
+          // Median number of hits for width x width field around current pixel (iV,iU)
+          double median_hits = get_median(hitpatch);
+          if (median_hits >= 1)  {
+            // Compute the noralized occupancy 
+            normed_occupancy = hitVec[ adet.encodePixelID(iV, iU) ] / median_hits;
+          } else {
+            // If median number of hits too small, assume a normal pixel
+            normed_occupancy = 1;
+          }
+          
+          _histoMapOcc[normed_occhistoName]->SetBinContent(iU-minUCell+1,iV-minVCell+1, normed_occupancy );
+          
+          if (_maskNormalized) {
+            occupancy = normed_occupancy;
+          }
+          
           if ( (occupancy  > _maxOccupancy) or (occupancy <= _minOccupancy ) ) {
              
             nMasked++;     
@@ -331,7 +370,22 @@ namespace depfet {
                              << std::endl  << std::endl;   
   }
   
- 
+  //
+  // Method for computing the median of std::vector<double>
+  //
+  double HotPixelKiller::get_median(vector<double>& v) const
+  {
+    size_t size = v.size();
+
+    if (size == 0)
+    {
+      return 0;  // Undefined, really.
+    }
+
+    size_t n = size / 2;
+    std::nth_element(v.begin(), v.begin()+n, v.end());
+    return v[n];
+  }
  
 
 
