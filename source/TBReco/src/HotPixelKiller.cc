@@ -60,12 +60,21 @@ namespace depfet {
                                _noiseDBFileName, string("NoiseDB.root"));
     
     registerProcessorParameter ("MaxOccupancy",
-                                "Maximum occupancy for normal pixels",
-                                _maxOccupancy, static_cast < float >(5));
+                                "Maximum pixel occupancy (hits/event) for good pixels",
+                                _maxOccupancy, static_cast < float >(0.01));
     
     registerProcessorParameter ("MinOccupancy",
-                                "Minimum occupancy for normal pixels. Use negative value to deactivate cut. Use 0 to mask pixel with zero hits in run data.",
-                                _minOccupancy, static_cast < float >(0));
+                                "Minimum pixel occupancy (hits/events) for good pixels. Use negative value to deactivate cut. Use 0 to mask pixel with zero hits in data.",
+                                _minOccupancy, static_cast < float >(-1));
+
+    registerProcessorParameter ("MaxNormedOccupancy",
+                                "Maximum normed pixel occupancy (hits/event) for good pixels. If a pixel fires N times more frequently than median of its neihbors, it is masked as HOT.",
+                                _maxNormedOccupancy, static_cast < float >(5));
+    
+    registerProcessorParameter ("MinNormedOccupancy",
+                                "Minimum normed pixel occupancy (hits/events) for good pixels. Use negative value to deactivate cut. Use 0 to mask pixel with zero hits in data.",
+                                _minNormedOccupancy, static_cast < float >(-1));
+
 
     registerProcessorParameter ("OfflineZSThreshold",
                                 "Zero suppression threshold for digits [ADU]",
@@ -293,8 +302,8 @@ namespace depfet {
           double normed_occupancy = 1;
           hitpatch.clear();
           
-          for (int iVV = std::max(minVCell, iV-width); iVV < std::min(maxVCell, iV+width); iVV++) {
-            for (int iUU = std::max(minUCell, iU-width); iUU < std::min(maxUCell, iU+width); iUU++) {   
+          for (int iVV = std::max(minVCell, iV-width); iVV <= std::min(maxVCell, iV+width); iVV++) {
+            for (int iUU = std::max(minUCell, iU-width); iUU <= std::min(maxUCell, iU+width); iUU++) {   
               hitpatch.push_back( hitVec[ adet.encodePixelID(iVV, iUU) ] );
             }
           }
@@ -305,17 +314,21 @@ namespace depfet {
             // Compute the noralized occupancy 
             normed_occupancy = hitVec[ adet.encodePixelID(iV, iU) ] / median_hits;
           } else {
-            // If median number of hits too small, assume a normal pixel
-            normed_occupancy = 1;
+            // If number of hits == 0, the normed occupancy is zero (dead?). otherwise it is 1(good). 
+            normed_occupancy =  hitVec[ adet.encodePixelID(iV, iU) ] > 0 ? 1: 0;
           }
           
           _histoMapOcc[normed_occhistoName]->SetBinContent(iU-minUCell+1,iV-minVCell+1, normed_occupancy );
           
+            
+          float minOccupancyUsed{_minOccupancy}, maxOccupancyUsed{_maxOccupancy}; 
           if (_maskNormalized) {
             occupancy = normed_occupancy;
+            minOccupancyUsed = _minNormedOccupancy;
+            maxOccupancyUsed = _maxNormedOccupancy;
           }
           
-          if ( (occupancy  > _maxOccupancy) or (occupancy <= _minOccupancy ) ) {
+          if ( (occupancy  > maxOccupancyUsed) or (occupancy <= minOccupancyUsed ) ) {
              
             nMasked++;     
             streamlog_out(MESSAGE1) << "Mask pixel on sensorID " << sensorID 

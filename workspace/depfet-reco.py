@@ -67,30 +67,32 @@ def add_pixelmaskers(path):
 
   m26hotpixelkiller = tbsw.Processor(name="M26HotPixelKiller",proctype="HotPixelKiller")
   m26hotpixelkiller.param("InputCollectionName", "zsdata_m26")
-  m26hotpixelkiller.param("MaxOccupancy", 0.001)
+  m26hotpixelkiller.param("MaxNormedOccupancy", 5)
+  m26hotpixelkiller.param("MinNormedOccupancy", -1)   # deactivated
   m26hotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-M26.root")
   m26hotpixelkiller.param("OfflineZSThreshold", 0)
   path.add_processor(m26hotpixelkiller)
    
   fei4hotpixelkiller = tbsw.Processor(name="FEI4HotPixelKiller", proctype="HotPixelKiller")
   fei4hotpixelkiller.param("InputCollectionName", "zsdata_fei4")
-  fei4hotpixelkiller.param("MaxOccupancy", 0.001)
+  fei4hotpixelkiller.param("MaxNormedOccupancy", 5)
+  fei4hotpixelkiller.param("MinNormedOccupancy", -1) 
   fei4hotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-FEI4.root")
   fei4hotpixelkiller.param("OfflineZSThreshold", 0)
   path.add_processor(fei4hotpixelkiller)
    
   pxdhotpixelkiller = tbsw.Processor(name="PXDHotPixelKiller", proctype="HotPixelKiller")
   pxdhotpixelkiller.param("InputCollectionName", "zsdata_pxd")
-  pxdhotpixelkiller.param("MaxOccupancy", 0.001)
-  pxdhotpixelkiller.param("MinOccupancy", 0.0)   # Mask dead pixels 
+  pxdhotpixelkiller.param("MaxNormedOccupancy", 5)
+  pxdhotpixelkiller.param("MinNormedOccupancy", 0.0)   # mask dead pixels 
   pxdhotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-PXD.root")
   pxdhotpixelkiller.param("OfflineZSThreshold", 0)
   path.add_processor(pxdhotpixelkiller)  
   
   h5hotpixelkiller = tbsw.Processor(name="H5HotPixelKiller", proctype="HotPixelKiller")
   h5hotpixelkiller.param("InputCollectionName", "zsdata_h5")
-  h5hotpixelkiller.param("MaxOccupancy", 0.001)
-  h5hotpixelkiller.param("MinOccupancy", 0.0)   # Mask dead pixels 
+  h5hotpixelkiller.param("MaxNormedOccupancy", 5)
+  h5hotpixelkiller.param("MinNormedOccupancy", 0.0)   # mask dead pixels 
   h5hotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-H5.root")
   h5hotpixelkiller.param("OfflineZSThreshold", 0)
   path.add_processor(h5hotpixelkiller)  

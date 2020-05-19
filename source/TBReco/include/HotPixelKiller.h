@@ -29,16 +29,16 @@ namespace depfet {
    *  to exclude hot/dead pixels from entering into clusters. 
    * 
    *  The HotPixelKiller needs an input collection containing zero suppressed data or 
-   *  digits. The user can specify a maximum hit probability (hits/events) for "normal"
+   *  digits. The user can specify a maximum pixel occupancy (hits/events) for "good"
    *  pixels. For The user can specify an offline zero suppression threshold.
    * 
-   *  The hit probability (or occupancy) is shaped by the smooth beam profile. In order to remove the smooth
-   *  beam profile and can normalize and mask only pixels having far less or far more hits 
-   *  than neighbor pixels. We normalize by dividing by the median hit probability in a 5x5
-   *  field around each pixel. A normal working pixel has normed hit probability close to 1.  
+   *  The pixel occupancy is shaped by the smooth beam profile. In order to remove the smooth
+   *  beam profile we can normalize and mask only pixels having far less or far more hits 
+   *  than the median hits in 5x5 neighbor pixels. A normal working pixel has normed occupancy
+   *  close to 1.  
    *   
    *  The processor also checks if zero suppressed pixels are duplicated and have 
-   *  a valid pair of cellIDs.  
+   *  a valid pair of u/v cellIDs.  
    *  
    *  Author: B.Schwenker, Universität Göttingen
    *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
@@ -93,16 +93,28 @@ namespace depfet {
     float _offlineZSCut;
     
     //! Maximum pixel occupancy
-    /*! This is the maximum allowed hit rate or occupancy for normal pixels.
+    /*! This is the maximum allowed pixel occupancy (hits/events) for good pixels.
      *  If a pixel fires more frequently, it is masked as HOT. 
      */
     float _maxOccupancy;
     
     //! Minimum pixel occupancy
-    /*! This is the minimum allowed hit rate or occupancy for normal pixels.
+    /*! This is the minimum allowed pixel occupancy (hits/events) for good pixels.
      *  If a pixel fires less frequently, it is masked as DEAD. 
      */
     float _minOccupancy;
+
+    //! Maximum normed pixel occupancy
+    /*! This is the maximum allowed normed pixel occupancy for good pixels.
+     *  If a pixel fires N times more frequently than median of its neihbors, it is masked as HOT. 
+     */
+    float _maxNormedOccupancy;
+    
+    //! Minimum normed pixel occupancy
+    /*! This is the minimum allowed normed pixel occupancy for good pixels.
+     *  If a pixel fires N times less frequently than median of its neighbors, it is masked as DEAD. 
+     */
+    float _minNormedOccupancy;
 
     //! Masking on normalized occupancy
     /*! Normalize the occupancy before applying min/max cuts for pixel masking.  
