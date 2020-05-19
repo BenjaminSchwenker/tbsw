@@ -11,6 +11,7 @@
 #include <string>
 #include <map>
 #include <set>
+#include <utility>
 
 // Include Marlin classes
 #include <marlin/Global.h>
@@ -29,14 +30,20 @@ namespace depfet {
   //! GoeClusterCalibrator  
   /*! 
    *  The task of this processor is to create a clusterDB for clusters
-   *  contained in the input cluster collection. After calibration, the 
+   *  contained in the input track collection. After calibration, the 
    *  clusterDB will be used by the GoeHitMaker processor to compute a 2D 
    *  position measurement (hit) in local sensor coordinates together with
    *  a 2x2 covariance matrix for all cluster registered in the clusterDB.
    *   
-   *  This version of the ClusterCalibrator requires a collection of reco
+   *  The ClusterCalibrator processor requires a collection of reco
    *  tracks in a fully aligned telescope for creating the clusterDB.
+   *   
+   *  The calibration can be narrowed to the clusters from a user defined
+   *  list of sensor planes sharing the same technology. 
    *  
+   *  This version performs a optimized selection of eta variables to 
+   *  boost the spatial resolution.  
+   * 
    *  Author: B.Schwenker, Universität Göttingen
    *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
    */
@@ -79,7 +86,7 @@ namespace depfet {
     //! Name of clusterDB output file   
     std::string _clusterDBFileName;   
        
-    //! Minimum number of clusters occurances 
+    //! Minimum number of clusters for training a type 
     int _minClusters; 
     
     //! Periodicity for vCells used for clusterDB
@@ -88,18 +95,22 @@ namespace depfet {
     //! Periodicity for uCells used for clusterDB
     int _uCellPeriod; 
     
-    //! Max number of eta bins  
+    //! Max number of eta bins per type  
     int _maxEtaBins; 
     
-    //! Minimum variance of clusters covariance matrix
-    float _minVarianceU; 
-    float _minVarianceV;
+    //! Minimum sigmaU of clusters covariance matrix
+    float _minSigmaU; 
+
+    //! Minimum sigmaV of clusters covariance matrix
+    float _minSigmaV;
     
     //! Select clusters from these planes
     std::vector<int >  _selectIDVec;
        
     //! Name of temporary file for collector output
     std::string _collectorOutputFileName;   
+
+    
  
    private:
     
@@ -115,24 +126,33 @@ namespace depfet {
     TH1F * _trackDuDwHisto;
     /**Histograms for track incident angle DvDw */
     TH1F * _trackDvDwHisto;
-    /**Container for histos*/
+    /**Container for bias histos for pairs (runno,plane)*/
+    std::map< std::pair<int,int>, TH1F *> _biasMapU;
+    /**Container for bias histos for pairs (runno,plane)*/
+    std::map< std::pair<int,int>, TH1F *> _biasMapV;
+    /**Container for clusterDB histos*/
     std::map< std::string, TH1F *> _histoMap;
     /** Name of cluster tree */
     TTree * m_rootTree; 
     /** Name of cluster type */
     std::string m_typeName;
-    /** Eta value of cluster for sector (+,+)*/
-    float m_clusterEtaPP;
-    /** Eta value of cluster for sector (-,+)*/
-    float m_clusterEtaNP;
-    /** Eta value of cluster for sector (+,-)*/
-    float m_clusterEtaPN;
-    /** Eta value of cluster for sector (-,-)*/
-    float m_clusterEtaNN; 
+    /** Run number used for bias check/correction */
+    int m_runNumber;
+    /** Plane number used for bias check/correction */
+    int m_planeNumber;
+    /** Eta vector for same sign incidence angles thetaU, thetaV */
+    std::vector<float> m_clusterEtaSS; 
+    /** Eta vector for opposite sign incidence angles thetaU, thetaV*/
+    std::vector<float> m_clusterEtaOS;
     /** Position offset u of cluster */
     float m_positionOffsetU;
     /** Position offset v of cluster */
     float m_positionOffsetV;
+    /** Center of gravity residual u */
+    float m_cogResidualU;
+    /** Center of gravity residual v */
+    float m_cogResidualV;
+
             
     double _timeCPU; //!< CPU time
     int    _nRun ;   //!< Run number

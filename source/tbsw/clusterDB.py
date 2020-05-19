@@ -149,6 +149,21 @@ class ClusterDB(object):
     
     return nClusters
 
+  def getEtaIndex(self, clustype):
+    """
+    Get index of selected eta variable for offset calibration.  
+    """
+    dbfile = ROOT.TFile( self.dbpath, 'READ' ) 
+    histo  = dbfile.Get("hDB_EtaIndex")
+    
+    etaIndex = None
+    for bin in range(1,histo.GetNbinsX()+1):    
+      if histo.GetXaxis().GetBinLabel(bin) == clustype:        
+        etaIndex = histo.GetBinContent(bin)
+     
+    dbfile.Close() 
+     
+    return etaIndex      
     
   def getFraction(self, shape=''): 
     """
@@ -358,7 +373,66 @@ class ClusterDB(object):
       for digit in digits:		
         cells.append( (float(re.split('\.',digit)[1])*pitchU , float(re.split('\.',digit)[0])*pitchV, pixelType) ) 
       return cells
-     
+       
+    def getHeadTailPixelIndices(cells, thetaU, thetaV, etaindex=0): 
+      size = len(cells)
+      
+      # The cells are sorted from lowerLeft to 
+      # upperRight
+      lowerLeft = 0
+      upperRight = size-1
+      
+      # Find index of lower right digit 
+      # Note cell contains posU,posV,pixelType 
+      lowerRight = upperRight
+      for index in range(size-1):   
+        if cells[index+1][1] > cells[0][1]: 
+          lowerRight = index
+          break
+      
+      # Find index of upper left digit
+      # Note cell contains posU,posV,pixelType 
+      upperLeft = lowerLeft 
+      for index in range( size-1,0,-1): 
+        if cells[index-1][1] < cells[size-1][1]:
+          upperLeft = index
+          break
+      
+      # Basically, we need to distingush same sign 
+      # and opposite sign cases for angles.  
+      if thetaV*thetaU>=0: 
+        heads = [upperRight, upperRight]
+        tails = [lowerLeft, lowerLeft]
+        if size > 1:
+          heads[1] = upperRight-1    
+          tails[1] = lowerLeft+1    
+      else:
+        heads = [upperLeft, upperLeft]
+        tails = [lowerRight, lowerRight]
+        if size > 1:
+          if upperLeft < upperRight:
+            heads[1] = upperLeft+1
+          else: 
+            heads[1] = upperLeft-1
+          
+          if lowerRight > lowerLeft:
+            tails[1] = lowerRight-1
+          else: 
+            tails[1] = lowerRight+1   
+      
+      etamapping = { 0: ([heads[0]], [tails[0]]), 
+                     1: ([heads[1]], [tails[0]]), 
+                     2: ([heads[0]], [tails[1]]), 
+                     3: ([heads[1]], [tails[1]]), 
+                     4: ([heads[0], heads[1]], [tails[0]]), 
+                     5: ([heads[0], heads[1]], [tails[1]]), 
+                     6: ([heads[0]], [tails[0], tails[1]]), 
+                     7: ([heads[1]], [tails[0], tails[1]]), 
+                     8: ([heads[0], heads[1]], [tails[0], tails[1]]), 
+                   }
+      
+      return etamapping[etaindex]
+    
     def create_poly_pixels(cells):  
       pixels = []
       for originU, originV, pixelType in cells: 
@@ -398,13 +472,13 @@ class ClusterDB(object):
     
     # Sum the fractions for all shape belonging to the cluster type
     # Note that we do not want to match shapes with more digits
-    sum_prob = self.getFraction('^E[0-9]'+clusterType+'$') 
+    sum_prob = self.getFraction('^E[0-9]+'+clusterType+'$') 
     
     # Compute the sigmaU, sigmaV and rho for the weighted avarage 
     # of the covariance matrices of all contributing shapes. 
-    av_sigU, _ = self.getSigmaU('^E[0-9]'+clusterType+'$')
-    av_sigV, _ = self.getSigmaV('^E[0-9]'+clusterType+'$')
-    av_rho = self.getRho('^E[0-9]'+clusterType+'$')    
+    av_sigU, _ = self.getSigmaU('^E[0-9]+'+clusterType+'$')
+    av_sigV, _ = self.getSigmaV('^E[0-9]+'+clusterType+'$')
+    av_rho = self.getRho('^E[0-9]+'+clusterType+'$')    
     
     # Compute list of cells and bounding box
     if poly: 
@@ -428,9 +502,8 @@ class ClusterDB(object):
     
     ax.set_xlabel('offset u / mm')
     ax.set_ylabel('offset v / mm')
-    #ax.set_title(clusterType)
     ax.set_title("\n".join(textwrap.wrap(clusterType, 50)))
-    ax.text(0.5, 0.9, 'prob={:.2f}% \n $\sigma_u$={:.1f}$\mu$m, $\sigma_v$={:.1f}$\mu$m, $\\rho$={:.2f}'.format(sum_prob, 1000*av_sigU, 1000*av_sigV, av_rho),
+    ax.text(0.5, 0.9, 'prob={:.2f}% \n $\sigma_u$={:.2f}$\mu$m, $\sigma_v$={:.2f}$\mu$m, $\\rho$={:.2f}'.format(sum_prob, 1000*av_sigU, 1000*av_sigV, av_rho),
           style='italic',
           bbox={'facecolor':'red', 'alpha':0.5, 'pad':10},
           horizontalalignment='center',
@@ -438,13 +511,32 @@ class ClusterDB(object):
           transform = ax.transAxes)
     
     # Draw the cluster outline
-    pixels = create_poly_pixels(cells)      
-    for pixel in pixels:
+    pixels = create_poly_pixels(cells)   
+
+    # Get indices for head and tail pixels 
+    heads, tails = getHeadTailPixelIndices(cells, self.getThetaU(), self.getThetaV(), self.getEtaIndex(clusterType))
+    
+   
+    for index, pixel in enumerate(pixels):
       pixel.set_clip_box(ax.bbox)
       ax.add_artist(pixel)
       
+      if index in heads and len(pixels)>1: 
+        # Mark the head pixel  
+        cx = np.array(pixel.get_xy()[:,0]).mean()
+        cy = np.array(pixel.get_xy()[:,1]).mean()
+        ax.annotate('Head', (cx, cy), color='b', weight='bold', 
+                    fontsize=12, ha='center', va='center')
+      
+      if index in tails and len(pixels)>1: 
+        # Mark the tail pixel  
+        cx = np.array(pixel.get_xy()[:,0]).mean()
+        cy = np.array(pixel.get_xy()[:,1]).mean()
+        ax.annotate('Tail', (cx, cy), color='b', weight='bold', 
+                    fontsize=12, ha='center', va='center')
+        
     # Loop over all shapes   
-    for shape in self.getSelectedShapes('^E[0-9]'+clusterType+'$') :
+    for shape in self.getSelectedShapes('^E[0-9]+'+clusterType+'$') :
       prob = self.getFraction('^'+shape+'$')
       sigU, _ = self.getSigmaU('^'+shape+'$')
       sigV, _ = self.getSigmaV('^'+shape+'$')
@@ -464,3 +556,7 @@ class ClusterDB(object):
     
     fig.savefig(imagePath)
     fig.clf()
+
+  
+    
+  

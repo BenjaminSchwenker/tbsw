@@ -71,11 +71,11 @@ namespace depfet {
                                 _clusterDBFileName, std::string("clusterDB.root"));  
      
     registerProcessorParameter ("MinClusters",
-                                "Minimum number of cluster ID occurances for clusterDB",
-                                _minClusters,  static_cast < int > (2000));
+                                "Minimum number of clusters needed to calibrate a cluster type",
+                                _minClusters,  static_cast < int > (200));
     
     registerProcessorParameter ("MaxEtaBins",
-                                "Maximum number of eta bins for clusterDB",
+                                "Maximum number of eta bins per cluster type",
                                 _maxEtaBins,  static_cast < int > (1));
     
     registerProcessorParameter ("vCellPeriod",
@@ -86,11 +86,11 @@ namespace depfet {
                                 "Periodicity for uCells used for clusterDB",
                                 _uCellPeriod,  static_cast < int > (1));
     
-    registerProcessorParameter ("MinVarianceU", "Minimum value of variance for u position measurement [mm^2]",
-                                _minVarianceU, static_cast < float > (1.0E-6) );
+    registerProcessorParameter ("MinSigmaU", "Minimum value of sigmaU for 2x2 cluster covariance matrix [mm]",
+                                _minSigmaU, static_cast < float > (0.5E-3) );
     
-    registerProcessorParameter ("MinVarianceV", "Minimum value of variance for v position measurement [mm^2]",
-                                _minVarianceV, static_cast < float > (1.0E-6) );
+    registerProcessorParameter ("MinSigmaV", "Minimum value of sigmaV for 2x2 cluster covariance matrix [mm]",
+                                _minSigmaV, static_cast < float > (0.5E-3) );
      
     
     std::vector<int> initSelectIDVec;
@@ -110,12 +110,12 @@ namespace depfet {
     _nEvt = 0 ;
     _timeCPU = clock()/1000 ;
     
-    if ( _minVarianceU <= 0 ) {  
-      _minVarianceU = 1.0E-6;  
+    if ( _minSigmaU <= 0 ) {  
+      _minSigmaU = 1.0E-3;  
     } 
     
-    if ( _minVarianceV <= 0 ) {
-      _minVarianceV = 1.0E-6;  
+    if ( _minSigmaV <= 0 ) {
+      _minSigmaV = 1.0E-3;  
     } 
     
     if ( _maxEtaBins<=0) _maxEtaBins=1;
@@ -147,12 +147,14 @@ namespace depfet {
     
     m_rootTree = new TTree("tree","Cluster info");
     m_rootTree->Branch<string>("TypeName", &m_typeName);
-    m_rootTree->Branch<float>("ClusterEtaPP", &m_clusterEtaPP);
-    m_rootTree->Branch<float>("ClusterEtaNP", &m_clusterEtaNP);
-    m_rootTree->Branch<float>("ClusterEtaPN", &m_clusterEtaPN);
-    m_rootTree->Branch<float>("ClusterEtaNN", &m_clusterEtaNN);
+    m_rootTree->Branch< std::vector<float> >("ClusterEtaSS", &m_clusterEtaSS);
+    m_rootTree->Branch< std::vector<float> >("ClusterEtaOS", &m_clusterEtaOS);
     m_rootTree->Branch<float>("OffsetU", &m_positionOffsetU);
     m_rootTree->Branch<float>("OffsetV", &m_positionOffsetV);
+    m_rootTree->Branch<float>("CogResidualU", &m_cogResidualU);
+    m_rootTree->Branch<float>("CogResidualV", &m_cogResidualV);
+    m_rootTree->Branch<int>("RunNumber", &m_runNumber);
+    m_rootTree->Branch<int>("PlaneNumber", &m_planeNumber);
     
     // Print set parameters
     printProcessorParams();
@@ -181,6 +183,8 @@ namespace depfet {
   void GoeClusterCalibrator::processEvent(LCEvent * evt)
   {
     
+    // Set run number 
+    m_runNumber = evt->getRunNumber();   
     _nEvt ++ ;
     
     TrackInputProvider TrackIO; 
@@ -238,9 +242,7 @@ namespace depfet {
           double trk_tv = TE.GetState().GetPars()[1];  // rad
           double trk_u = TE.GetState().GetPars()[2];   // mm
           double trk_v = TE.GetState().GetPars()[3];   // mm
-          //double trk_qp = TE.GetState().GetPars()[4];  // 1/GeV
-          //double trk_charge = track.GetCharge();
-          //double trk_mom = std::abs(trk_charge/trk_qp); 
+          
            
           double sigma2_u = TE.GetState().GetCov()(2,2); 
           double sigma2_v = TE.GetState().GetCov()(3,3); 
@@ -255,29 +257,57 @@ namespace depfet {
           _trackDuDwHisto->Fill(trk_tu);  
           _trackDvDwHisto->Fill(trk_tv);       
              
-          // FIXME: This cluster is only needed to be handed to the ctor of PolyClusterDescriptor. 
-          // Check if its creation can be avoided. 
           PixelCluster Cluster = TE.GetHit().GetCluster();  
           PolyClusterDescriptor Descriptor(Cluster, Sensor);
           
-          // Fill collector output
+          // Compute center of gravity hit coordinate
+          double u_cog{0.0}, v_cog{0.0}, sig2_u_cog{0.0}, sig2_v_cog{0.0}, cov_uv_cog{0.0};
+          Cluster.getCenterOfGravity(Sensor, u_cog, v_cog, sig2_u_cog, sig2_v_cog, cov_uv_cog); 
+          
+          // Fill collector tree with all data needed for this calibration
           
           // A string to identify the cluster type, it quantifies the configuration of firing pixels 
-          // but does not using the measured pixel signals. Details depend on the implementation of 
+          // but does not use the measured pixel signals. Details depend on the implementation of 
           // the cluster descriptor. 
           m_typeName = Descriptor.getType(_vCellPeriod, _uCellPeriod);
           
-          // The eta value is a scalar computed from the pixel charges. It value may depend on the sign of
-          // the incidence angle of the beam into the sensor. But details depend on the implementation of 
-          // the cluster descriptor. 
-          m_clusterEtaPP = Descriptor.computeEta(+1, +1);
-          m_clusterEtaPN = Descriptor.computeEta(+1, -1);
-          m_clusterEtaNP = Descriptor.computeEta(-1, +1);
-          m_clusterEtaNN = Descriptor.computeEta(-1, -1); 
-           
+          // The eta=s_tail/(s_head+s_tail) is computed from the charge deposited where the particle 
+          // enters (tail charge) and leaves (head charge) the sensor. There are differnt ways to 
+          // compute head/tail charges depending on cluster type and sign of incidence angles. Here, 
+          // we compute a number of relevant choices and leave the best selection to the final 
+          // calibration. 
+          m_clusterEtaSS.clear();
+          m_clusterEtaOS.clear();
+          for (int etaIndex=0; etaIndex<9; etaIndex++) {
+            m_clusterEtaSS.push_back( Descriptor.computeEta(+1, +1, etaIndex) );
+            m_clusterEtaOS.push_back( Descriptor.computeEta(+1, -1, etaIndex) ); 
+          }
+          
           m_positionOffsetU = trk_u - Descriptor.getOriginU();  
           m_positionOffsetV = trk_v - Descriptor.getOriginV();  
+          m_cogResidualU = trk_u - u_cog;
+          m_cogResidualV = trk_v - v_cog;
+          m_planeNumber = ipl;
           m_rootTree->Fill(); 
+           
+          // Create the residual histograms for bias correction if needed  
+          auto key = std::make_pair(m_runNumber, m_planeNumber);
+          if ( _biasMapU.find(key) == _biasMapU.end() ) {
+            string tmpName = "hBiasU_runno_" + to_string(m_runNumber) + "_plane_" + to_string(m_planeNumber); 
+            _biasMapU[key] = new TH1F(tmpName.c_str(),tmpName.c_str(),1,0,1);
+            _biasMapU[key]->StatOverflows();
+            _biasMapU[key]->SetDirectory(nullptr);
+          }
+          if ( _biasMapV.find(key) == _biasMapV.end() ) {
+            string tmpName = "hBiasV_runno_" + to_string(m_runNumber) + "_plane_" + to_string(m_planeNumber); 
+            _biasMapV[key] = new TH1F(tmpName.c_str(),tmpName.c_str(),1,0,1);
+            _biasMapV[key]->StatOverflows();
+            _biasMapV[key]->SetDirectory(nullptr);
+          }
+          
+          // Fill the bias map to detect residual drift over runs
+          _biasMapU[key]->Fill(TE.GetHit().GetCoord()[0] - trk_u);   
+          _biasMapV[key]->Fill(TE.GetHit().GetCoord()[1] - trk_v);   
         }
       }
     }  
@@ -343,184 +373,361 @@ namespace depfet {
     // should be small (< few mrad) 
     double thetaU = _trackDuDwHisto->GetMean();
     double thetaV = _trackDvDwHisto->GetMean();
-    
+
+    // Check if there is a drift in the residuals in case 
+    // data from more than one run is used. 
+    for (const auto &entry: _biasMapU)
+	{
+      auto key_pair = entry.first;
+      streamlog_out(MESSAGE3) << std::setprecision(5)
+                              << "Run number " << key_pair.first << ", plane number " << key_pair.second << " has biasU="
+                              << entry.second->GetMean() << "+/-" << entry.second->GetMeanError() << endl;
+	}
+    // Check if there is a drift in the residuals in case 
+    // data from more than one run is used. 
+    for (const auto &entry: _biasMapV)
+	{
+      auto key_pair = entry.first;
+      streamlog_out(MESSAGE3) << std::setprecision(5)
+                              << "Run number " << key_pair.first << ", plane number " << key_pair.second << " has biasV="
+                              << entry.second->GetMean() << "+/-" << entry.second->GetMeanError() << endl;
+	}
+     
     streamlog_out(MESSAGE3) << std::setprecision(5)
                             << "Average telescope sigmaU=" << sqrt(trk_covU) << ", sigmaV=" << sqrt(trk_covV) << endl
                             << "Average track incidence angles on DUT are du/dw=" << thetaU  << ", dvdw=" << thetaV  << endl;
-
+     
+    // Number of tracks in the data sample
+    const auto nEntries = m_rootTree->GetEntries();
+    
     // Enumerate all types by unique name and count their
     // occurence in training data.
-    vector< pair<string, float> > typeList;
+    vector< pair<string, float> > allTypes;
     
-    const auto nEntries = m_rootTree->GetEntries();
     for (int i = 0; i < nEntries; ++i) {
       m_rootTree->GetEntry(i);
       
-      auto it = std::find_if(typeList.begin(), typeList.end(),
+      auto it = std::find_if(allTypes.begin(), allTypes.end(),
                              [&](const pair<string, float>& element) { return element.first == m_typeName;});
       
       //Shape name exists in vector
-      if (it != typeList.end()) {
+      if (it != allTypes.end()) {
         //increment key in map
         it->second++;
       }
       //Shape name does not exist
       else {
         //Not found, insert in vector
-        typeList.push_back(pair<string, int>(m_typeName, 1));
+        allTypes.push_back(pair<string, int>(m_typeName, 1));
       }
     }
     
-    // Loop over typeList to select types with enough data for
-    // next calibration step
+    // Make a list of good types having enough data for 
+    // calibration. 
     
-    // Vector with eta histograms for selected shapes
-    vector< pair<string, TH1D> > etaHistos;
- 
-    // Coverage of position offsets on training data
+    // Vector with names of types having enough data
+    vector< string > goodTypes;
+    
+    // Ratio of tracks in goodTypes relative to all tracks
     double coverage = 0.0;
     
-    for (auto iter : typeList) {
+    for (auto iter : allTypes) {
       auto name = iter.first;
       auto counter = iter.second;
       if (counter >=  _minClusters) {
-        coverage += counter / nEntries;
-        string etaname = "eta_" + name;     
-        TH1D etaHisto(etaname.c_str(), etaname.c_str(), 301, 0, 1);
-        etaHisto.SetDirectory(0);
-        etaHistos.push_back(pair<string, TH1D>(name, etaHisto));
+        coverage += counter / nEntries;    
+        goodTypes.push_back(name);
       } else {
         streamlog_out(MESSAGE3) << "  Unable to calibrate cluster type:  " << name << " because too few counts (" << counter  << ")" << endl;
       } 
     }     
     
-    // Loop over the tree is to fill the eta histograms for
-    // selected shapes.
-    for (int i = 0; i < nEntries; ++i) {
-      m_rootTree->GetEntry(i);
-      auto it = std::find_if(etaHistos.begin(), etaHistos.end(),
-                    [&](const pair<string, TH1D>& element) { return element.first == m_typeName;});
-      //Item exists in map
-      if (it != etaHistos.end()) {
-        // increment key in map
-        auto clusterEta = m_clusterEtaPP;
-        if (thetaU > 0 && thetaV < 0) {clusterEta = m_clusterEtaPN;}
-        else if (thetaU < 0 && thetaV > 0) {clusterEta = m_clusterEtaNP;}
-        else if (thetaU < 0 && thetaV < 0) {clusterEta = m_clusterEtaNN;}   
-        it->second.Fill(clusterEta);
-      }
-    }
+    // Make 2D histogram for center of gravity residuals 
+    // for all good types. 
+    vector< pair< string, TH2D > > cogHistosVec;
     
-    // Vector for eta bin edges stored by type name 
-    vector< pair< string, vector<double> > > etaBinEdgesVec;
+    for (const string& name : goodTypes) {
+      string cog_name = "cog_" + name;    
+      TH2D cogHisto(cog_name.c_str(), cog_name.c_str(), 1, 0, 1, 1, 0, 1);
+      cogHisto.SetDirectory(nullptr);
+      cogHisto.StatOverflows();
+      cogHistosVec.push_back(pair<string, TH2D>(name, cogHisto));  
+    }     
     
-    // Vector for offset histograms storing pairs of typename and a vector of 2d histos for different eta bins
-    vector< pair< string, vector<TH2D> > > offsetHistosVec;
-    
-    for (auto iter : etaHistos) {
-      auto name = iter.first;
-      auto& histo = iter.second;
-      int nClusters = histo.GetEntries();
-      
-      streamlog_out(MESSAGE3) << "Eta histogram " << name << " has " << nClusters << " entries" << std::endl; 
-      
-      // Try to split clusters into n bins with _minClusters clusters
-      int nEtaBins  = std::max(int(nClusters / _minClusters), 1);
-      nEtaBins =  std::min(nEtaBins, _maxEtaBins);  
-      
-      // We have to check for singular cases where eta distribution is concentrated is concentrated in 
-      // less bins than required number of eta bins 
-      int nFilledBins = 0;  
-      for (auto ibin = 1; ibin <= histo.GetXaxis()->GetNbins(); ibin++) {  
-        if (histo.GetBinContent(ibin) > 0) nFilledBins++;  
-      }
-      if (nFilledBins <= nEtaBins) {
-        nEtaBins = 1; 
-        streamlog_out(MESSAGE3) << "Eta histogram " << name << " is a delta spike" << std::endl;   
-      }
-      
-      vector<double> etaBinEdges;
-      vector< TH2D > offsetHistos;
-      
-      for (int i = 0; i < nEtaBins; i++) {
-        // Position where to compute the quantiles in [0,1]
-        double xq = double(i) / nEtaBins;
-        // Double to contain the quantile
-        double yq = 0;
-        histo.GetQuantiles(1, &yq, &xq);
-        streamlog_out(MESSAGE3) << " Quantile at xq =" << xq << " is yq=" << yq << std::endl;
-        etaBinEdges.push_back(yq);
-        
-        string offsetname = "E" + std::to_string(i) + name;         
-        TH2D offsetHisto(offsetname.c_str(), offsetname.c_str(), 1, 0, 1, 1, 0, 1);
-        offsetHisto.StatOverflows();
-        offsetHistos.push_back(offsetHisto);
-      }
-      etaBinEdgesVec.push_back(pair< string, vector<double> >(name, etaBinEdges));
-      offsetHistosVec.push_back(pair< string, vector<TH2D> >(name, offsetHistos));
-    }
-    
-    // Loop over the tree is to fill offset histograms
+    // Loop over the tree is to fill cog histograms
     for (int i = 0; i < nEntries; ++i) {
       m_rootTree->GetEntry(i); 
       
-      auto it = std::find_if(offsetHistosVec.begin(), offsetHistosVec.end(),
-                        [&](const pair<string, vector<TH2D>>& element) { return element.first == m_typeName;});
-      
-      auto it2 = std::find_if(etaBinEdgesVec.begin(), etaBinEdgesVec.end(),
-                        [&](const pair<string, vector<double>>& element) { return element.first == m_typeName;});
+      auto it = std::find_if(cogHistosVec.begin(), cogHistosVec.end(),
+                        [&](const pair<string, TH2D>& element) { return element.first == m_typeName;});
       
       //Item exists in maps
-      if (it != offsetHistosVec.end()  && it2 != etaBinEdgesVec.end() ) {
-        auto clusterEta = m_clusterEtaPP;
-        if (thetaU > 0 && thetaV < 0) {clusterEta = m_clusterEtaPN;}
-        else if (thetaU < 0 && thetaV > 0) {clusterEta = m_clusterEtaNP;}
-        else if (thetaU < 0 && thetaV < 0) {clusterEta = m_clusterEtaNN;}   
-        // FIXME add a switch to select which descriptor to use
-        auto etaBin = PolyClusterDescriptor::computeEtaBin(clusterEta, it2->second);
-        it->second.at(etaBin).Fill(m_positionOffsetU, m_positionOffsetV);
+      if (it != cogHistosVec.end()  ) {
+        it->second.Fill(m_cogResidualU, m_cogResidualV);   
       }
     }
     
-    // Count total number of types
-    int nTypes = 0;
- 
-    // Count total number of shapes 
-    int nShapes = 0; 
+    // Great, at this point we know the spatial resolution for the 
+    // center of gravity method on all goodTypes. This is our baseline
+    // to judge the resolution of eta shapes later. 
     
-    // Find minimum offset variance in U    
-    double min_covU = numeric_limits< double >::max();
+    // Map key is cluster type and value is center of gravity loss 
+    map< string, double > cogLossMap;
     
-    // Find minimum offset variance in V
-    double min_covV = numeric_limits< double >::max();
+    streamlog_out(MESSAGE3) << "Summary of center of gravity performance per type: "  << endl <<  endl;
+    
+    for (const auto &entry: cogHistosVec)
+	{
+      double covU = pow(entry.second.GetRMS(1), 2);
+      double covV = pow(entry.second.GetRMS(2), 2);
+      double covUV = entry.second.GetCovariance();
       
-    // Compute the moments of the offset histograms 
-    for (auto iter : offsetHistosVec) {
-      auto name = iter.first;
-      auto& histovec = iter.second;
-      // Loop over eta bins
-      for (auto& histo : histovec) {
-        // Compute offset moments 
-        double covU = pow(histo.GetRMS(1), 2);
-        double covV = pow(histo.GetRMS(2), 2);
-        if ( covU < min_covU ) min_covU = covU;
-        if ( covV < min_covV ) min_covV = covV;
-        nShapes += 1;
+      covU =  std::max(covU - trk_covU, pow(_minSigmaU ,2));  
+      covV =  std::max(covV - trk_covV, pow(_minSigmaV ,2));  
+      covUV -= trk_covUV;    
+      
+      streamlog_out(MESSAGE3) << std::setprecision(5)
+                              << "Name " << entry.first  << " entries=" << entry.second.GetEntries() 
+                              << ", sigmaU=" << sqrt(covU) << ", sigmaV=" << sqrt(covV) << ", corrUV=" << covUV/sqrt(covU)/sqrt(covV) 
+                              << ", loss=" << sqrt(covU)+sqrt(covV)
+                              << std::endl;  
+      
+      TMatrixDSym HitCov(2);
+      HitCov(0, 0) = covU;
+      HitCov(1, 0) = covUV;
+      HitCov(0, 1) = covUV;
+      HitCov(1, 1) = covV;
+          
+      TMatrixDSymEigen HitCovE(HitCov);
+      TVectorD eigenval = HitCovE.GetEigenValues();
+      if (eigenval(0) <= 0 || eigenval(1) <= 0) {
+        streamlog_out(ERROR3) << "Estimated covariance matrix not positive definite." << std::endl;
       }
-      nTypes += 1;
-    }
-       
-    if ( min_covU - trk_covU < _minVarianceU ) {
-      streamlog_out(MESSAGE3) << "Original track sigmaU is  " << sqrt(trk_covU)  << std::endl;
-      trk_covU = min_covU - _minVarianceU;
-      streamlog_out(MESSAGE3) << "Truncated track sigmaU is  " << sqrt(trk_covU)  << std::endl;  
-    } 
+      
+      // We want to use this to judge the performance of eta calibrations. 
+      cogLossMap[entry.first] = sqrt(covU)+sqrt(covV); 
+	}
+    
+    // There are multiple ways to compute an eta variable for a given 
+    // cluster type. These ways differ in the definition of the head 
+    // and tail signal entering for computing eta=S_h/(S_t + S_h).   
+    // The training data has computed a number of candidate eta 
+    // definitions eta[i].
+    //   
+    // In the next step, we compute for each variable eta[i] the cluster 
+    // shape corrections. We measure the performance of the corrections for 
+    // on a cluster type T with a loss function L(T,eta[i]). The final 
+    // set of cluster shape corrections is computed using the best eta 
+    // variable eta[i_T] for each cluster type T.   
+    
+    // Map key is cluster type and value is vector of losses for different eta[i]
+    map< string, vector<double> > lossMatrix;
+    
+    // Map key is cluster type and value is vector of eta binnings for different eta[i]
+    map< string, vector< vector<double> > > etaBinningMap;
+    
+    // Map key is cluster type and value is vector of eta offset calibrations for different eta[i]
+    map< string, vector< vector< vector<double> > > > etaOffsetCalibrationMap;
+    
+    // Loop over all collected eta variables and compute the losses
+    for (int etaIndex = 0; etaIndex < 9; etaIndex++) {        
+      
+      // Vector with eta histograms 
+      vector< pair<string, TH1D> > etaHistos;
+      
+      for (const string& name : goodTypes) {
+        string eta_name =  "variant_" + to_string(etaIndex) + "_" + "eta_"  + name;     
+        TH1D etaHisto(eta_name.c_str(), eta_name.c_str(), 301, 0, 1);
+        etaHisto.SetDirectory(nullptr);
+        etaHistos.push_back(pair<string, TH1D>(name, etaHisto));
+      }     
+      
+      // Loop over the tree is to fill the eta histograms for
+      // good types
+      for (int i = 0; i < nEntries; ++i) {
+        m_rootTree->GetEntry(i);
+        auto it = std::find_if(etaHistos.begin(), etaHistos.end(),
+                      [&](const pair<string, TH1D>& element) { return element.first == m_typeName;});
+        //Item exists in map
+        if (it != etaHistos.end()) {
+          // increment key in map
+          auto clusterEta = m_clusterEtaSS[etaIndex];
+          if (thetaU * thetaV < 0) {clusterEta = m_clusterEtaOS[etaIndex];}
+          it->second.Fill(clusterEta);
+        }
+      }
+      
+      // Vector for eta bin edges stored by type name 
+      vector< pair< string, vector<double> > > etaBinEdgesVec;
+      
+      // Vector for offset histograms storing pairs of typename and a vector of 2d histos for different eta bins
+      vector< pair< string, vector<TH2D> > > offsetHistosVec;
+      
+      for (auto iter : etaHistos) {
+        auto name = iter.first;
+        auto& histo = iter.second;
+        int nClusters = histo.GetEntries();
+        
+        streamlog_out(MESSAGE3) << "Eta histogram " << histo.GetName() << " has " << nClusters << " entries" << std::endl; 
+        
+        // Try to split clusters into n bins with _minClusters clusters
+        int nEtaBins  = std::max(int(nClusters / _minClusters), 1);
+        nEtaBins =  std::min(nEtaBins, _maxEtaBins);  
+        
+        // We have to check for singular cases where eta distribution is concentrated is concentrated in 
+        // less bins than required number of eta bins 
+        int nFilledBins = 0;  
+        for (auto ibin = 1; ibin <= histo.GetXaxis()->GetNbins(); ibin++) {  
+          if (histo.GetBinContent(ibin) > 0) nFilledBins++;  
+        }
+        if (nFilledBins <= nEtaBins) {
+          nEtaBins = 1; 
+          streamlog_out(MESSAGE3) << "Eta histogram " << histo.GetName() << " is a delta spike" << std::endl;   
+        }
+        
+        vector<double> etaBinEdges;
+        vector< TH2D > offsetHistos;
+        
+        for (int i = 0; i < nEtaBins; i++) {
+          // Position where to compute the quantiles in [0,1]
+          double xq = double(i) / nEtaBins;
+          // Double to contain the quantile
+          double yq = 0;
+          histo.GetQuantiles(1, &yq, &xq);
+          streamlog_out(MESSAGE3) << " Quantile at xq =" << xq << " is yq=" << yq << std::endl;
+          etaBinEdges.push_back(yq);
+          
+          string offsetname =  "variant_" + to_string(etaIndex) + "_" + "E" + std::to_string(i) + name;         
+          TH2D offsetHisto(offsetname.c_str(), offsetname.c_str(), 1, 0, 1, 1, 0, 1);
+          offsetHisto.StatOverflows();
+          offsetHisto.SetDirectory(nullptr);
+          offsetHistos.push_back(offsetHisto);
+        }
+        etaBinEdgesVec.push_back(pair< string, vector<double> >(name, etaBinEdges));
+        offsetHistosVec.push_back(pair< string, vector<TH2D> >(name, offsetHistos));
+        
+        etaBinningMap[name].push_back(vector<double>(etaBinEdges));
+      }
+      
+      // Loop over the tree is to fill offset histograms
+      for (int i = 0; i < nEntries; ++i) {
+        m_rootTree->GetEntry(i); 
+        
+        auto it = std::find_if(offsetHistosVec.begin(), offsetHistosVec.end(),
+                          [&](const pair<string, vector<TH2D>>& element) { return element.first == m_typeName;});
+        
+        auto it2 = std::find_if(etaBinEdgesVec.begin(), etaBinEdgesVec.end(),
+                          [&](const pair<string, vector<double>>& element) { return element.first == m_typeName;});
+        
+        //Item exists in maps
+        if (it != offsetHistosVec.end()  && it2 != etaBinEdgesVec.end() ) {
+          auto clusterEta = m_clusterEtaSS[etaIndex];
+          if (thetaU * thetaV < 0) {clusterEta = m_clusterEtaOS[etaIndex];}
+          auto etaBin = PolyClusterDescriptor::computeEtaBin(clusterEta, it2->second);
+          it->second.at(etaBin).Fill(m_positionOffsetU, m_positionOffsetV);
+        }
+      }
+      
+      // Compute the losses for all good types 
+      for (auto iter : offsetHistosVec) {
+        auto name = iter.first;
+        auto& histovec = iter.second;
+        
+        double lossU = 0;
+        double lossV = 0;
+        double norm = 0;
+                
+        vector< vector<double> > offsetCalibrations;
 
-    if ( min_covV - trk_covV < _minVarianceV ) {
-      streamlog_out(MESSAGE3) << "Original track sigmaV is  " << sqrt(trk_covV)  << std::endl;
-      trk_covV = min_covV - _minVarianceV;
-      streamlog_out(MESSAGE3) << "Truncated track sigmaV is  " << sqrt(trk_covV)  << std::endl;  
-    }  
+        // Loop over eta bins
+        for (auto& histo : histovec) {
+            
+          double offsetU = histo.GetMean(1);
+          double offsetV = histo.GetMean(2);
+          double covU = pow(histo.GetRMS(1), 2);
+          double covV = pow(histo.GetRMS(2), 2);
+          double covUV = histo.GetCovariance();
+          double error_offsetU = histo.GetMeanError(1);
+          double error_offsetV = histo.GetMeanError(2);
+          double error_covU = 2 * histo.GetRMS(1) * histo.GetRMSError(1); 
+          double error_covV = 2 * histo.GetRMS(2) * histo.GetRMSError(2); 
+          
+          covU =  std::max(covU - trk_covU, pow(_minSigmaU ,2));  
+          covV =  std::max(covV - trk_covV, pow(_minSigmaV ,2));  
+          covUV -= trk_covUV;    
+          
+          streamlog_out(MESSAGE3) << std::setprecision(5)
+                                  << "Name " << histo.GetName()  << " entries=" << histo.GetEntries() 
+                                  << ", sigmaU=" << sqrt(covU) << ", sigmaV=" << sqrt(covV) << ", corrUV=" << covUV/sqrt(covU)/sqrt(covV) << std::endl;  
+           
+          TMatrixDSym HitCov(2);
+          HitCov(0, 0) = covU;
+          HitCov(1, 0) = covUV;
+          HitCov(0, 1) = covUV;
+          HitCov(1, 1) = covV;
+          
+          TMatrixDSymEigen HitCovE(HitCov);
+          TVectorD eigenval = HitCovE.GetEigenValues();
+          if (eigenval(0) <= 0 || eigenval(1) <= 0) {
+            streamlog_out(ERROR3) << "Estimated covariance matrix not positive definite." << std::endl;
+          }
+
+          vector<double> etaBinOffsetCalibration;
+          etaBinOffsetCalibration.push_back(histo.GetEntries());
+          etaBinOffsetCalibration.push_back(offsetU);
+          etaBinOffsetCalibration.push_back(offsetV);
+          etaBinOffsetCalibration.push_back(covU);
+          etaBinOffsetCalibration.push_back(covV);
+          etaBinOffsetCalibration.push_back(covUV);
+          etaBinOffsetCalibration.push_back(error_offsetU);
+          etaBinOffsetCalibration.push_back(error_offsetV);
+          etaBinOffsetCalibration.push_back(error_covU);
+          etaBinOffsetCalibration.push_back(error_covV);
+          
+          // Append the calibration 
+          offsetCalibrations.push_back(etaBinOffsetCalibration); 
+          
+          // Compute weighed mean of covariance matrix diagonals
+          lossU += histo.GetEntries() * covU;
+          lossV += histo.GetEntries() * covV;
+          norm += histo.GetEntries();
+        }
+         
+        // Append the normalized loss, i.e. sum of average sigmaU and sigmaV 
+        lossMatrix[name].push_back( sqrt(lossU/norm) + sqrt(lossV/norm) );
+        
+        // Append the offset calibrations 
+        etaOffsetCalibrationMap[name].push_back( offsetCalibrations );
+      }
+    }
+    
+    // The matrix of losses is now computed. Next we search for the 
+    // best eta index i_T for each type T. 
+    
+    // Map key is cluster type and value is index i_T of best eta[i_T]
+    map< string, int > bestEtaMap;
+    
+    for (auto const& x : lossMatrix) { 
+      auto smallest = std::min_element( x.second.begin(), x.second.end() );
+      if (smallest == x.second.end()) {
+        streamlog_out(ERROR3) << "Cannot find minimum loss for " << x.first << ". Very odd." << endl;   
+      }
+      bestEtaMap[x.first] = std::distance(x.second.begin(), smallest); 
+         
+      streamlog_out(MESSAGE3) << std::setprecision(5)
+                              << "Name " << x.first  << " has cog_loss=" << cogLossMap[x.first]  << ", eta_loss=" << *smallest << " at eta index=" << bestEtaMap[x.first] <<  endl;
+      streamlog_out(MESSAGE3) << std::setprecision(5)
+                              << "Name " << x.first  << " has reference loss=" << x.second[0]  <<  endl;
+    }
+    
+    // Count total number of good cluster types
+    int nTypes = (int) etaOffsetCalibrationMap.size();
+      
+    // Count total number of eta shapes 
+    int nShapes = 0; 
+    for (auto const& x : etaOffsetCalibrationMap) {
+      nShapes += (int)x.second[bestEtaMap[x.first]].size();
+    }
     
     // Close collector file
     _rootCollectorOutputFile->Write();
@@ -549,6 +756,11 @@ namespace depfet {
       _histoMap[histoName] = new TH1F(histoName.c_str(),"",nTypes,0,nTypes);
       _histoMap[histoName]->SetStats( false );
       _histoMap[histoName]->SetYTitle("type");  
+      
+      histoName = "hDB_EtaIndex";
+      _histoMap[histoName] = new TH1F(histoName.c_str(),"",nTypes,0,nTypes);
+      _histoMap[histoName]->SetStats( false );
+      _histoMap[histoName]->SetYTitle("eta index");  
       
       histoName = "hDB_Weight";
       _histoMap[histoName] = new TH1F(histoName.c_str(),"",nShapes,0,nShapes);
@@ -580,37 +792,41 @@ namespace depfet {
       _histoMap[histoName]->SetStats( false );
       _histoMap[histoName]->SetYTitle("covariance u-v [mm^2]"); 
       
-      
+       
       // Compute the moments of the offset histograms 
       int offsetBin = 0;
       int typeBin = 0; 
-      for (auto iter : offsetHistosVec) {
+      
+      for (auto const& x : etaOffsetCalibrationMap) {
         typeBin++;
-        auto name = iter.first;
-        auto& histovec = iter.second;
+        auto name = x.first;
+        auto& calvec = x.second[bestEtaMap[x.first]];
         int typeCounter = 0; 
         
         // Loop over eta bins
         int etaBin = -1; 
-        for (auto& histo : histovec) {
+        for (auto& cal : calvec) {
           // Compute offset moments
           offsetBin++;
           etaBin++; 
-          auto shapeName = "E" + std::to_string(etaBin) + name; 
-          int counter = histo.GetEntries();
+          auto shapeName = "E" + std::to_string(etaBin) + name;
+          
+          // Read back the calibration constants
+          int counter = (int)cal[0];
+          double offsetU = cal[1];
+          double offsetV = cal[2];
+          double covU = cal[3];
+          double covV = cal[4];
+          double covUV = cal[5];
+          double error_offsetU = cal[6];
+          double error_offsetV = cal[7];     
+          double error_covU = cal[8];
+          double error_covV = cal[9];          
+
           typeCounter += counter;
-          double offsetU = histo.GetMean(1);
-          double offsetV = histo.GetMean(2);
-          double covUV = histo.GetCovariance();
-          double covU = pow(histo.GetRMS(1), 2);
-          double covV = pow(histo.GetRMS(2), 2);
-          
-          // Subtract mean covariance of track extrapolation to DUT
-          covU -= trk_covU;
-          covV -= trk_covV;     
-          covUV -= trk_covUV;   
-          
-          streamlog_out(MESSAGE3) << "Name " << shapeName  << " entries=" << counter << ", posU=" << offsetU << ", posV=" << offsetV 
+           
+          streamlog_out(MESSAGE3) << std::setprecision(5)
+                                  << "Name " << shapeName  << " entries=" << counter << ", posU=" << offsetU << ", posV=" << offsetV 
                                   << ", sigmaU=" << sqrt(covU) << ", sigmaV=" << sqrt(covV) << ", corrUV=" << covUV/sqrt(covU)/sqrt(covV) << std::endl;
           
           TMatrixDSym HitCov(2);
@@ -622,7 +838,7 @@ namespace depfet {
           TMatrixDSymEigen HitCovE(HitCov);
           TVectorD eigenval = HitCovE.GetEigenValues();
           if (eigenval(0) <= 0 || eigenval(1) <= 0) {
-            streamlog_out(MESSAGE3) << "Estimated covariance matrix not positive definite." << std::endl;
+            streamlog_out(ERROR3) << "Estimated covariance matrix not positive definite." << std::endl;
           }
           
           // Store calibration result   
@@ -632,22 +848,22 @@ namespace depfet {
           
           histoName = "hDB_U";
           _histoMap[histoName]->SetBinContent( offsetBin, offsetU );
-          _histoMap[histoName]->SetBinError( offsetBin, histo.GetMeanError(1) );
+          _histoMap[histoName]->SetBinError( offsetBin, error_offsetU );
           _histoMap[histoName]->GetXaxis()->SetBinLabel( offsetBin, shapeName.c_str() );
           
           histoName = "hDB_V"; 
           _histoMap[histoName]->SetBinContent( offsetBin, offsetV );
-          _histoMap[histoName]->SetBinError( offsetBin, histo.GetMeanError(2) );
+          _histoMap[histoName]->SetBinError( offsetBin, error_offsetV );
           _histoMap[histoName]->GetXaxis()->SetBinLabel( offsetBin, shapeName.c_str() );
                
           histoName = "hDB_Sigma2_U";
           _histoMap[histoName]->SetBinContent( offsetBin, covU );
-          _histoMap[histoName]->SetBinError( offsetBin, 2 * histo.GetRMS(1) * histo.GetRMSError(1) );
+          _histoMap[histoName]->SetBinError( offsetBin, error_covU );
           _histoMap[histoName]->GetXaxis()->SetBinLabel( offsetBin, shapeName.c_str() );
           
           histoName = "hDB_Sigma2_V";
           _histoMap[histoName]->SetBinContent( offsetBin, covV );
-          _histoMap[histoName]->SetBinError( offsetBin, 2 * histo.GetRMS(2) * histo.GetRMSError(2) );
+          _histoMap[histoName]->SetBinError( offsetBin, error_covV );
           _histoMap[histoName]->GetXaxis()->SetBinLabel( offsetBin, shapeName.c_str() );  
         
           histoName = "hDB_Cov_UV";
@@ -660,11 +876,16 @@ namespace depfet {
         histoName = "hDB_Types";
         _histoMap[histoName]->SetBinContent( typeBin, typeCounter );
         _histoMap[histoName]->GetXaxis()->SetBinLabel( typeBin, name.c_str() ); 
+
+        // Add optimized eta index 
+        histoName = "hDB_EtaIndex";
+        _histoMap[histoName]->SetBinContent( typeBin, bestEtaMap[x.first] );
+        _histoMap[histoName]->GetXaxis()->SetBinLabel( typeBin, name.c_str() ); 
       }
       
-      for (auto iter : etaBinEdgesVec) {
-        auto name = iter.first;
-        auto& etaBinEdges = iter.second;
+      for (auto const& x : etaBinningMap) {
+        auto name = x.first;
+        auto& etaBinEdges = x.second[bestEtaMap[x.first]];
         
         // Add eta bin edges for type
         TVectorD DB_etaBinEdges( etaBinEdges.size() );
@@ -673,7 +894,7 @@ namespace depfet {
         }
         DB_etaBinEdges.Write(  string("DB_etaBinEdges_"+name).c_str() );
       }
-               
+         
       TVectorD DB_periods( 2 );
       DB_periods[0] = _vCellPeriod;
       DB_periods[1] = _uCellPeriod;
