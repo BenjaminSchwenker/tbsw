@@ -54,7 +54,10 @@ for inputfilename in glob.glob(args.ifile):
     inpixel.plot_superpixel(inputfile, histofile, pixeltype=0, upitch=0.05, vpitch=0.060, ubins=20, vbins=20, ufold=2, vfold=2)             
       
     # Add superpixel in-pixel efficiency plots 
-    efficiency.plot_super_inpix(inputfile, histofile, basecut="hasRefHit==0 && hasTestPixels==1 && pixeltype==0", matchcut="hasHit==0 && localChi2<20", upitch=0.05, vpitch=0.060, ubins=20, vbins=20)
+    efficiency.plot_super_inpix(inputfile, histofile, basecut="hasRefHit==0 && maskedPixel==0 && pixeltype==0", matchcut="hasHit==0 && localChi2<20", upitch=0.05, vpitch=0.060, ubins=20, vbins=20)
+
+    # Compute efficiency (and error) in specified ROI
+    efficiency.extract_roi(inputfile, basecut="hasRefHit==0 && maskedPixel==0 && cellU_fit>100 && cellU_fit<150 && cellV_fit>512 && cellV_fit<550", matchcut="hasHit==0 && localChi2<20")
     
     # Make a pdf containing all plots 
     pdfName = os.path.splitext( os.path.basename( inputfilename ) )[0] + '.pdf' 

@@ -373,6 +373,7 @@ _rootTrackTree->Branch("hasHit"          ,&_rootTrackHasHit         ,"hasHit/I")
 _rootTrackTree->Branch("localChi2"       ,&_rootTrackLocalChi2      ,"localChi2/D");   // Chi2 value from hit-track residual on device under test                                                
 _rootTrackTree->Branch("seedCharge"      ,&_rootTrackSeedCharge     ,"seedCharge/D");  // Highest charge in cluster, only filled if cluster matched
 _rootTrackTree->Branch("pixeltype"      ,&_rootTrackPixelType     ,"pixeltype/I");     // PixelType of pixel cell intersected by track 
+_rootTrackTree->Branch("maskedPixel"     ,&_rootTrackPixelMasked    ,"maskedPixel/I"); // Track intersects a masked pixel (masked!=0) or unmasked pixel (masked=0)  
  
 // Event Summay Tree filled once per event
 _rootEventTree = new TTree("Event","Event info");

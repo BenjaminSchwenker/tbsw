@@ -77,22 +77,22 @@ void PixelClusterizer::init() {
    
    _dummyCollectionName = "original_data_"+_clusterCollectionName;
    
-   // Open clusterDB file 
+   // Open noiseDB file 
    TFile * noiseDBFile = new TFile(_noiseDBFileName.c_str(), "READ");
-    
-   for(int ipl=0;ipl<TBDetector::GetInstance().GetNSensors();ipl++)  { 
-     int sensorID = TBDetector::Get(ipl).GetSensorID();  
-     string histoName = "hDB_sensor"+to_string(sensorID) + "_mask";
-     if ( (TH2F *) noiseDBFile->Get(histoName.c_str()) != nullptr) {
-       _DB_Map_Mask[sensorID] = (TH2F *) noiseDBFile->Get(histoName.c_str());  
-       _DB_Map_Mask[sensorID]->SetDirectory(0);
-     }  
+   if (!noiseDBFile->IsZombie()) { 
+     for(int ipl=0;ipl<TBDetector::GetInstance().GetNSensors();ipl++)  { 
+       int sensorID = TBDetector::Get(ipl).GetSensorID();  
+       string histoName = "hDB_sensor"+to_string(sensorID) + "_mask";
+       if ( (TH2F *) noiseDBFile->Get(histoName.c_str()) != nullptr) {
+         _DB_Map_Mask[sensorID] = (TH2F *) noiseDBFile->Get(histoName.c_str());  
+         _DB_Map_Mask[sensorID]->SetDirectory(0);
+       }  
+     }
+     // Close root  file
+     noiseDBFile->Close();
    }
-     
-   // Close root  file
-   noiseDBFile->Close();
    delete noiseDBFile;
-              
+           
    // Print set parameters
    printProcessorParams();
    

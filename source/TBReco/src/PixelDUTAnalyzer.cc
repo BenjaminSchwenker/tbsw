@@ -76,6 +76,10 @@ PixelDUTAnalyzer::PixelDUTAnalyzer() : Processor("PixelDUTAnalyzer"),_inputDecod
                            std::string("zsdata_dut") ) ;
   
   // Processor parameters
+
+  registerProcessorParameter("NoiseDBFileName",
+                               "This is the name of the ROOT file with the status mask (add .root)",
+                               _noiseDBFileName, static_cast< string > ( "NoiseDB.root" ) ); 
   
   registerProcessorParameter ("MetaInfoCollection",
                              "Name of optional unpacker meta info collection for DUT. Set empty string if it does not exist",
@@ -137,6 +141,24 @@ void PixelDUTAnalyzer::init() {
      _iref = -1;
    }
    
+   _minUCell = TBDetector::Get(_idut).GetMinUCell(); 
+   _minVCell = TBDetector::Get(_idut).GetMinVCell();  
+      
+   // Read mask from noiseDB file 
+   TFile * noiseDBFile = new TFile(_noiseDBFileName.c_str(), "READ");
+   if (!noiseDBFile->IsZombie()) {
+     string histoName = "hDB_sensor"+to_string( TBDetector::Get(_idut).GetSensorID() ) + "_mask";
+     if ( (TH2F *) noiseDBFile->Get(histoName.c_str()) != nullptr) {
+       _DUT_Mask = (TH2F *) noiseDBFile->Get(histoName.c_str());  
+       _DUT_Mask->SetDirectory(0);
+     }
+     noiseDBFile->Close();      
+   } 
+   delete noiseDBFile;   
+
+   // Book output TTree and TH1 objects 
+   bookHistos();   
+   
    // Print set parameters
    printProcessorParams();
    
@@ -144,10 +166,6 @@ void PixelDUTAnalyzer::init() {
    streamlog_out ( MESSAGE3 )  << "D.U.T. plane  ID = " << TBDetector::Get(_idut).GetSensorID()
                                << "  at position = " << _idut 
                                << endl << endl;
-    
-      
-   bookHistos();
-   
 }
 
 //
@@ -506,6 +524,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
       _rootHitHasTrack = 0;  // matched   
        
       // Check track has a hit on reference (timing) plane
+      _rootHitHasTrackWithRefHit = -1;
       if ( _iref >= 0 ) {
         if ( trk.GetTE(_iref).HasHit() ) {
           streamlog_out ( MESSAGE2 ) << "Track has hit on reference plane." << endl;
@@ -525,9 +544,15 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
       double pv = p[3];
         
       // Get readout channels  
-      int fitcol = dut.GetUCellFromCoord( pu, pv );     
-      int fitrow = dut.GetVCellFromCoord( pu, pv );           
-       
+      int fitUCell = dut.GetUCellFromCoord( pu, pv );     
+      int fitVCell = dut.GetVCellFromCoord( pu, pv );     
+      
+      // Try to check if pixel is masked (=1) or unmasked (=0)
+      int masked = 0; 
+      if ( _DUT_Mask != nullptr ) {
+        masked = _DUT_Mask->GetBinContent(fitUCell-_minUCell+1, fitVCell-_minVCell+1); 
+      }      
+      
       _rootHitFitdUdW = p[0];     
       _rootHitFitdVdW = p[1];    
       _rootHitFitU = p[2];           
@@ -538,15 +563,14 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
       _rootHitPullResidualU = (hit.GetCoord()[0] - p[2]) / TMath::Sqrt( C(2,2) + hit.GetCov()(0,0) ) ;   
       _rootHitPullResidualV = (hit.GetCoord()[1] - p[3]) / TMath::Sqrt( C(3,3) + hit.GetCov()(1,1) ) ;  
                                  
-      _rootHitFitCellU = fitcol;      
-      _rootHitFitCellV = fitrow;    
-      _rootHitFitCellUCenter = dut.GetPixelCenterCoordU( fitrow, fitcol ); 
-      _rootHitFitCellVCenter = dut.GetPixelCenterCoordV( fitrow, fitcol );                                        
+      _rootHitFitCellU = fitUCell;      
+      _rootHitFitCellV = fitVCell;    
+      _rootHitFitCellUCenter = dut.GetPixelCenterCoordU( fitVCell, fitUCell ); 
+      _rootHitFitCellVCenter = dut.GetPixelCenterCoordV( fitVCell, fitUCell );                                        
       _rootHitTrackChi2 = trk.GetChiSqu(); 
       _rootHitTrackNDF = trk.GetNDF();
       _rootHitTrackNHits = trk.GetNumHits(); 
-      
-     
+      _rootHitPixelMasked = masked;
       
     } else {
 
@@ -570,6 +594,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
       _rootHitTrackNHits = -1;  
       _rootHitPullResidualU = -1;   
       _rootHitPullResidualV = -1;  
+      _rootHitPixelMasked = 0;
     }
     
     // Fill tree with set variables 
@@ -601,22 +626,29 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     double pv = p[3];
         
     // Get readout channels  
-    int fitcellu = dut.GetUCellFromCoord( pu, pv );     
-    int fitcellv = dut.GetVCellFromCoord( pu, pv );       
+    int fitUCell = dut.GetUCellFromCoord( pu, pv );     
+    int fitVCell = dut.GetVCellFromCoord( pu, pv );      
+
+    // Try to check if pixel is masked (=1) or unmasked (=0)
+    int masked = 0; 
+    if ( _DUT_Mask != nullptr ) {
+      masked = _DUT_Mask->GetBinContent(fitUCell-_minUCell+1, fitVCell-_minVCell+1); 
+    }       
     
-    _rootTrackPixelType = dut.GetPixelType(fitcellv, fitcellu);  
+    _rootTrackPixelType = dut.GetPixelType(fitVCell, fitUCell);  
     _rootTrackFitMomentum = trk.GetMomentum();      
     _rootTrackFitdUdW = p[0];     
     _rootTrackFitdVdW = p[1];    
     _rootTrackFitU = p[2];           
     _rootTrackFitV = p[3];    
-    _rootTrackFitCellU = fitcellu;      
-    _rootTrackFitCellV = fitcellv;    
-    _rootTrackFitCellUCenter = dut.GetPixelCenterCoordU( fitcellv, fitcellu ); 
-    _rootTrackFitCellVCenter = dut.GetPixelCenterCoordV( fitcellv, fitcellu );                                        
+    _rootTrackFitCellU = fitUCell;      
+    _rootTrackFitCellV = fitVCell;    
+    _rootTrackFitCellUCenter = dut.GetPixelCenterCoordU( fitVCell, fitUCell ); 
+    _rootTrackFitCellVCenter = dut.GetPixelCenterCoordV( fitVCell, fitUCell );                                        
     _rootTrackChi2 = trk.GetChiSqu(); 
     _rootTrackNDF = trk.GetNDF();  
-    _rootTrackNHits = trk.GetNumHits();    
+    _rootTrackNHits = trk.GetNumHits();  
+    _rootTrackPixelMasked = masked;  
            
     if ( track2hit[itrk] >= 0  ) {
       TBHit& hit = HitStore[ track2hit[itrk] ];  
@@ -776,7 +808,8 @@ void PixelDUTAnalyzer::bookHistos()
    _rootHitTree->Branch("momentum"        ,&_rootHitFitMomentum      ,"momentum/D");    
    _rootHitTree->Branch("localChi2"       ,&_rootHitLocalChi2       ,"localChi2/D"); 
    _rootHitTree->Branch("pixeltype"       ,&_rootHitSeedPixelType     ,"pixeltype/I");  
-    
+   _rootHitTree->Branch("maskedPixel"     ,&_rootHitPixelMasked     ,"maskedPixel/I");       
+ 
    // 
    // Track Tree 
    _rootTrackTree = new TTree("Track","Track info");
@@ -806,7 +839,8 @@ void PixelDUTAnalyzer::bookHistos()
    _rootTrackTree->Branch("trackNHits"      ,&_rootTrackNHits          ,"trackNHits/I");  
    _rootTrackTree->Branch("seedCharge"      ,&_rootTrackSeedCharge     ,"seedCharge/D");  
    _rootTrackTree->Branch("localChi2"       ,&_rootTrackLocalChi2      ,"localChi2/D"); 
-   _rootTrackTree->Branch("pixeltype"      ,&_rootTrackPixelType     ,"pixeltype/I");     
+   _rootTrackTree->Branch("pixeltype"       ,&_rootTrackPixelType      ,"pixeltype/I");     
+   _rootTrackTree->Branch("maskedPixel"     ,&_rootTrackPixelMasked    ,"maskedPixel/I");     
 
    // 
    // Event Summay Tree 
