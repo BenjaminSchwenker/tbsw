@@ -341,7 +341,7 @@ class ClusterDB(object):
       return float('nan')
   
    
-  def plotClusterType(self, clusterType, imagePath, scale=10000, poly=True):
+  def plotClusterType(self, clusterType, imagePath, scale=10000, poly=True, title=True):
     """
     Create an image of the pixel cells of the given cluster type 
     overlaid with 68% error ellipses of position estimators. 
@@ -466,7 +466,7 @@ class ClusterDB(object):
       theta = np.degrees(np.arctan2(*vecs[:,0][::-1]))
       w, h = 2 * math.sqrt(2.30) * np.sqrt(vals)
       ell = Ellipse( (u, v), width=w, height=h, angle=theta,)
-      ell.set_alpha(0.4)
+      ell.set_alpha(0.12)  #0.4
       ell.set_facecolor('none')
       return ell
     
@@ -491,25 +491,40 @@ class ClusterDB(object):
     
     # Set margins for plotting 
     umin, umax, vmin, vmax = get_bounding_box(cells)  
-    marginU = 1.5*min(abs(umin), abs(umax))
-    marginV = 1.5*min(abs(vmin), abs(vmax))
+    marginU = 0.2*min(abs(umin), abs(umax))
+    marginV = 0.2*min(abs(vmin), abs(vmax))
     
 
     #ax = fig.add_subplot(111, aspect='equal')
     ax = fig.add_subplot(111)
     ax.set_xlim(umin - marginU, umax + marginU)
-    ax.set_ylim(vmin - marginV, vmax + marginV)
+    ax.set_ylim(vmin - marginV, vmax + 2.5*marginV)
     
-    ax.set_xlabel('offset u / mm')
-    ax.set_ylabel('offset v / mm')
-    ax.set_title("\n".join(textwrap.wrap(clusterType, 50)))
-    ax.text(0.5, 0.9, 'prob={:.2f}% \n $\sigma_u$={:.2f}$\mu$m, $\sigma_v$={:.2f}$\mu$m, $\\rho$={:.2f}'.format(sum_prob, 1000*av_sigU, 1000*av_sigV, av_rho),
-          style='italic',
-          bbox={'facecolor':'red', 'alpha':0.5, 'pad':10},
+    ax.set_xlabel('shape u / mm')
+    ax.set_ylabel('shape v / mm')
+
+    ax.yaxis.label.set_size(24)
+    ax.xaxis.label.set_size(24)
+    ax.tick_params(axis='both', which='major', labelsize=18)
+    ax.tick_params(axis='both', which='minor', labelsize=18)
+ 
+    if title: 
+      ax.set_title("\n".join(textwrap.wrap(clusterType, 50)))
+    #ax.text(0.5, 0.9, '$\phi$={:.1f}$^\circ$ $\\theta$={:.1f}$^\circ$ \n $\sigma_u$={:.2f}$\mu$m, $\sigma_v$={:.2f}$\mu$m, $\rho$={:.2f}'.format( self.getThetaU(), self.getThetaV(),  1000*av_sigU, 1000*av_sigV, av_rho),
+    #      style='italic',
+    #      #bbox={'facecolor':'red', 'alpha':0.5, 'pad':10},
+    #      horizontalalignment='center',
+    #      verticalalignment='center',
+    #      transform = ax.transAxes)
+    
+    ax.text(0.5, 0.9, '$\phi$={:.1f}$^\circ$, $\\theta$={:.1f}$^\circ$  \n $<\sigma_u>$={:.2f}$\mu$m, $<\sigma_v>$={:.2f}$\mu$m, $<\\rho>$={:.2f} '.format( self.getThetaU(), self.getThetaV(), 1000*av_sigU, 1000*av_sigV, av_rho),
+          #style='italic',
+          #bbox={'facecolor':'red', 'alpha':0.5, 'pad':10},
           horizontalalignment='center',
           verticalalignment='center',
-          transform = ax.transAxes)
-    
+          transform = ax.transAxes, 
+          fontsize=18)
+
     # Draw the cluster outline
     pixels = create_poly_pixels(cells)   
 
@@ -521,20 +536,27 @@ class ClusterDB(object):
       pixel.set_clip_box(ax.bbox)
       ax.add_artist(pixel)
       
-      if index in heads and len(pixels)>1: 
-        # Mark the head pixel  
-        cx = np.array(pixel.get_xy()[:,0]).mean()
-        cy = np.array(pixel.get_xy()[:,1]).mean()
-        ax.annotate('Head', (cx, cy), color='b', weight='bold', 
-                    fontsize=12, ha='center', va='center')
-      
-      if index in tails and len(pixels)>1: 
-        # Mark the tail pixel  
-        cx = np.array(pixel.get_xy()[:,0]).mean()
-        cy = np.array(pixel.get_xy()[:,1]).mean()
-        ax.annotate('Tail', (cx, cy), color='b', weight='bold', 
+      if len(pixels)>1: 
+        if index in heads and not index in tails:     
+          cx = np.array(pixel.get_xy()[:,0]).mean()
+          cy = np.array(pixel.get_xy()[:,1]).mean()
+          ax.annotate('Head', (cx, cy), color='b', weight='bold', 
                     fontsize=12, ha='center', va='center')
         
+        if index in tails and not index in heads: 
+          # Mark the tail pixel  
+          cx = np.array(pixel.get_xy()[:,0]).mean()
+          cy = np.array(pixel.get_xy()[:,1]).mean()
+          ax.annotate('Tail', (cx, cy), color='b', weight='bold', 
+                    fontsize=12, ha='center', va='center')
+         
+        if index in tails and index in heads: 
+          # Mark the tail pixel  
+          cx = np.array(pixel.get_xy()[:,0]).mean()
+          cy = np.array(pixel.get_xy()[:,1]).mean()
+          ax.annotate('Head', (cx, cy), color='b', weight='bold', 
+                    fontsize=12, ha='center', va='center')
+
     # Loop over all shapes   
     for shape in self.getSelectedShapes('^E[0-9]+'+clusterType+'$') :
       prob = self.getFraction('^'+shape+'$')
