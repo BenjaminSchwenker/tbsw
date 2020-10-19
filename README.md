@@ -120,11 +120,12 @@ script creates two root files with simple residual histograms ('Example-Residual
 to show what can be done using the hit and track trees.   
 
 
-# What is the output data format of tbsw?
+# What is the input/output data format of tbsw?
 
 The tbsw framework uses Marlin[1] and LCIO[2] to organize the calibration and reconstruction of test beam data into a ```Path``` of small steps 
 handled by so called ```Processors```. In order to read in raw files from EUDAQ a part of the EUDAQ 1 code base [3] is hosted to read files and 
 convert event raw data into LCIO collections for further processing. The reconstruction path from the example script can illustrate the situation:
+
 
 ```
 #!python
@@ -266,6 +267,12 @@ python histo-plotter.py
 ```
 
 A collection of real world workspaces for applying tbsw to testbeam data can be found at https://bitbucket.org/testbeam/tbsw_workspaces/src/master/
+
+Recently the option was added to read hit tables from different subdetectors in csv format as input into tbsw. The hit tables describe one raw hit 
+per row providing the trigger number, plane number, column/row and charge information. The syncronization of hits from different tables is done in the 
+AsciiInputProcessor based on the trigger number. A working example can be found here: 
+
+https://bitbucket.org/testbeam/tbsw_workspaces/src/master/workspace_tjmono/ 
 
 Have fun with test beams ;)  
 
