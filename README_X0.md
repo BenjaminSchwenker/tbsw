@@ -31,13 +31,14 @@ generating a calibrated X0 image. All of these steps are included in the example
 there.
 
 The second part of this README explains the x0-reco.py script which can be used to analyse real beam test data. Example raw
-files can be downloaded to test the script. First create a directory (for example at '$HOME/rawdata/example') where the data files
+files can be downloaded to test the script. First create a directory (for example at './rawdata') where the data files
 are stored. Afterwards download the files:
 
 ```
-wget -O $HOME/rawdata/example/run006958.raw  https://owncloud.gwdg.de/index.php/s/NKdExF0pgz4G3UA/download
-wget -O $HOME/rawdata/example/run006965.raw  https://owncloud.gwdg.de/index.php/s/7a3SXRqHGVTOQnn/download
-wget -O $HOME/rawdata/example/run006973.raw  https://owncloud.gwdg.de/index.php/s/DkiJTIaHSJWgXgf/download 
+mkdir rawdata
+wget -O ./rawdata/run006958.raw  https://owncloud.gwdg.de/index.php/s/NKdExF0pgz4G3UA/download
+wget -O ./rawdata/run006965.raw  https://owncloud.gwdg.de/index.php/s/7a3SXRqHGVTOQnn/download
+wget -O ./rawdata/run006973.raw  https://owncloud.gwdg.de/index.php/s/DkiJTIaHSJWgXgf/download
 ```
 
 The parameters in the script are selected to conduct a analysis with the downloaded example files. It can be

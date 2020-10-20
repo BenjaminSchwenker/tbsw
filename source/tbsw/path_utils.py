@@ -161,9 +161,7 @@ def add_clustercalibrator(path, use_outerplanes=False):
   cluster_calibrator = tbsw.Processor(name="M26ClusterCalibrator",proctype="GoeClusterCalibrator")
   cluster_calibrator.param("ClusterDBFileName","localDB/clusterDB-M26.root")
   cluster_calibrator.param("MinClusters", "1000")
-  cluster_calibrator.param("MinVarianceU", 1e-06)
-  cluster_calibrator.param("MinVarianceV", 1e-06)
-
+  
   if use_outerplanes:
     cluster_calibrator.param("SelectPlanes","0 1 2 4 5 6")
   else:
