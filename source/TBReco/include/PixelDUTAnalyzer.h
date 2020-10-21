@@ -190,6 +190,7 @@ class PixelDUTAnalyzer : public marlin::Processor {
    double _rootTrackFitMomentum;     // Estimated track momentum from fit    
    int _rootTrackNDF;                // Number of degrees of freedom of track fit
    double _rootTrackChi2;            // Chi2 value from fit of reference track
+   double _rootTrackPValue;          // p-value from fit of reference track
    double _rootTrackLocalChi2;       // Chi2 value from hit-track residual on device under test 
    double _rootTrackFitU ;           // Estimated track intersection u coordimate in mm, in local DUT uvw coordinates 
    double _rootTrackFitV ;           // Estimated track intersection v coordimate in mm, in local DUT uvw coordinates

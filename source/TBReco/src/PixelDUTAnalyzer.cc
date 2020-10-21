@@ -647,6 +647,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     _rootTrackFitCellVCenter = dut.GetPixelCenterCoordV( fitVCell, fitUCell );                                        
     _rootTrackChi2 = trk.GetChiSqu(); 
     _rootTrackNDF = trk.GetNDF();  
+    _rootTrackPValue = TMath::Prob(trk.GetChiSqu(), trk.GetNDF());
     _rootTrackNHits = trk.GetNumHits();  
     _rootTrackPixelMasked = masked;  
            
@@ -835,6 +836,7 @@ void PixelDUTAnalyzer::bookHistos()
    _rootTrackTree->Branch("cellUCenter_fit" ,&_rootTrackFitCellUCenter ,"cellUCenter_fit/D");
    _rootTrackTree->Branch("cellVCenter_fit" ,&_rootTrackFitCellVCenter ,"cellVCenter_fit/D");
    _rootTrackTree->Branch("trackChi2"       ,&_rootTrackChi2           ,"trackChi2/D");
+   _rootTrackTree->Branch("trackPValue"     ,&_rootTrackPValue         ,"trackPValue/D");
    _rootTrackTree->Branch("trackNdof"       ,&_rootTrackNDF            ,"trackNdof/I");
    _rootTrackTree->Branch("trackNHits"      ,&_rootTrackNHits          ,"trackNHits/I");  
    _rootTrackTree->Branch("seedCharge"      ,&_rootTrackSeedCharge     ,"seedCharge/D");  
