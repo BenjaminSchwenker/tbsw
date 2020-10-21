@@ -18,7 +18,8 @@ namespace depfet {
 /** Class PolyDet
  * 
  *  The PolyDet class is a subclass of the Det class and represents a pixel detector 
- *  with a pixel matrix of polygon shaped pixels.
+ *  with a pixel matrix of polygon shaped pixels. See also Det.h and TBDetector.h 
+ *  files for more information. 
  *  
  *  
  *  @Author H. C. Beck, University of Göttingen

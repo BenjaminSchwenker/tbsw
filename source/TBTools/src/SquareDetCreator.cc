@@ -29,7 +29,6 @@ namespace {
 	       << "\" in element <" << el->Value() << "/> " ;
       throw marlin::ParseException( str.str() ) ;
     }
-     
     return std::string( *at )  ;
   }
 } 
@@ -138,7 +137,16 @@ void SquareDetCreator::create(const TiXmlNode* content, std::vector<Det*>& dets)
     ReferenceFrame nominal;
     nominal.SetPosition(NominalPosition);
     nominal.SetRotation(NominalRotation);     
-        
+    
+    // Check for optional material budget (radiation length X0) map
+    const TiXmlNode* X0Node = xmlLayer->FirstChildElement( "x0map" ) ;
+    std::string x0file("");
+    std::string x0histo("");
+    if (X0Node != nullptr) {
+      x0file = getXMLAttribute( X0Node, "x0file" ) ;
+      x0histo = getXMLAttribute( X0Node, "x0object" ) ;
+    } 
+    
     // Add new Det object to detector, ownership goes with detector
     // The plane number is set to -1 because we do not know the ordering of Dets yet 
     dets.push_back( new SquareDet( "SquareDet",
@@ -157,7 +165,9 @@ void SquareDetCreator::create(const TiXmlNode* content, std::vector<Det*>& dets)
                                   uCellGroupVec, 
                                   vCellGroupVec, 
                                   discrete, 
-                                  nominal
+                                  nominal, 
+                                  x0file,
+                                  x0histo
                                  ));
      
         
