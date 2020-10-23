@@ -388,7 +388,8 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
 
   m26hotpixelkiller = tbsw.Processor(name="M26HotPixelKiller",proctype="HotPixelKiller")
   m26hotpixelkiller.param("InputCollectionName", "zsdata_m26")
-  m26hotpixelkiller.param("MaxOccupancy", 0.01)
+  m26hotpixelkiller.param("MaxNormedOccupancy", 5)
+  m26hotpixelkiller.param("MinNormedOccupancy", -1)
   m26hotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-M26.root")
   m26hotpixelkiller.param("OfflineZSThreshold", 0)
   mask_path.add_processor(m26hotpixelkiller)
