@@ -9,13 +9,16 @@
 // Include TBTools 
 #include "Det.h"
 
+// ROOT includes 
+#include <TH2D.h>
+
 namespace depfet {
 	
 /** Class SquareDet
  *    
  *  The SquareDet class is a subclass of the Det class and represents a pixel detector 
  *  with a checkerboard type pixel matrix. The pixel pitch may change along the local 
- *  u-axis or v-axis.  
+ *  u-axis or v-axis. See also Det.h and TBDetector.h files for more information. 
  *  
  *  The geometrical 2D layout of pixels is constructed from a product of two 1D 'strip' layouts 
  *  for the u and v axis. As the 'strip' pitch in the 1D layouts changes, also the area of the 
@@ -46,6 +49,21 @@ namespace depfet {
  *
  *  Note that there is no restriction on the number of vCellGroups or uCellGroups and the above 
  *  example just demonstrates the simplest non trivial case. 
+ *
+ *  The material budget, or radiation length X0, for a SquareDet can optionally be specified by 
+ *  providing a (TH2D) histogram with X0 numbers for bins in the local sensor u/v plane. The root 
+ *  file containing the histogram must be placed in the steerfiles folder next to the gear files. 
+ *  Outside the range of this 2d histogram, default X0 numbers defined in the xml nodes 'sensitive'
+ *  and 'ladder' will be used. 
+ *  
+ *  In order to use this feature, add the following xml node to your sensor layer in the gear file. 
+ *  
+ *  <pre>
+ *  <x0map 
+ *    x0file="EoS2_f.root"
+ *	  x0object="x0_image"
+ *	/>
+ *  </pre>
  *  
  *  @Author B. Schwenker, University of Göttingen
  *  <mailto:benjamin.schwenker@phys.uni-goettingen.de>
@@ -67,7 +85,8 @@ class SquareDet : public Det {
                      double ladderAtomicNumber, double ladderAtomicMass, double ladderSizeU, 
                      double LayerSizeV, const std::vector< std::tuple<int,int,double> >& uCells, 
                      const std::vector< std::tuple<int,int,double> >& vCells, 
-                     const ReferenceFrame& discrete, const ReferenceFrame& nominal );
+                     const ReferenceFrame& discrete, const ReferenceFrame& nominal,
+					 const std::string& x0FileName, const std::string& x0ObjName );
   
     
   /** Get pixel type for pixel at position vcell and ucell. 
@@ -218,7 +237,10 @@ class SquareDet : public Det {
    */
   int GetPixelTypeV(int vcell) const;   
 
-  
+  /** Get default radlenght at position (u,v) from sensitive / ladder specifications.
+   */ 
+  double GetRadLengthDefault(double u, double v) const;  
+
   // Thickness in sensitive volume
   double m_sensitiveThickness;
   // Rad. length in sensitive volume
@@ -262,6 +284,9 @@ class SquareDet : public Det {
   std::vector<double> m_offsetsV; 
   // Map containing the protopixels of the layout
   std::map<int, std::vector<std::tuple<double,double>>> m_protopixels;
+
+  // For using user specified X0 maps 
+  TH2D * m_x0map {nullptr};
 };
  
 } // Namespace

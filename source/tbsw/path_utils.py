@@ -161,9 +161,7 @@ def add_clustercalibrator(path, use_outerplanes=False):
   cluster_calibrator = tbsw.Processor(name="M26ClusterCalibrator",proctype="GoeClusterCalibrator")
   cluster_calibrator.param("ClusterDBFileName","localDB/clusterDB-M26.root")
   cluster_calibrator.param("MinClusters", "1000")
-  cluster_calibrator.param("MinVarianceU", 1e-06)
-  cluster_calibrator.param("MinVarianceV", 1e-06)
-
+  
   if use_outerplanes:
     cluster_calibrator.param("SelectPlanes","0 1 2 4 5 6")
   else:
@@ -390,7 +388,8 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
 
   m26hotpixelkiller = tbsw.Processor(name="M26HotPixelKiller",proctype="HotPixelKiller")
   m26hotpixelkiller.param("InputCollectionName", "zsdata_m26")
-  m26hotpixelkiller.param("MaxOccupancy", 0.01)
+  m26hotpixelkiller.param("MaxNormedOccupancy", 5)
+  m26hotpixelkiller.param("MinNormedOccupancy", -1)
   m26hotpixelkiller.param("NoiseDBFileName", "localDB/NoiseDB-M26.root")
   m26hotpixelkiller.param("OfflineZSThreshold", 0)
   mask_path.add_processor(m26hotpixelkiller)

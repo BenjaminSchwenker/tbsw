@@ -13,6 +13,9 @@
 
 #include <algorithm>
 
+// ROOT includes 
+#include <TFile.h>
+
 // Namespaces
 using namespace marlin;
 
@@ -26,7 +29,8 @@ SquareDet::SquareDet(const std::string& typeName, int sensorID, int planeNumber,
                      double ladderAtomicNumber, double ladderAtomicMass, double ladderSizeU, 
                      double ladderSizeV, const std::vector< std::tuple<int,int,double> >& uCells, 
                      const std::vector< std::tuple<int,int,double> >& vCells, 
-                     const ReferenceFrame& discrete, const ReferenceFrame& nominal )
+                     const ReferenceFrame& discrete, const ReferenceFrame& nominal, 
+					 const std::string& x0FileName, const std::string& x0ObjName )
   : Det(typeName, sensorID, planeNumber) 
 {
   
@@ -69,6 +73,21 @@ SquareDet::SquareDet(const std::string& typeName, int sensorID, int planeNumber,
   m_ladderSizeV = ladderSizeV; 
   m_discrete = discrete;
   m_nominal = nominal;
+  
+  // Open root file for reading the x0 map 
+  if (x0FileName != "") {
+    TFile * rootFile = new TFile(x0FileName.c_str(), "READ");
+    if ((TH2D *) rootFile->Get(x0ObjName.c_str()) != nullptr) {
+      m_x0map = (TH2D *) rootFile->Get(x0ObjName.c_str());
+      m_x0map->SetDirectory(nullptr);
+      m_x0map->SetStats(0);
+      m_x0map->SetName((std::string("x0map_d"+std::to_string(GetSensorID()))).c_str());
+    } 
+    
+    // Close root  file
+    rootFile->Close();
+    delete rootFile;
+  }
 }
 
 SquareDet::SquareDet(const std::string& typeName, int sensorID, int planeNumber)
@@ -356,7 +375,7 @@ double SquareDet::GetTrackLength(double u, double v, double dudw, double dvdw) c
   return GetThickness(u,v)*std::sqrt(1 + dudw*dudw + dvdw*dvdw);  
 }
     
-double SquareDet::GetRadLength(double u, double v) const
+double SquareDet::GetRadLengthDefault(double u, double v) const
 { 
   if ( SensitiveCrossed(u, v) ) {
     return m_sensitiveRadLength; 
@@ -366,6 +385,27 @@ double SquareDet::GetRadLength(double u, double v) const
   }
   return materialeffect::X0_air; 
 } 
+
+double SquareDet::GetRadLength(double u, double v) const
+{ 
+  double x0 = GetRadLengthDefault(u, v);
+  
+  if (m_x0map != nullptr) {
+    int uBin = m_x0map->GetXaxis()->FindBin(u);
+    int vBin = m_x0map->GetYaxis()->FindBin(v);
+         
+    // Histo gives values X/X0 in percent for perpendicular incidence
+    // Histo values may be non positive, do not use these
+    // Retrieve X0 in mm from histogram. 
+    double xx0 = m_x0map->GetBinContent(uBin, vBin); 
+    double x = GetThickness(u, v);
+    if ((x > 0) and (xx0 > 0)) {
+      x0 = 100.0*x/xx0;     
+    }  
+  } 
+  return x0;
+} 
+
 
 double SquareDet::GetAtomicNumber(double u, double v) const
 { 
