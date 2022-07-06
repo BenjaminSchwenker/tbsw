@@ -21,7 +21,7 @@ namespace depfet {
     public: 
      
      /** Default constructor */
-     RawDigit(unsigned short iU=0, unsigned short iV=0, unsigned short charge=1) : m_cellIDU(iU), m_cellIDV(iV), m_charge(charge)
+     RawDigit(unsigned short iU=0, unsigned short iV=0, unsigned short charge=0, unsigned short time=0) : m_cellIDU(iU), m_cellIDV(iV), m_charge(charge), m_time(time)
      {}
      
      /** Sorting RawDigits */
@@ -38,6 +38,7 @@ namespace depfet {
      unsigned short m_cellIDU;
      unsigned short m_cellIDV;
      unsigned short m_charge;
+     unsigned short m_time;
   };
 
 
@@ -55,7 +56,7 @@ namespace depfet {
     /** Default constructor */
     PixelCluster():
       m_sensorID(0), m_clsCharge(0), m_seedCharge(0),
-      m_clsSize(0), m_uSize(0), m_vSize(0), m_uStart(0), m_vStart(0), m_uSeed(0), m_vSeed(0)
+      m_clsSize(0), m_uSize(0), m_vSize(0), m_uStart(0), m_vStart(0), m_uSeed(0), m_vSeed(0), m_minTime(0), m_maxTime(0)
     {}
     
     /** Constructor */
@@ -113,6 +114,16 @@ namespace depfet {
      * @return vCell of seed pixel.
      */
     short getVSeed() const { return m_vSeed; }
+
+    /** Get min time.
+     * @return minimum time over digit times.
+     */
+    short getMinTime() const { return m_minTime; }
+
+    /** Get max time.
+     * @return maximum time over digit times.
+     */
+    short getMaxTime() const { return m_maxTime; }
     
     /** Get sorted vector of raw digits 
      */
@@ -144,6 +155,10 @@ namespace depfet {
     short m_uSeed;
     // Seed pixel vCell address  
     short m_vSeed;
+    // Smallest time of hit   
+    unsigned short m_minTime;
+    // Largest time of hit   
+    unsigned short m_maxTime;
 
     // Sorted vector of raw digits 
     std::vector<RawDigit> m_sortedDigits;

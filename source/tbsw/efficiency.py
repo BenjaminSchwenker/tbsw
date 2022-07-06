@@ -1,5 +1,5 @@
 from ROOT import TFile, TH1F, TH2F, TGraphAsymmErrors
-from ROOT import gROOT, Double, TCut
+from ROOT import gROOT, TCut
 
 
 def plot_super_inpix(inputfile=None, histofile=None, basecut="", matchcut="hasHit==0", upitch=0.0, vpitch=0.0, ubins=10, vbins=10):
@@ -116,7 +116,7 @@ def plot(inputfile=None, histofile=None, basecut="", matchcut="hasHit==0", uaxis
   g_efficiency_v.SetTitle("Hit efficiency profile")
   g_efficiency_v.GetXaxis().SetTitle("cellV_{fit} [cellID]")
   g_efficiency_v.GetYaxis().SetTitle("efficiency") 
-  g_efficiency_v.Write()
+  #g_efficiency_v.Write()
 
   # Compute efficiency for u cells 
   h_track_u_total = TH1F("h_track_u_total","",uaxis[0],uaxis[1],uaxis[2])
@@ -136,7 +136,7 @@ def plot(inputfile=None, histofile=None, basecut="", matchcut="hasHit==0", uaxis
   g_efficiency_u.SetTitle("Hit efficiency profile")
   g_efficiency_u.GetXaxis().SetTitle("cellU_{fit} [cellID]")
   g_efficiency_u.GetYaxis().SetTitle("efficiency") 
-  g_efficiency_u.Write()
+  #g_efficiency_u.Write()
   
   # Compute efficiency for u:v 
   h_track_total = TH2F("h_track_total","",uaxis[0],uaxis[1],uaxis[2],vaxis[0],vaxis[1],vaxis[2])
@@ -150,6 +150,8 @@ def plot(inputfile=None, histofile=None, basecut="", matchcut="hasHit==0", uaxis
   h_track_pass.GetXaxis().SetTitle("cellU_fit [cellID]")
   h_track_pass.GetYaxis().SetTitle("cellV_fit [cellID]")
   h_track_pass.GetZaxis().SetTitle("tracks")
+
+  
 
   h2_efficiencymap = h_track_pass      
   h2_efficiencymap.SetName("h2_efficiencymap")

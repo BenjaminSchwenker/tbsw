@@ -122,6 +122,11 @@ namespace depfet {
      */
     bool _maskNormalized;                 
 
+    //! MasksAsAscii
+    /*! Outputs mask as Ascii
+     */
+    bool _maskAsAscii;    
+
    private:
     
     //! internally used as storage for input decoding

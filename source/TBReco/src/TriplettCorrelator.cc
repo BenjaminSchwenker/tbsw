@@ -67,7 +67,7 @@ TriplettCorrelator::TriplettCorrelator() : Processor("TriplettCorrelator")
    
    registerProcessorParameter ("OutputRootFileName",
                               "This is the name of the output root file",
-                              _rootFileName, string("XCorrelator.root"));
+                              _rootFileName, string("TXCorrelator.root"));
    
    
    
@@ -385,7 +385,7 @@ void TriplettCorrelator::bookHistos() {
     // This is a alignable detector   
     Det & det = TBDetector::GetInstance().GetDet(ipl); 
              
-    double safetyFactor = 1.4;  // 2 should be enough because it
+    double safetyFactor = 1.6;  // 2 should be enough because it
                                 // means that the sensor is wrong
                                 // by all its size.
         
@@ -422,7 +422,7 @@ void TriplettCorrelator::bookHistos() {
     double  vMax = safetyFactor *  det.GetSensitiveMaxV(); 
     double  PitchV = det.GetSensitiveMaxV()/(det.GetMaxVCell()-det.GetMinVCell()+1); 
     int     vBins = static_cast<int>( (vMax - vMin)/(2*PitchV) );     
-        
+
     // avoid too many bins 
     if (vBins > 2000 ) vBins = 2000;   
     

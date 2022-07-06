@@ -133,8 +133,8 @@ class Path(object):
       root.append(processor_node)
       
       # add processor to execute tag   
-      xml.etree.ElementTree.SubElement(root.find('execute'), tag='processor', attrib={'name' : str(processor.name) })
-      
+      xml.etree.ElementTree.SubElement(root.find('execute'), 'processor', attrib={'name' : str(processor.name) })
+
     # write new steer file 
     tree.write(os.path.join(self.tmpdir,self.name+'.xml'))
     

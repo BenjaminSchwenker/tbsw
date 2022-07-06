@@ -142,7 +142,8 @@ void TelUnpacker::processEvent(LCEvent * evt)
         int col = static_cast<int> (rawData[iDigit * m_modulus]);
         int row = static_cast<int> (rawData[iDigit * m_modulus + 1]);
         float charge =  rawData[iDigit * m_modulus + 2];     
-         
+        float time = 0; 
+
         // Print detailed pixel summary, for testing/debugging only !!! 
         streamlog_out(MESSAGE1) << "Digit Nr. " << iDigit << " on sensor " << sensorID  
                                 << std::endl;  
@@ -153,7 +154,8 @@ void TelUnpacker::processEvent(LCEvent * evt)
         // Store raw digits in tbsw format 
         outputDigitsMap[sensorID]->chargeValues().push_back( col );
         outputDigitsMap[sensorID]->chargeValues().push_back( row );
-        outputDigitsMap[sensorID]->chargeValues().push_back( charge );   
+        outputDigitsMap[sensorID]->chargeValues().push_back( charge );
+        outputDigitsMap[sensorID]->chargeValues().push_back( time );   
          
        }  
 

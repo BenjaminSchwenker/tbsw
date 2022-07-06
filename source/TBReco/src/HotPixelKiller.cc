@@ -13,6 +13,8 @@
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
+#include <fstream>
+
 
 // Include LCIO classes
 #include <lcio.h>
@@ -83,6 +85,11 @@ namespace depfet {
     registerProcessorParameter ("MaskNormalized",
                                 "Normalize occupancy before applying min/max cuts. Normal working pixel has normed occupancy near 1.",
                                 _maskNormalized, static_cast < bool >(true));
+
+    registerProcessorParameter ("MaskAsAscii",
+                                "Output mask as Ascii file",
+                                _maskAsAscii, static_cast < bool >(false));
+ 
 
   }
   
@@ -162,15 +169,15 @@ namespace depfet {
         }
         
         FloatVec sparseDigits = trackerData->getChargeValues();
-        int nDigits = sparseDigits.size()/3; 
+        int nDigits = sparseDigits.size()/4; 
             
         streamlog_out(MESSAGE2) << "Module sensorID " << sensorID << " having digits " <<  nDigits << std::endl; 
          
         for ( int index=0; index<nDigits;  index++) { 
             
-          int iU = static_cast<int> (sparseDigits[index * 3]);
-          int iV = static_cast<int> (sparseDigits[index * 3 + 1]);
-          float chargeValue =  sparseDigits[index * 3 + 2]; 
+          int iU = static_cast<int> (sparseDigits[index * 4]);
+          int iV = static_cast<int> (sparseDigits[index * 4 + 1]);
+          float chargeValue =  sparseDigits[index * 4 + 2]; 
            
           // Describe pixel by unique ID
           int uniqPixelID  = adet.encodePixelID(iV, iU);   
@@ -194,8 +201,8 @@ namespace depfet {
           // Check if digit is a duplicate   
           for ( int id=0; id<index;  id++) {
             
-            int iU2 = static_cast<int> (sparseDigits[id * 3]);
-            int iV2 = static_cast<int> (sparseDigits[id * 3 + 1]);
+            int iU2 = static_cast<int> (sparseDigits[id * 4]);
+            int iV2 = static_cast<int> (sparseDigits[id * 4 + 1]);
           
             if ( iU2 == iU && iV2==iV ) {
               streamlog_out(MESSAGE2) << "Digit on sensor " << sensorID 
@@ -342,7 +349,24 @@ namespace depfet {
           }      
         }
       } 
-        
+
+      if (_maskAsAscii) {
+
+        auto file = std::ofstream("localDB/mask_mimosa_" + std::to_string(sensorID) + "_DB.txt");
+        if (file.is_open()) {
+          for (int iV = minVCell; iV <= maxVCell; iV++) {
+            for (int iU = minUCell; iU <= maxUCell; iU++) {
+            
+              // Mask pixel with very high hit frequency -> hot pixel killer 
+              double occupancy =  hitVec[ adet.encodePixelID(iV, iU) ] / _nEvt;
+              if ( (occupancy  > _maxOccupancy) or (occupancy <= _minOccupancy ) ) {   
+                file  << "p " << iU << " " << iV << endl;
+              }  
+            }
+          }
+        } 
+      }
+  
       streamlog_out(MESSAGE3) << "Number of masked pixels on sensorID " << sensorID 
                               << " is " << nMasked << endl;  
     }

@@ -1,5 +1,5 @@
 from ROOT import TFile, TH1F, TH2F
-from ROOT import gROOT, Double, TCut
+from ROOT import gROOT, TCut
 import math
 
 
@@ -108,7 +108,6 @@ def plot(inputfile=None, histofile=None, basecut="hasTrack==0", Config=None):
   
   #Get access to hits
   hittree = inputfile.Get("Hit")
-
   hspot = TH2F("hspot","",nucells,minucell,maxucell, nvcells, minvcell, maxvcell)
   hittree.Draw("cellV_hit:cellU_hit>>hspot", hitcut,"goff")
   hspot.SetTitle("DUT clusters on matrix")

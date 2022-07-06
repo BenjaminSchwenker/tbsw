@@ -96,9 +96,6 @@ void CogHitMaker::init() {
                  
    // Print set parameters
    printProcessorParams();
-   
-   
-    
 }
 
 //
@@ -133,7 +130,6 @@ void CogHitMaker::processEvent(LCEvent * evt)
    
   //
   // Open collections
-  
   try {
       LCCollectionVec* clusterCollection = dynamic_cast < LCCollectionVec * >  ( evt->getCollection(_clusterCollectionName) );
       
@@ -154,11 +150,9 @@ void CogHitMaker::processEvent(LCEvent * evt)
         streamlog_out(MESSAGE2) << "Processing cluster on sensorID " << sensorID  << endl; 
         
         PixelCluster myCluster(cluster->getTrackerData());  
-        
         // Calculate center of gravity hit coord in local frame in mm
         double u{0.0}, v{0.0}, sig2_u{0.0}, sig2_v{0.0}, cov_uv{0.0};
         myCluster.getCenterOfGravity(Det, u, v, sig2_u, sig2_v, cov_uv); 
-        
         // Override sigmas from user input
         if ( myCluster.getUSize()-1 < int(_sigmaUCorrections.size()) ) {
           sig2_u *= pow(_sigmaUCorrections[myCluster.getUSize()-1],2);  
@@ -174,7 +168,7 @@ void CogHitMaker::processEvent(LCEvent * evt)
         streamlog_out(MESSAGE2) << "Stored cluster on sensorID " << sensorID << " at u=" << u << " v=" << v << endl; 
         
         TBHit hit(sensorID, u, v, m_scale*sig2_u, m_scale*sig2_v, m_scale*cov_uv, clsType);
-        
+
         // Make LCIO TrackerHit
         TrackerHitImpl * trackerhit = hit.MakeLCIOHit();  
             
@@ -187,7 +181,6 @@ void CogHitMaker::processEvent(LCEvent * evt)
         hitCollection->push_back( trackerhit );
           
       } // End cluster loop 
-      
              
     // Store hitCollection in LCIO file
     evt->addCollection( hitCollection, _hitCollectionName );

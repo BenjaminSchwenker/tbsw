@@ -236,7 +236,7 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
         const FloatVec &pixVector = digits->getChargeValues();
          
         // Read the number of pixels on DUT in the event
-        nDUTDigits = pixVector.size()/3;
+        nDUTDigits = pixVector.size()/4;
                
         std::set<char> delims{':'};
         for (auto pixelstr: _testPixels) {
@@ -246,8 +246,8 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
           bool flag = false; 
           
           for (int iPix = 0; iPix < nDUTDigits; iPix++) {   
-            int col = static_cast<int> (pixVector[iPix * 3]);
-            int row = static_cast<int> (pixVector[iPix * 3 + 1]);
+            int col = static_cast<int> (pixVector[iPix * 4]);
+            int row = static_cast<int> (pixVector[iPix * 4 + 1]);
             if (col == test_col and row == test_row) {
               flag = true;
               break;

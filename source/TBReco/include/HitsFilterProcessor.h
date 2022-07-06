@@ -66,23 +66,16 @@ protected:
    //! Input data collection name  
    std::string _inputCollectionName;
 
-   //! Number data elememts per hit
-   int m_hitElements;
-
    //! Only use hits from these these sensorIDs
    std::vector<int >  _filterIDs;
  	       
-   //! Map filtered sensorIDs to mapped sensorID  
-   std::vector<int >  _mappedIDs;
-
-   //! Picked indices for filtered hits   
-   std::vector<int >  _pickedIndices;
  private: 
    CellIDEncodeConstructHelper _outputEncoderHelper; 
     
    double _timeCPU; //!< CPU time
    int    _nRun ;   //!< Run number
    int    _nEvt ;   //!< Event number
+   int _hitElements;
    
 }; // Class
 
