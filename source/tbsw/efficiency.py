@@ -136,7 +136,7 @@ def plot(inputfile=None, histofile=None, basecut="", matchcut="hasHit==0", uaxis
   g_efficiency_u.SetTitle("Hit efficiency profile")
   g_efficiency_u.GetXaxis().SetTitle("cellU_{fit} [cellID]")
   g_efficiency_u.GetYaxis().SetTitle("efficiency") 
-  #g_efficiency_u.Write()
+  g_efficiency_u.Write()
   
   # Compute efficiency for u:v 
   h_track_total = TH2F("h_track_total","",uaxis[0],uaxis[1],uaxis[2],vaxis[0],vaxis[1],vaxis[2])
