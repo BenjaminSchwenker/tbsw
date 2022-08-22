@@ -13,7 +13,6 @@
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
-#include <fstream>
 
 
 // Include LCIO classes
@@ -85,11 +84,6 @@ namespace depfet {
     registerProcessorParameter ("MaskNormalized",
                                 "Normalize occupancy before applying min/max cuts. Normal working pixel has normed occupancy near 1.",
                                 _maskNormalized, static_cast < bool >(true));
-
-    registerProcessorParameter ("MaskAsAscii",
-                                "Output mask as Ascii file",
-                                _maskAsAscii, static_cast < bool >(false));
- 
 
   }
   
@@ -317,12 +311,16 @@ namespace depfet {
           
           // Median number of hits for width x width field around current pixel (iV,iU)
           double median_hits = get_median(hitpatch);
-          if (median_hits >= 1)  {
+
+          // Number of hits on current pixel 
+          double pixhits = hitVec[ adet.encodePixelID(iV, iU) ];
+
+          if (median_hits >= 1  &&  pixhits >= 1 )  {
             // Compute the noralized occupancy 
-            normed_occupancy = hitVec[ adet.encodePixelID(iV, iU) ] / median_hits;
+            normed_occupancy = pixhits / median_hits;
           } else {
-            // If number of hits == 0, the normed occupancy is zero (dead?). otherwise it is 1(good). 
-            normed_occupancy =  hitVec[ adet.encodePixelID(iV, iU) ] > 0 ? 1: 0;
+            // If median number of hits == 0, we have very low occupancy and cannot judge. Treat pixel as good one.  
+            normed_occupancy =  1; 
           }
           
           _histoMapOcc[normed_occhistoName]->SetBinContent(iU-minUCell+1,iV-minVCell+1, normed_occupancy );
@@ -350,23 +348,6 @@ namespace depfet {
         }
       } 
 
-      if (_maskAsAscii) {
-
-        auto file = std::ofstream("localDB/mask_mimosa_" + std::to_string(sensorID) + "_DB.txt");
-        if (file.is_open()) {
-          for (int iV = minVCell; iV <= maxVCell; iV++) {
-            for (int iU = minUCell; iU <= maxUCell; iU++) {
-            
-              // Mask pixel with very high hit frequency -> hot pixel killer 
-              double occupancy =  hitVec[ adet.encodePixelID(iV, iU) ] / _nEvt;
-              if ( (occupancy  > _maxOccupancy) or (occupancy <= _minOccupancy ) ) {   
-                file  << "p " << iU << " " << iV << endl;
-              }  
-            }
-          }
-        } 
-      }
-  
       streamlog_out(MESSAGE3) << "Number of masked pixels on sensorID " << sensorID 
                               << " is " << nMasked << endl;  
     }
