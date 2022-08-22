@@ -91,7 +91,17 @@ Correlator::Correlator() : Processor("Correlator")
 
    registerProcessorParameter ("RandomSeed", "Seed for random generator",
                               _seed,  static_cast < int > (0));
-     
+
+   std::vector<int> initFixPlanesU;
+   registerProcessorParameter ("FixPlanesU",
+                              "Enter plane numbers of sensor planes to fix in U",
+                              _fixPlanesU, initFixPlanesU);
+
+   std::vector<int> initFixPlanesV;
+   registerProcessorParameter ("FixPlanesV",
+                              "Enter plane numbers of sensor planes to fix in V",
+                              _fixPlanesV, initFixPlanesV);
+
 }
 
 //
@@ -106,6 +116,28 @@ void Correlator::init() {
   // Initialize new random generator with unique seed 
   gRandom = new TRandom3();
   gRandom->SetSeed(_seed);
+
+  if( _fixPlanesU.size() ) {
+    streamlog_out ( MESSAGE3 ) <<  _fixPlanesU.size() << " detectors are fixed in U!!" << endl;
+  }
+
+  if( _fixPlanesV.size() ) {
+    streamlog_out ( MESSAGE3 ) <<  _fixPlanesV.size() << " detectors are fixed in V!!" << endl;
+  }
+
+  auto _nTelPlanes =  TBDetector::GetInstance().GetNSensors(); 
+  _isActiveU.resize(_nTelPlanes, true);
+  _isActiveV.resize(_nTelPlanes, true);
+
+  for(int iFix=0; iFix<(int)_fixPlanesU.size(); iFix++) {
+    int ipl = _fixPlanesU[iFix];
+    _isActiveU[ipl] = false; 
+  }
+
+  for(int iFix=0; iFix<(int)_fixPlanesV.size(); iFix++) {
+    int ipl = _fixPlanesV[iFix];
+    _isActiveV[ipl] = false; 
+  }
 
   // Print random generator info
   streamlog_out(MESSAGE3) << "Random Generator setup with seed: "
@@ -297,8 +329,7 @@ void Correlator::end()
   {           
        
     if (ipl == _refPlane) continue; 
-       
-    
+   
     // Find position of residual peak in U
     
     float peakFrequencyU = 0.;
@@ -334,7 +365,17 @@ void Correlator::end()
     // Use alignment offsets to shift the residual peaks to zero     
     double offsetU = peakPositionU; 
     double offsetV = peakPositionV; 
-    
+
+    if(! _isActiveU[ipl]) { 
+      streamlog_out ( MESSAGE2 ) << " fix sensor in U to default position!! " << endl;
+      offsetU = 0;
+    }
+
+    if(! _isActiveV[ipl]) { 
+      streamlog_out ( MESSAGE2 ) << " fix sensor in V to default position!! " << endl;
+      offsetV = 0;
+    }
+
     // Compute alignment corrections  
              
     streamlog_out(MESSAGE3) << "Plane number : " << ipl << endl  
