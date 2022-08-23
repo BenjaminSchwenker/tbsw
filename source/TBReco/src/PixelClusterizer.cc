@@ -39,27 +39,30 @@ PixelClusterizer::PixelClusterizer() : Processor("PixelClusterizer"),_inputDecod
 //   
 // First of all, we need to register the input/output collections
    
-   registerInputCollection (LCIO::TRACKERDATA, "SparseDataCollectionName",
+    registerInputCollection (LCIO::TRACKERDATA, "SparseDataCollectionName",
                             "Name of input sparsified pixel data collection",
                             _sparseDataCollectionName, string("zsdata"));
     
-   registerOutputCollection (LCIO::TRACKERPULSE, "ClusterCollectionName",
+    registerOutputCollection (LCIO::TRACKERPULSE, "ClusterCollectionName",
                             "Name of the output cluster collection",
                             _clusterCollectionName, string("zscluster"));
     
-   registerProcessorParameter( "SparseZSCut","Threshold for zero suppression",
+    registerProcessorParameter( "SparseZSCut","Threshold for zero suppression",
                                _sparseZSCut, static_cast<float > (0));
 
-   registerProcessorParameter( "SparseSeedCut","Threshold for seed pixel signal",
+    registerProcessorParameter( "SparseSeedCut","Threshold for seed pixel signal",
                                _sparseSeedCut, static_cast<float > (0));
    
-   registerProcessorParameter( "SparseClusterCut","Threshold for cluster signal",
+    registerProcessorParameter( "SparseClusterCut","Threshold for cluster signal",
                                _sparseClusterCut, static_cast<float > (0) ); 
    
-   registerProcessorParameter( "AcceptDiagonalCluster","0: common side; 1: common corner; 3: max. one missing pixel",
+    registerProcessorParameter( "AcceptDiagonalCluster","0: common side; 1: common corner; 3: max. one missing pixel",
                                m_acceptDiagonalClusters , static_cast<int > (1) ); 
 
-   registerProcessorParameter("NoiseDBFileName",
+    registerProcessorParameter( "DifferenceTimeCut","Max absolute time difference between neighbor digits",
+                               _absoluteNeighborTimeCut, static_cast<float > (0) ); 
+  
+    registerProcessorParameter("NoiseDBFileName",
                                "This is the name of the ROOT file with the status mask (add .root)",
                                _noiseDBFileName, static_cast< string > ( "NoiseDB.root" ) ); 
     
@@ -73,7 +76,7 @@ void PixelClusterizer::init() {
    // Initialize variables
    _nRun = 0 ;
    _nEvt = 0 ;
-   
+   _hitElements = 4;
    
    _dummyCollectionName = "original_data_"+_clusterCollectionName;
    
@@ -237,9 +240,9 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
     int maxUCell = adet.GetMaxUCell();   
     int maxVCell = adet.GetMaxVCell(); 
     
-    // List of firing pixels. Each pixel has a iU, iV and charge 
+    // List of firing pixels. Each pixel has a iU, iV, charge and time 
     FloatVec pixVector = pixModule->getChargeValues();
-    int npixels = pixVector.size()/3; 
+    int npixels = pixVector.size()/_hitElements; 
         
     // All firing pixels will be accumulated in groups of geometrical adjecant 
     // pixels, which are maintained in a vector of groups. These groups are dynamic
@@ -256,9 +259,10 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
     for (int iPix = 0; iPix < npixels; iPix++) 
     {   
       
-      int iU = static_cast<int> (pixVector[iPix * 3]);
-      int iV = static_cast<int> (pixVector[iPix * 3 + 1]);
-      float charge =  pixVector[iPix * 3 + 2];     
+      int iU = static_cast<int> (pixVector[iPix * _hitElements]);
+      int iV = static_cast<int> (pixVector[iPix * _hitElements + 1]);
+      float charge =  pixVector[iPix * _hitElements + 2];  
+      float time =  pixVector[iPix * _hitElements + 3];     
        
       // Try to get status code for pixel 
       float status = 0; 
@@ -272,6 +276,7 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
                               << std::endl;  
       streamlog_out(MESSAGE1) << "   iU:" << iU << ", iV:" << iV
                               << ", charge:" << charge
+                              << ", time:" << time
                               << std::endl;
       
       // If pixel signal below threshold, skip it in clusterization
@@ -302,7 +307,7 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
       while( !found && firstGroup!= lastGroup)
       {
         
-        if ( areNeighbours( *firstGroup, iU, iV, ipl) )
+        if ( areNeighbours( *firstGroup, iU, iV, ipl, time) )
         {
            
           // If pixel is a duplicate of one in the cluster, do not add it.   
@@ -312,9 +317,10 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
             (*firstGroup).push_back(iU);
             (*firstGroup).push_back(iV);
             (*firstGroup).push_back(charge);
+            (*firstGroup).push_back(time);
             
             // See if iU/iV is a neighbour to any other groups, if yes perform merging 
-            checkForMerge(iU, iV, ipl, firstGroup, lastGroup);
+            checkForMerge(iU, iV, ipl, time, firstGroup, lastGroup);
               
           } else {
             streamlog_out(MESSAGE2) << "  A pixel duplicate found. Skipping it." << std::endl; 
@@ -332,6 +338,7 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
         newGroup.push_back(iU);
         newGroup.push_back(iV);
         newGroup.push_back(charge);
+        newGroup.push_back(time);
         
         pixGroups.push_back(std::move(newGroup));
         
@@ -372,15 +379,16 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
         // Prepare a TrackerData to store original data of cluster
         TrackerDataImpl* sparseCluster = new TrackerDataImpl ; 
         
-        int npixels = (*group).size()/3; 
+        int npixels = (*group).size()/_hitElements; 
         auto& chargeVec=sparseCluster->chargeValues();
         chargeVec.reserve((*group).size());
         for ( int index=0; index < npixels; index++)
         {
            
-          int iU = static_cast<int> ( (*group)[index * 3]);
-          int iV = static_cast<int> ( (*group)[index * 3 + 1]);
-          float charge = ( (*group)[index * 3 + 2]);
+          int iU = static_cast<int> ( (*group)[index * _hitElements]);
+          int iV = static_cast<int> ( (*group)[index * _hitElements + 1]);
+          float charge = ( (*group)[index * _hitElements + 2]);
+          float time = ( (*group)[index * _hitElements + 3]);
                    
           clusterSignal += charge;
          
@@ -392,6 +400,7 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
           chargeVec.push_back( iU );
           chargeVec.push_back( iV );
           chargeVec.push_back( charge );
+          chargeVec.push_back( time );
           
         }
             
@@ -469,7 +478,7 @@ void PixelClusterizer::clusterize( LCEvent * evt , LCCollectionVec * clusterColl
 // Checks if any other pixel group (apart from base group) neighbours iU/iV. 
 // If so, merge with base group.  
  
-void PixelClusterizer::checkForMerge( int iU, int iV,  int planeNumber, 
+void PixelClusterizer::checkForMerge( int iU, int iV,  int planeNumber, float time,
  Pix_GroupVector::iterator baseGroup,
  Pix_GroupVector::iterator lastGroup) 
 {
@@ -479,20 +488,22 @@ void PixelClusterizer::checkForMerge( int iU, int iV,  int planeNumber,
    
   for (; nextGroup!= lastGroup; ++nextGroup)
   {              
-    if (areNeighbours( *nextGroup, iU, iV, planeNumber ))
+    if (areNeighbours( *nextGroup, iU, iV, planeNumber, time ))
     {
       // Merge these pixel groups
-      int npixels = (*nextGroup).size()/3; 
+      int npixels = (*nextGroup).size()/_hitElements; 
        
       for ( int index=0; index < npixels; index++)      
       {
-        float iUtmp = (*nextGroup)[index * 3];
-        float iVtmp = (*nextGroup)[index * 3 + 1];
-        float chargetmp =  (*nextGroup)[index * 3 + 2];     
+        float iUtmp = (*nextGroup)[index * _hitElements];
+        float iVtmp = (*nextGroup)[index * _hitElements + 1];
+        float chargetmp =  (*nextGroup)[index * _hitElements + 2];    
+        float timetmp =  (*nextGroup)[index * _hitElements + 3];     
         // Copy pixel to base group 
         (*baseGroup).push_back(iUtmp);
         (*baseGroup).push_back(iVtmp);
         (*baseGroup).push_back(chargetmp);
+        (*baseGroup).push_back(timetmp);
       }
       (*nextGroup).clear();
        
@@ -505,17 +516,18 @@ void PixelClusterizer::checkForMerge( int iU, int iV,  int planeNumber,
 // determine if the pixel cell at address (iU,iV) should be added 
 // to the candidate cluster passed as first argument.  
 
-bool PixelClusterizer::areNeighbours( FloatVec &group, int iU, int iV, int planeNumber ) 
+bool PixelClusterizer::areNeighbours( FloatVec &group, int iU, int iV, int planeNumber, float time ) 
 {   
-  int npixels = group.size()/3; 
+  int npixels = group.size()/_hitElements; 
   
   for ( int index=0; index < npixels; index++)
   {
            
-    int iU1 = static_cast<int> (group[index * 3]);
-    int iV1 = static_cast<int> (group[index * 3 + 1]);
+    int iU1 = static_cast<int> (group[index * _hitElements]);
+    int iV1 = static_cast<int> (group[index * _hitElements + 1]);
+    int time1 = static_cast<int> (group[index * _hitElements + 3]);
  
-    if(TBDetector::Get(planeNumber).areNeighbors(iV1, iU1, iV, iU)) return true;               
+    if(TBDetector::Get(planeNumber).areNeighbors(iV1, iU1, iV, iU) && std::abs(time-time1) <= _absoluteNeighborTimeCut ) return true;               
   }
     
   return false;
@@ -529,12 +541,12 @@ bool PixelClusterizer::areNeighbours( FloatVec &group, int iU, int iV, int plane
 bool PixelClusterizer::isDuplicated( FloatVec &group, int iU, int iV ) 
 { 
   bool duplicate = false;
-  int npixels = group.size()/3; 
+  int npixels = group.size()/_hitElements; 
    
   for ( int index=0; index < npixels; index++)
   {
-    int iU1 = static_cast<int> (group[index * 3]);
-    int iV1 = static_cast<int> (group[index * 3 + 1]);  
+    int iU1 = static_cast<int> (group[index * _hitElements]);
+    int iV1 = static_cast<int> (group[index * _hitElements + 1]);  
      
     // Duplicate?? 
     if(iV1 == iV && iU1 == iU){
@@ -544,9 +556,6 @@ bool PixelClusterizer::isDuplicated( FloatVec &group, int iU, int iV )
   }  
   return duplicate;
 }
-
-
-
 
 } // Namespace
 

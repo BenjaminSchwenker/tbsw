@@ -1,5 +1,6 @@
-#ifndef AsciiInputProcessor_H
-#define AsciiInputProcessor_H 1
+
+#ifndef CorryInputProcessor_H
+#define CorryInputProcessor_H 1
 
 
 // marlin includes ".h"
@@ -9,15 +10,16 @@
 // system includes <>
 #include <vector>
 #include <string>
+#include <map>
 #include <fstream>
 
 namespace depfet
 {
   
-  /** The AsciiInputProcessor Processor
+  /** The CorryInputProcessor Processor
    *
    * The input processor reads one or more ascii files containing 
-   * Hits tables. It reads all hits one by one from file, builds 
+   * hit tables. It reads all hits one by one from file, builds 
    * lcio::LCEvent and fills a lcio::LCCollection with hits.  
    * 
    * The input files contain comma seperated values with one hit 
@@ -39,13 +41,13 @@ namespace depfet
    * <mailto:benjamin.schwenker@phys.uni-goettingen.de>
    */
   
-  class AsciiInputProcessor:public marlin::DataSourceProcessor 
+  class CorryInputProcessor:public marlin::DataSourceProcessor 
   {
    public:
      
     //! Default constructor
-    AsciiInputProcessor();
-    virtual AsciiInputProcessor * newProcessor ();
+    CorryInputProcessor();
+    virtual CorryInputProcessor * newProcessor ();
     virtual void readDataSource (int Ntrig);
     virtual void init ();
     virtual void end ();
@@ -61,6 +63,12 @@ namespace depfet
     //! Input hit files 
     std::vector< std::string >  m_fileNameVec;
 
+    //! List of sensor names 
+    std::vector< std::string >  m_sensorNamesVec;
+
+    //! List of sensorIDs
+    std::vector< int >  m_sensorIDsVec;
+
     //! Gear detector name   
     std::string m_detectorName;
 
@@ -70,27 +78,16 @@ namespace depfet
     //! Run number 
     int m_runNumber;
 
-    //! Static SensorID 
-    int m_sensorID;
-
-    //! Number of columns in ascii file
-    int m_numberOfColumms;
-
-    //! Vector with column numbers for event_number, sensorID, column, row, charge, time. Start at 0. Put -1 if not available  
-    std::vector<int> m_indexVec;
-
-    //! Seperator character between columns
-    std::string m_seperator;
-
    private:  
     //! Number of events per chunk
     int m_chunkSize;
     //! Number of processed triggers (events)
     unsigned m_ntriggers;
-       
+    //! Map from name of senor to sensorID 
+    std::map<std::string, int> m_sensor_lookup;
   };
   
-  AsciiInputProcessor gAsciiInputProcessor;
+  CorryInputProcessor gCorryInputProcessor;
  
 }            
 #endif

@@ -1,5 +1,5 @@
 from ROOT import TFile, TH1F, TH2F
-from ROOT import gROOT, Double, TCut
+from ROOT import gROOT, TCut
 import numpy 
 import math
 

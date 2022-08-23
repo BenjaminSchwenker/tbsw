@@ -7,6 +7,7 @@
 #include <sstream>
 #include <assert.h>
 #include <vector> 	
+#include <set>
 
 // ROOT includes
 #include "TString.h" // for char *Form(...)

@@ -60,7 +60,7 @@ ENDIF()
 
 #-------------Compiler Flags---------------------------------
 #------ all compiler flags should go here ----
-ADD_DEFINITIONS( "-std=c++14" )
+ADD_DEFINITIONS( "-std=c++17" )
 #------ correct C++
 ADD_DEFINITIONS( "-Wall -pedantic" )
 #------ performance

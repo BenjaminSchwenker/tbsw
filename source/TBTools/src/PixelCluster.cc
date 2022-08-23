@@ -22,21 +22,24 @@ namespace depfet {
   /** Constructor */
   PixelCluster::PixelCluster( TrackerData * Digits, unsigned short sensorID) : 
                                   m_sensorID(sensorID), m_clsCharge(0), m_seedCharge(0),
-                                  m_clsSize(0), m_uSize(0), m_vSize(0), m_uStart(0), m_vStart(0), m_uSeed(0), m_vSeed(0)
+                                  m_clsSize(0), m_uSize(0), m_vSize(0), m_uStart(0), m_vStart(0), m_uSeed(0), m_vSeed(0), m_minTime(0), m_maxTime(0)
   {
     const EVENT::FloatVec &rawDigits = Digits->getChargeValues();
-    int size = rawDigits.size()/3; 
+    int size = rawDigits.size()/4; 
     m_sortedDigits.reserve(size);
 
     unsigned short vMin = std::numeric_limits<unsigned short>::max();
     unsigned short vMax = 0;
     unsigned short uMin = std::numeric_limits<unsigned short>::max();
     unsigned short uMax = 0; 
+    m_minTime = std::numeric_limits<unsigned short>::max();
+    m_maxTime = 0; 
 
     for ( int index=0; index<size;  index++) { 
-      unsigned short iU = static_cast<unsigned short> (rawDigits[index * 3]);
-      unsigned short iV = static_cast<unsigned short> (rawDigits[index * 3 + 1]);
-      unsigned short charge = static_cast<unsigned short> (rawDigits[index * 3 + 2]);   
+      unsigned short iU = static_cast<unsigned short> (rawDigits[index * 4]);
+      unsigned short iV = static_cast<unsigned short> (rawDigits[index * 4 + 1]);
+      unsigned short charge = static_cast<unsigned short> (rawDigits[index * 4 + 2]);   
+      unsigned short time = static_cast<unsigned short> (rawDigits[index * 4 + 3]);   
       
       m_clsCharge += charge;
       
@@ -49,8 +52,11 @@ namespace depfet {
       if (iV > vMax) vMax = iV;
       if (iU < uMin) uMin = iU;
       if (iU > uMax) uMax = iU;  
+
+      if (time < m_minTime) m_minTime = time;
+      if (time > m_maxTime) m_maxTime = time;  
       
-      m_sortedDigits.push_back(RawDigit(iU,iV,charge));
+      m_sortedDigits.push_back(RawDigit(iU,iV,charge,time));
     }
     
     // Compute some variables 

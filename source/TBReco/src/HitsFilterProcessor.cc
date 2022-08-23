@@ -42,25 +42,11 @@ HitsFilterProcessor::HitsFilterProcessor() : Processor("HitsFilterProcessor") , 
                             "Name of the output filtered collection",
                             _outputCollectionName, string("zsdata_filtered"));
 
-   registerProcessorParameter( "HitElements","How many data elements describe the hit",
-                               m_hitElements, static_cast<int > (4));
-
    std::vector<int> initFilterIDs;
    registerProcessorParameter ("FilterIDs",
                               " Only use hits from these these sensorIDs",
                               _filterIDs, initFilterIDs);
    
-   std::vector<int> initMappedIDs;
-   registerProcessorParameter ("MappedIDs",
-                              "Map filtered sensorIDs to mapped sensorID",
-                              _mappedIDs, initMappedIDs);   
-
-
-   std::vector<int> initPickedIndices;
-   registerProcessorParameter ("PickedIndices",
-                              "Picked indices for filtered hits",
-                              _pickedIndices, initPickedIndices);
-
 }
 
 //
@@ -71,7 +57,7 @@ void HitsFilterProcessor::init() {
    // Initialize variables
    _nRun = 0 ;
    _nEvt = 0 ;
-   
+   _hitElements = 5;
    
    // Print set parameters
    printProcessorParams();
@@ -134,22 +120,25 @@ void HitsFilterProcessor::processEvent(LCEvent * evt)
              
        // Loop over digits
        FloatVec rawData = zsFrame->getChargeValues();
-       int nDigits = rawData.size()/m_hitElements; 
+       int nDigits = rawData.size()/_hitElements; 
          
        for (int iDigit = 0; iDigit < nDigits; iDigit++) 
        {   
         
         
-        int sensorID = static_cast<int> (rawData[iDigit * m_hitElements]);
-        int col = static_cast<int> (rawData[iDigit * m_hitElements + 1]);
-        int row = static_cast<int> (rawData[iDigit * m_hitElements + 2]);
-        float charge =  rawData[iDigit * m_hitElements + 3];     
+        int sensorID = static_cast<int> (rawData[iDigit * _hitElements]);
+        int col = static_cast<int> (rawData[iDigit * _hitElements + 1]);
+        int row = static_cast<int> (rawData[iDigit * _hitElements + 2]);
+        float charge =  rawData[iDigit * _hitElements + 3];    
+        float time = rawData[iDigit * _hitElements + 4];
+        
          
         // Print detailed pixel summary, for testing/debugging only !!! 
         streamlog_out(MESSAGE1) << "Digit Nr. " << iDigit << " on sensor " << sensorID  
                                 << std::endl;  
         streamlog_out(MESSAGE1) << "   column:" << col << ", row:" << row
                                 << ", charge:" << charge
+                                << ", time:" << time
                                 << std::endl;
         
         // Ignore digits from this sensor. 
@@ -158,8 +147,8 @@ void HitsFilterProcessor::processEvent(LCEvent * evt)
         // Store raw digits in tbsw format 
         outputDigitsMap[sensorID]->chargeValues().push_back( col );
         outputDigitsMap[sensorID]->chargeValues().push_back( row );
-        outputDigitsMap[sensorID]->chargeValues().push_back( charge );   
-         
+        outputDigitsMap[sensorID]->chargeValues().push_back( charge );
+        outputDigitsMap[sensorID]->chargeValues().push_back( time );   
        }  
 
      } // End frame loop 

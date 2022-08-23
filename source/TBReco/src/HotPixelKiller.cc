@@ -14,6 +14,7 @@
 #include <iomanip>
 #include <algorithm>
 
+
 // Include LCIO classes
 #include <lcio.h>
 #include <IMPL/TrackerDataImpl.h>
@@ -162,15 +163,15 @@ namespace depfet {
         }
         
         FloatVec sparseDigits = trackerData->getChargeValues();
-        int nDigits = sparseDigits.size()/3; 
+        int nDigits = sparseDigits.size()/4; 
             
         streamlog_out(MESSAGE2) << "Module sensorID " << sensorID << " having digits " <<  nDigits << std::endl; 
          
         for ( int index=0; index<nDigits;  index++) { 
             
-          int iU = static_cast<int> (sparseDigits[index * 3]);
-          int iV = static_cast<int> (sparseDigits[index * 3 + 1]);
-          float chargeValue =  sparseDigits[index * 3 + 2]; 
+          int iU = static_cast<int> (sparseDigits[index * 4]);
+          int iV = static_cast<int> (sparseDigits[index * 4 + 1]);
+          float chargeValue =  sparseDigits[index * 4 + 2]; 
            
           // Describe pixel by unique ID
           int uniqPixelID  = adet.encodePixelID(iV, iU);   
@@ -194,8 +195,8 @@ namespace depfet {
           // Check if digit is a duplicate   
           for ( int id=0; id<index;  id++) {
             
-            int iU2 = static_cast<int> (sparseDigits[id * 3]);
-            int iV2 = static_cast<int> (sparseDigits[id * 3 + 1]);
+            int iU2 = static_cast<int> (sparseDigits[id * 4]);
+            int iV2 = static_cast<int> (sparseDigits[id * 4 + 1]);
           
             if ( iU2 == iU && iV2==iV ) {
               streamlog_out(MESSAGE2) << "Digit on sensor " << sensorID 
@@ -310,12 +311,16 @@ namespace depfet {
           
           // Median number of hits for width x width field around current pixel (iV,iU)
           double median_hits = get_median(hitpatch);
-          if (median_hits >= 1)  {
+
+          // Number of hits on current pixel 
+          double pixhits = hitVec[ adet.encodePixelID(iV, iU) ];
+
+          if (median_hits >= 1  &&  pixhits >= 1 )  {
             // Compute the noralized occupancy 
-            normed_occupancy = hitVec[ adet.encodePixelID(iV, iU) ] / median_hits;
+            normed_occupancy = pixhits / median_hits;
           } else {
-            // If number of hits == 0, the normed occupancy is zero (dead?). otherwise it is 1(good). 
-            normed_occupancy =  hitVec[ adet.encodePixelID(iV, iU) ] > 0 ? 1: 0;
+            // If median number of hits == 0, we have very low occupancy and cannot judge. Treat pixel as good one.  
+            normed_occupancy =  1; 
           }
           
           _histoMapOcc[normed_occhistoName]->SetBinContent(iU-minUCell+1,iV-minVCell+1, normed_occupancy );
@@ -342,7 +347,7 @@ namespace depfet {
           }      
         }
       } 
-        
+
       streamlog_out(MESSAGE3) << "Number of masked pixels on sensorID " << sensorID 
                               << " is " << nMasked << endl;  
     }

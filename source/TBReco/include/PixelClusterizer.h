@@ -67,7 +67,7 @@ namespace depfet {
     // This method is called inside the clusterize() method in order to 
     // determine if the pixel cell at address (iU,iV) should be added 
     // to the pixel group passed as first argument.  
-    bool areNeighbours( FloatVec &group, int iU, int iV, int planeNumber ); 
+    bool areNeighbours( FloatVec &group, int iU, int iV, int planeNumber, float time ); 
        
     // This method is called inside the clusterize() method in order to 
     // determine if the pixel cell with address iU/iV is already part 
@@ -76,7 +76,7 @@ namespace depfet {
     
     // Checks if any other pixel group (apart from base group) neighbours (iU,iV). 
     // If so, merge with base group.   
-    void checkForMerge( int iU, int iV, int planeNumber, 
+    void checkForMerge( int iU, int iV, int planeNumber, float time,
            Pix_GroupVector::iterator baseGroup,
            Pix_GroupVector::iterator lastGroup); 
            
@@ -105,6 +105,9 @@ namespace depfet {
     
     //! Minimum signal for total cluster charge
     float _sparseClusterCut;
+
+    //! Max absolute time difference between neighboring digits
+    float _absoluteNeighborTimeCut;
     
     //! m_acceptDiagonalClusters: 
     //!   = 0: Add pixels which have a side in common with a pixel cell 
@@ -129,6 +132,7 @@ namespace depfet {
    double _timeCPU; //!< CPU time
    int    _nRun ;   //!< Run number
    int    _nEvt ;   //!< Event number
+   int _hitElements; //!< Integers per hit
    
 }; // Class
 

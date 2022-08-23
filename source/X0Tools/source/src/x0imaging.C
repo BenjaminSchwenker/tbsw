@@ -12,6 +12,7 @@
 #include "TROOT.h"
 #include "TStyle.h"
 #include "TTree.h"
+#include "TObjString.h"
 
 using namespace std;
 

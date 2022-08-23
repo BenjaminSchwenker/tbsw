@@ -1,17 +1,17 @@
 /*=====================================================================*/
-/*          AsciiInputProcessor                                        */
+/*          CorryInputProcessor                                        */
 /*                                                                     */
 /*          Author: Benjamin Schwenker                                 */
 /*                (benjamin.schwenker@phys.uni-goettingen.de)          */
 /*                                                                     */
-/*  Processers converts raw digits in Hits tables from one or more     */ 
-/*  ascii input files into series of lcio::LCEvents. In case multiple   */
-/*  ascii input files are are supplied, raw digits are aligned using    */
+/*  Processers converts raw digits in hit tables from one or more      */ 
+/*  ascii input files into series of lcio::LCEvents. In case multiple  */
+/*  ascii input files are are supplied, raw digits are aligned using   */
 /*  the event number.                                                  */
 /*=====================================================================*/
 
 // user includes
-#include "AsciiInputProcessor.h"
+#include "CorryInputProcessor.h"
 
 // marlin includes
 #include "marlin/ProcessorMgr.h"
@@ -37,16 +37,26 @@ using namespace std::string_literals;
 
 
 
-AsciiInputProcessor::AsciiInputProcessor ():DataSourceProcessor("AsciiInputProcessor") {
+CorryInputProcessor::CorryInputProcessor ():DataSourceProcessor("CorryInputProcessor") {
   
   _description =
-    "Reads Hits table from one or more ascii files. Events are formed and hits are written to TrackerData collections.\n"
+    "Reads hit table from one or more ascii files. Events are formed and hits are written to lcio::TrackerData collections.\n"
     "Make sure to not specify any LCIOInputFiles.";
   
-  std::vector< string > inputFileNameVecExample;
-  inputFileNameVecExample.push_back("input.txt");
+  std::vector< string > inputFileNamesVecExample;
+  inputFileNamesVecExample.push_back("input.txt");
   registerProcessorParameter ("FileNames", "Whitespace seperated list of input file names to read",
-                              m_fileNameVec, inputFileNameVecExample);
+                              m_fileNameVec, inputFileNamesVecExample);
+
+  std::vector< string > inputSensorNamesVecExample;
+  inputSensorNamesVecExample.push_back("dummy");
+  registerProcessorParameter ("SensorNames", "Whitespace seperated list of sensor names",
+                              m_sensorNamesVec, inputSensorNamesVecExample);
+
+  std::vector< int > inputSensorIDsVecExample;
+  inputSensorIDsVecExample.push_back(-1);
+  registerProcessorParameter ("SensorIDs", "Whitespace seperated list of sensorIDs",
+                              m_sensorIDsVec, inputSensorIDsVecExample);
   
   registerProcessorParameter( "DetectorName", "Set name of the detector. Needs to be the same name as in gear file.",
                               m_detectorName, std::string("EUTelescope"));
@@ -56,43 +66,29 @@ AsciiInputProcessor::AsciiInputProcessor ():DataSourceProcessor("AsciiInputProce
 
   registerProcessorParameter ("RunNumber", "Set run number.",
                               m_runNumber,  static_cast < int > (0));
-    
-  registerProcessorParameter ("StaticSensorID", "Set static sensorID. Put -1 if sensorID read from file. Otherwise provide it here.",
-                              m_sensorID,  static_cast < int > (-1));
-
-  registerProcessorParameter ("NumberOfColumns", "Set number of columns to read per row.",
-                              m_numberOfColumms,  static_cast < int > (6));
-
-  registerProcessorParameter( "ColumnSeperator", "Seperator character between columns",
-                              m_seperator, std::string(" "));
-
-  std::vector< int > inputIndexVecExample;
-  inputIndexVecExample.push_back(0);
-  inputIndexVecExample.push_back(1);
-  inputIndexVecExample.push_back(2);
-  inputIndexVecExample.push_back(3);
-  inputIndexVecExample.push_back(4);
-  inputIndexVecExample.push_back(5);
-  registerProcessorParameter ("ColumnsIndexVec", "Whitespace seperated list of of column indices for event_number, sensorID, column, row, charge, time. Put -1 if not available.",
-                              m_indexVec, inputIndexVecExample);
-
 }
 
 
-AsciiInputProcessor * AsciiInputProcessor::newProcessor () {  
-  return new AsciiInputProcessor;
+CorryInputProcessor * CorryInputProcessor::newProcessor () {  
+  return new CorryInputProcessor;
 }
 
 
-void AsciiInputProcessor::init () {
+void CorryInputProcessor::init () {
   m_chunkSize = 1000;
   m_ntriggers = 0;
+
+  assert(m_sensorNamesVec.size() == m_sensorIDsVec.size());
+  for (size_t i = 0; i < m_sensorNamesVec.size(); ++i) {
+    streamlog_out(MESSAGE3) <<  m_sensorNamesVec[i] << ":"<<  m_sensorIDsVec[i] << std::endl;
+    m_sensor_lookup[m_sensorNamesVec[i]] = m_sensorIDsVec[i];
+  }
 
   printParameters ();
 }
 
 
-void AsciiInputProcessor::readDataSource (int Ntrig) {
+void CorryInputProcessor::readDataSource (int Ntrig) {
   
   if (m_fileNameVec.size() == 0) return;
   string filename = m_fileNameVec[0];
@@ -104,7 +100,7 @@ void AsciiInputProcessor::readDataSource (int Ntrig) {
   lcHeader->setDescription(" Reading from file " + filename);
   lcHeader->setRunNumber( m_runNumber );  
   lcHeader->setDetectorName(m_detectorName);
-
+          
   // Add run header to LCIO file
   ProcessorMgr::instance ()->processRunHeader ( static_cast<lcio::LCRunHeader*> (lcHeader) );
   delete lcHeader; 
@@ -140,7 +136,7 @@ void AsciiInputProcessor::readDataSource (int Ntrig) {
     vector< vector< vector<int> > > all_other_hits;
     vector< vector< vector<int> > > all_other_events;
     
-    // now add data from other file  
+    // now add data from other files  
     for (size_t iFile=1; iFile< m_fileNameVec.size(); iFile++) {
       string other_filename = m_fileNameVec[iFile];
       
@@ -186,7 +182,7 @@ void AsciiInputProcessor::readDataSource (int Ntrig) {
       auto& chargevec=zsFrame->chargeValues();
       chargevec.reserve(chargevec.size()+size_t(60)  );
       
-      for (int iHit=events[iEvt][1]; iHit<=events[iEvt][2]; iHit++ ) { 
+      for (int iHit=events[iEvt][1]; iHit<=events[iEvt][2]; iHit++ ) {
         chargevec.push_back( hits[iHit][1] );
         chargevec.push_back( hits[iHit][2] );
         chargevec.push_back( hits[iHit][3] );
@@ -221,9 +217,9 @@ void AsciiInputProcessor::readDataSource (int Ntrig) {
   }
 }
 
-bool AsciiInputProcessor::getAllEventFromFile(fstream& fin, vector< vector<int> >& hits, std::vector< std::vector<int> >& events, int max_events, int max_event_number) 
+bool CorryInputProcessor::getAllEventFromFile(fstream& fin, vector< vector<int> >& hits, std::vector< std::vector<int> >& events, int max_events, int max_event_number) 
 {
-
+  
   string line, word; 
   int event_number=-1;  
   int sensorID=-1; 
@@ -233,32 +229,54 @@ bool AsciiInputProcessor::getAllEventFromFile(fstream& fin, vector< vector<int> 
   int time=-1;
   int firstHit = 0;
   int current_event = -1; 
+  bool validHit = false;
 
   // stores the position
   streampos oldpos = fin.tellg();
   
   while (getline(fin, line)) {
-
-    if (line.substr(0, 1) == " ") {
-      continue;
-    } 
-             
-    // used for breaking words 
-    stringstream sd(line); 
-    std::vector<int> rowbuffer;
-
-    for (int step=0; step<m_numberOfColumms; step++) {
-      getline(sd, word, m_seperator.c_str()[0]);    
-      rowbuffer.push_back(stoi(word));
+         
+    if ( line.substr(0, 3) == "===") {
+      // Start of event: Set event number
+      stringstream sd(line); 
+      getline(sd, word, ' ');   
+      getline(sd, word, ' ');   
+      event_number=stoi(word);
+      validHit = false;
+    } else if ( line.substr(0, 3) == "---") {
+      // Start of sensor data: Set sensorID 
+      stringstream sd(line); 
+      getline(sd, word, ' ');   
+      getline(sd, word, ' ');   
+      auto it = m_sensor_lookup.find( word );
+      if (it == m_sensor_lookup.end()) {
+        sensorID = -1;
+      }
+      sensorID = it->second;  
+      validHit = false;
+    } else if ( line.substr(0, 5) == "Pixel" ) {
+      // Pixel data: Read pixel hit
+      stringstream sd(line);
+      getline(sd, word, ' ');
+      getline(sd, word, ',');
+      column=stoi(word);
+      getline(sd, word, ',');
+      row=stoi(word);
+      getline(sd, word, ','); 
+      charge=stoi(word);     
+      time=0;
+      if (event_number >= 0 && sensorID >= 0) {
+        validHit = true;
+      }
+    } else {
+      // Something else
+      validHit = false;
     }
 
-    event_number=0; //rowbuffer[m_indexVec[0]];  
-    sensorID=11;   //rowbuffer[m_indexVec[1]];
-    column=rowbuffer[m_indexVec[2]];
-    row=rowbuffer[m_indexVec[3]];
-    charge=rowbuffer[m_indexVec[4]];
-    time=rowbuffer[m_indexVec[5]];
-
+    if (!validHit) {
+      continue;
+    }
+ 
     if (current_event == -1) {
       //cout << "START CHUNK WITH EVT=" << event_number << endl;
       current_event = event_number;
@@ -295,16 +313,13 @@ bool AsciiInputProcessor::getAllEventFromFile(fstream& fin, vector< vector<int> 
     // Stores the position in file stream
     oldpos = fin.tellg();  
   }
-
-  // Write out whatever is in thit hits buffer
-  events.push_back( vector<int>{ current_event, firstHit, (int)hits.size()-1 } );
   
-  // Nothing left to read
+  // Reached end of file, nothing left to read 
   return false;
 }
 
 
-void AsciiInputProcessor::end () 
+void CorryInputProcessor::end () 
 { 
   
   // Print message

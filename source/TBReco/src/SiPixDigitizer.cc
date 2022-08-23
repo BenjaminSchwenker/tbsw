@@ -762,7 +762,8 @@ namespace depfet {
        
         Digit * currentDigit = iterSensorMap->second;
        
-        double signal  = currentDigit->charge;
+        double signal = currentDigit->charge;
+        double time = 0;
         
         // Note: zero suppressed pixels have signal == 0, just skip 
         if (signal == 0) continue;  
@@ -773,7 +774,8 @@ namespace depfet {
         // Store digits  
         digitVec->chargeValues().push_back( iU );
         digitVec->chargeValues().push_back( iV );
-        digitVec->chargeValues().push_back( signal );   
+        digitVec->chargeValues().push_back( signal ); 
+        digitVec->chargeValues().push_back( time );   
 
         streamlog_out(MESSAGE1) << std::setiosflags(std::ios::fixed | std::ios::internal )
                                 << std::setprecision(3)

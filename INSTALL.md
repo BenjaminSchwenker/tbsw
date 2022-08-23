@@ -20,17 +20,13 @@ sudo apt install cmake
 
 # Python 
 
-You should use your default system version of Python. Check that library python-dev is installed on your system to work with PyRoot. You can install by typing: 
-
+Create a conda environment with a recent version of python3 e.g. 3.9:
 ```
-sudo apt-get install python-dev
+conda create --name tbsw python=3.9
 ```
-
-A few more python modules are needed to run the example scripts: 
-
+Then install the numpy and scipy packages for python:
 ```
-sudo apt-get install python-numpy
-sudo apt-get install python-scipy
+conda install numpy scipy
 ```
 
 # Root 
@@ -66,7 +62,7 @@ root
 You can get the tbsw source code from a puplic git repository at bitbucket.
 
 ```
-git clone https://BenjaminSchwenker@bitbucket.org/BenjaminSchwenker/tbsw.git
+git clone https://github.com/BenjaminSchwenker/tbsw.git
 cd tbsw
 ```
 

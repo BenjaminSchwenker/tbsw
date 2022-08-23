@@ -62,8 +62,8 @@ def save_targetpos(treefilename=None,dbfilename=None):
   # Round mean value to first decimal (100 microns)
   mean=round(mean/count,1)
 
-  print "New target position is"
-  print mean
+  print("New target position is")
+  print(mean)
 
   Modify_AlignmentDBFile(dbfilename=dbfilename, planenumber=3, mode='z', value=mean)
 

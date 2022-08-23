@@ -125,9 +125,18 @@ protected:
 /*!
  */
     std::string _rootFileName;       
-           
+
+
+//! Fix position of planes with plane numbers in this array 
+   std::vector<int >  _fixPlanesU;
+   std::vector<int >  _fixPlanesV;
+
  private:
-    
+
+// Active flag for sensors, plane number indexed 
+   std::vector<bool> _isActiveU;
+   std::vector<bool> _isActiveV;
+
 //! ROOT_Output
     TFile * _rootFile;
   

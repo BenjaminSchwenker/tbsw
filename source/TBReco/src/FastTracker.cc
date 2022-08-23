@@ -136,8 +136,8 @@ FastTracker::FastTracker() : Processor("FastTracker")
                               _maxSlope,  static_cast < float > (0.1));
    
    registerProcessorParameter("HitQualitySelection",
-                             "To use only GoodQuality write 0 here",
-                             _hitQualitySelect, static_cast<int> ( 0 ));
+                             "To use only GoodQuality write 0 here. Use 1 for all hits",
+                             _hitQualitySelect, static_cast<int> ( 1 ));
 
    std::vector<int> initBadDetectorIDs;
    registerProcessorParameter ("ExcludeDetector",

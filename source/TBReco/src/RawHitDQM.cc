@@ -343,7 +343,8 @@ void RawHitDQM::bookHistos() {
     histoTitle ="Cluster u"; 
     _histoMap[ histoName ] = new TH1D(histoName.c_str(), histoTitle.c_str(), uBins ,  uMin, uMax ); 
     _histoMap[ histoName ]->SetXTitle("cluster u [mm]"); 
-       
+    _histoMap[ histoName ]->SetYTitle("number of clusters"); 
+
     double  vMin = safetyFactor * adet.GetSensitiveMinV();
     double  vMax = safetyFactor * adet.GetSensitiveMaxV();
     int vBins = maxVCell-minVCell+1;
@@ -352,6 +353,7 @@ void RawHitDQM::bookHistos() {
     histoTitle ="Cluster v"; 
     _histoMap[ histoName ] = new TH1D(histoName.c_str(), histoTitle.c_str(), vBins, vMin, vMax);
     _histoMap[ histoName ]->SetXTitle("cluster v [mm]"); 
+    _histoMap[ histoName ]->SetYTitle("number of clusters"); 
     
     histoName = "hhitmap"+to_string( ipl );
     histoTitle ="Hitmap for plane " +to_string( ipl )+" SensorID " + to_string( adet.GetSensorID()  );
@@ -370,37 +372,37 @@ void RawHitDQM::bookHistos() {
     histoName = "hcls_charge_sensor"+to_string( ipl );
     _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 255, 0, 255);
     _histoMap[ histoName ]->SetXTitle(" cluster charge [ADU]"); 
-    _histoMap[ histoName ]->SetYTitle(" tracks");  
+    _histoMap[ histoName ]->SetYTitle(" number of clusters");  
 
     histoName = "hseed_charge_sensor"+to_string( ipl );
     _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 255, 0, 255);
     _histoMap[ histoName ]->SetXTitle(" seed charge [ADU]"); 
-    _histoMap[ histoName ]->SetYTitle(" tracks");      
+    _histoMap[ histoName ]->SetYTitle(" number of clusters");      
 
     histoName = "hcls_type_sensor"+to_string( ipl );
     _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 10, 0, 10);
     _histoMap[ histoName ]->SetXTitle(" cluster type"); 
-    _histoMap[ histoName ]->SetYTitle(" tracks");   
+    _histoMap[ histoName ]->SetYTitle(" number of clusters");   
 
     histoName = "hsize_sensor"+to_string( ipl );
     _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 10, 0, 10);
     _histoMap[ histoName ]->SetXTitle(" cluster size [pixels]"); 
-    _histoMap[ histoName ]->SetYTitle(" tracks");    
+    _histoMap[ histoName ]->SetYTitle(" number of clusters");    
     
     histoName = "hsizeU_sensor"+to_string( ipl );
     _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 6, 0, 6);
     _histoMap[ histoName ]->SetXTitle(" cluster size u [cells]"); 
-    _histoMap[ histoName ]->SetYTitle(" tracks");    
+    _histoMap[ histoName ]->SetYTitle(" number of clusters");    
     
     histoName = "hsizeV_sensor"+to_string( ipl );
     _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 6, 0, 6);
     _histoMap[ histoName ]->SetXTitle(" cluster size v [cells]"); 
-    _histoMap[ histoName ]->SetYTitle(" tracks");  
+    _histoMap[ histoName ]->SetYTitle(" number of clusters");  
           
     histoName = "hnhits_sensor"+to_string( ipl );
     _histoMap[ histoName ] = new TH1D(histoName.c_str(), "", 200, 0, 200);
     _histoMap[ histoName ]->SetXTitle("hits per event"); 
-    _histoMap[ histoName ]->SetYTitle("events");   
+    _histoMap[ histoName ]->SetYTitle("number of events");   
      
   } 
         
