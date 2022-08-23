@@ -10,9 +10,12 @@ Usage: python histo-plotter.py --ifile=root-files/Histos-PXD-simrun-test-reco.ro
 Author: Benjamin Schwenker <benjamin.schwenker@phys.uni-goettingen.de>  
 """
 
-from tbsw import *
+import tbsw.residuals as residuals
+import tbsw.efficiency as efficiency
+import tbsw.inpixel as inpixel
 import ROOT
 import os
+import glob
 
 import argparse
 parser = argparse.ArgumentParser(description="Perform plotting of test beam runs")
