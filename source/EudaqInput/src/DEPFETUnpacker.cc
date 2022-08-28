@@ -208,12 +208,13 @@ namespace eudaqinput {
           outputEncoder["sparsePixelType"s] = 0;
           outputEncoder.setCellID( zsFrame );
           auto & charge_values=zsFrame->chargeValues();
-          charge_values.reserve(charge_values.size()+3*event.zs_data.size());
+          charge_values.reserve(charge_values.size()+4*event.zs_data.size());
           for ( const auto & hit : event.zs_data ) {
               // Store pixel data int lcio format
               charge_values.push_back( hit.col );
               charge_values.push_back( hit.row );
               charge_values.push_back( hit.val );
+              charge_values.push_back( 0 );
               //streamlog_out(MESSAGE2) << "Hit at col= " << hit.col << ", row=" <<  hit.row << ", val=" << hit.val << std::endl;
           }
           result->push_back(zsFrame);

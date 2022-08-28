@@ -153,6 +153,7 @@ namespace eudaqinput {
         frame->chargeValues().push_back( hitPixel.x );
         frame->chargeValues().push_back( hitPixel.y );
         frame->chargeValues().push_back( hitPixel.tot+1);    
+        frame->chargeValues().push_back(0);    
       }   
 	}
       
