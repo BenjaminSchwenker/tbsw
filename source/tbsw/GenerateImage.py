@@ -6,9 +6,9 @@ import glob
 import math
 import fileinput
 import argparse
-import ConfigParser
+import configparser
 
-class MyConfigParser(ConfigParser.ConfigParser):
+class MyConfigParser(configparser.ConfigParser):
 
     def write(self, fp):
         """Write an .ini-format representation of the configuration state."""

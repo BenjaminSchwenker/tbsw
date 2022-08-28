@@ -47,7 +47,7 @@ Author: Ulf Stolzenberg <ulf.stolzenberg@phys.uni-goettingen.de>
 Author: Benjamin Schwenker <benjamin.schwenker@phys.uni-goettingen.de>  
 """
 
-import tbsw 
+from tbsw import x0script_functions
 import os
 import multiprocessing
 import argparse
@@ -211,11 +211,11 @@ if __name__ == '__main__':
   # workspace/results/telescopeDQM
 
   if args.startStep < 2 and args.stopStep >= 1:
-    tbsw.x0script_functions.calibrate( rawfile_cali, steerfiles, caltag, gearfile, nevents_cali, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali, UseOuterPlanesForClusterDB)
+    x0script_functions.calibrate( rawfile_cali, steerfiles, caltag, gearfile, nevents_cali, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali, UseOuterPlanesForClusterDB)
 
     # Target alignment
     for it in range(0,targetalignment_iterations):
-      tbsw.x0script_functions.targetalignment(rawfile_TA, steerfiles, it, caltag, gearfile, nevents_TA, Use_clusterDB, beamenergy, mcdata)
+      x0script_functions.targetalignment(rawfile_TA, steerfiles, it, caltag, gearfile, nevents_TA, Use_clusterDB, beamenergy, mcdata)
 
   # Angle reconstruction
   # In case you already have reconstructed the scattering angles for all
@@ -228,14 +228,14 @@ if __name__ == '__main__':
   # workspace/results/anglerecoDQM/
   if args.startStep < 3 and args.stopStep >= 2:
     params_reco=[(x, steerfiles, caltag, gearfile, nevents_reco, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata) for x in RawfileList_reco]
-    print "The parameters for the reconstruction are: " 
-    print params_reco
+    print("The parameters for the reconstruction are: ") 
+    print(params_reco)
     
     def work(params):
       """ Multiprocessing work
       """
       rawfile, steerfiles, caltag, gearfile, nevents, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata = params
-      tbsw.x0script_functions.reconstruct(rawfile, steerfiles, caltag, gearfile, nevents, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)
+      x0script_functions.reconstruct(rawfile, steerfiles, caltag, gearfile, nevents, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)
                   
     count = multiprocessing.cpu_count()
     pool = multiprocessing.Pool(processes=count)
@@ -245,7 +245,7 @@ if __name__ == '__main__':
 
     for rawfile in RawfileList_reco:
       params=(rawfile, caltag)
-      tbsw.x0script_functions.reconstruction_DQM(rawfile, caltag)
+      x0script_functions.reconstruction_DQM(rawfile, caltag)
 
   # Start x0 calibration
   # In case you already have the x0 calibration DB file from a previous x0 calibration 
@@ -254,17 +254,17 @@ if __name__ == '__main__':
   # The fitted distributions and self-consistency plots in pdf format from this 
   # x0 calibration can be found in the workspace/tmp-runs/*X0Calibration/ directory
   if args.startStep < 4 and args.stopStep >= 3:
-    tbsw.x0script_functions.xx0calibration(RawfileList_x0cali, steerfiles, caltag)
+    x0script_functions.xx0calibration(RawfileList_x0cali, steerfiles, caltag)
 
   # Generate a calibrated X/X0 image
   #
   # The calibrated radiation length image and other images, such as the beamspot
   # etc can be found in the workspace/root-files/*CalibratedX0Image.root
   if args.startStep < 5 and args.stopStep >= 4:
-    tbsw.x0script_functions.xx0image(RawfileList_x0image, steerfiles, caltag, name_image1)
+    x0script_functions.xx0image(RawfileList_x0image, steerfiles, caltag, name_image1)
 
   # Generate another calibrated X/X0 image
   # The X/X0 image step can be repeated multiple times to generate a set of images
   # Just remove the comment and add a run list for each image
-    #tbsw.x0script_functions.xx0image(RawfileList_x0image2, steerfiles, caltag, name_image2)
+    #x0script_functions.xx0image(RawfileList_x0image2, steerfiles, caltag, name_image2)
 

@@ -5,14 +5,14 @@ Some helper code to define processor paths for X/X0 studies
 :author: ulf.stolzenberg@phys.uni-goettinge.de  
 """
 
-import tbsw 
+from tbsw.tbsw import Processor
 
 def add_geometry(path, applyAlignment="true", overrideAlignment="true"): 
   """
   Adds geometry processor to the path
   """   
   
-  geo = tbsw.Processor(name="Geo",proctype="Geometry")
+  geo = Processor(name="Geo",proctype="Geometry")
   geo.param("AlignmentDBFilePath", "localDB/alignmentDB.root")
   geo.param("ApplyAlignment", applyAlignment)
   geo.param("OverrideAlignment", overrideAlignment)
@@ -25,7 +25,7 @@ def add_rawinputprocessor(path,rawfile):
   Adds raw input processor to the path
   """ 
 
-  rawinput_processor = tbsw.Processor(name="rawinput_processor",proctype="EudaqInputProcessor")
+  rawinput_processor = Processor(name="rawinput_processor",proctype="EudaqInputProcessor")
   rawinput_processor.param("DetectorName","EUTelescope")
   rawinput_processor.param("FileNames",rawfile)
   path.add_processor(rawinput_processor)
@@ -37,7 +37,7 @@ def add_csvrawinputprocessor(path,rawfile, runno=0):
   Adds raw input processor to the path
   """ 
 
-  csvinput = tbsw.Processor(name="CSVInputProcessor",proctype="AsciiInputProcessor")
+  csvinput = Processor(name="CSVInputProcessor",proctype="AsciiInputProcessor")
   csvinput.param("RawHitCollectionName", "zsdata")
   csvinput.param("RunNumber", runno)
   csvinput.param('FileNames', rawfile)
@@ -52,7 +52,7 @@ def add_M26unpacker(path):
   Adds M26 unpacker to the path
   """ 
 
-  M26unpacker = tbsw.Processor(name="M26Unpacker",proctype="NIUnpacker")
+  M26unpacker = Processor(name="M26Unpacker",proctype="NIUnpacker")
   M26unpacker.param("InputCollectionName","NI")
   M26unpacker.param("OutputCollectionName","zsdata_m26")
   path.add_processor(M26unpacker)
@@ -63,7 +63,7 @@ def add_CSVunpacker(path, ids=[1, 2, 3, 4, 5, 6], colname="zsdata_m26"):
   """
   Adds csv unpacker to the path
   """ 
-  csvunpacker = tbsw.Processor(name="CSVUnpacker",proctype="HitsFilterProcessor")   
+  csvunpacker = Processor(name="CSVUnpacker",proctype="HitsFilterProcessor")   
   csvunpacker.param("InputCollectionName", "zsdata")
   csvunpacker.param("OutputCollectionName", colname)
   csvunpacker.param("FilterIDs"," ".join([ str(sensorID) for sensorID in ids ]))
@@ -76,7 +76,7 @@ def add_M26clusterizer(path):
   Adds M26 clusterizer to the path
   """  
     
-  m26clust = tbsw.Processor(name="M26Clusterizer",proctype="PixelClusterizer")   
+  m26clust = Processor(name="M26Clusterizer",proctype="PixelClusterizer")   
   m26clust.param("NoiseDBFileName","localDB/NoiseDB-M26.root")
   m26clust.param("SparseDataCollectionName","zsdata_m26")
   m26clust.param("ClusterCollectionName","zscluster_m26")
@@ -94,7 +94,7 @@ def add_trackfinder(path, beamenergy, excludeplanes="3", minhits=6, maxTrkChi2=2
   """  
   #fixme: add gap to deal with additional sensors (timing planes)
   maxgap=1  
-  trackfinder = tbsw.Processor(name="TF",proctype="FastTracker")
+  trackfinder = Processor(name="TF",proctype="FastTracker")
   trackfinder.param("InputHitCollectionNameVec","hit_m26")
   trackfinder.param("ExcludeDetector", excludeplanes)
   trackfinder.param("MaxTrackChi2", maxTrkChi2)  # loosecut version 10,000,000  
@@ -119,7 +119,7 @@ def add_aligner(path, xerrors='0 10 10 0 10 10 0', yerrors='0 10 10 0 10 10 0', 
   """
   Adds aligner to the path
   """  
-  aligner = tbsw.Processor(name="PreAligner",proctype="KalmanAligner")
+  aligner = Processor(name="PreAligner",proctype="KalmanAligner")
   aligner.param('ErrorsShiftX' , xerrors)
   aligner.param('ErrorsShiftY' , yerrors)
   aligner.param('ErrorsShiftZ' , zerrors)
@@ -136,14 +136,14 @@ def add_M26hitmaker(path, hitmakertype):
   Adds M26 hitmaker to the path
   """  
   if hitmakertype=="goe":
-    m26goehitmaker = tbsw.Processor(name="M26GoeHitMaker",proctype="GoeHitMaker")
+    m26goehitmaker = Processor(name="M26GoeHitMaker",proctype="GoeHitMaker")
     m26goehitmaker.param("ClusterCollection","zscluster_m26")
     m26goehitmaker.param("HitCollectionName","hit_m26")
     m26goehitmaker.param("ClusterDBFileName","localDB/clusterDB-M26.root")
     m26goehitmaker.param("UseCenterOfGravityFallback","false")
     path.add_processor(m26goehitmaker)  
   else:
-    m26coghitmaker = tbsw.Processor(name="M26CogHitMaker",proctype="CogHitMaker")
+    m26coghitmaker = Processor(name="M26CogHitMaker",proctype="CogHitMaker")
     m26coghitmaker.param("ClusterCollection","zscluster_m26")
     m26coghitmaker.param("HitCollectionName","hit_m26")
     m26coghitmaker.param("SigmaUCorrections", "0.62118 0.28235 0.31373")
@@ -158,7 +158,7 @@ def add_clustercalibrator(path, use_outerplanes=False):
   Adds M26 cluster calibration to the path
   """ 
   
-  cluster_calibrator = tbsw.Processor(name="M26ClusterCalibrator",proctype="GoeClusterCalibrator")
+  cluster_calibrator = Processor(name="M26ClusterCalibrator",proctype="GoeClusterCalibrator")
   cluster_calibrator.param("ClusterDBFileName","localDB/clusterDB-M26.root")
   cluster_calibrator.param("MinClusters", "1000")
   
@@ -236,7 +236,7 @@ def append_tracklett_aligner(Env, paths, gearfile, nevents, beamenergy, hitmaker
   tracklett_dqm_path=add_geometry(tracklett_dqm_path, applyAlignment="true", overrideAlignment="true") 
   tracklett_dqm_path=add_M26hitmaker(tracklett_dqm_path,hitmakertype) 
   tracklett_dqm_path=add_trackfinder(tracklett_dqm_path, beamenergy, excludeplanes, minhits, maxTrkChi2=20, maxOutlierChi2=10)
-  tracklett_dqm = tbsw.Processor(name="TelescopeDQM", proctype="TrackFitDQM") 
+  tracklett_dqm = Processor(name="TelescopeDQM", proctype="TrackFitDQM") 
   tracklett_dqm.param("RootFileName","TelescopeDQM_"+hitmakertype+'hits_'+trackletttype+".root")
   tracklett_dqm_path.add_processor(tracklett_dqm)  
   paths.append(tracklett_dqm_path)
@@ -247,7 +247,7 @@ def append_tracklett_aligner(Env, paths, gearfile, nevents, beamenergy, hitmaker
   tracklett_correlator_path=add_geometry(tracklett_correlator_path, applyAlignment="true", overrideAlignment="true")
   tracklett_correlator_path=add_M26hitmaker(tracklett_correlator_path,"cog") 
   tracklett_correlator_path=add_trackfinder(tracklett_correlator_path, beamenergy, excludeplanes, minhits , maxTrkChi2=20, maxOutlierChi2=10)
-  tracklett_correlator = tbsw.Processor(name="Tracklett_Correlator", proctype="TriplettCorrelator") 
+  tracklett_correlator = Processor(name="Tracklett_Correlator", proctype="TriplettCorrelator") 
   tracklett_correlator.param("InputHitCollectionNameVec","hit_m26")
   tracklett_correlator.param("OutputRootFileName","Correlator_"+hitmakertype+'hits_'+trackletttype+".root")
   tracklett_correlator.param("TrackCollectionName","tracks")
@@ -283,7 +283,7 @@ def create_anglereco_path(Env, rawfile, gearfile, numberofevents, usesinglehitse
   else:
     reco_path=add_M26hitmaker(reco_path,"cog")
 
-  downstream_TF=tbsw.Processor(name="downstream_TF",proctype="FastTracker")
+  downstream_TF=Processor(name="downstream_TF",proctype="FastTracker")
   downstream_TF.param("InputHitCollectionNameVec","hit_m26")
   downstream_TF.param("HitCollectionName","unusedhits_down")
   downstream_TF.param("OutputTrackCollectionName","down_tracks")
@@ -314,7 +314,7 @@ def create_anglereco_path(Env, rawfile, gearfile, numberofevents, usesinglehitse
   reco_path.add_processor(downstream_TF)
 
 
-  upstream_TF=tbsw.Processor(name="upstream_TF",proctype="FastTracker")
+  upstream_TF=Processor(name="upstream_TF",proctype="FastTracker")
   upstream_TF.param("InputHitCollectionNameVec","hit_m26")
   upstream_TF.param("HitCollectionName","unusedhits_up")
   upstream_TF.param("OutputTrackCollectionName","up_tracks")
@@ -344,7 +344,7 @@ def create_anglereco_path(Env, rawfile, gearfile, numberofevents, usesinglehitse
     upstream_TF.param("SingleHitSeeding", "")
   reco_path.add_processor(upstream_TF)
 
-  x0imageproducer=tbsw.Processor(name="x0imageproducer",proctype="X0ImageProducer")
+  x0imageproducer=Processor(name="x0imageproducer",proctype="X0ImageProducer")
   x0imageproducer.param("DownStreamTrackCollection","down_tracks")
   x0imageproducer.param("UpStreamTrackCollection","up_tracks")
   x0imageproducer.param("DUTPlane","3")
@@ -386,7 +386,7 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
   
   mask_path=add_geometry(mask_path, applyAlignment="true", overrideAlignment="true")
 
-  m26hotpixelkiller = tbsw.Processor(name="M26HotPixelKiller",proctype="HotPixelKiller")
+  m26hotpixelkiller = Processor(name="M26HotPixelKiller",proctype="HotPixelKiller")
   m26hotpixelkiller.param("InputCollectionName", "zsdata_m26")
   m26hotpixelkiller.param("MaxNormedOccupancy", 5)
   m26hotpixelkiller.param("MinNormedOccupancy", -1)
@@ -415,7 +415,7 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
   clusterizer_path=add_geometry(clusterizer_path, applyAlignment="true", overrideAlignment="true")
   clusterizer_path=add_M26clusterizer(clusterizer_path)
 
-  lciooutput = tbsw.Processor(name="LCIOOutput",proctype="LCIOOutputProcessor")
+  lciooutput = Processor(name="LCIOOutput",proctype="LCIOOutputProcessor")
   lciooutput.param("LCIOOutputFile","tmp.slcio")
   lciooutput.param("LCIOWriteMode","WRITE_NEW")
   clusterizer_path.add_processor(lciooutput)  
@@ -430,7 +430,7 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
     mc_clustercal_path=add_geometry(mc_clustercal_path, applyAlignment="true", overrideAlignment="true")
     mc_clustercal_path=add_M26hitmaker(mc_clustercal_path,"cog") 
 
-    m26clustercalibrationformc = tbsw.Processor(name="M26ClusterCalibrationFromMC", proctype="GoeClusterCalibratorForMC")
+    m26clustercalibrationformc = Processor(name="M26ClusterCalibrationFromMC", proctype="GoeClusterCalibratorForMC")
     m26clustercalibrationformc.param("HitCollection","hit_m26")
     m26clustercalibrationformc.param("SimTrackerHitCollection","SimTrackerHits")
     m26clustercalibrationformc.param("ClusterDBFileName","localDB/clusterDB-M26-MC.root")
@@ -449,12 +449,12 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
   correlator_path=add_geometry(correlator_path, applyAlignment="false", overrideAlignment="true")
   correlator_path=add_M26hitmaker(correlator_path,"cog") 
   
-  hitdqm = tbsw.Processor(name="RawDQM",proctype="RawHitDQM")
+  hitdqm = Processor(name="RawDQM",proctype="RawHitDQM")
   hitdqm.param("InputHitCollectionNameVec","hit_m26")  
   hitdqm.param("RootFileName","RawDQM.root")
   correlator_path.add_processor(hitdqm)  
   
-  correlator = tbsw.Processor(name="TelCorrelator", proctype="Correlator")
+  correlator = Processor(name="TelCorrelator", proctype="Correlator")
   correlator.param("InputHitCollectionNameVec","hit_m26")
   correlator.param("OutputRootFileName","XCorrelator.root")
   correlator.param("ReferencePlane","0")
@@ -515,7 +515,7 @@ def create_x0analysis_calibration_paths(Env, rawfile, gearfile, nevents, useClus
     dqm2_path=add_M26hitmaker(dqm2_path,"goe")
     dqm2_path=add_trackfinder(dqm2_path, beamenergy, excludeplanes="3", minhits=6, maxTrkChi2=20, maxOutlierChi2=10)
     
-    teldqm = tbsw.Processor(name="TelescopeDQM", proctype="TrackFitDQM") 
+    teldqm = Processor(name="TelescopeDQM", proctype="TrackFitDQM") 
     teldqm.param("RootFileName","TelescopeDQM2.root")
     dqm2_path.add_processor(teldqm)  
     
@@ -531,18 +531,18 @@ def create_x0sim_path(Env, name, rawfile, gearfile, nevents, beamenergy):
   x0sim = Env.create_path(name)
   x0sim.set_globals(params={'GearXMLFile': gearfile , 'MaxRecordNumber' : nevents, 'Verbosity': "MESSAGE3"})   
   
-  infosetter = tbsw.Processor(name="InfoSetter", proctype='EventInfoSetter')
+  infosetter = Processor(name="InfoSetter", proctype='EventInfoSetter')
   infosetter.param("RunNumber","0")
   infosetter.param("DetectorName","EUTelescope") 
   x0sim.add_processor(infosetter)
   
-  geo_noalign = tbsw.Processor(name="Geo",proctype="Geometry")
+  geo_noalign = Processor(name="Geo",proctype="Geometry")
   geo_noalign.param("AlignmentDBFilePath", "localDB/alignmentDB.root")
   geo_noalign.param("ApplyAlignment", "false")
   geo_noalign.param("OverrideAlignment", "true")
   x0sim.add_processor(geo_noalign)
    
-  gun = tbsw.Processor(name="ParticleGun",proctype="ParticleGunGenerator")
+  gun = Processor(name="ParticleGun",proctype="ParticleGunGenerator")
   gun.param("BeamIntensity","20000")
   gun.param("BeamMomentum", str(beamenergy))
   gun.param("BeamMomentumSigma", 0.001)
@@ -563,7 +563,7 @@ def create_x0sim_path(Env, name, rawfile, gearfile, nevents, beamenergy):
   gun.param("ParticleMass","0.000511")
   x0sim.add_processor(gun)
   
-  fastsim = tbsw.Processor(name="FastSim",proctype="FastSimulation")
+  fastsim = Processor(name="FastSim",proctype="FastSimulation")
   fastsim.param("MCParticleCollectionName","MCParticles")
   fastsim.param("SimTrackerHitCollectionName","SimTrackerHits")
   fastsim.param("ScatterModel","0")
@@ -571,7 +571,7 @@ def create_x0sim_path(Env, name, rawfile, gearfile, nevents, beamenergy):
   fastsim.param("DoFractionalBetheHeitlerEnergyLoss","false")
   x0sim.add_processor(fastsim)
  
-  m26digi = tbsw.Processor(name="M26Digitizer",proctype="SiPixDigitizer")
+  m26digi = Processor(name="M26Digitizer",proctype="SiPixDigitizer")
   m26digi.param("DigitCollectionName","zsdata_m26")  
   m26digi.param("FrontEndType","1") 
   m26digi.param("ComparatorThrehold","1100")
@@ -590,7 +590,7 @@ def create_x0sim_path(Env, name, rawfile, gearfile, nevents, beamenergy):
   m26digi.param("NoiseFraction","0.000001")
   x0sim.add_processor(m26digi)
   
-  lciooutput = tbsw.Processor(name="LCIOOutput",proctype="LCIOOutputProcessor")
+  lciooutput = Processor(name="LCIOOutput",proctype="LCIOOutputProcessor")
   lciooutput.param("LCIOOutputFile",rawfile)
   lciooutput.param("LCIOWriteMode","WRITE_NEW")  
   x0sim.add_processor(lciooutput)

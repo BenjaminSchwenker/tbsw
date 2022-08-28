@@ -4,11 +4,14 @@ Some helper code to define processor paths for X/X0 studies
 :author: ulf.stolzenberg@phys.uni-goettinge.de  
 """
 
-import tbsw 
-import x0imaging
-import path_utils 
-import DQMplots
-import gear
+ 
+
+from tbsw.tbsw import Simulation, Calibration, Reconstruction
+import tbsw.X0Calibration as X0Calibration
+import tbsw.GenerateImage as GenerateImage 
+import tbsw.path_utils as path_utils 
+import tbsw.DQMplots as DQMplots 
+import tbsw.gear as gear
 
 import os
 
@@ -47,7 +50,7 @@ def simulate(rawfile_air=None, rawfile_alu_list=None, steerfiles=None, gearfile=
     return None
   
   # Create tmpdir to hold all steerfiles and log files 
-  SimObj = tbsw.Simulation(steerfiles=steerfiles, name='x0-sim' )
+  SimObj = Simulation(steerfiles=steerfiles, name='x0-sim' )
   
   # Get path to gearfile in simulation environment
   localgearfile = SimObj.get_filename(gearfile)
@@ -117,7 +120,7 @@ def calibrate(rawfile=None, steerfiles=None, caltag="default", gearfile="gear.xm
   
   # Calibrate of the run using beam data. Creates a folder cal-files/caltag 
   # containing all calibration data. 
-  CalObj = tbsw.Calibration(steerfiles=steerfiles, name=caltag + '-cal') 
+  CalObj = Calibration(steerfiles=steerfiles, name=caltag + '-cal') 
   
   # Create list of calibration steps 
   calpaths = path_utils.create_x0analysis_calibration_paths(CalObj, rawfile, gearfile, nevents, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali, UseOuterPlanesForClusterDB, csvdata=csvdata)
@@ -164,7 +167,7 @@ def reconstruct(rawfile=None, steerfiles=None, caltag='default', gearfile='gear.
   
   # Reconsruct the rawfile using the caltag. Resulting root files are 
   # written to folder root-files/
-  RecObj = tbsw.Reconstruction(steerfiles=steerfiles, name=name )
+  RecObj = Reconstruction(steerfiles=steerfiles, name=name )
   
   # Create reconstuction path
   recopath = path_utils.create_anglereco_path(RecObj, rawfile, gearfile, nevents, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata, csvdata=csvdata)  
@@ -228,7 +231,7 @@ def targetalignment(rawfile=None, steerfiles=None, iteration=None, caltag="defau
   
   # Reconsruct the rawfile using the caltag. Resulting root files are 
   # written to folder root-files/
-  RecObj = tbsw.Reconstruction(steerfiles=steerfiles, name='x0-reco-targetalign-it-{:d}'.format(iteration) )
+  RecObj = Reconstruction(steerfiles=steerfiles, name='x0-reco-targetalign-it-{:d}'.format(iteration) )
   
   # Create reconstuction path
   recopath = path_utils.create_anglereco_path(RecObj, rawfile, gearfile, nevents, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata, csvdata=csvdata)  
@@ -271,17 +274,17 @@ def xx0calibration(RunList=None, steerfiles=None, caltag="default", x0caltag=Non
 
   # Create list with input root files from list of input raw files
   RootFileList_x0cali=[]
-  x0imaging.X0Calibration.CreateRootFileList(rawlist=RunList,rootlist=RootFileList_x0cali, caltag=caltag)
+  X0Calibration.CreateRootFileList(rawlist=RunList,rootlist=RootFileList_x0cali, caltag=caltag)
 
   # Generate a uncalibrated X/X0 image
   imagenametag='X0image-calitarget-Uncalibrated'
-  x0imaging.GenerateImage.x0imaging(rootfilelist=[RootFileList_x0cali[0]],caltag='',steerfiles=steerfiles,nametag=imagenametag)
+  GenerateImage.x0imaging(rootfilelist=[RootFileList_x0cali[0]],caltag='',steerfiles=steerfiles,nametag=imagenametag)
 
   # Path to uncalibrated X0 image file
   imagefilename='/root-files/'+imagenametag+'.root'
 
   # Do a calibration of the angle resolution
-  x0imaging.X0Calibration.x0calibration(rootfilelist=RootFileList_x0cali,imagefile=imagefilename,caltag=x0caltag,steerfiles=steerfiles)
+  X0Calibration.x0calibration(rootfilelist=RootFileList_x0cali,imagefile=imagefilename,caltag=x0caltag,steerfiles=steerfiles)
 
   nametag='X0Calibration-'+x0caltag
   DQMplots.x0calibration_DQMPlots(nametag=nametag)
@@ -312,7 +315,7 @@ def xx0image(RunList=None, steerfiles=None, caltag="default", listname="X0image"
     x0caltag=caltag
 
   RootFileList_x0image=[]
-  x0imaging.X0Calibration.CreateRootFileList(rawlist=RunList,rootlist=RootFileList_x0image, caltag=caltag)
+  X0Calibration.CreateRootFileList(rawlist=RunList,rootlist=RootFileList_x0image, caltag=caltag)
 
   if listname=='':
     print("No image name found. Using default naming scheme!")
@@ -325,7 +328,7 @@ def xx0image(RunList=None, steerfiles=None, caltag="default", listname="X0image"
     nametag=listname+'-Calibrated-'+x0caltag
 
   # Do a calibration of the angle resolution
-  x0imaging.GenerateImage.x0imaging(rootfilelist=RootFileList_x0image,caltag=x0caltag,steerfiles=steerfiles,nametag=nametag)
+  GenerateImage.x0imaging(rootfilelist=RootFileList_x0image,caltag=x0caltag,steerfiles=steerfiles,nametag=nametag)
 
   DQMplots.x0image_Plots(nametag=nametag)
 
