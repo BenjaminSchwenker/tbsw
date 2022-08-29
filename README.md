@@ -11,6 +11,10 @@ The tbsw framework is designed to run on local machines (Desktop / Laptop) to en
 analysis right during the beam test (or shortly afterwards). Some effort was invested to make this as smooth and simple
 as possible. The installation of the framework is covered in INSTALL. 
 
+A testbeam paper describing also the algorithms behind tbsw in some detail can be found here: https://doi.org/10.1016/j.nima.2020.164978
+
+
+
 
 # For the impatient reader: The text below is a step by step instruction how to run the code on raw data
 
@@ -266,13 +270,10 @@ python depfet-reco.py
 python histo-plotter.py
 ```
 
-A collection of real world workspaces for applying tbsw to testbeam data can be found at https://bitbucket.org/testbeam/tbsw_workspaces/src/master/
 
-Recently the option was added to read hit tables from different subdetectors in csv format as input into tbsw. The hit tables describe one raw hit 
-per row providing the trigger number, plane number, column/row and charge information. The syncronization of hits from different tables is done in the 
-AsciiInputProcessor based on the trigger number. A working example can be found here: 
+Recently the option was added to read hit tables from different subdetectors in csv format as input into tbsw. A working example can be found here: 
 
-https://bitbucket.org/testbeam/tbsw_workspaces/src/master/workspace_tjmono/ 
+https://github.com/BenjaminSchwenker/tbsw_workspace_tjmp2_desy
 
 Have fun with test beams ;)  
 
@@ -280,7 +281,9 @@ benjamin.schwenker@phys.uni-goettingen.de
 
 # Bug Report / Feature Request / Question
 
-Please use the issue tracker: https://bitbucket.org/testbeam/tbsw/issues?status=new&status=open
+Please use the issue tracker of the repository: https://github.com/BenjaminSchwenker/tbsw
+
+Or contact me directly: benjamin.schwenker@phys.uni-goettingen.de
 
 # Phd theses
 
@@ -298,6 +301,8 @@ U. Stolzenberg, A. Frey, B. Schwenker, P. Wieduwilt, C. Marinas and F. Lütticke
 
 T. Obermanna, T. Hemperek, F. Hügging, H. Krüger, D.-L. Pohl, B. Schwenker and N. Wermes, 2017,  Depleted Monolithic Pixels (DMAPS) in a 150 nm technology: lab and beam results, https://doi.org/10.1088%2F1748-0221%2F12%2F01%2Fc01062, JINST 2017
 
+P. Wieduwilt,∗, B. Paschen,∗, H. Schreeck, B. Schwenker, Performance of production modules of the Belle II pixel detector in a
+high-energy particle beam, https://doi.org/10.1016/j.nima.2020.164978, Nucl. Inst. Meth. A 991 (2021) 164978
 
 # Further references
 

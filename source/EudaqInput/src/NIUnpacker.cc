@@ -303,6 +303,7 @@ namespace eudaqinput {
             chargevec.push_back( column+j );
             chargevec.push_back( row );
             chargevec.push_back( 1 );
+            chargevec.push_back( 0 );
         }
         npixels += num + 1;
       }

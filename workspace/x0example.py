@@ -19,7 +19,7 @@ python x0example.py
 Author: Ulf Stolzenberg <ulf.stolzenberg@phys.uni-goettingen.de>  
 """
 
-import tbsw 
+from tbsw import x0script_functions
 import os
 import multiprocessing
 import argparse
@@ -134,7 +134,7 @@ if __name__ == '__main__':
   # Create a simulated lcio for run with no target (air run) and 
   # multiple run s with a Al plate as scattering material
   if args.startStep < 1 and args.stopStep >= 0:
-    tbsw.x0script_functions.simulate(rawfile_air, rawfile_alu_list, steerfiles, gearfile, nevents_air, nevents_alu, nprocesses, mean_list, sigma_list, sensorexception_list, modeexception_list, beamenergy)
+    x0script_functions.simulate(rawfile_air, rawfile_alu_list, steerfiles, gearfile, nevents_air, nevents_alu, nprocesses, mean_list, sigma_list, sensorexception_list, modeexception_list, beamenergy)
   
   
   # Calibrate the telescope 
@@ -145,11 +145,11 @@ if __name__ == '__main__':
   # from this telescope calibration step can be found as pdf files in 
   # workspace/results/telescopeDQM
   if args.startStep < 2 and args.stopStep >= 1:
-    tbsw.x0script_functions.calibrate( rawfile_air, steerfiles, caltag, gearfile, nevents_air, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali, UseOuterPlanesForClusterDB)
+    x0script_functions.calibrate( rawfile_air, steerfiles, caltag, gearfile, nevents_air, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali, UseOuterPlanesForClusterDB)
    
     # Target alignment
     for it in range(0,targetalignment_iterations):
-      tbsw.x0script_functions.targetalignment(rawfile_alu_list[0], steerfiles, it, caltag, gearfile, nevents_TA, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)
+      x0script_functions.targetalignment(rawfile_alu_list[0], steerfiles, it, caltag, gearfile, nevents_TA, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)
   
   # Angle reconstruction
   # In case you already have reconstructed the scattering angles for all
@@ -162,14 +162,14 @@ if __name__ == '__main__':
   # workspace/results/anglerecoDQM/
   if args.startStep < 3 and args.stopStep >= 2:
     params_reco=[(x, steerfiles, caltag, gearfile, nevents_alu, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata) for x in rawfile_alu_list]
-    print "The parameters for the reconstruction are: " 
-    print params_reco
+    print("The parameters for the reconstruction are: ") 
+    print(params_reco)
     
     def work(params):
       """ Multiprocessing work
       """
       rawfile, steerfiles, caltag, gearfile, nevents, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata = params
-      tbsw.x0script_functions.reconstruct(rawfile, steerfiles, caltag, gearfile, nevents, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)
+      x0script_functions.reconstruct(rawfile, steerfiles, caltag, gearfile, nevents, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)
                   
     count = min(nprocesses,multiprocessing.cpu_count())
     pool = multiprocessing.Pool(processes=count)
@@ -178,7 +178,7 @@ if __name__ == '__main__':
     pool.join()
     
     for rawfile in rawfile_alu_list:
-      tbsw.x0script_functions.reconstruction_DQM(rawfile, caltag)
+      x0script_functions.reconstruction_DQM(rawfile, caltag)
     
   if args.startStep < 4 and args.stopStep >= 3:
     # Start x0 calibration
@@ -187,12 +187,12 @@ if __name__ == '__main__':
     #
     # The fitted distributions and self-consistency plots in pdf format from this 
     # x0 calibration can be found in the workspace/tmp-runs/*X0Calibration/ directory
-    tbsw.x0script_functions.xx0calibration(rawfile_alu_list, steerfiles, caltag)
+    x0script_functions.xx0calibration(rawfile_alu_list, steerfiles, caltag)
 
     # Generate a calibrated X/X0 image
     #
     # The calibrated radiation length image and other images, such as the beamspot
     # etc can be found in the workspace/root-files/*CalibratedX0Image.root
   if args.startStep < 5 and args.stopStep >= 4:
-    tbsw.x0script_functions.xx0image(rawfile_alu_list, steerfiles, caltag, name_image1)
+    x0script_functions.xx0image(rawfile_alu_list, steerfiles, caltag, name_image1)
 
