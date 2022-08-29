@@ -301,7 +301,7 @@ U. Stolzenberg, A. Frey, B. Schwenker, P. Wieduwilt, C. Marinas and F. Lütticke
 
 T. Obermanna, T. Hemperek, F. Hügging, H. Krüger, D.-L. Pohl, B. Schwenker and N. Wermes, 2017,  Depleted Monolithic Pixels (DMAPS) in a 150 nm technology: lab and beam results, https://doi.org/10.1088%2F1748-0221%2F12%2F01%2Fc01062, JINST 2017
 
-P. Wieduwiltb,∗, B. Paschena,∗, H. Schreeckb, B. Schwenker, Performance of production modules of the Belle II pixel detector in a
+P. Wieduwilt,∗, B. Paschen,∗, H. Schreeck, B. Schwenker, Performance of production modules of the Belle II pixel detector in a
 high-energy particle beam, https://doi.org/10.1016/j.nima.2020.164978, Nucl. Inst. Meth. A 991 (2021) 164978
 
 # Further references
