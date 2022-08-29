@@ -37,12 +37,13 @@ def add_csvrawinputprocessor(path,rawfile, runno=0):
   Adds raw input processor to the path
   """ 
 
-  csvinput = Processor(name="CSVInputProcessor",proctype="AsciiInputProcessor")
-  csvinput.param("RawHitCollectionName", "zsdata")
-  csvinput.param("RunNumber", runno)
-  csvinput.param('FileNames', rawfile)
-  csvinput.param("DetectorName","EUTelescope")
-  path.add_processor(csvinput)
+  rawinput = Processor(name="CorryInputProcessor",proctype="CorryInputProcessor")
+  rawinput.param('FileNames', rawfile)
+  rawinput.param('SensorIDs', "0 1 2 3 4 5")
+  rawinput.param('SensorNames', "MIMOSA26_0 MIMOSA26_1 MIMOSA26_2 MIMOSA26_3 MIMOSA26_4 MIMOSA26_5")
+  rawinput.param('RawHitCollectionName', "rawdata")
+  rawinput.param("RunNumber", runno)
+  path.add_processor(rawinput)
   
   return path 
 
@@ -63,11 +64,12 @@ def add_CSVunpacker(path, ids=[1, 2, 3, 4, 5, 6], colname="zsdata_m26"):
   """
   Adds csv unpacker to the path
   """ 
-  csvunpacker = Processor(name="CSVUnpacker",proctype="HitsFilterProcessor")   
-  csvunpacker.param("InputCollectionName", "zsdata")
-  csvunpacker.param("OutputCollectionName", colname)
-  csvunpacker.param("FilterIDs"," ".join([ str(sensorID) for sensorID in ids ]))
-  path.add_processor(csvunpacker)
+  
+  m26unpacker = Processor(name="TelUnpacker", proctype="HitsFilterProcessor") 
+  m26unpacker.param("InputCollectionName", "rawdata")
+  m26unpacker.param("OutputCollectionName", "zsdata_m26")
+  m26unpacker.param("FilterIDs", "0 1 2 3 4 5")
+  path.add_processor(m26unpacker)
    
   return path    
 

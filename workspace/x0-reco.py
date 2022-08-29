@@ -198,6 +198,9 @@ nevents_TA = 1000000
 
 # for angle reconstruction (-1 use all available events)
 nevents_reco = -1   
+
+# Format of telescope data
+csvdata = False
   
 if __name__ == '__main__':
 
@@ -211,11 +214,11 @@ if __name__ == '__main__':
   # workspace/results/telescopeDQM
 
   if args.startStep < 2 and args.stopStep >= 1:
-    x0script_functions.calibrate( rawfile_cali, steerfiles, caltag, gearfile, nevents_cali, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali, UseOuterPlanesForClusterDB)
+    x0script_functions.calibrate( rawfile_cali, steerfiles, caltag, gearfile, nevents_cali, Use_clusterDB, beamenergy, mcdata, Use_LongTelescopeCali, UseOuterPlanesForClusterDB, csvdata=csvdata)
 
     # Target alignment
     for it in range(0,targetalignment_iterations):
-      x0script_functions.targetalignment(rawfile_TA, steerfiles, it, caltag, gearfile, nevents_TA, Use_clusterDB, beamenergy, mcdata)
+      x0script_functions.targetalignment(rawfile_TA, steerfiles, it, caltag, gearfile, nevents_TA, Use_clusterDB, beamenergy, mcdata, csvdata=csvdata)
 
   # Angle reconstruction
   # In case you already have reconstructed the scattering angles for all
@@ -235,7 +238,7 @@ if __name__ == '__main__':
       """ Multiprocessing work
       """
       rawfile, steerfiles, caltag, gearfile, nevents, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata = params
-      x0script_functions.reconstruct(rawfile, steerfiles, caltag, gearfile, nevents, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata)
+      x0script_functions.reconstruct(rawfile, steerfiles, caltag, gearfile, nevents, Use_SingleHitSeeding, Use_clusterDB, beamenergy, mcdata, csvdata=csvdata)
                   
     count = multiprocessing.cpu_count()
     pool = multiprocessing.Pool(processes=count)
