@@ -295,7 +295,7 @@ void PixelChargeCalibrator::calibrate( LCEvent * evt , LCCollectionVec * calibCo
     
     // List of firing pixels. Each pixel has a iU, iV and charge 
     FloatVec pixVector = pixModule->getChargeValues();
-    int npixels = pixVector.size()/3; 
+    int npixels = pixVector.size()/4; 
     
     // Prepare a TrackerData to store the calibrated data
     TrackerDataImpl* calibData = new TrackerDataImpl ; 
@@ -304,9 +304,10 @@ void PixelChargeCalibrator::calibrate( LCEvent * evt , LCCollectionVec * calibCo
     for (int iPix = 0; iPix < npixels; iPix++) 
     {   
       
-      int iU = static_cast<int> (pixVector[iPix * 3]);
-      int iV = static_cast<int> (pixVector[iPix * 3 + 1]);
-      float charge =  pixVector[iPix * 3 + 2];     
+      int iU = static_cast<int> (pixVector[iPix * 4]);
+      int iV = static_cast<int> (pixVector[iPix * 4 + 1]);
+      float charge =  pixVector[iPix * 4 + 2];
+      float time =  pixVector[iPix * 4 + 3];     
        
       // Try to get status code for pixel 
       float status = 0; 
@@ -352,6 +353,7 @@ void PixelChargeCalibrator::calibrate( LCEvent * evt , LCCollectionVec * calibCo
       calibData->chargeValues().push_back( iU );
       calibData->chargeValues().push_back( iV );
       calibData->chargeValues().push_back( calibCharge );
+      calibData->chargeValues().push_back( time );
       
       streamlog_out(MESSAGE2) << " On sensor " << sensorID << " having DAC unit charge " << charge << " calibrated to " << calibCharge << std::endl;
     }
