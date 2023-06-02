@@ -7,7 +7,7 @@ PROJECT( TBSW )
 
 # project version
 SET( tbsw_MAJOR_VERSION 0 )
-SET( tbsw_MINOR_VERSION 11 )
+SET( tbsw_MINOR_VERSION 12 )
 SET( tbsw_PATCH_LEVEL 0 )
 
 # project options
