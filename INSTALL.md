@@ -23,7 +23,9 @@ sudo apt install cmake
 Create a conda environment with a recent version of python3 e.g. 3.9:
 ```
 conda create --name tbsw python=3.9
+conda activate tbsw
 ```
+
 Then install the numpy and scipy packages for python:
 ```
 conda install numpy scipy
@@ -39,10 +41,11 @@ You want to install root in a generic directory, depending on environment variab
 
 2) Type the build commands:
 ```
-mkdir <builddir>
-cd <builddir>
-cmake ../root
-cmake --build . [ -- -j<N> ] [ or simply "make -j<N>" on Unix systems ] 
+git clone --branch latest-stable --depth=1 https://github.com/root-project/root.git root_src
+mkdir root_build root_install && cd root_build
+cmake -DCMAKE_INSTALL_PREFIX=../root_install ../root_src -DCMAKE_CXX_STANDARD=17 # && check cmake configuration output for warnings or errors
+cmake --build . -- install -j4 # if you have 4 cores available for compilation
+source ../root_install/bin/thisroot.sh # or thisroot.{fish,csh}
 ```
 
 3) Add bin/ to PATH and lib/ to LD_LIBRARY_PATH. For the sh shell family do:
