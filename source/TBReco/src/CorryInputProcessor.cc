@@ -263,7 +263,8 @@ bool CorryInputProcessor::getAllEventFromFile(fstream& fin, vector< vector<int> 
       getline(sd, word, ',');
       row=stoi(word);
       getline(sd, word, ','); 
-      charge=stoi(word);     
+      charge=stoi(word);    
+      if (charge <= 0) charge = 1; 
       time=0;
       if (event_number >= 0 && sensorID >= 0) {
         validHit = true;
