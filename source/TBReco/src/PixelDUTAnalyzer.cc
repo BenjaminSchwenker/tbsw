@@ -647,8 +647,22 @@ void PixelDUTAnalyzer::processEvent(LCEvent * evt)
     // Try to check if pixel is masked (=1) or unmasked (=0)
     int masked = 0; 
     if ( _DUT_Mask != nullptr ) {
-      masked = _DUT_Mask->GetBinContent(fitUCell-_minUCell+1, fitVCell-_minVCell+1); 
-    }       
+        masked += _DUT_Mask->GetBinContent(fitUCell-_minUCell+1, fitVCell-_minVCell+1);
+
+        if (fitUCell+1-_minUCell+1 <= _DUT_Mask->GetXaxis()->GetNbins())
+          masked += _DUT_Mask->GetBinContent(fitUCell+1-_minUCell+1, fitVCell-_minVCell+1);
+
+        if (fitUCell-1-_minUCell+1 >= 1)
+          masked += _DUT_Mask->GetBinContent(fitUCell-1-_minUCell+1, fitVCell-_minVCell+1);
+
+        if (fitVCell+1-_minVCell+1 <= _DUT_Mask->GetYaxis()->GetNbins())
+          masked += _DUT_Mask->GetBinContent(fitUCell-_minUCell+1, fitVCell+1-_minVCell+1);
+
+        if (fitVCell-1-_minVCell+1 >= 1)
+          masked += _DUT_Mask->GetBinContent(fitUCell-_minUCell+1, fitVCell-1-_minVCell+1);
+
+        if (masked >0 ) masked=1;
+      }        
     
     _rootTrackPixelType = dut.GetPixelType(fitVCell, fitUCell);  
     _rootTrackFitMomentum = trk.GetMomentum();      
