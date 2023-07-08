@@ -1,4 +1,4 @@
-from ROOT import TFile, TH1F, TH2F, TGraphAsymmErrors
+from ROOT import TFile, TH1F, TH2F, TGraphAsymmErrors, TPaveText
 from ROOT import gROOT, TCut
 
 
@@ -175,16 +175,16 @@ def extract_roi(inputfile=None, basecut="", matchcut="hasHit==0"):
   tree = inputfile.Get("Track")
  
   # Compute roi efficiency 
-  h_roi_total = TH1F("h_roi_total","",1,0,500)
+  h_roi_total = TH1F("h_roi_total","",1,0,1)
   tree.Draw("trackChi2 >> +h_roi_total", total_cut  ,  "goff")
   
-  h_roi_pass = TH1F("h_roi_pass","",1,0,500)
+  h_roi_pass = TH1F("h_roi_pass","",1,0,1)
   tree.Draw("trackChi2 >> +h_roi_pass"  ,  pass_cut , "goff" )
   
   g_efficiency_roi = TGraphAsymmErrors()
   g_efficiency_roi.SetName("g_efficiency_roi")
   g_efficiency_roi.Divide(h_roi_pass,h_roi_total) 
-  g_efficiency_roi.SetTitle("Hit efficiency roi")
+  g_efficiency_roi.SetTitle("ROI hit efficiency cut: " + basecut)
   g_efficiency_roi.GetYaxis().SetTitle("efficiency") 
   g_efficiency_roi.Write()
 
