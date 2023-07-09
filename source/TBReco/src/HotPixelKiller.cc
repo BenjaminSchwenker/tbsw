@@ -314,12 +314,13 @@ namespace depfet {
 
           // Number of hits on current pixel 
           double pixhits = hitVec[ adet.encodePixelID(iV, iU) ];
-
-          if (median_hits >= 1  &&  pixhits >= 1 )  {
+          
+          streamlog_out ( MESSAGE3 ) << "Median hits " << median_hits << endl;
+          if (median_hits > 0)  {
             // Compute the noralized occupancy 
             normed_occupancy = pixhits / median_hits;
           } else {
-            // If median number of hits == 0, we have very low occupancy and cannot judge. Treat pixel as good one.  
+            // If median number of hits <1, we have very low occupancy and cannot judge. Treat pixel as good one.  
             normed_occupancy =  1; 
           }
           
